@@ -1,0 +1,25 @@
+version = 1
+
+[[annotations]]
+path = [
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    "artifacts/**",
+    "REUSE.toml",
+    "go.sum",
+    "VERSION",
+    "**.json",
+    "**.png",
+    "internal/cli/deployment-mock-rest_test.go",
+    "internal/cli/testdata/**",
+    "docs/cli/**",
+    "pkg/rest/**"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 Intel Corporation"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["api/ent/opts.proto", "pkg/api/**.pb**.go"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2019-present Facebook"
+SPDX-License-Identifier = "Apache-2.0"

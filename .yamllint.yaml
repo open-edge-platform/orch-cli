@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2022-present Intel Corporation
+#
+# SPDX-License-Identifier: Apache-2.0
+---
+ignore: |
+  examples/templates/values/stuttgart-sra-evam-helm-values.yaml
+  examples/testapp/*
+  pkg/rest/*/*.yaml
+  vendor/
+  .github/
+rules:
+  line-length:
+    level: warning
+    ignore: |
+      examples/sra-cli-test/values/*.yaml
+      examples/templates/values/*.yaml
+  document-start:
+    level: warning
+  comments:
+    level: error
+  comments-indentation:
+    level: error
+  truthy:
+    level: error
+  empty-values: enable
