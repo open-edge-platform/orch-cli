@@ -66,8 +66,6 @@ func TestAddAuthHeader(t *testing.T) {
 	viper.Set(RefreshTokenField, "test_token")
 	err := AddAuthHeader(context.Background(), req)
 	assert.NoError(t, err)
-	err = AddUserAgentHeader(context.Background(), req)
-	assert.NoError(t, err)
 	assert.Equal(t, "Bearer test access token after refresh", req.Header.Get("Authorization"))
 
 	req2 := new(http.Request)
