@@ -12,7 +12,10 @@ path = [
     "internal/cli/deployment-mock-rest_test.go",
     "internal/cli/testdata/**",
     "docs/cli/**",
-    "pkg/rest/**"
+    "pkg/rest/**",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "SECURITY.md",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2025 Intel Corporation"
