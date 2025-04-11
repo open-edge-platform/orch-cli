@@ -1,0 +1,17 @@
+---
+specSchema: "Application"
+schemaVersion: "0.1"
+
+name: app1
+version: 1.1.1
+description: "Test application"
+
+# All resources must specify publisher
+
+publisher: "acme"
+
+# CLI tool will look up registry by name and convert to an ID.
+
+registry: "testregistry"
+chartName: "sra-evam-helm"
+chartVersion: "0.1.0"

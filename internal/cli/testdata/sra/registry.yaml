@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=/tmp/schemas/composition.yaml#/CASpecComposition
+---
+specSchema: "Registry"
+schemaVersion: "0.1"
+
+name: "testregistry"
+description: "test registry"
+registryType: "HELM"
+
+# All resources must specify publisher
+
+publisher: "acme"
+
+rootUrl: "http://customer-harbor.intel.com/"
+
+
+
