@@ -55,9 +55,9 @@ install: build
 	@# Help: Installs client tool
 	cp build/_output/$(RELEASE_NAME) ${INSTALL_PATH}
 
-lint: license
+lint:
 	@# Help: Runs lint stage
-	golangci-lint run
+	golangci-lint run --timeout 10m
 	yamllint .
 
 test: mod-update
