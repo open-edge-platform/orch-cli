@@ -21,6 +21,9 @@ on:
   schedule:
     - cron: "0 0 * * 6"   # every week, at 00:00 on Saturday
 
+permissions:
+  contents: read
+
 jobs:
   go-fuzz-catalog:
     if: ${{ inputs.run_catalog || github.event_name == 'schedule' }}
