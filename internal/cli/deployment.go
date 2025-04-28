@@ -141,7 +141,7 @@ func getOverrideValues(cmd *cobra.Command) ([]depapi.OverrideValues, error) {
 func getOverrideValuesRaw(namespaces, sets map[string]string) ([]depapi.OverrideValues, error) {
 	overrides := make(map[string]depapi.OverrideValues, 0)
 
-	// First accumulate any app target namespace settings in format "<app-name>=<target-namespace>"
+	// First, accumulate any app target namespace settings in the format "<app-name>=<target-namespace>"
 	for app, namespace := range namespaces {
 		ns := namespace
 		values := make(map[string]interface{}, 0)
@@ -204,7 +204,7 @@ func parseValue(value string) interface{} {
 	return value
 }
 
-func getTargetClusters(cmd *cobra.Command) ([]depapi.TargetClusters, error) {
+func getTargetClusters(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
 	// Next accumulate any app target cluster labels in format "<app-name>.<label-name>=<label-value>"
 	targets := make(map[string]depapi.TargetClusters, 0)
 	labels, _ := cmd.Flags().GetStringToString("application-label")
@@ -221,7 +221,7 @@ func getTargetClusters(cmd *cobra.Command) ([]depapi.TargetClusters, error) {
 		lbls[label] = value
 
 		if !ok {
-			target = depapi.TargetClusters{AppName: app, Labels: &lbls}
+			target = depapi.TargetClusters{AppName: &app, Labels: &lbls}
 		}
 		targets[app] = target
 	}
@@ -231,7 +231,7 @@ func getTargetClusters(cmd *cobra.Command) ([]depapi.TargetClusters, error) {
 	for _, target := range targets {
 		targetClusters = append(targetClusters, target)
 	}
-	return targetClusters, nil
+	return &targetClusters, nil
 }
 
 func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
@@ -315,7 +315,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if len(overrideValues) > 0 {
 		request.OverrideValues = &overrideValues
 	}
-	if len(targetClusters) > 0 {
+	if len(*targetClusters) > 0 {
 		request.TargetClusters = targetClusters
 	}
 

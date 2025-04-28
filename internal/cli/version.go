@@ -15,7 +15,7 @@ func versionCommand() *cobra.Command {
 		Use:   "version",
 		Short: "Get catalog CLI version",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			fmt.Printf("catalog version 0.11.4-dev %s\n", runtime.GOARCH)
+			fmt.Printf("catalog version 0.12.0 %s\n", runtime.GOARCH)
 			return nil
 		},
 	}
