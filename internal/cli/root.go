@@ -18,7 +18,7 @@ var log = dazl.GetLogger()
 
 // Default value for the catalog service REST end-point.
 const (
-	CLIName = "cli"
+	CLIName = "orch-cli"
 
 	catalogEndpoint = "catalog-endpoint"
 	debugHeaders    = "debug-headers"

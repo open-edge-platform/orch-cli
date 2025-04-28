@@ -78,8 +78,8 @@ func getDeleteDeploymentCommand() *cobra.Command {
 	return cmd
 }
 
-var deploymentHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s",
-	"Deployment ID", "Publisher Name", "Name", "Display Name", "Profile", "State")
+var deploymentHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
+	"Deployment ID", "Name", "Display Name", "Profile", "State")
 
 func printDeployments(writer *tabwriter.Writer, deployments *[]depapi.Deployment, verbose bool) {
 	for _, d := range *deployments {

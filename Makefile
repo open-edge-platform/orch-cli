@@ -2,13 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-CMD_DIR         ?= ./cmd/catalog-cli
+CMD_DIR         ?= ./cmd/orch-cli
 
 PKG     	:= github.com/open-edge-platform/cli
-GOPRIVATE   := github.com/open-edge-platform/*
 
 RELEASE_DIR     ?= release
-RELEASE_NAME    ?= catalog
+RELEASE_NAME    ?= orch-cli
 RELEASE_OS_ARCH ?= linux-amd64 linux-arm64 windows-amd64 darwin-amd64
 RELEASE_BINS    := $(foreach rel,$(RELEASE_OS_ARCH),$(RELEASE_DIR)/$(RELEASE_NAME)-$(rel))
 
@@ -32,11 +31,11 @@ linux_opts = -trimpath -gcflags="all=-spectre=all -N -l" -asmflags="all=-spectre
 $(RELEASE_BINS):
 	export GOOS=$(rel_os) ;\
 	export GOARCH=$(rel_arch) ;\
-	if [ "$@" == "release/catalog-linux-amd64" ]; \
+	if [ "$@" == "release/orch-cli-linux-amd64" ]; \
 	then \
-	  GOPRIVATE=$(GOPRIVATE) go build $(linux_opts) -o "$@" $(CMD_DIR) ;\
+	  go build $(linux_opts) -o "$@" $(CMD_DIR) ;\
 	else \
-	  GOPRIVATE=$(GOPRIVATE) go build -o "$@" $(CMD_DIR); \
+	  go build -o "$@" $(CMD_DIR); \
 	fi
 
 release: $(RELEASE_BINS)
@@ -44,12 +43,12 @@ release: $(RELEASE_BINS)
 
 mod-update:
 	@# Help: Update Go modules
-	GOPRIVATE=$(GOPRIVATE) go mod tidy
+	go mod tidy
 
 build: mod-update
 	@# Help: Runs build stage
 	@sed "s/VERSION/`cat VERSION`/g" internal/cli/version.go.template > internal/cli/version.go
-	GOPRIVATE=$(GOPRIVATE) go build -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
+	go build -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
 
 install: build
 	@# Help: Installs client tool
@@ -72,7 +71,7 @@ rest-client-gen:
 	oapi-codegen -generate types -old-config-style -package deployment -o pkg/rest/deployment/types.go pkg/rest/deployment/amc-app-orch-deployment-app-deployment-manager-openapi.yaml
 
 cli-docs:
-	@# Help: Generates markdowns for the catalog cli
+	@# Help: Generates markdowns for the orchestrator cli
 	go run cmd/cli-docs-gen/main.go
 
 go-cover-dependency:
