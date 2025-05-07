@@ -5,11 +5,12 @@
 package cli
 
 import (
+	"io"
+	"strings"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/orch-library/go/pkg/errors"
 	"github.com/spf13/cobra"
-	"io"
-	"strings"
 )
 
 func getCreateCommand() *cobra.Command {
@@ -52,6 +53,8 @@ func getListCommand() *cobra.Command {
 		getListNetworksCommand(),
 
 		getListDeploymentsCommand(),
+
+		getListClusterTemplatesCommand(),
 	)
 	return catalogListRootCmd
 }
