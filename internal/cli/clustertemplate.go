@@ -17,8 +17,8 @@ import (
 
 var clusterTemplateHeader = fmt.Sprintf("%s\t%s\t%s", "Name", "Description", "Version")
 
-// toJson is a helper function to format a struct or map into a nicely formatted JSON string
-func toJson(s interface{}) string {
+// toJSON is a helper function to format a struct or map into a nicely formatted JSON string
+func toJSON(s interface{}) string {
 	if s == nil {
 		return "nil"
 	}
@@ -31,7 +31,7 @@ func toJson(s interface{}) string {
 	return string(formatted)
 }
 
-func printClusterTemplates(writer io.Writer, clusterTemplates *[]coapi.TemplateInfo, verbose bool) error {
+func printClusterTemplates(writer io.Writer, clusterTemplates *[]coapi.TemplateInfo, verbose bool) {
 	for _, ct := range *clusterTemplates {
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", ct.Name, *ct.Description, ct.Version)
@@ -42,12 +42,11 @@ func printClusterTemplates(writer io.Writer, clusterTemplates *[]coapi.TemplateI
 			_, _ = fmt.Fprintf(writer, "KubernetesVersion: %s\n", ct.KubernetesVersion)
 			_, _ = fmt.Fprintf(writer, "Controlplaneprovidertype: %s\n", *ct.Controlplaneprovidertype)
 			_, _ = fmt.Fprintf(writer, "Infraprovidertype: %s\n", *ct.Infraprovidertype)
-			_, _ = fmt.Fprintf(writer, "ClusterLabels: %v\n", toJson(ct.ClusterLabels))
-			_, _ = fmt.Fprintf(writer, "ClusterNetwork: %v\n", toJson(ct.ClusterNetwork))
-			_, _ = fmt.Fprintf(writer, "Clusterconfiguration: %v\n", toJson(ct.Clusterconfiguration))
+			_, _ = fmt.Fprintf(writer, "ClusterLabels: %v\n", toJSON(ct.ClusterLabels))
+			_, _ = fmt.Fprintf(writer, "ClusterNetwork: %v\n", toJSON(ct.ClusterNetwork))
+			_, _ = fmt.Fprintf(writer, "Clusterconfiguration: %v\n", toJSON(ct.Clusterconfiguration))
 		}
 	}
-	return nil
 }
 
 func getListClusterTemplatesCommand() *cobra.Command {
@@ -60,7 +59,7 @@ func getListClusterTemplatesCommand() *cobra.Command {
 	return cmd
 }
 
-func runListClusterTemplatesCommand(cmd *cobra.Command, args []string) error {
+func runListClusterTemplatesCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
 	ctx, clusterTemplateClient, projectName, err := getClusterServiceContext(cmd)
@@ -74,7 +73,7 @@ func runListClusterTemplatesCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		clusterTemplateHeader, fmt.Sprintf("error getting clusterTemplates")); !proceed {
+		clusterTemplateHeader, "error getting clusterTemplates"); !proceed {
 		return err
 	}
 
