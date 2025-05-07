@@ -53,7 +53,7 @@ jobs:
           git config --global url."https://${{ secrets.SYS_ORCH_GITHUB }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
       - name: Setup asdf and install dependencies
-        uses: open-edge-platform/orch-utils/.github/actions/setup-asdf@76f80a5e5b044bf31fc28925f9ae27da86733820q
+        uses: open-edge-platform/orch-utils/.github/actions/setup-asdf@76f80a5e5b044bf31fc28925f9ae27da86733820
 
       - name: Checkout app-orch-catalog repository
         uses: actions/checkout@v4
@@ -61,6 +61,7 @@ jobs:
           repository: open-edge-platform/app-orch-catalog
           path: app-orch-catalog
           token: ${{ secrets.SYS_ORCH_GITHUB }}
+          persist-credentials: false
 
       - name: Get current git hash of the app-orch-catalog PR
         id: get-git-hash-catalog
