@@ -63,12 +63,25 @@ test: mod-update
 	@# Help: Runs test stage
 	go test -race -gcflags=-l `go list $(PKG)/cmd/... $(PKG)/internal/... $(PKG)/pkg/...`
 
+fetch-catalog-openapi:
+	@# Help: Fetch the Catalog OpenAPI spec
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-app-orch-catalog-openapi.yaml -o pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
+
+fetch-cluster-openapi:
+	@# Help: Fetch the Cluster Manager OpenAPI spec
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-cluster-manager-openapi.yaml -o pkg/rest/cluster/amc-cluster-manager-openapi.yaml
+
+fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi
+	@# Help: Fetch OpenAPI specs for all components
+
 rest-client-gen:
 	@# Help: Generate Rest client from the MT GW openapi spec.
 	oapi-codegen -generate client -old-config-style -package catalog -o pkg/rest/catalog/client.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
 	oapi-codegen -generate types -old-config-style -package catalog -o pkg/rest/catalog/types.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
 	oapi-codegen -generate client -old-config-style -package deployment -o pkg/rest/deployment/client.go pkg/rest/deployment/amc-app-orch-deployment-app-deployment-manager-openapi.yaml
 	oapi-codegen -generate types -old-config-style -package deployment -o pkg/rest/deployment/types.go pkg/rest/deployment/amc-app-orch-deployment-app-deployment-manager-openapi.yaml
+	oapi-codegen -generate client -old-config-style -package cluster -o pkg/rest/cluster/client.go pkg/rest/cluster/amc-cluster-manager-openapi.yaml
+	oapi-codegen -generate types -old-config-style -package cluster -o pkg/rest/cluster/types.go pkg/rest/cluster/amc-cluster-manager-openapi.yaml
 
 cli-docs:
 	@# Help: Generates markdowns for the orchestrator cli
