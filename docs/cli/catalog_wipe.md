@@ -1,15 +1,16 @@
-## catalog export
+## catalog wipe
 
-Export publisher's catalog resources by saving them into a directory structure as YAML files
+Wipe all data associated with the specified project
 
 ```
-catalog export {<file-path>|<dir-path>} [flags]
+catalog wipe [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for export
+  -h, --help   help for wipe
+  -y, --yes    artifact MIME type (required)
 ```
 
 ### Options inherited from parent commands

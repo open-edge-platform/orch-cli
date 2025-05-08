@@ -1,15 +1,15 @@
-## catalog export
+## catalog version
 
-Export publisher's catalog resources by saving them into a directory structure as YAML files
+Get catalog CLI version
 
 ```
-catalog export {<file-path>|<dir-path>} [flags]
+catalog version [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for export
+  -h, --help   help for version
 ```
 
 ### Options inherited from parent commands

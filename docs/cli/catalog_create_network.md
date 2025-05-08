@@ -1,22 +1,18 @@
-## catalog create application
+## catalog create network
 
-Create an application
+Create a Network
 
 ```
-catalog create application <name> <version> [flags]
+catalog create network <name> [flags]
 ```
 
 ### Options
 
 ```
-      --chart-name string       Helm chart name for deploying the application (required)
-      --chart-registry string   Helm chart registry (required)
-      --chart-version string    Helm chart version (required)
-      --description string      description of the application
-      --display-name string     application display name
-  -h, --help                    help for application
-      --image-registry string   image registry
-      --kind string             application kind: normal, addon, extension (default "normal")
+      --description string    description of the network
+      --display-name string   network display name
+  -h, --help                  help for network
+      --type string           Network type (default "application-mesh")
 ```
 
 ### Options inherited from parent commands
