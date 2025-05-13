@@ -1,0 +1,113 @@
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+package cli
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/spf13/cobra"
+
+	"github.com/open-edge-platform/cli/pkg/auth"
+	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
+)
+
+func getCreateClusterCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "cluster <name> [flags]",
+		Aliases: []string{"add"},
+		Short:   "Create a cluster",
+		Args:    cobra.ExactArgs(1),
+		RunE:    runCreateClusterCommand,
+	}
+	cmd.Flags().String("template", "", "Cluster template to use")
+	cmd.Flags().StringSlice("nodes", []string{}, "Mandatory list of nodes in the format <id>:<role>")
+	cmd.Flags().StringToString("labels", map[string]string{}, "Labels in the format key=value")
+	cmd.MarkFlagRequired("nodes")
+	return cmd
+}
+
+func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
+	verbose, err := cmd.Flags().GetBool("verbose")
+	if err != nil {
+		return processError(err)
+	}
+	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	clusterName := args[0]
+
+	request := coapi.PostV2ProjectsProjectNameClustersJSONRequestBody{
+		Name: &clusterName,
+	}
+
+	nodesFlag, err := cmd.Flags().GetStringSlice("nodes")
+	if err != nil {
+		return processError(err)
+	}
+
+	nodes := []coapi.NodeSpec{}
+	for _, node := range nodesFlag {
+		parts := strings.Split(node, ":")
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid node format: %s, expected <id>:<role>", node)
+		}
+		nodes = append(nodes, coapi.NodeSpec{
+			Id:   parts[0],
+			Role: coapi.NodeSpecRole(parts[1]),
+		})
+	}
+
+	request.Nodes = nodes
+
+	template, err := cmd.Flags().GetString("template")
+	if err != nil {
+		return processError(err)
+	}
+
+	if template != "" {
+		request.Template = &template
+	}
+
+	labels, err := cmd.Flags().GetStringToString("labels")
+	if err != nil {
+		return processError(err)
+	}
+	request.Labels = &labels
+
+	if verbose {
+		fmt.Printf("Creating cluster with the following details:\n")
+		fmt.Printf("- Name: %s\n", *request.Name)
+		if template != "" {
+			fmt.Printf("- Template: %s\n", template)
+		}
+		if len(nodes) > 0 {
+			fmt.Printf("- Nodes: %+v\n", nodes)
+		}
+		if request.Labels != nil && len(*request.Labels) > 0 {
+			fmt.Printf("- Labels: %v\n", *request.Labels)
+		}
+	}
+
+	resp, err := clusterClient.PostV2ProjectsProjectNameClustersWithResponse(ctx, projectName, request, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	if verbose {
+		if resp.JSON201 != nil {
+			fmt.Printf("Cluster created successfully: %+v\n", *resp.JSON201)
+		} else if resp.Body != nil {
+			fmt.Printf("Response body: %s\n", string(resp.Body))
+		}
+	}
+
+	if resp.JSON201 != nil {
+		fmt.Printf("Cluster '%s' created successfully.\n", clusterName)
+		return nil
+	}
+	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating cluster %s", clusterName))
+}
