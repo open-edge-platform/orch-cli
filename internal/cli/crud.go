@@ -32,6 +32,8 @@ func getCreateCommand() *cobra.Command {
 		getCreateNetworkCommand(),
 
 		getCreateDeploymentCommand(),
+
+		getCreateOSProfileCommand(),
 	)
 	return cmd
 }
@@ -55,6 +57,9 @@ func getListCommand() *cobra.Command {
 		getListDeploymentsCommand(),
 
 		getListClusterTemplatesCommand(),
+
+		getListOSProfileCommand(),
+		getListHostCommand(),
 	)
 	return catalogListRootCmd
 }
@@ -89,6 +94,9 @@ func getGetCommand() *cobra.Command {
 		getListDeploymentsCommand(),
 
 		getListNetworksCommand(),
+
+		getGetOSProfileCommand(),
+		getGetHostCommand(),
 	)
 	return catalogGetRootCmd
 }

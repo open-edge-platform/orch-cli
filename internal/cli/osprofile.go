@@ -1,0 +1,237 @@
+// SPDX-FileCopyrightText: 2022-present Intel Corporation
+//
+// SPDX-License-Identifier: Apache-2.0
+
+package cli
+
+import (
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/rest/infra"
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
+)
+
+var OSProfileHeader = fmt.Sprintf("%s\t%s\t%s", "Name", "Architecture", "Security Feature")
+var OSProfileHeaderGet = fmt.Sprintf("%s\t%s", "OS Profile Field", "Value")
+
+type OSProfileSpec struct {
+	Name            string `yaml:"name"`
+	Type            string `yaml:"type"`
+	Provider        string `yaml:"provider"`
+	Architecture    string `yaml:"architecture"`
+	ProfileName     string `yaml:"profileName"`
+	OsImageUrl      string `yaml:"osImageUrl"`
+	OsImageSha256   string `yaml:"osImageSha256"`
+	OsImageVersion  string `yaml:"osImageVersion"`
+	OSPackageURL    string `yaml:"osPackageManifestURL"`
+	SecurityFeature string `yaml:"securityFeature"`
+	PlatformBundle  string `yaml:"platformBundle"`
+}
+
+type NestedSpec struct {
+	AppVersion string        `yaml:"appVersion"`
+	Spec       OSProfileSpec `yaml:"spec"`
+}
+
+func printOSProfiles(writer io.Writer, OSProfiles *[]infra.OperatingSystemResource, verbose bool) {
+	for _, osp := range *OSProfiles {
+		if !verbose {
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", *osp.Name, *osp.Architecture, *osp.SecurityFeature)
+		} else {
+			_, _ = fmt.Fprintf(writer, "Name: %s\n", *osp.Name)
+			_, _ = fmt.Fprintf(writer, "Profile Name: %s\n", *osp.ProfileName)
+			_, _ = fmt.Fprintf(writer, "Security Feature: %v\n", osp.SecurityFeature)
+			_, _ = fmt.Fprintf(writer, "Architecture: %s\n", *osp.Architecture)
+			_, _ = fmt.Fprintf(writer, "Repository URL: %s\n", *osp.RepoUrl)
+			_, _ = fmt.Fprintf(writer, "sha256: %v\n", osp.Sha256)
+			_, _ = fmt.Fprintf(writer, "Kernel Command: %v\n\n", osp.KernelCommand)
+		}
+	}
+}
+
+func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) {
+
+	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSProfile.Name)
+	_, _ = fmt.Fprintf(writer, "Profile Name: \t%s\n", *OSProfile.ProfileName)
+	_, _ = fmt.Fprintf(writer, "OS Resource ID: \t%s\n", *OSProfile.OsResourceID)
+	_, _ = fmt.Fprintf(writer, "version: \t%v\n", toJSON(OSProfile.ProfileVersion))
+	_, _ = fmt.Fprintf(writer, "sha256: \t%v\n", OSProfile.Sha256)
+	_, _ = fmt.Fprintf(writer, "Image ID: \t%s\n", *OSProfile.ImageId)
+	_, _ = fmt.Fprintf(writer, "Image URL: \t%s\n", *OSProfile.ImageUrl)
+	_, _ = fmt.Fprintf(writer, "Repository URL: \t%s\n", *OSProfile.RepoUrl)
+	_, _ = fmt.Fprintf(writer, "Security Feature: \t%v\n", toJSON(OSProfile.SecurityFeature))
+	_, _ = fmt.Fprintf(writer, "Architecture: \t%s\n", *OSProfile.Architecture)
+	_, _ = fmt.Fprintf(writer, "OS type: \t%s\n", *OSProfile.OsType)
+	_, _ = fmt.Fprintf(writer, "OS provider: \t%s\n", *OSProfile.OsProvider)
+	_, _ = fmt.Fprintf(writer, "Platform Bundle: \t%s\n", *OSProfile.PlatformBundle)
+	_, _ = fmt.Fprintf(writer, "Update Sources: \t%v\n", OSProfile.UpdateSources)
+	_, _ = fmt.Fprintf(writer, "Installed Packages: \t%v\n", toJSON(OSProfile.InstalledPackages))
+	_, _ = fmt.Fprintf(writer, "Created: \t%v\n", OSProfile.Timestamps.CreatedAt)
+	_, _ = fmt.Fprintf(writer, "Updated: \t%v\n", OSProfile.Timestamps.UpdatedAt)
+
+}
+
+func verifyOSProfileInput(path string) error {
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return fmt.Errorf("file does not exist: %s", path)
+	}
+
+	ext := strings.ToLower(filepath.Ext(path))
+	if ext != ".yaml" && ext != ".yml" {
+		return errors.New("os Profile input must be a yaml file")
+	}
+
+	return nil
+}
+
+func readOSProfileFromYaml(path string) (*NestedSpec, error) {
+
+	var input NestedSpec
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(data, &input)
+	if err != nil {
+		log.Fatalf("error unmarshalling YAML: %v", err)
+	}
+
+	return &input, nil
+}
+
+func filterProfilesByName(OSProfiles *[]infra.OperatingSystemResource, name string) (*infra.OperatingSystemResource, error) {
+	for _, profile := range *OSProfiles {
+		if *profile.Name == name {
+			return &profile, nil
+		}
+	}
+	return nil, errors.New("no os profile matches the given name")
+}
+
+func getGetOSProfileCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "osprofile <name> [flags]",
+		Short: "Get an OS profile",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runGetOSProfileCommand,
+	}
+	return cmd
+}
+
+func getListOSProfileCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "osprofile <name> [flags]",
+		Short: "List OS profiles",
+		RunE:  runListOSProfileCommand,
+	}
+	return cmd
+}
+
+func getCreateOSProfileCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "osprofile <name> [flags]",
+		Short: "List OS profiles",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runCreateOSProfileCommand,
+	}
+	return cmd
+}
+
+func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
+	writer, verbose := getOutputContext(cmd)
+	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	resp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
+		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+		OSProfileHeaderGet, "error getting OS Profiles"); !proceed {
+		return err
+	}
+
+	name := args[0]
+	profile, err := filterProfilesByName(resp.JSON200.OperatingSystemResources, name)
+	if err != nil {
+		return err
+	}
+
+	printOSProfile(writer, profile)
+	return writer.Flush()
+}
+
+func runListOSProfileCommand(cmd *cobra.Command, _ []string) error {
+	writer, verbose := getOutputContext(cmd)
+
+	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	resp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
+		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+		OSProfileHeader, "error getting OS Profiles"); !proceed {
+		return err
+	}
+
+	printOSProfiles(writer, resp.JSON200.OperatingSystemResources, verbose)
+
+	return writer.Flush()
+}
+
+func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
+	path := args[0]
+
+	err := verifyOSProfileInput(path)
+	if err != nil {
+		return err
+	}
+
+	spec, err := readOSProfileFromYaml(path)
+	if err != nil {
+		return err
+	}
+
+	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	resp, err := OSProfileClient.PostV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
+		infra.PostV1ProjectsProjectNameComputeOsJSONRequestBody{
+			Name:            &spec.Spec.Name,
+			Architecture:    &spec.Spec.Architecture,
+			ImageUrl:        &spec.Spec.OsImageUrl,
+			ImageId:         &spec.Spec.OsImageVersion,
+			OsType:          (*infra.OperatingSystemType)(&spec.Spec.Type),
+			OsProvider:      (*infra.OperatingSystemProvider)(&spec.Spec.Provider),
+			ProfileName:     &spec.Spec.ProfileName,
+			RepoUrl:         &spec.Spec.OsImageUrl,
+			SecurityFeature: (*infra.SecurityFeature)(&spec.Spec.SecurityFeature),
+			Sha256:          spec.Spec.OsImageSha256,
+			UpdateSources:   []string{""},
+		}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating OS Profile from %s", path))
+}
