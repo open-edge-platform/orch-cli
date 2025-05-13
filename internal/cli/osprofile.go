@@ -146,6 +146,16 @@ func getCreateOSProfileCommand() *cobra.Command {
 	return cmd
 }
 
+func getDeleteOSProfileCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "osprofile <name> [flags]",
+		Short: "Delete an OS profile",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runDeleteOSProfileCommand,
+	}
+	return cmd
+}
+
 func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
@@ -234,4 +244,36 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating OS Profile from %s", path))
+}
+
+func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
+	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	gresp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
+		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	if err = checkResponse(gresp.HTTPResponse, "Error getting OS profiles"); err != nil {
+		return err
+	}
+
+	name := args[0]
+	profile, err := filterProfilesByName(gresp.JSON200.OperatingSystemResources, name)
+	if err != nil {
+		return err
+	}
+
+	resp, err := OSProfileClient.DeleteV1ProjectsProjectNameComputeOsOSResourceIDWithResponse(ctx, projectName,
+		*profile.OsResourceID, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS profile %s", name))
+
 }

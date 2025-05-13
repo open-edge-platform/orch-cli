@@ -245,7 +245,7 @@ func checkResponse(response *http.Response, message string) error {
 func checkResponseCode(responseCode int, message string, responseMessage string) error {
 	if responseCode == 401 {
 		return fmt.Errorf("%s. Unauthorized. Please Login. %s", message, responseMessage)
-	} else if responseCode != 200 {
+	} else if responseCode != 200 && responseCode != 201 && responseCode != 204 {
 		if len(message) > 0 {
 			return fmt.Errorf("%s: %s", message, responseMessage)
 		}
