@@ -24,7 +24,7 @@ func getCreateClusterCommand() *cobra.Command {
 	cmd.Flags().String("template", "", "Cluster template to use")
 	cmd.Flags().StringSlice("nodes", []string{}, "Mandatory list of nodes in the format <id>:<role>")
 	cmd.Flags().StringToString("labels", map[string]string{}, "Labels in the format key=value")
-	cmd.MarkFlagRequired("nodes")
+	_ = cmd.MarkFlagRequired("nodes")
 	return cmd
 }
 
