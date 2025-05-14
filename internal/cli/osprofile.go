@@ -40,22 +40,24 @@ type NestedSpec struct {
 	Spec       OSProfileSpec `yaml:"spec"`
 }
 
+// Prints OS Profiles in tabular format
 func printOSProfiles(writer io.Writer, OSProfiles *[]infra.OperatingSystemResource, verbose bool) {
 	for _, osp := range *OSProfiles {
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", *osp.Name, *osp.Architecture, *osp.SecurityFeature)
 		} else {
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", *osp.Name)
-			_, _ = fmt.Fprintf(writer, "Profile Name: %s\n", *osp.ProfileName)
-			_, _ = fmt.Fprintf(writer, "Security Feature: %v\n", osp.SecurityFeature)
-			_, _ = fmt.Fprintf(writer, "Architecture: %s\n", *osp.Architecture)
-			_, _ = fmt.Fprintf(writer, "Repository URL: %s\n", *osp.RepoUrl)
-			_, _ = fmt.Fprintf(writer, "sha256: %v\n", osp.Sha256)
-			_, _ = fmt.Fprintf(writer, "Kernel Command: %v\n\n", osp.KernelCommand)
+			_, _ = fmt.Fprintf(writer, "Name:\t %s\n", *osp.Name)
+			_, _ = fmt.Fprintf(writer, "Profile Name:\t %s\n", *osp.ProfileName)
+			_, _ = fmt.Fprintf(writer, "Security Feature:\t %v\n", toJSON(osp.SecurityFeature))
+			_, _ = fmt.Fprintf(writer, "Architecture:\t %s\n", *osp.Architecture)
+			_, _ = fmt.Fprintf(writer, "Repository URL:\t %s\n", *osp.RepoUrl)
+			_, _ = fmt.Fprintf(writer, "sha256:\t %v\n", osp.Sha256)
+			_, _ = fmt.Fprintf(writer, "Kernel Command:\t %v\n\n", toJSON(osp.KernelCommand))
 		}
 	}
 }
 
+// Prints output details of OS Profiles
 func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) {
 
 	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSProfile.Name)
@@ -78,6 +80,7 @@ func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) 
 
 }
 
+// Helper function to verify that the input file exists and is of right format
 func verifyOSProfileInput(path string) error {
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -92,6 +95,7 @@ func verifyOSProfileInput(path string) error {
 	return nil
 }
 
+// Helper function to unmarshal yaml file
 func readOSProfileFromYaml(path string) (*NestedSpec, error) {
 
 	var input NestedSpec
@@ -108,6 +112,7 @@ func readOSProfileFromYaml(path string) (*NestedSpec, error) {
 	return &input, nil
 }
 
+// Filters list of profiles to find one with specific name
 func filterProfilesByName(OSProfiles *[]infra.OperatingSystemResource, name string) (*infra.OperatingSystemResource, error) {
 	for _, profile := range *OSProfiles {
 		if *profile.Name == name {
@@ -156,6 +161,8 @@ func getDeleteOSProfileCommand() *cobra.Command {
 	return cmd
 }
 
+// Gets specific OS Profile - retrieves list of profiles and then filters and outputs
+// specifc profile by name
 func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
@@ -170,7 +177,7 @@ func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		OSProfileHeaderGet, "error getting OS Profiles"); !proceed {
+		OSProfileHeaderGet, "error getting OS Profile"); !proceed {
 		return err
 	}
 
@@ -184,6 +191,7 @@ func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
 	return writer.Flush()
 }
 
+// Lists all OS Profiles - retrieves all profiles and displays selected information in tabular format
 func runListOSProfileCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
@@ -208,6 +216,7 @@ func runListOSProfileCommand(cmd *cobra.Command, _ []string) error {
 	return writer.Flush()
 }
 
+// Creates OS Profile - checks if a profile already exists and the creates it if it does not using the input .yaml file
 func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 	path := args[0]
 
@@ -225,6 +234,23 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	//TODO Delete name check once API accepts only unique names
+	gresp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
+		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	if err = checkResponse(gresp.HTTPResponse, "Error getting OS profiles"); err != nil {
+		return err
+	}
+
+	_, err = filterProfilesByName(gresp.JSON200.OperatingSystemResources, spec.Spec.Name)
+	if err == nil {
+		return fmt.Errorf("OS Profile %s already exists", spec.Spec.Name)
+	}
+	// End TODO
 
 	resp, err := OSProfileClient.PostV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
 		infra.PostV1ProjectsProjectNameComputeOsJSONRequestBody{
@@ -246,6 +272,7 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating OS Profile from %s", path))
 }
 
+// Deletes OS Profile - checks if a profile already exists and then deletes it if it does
 func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
 	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
