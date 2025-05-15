@@ -19,7 +19,7 @@ import (
 //TODO handle auto-onboard flag
 //TODO handle auto-provision flag
 
-var hostHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
+var hostHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
 var hostHeaderGet = fmt.Sprintf("%s\t%s", "Host Field", "Value")
 
 // Prints Host list in tabular format
@@ -35,10 +35,11 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 			if *h.HostStatus != "" {
 				host = *h.HostStatus
 			}
-			fmt.Fprintf(writer, "%s\t%s\t%v\t%v\t%v\t%v\n", h.Name, host, *h.SerialNumber, os, h.Site, workload)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber, os, h.Site, workload)
 		} else {
-			// TODO: expand verbose list - perhaps chande to wider tabular with -o wide
+			// TODO: expand verbose list - perhaps change to wider tabular with -o wide
 			_, _ = fmt.Fprintf(writer, "Name:\t %s\n", h.Name)
+			_, _ = fmt.Fprintf(writer, "Host Resource ID:\t %s\n\n", *h.ResourceId)
 			if *h.HostStatus == "" {
 				_, _ = fmt.Fprintf(writer, "Host Status:\t unknown\n")
 			} else {
@@ -65,7 +66,8 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 }
 
 func printHost(writer io.Writer, host *infra.Host) {
-
+	//TODO fill out actual host details
+	_, _ = fmt.Fprintf(writer, "Host Resurce ID:\t %s\n\n", *host.ResourceId)
 	_, _ = fmt.Fprintf(writer, "Name:\t %s\n\n", host.Name)
 
 	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
@@ -102,16 +104,6 @@ func printHost(writer io.Writer, host *infra.Host) {
 
 }
 
-// Filters list of profiles to find one with specific name
-func filterHostsByName(hosts *[]infra.Host, name string) (*infra.Host, error) {
-	for _, h := range *hosts {
-		if h.Name == name {
-			return &h, nil
-		}
-	}
-	return nil, errors.New("no os host matches the given name")
-}
-
 func getRegisterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "register",
@@ -131,7 +123,7 @@ func getRegisterCommand() *cobra.Command {
 
 func getListHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "host <name> [flags]",
+		Use:   "host [flags]",
 		Short: "List hosts",
 		RunE:  runListHostCommand,
 	}
@@ -140,7 +132,7 @@ func getListHostCommand() *cobra.Command {
 
 func getGetHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "host <name> [flags]",
+		Use:   "host <resourceID> [flags]",
 		Short: "Get host",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runGetHostCommand,
@@ -221,14 +213,16 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 }
 
 func runGetHostCommand(cmd *cobra.Command, args []string) error {
+
+	hostID := args[0]
 	writer, verbose := getOutputContext(cmd)
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeHostsParams{}, auth.AddAuthHeader)
+	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
+		hostID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -238,25 +232,22 @@ func runGetHostCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	name := args[0]
-	host, err := filterHostsByName(resp.JSON200.Hosts, name)
-	if err != nil {
-		return err
-	}
-
-	printHost(writer, host)
+	printHost(writer, resp.JSON200)
 	return writer.Flush()
 }
 
 func runRegisterHostCommand(cmd *cobra.Command, args []string) error {
 
+	//TODO add autoonboarding and autoprovision??
 	hostname := args[0]
 
-	//TODO ensure that either serial or uuid is not set to nil
 	serial, _ := cmd.Flags().GetString("serial")
 	uuidString, _ := cmd.Flags().GetString("uuid")
 
-	//TODO add autoonboarding and autoprovision
+	if serial == "" && uuidString == "" {
+		return errors.New("at least one of the flags 'serial' or 'uuid' must be provided")
+	}
+
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
@@ -266,13 +257,11 @@ func runRegisterHostCommand(cmd *cobra.Command, args []string) error {
 	if uuidString != "" {
 		parsedUUID, err := uuid.Parse(uuidString)
 		if err != nil {
-			fmt.Println("Invalid UUID format:", err)
 			return err
 		}
 		uuidParsed = &parsedUUID
 	}
 
-	//TODO: Ensure that the host does not alrady exist
 	resp, err := hostClient.PostV1ProjectsProjectNameComputeHostsRegisterWithResponse(ctx, projectName,
 		infra.PostV1ProjectsProjectNameComputeHostsRegisterJSONRequestBody{
 			Name:         &hostname,
@@ -288,10 +277,12 @@ func runRegisterHostCommand(cmd *cobra.Command, args []string) error {
 
 func runOnboardHostCommand(cmd *cobra.Command, _ []string) error {
 	return nil
+	//TODO
 }
 
 func runProvisionHostCommand(cmd *cobra.Command, _ []string) error {
 	return nil
+	//TODO
 }
 
 func runImportHostCommand(cmd *cobra.Command, _ []string) error {
