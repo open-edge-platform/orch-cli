@@ -13,11 +13,21 @@ import (
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 )
 
+const createClusterExamples = `# Create a cluster with the name "my-cluster" on the given nodes using the default template
+orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all
+
+# Create a cluster with the name "my-cluster" using the specified template on the given nodes and with the provided label
+orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue --template sometemplate-v1.0.0
+
+# Create a cluster with the name "my-cluster" on the given nodes using the default template and with the provided multiple labels
+orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue,another-label=another-value`
+
 func getCreateClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cluster <name> [flags]",
 		Aliases: []string{"add"},
 		Short:   "Create a cluster",
+		Example: createClusterExamples,
 		Args:    cobra.ExactArgs(1),
 		RunE:    runCreateClusterCommand,
 	}
