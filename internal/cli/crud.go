@@ -143,6 +143,7 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteNetworkCommand(),
 
 		getDeleteOSProfileCommand(),
+		getDeleteHostCommand(),
 	)
 	return catalogDeleteRootCmd
 }

@@ -20,73 +20,89 @@ import (
 //TODO handle auto-provision flag
 
 var hostHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
-var hostHeaderGet = fmt.Sprintf("%s\t%s", "Host Field", "Value")
+var hostHeaderGet = "Detailed Host Information\n"
 
 // Prints Host list in tabular format
 func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
+	os, workload := "not set", "not set"
+	host := "unknown"
+
+	//TODO clean up the verbose outputs and replace with -o wide the header should come from processing function
+	if verbose {
+		fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
+			"Serial Number", "Operating System", "Site", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
+	}
 	for _, h := range *hosts {
+
+		if h.Instance != nil {
+			os = string(toJSON(h.Instance.CurrentOs))
+			workload = string(toJSON(h.Instance.WorkloadMembers))
+		}
+		if *h.HostStatus != "" {
+			host = *h.HostStatus
+		}
 		if !verbose {
-			os, workload := "not set", "not set"
-			host := "unknown"
-			if h.Instance != nil {
-				os = string(toJSON(h.Instance.CurrentOs))
-				workload = string(toJSON(h.Instance.WorkloadMembers))
-			}
-			if *h.HostStatus != "" {
-				host = *h.HostStatus
-			}
 			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber, os, h.Site, workload)
 		} else {
-			// TODO: expand verbose list - perhaps change to wider tabular with -o wide
-			_, _ = fmt.Fprintf(writer, "Name:\t %s\n", h.Name)
-			_, _ = fmt.Fprintf(writer, "Host Resource ID:\t %s\n\n", *h.ResourceId)
-			if *h.HostStatus == "" {
-				_, _ = fmt.Fprintf(writer, "Host Status:\t unknown\n")
-			} else {
-				_, _ = fmt.Fprintf(writer, "Host Status:\t %s\n", *h.HostStatus)
-			}
-			_, _ = fmt.Fprintf(writer, "Serial number:\t %v\n", *h.SerialNumber)
-			if h.Instance == nil {
-				_, _ = fmt.Fprintf(writer, "Operating System:\t not set\n")
-			} else {
-				_, _ = fmt.Fprintf(writer, "Operating System:\t %v\n", h.Instance.CurrentOs)
-			}
-			if h.Site == nil {
-				_, _ = fmt.Fprintf(writer, "Site:\t not set\n")
-			} else {
-				_, _ = fmt.Fprintf(writer, "Site:\t %v\n", *h.Site)
-			}
-			if h.Instance == nil {
-				_, _ = fmt.Fprintf(writer, "Workload:\t not set\n\n")
-			} else {
-				_, _ = fmt.Fprintf(writer, "Workload:\t %v\n\n", h.Instance.WorkloadMembers)
-			}
+			avupdt := "no update"
+			tcomp := "Not compatible"
+
+			//TODO
+			//if h.CurrentOs != h.desiredOS avupdt is available
+			//if tcomp is set then reflect
+
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber,
+				os, h.Site, workload, h.Name, h.Uuid, *h.CpuModel, avupdt, tcomp)
 		}
 	}
 }
 
 func printHost(writer io.Writer, host *infra.Host) {
-	//TODO fill out actual host details
-	_, _ = fmt.Fprintf(writer, "Host Resurce ID:\t %s\n\n", *host.ResourceId)
-	_, _ = fmt.Fprintf(writer, "Name:\t %s\n\n", host.Name)
+
+	updatestatus := ""
+	hoststatus := "unknown"
+	currentOS := ""
+	osprofile := ""
+
+	//TODO Verify all below are valid
+	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
+		updatestatus = toJSON(host.Instance.UpdateStatus)
+	}
+
+	if host != nil && host.Instance != nil && host.Instance.CurrentOs != nil {
+		currentOS = toJSON(host.Instance.CurrentOs)
+	}
+
+	if host != nil && host.Instance != nil && host.Instance.Os.Name != nil {
+		osprofile = toJSON(host.Instance.Os.Name)
+	}
+
+	if *host.HostStatus != "" {
+		hoststatus = *host.HostStatus
+	}
+
+	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
+	_, _ = fmt.Fprintf(writer, "-\tHost Resurce ID:\t %s\n", *host.ResourceId)
+	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
+	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n\n", osprofile)
 
 	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
-	_, _ = fmt.Fprintf(writer, "Host Status:\t %s\n", *host.HostStatus)
-	//_, _ = fmt.Fprintf(writer, "\tUpdate Status:\t %s\n", *host.Instance.UpdateStatus)
+	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
+	_, _ = fmt.Fprintf(writer, "-\tUpdate Status:\t %s\n\n", updatestatus)
 
-	// _, _ = fmt.Fprintf(writer, "Specification: \n\n")
-	// _, _ = fmt.Fprintf(writer, "\tSerial Number:\t %s\n", *host.SerialNumber)
-	// _, _ = fmt.Fprintf(writer, "\tUUID:\t %s\n", *host.Uuid)
-	// _, _ = fmt.Fprintf(writer, "\tOS:\t %v\n", host.Instance.CurrentOs)
-	// _, _ = fmt.Fprintf(writer, "\tBIOS Vendor:\t %v\n", host.BiosVendor)
-	// _, _ = fmt.Fprintf(writer, "\tProduct Name:\t %v\n", host.ProductName)
+	_, _ = fmt.Fprintf(writer, "Specification: \n\n")
+	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", *host.SerialNumber)
+	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", *host.Uuid)
+	_, _ = fmt.Fprintf(writer, "-\tOS:\t %v\n", currentOS)
+	_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", *host.BiosVendor)
+	_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", *host.ProductName)
 
-	// _, _ = fmt.Fprintf(writer, "CPU Info: \n\n")
-	// _, _ = fmt.Fprintf(writer, "\tCPU Model:\t %v\n", host.CpuModel)
-	// _, _ = fmt.Fprintf(writer, "\tCPU Cores:\t %v\n", host.CpuCores)
-	// _, _ = fmt.Fprintf(writer, "\tCPU Architecture:\t %v\n", host.CpuArchitecture)
-	// _, _ = fmt.Fprintf(writer, "\tCPU Threads:\t %v\n", host.CpuThreads)
-	// _, _ = fmt.Fprintf(writer, "\tCPU Sockets:\t %v\n", host.CpuSockets)
+	_, _ = fmt.Fprintf(writer, "CPU Info: \n\n")
+	_, _ = fmt.Fprintf(writer, "-\tCPU Model:\t %v\n", *host.CpuModel)
+	_, _ = fmt.Fprintf(writer, "-\tCPU Cores:\t %v\n", *host.CpuCores)
+	_, _ = fmt.Fprintf(writer, "-\tCPU Architecture:\t %v\n", *host.CpuArchitecture)
+	_, _ = fmt.Fprintf(writer, "-\tCPU Threads:\t %v\n", *host.CpuThreads)
+	_, _ = fmt.Fprintf(writer, "-\tCPU Sockets:\t %v\n\n", *host.CpuSockets)
 
 	// //TODO enhance GPU display
 	// _, _ = fmt.Fprintf(writer, "GPU Info: \n\n")
@@ -98,9 +114,6 @@ func printHost(writer io.Writer, host *infra.Host) {
 
 	// //TODO enhance labels
 	// _, _ = fmt.Fprintf(writer, "Host Labels: \n\n")
-
-	// //TODO enhance profile name
-	// _, _ = fmt.Fprintf(writer, "OS Profile:\t %v\n", host.Instance.Os.Name)
 
 }
 
@@ -114,9 +127,20 @@ func getRegisterCommand() *cobra.Command {
 
 	cmd.AddCommand(
 		getRegisterHostCommand(),
-		getOnboardHostCommand(),   //TODO is this in worng spot - should I make getOnboardCommand()
-		getProvisionHostCommand(), //TODO is this in worng spot - should I make getOnboardCommand()
-		getImportHostCommand(),    //TODO is this in worng spot - should I make getOnboardCommand()
+	)
+	return cmd
+}
+
+func getDeauthorizeCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:               "deauthorize",
+		Args:              cobra.MinimumNArgs(1),
+		Short:             "Deauthorize host",
+		PersistentPreRunE: auth.CheckAuth,
+	}
+
+	cmd.AddCommand(
+		getDeauthorizeHostCommand(),
 	)
 	return cmd
 }
@@ -155,32 +179,52 @@ func getRegisterHostCommand() *cobra.Command {
 	return cmd
 }
 
-func getOnboardHostCommand() *cobra.Command {
+// func getOnboardHostCommand() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:   "host <name> [flags]",
+// 		Short: "Register a host",
+// 		Args:  cobra.ExactArgs(1),
+// 		RunE:  runOnboardHostCommand,
+// 	}
+// 	return cmd
+// }
+
+// func getProvisionHostCommand() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:   "host <name> [flags]",
+// 		Short: "Register a host",
+// 		Args:  cobra.ExactArgs(1),
+// 		RunE:  runProvisionHostCommand,
+// 	}
+// 	return cmd
+// }
+
+// func getImportHostCommand() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:   "host <name> [flags]",
+// 		Short: "Register a host",
+// 		Args:  cobra.ExactArgs(1),
+// 		RunE:  runImportHostCommand,
+// 	}
+// 	return cmd
+// }
+
+func getDeleteHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "host <name> [flags]",
 		Short: "Register a host",
 		Args:  cobra.ExactArgs(1),
-		RunE:  runOnboardHostCommand,
+		RunE:  runDeleteHostCommand,
 	}
 	return cmd
 }
 
-func getProvisionHostCommand() *cobra.Command {
+func getDeauthorizeHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "host <name> [flags]",
 		Short: "Register a host",
 		Args:  cobra.ExactArgs(1),
-		RunE:  runProvisionHostCommand,
-	}
-	return cmd
-}
-
-func getImportHostCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "host <name> [flags]",
-		Short: "Register a host",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runImportHostCommand,
+		RunE:  runDeauthorizeHostCommand,
 	}
 	return cmd
 }
@@ -212,6 +256,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 	return writer.Flush()
 }
 
+// Gets specific Host - retrieves a host using resource ID and displays detailed information
 func runGetHostCommand(cmd *cobra.Command, args []string) error {
 
 	hostID := args[0]
@@ -236,6 +281,7 @@ func runGetHostCommand(cmd *cobra.Command, args []string) error {
 	return writer.Flush()
 }
 
+// Registers specific Host - registers sprcific host using SN and/or UUID
 func runRegisterHostCommand(cmd *cobra.Command, args []string) error {
 
 	//TODO add autoonboarding and autoprovision??
@@ -275,16 +321,50 @@ func runRegisterHostCommand(cmd *cobra.Command, args []string) error {
 	return checkResponse(resp.HTTPResponse, "error while registering host")
 }
 
-func runOnboardHostCommand(cmd *cobra.Command, _ []string) error {
-	return nil
-	//TODO
+// func runOnboardHostCommand(cmd *cobra.Command, _ []string) error {
+// 	return nil
+// 	//TODO
+// }
+
+// func runProvisionHostCommand(cmd *cobra.Command, _ []string) error {
+// 	return nil
+// 	//TODO
+// }
+
+// func runImportHostCommand(cmd *cobra.Command, _ []string) error {
+// 	return nil
+// }
+
+// Deletes specific Host - finds a host using resource ID and deletes it
+func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
+	hostID := args[0]
+	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	resp, err := hostClient.DeleteV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
+		hostID, infra.DeleteV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody{}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	return checkResponse(resp.HTTPResponse, "error while deleting host")
 }
 
-func runProvisionHostCommand(cmd *cobra.Command, _ []string) error {
-	return nil
-	//TODO
-}
+// Deauthorizes specific Host - finds a host using resource ID and invalidates it
+func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
+	hostID := args[0]
+	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
 
-func runImportHostCommand(cmd *cobra.Command, _ []string) error {
-	return nil
+	resp, err := hostClient.PutV1ProjectsProjectNameComputeHostsHostIDInvalidateWithResponse(ctx, projectName,
+		hostID, infra.PutV1ProjectsProjectNameComputeHostsHostIDInvalidateJSONRequestBody{}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	return checkResponse(resp.HTTPResponse, "error while deleting host")
 }
