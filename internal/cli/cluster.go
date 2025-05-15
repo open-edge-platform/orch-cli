@@ -25,7 +25,6 @@ orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010
 func getCreateClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cluster <name> [flags]",
-		Aliases: []string{"add"},
 		Short:   "Create a cluster",
 		Example: createClusterExamples,
 		Args:    cobra.ExactArgs(1),
