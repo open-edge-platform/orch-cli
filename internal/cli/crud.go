@@ -32,6 +32,8 @@ func getCreateCommand() *cobra.Command {
 		getCreateNetworkCommand(),
 
 		getCreateDeploymentCommand(),
+
+		getCreateClusterCommand(),
 	)
 	return cmd
 }
