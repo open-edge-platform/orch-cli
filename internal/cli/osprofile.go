@@ -15,11 +15,12 @@ import (
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 )
 
-var OSProfileHeader = fmt.Sprintf("%s\t%s\t%s", "Name", "Architecture", "Security Feature")
-var OSProfileHeaderGet = fmt.Sprintf("%s\t%s", "OS Profile Field", "Value")
+var OSProfileHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Architecture", "Security Feature")
+var OSProfileHeaderGet = fmt.Sprintf("\n%s\t%s", "OS Profile Field", "Value")
 
 type OSProfileSpec struct {
 	Name            string `yaml:"name"`
@@ -46,13 +47,13 @@ func printOSProfiles(writer io.Writer, OSProfiles *[]infra.OperatingSystemResour
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", *osp.Name, *osp.Architecture, *osp.SecurityFeature)
 		} else {
-			_, _ = fmt.Fprintf(writer, "Name:\t %s\n", *osp.Name)
+			_, _ = fmt.Fprintf(writer, "\nName:\t %s\n", *osp.Name)
 			_, _ = fmt.Fprintf(writer, "Profile Name:\t %s\n", *osp.ProfileName)
 			_, _ = fmt.Fprintf(writer, "Security Feature:\t %v\n", toJSON(osp.SecurityFeature))
 			_, _ = fmt.Fprintf(writer, "Architecture:\t %s\n", *osp.Architecture)
 			_, _ = fmt.Fprintf(writer, "Repository URL:\t %s\n", *osp.RepoUrl)
 			_, _ = fmt.Fprintf(writer, "sha256:\t %v\n", osp.Sha256)
-			_, _ = fmt.Fprintf(writer, "Kernel Command:\t %v\n\n", toJSON(osp.KernelCommand))
+			_, _ = fmt.Fprintf(writer, "Kernel Command:\t %v\n", toJSON(osp.KernelCommand))
 		}
 	}
 }
@@ -138,13 +139,14 @@ func getListOSProfileCommand() *cobra.Command {
 		Short: "List OS profiles",
 		RunE:  runListOSProfileCommand,
 	}
+	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of osprofile list command")
 	return cmd
 }
 
 func getCreateOSProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "osprofile <name> [flags]",
-		Short: "List OS profiles",
+		Short: "Create OS profiles",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runCreateOSProfileCommand,
 	}
@@ -195,13 +197,18 @@ func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
 func runListOSProfileCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
+	filtflag, _ := cmd.Flags().GetString("filter")
+	filter := filterHelper(filtflag)
+
 	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
 	resp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+		&infra.GetV1ProjectsProjectNameComputeOsParams{
+			Filter: filter,
+		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}

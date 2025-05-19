@@ -19,8 +19,31 @@ import (
 //TODO handle auto-onboard flag
 //TODO handle auto-provision flag
 
-var hostHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
-var hostHeaderGet = "Detailed Host Information\n"
+var hostHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
+var hostHeaderGet = "\nDetailed Host Information\n"
+
+func filterHelper(f string) *string {
+	if f != "" {
+		switch f {
+		case "onboarded":
+			f = "hostStatus='onboarded'"
+		case "registered":
+			f = "hostStatus='registered'"
+		case "provisioned":
+			f = "hostStatus='provisioned'"
+		case "deauthorized":
+			f = "hostStatus='invalidated'"
+		case "unknown":
+			f = "hostStatus=''"
+		case "error":
+			f = "hostStatus='error'"
+		default:
+		}
+		return &f
+	} else {
+		return nil
+	}
+}
 
 // Prints Host list in tabular format
 func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
@@ -29,7 +52,7 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 
 	//TODO clean up the verbose outputs and replace with -o wide the header should come from processing function
 	if verbose {
-		fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
 			"Serial Number", "Operating System", "Site", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
 	}
 	for _, h := range *hosts {
@@ -92,7 +115,7 @@ func printHost(writer io.Writer, host *infra.Host) {
 
 	_, _ = fmt.Fprintf(writer, "Specification: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", *host.SerialNumber)
-	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", *host.Uuid)
+	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", host.Uuid)
 	_, _ = fmt.Fprintf(writer, "-\tOS:\t %v\n", currentOS)
 	_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", *host.BiosVendor)
 	_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", *host.ProductName)
@@ -151,6 +174,10 @@ func getListHostCommand() *cobra.Command {
 		Short: "List hosts",
 		RunE:  runListHostCommand,
 	}
+
+	// Local persistent flags
+	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command")
+
 	return cmd
 }
 
@@ -212,7 +239,7 @@ func getRegisterHostCommand() *cobra.Command {
 func getDeleteHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "host <name> [flags]",
-		Short: "Register a host",
+		Short: "Delete a host",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runDeleteHostCommand,
 	}
@@ -222,7 +249,7 @@ func getDeleteHostCommand() *cobra.Command {
 func getDeauthorizeHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "host <name> [flags]",
-		Short: "Register a host",
+		Short: "Deauthorize a host",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runDeauthorizeHostCommand,
 	}
@@ -232,7 +259,9 @@ func getDeauthorizeHostCommand() *cobra.Command {
 // Lists all Hosts - retrieves all hosts and displays selected information in tabular format
 func runListHostCommand(cmd *cobra.Command, _ []string) error {
 
-	//TODO: List by flag
+	filtflag, _ := cmd.Flags().GetString("filter")
+	filter := filterHelper(filtflag)
+
 	writer, verbose := getOutputContext(cmd)
 
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
@@ -241,7 +270,9 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeHostsParams{}, auth.AddAuthHeader)
+		&infra.GetV1ProjectsProjectNameComputeHostsParams{
+			Filter: filter,
+		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}

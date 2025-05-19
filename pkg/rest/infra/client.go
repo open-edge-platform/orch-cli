@@ -14339,10 +14339,6 @@ func ParsePostV1ProjectsProjectNameComputeOsResponse(rsp *http.Response) (*PostV
 		HTTPResponse: rsp,
 	}
 
-	// Convert the body bytes to a string and print it
-	bodyString := string(bodyBytes)
-	fmt.Println("Response Message:", bodyString)
-
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest OperatingSystemResource
