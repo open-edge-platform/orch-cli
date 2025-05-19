@@ -33,9 +33,9 @@ func getCreateCommand() *cobra.Command {
 
 		getCreateDeploymentCommand(),
 
-		getCreateOSProfileCommand(),
-
 		getCreateClusterCommand(),
+
+		getCreateOSProfileCommand(),
 	)
 	return cmd
 }

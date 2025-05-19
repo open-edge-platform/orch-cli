@@ -16,9 +16,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-//TODO handle auto-onboard flag
-//TODO handle auto-provision flag
-
 var hostHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
 var hostHeaderGet = "\nDetailed Host Information\n"
 
@@ -50,7 +47,6 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 	os, workload := "not set", "not set"
 	host := "unknown"
 
-	//TODO clean up the verbose outputs and replace with -o wide the header should come from processing function
 	if verbose {
 		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
 			"Serial Number", "Operating System", "Site", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
@@ -87,7 +83,7 @@ func printHost(writer io.Writer, host *infra.Host) {
 	currentOS := ""
 	osprofile := ""
 
-	//TODO Verify all below are valid
+	//TODO Build out the host information
 	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
 		updatestatus = toJSON(host.Instance.UpdateStatus)
 	}
@@ -127,17 +123,6 @@ func printHost(writer io.Writer, host *infra.Host) {
 	_, _ = fmt.Fprintf(writer, "-\tCPU Threads:\t %v\n", *host.CpuThreads)
 	_, _ = fmt.Fprintf(writer, "-\tCPU Sockets:\t %v\n\n", *host.CpuSockets)
 
-	// //TODO enhance GPU display
-	// _, _ = fmt.Fprintf(writer, "GPU Info: \n\n")
-	// _, _ = fmt.Fprintf(writer, "\tGPU Model:\t %v\n", host.HostGpus)
-
-	// //TODO enhance USB display
-	// _, _ = fmt.Fprintf(writer, "I/O Devices Info: \n\n")
-	// _, _ = fmt.Fprintf(writer, "\tUSB Model:\t %v\n", host.HostUsbs)
-
-	// //TODO enhance labels
-	// _, _ = fmt.Fprintf(writer, "Host Labels: \n\n")
-
 }
 
 func getRegisterCommand() *cobra.Command {
@@ -171,12 +156,12 @@ func getDeauthorizeCommand() *cobra.Command {
 func getListHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "host [flags]",
-		Short: "List hosts",
+		Short: "Lists all hosts",
 		RunE:  runListHostCommand,
 	}
 
 	// Local persistent flags
-	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command")
+	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec. \n\tPredefined filters: --filter provisioned/onboarded/registered/unknown/deauthorized")
 
 	return cmd
 }
@@ -184,7 +169,7 @@ func getListHostCommand() *cobra.Command {
 func getGetHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "host <resourceID> [flags]",
-		Short: "Get host",
+		Short: "Gets a host",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runGetHostCommand,
 	}
@@ -193,8 +178,8 @@ func getGetHostCommand() *cobra.Command {
 
 func getRegisterHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "host <name> [flags]",
-		Short: "Register a host",
+		Use:   "host <name> [flags, --serial and/or --uuid must be provided]",
+		Short: "Registers a host",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runRegisterHostCommand,
 	}
@@ -238,8 +223,8 @@ func getRegisterHostCommand() *cobra.Command {
 
 func getDeleteHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "host <name> [flags]",
-		Short: "Delete a host",
+		Use:   "host <resourceID> [flags]",
+		Short: "Deletes a host",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runDeleteHostCommand,
 	}
@@ -248,8 +233,8 @@ func getDeleteHostCommand() *cobra.Command {
 
 func getDeauthorizeHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "host <name> [flags]",
-		Short: "Deauthorize a host",
+		Use:   "host <resourceID> [flags]",
+		Short: "Deauthorizes a host",
 		Args:  cobra.ExactArgs(1),
 		RunE:  runDeauthorizeHostCommand,
 	}
