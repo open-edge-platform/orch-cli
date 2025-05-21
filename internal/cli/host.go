@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -15,6 +14,31 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+const listHostExamples = `# List all hosts
+orch-cli list host --project some-project
+
+# List hosts using a predefined filter (options: provisioned, onboarded, registered, unknown, deauthorized) 
+orch-cli list host --project some-project --filter provisioned
+
+# List hosts using a custom filter (see: https://google.aip.dev/160 and API spec @ https://github.com/open-edge-platform/orch-utils/blob/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml )
+orch-cli list host --project some-project --filter --filter "serialNumber='123456789'"`
+
+const getHostExamples = `# Get detailed information about specific host using the host Resource ID
+orch-cli get host host-1234abcd --project some-project`
+
+const registerHostExamples = `# Register a host with a name "my-host" to an Edge Orchestrator using a Serial number of the machine and/or it's UUID.
+orch-cli register my-host --project some-project --serial 12345678 --uuid 0e4ec196-d1c4-4d81-9870-f202ebb498cc
+
+orch-cli register my-host --project some-project --serial 12345678
+
+orch-cli register my-host --project some-project --uuid 0e4ec196-d1c4-4d81-9870-f202ebb498cc`
+
+const deleteHostExamples = `#Delete a host using it's host Resource ID
+orch-cli delete host host-1234abcd  --project itep`
+
+const deauthorizeHostExamples = `#Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
+orch-cli deauthorize host host-1234abcd  --project itep`
 
 var hostHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
 var hostHeaderGet = "\nDetailed Host Information\n"
@@ -155,9 +179,10 @@ func getDeauthorizeCommand() *cobra.Command {
 
 func getListHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "host [flags]",
-		Short: "Lists all hosts",
-		RunE:  runListHostCommand,
+		Use:     "host [flags]",
+		Short:   "Lists all hosts",
+		Example: listHostExamples,
+		RunE:    runListHostCommand,
 	}
 
 	// Local persistent flags
@@ -168,20 +193,22 @@ func getListHostCommand() *cobra.Command {
 
 func getGetHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "host <resourceID> [flags]",
-		Short: "Gets a host",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runGetHostCommand,
+		Use:     "host <resourceID> [flags]",
+		Short:   "Gets a host",
+		Example: getHostExamples,
+		Args:    cobra.ExactArgs(1),
+		RunE:    runGetHostCommand,
 	}
 	return cmd
 }
 
 func getRegisterHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "host <name> [flags, --serial and/or --uuid must be provided]",
-		Short: "Registers a host",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runRegisterHostCommand,
+		Use:     "host <name> [flags, --serial and/or --uuid must be provided]",
+		Short:   "Registers a host",
+		Example: registerHostExamples,
+		Args:    cobra.ExactArgs(1),
+		RunE:    runRegisterHostCommand,
 	}
 
 	// Local persistent flags
@@ -223,20 +250,22 @@ func getRegisterHostCommand() *cobra.Command {
 
 func getDeleteHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "host <resourceID> [flags]",
-		Short: "Deletes a host",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runDeleteHostCommand,
+		Use:     "host <resourceID> [flags]",
+		Short:   "Deletes a host",
+		Example: deleteHostExamples,
+		Args:    cobra.ExactArgs(1),
+		RunE:    runDeleteHostCommand,
 	}
 	return cmd
 }
 
 func getDeauthorizeHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "host <resourceID> [flags]",
-		Short: "Deauthorizes a host",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runDeauthorizeHostCommand,
+		Use:     "host <resourceID> [flags]",
+		Short:   "Deauthorizes a host",
+		Example: deauthorizeHostExamples,
+		Args:    cobra.ExactArgs(1),
+		RunE:    runDeauthorizeHostCommand,
 	}
 	return cmd
 }

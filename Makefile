@@ -73,8 +73,7 @@ fetch-cluster-openapi:
 
 
 fetch-infra-openapi:
-	@# Help: Fetch the Cluster Manager OpenAPI spec
-	#TODO API v2
+	@# Help: Fetch the Infra Manager OpenAPI spec
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 
 fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi fetch-infra-openapi

@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -18,6 +17,39 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 )
+
+const listOSProfileExamples = `# List all OS Profiles
+orch-cli list osprofile --project some-project
+
+# List OS Profiles using a custom filter (see: https://google.aip.dev/160 and API spec @ https://github.com/open-edge-platform/orch-utils/blob/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml )
+orch-cli list host --project some-project --filter "osType=OS_TYPE_IMMUTABLE"`
+
+const getOSProfileExamples = `# Get detailed information about specific OS Profile using the host Resource ID
+orch-cli get host host-1234abcd --project some-project`
+
+const createOSProfileExamples = `# Create an OS Profile using a valid .yaml manifest as an input.
+orch-cli create osprofile ./microvisor-nonrt.yaml  --project some-project
+
+Example .yaml manifest:
+
+spec:
+  name: Edge Microvisor Toolkit <ver>
+  type: OPERATING_SYSTEM_TYPE_IMMUTABLE
+  provider: OPERATING_SYSTEM_PROVIDER_INFRA
+  architecture: x86_64
+  profileName: <profile name>  # Name has to be identical to this file's name
+  osImageUrl: files-edge-orch/repository/microvisor/non_rt/<artfact.raw.gz>
+  osImageVersion: <version>
+  osImageSha256: <sha>
+  osPackageManifestURL: files-edge-orch/repository/microvisor/non_rt/<manifest.json>
+  securityFeature: SECURITY_FEATURE_NONE
+  platformBundle:
+
+See 
+https://github.com/open-edge-platform/infra-core/tree/main/os-profiles`
+
+const deleteOSProfileExamples = `#Delete an OS Profile using it's name
+orch-cli delete osprofile "Edge Microvisor Toolkit 3.0.20250504" --project some-project`
 
 var OSProfileHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Architecture", "Security Feature")
 var OSProfileHeaderGet = fmt.Sprintf("\n%s\t%s", "OS Profile Field", "Value")
@@ -125,19 +157,21 @@ func filterProfilesByName(OSProfiles *[]infra.OperatingSystemResource, name stri
 
 func getGetOSProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "osprofile <name> [flags]",
-		Short: "Get an OS profile",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runGetOSProfileCommand,
+		Use:     "osprofile <name> [flags]",
+		Short:   "Get an OS profile",
+		Example: getOSProfileExamples,
+		Args:    cobra.ExactArgs(1),
+		RunE:    runGetOSProfileCommand,
 	}
 	return cmd
 }
 
 func getListOSProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "osprofile [flags]",
-		Short: "List all OS profiles",
-		RunE:  runListOSProfileCommand,
+		Use:     "osprofile [flags]",
+		Short:   "List all OS profiles",
+		Example: listOSProfileExamples,
+		RunE:    runListOSProfileCommand,
 	}
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")
 	return cmd
@@ -145,20 +179,22 @@ func getListOSProfileCommand() *cobra.Command {
 
 func getCreateOSProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "osprofile </path/to/profile.yaml> [flags]",
-		Short: "Creates OS profile",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runCreateOSProfileCommand,
+		Use:     "osprofile </path/to/profile.yaml> [flags]",
+		Short:   "Creates OS profile",
+		Example: createOSProfileExamples,
+		Args:    cobra.ExactArgs(1),
+		RunE:    runCreateOSProfileCommand,
 	}
 	return cmd
 }
 
 func getDeleteOSProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "osprofile <name> [flags]",
-		Short: "Delete an OS profile",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runDeleteOSProfileCommand,
+		Use:     "osprofile <name> [flags]",
+		Short:   "Delete an OS profile",
+		Example: deleteOSProfileExamples,
+		Args:    cobra.ExactArgs(1),
+		RunE:    runDeleteOSProfileCommand,
 	}
 	return cmd
 }
