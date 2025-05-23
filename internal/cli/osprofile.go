@@ -22,10 +22,10 @@ const listOSProfileExamples = `# List all OS Profiles
 orch-cli list osprofile --project some-project
 
 # List OS Profiles using a custom filter (see: https://google.aip.dev/160 and API spec @ https://github.com/open-edge-platform/orch-utils/blob/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml )
-orch-cli list host --project some-project --filter "osType=OS_TYPE_IMMUTABLE"`
+orch-cli list osprofile --project some-project --filter "osType=OS_TYPE_IMMUTABLE"`
 
-const getOSProfileExamples = `# Get detailed information about specific OS Profile using the host Resource ID
-orch-cli get host host-1234abcd --project some-project`
+const getOSProfileExamples = `# Get detailed information about specific OS Profile using the os profile name
+orch-cli get osprofile osprofilename --project some-project`
 
 const createOSProfileExamples = `# Create an OS Profile using a valid .yaml manifest as an input.
 orch-cli create osprofile ./microvisor-nonrt.yaml  --project some-project

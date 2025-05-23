@@ -36,11 +36,11 @@ const getHostExamples = `# Get detailed information about specific host using th
 orch-cli get host host-1234abcd --project some-project`
 
 const registerHostExamples = `# Register a host with a name "my-host" to an Edge Orchestrator using a Serial number of the machine and/or it's UUID.
-orch-cli register my-host --project some-project --serial 12345678 --uuid 0e4ec196-d1c4-4d81-9870-f202ebb498cc
+orch-cli register host my-host --project some-project --serial 12345678 --uuid 0e4ec196-d1c4-4d81-9870-f202ebb498cc
 
-orch-cli register my-host --project some-project --serial 12345678
+orch-cli register host my-host --project some-project --serial 12345678
 
-orch-cli register my-host --project some-project --uuid 0e4ec196-d1c4-4d81-9870-f202ebb498cc`
+orch-cli register host my-host --project some-project --uuid 0e4ec196-d1c4-4d81-9870-f202ebb498cc`
 
 const deleteHostExamples = `#Delete a host using it's host Resource ID
 orch-cli delete host host-1234abcd  --project itep`
