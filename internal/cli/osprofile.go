@@ -60,7 +60,7 @@ type OSProfileSpec struct {
 	Provider        string `yaml:"provider"`
 	Architecture    string `yaml:"architecture"`
 	ProfileName     string `yaml:"profileName"`
-	OsImageUrl      string `yaml:"osImageUrl"`
+	OsImageURL      string `yaml:"osImageUrl"`
 	OsImageSha256   string `yaml:"osImageSha256"`
 	OsImageVersion  string `yaml:"osImageVersion"`
 	OSPackageURL    string `yaml:"osPackageManifestURL"`
@@ -299,12 +299,12 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 		infra.PostV1ProjectsProjectNameComputeOsJSONRequestBody{
 			Name:            &spec.Spec.Name,
 			Architecture:    &spec.Spec.Architecture,
-			ImageUrl:        &spec.Spec.OsImageUrl,
+			ImageUrl:        &spec.Spec.OsImageURL,
 			ImageId:         &spec.Spec.OsImageVersion,
 			OsType:          (*infra.OperatingSystemType)(&spec.Spec.Type),
 			OsProvider:      (*infra.OperatingSystemProvider)(&spec.Spec.Provider),
 			ProfileName:     &spec.Spec.ProfileName,
-			RepoUrl:         &spec.Spec.OsImageUrl,
+			RepoUrl:         &spec.Spec.OsImageURL,
 			SecurityFeature: (*infra.SecurityFeature)(&spec.Spec.SecurityFeature),
 			Sha256:          spec.Spec.OsImageSha256,
 			UpdateSources:   []string{""},

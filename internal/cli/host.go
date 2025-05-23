@@ -25,10 +25,10 @@ orch-cli list host --project some-project --filter provisioned
 # List hosts using a custom filter (see: https://google.aip.dev/160 and API spec @ https://github.com/open-edge-platform/orch-utils/blob/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml )
 orch-cli list host --project some-project --filter "serialNumber='123456789'"
 
-# List hosts using in a specific site uing site ID (--site flag will take precendece over --region flag)
+# List hosts using in a specific site uing site ID (--site flag will take precedence over --region flag)
 orch-cli list host --project some-project --site site-c69a3c81
 
-# List hosts using in a specific region uing region ID (--site flag will take precendece over --region flag)
+# List hosts using in a specific region uing region ID (--site flag will take precedence over --region flag)
 orch-cli list host --project some-project --region region-1234abcd
 `
 
@@ -69,9 +69,9 @@ func filterHelper(f string) *string {
 		default:
 		}
 		return &f
-	} else {
-		return nil
 	}
+	return nil
+
 }
 
 func filterSitesHelper(s string) (*string, error) {
@@ -81,9 +81,8 @@ func filterSitesHelper(s string) (*string, error) {
 			return nil, fmt.Errorf("invalid site id %s --site expects site-abcd1234 format", s)
 		}
 		return &s, nil
-	} else {
-		return nil, nil
 	}
+	return nil, nil
 }
 
 func filterRegionsHelper(r string) (*string, error) {
@@ -93,9 +92,8 @@ func filterRegionsHelper(r string) (*string, error) {
 			return nil, fmt.Errorf("invalid region id %s --region expects region-abcd1234 format", r)
 		}
 		return &r, nil
-	} else {
-		return nil, nil
 	}
+	return nil, nil
 }
 
 // Prints Host list in tabular format
@@ -111,11 +109,11 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 		host := "Not connected"
 
 		if h.Instance != nil {
-			os = string(toJSON(h.Instance.CurrentOs.Name))
-			workload = string(toJSON(h.Instance.WorkloadMembers))
+			os = toJSON(h.Instance.CurrentOs.Name)
+			workload = toJSON(h.Instance.WorkloadMembers)
 		}
 		if h.SiteId != nil {
-			site = string(toJSON(h.SiteId))
+			site = toJSON(h.SiteId)
 		}
 		if *h.HostStatus != "" {
 			host = *h.HostStatus
