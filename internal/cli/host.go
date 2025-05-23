@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 
 	"github.com/google/uuid"
 	"github.com/open-edge-platform/cli/pkg/auth"
@@ -18,11 +19,18 @@ import (
 const listHostExamples = `# List all hosts
 orch-cli list host --project some-project
 
-# List hosts using a predefined filter (options: provisioned, onboarded, registered, unknown, deauthorized) 
+# List hosts using a predefined filter (options: provisioned, onboarded, registered, "not connected", deauthorized) 
 orch-cli list host --project some-project --filter provisioned
 
 # List hosts using a custom filter (see: https://google.aip.dev/160 and API spec @ https://github.com/open-edge-platform/orch-utils/blob/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml )
-orch-cli list host --project some-project --filter --filter "serialNumber='123456789'"`
+orch-cli list host --project some-project --filter "serialNumber='123456789'"
+
+# List hosts using in a specific site uing site ID (--site flag will take precendece over --region flag)
+orch-cli list host --project some-project --site site-c69a3c81
+
+# List hosts using in a specific region uing region ID (--site flag will take precendece over --region flag)
+orch-cli list host --project some-project --region region-1234abcd
+`
 
 const getHostExamples = `# Get detailed information about specific host using the host Resource ID
 orch-cli get host host-1234abcd --project some-project`
@@ -54,7 +62,7 @@ func filterHelper(f string) *string {
 			f = "hostStatus='provisioned'"
 		case "deauthorized":
 			f = "hostStatus='invalidated'"
-		case "unknown":
+		case "not connected":
 			f = "hostStatus=''"
 		case "error":
 			f = "hostStatus='error'"
@@ -66,28 +74,56 @@ func filterHelper(f string) *string {
 	}
 }
 
+func filterSitesHelper(s string) (*string, error) {
+	if s != "" {
+		re := regexp.MustCompile(`^site-[a-zA-Z0-9]{8}$`)
+		if !re.MatchString(s) {
+			return nil, fmt.Errorf("invalid site id %s --site expects site-abcd1234 format", s)
+		}
+		return &s, nil
+	} else {
+		return nil, nil
+	}
+}
+
+func filterRegionsHelper(r string) (*string, error) {
+	if r != "" {
+		re := regexp.MustCompile(`^region-[a-zA-Z0-9]{8}$`)
+		if !re.MatchString(r) {
+			return nil, fmt.Errorf("invalid region id %s --region expects region-abcd1234 format", r)
+		}
+		return &r, nil
+	} else {
+		return nil, nil
+	}
+}
+
 // Prints Host list in tabular format
 func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
-	os, workload := "not set", "not set"
-	host := "unknown"
 
 	if verbose {
 		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
 			"Serial Number", "Operating System", "Site", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
 	}
 	for _, h := range *hosts {
+		//TODO clean this up
+		os, workload, site := "Not provisioned", "Not provisioned", "Not provisioned"
+		host := "Not connected"
 
 		if h.Instance != nil {
-			os = string(toJSON(h.Instance.CurrentOs))
+			os = string(toJSON(h.Instance.CurrentOs.Name))
 			workload = string(toJSON(h.Instance.WorkloadMembers))
+		}
+		if h.SiteId != nil {
+			site = string(toJSON(h.SiteId))
 		}
 		if *h.HostStatus != "" {
 			host = *h.HostStatus
 		}
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber, os, h.Site, workload)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber, os, site, workload)
 		} else {
-			avupdt := "no update"
+			avupdt := "No update"
 			tcomp := "Not compatible"
 
 			//TODO
@@ -95,7 +131,7 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 			//if tcomp is set then reflect
 
 			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber,
-				os, h.Site, workload, h.Name, h.Uuid, *h.CpuModel, avupdt, tcomp)
+				os, site, workload, h.Name, h.Uuid, *h.CpuModel, avupdt, tcomp)
 		}
 	}
 }
@@ -103,7 +139,7 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 func printHost(writer io.Writer, host *infra.Host) {
 
 	updatestatus := ""
-	hoststatus := "unknown"
+	hoststatus := "Not connected"
 	currentOS := ""
 	osprofile := ""
 
@@ -112,8 +148,8 @@ func printHost(writer io.Writer, host *infra.Host) {
 		updatestatus = toJSON(host.Instance.UpdateStatus)
 	}
 
-	if host != nil && host.Instance != nil && host.Instance.CurrentOs != nil {
-		currentOS = toJSON(host.Instance.CurrentOs)
+	if host != nil && host.Instance != nil && host.Instance.CurrentOs.Name != nil {
+		currentOS = toJSON(host.Instance.CurrentOs.Name)
 	}
 
 	if host != nil && host.Instance != nil && host.Instance.Os.Name != nil {
@@ -186,8 +222,9 @@ func getListHostCommand() *cobra.Command {
 	}
 
 	// Local persistent flags
-	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec. \n\tPredefined filters: --filter provisioned/onboarded/registered/unknown/deauthorized")
-
+	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec. \n\tPredefined filters: --filter provisioned/onboarded/registered/nor connected/deauthorized")
+	cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Optional filter provided as part of host list to filter hosts by site")
+	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of host list to filter hosts by region")
 	return cmd
 }
 
@@ -218,36 +255,6 @@ func getRegisterHostCommand() *cobra.Command {
 	return cmd
 }
 
-// func getOnboardHostCommand() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "host <name> [flags]",
-// 		Short: "Register a host",
-// 		Args:  cobra.ExactArgs(1),
-// 		RunE:  runOnboardHostCommand,
-// 	}
-// 	return cmd
-// }
-
-// func getProvisionHostCommand() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "host <name> [flags]",
-// 		Short: "Register a host",
-// 		Args:  cobra.ExactArgs(1),
-// 		RunE:  runProvisionHostCommand,
-// 	}
-// 	return cmd
-// }
-
-// func getImportHostCommand() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "host <name> [flags]",
-// 		Short: "Register a host",
-// 		Args:  cobra.ExactArgs(1),
-// 		RunE:  runImportHostCommand,
-// 	}
-// 	return cmd
-// }
-
 func getDeleteHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "host <resourceID> [flags]",
@@ -276,6 +283,22 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 	filtflag, _ := cmd.Flags().GetString("filter")
 	filter := filterHelper(filtflag)
 
+	siteFlag, _ := cmd.Flags().GetString("site")
+	site, err := filterSitesHelper(siteFlag)
+	if err != nil {
+		return err
+	}
+
+	regFlag, _ := cmd.Flags().GetString("region")
+	region, err := filterRegionsHelper(regFlag)
+	if err != nil {
+		return err
+	}
+
+	if siteFlag != "" && regFlag != "" {
+		fmt.Printf("--region flag ignored, using --site as it is more precise")
+	}
+
 	writer, verbose := getOutputContext(cmd)
 
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
@@ -283,9 +306,45 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	//If all host for a given region are quereied, sites need to be found first
+	if siteFlag == "" && regFlag != "" {
+
+		regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
+
+		cresp, err := hostClient.GetV1ProjectsProjectNameRegionsRegionIDSitesWithResponse(ctx, projectName, *region,
+			&infra.GetV1ProjectsProjectNameRegionsRegionIDSitesParams{
+				Filter: &regFilter,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		//create site filter
+		siteFilter := ""
+		if *cresp.JSON200.TotalElements != 0 {
+			for i, s := range *cresp.JSON200.Sites {
+				if i == 0 {
+					siteFilter = fmt.Sprintf("site.resourceId='%s'", *s.ResourceId)
+				} else {
+					siteFilter = fmt.Sprintf("%s OR site.resourceId='%s'", siteFilter, *s.ResourceId)
+				}
+			}
+		} else {
+			return errors.New("no site was found in provided region")
+		}
+
+		//if additional filter exists add sites to that filter if not replace empty filter with sites
+		if filtflag != "" {
+			*filter = fmt.Sprintf("%s AND (%s)", *filter, siteFilter)
+		} else {
+			filter = &siteFilter
+		}
+	}
+
 	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsWithResponse(ctx, projectName,
 		&infra.GetV1ProjectsProjectNameComputeHostsParams{
 			Filter: filter,
+			SiteID: site,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -365,20 +424,6 @@ func runRegisterHostCommand(cmd *cobra.Command, args []string) error {
 
 	return checkResponse(resp.HTTPResponse, "error while registering host")
 }
-
-// func runOnboardHostCommand(cmd *cobra.Command, _ []string) error {
-// 	return nil
-// 	//TODO
-// }
-
-// func runProvisionHostCommand(cmd *cobra.Command, _ []string) error {
-// 	return nil
-// 	//TODO
-// }
-
-// func runImportHostCommand(cmd *cobra.Command, _ []string) error {
-// 	return nil
-// }
 
 // Deletes specific Host - finds a host using resource ID and deletes it
 func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
