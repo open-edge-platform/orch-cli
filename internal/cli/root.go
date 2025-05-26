@@ -6,12 +6,13 @@ package cli
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/atomix/dazl"
 	clilib "github.com/open-edge-platform/orch-library/go/pkg/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
-	"os"
 )
 
 var log = dazl.GetLogger()
@@ -98,6 +99,8 @@ func getRootCmd() *cobra.Command {
 		getLoginCommand(),
 		getLogoutCommand(),
 		getExportCommand(),
+		getRegisterCommand(),
+		getDeauthorizeCommand(),
 		getWipeProjectCommand(),
 		versionCommand(),
 	)

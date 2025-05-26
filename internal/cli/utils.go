@@ -21,6 +21,7 @@ import (
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
+	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/metadata"
 )
@@ -88,6 +89,23 @@ func getClusterServiceContext(cmd *cobra.Command) (context.Context, *coapi.Clien
 		return nil, nil, "", err
 	}
 	return context.Background(), coClient, projectName, nil
+}
+
+// Get the new background context, REST client, and project name given the specified command.
+func getInfraServiceContext(cmd *cobra.Command) (context.Context, *infraapi.ClientWithResponses, string, error) {
+	serverAddress, err := cmd.Flags().GetString(deploymentEndpoint)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	projectName, err := getProjectName(cmd)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	infraClient, err := infraapi.NewClientWithResponses(serverAddress)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return context.Background(), infraClient, projectName, nil
 }
 
 // Get the web socket for receiving event notifications.
@@ -227,7 +245,7 @@ func checkResponse(response *http.Response, message string) error {
 func checkResponseCode(responseCode int, message string, responseMessage string) error {
 	if responseCode == 401 {
 		return fmt.Errorf("%s. Unauthorized. Please Login. %s", message, responseMessage)
-	} else if responseCode != 200 {
+	} else if responseCode != 200 && responseCode != 201 && responseCode != 204 {
 		if len(message) > 0 {
 			return fmt.Errorf("%s: %s", message, responseMessage)
 		}
