@@ -37,6 +37,18 @@ func getCreateClusterCommand() *cobra.Command {
 	return cmd
 }
 
+func getListClusterCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "cluster",
+		Short:   "List clusters",
+		Example: "orch-cli list cluster --project some-project",
+		RunE:    runListClusterCommand,
+	}
+	cmd.Flags().String("project", "", "Project name to filter clusters")
+	_ = cmd.MarkFlagRequired("project")
+	return cmd
+}
+
 func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 	verbose, err := cmd.Flags().GetBool("verbose")
 	if err != nil {
@@ -119,4 +131,53 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating cluster %s", clusterName))
+}
+
+func runListClusterCommand(cmd *cobra.Command, _ []string) error {
+	verbose, err := cmd.Flags().GetBool("verbose")
+	if err != nil {
+		return processError(err)
+	}
+	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	var clusters []coapi.ClusterInfo
+	pageSize := 50
+	offset := 0
+
+	for {
+		params := coapi.GetV2ProjectsProjectNameClustersParams{
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}
+		if verbose {
+			fmt.Printf("Fetching clusters for project '%s' with page size %d and offset %d\n", projectName, pageSize, offset)
+		}
+
+		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName, &params, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if resp.JSON200 == nil {
+			return fmt.Errorf("unexpected response: %s", resp.HTTPResponse.Status)
+		}
+		if verbose {
+			fmt.Printf("Received %d clusters from the server out of total clusters: %d\n", len(*resp.JSON200.Clusters), resp.JSON200.TotalElements)
+		}
+
+		clusters = append(clusters, *resp.JSON200.Clusters...)
+		if len(*resp.JSON200.Clusters) < pageSize {
+			break
+		}
+		offset += pageSize
+	}
+
+	fmt.Printf("Total clusters found: %d\n", len(clusters))
+	fmt.Printf("Clusters in project '%s':\n", projectName)
+	for i, cluster := range clusters {
+		fmt.Printf("%v. %s (%s)\n", i, *cluster.Name, *cluster.ProviderStatus.Message)
+	}
+	return nil
 }
