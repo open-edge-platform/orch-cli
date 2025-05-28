@@ -8,12 +8,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/google/uuid"
+	u "github.com/google/uuid"
 	e "github.com/open-edge-platform/cli/internal/errors"
 	"github.com/open-edge-platform/cli/internal/files"
 	"github.com/open-edge-platform/cli/internal/types"
@@ -502,12 +503,6 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		doRegister(ctx, hostClient, projectName, record, respCache, &erringRecords)
 	}
 
-	// fmt.Printf("Here")
-	// for _, record := range respCache.OSProfileCache {
-	// 	fmt.Printf("\nProfile name is: %s , profile OSResourceID is: %s\n", *record.ProfileName, *record.OsResourceID)
-	// }
-	// fmt.Printf("Here2")
-
 	// if len(erringRecords) > 0 {
 	// 	newFilename := fmt.Sprintf("%s_%s_%s", "import_error",
 	// 		time.Now().Format(time.RFC3339), filepath.Base(filePath))
@@ -539,43 +534,153 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 	// get the required fields from the record
 	sNo := rIn.Serial
 	uuid := rIn.UUID
-	//siteID := rIn.Site
-	//osprofile := rIn.OSProfile
+	hostName := ""
+	hostID := ""
+	autonboard := true
 
+	//sanitize fields
 	rOut, err := sanitizeProvisioningFields(ctx, hClient, projectName, rIn, respCache, erringRecords)
 	if err != nil {
+		fmt.Printf("\n\n Error Sanitizing\n")
 		return
 	}
 
-	fmt.Printf("\n Regisstering: \n")
-	fmt.Printf("\n Profile: %s\n", rOut.OSProfile)
-	fmt.Printf("\n Site: %s\n", rOut.Site)
-	fmt.Printf("\n Secure: %s\n", rOut.Secure)
-	fmt.Printf("\n Remote User: %s\n", rOut.RemoteUser)
-	fmt.Printf("\n Metadata: %s\n", rOut.Metadata)
+	// //TODO delete
+	fmt.Printf("\n\nRegistering Host %s\n", rOut.OSProfile)
+	// fmt.Printf("\n Profile: %s\n", rOut.OSProfile)
+	// fmt.Printf("\n Site: %s\n", rOut.Site)
+	// fmt.Printf("\n Secure: %s\n", rOut.Secure)
+	// fmt.Printf("\n Remote User: %s\n", rOut.RemoteUser)
+	// fmt.Printf("\n Metadata: %s\n", rOut.Metadata)
 
-	//TODO finish registration
+	//convert uuid
+	var uuidParsed u.UUID
+	if uuid != "" {
+		uuidParsed = u.MustParse(uuid)
+	}
+
 	// Register host
-	hostID, err := oClient.RegisterHost(ctx, "", sNo, uuid, autoOnboard)
+	resp, err := hClient.PostV1ProjectsProjectNameComputeHostsRegisterWithResponse(ctx, projectName,
+		infra.PostV1ProjectsProjectNameComputeHostsRegisterJSONRequestBody{
+			Name:         &hostName,
+			SerialNumber: &sNo,
+			Uuid:         &uuidParsed,
+			AutoOnboard:  &autonboard,
+		}, auth.AddAuthHeader)
 	if err != nil {
-		if e.Is(e.ErrAlreadyRegistered, err) {
-			// If already registered, get the hostID
-			hostID, err = oClient.GetHostID(ctx, sNo, uuid)
-		}
-		if err != nil {
+		processError(err)
+		rIn.Error = err.Error()
+		*erringRecords = append(*erringRecords, rIn)
+		return
+	}
+	//Check that valid response was received
+	err = checkResponse(resp.HTTPResponse, "error while registering host")
+	if err != nil {
+		//if host already registered
+		if resp.HTTPResponse.StatusCode == http.StatusPreconditionFailed {
+			fmt.Printf("Status Precondition Failed\n")
+			//form a filter
+			hFilter := fmt.Sprintf("serialNumber='%s' AND uuid='%s'", sNo, uuid)
+
+			//get all the hosts matching the filter
+			gresp, err := hClient.GetV1ProjectsProjectNameComputeHostsWithResponse(ctx, projectName,
+				&infra.GetV1ProjectsProjectNameComputeHostsParams{
+					Filter: &hFilter,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				processError(err)
+			}
+
+			fmt.Printf("Done a get hosts call\n")
+			err = checkResponse(gresp.HTTPResponse, "error while getting host which failed registration")
+			if err != nil {
+				rIn.Error = err.Error()
+				*erringRecords = append(*erringRecords, rIn)
+				return
+			}
+
+			if *gresp.JSON200.TotalElements != 1 {
+				err = e.NewCustomError(e.ErrHostDetailMismatch)
+				rIn.Error = err.Error()
+				*erringRecords = append(*erringRecords, rIn)
+				return
+			} else if (*gresp.JSON200.Hosts)[0].Instance != nil {
+				fmt.Printf("Alredy Registered - instance exists\n")
+				err = e.NewCustomError(e.ErrAlreadyRegistered)
+				rIn.Error = err.Error()
+				*erringRecords = append(*erringRecords, rIn)
+				return
+			} else {
+				fmt.Printf("Alredy Registered - no instance\n")
+				respCache.HostCache[*(*gresp.JSON200.Hosts)[0].ResourceId] = (*gresp.JSON200.Hosts)[0]
+				hostID = *(*gresp.JSON200.Hosts)[0].ResourceId
+			}
+
+		} else {
 			rIn.Error = err.Error()
 			*erringRecords = append(*erringRecords, rIn)
 			return
 		}
+	} else {
+		//Cache host and save host ID
+		if resp.JSON201 != nil && resp.JSON201.ResourceId != nil {
+			respCache.HostCache[*resp.JSON201.ResourceId] = *resp.JSON201
+			hostID = *resp.JSON201.ResourceId
+		} else {
+			fmt.Printf("No 201 response, Host does not exist\n")
+			rIn.Error = "No 201 response, Host does not exist"
+			*erringRecords = append(*erringRecords, rIn)
+			return
+		}
 	}
-	// // Create instance if osProfileID is available else append to error list
-	// // Need not notify user of instance ID. Unnecessary detail for user.
-	// _, err = oClient.CreateInstance(ctx, hostID, rOut)
-	// if err != nil {
-	// 	rIn.Error = err.Error()
-	// 	*erringRecords = append(*erringRecords, rIn)
-	// 	return
-	// }
+
+	// Validate OS profile
+	if valErr := validateOSProfile(rOut.OSProfile); valErr != nil {
+		rIn.Error = valErr.Error()
+		*erringRecords = append(*erringRecords, rIn)
+		return
+	}
+	// Create instance if osProfileID is available else append to error list
+	// Need not notify user of instance ID. Unnecessary detail for user.
+	kind := infra.INSTANCEKINDUNSPECIFIED
+	osResource, ok := respCache.OSProfileCache[rIn.OSProfile]
+	if !ok {
+		rIn.Error = "OS Profile does not exist in cache"
+		*erringRecords = append(*erringRecords, rIn)
+		return
+	}
+
+	secFeat := *osResource.SecurityFeature
+	if rOut.Secure != types.SecureTrue {
+		secFeat = infra.SECURITYFEATURENONE
+	}
+
+	var locAcc *string
+	if rOut.RemoteUser != "" {
+		locAcc = &rOut.RemoteUser
+	}
+
+	iresp, err := hClient.PostV1ProjectsProjectNameComputeInstancesWithResponse(ctx, projectName,
+		infra.PostV1ProjectsProjectNameComputeInstancesJSONRequestBody{
+			HostID:          &hostID,
+			OsID:            &rOut.OSProfile,
+			LocalAccountID:  locAcc,
+			SecurityFeature: &secFeat,
+			Kind:            &kind,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		processError(err)
+		rIn.Error = err.Error()
+		*erringRecords = append(*erringRecords, rIn)
+		return
+	}
+
+	err = checkResponse(iresp.HTTPResponse, "error while creating instance\n\n")
+	if err != nil {
+		rIn.Error = err.Error()
+		*erringRecords = append(*erringRecords, rIn)
+		return
+	}
 
 	// if err := oClient.AllocateHostToSiteAndAddMetadata(ctx, hostID, rOut.Site, rOut.Metadata); err != nil {
 	// 	rIn.Error = err.Error()
@@ -593,24 +698,24 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 
 	osProfileID, err := resolveOSProfile(ctx, hClient, projectName, record.OSProfile, record, respCache, erringRecords)
 	if err != nil {
-		fmt.Printf("Erroring here osprofile\n") //TODO delete
+		fmt.Print("osprofile error sanitize\n")
 		return nil, err
 	}
 
 	if valErr := validateSecurityFeature(record.OSProfile, isSecure, record, respCache, erringRecords); valErr != nil {
-		fmt.Printf("Erroring here secure\n") //TODO delete
+		fmt.Print("security feature error sanitize\n")
 		return nil, valErr
 	}
 
 	siteID, err := resolveSite(ctx, hClient, projectName, record.Site, record, respCache, erringRecords)
 	if err != nil {
-		fmt.Printf("Erroring here site\n") //TODO delete
+		fmt.Print("site error sanitize\n")
 		return nil, err
 	}
 
 	laID, err := resolveRemoteUser(ctx, hClient, projectName, record.RemoteUser, record, respCache, erringRecords)
 	if err != nil {
-		fmt.Printf("Erroring here remote user\n") //TODO delete
+		fmt.Print("remote user error sanitize\n")
 		return nil, err
 	}
 
@@ -690,6 +795,14 @@ func validateSecurityFeature(osProfileID string, isSecure types.RecordSecure,
 		record.Error = e.NewCustomError(e.ErrOSSecurityMismatch).Error()
 		*erringRecords = append(*erringRecords, record)
 		return e.NewCustomError(e.ErrOSSecurityMismatch)
+	}
+	return nil
+}
+
+func validateOSProfile(osProfileID string) error {
+	osRe := regexp.MustCompile(validator.OSPIDPATTERN)
+	if !osRe.MatchString(osProfileID) {
+		return e.NewCustomError(e.ErrInvalidOSProfile)
 	}
 	return nil
 }
@@ -778,9 +891,9 @@ func runRegisterHostCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var uuidParsed *uuid.UUID
+	var uuidParsed *u.UUID
 	if uuidString != "" {
-		parsedUUID, err := uuid.Parse(uuidString)
+		parsedUUID, err := u.Parse(uuidString)
 		if err != nil {
 			return err
 		}
