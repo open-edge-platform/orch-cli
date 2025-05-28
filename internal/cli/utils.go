@@ -76,7 +76,7 @@ func getDeploymentServiceContext(cmd *cobra.Command) (context.Context, *depapi.C
 
 // Get the new background context, REST client, and project name given the specified command.
 func getClusterServiceContext(cmd *cobra.Command) (context.Context, *coapi.ClientWithResponses, string, error) {
-	serverAddress, err := cmd.Flags().GetString(deploymentEndpoint)
+	serverAddress, err := cmd.Flags().GetString(catalogEndpoint)
 	if err != nil {
 		return nil, nil, "", err
 	}
