@@ -44,8 +44,6 @@ func getListClusterCommand() *cobra.Command {
 		Example: "orch-cli list cluster --project some-project",
 		RunE:    runListClusterCommand,
 	}
-	cmd.Flags().String("project", "", "Project name to filter clusters")
-	_ = cmd.MarkFlagRequired("project")
 	return cmd
 }
 
@@ -58,9 +56,6 @@ func getDeleteClusterCommand() *cobra.Command {
 		RunE:    runDeleteClusterCommand,
 	}
 	cmd.Flags().Bool("force", false, "Force delete the cluster without waiting for host cleanup")
-	cmd.Flags().Bool("verbose", false, "Enable verbose output")
-	cmd.Flags().String("project", "", "Project name to filter clusters")
-	_ = cmd.MarkFlagRequired("project")
 	return cmd
 }
 
