@@ -141,7 +141,7 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteApplicationReferenceCommand(),
 
 		getDeleteDeploymentCommand(),
-
+		getDeleteClusterCommand(),
 		getDeleteNetworkCommand(),
 
 		getDeleteOSProfileCommand(),

@@ -49,6 +49,21 @@ func getListClusterCommand() *cobra.Command {
 	return cmd
 }
 
+func getDeleteClusterCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "cluster <name> [flags]",
+		Short:   "Delete a cluster",
+		Example: "orch-cli delete cluster cli-cluster --project some-project",
+		Args:    cobra.ExactArgs(1),
+		RunE:    runDeleteClusterCommand,
+	}
+	cmd.Flags().Bool("force", false, "Force delete the cluster without waiting for host cleanup")
+	cmd.Flags().Bool("verbose", false, "Enable verbose output")
+	cmd.Flags().String("project", "", "Project name to filter clusters")
+	_ = cmd.MarkFlagRequired("project")
+	return cmd
+}
+
 func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 	verbose, err := cmd.Flags().GetBool("verbose")
 	if err != nil {
@@ -179,5 +194,36 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 	for i, cluster := range clusters {
 		fmt.Printf("%v. %s (%s)\n", i, *cluster.Name, *cluster.ProviderStatus.Message)
 	}
+	return nil
+}
+
+func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
+	verbose, err := cmd.Flags().GetBool("verbose")
+	if err != nil {
+		return processError(err)
+	}
+	//force, err := cmd.Flags().GetBool("force")
+
+	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	clusterName := args[0]
+
+	if verbose {
+		fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
+	}
+
+	resp, err := clusterClient.DeleteV2ProjectsProjectNameClustersNameWithResponse(ctx, projectName, clusterName, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	err = checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting cluster %s", clusterName))
+	if err != nil {
+		fmt.Printf("Failed to delete cluster '%s': %v\n", clusterName, err)
+		return err
+	}
+	fmt.Printf("Cluster '%s' deleted successfully.\n", clusterName)
 	return nil
 }
