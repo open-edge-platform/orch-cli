@@ -34,6 +34,7 @@ const (
 
 // Defines values for TemplateInfoControlplaneprovidertype.
 const (
+	K3s     TemplateInfoControlplaneprovidertype = "k3s"
 	Kubeadm TemplateInfoControlplaneprovidertype = "kubeadm"
 	Rke2    TemplateInfoControlplaneprovidertype = "rke2"
 )
