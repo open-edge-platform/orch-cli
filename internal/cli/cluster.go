@@ -327,7 +327,7 @@ func softDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithRespo
 	if err != nil {
 		return processError(err)
 	}
-	if resp.HTTPResponse.StatusCode != 202 {
+	if resp.HTTPResponse.StatusCode != 204 {
 		return fmt.Errorf("failed to delete cluster %s: %s", clusterName, resp.HTTPResponse.Status)
 	}
 	return nil
