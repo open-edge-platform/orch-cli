@@ -165,32 +165,28 @@ func runGetClusterCommand(cmd *cobra.Command, args []string) error {
 
 	clusterName := args[0]
 
-	resp, err := clusterClient.GetV2ProjectsProjectNameClustersNameWithResponse(ctx, projectName, clusterName, auth.AddAuthHeader)
+	cluster, err := getClusterDetails(ctx, clusterClient, projectName, clusterName)
 	if err != nil {
-		return processError(err)
-	}
-
-	if resp.JSON200 == nil {
-		return fmt.Errorf("cluster %s not found in project %s", clusterName, projectName)
+		return fmt.Errorf("failed to get cluster details: %w", err)
 	}
 
 	fmt.Printf("Project: %s\n", projectName)
-	fmt.Printf("Name: %s\n", *resp.JSON200.Name)
-	fmt.Printf("Kubernetes Version: %s\n", *resp.JSON200.KubernetesVersion)
-	fmt.Printf("Template: %s\n", *resp.JSON200.Template)
+	fmt.Printf("Name: %s\n", *cluster.Name)
+	fmt.Printf("Kubernetes Version: %s\n", *cluster.KubernetesVersion)
+	fmt.Printf("Template: %s\n", *cluster.Template)
 	fmt.Printf("Nodes:\n")
-	for _, node := range *resp.JSON200.Nodes {
+	for _, node := range *cluster.Nodes {
 		fmt.Printf("- ID: %s, Role: %s\n", *node.Id, *node.Role)
 	}
 	fmt.Printf("Status:\n")
-	fmt.Printf("- Lifecycle Phase: %s\n", *resp.JSON200.LifecyclePhase.Message)
-	fmt.Printf("- Provider: %s\n", *resp.JSON200.ProviderStatus.Message)
-	fmt.Printf("- Control Plane Ready: %s\n", *resp.JSON200.ControlPlaneReady.Message)
-	fmt.Printf("- Infrastructure Ready: %s\n", *resp.JSON200.InfrastructureReady.Message)
-	fmt.Printf("- Node Health: %s\n", *resp.JSON200.NodeHealth.Message)
-	if resp.JSON200.Labels != nil {
+	fmt.Printf("- Lifecycle Phase: %s\n", *cluster.LifecyclePhase.Message)
+	fmt.Printf("- Provider: %s\n", *cluster.ProviderStatus.Message)
+	fmt.Printf("- Control Plane Ready: %s\n", *cluster.ControlPlaneReady.Message)
+	fmt.Printf("- Infrastructure Ready: %s\n", *cluster.InfrastructureReady.Message)
+	fmt.Printf("- Node Health: %s\n", *cluster.NodeHealth.Message)
+	if cluster.Labels != nil {
 		fmt.Printf("Labels:\n")
-		for key, value := range *resp.JSON200.Labels {
+		for key, value := range *cluster.Labels {
 			fmt.Printf("- %s: %s\n", key, value)
 		}
 	} else {
@@ -308,6 +304,17 @@ func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func getClusterDetails(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) (res coapi.ClusterDetailInfo, err error) {
+	resp, err := clusterClient.GetV2ProjectsProjectNameClustersNameWithResponse(ctx, projectName, clusterName, auth.AddAuthHeader)
+	if err != nil {
+		return res, processError(err)
+	}
+	if resp.JSON200 == nil {
+		return res, fmt.Errorf("cluster %s not found in project %s", clusterName, projectName)
+	}
+	return *resp.JSON200, nil
+}
+
 func softDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
 	resp, err := clusterClient.DeleteV2ProjectsProjectNameClustersNameWithResponse(ctx, projectName, clusterName, auth.AddAuthHeader)
 	if err != nil {
@@ -320,5 +327,6 @@ func softDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithRespo
 }
 
 func forceDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
+
 	return errors.New("force delete is not implemented yet, please use soft delete instead")
 }
