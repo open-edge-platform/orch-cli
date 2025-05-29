@@ -298,13 +298,16 @@ func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to get infra service context: %w", err)
 		}
 		err = forceDeleteCluster(ctx, hostClient, clusterClient, projectName, clusterName)
+		if err != nil {
+			return fmt.Errorf("failed to force delete cluster '%s': %w", clusterName, err)
+		}
 	} else {
 		err = softDeleteCluster(ctx, clusterClient, projectName, clusterName)
+		if err != nil {
+			return fmt.Errorf("failed to soft delete cluster '%s': %w", clusterName, err)
+		}
 	}
-	if err != nil {
-		return fmt.Errorf("failed to delete cluster '%s': %w", clusterName, err)
-	}
-	fmt.Printf("Cluster '%s' deleted successfully.\n", clusterName)
+	fmt.Printf("Cluster '%s' deletion initiated successfully.\n", clusterName)
 	return nil
 }
 
