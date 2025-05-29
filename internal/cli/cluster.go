@@ -340,6 +340,9 @@ func forceDeleteCluster(ctx context.Context, hostClient *infra.ClientWithRespons
 	}
 
 	for _, node := range *cluster.Nodes {
+		if node.Id == nil || *node.Id == "" {
+			return fmt.Errorf("node ID is missing for node in cluster %s", clusterName)
+		}
 		hostID := *node.Id
 		uuid, err := getHostUUID(ctx, hostClient, projectName, hostID)
 		if err != nil {
@@ -375,5 +378,8 @@ func getHostUUID(ctx context.Context, hostClient *infra.ClientWithResponses, pro
 
 	host := resp.JSON200
 	uuid := host.Uuid
+	if uuid == nil {
+		return "", fmt.Errorf("host %s does not have a UUID", hostID)
+	}
 	return uuid.String(), nil
 }
