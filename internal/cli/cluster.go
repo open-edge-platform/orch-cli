@@ -5,7 +5,6 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -327,6 +326,28 @@ func softDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithRespo
 }
 
 func forceDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
+	cluster, err := getClusterDetails(ctx, clusterClient, projectName, clusterName)
+	if err != nil {
+		return fmt.Errorf("failed to get cluster details for force delete: %w", err)
+	}
 
-	return errors.New("force delete is not implemented yet, please use soft delete instead")
+	for _, node := range *cluster.Nodes {
+		uuid := *node.Id
+		fmt.Printf("Force deleting node %s from cluster %s\n", uuid, clusterName)
+		force := true
+		params := coapi.DeleteV2ProjectsProjectNameClustersNameNodesNodeIdParams{
+			Force: &force,
+		}
+		resp, err := clusterClient.DeleteV2ProjectsProjectNameClustersNameNodesNodeIdWithResponse(ctx, projectName, clusterName, uuid, &params, auth.AddAuthHeader)
+		if err != nil {
+			return fmt.Errorf("failed to delete node %s from cluster %s: %w", uuid, clusterName, err)
+		}
+		if resp.HTTPResponse.StatusCode != 204 {
+			return fmt.Errorf("failed to delete node %s from cluster %s: %s", uuid, clusterName, resp.HTTPResponse.Status)
+		}
+		fmt.Printf("Node %s deleted successfully from cluster %s\n", uuid, clusterName)
+
+	}
+
+	return nil
 }
