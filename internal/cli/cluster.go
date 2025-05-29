@@ -12,6 +12,7 @@ import (
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
+	"github.com/open-edge-platform/cli/pkg/rest/infra"
 )
 
 const createClusterExamples = `# Create a cluster with the name "my-cluster" on the given nodes using the default template
@@ -292,7 +293,11 @@ func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
 	if force {
-		err = forceDeleteCluster(ctx, clusterClient, projectName, clusterName)
+		ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+		if err != nil {
+			return fmt.Errorf("failed to get infra service context: %w", err)
+		}
+		err = forceDeleteCluster(ctx, hostClient, clusterClient, projectName, clusterName)
 	} else {
 		err = softDeleteCluster(ctx, clusterClient, projectName, clusterName)
 	}
@@ -325,14 +330,18 @@ func softDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithRespo
 	return nil
 }
 
-func forceDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
+func forceDeleteCluster(ctx context.Context, hostClient *infra.ClientWithResponses, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
 	cluster, err := getClusterDetails(ctx, clusterClient, projectName, clusterName)
 	if err != nil {
 		return fmt.Errorf("failed to get cluster details for force delete: %w", err)
 	}
 
 	for _, node := range *cluster.Nodes {
-		uuid := *node.Id
+		hostID := *node.Id
+		uuid, err := getHostUUID(ctx, hostClient, projectName, hostID)
+		if err != nil {
+			return fmt.Errorf("failed to get UUID for host %s: %w", *node.Id, err)
+		}
 		fmt.Printf("Force deleting node %s from cluster %s\n", uuid, clusterName)
 		force := true
 		params := coapi.DeleteV2ProjectsProjectNameClustersNameNodesNodeIdParams{
@@ -350,4 +359,18 @@ func forceDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithResp
 	}
 
 	return nil
+}
+
+func getHostUUID(ctx context.Context, hostClient *infra.ClientWithResponses, projectName, hostID string) (string, error) {
+	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+	if err != nil {
+		return "", processError(err)
+	}
+	if resp.JSON200 == nil {
+		return "", fmt.Errorf("host %s not found in project %s", hostID, projectName)
+	}
+
+	host := resp.JSON200
+	uuid := host.Uuid
+	return uuid.String(), nil
 }
