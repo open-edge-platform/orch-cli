@@ -4,6 +4,8 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -228,11 +230,10 @@ func clusterReady(cluster coapi.ClusterInfo) bool {
 }
 
 func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
-	verbose, err := cmd.Flags().GetBool("verbose")
+	force, err := cmd.Flags().GetBool("force")
 	if err != nil {
 		return processError(err)
 	}
-	//force, err := cmd.Flags().GetBool("force")
 
 	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
 	if err != nil {
@@ -241,19 +242,30 @@ func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 
 	clusterName := args[0]
 
-	if verbose {
-		fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
+	fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
+	if force {
+		err = forceDeleteCluster(ctx, clusterClient, projectName, clusterName)
+	} else {
+		err = softDeleteCluster(ctx, clusterClient, projectName, clusterName)
 	}
+	if err != nil {
+		return fmt.Errorf("failed to delete cluster '%s': %w", clusterName, err)
+	}
+	fmt.Printf("Cluster '%s' deleted successfully.\n", clusterName)
+	return nil
+}
 
+func softDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
 	resp, err := clusterClient.DeleteV2ProjectsProjectNameClustersNameWithResponse(ctx, projectName, clusterName, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	err = checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting cluster %s", clusterName))
-	if err != nil {
-		fmt.Printf("Failed to delete cluster '%s': %v\n", clusterName, err)
-		return err
+	if resp.HTTPResponse.StatusCode != 202 {
+		return fmt.Errorf("failed to delete cluster %s: %s", clusterName, resp.HTTPResponse.Status)
 	}
-	fmt.Printf("Cluster '%s' deleted successfully.\n", clusterName)
 	return nil
+}
+
+func forceDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
+	return errors.New("force delete is not implemented yet, please use soft delete instead")
 }
