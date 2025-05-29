@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	u "github.com/google/uuid"
 	e "github.com/open-edge-platform/cli/internal/errors"
@@ -59,7 +60,7 @@ orch-cli delete host host-1234abcd  --project itep`
 const deauthorizeHostExamples = `#Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
 orch-cli deauthorize host host-1234abcd  --project itep`
 
-var hostHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
+var hostHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site ID", "Workload")
 var hostHeaderGet = "\nDetailed Host Information\n"
 
 func filterHelper(f string) *string {
@@ -111,21 +112,30 @@ func filterRegionsHelper(r string) (*string, error) {
 func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
-			"Serial Number", "Operating System", "Site", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
+			"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
 	}
 	for _, h := range *hosts {
 		//TODO clean this up
-		os, workload, site := "Not provisioned", "Not provisioned", "Not provisioned"
+		os, workload, site, siteName := "Not provisioned", "Not provisioned", "Not provisioned", "Not provisioned"
 		host := "Not connected"
 
 		if h.Instance != nil {
-			os = toJSON(h.Instance.CurrentOs.Name)
-			workload = toJSON(h.Instance.WorkloadMembers)
+			if h.Instance.CurrentOs != nil {
+				os = toJSON(h.Instance.CurrentOs.Name)
+			}
+			if h.Instance.WorkloadMembers != nil {
+				workload = toJSON(h.Instance.WorkloadMembers)
+			}
 		}
 		if h.SiteId != nil {
 			site = toJSON(h.SiteId)
 		}
+
+		if h.Site != nil && h.Site.Name != nil {
+			siteName = toJSON(h.Site.Name)
+		}
+
 		if *h.HostStatus != "" {
 			host = *h.HostStatus
 		}
@@ -139,8 +149,8 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 			//if h.CurrentOs != h.desiredOS avupdt is available
 			//if tcomp is set then reflect
 
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber,
-				os, site, workload, h.Name, h.Uuid, *h.CpuModel, avupdt, tcomp)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber,
+				os, site, siteName, workload, h.Name, h.Uuid, *h.CpuModel, avupdt, tcomp)
 		}
 	}
 }
@@ -430,6 +440,8 @@ func generateCSV(filename string) error {
 	return files.CreateFile(filename)
 }
 
+const kVSize = 2
+
 type ResponseCache struct {
 	OSProfileCache map[string]infra.OperatingSystemResource
 	SiteCache      map[string]infra.Site
@@ -437,8 +449,19 @@ type ResponseCache struct {
 	HostCache      map[string]infra.Host
 }
 
+type MetadataItem = struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 // Lists all Hosts - retrieves all hosts and displays selected information in tabular format
 func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
+
+	currentPath, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error finding current path for template generation:", err)
+		return err
+	}
 
 	generate, _ := cmd.Flags().GetBool("generate-csv")
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
@@ -450,11 +473,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 
 	if generate {
 		filename := "test.csv"
-		currentPath, err := os.Getwd()
-		if err != nil {
-			fmt.Println("Error finding current path for template generation:", err)
-			return err
-		}
+
 		err = generateCSV(fmt.Sprintf("%s/%s", currentPath, filename))
 		if err != nil {
 			return err
@@ -466,7 +485,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("--import-from-csv <path/to/file.csv> is required")
 	}
 
-	err := verifyCSVInput(csvFilePath)
+	err = verifyCSVInput(csvFilePath)
 	if err != nil {
 		return err
 	}
@@ -503,28 +522,16 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		doRegister(ctx, hostClient, projectName, record, respCache, &erringRecords)
 	}
 
-	// if len(erringRecords) > 0 {
-	// 	newFilename := fmt.Sprintf("%s_%s_%s", "import_error",
-	// 		time.Now().Format(time.RFC3339), filepath.Base(filePath))
-	// 	fmt.Printf("Generating error file: %s\n", newFilename)
-	// 	if err := files.WriteHostRecords(newFilename, erringRecords); err != nil {
-	// 		return e.NewCustomError(e.ErrFileRW)
-	// 	}
-	// 	return e.NewCustomError(e.ErrImportFailed)
-	// }
+	if len(erringRecords) > 0 {
+		newFilename := fmt.Sprintf("%s_%s_%s", "import_error",
+			time.Now().Format(time.RFC3339), filepath.Base(currentPath))
+		fmt.Printf("Generating error file: %s\n", newFilename)
+		if err := files.WriteHostRecords(newFilename, erringRecords); err != nil {
+			return e.NewCustomError(e.ErrFileRW)
+		}
+		return e.NewCustomError(e.ErrImportFailed)
+	}
 
-	//TODO Set up a host record type storing info??? See if its needed before requests are sent
-
-	//Get serial and UUI
-	//Get provisioning fields
-	//Register Host via API
-	//Check if alredy registered
-	// Check OS profile
-	// Create Instance
-	// Allocate host to site and add metadata
-	// Print success for succesfull registration
-
-	//Save errors to file
 	return nil
 }
 
@@ -541,17 +548,8 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 	//sanitize fields
 	rOut, err := sanitizeProvisioningFields(ctx, hClient, projectName, rIn, respCache, erringRecords)
 	if err != nil {
-		fmt.Printf("\n\n Error Sanitizing\n")
 		return
 	}
-
-	// //TODO delete
-	fmt.Printf("\n\nRegistering Host %s\n", rOut.OSProfile)
-	// fmt.Printf("\n Profile: %s\n", rOut.OSProfile)
-	// fmt.Printf("\n Site: %s\n", rOut.Site)
-	// fmt.Printf("\n Secure: %s\n", rOut.Secure)
-	// fmt.Printf("\n Remote User: %s\n", rOut.RemoteUser)
-	// fmt.Printf("\n Metadata: %s\n", rOut.Metadata)
 
 	//convert uuid
 	var uuidParsed u.UUID
@@ -578,7 +576,6 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 	if err != nil {
 		//if host already registered
 		if resp.HTTPResponse.StatusCode == http.StatusPreconditionFailed {
-			fmt.Printf("Status Precondition Failed\n")
 			//form a filter
 			hFilter := fmt.Sprintf("serialNumber='%s' AND uuid='%s'", sNo, uuid)
 
@@ -591,7 +588,6 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 				processError(err)
 			}
 
-			fmt.Printf("Done a get hosts call\n")
 			err = checkResponse(gresp.HTTPResponse, "error while getting host which failed registration")
 			if err != nil {
 				rIn.Error = err.Error()
@@ -605,13 +601,12 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 				*erringRecords = append(*erringRecords, rIn)
 				return
 			} else if (*gresp.JSON200.Hosts)[0].Instance != nil {
-				fmt.Printf("Alredy Registered - instance exists\n")
+				hostID = *(*gresp.JSON200.Hosts)[0].ResourceId
 				err = e.NewCustomError(e.ErrAlreadyRegistered)
 				rIn.Error = err.Error()
 				*erringRecords = append(*erringRecords, rIn)
 				return
 			} else {
-				fmt.Printf("Alredy Registered - no instance\n")
 				respCache.HostCache[*(*gresp.JSON200.Hosts)[0].ResourceId] = (*gresp.JSON200.Hosts)[0]
 				hostID = *(*gresp.JSON200.Hosts)[0].ResourceId
 			}
@@ -682,13 +677,58 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 		return
 	}
 
-	// if err := oClient.AllocateHostToSiteAndAddMetadata(ctx, hostID, rOut.Site, rOut.Metadata); err != nil {
-	// 	rIn.Error = err.Error()
-	// 	*erringRecords = append(*erringRecords, rIn)
-	// 	return
-	// }
-	// // Print host_id from response if successful
-	// fmt.Printf("✔ Host Serial number : %s  UUID : %s registered. Name : %s\n", sNo, uuid, hostID)
+	// Update host with Site and metadata
+	var metadata *infra.Metadata
+	if rOut.Metadata != "" {
+		metadata, err = DecodeMetadata(rOut.Metadata)
+		if err != nil {
+			rIn.Error = err.Error()
+			*erringRecords = append(*erringRecords, rIn)
+			return
+		}
+	}
+
+	sresp, err := hClient.PatchV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName, hostID,
+		infra.PatchV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody{
+			Metadata: metadata,
+			SiteId:   &rOut.Site,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		processError(err)
+		rIn.Error = err.Error()
+		*erringRecords = append(*erringRecords, rIn)
+		return
+	}
+
+	err = checkResponse(sresp.HTTPResponse, "error while linking site and metadata\n\n")
+	if err != nil {
+		rIn.Error = err.Error()
+		*erringRecords = append(*erringRecords, rIn)
+		return
+	}
+
+	// Print host_id from response if successful
+	fmt.Printf("✔ Host Serial number : %s  UUID : %s registered. Name : %s\n", sNo, uuid, hostID)
+}
+
+func DecodeMetadata(metadata string) (*infra.Metadata, error) {
+	metadataList := make(infra.Metadata, 0)
+	if metadata == "" {
+		return &metadataList, nil
+	}
+	metadataPairs := strings.Split(metadata, "&")
+	for _, pair := range metadataPairs {
+		kv := strings.Split(pair, "=")
+		if len(kv) != kVSize {
+			return &metadataList, e.NewCustomError(e.ErrInvalidMetadata)
+		}
+		mItem := MetadataItem{
+			Key:   kv[0],
+			Value: kv[1],
+		}
+		metadataList = append(metadataList, mItem)
+	}
+	return &metadataList, nil
 }
 
 func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, record types.HostRecord,
@@ -698,24 +738,20 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 
 	osProfileID, err := resolveOSProfile(ctx, hClient, projectName, record.OSProfile, record, respCache, erringRecords)
 	if err != nil {
-		fmt.Print("osprofile error sanitize\n")
 		return nil, err
 	}
 
 	if valErr := validateSecurityFeature(record.OSProfile, isSecure, record, respCache, erringRecords); valErr != nil {
-		fmt.Print("security feature error sanitize\n")
 		return nil, valErr
 	}
 
 	siteID, err := resolveSite(ctx, hClient, projectName, record.Site, record, respCache, erringRecords)
 	if err != nil {
-		fmt.Print("site error sanitize\n")
 		return nil, err
 	}
 
 	laID, err := resolveRemoteUser(ctx, hClient, projectName, record.RemoteUser, record, respCache, erringRecords)
 	if err != nil {
-		fmt.Print("remote user error sanitize\n")
 		return nil, err
 	}
 
