@@ -175,8 +175,10 @@ func runGetClusterCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Kubernetes Version: %s\n", *cluster.KubernetesVersion)
 	fmt.Printf("Template: %s\n", *cluster.Template)
 	fmt.Printf("Nodes:\n")
-	for _, node := range *cluster.Nodes {
-		fmt.Printf("- ID: %s, Role: %s\n", *node.Id, *node.Role)
+	if cluster.Nodes != nil {
+		for _, node := range *cluster.Nodes {
+			fmt.Printf("- ID: %s, Role: %s\n", *node.Id, *node.Role)
+		}
 	}
 	fmt.Printf("Status:\n")
 	fmt.Printf("- Lifecycle Phase: %s\n", *cluster.LifecyclePhase.Message)
