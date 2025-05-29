@@ -203,21 +203,6 @@ func printHost(writer io.Writer, host *infra.Host) {
 	_, _ = fmt.Fprintf(writer, "-\tCPU Sockets:\t %v\n\n", *host.CpuSockets)
 
 }
-
-func getRegisterCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:               "register",
-		Args:              cobra.MinimumNArgs(1),
-		Short:             "Register host",
-		PersistentPreRunE: auth.CheckAuth,
-	}
-
-	cmd.AddCommand(
-		getRegisterHostCommand(),
-	)
-	return cmd
-}
-
 func getDeauthorizeCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "deauthorize",
@@ -255,22 +240,6 @@ func getGetHostCommand() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE:    runGetHostCommand,
 	}
-	return cmd
-}
-
-func getRegisterHostCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "host <name> [flags, --serial and/or --uuid must be provided]",
-		Short:   "Registers a host",
-		Example: registerHostExamples,
-		Args:    cobra.ExactArgs(1),
-		RunE:    runRegisterHostCommand,
-	}
-
-	// Local persistent flags
-	cmd.PersistentFlags().StringP("uuid", "u", viper.GetString("uuid"), "Host UUID to be provided as registration argument")
-	cmd.PersistentFlags().StringP("serial", "s", viper.GetString("serial"), "Host Serial Number to be provided as registration argument")
-
 	return cmd
 }
 
@@ -690,6 +659,7 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 
 	sresp, err := hClient.PatchV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName, hostID,
 		infra.PatchV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody{
+			Name:     hostID,
 			Metadata: metadata,
 			SiteId:   &rOut.Site,
 		}, auth.AddAuthHeader)
@@ -909,61 +879,50 @@ func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, 
 	return "", errors.New(record.Error)
 }
 
-// Registers specific Host - registers sprcific host using SN and/or UUID
-func runRegisterHostCommand(cmd *cobra.Command, args []string) error {
-
-	//TODO add autoonboarding and autoprovision??
-	hostname := args[0]
-
-	serial, _ := cmd.Flags().GetString("serial")
-	uuidString, _ := cmd.Flags().GetString("uuid")
-
-	if serial == "" && uuidString == "" {
-		return errors.New("at least one of the flags 'serial' or 'uuid' must be provided")
-	}
+// Deletes specific Host - finds a host using resource ID and deletes it
+func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
+	hostID := args[0]
 
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
-	var uuidParsed *u.UUID
-	if uuidString != "" {
-		parsedUUID, err := u.Parse(uuidString)
-		if err != nil {
-			return err
-		}
-		uuidParsed = &parsedUUID
-	}
-
-	resp, err := hostClient.PostV1ProjectsProjectNameComputeHostsRegisterWithResponse(ctx, projectName,
-		infra.PostV1ProjectsProjectNameComputeHostsRegisterJSONRequestBody{
-			Name:         &hostname,
-			SerialNumber: &serial,
-			Uuid:         uuidParsed,
-		}, auth.AddAuthHeader)
+	//TODO discovered bug delete instance
+	//Get instance associated with host
+	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
+		hostID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, "error while registering host")
-}
-
-// Deletes specific Host - finds a host using resource ID and deletes it
-func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
-	hostID := args[0]
-	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	err = checkResponse(resp.HTTPResponse, "error while getting host to delete")
 	if err != nil {
 		return err
 	}
 
-	resp, err := hostClient.DeleteV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
+	if resp.JSON200.Instance != nil {
+		instanceID := resp.JSON200.Instance.ResourceId
+
+		iresp, err := hostClient.DeleteV1ProjectsProjectNameComputeInstancesInstanceIDWithResponse(ctx, projectName,
+			*instanceID, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		err = checkResponse(iresp.HTTPResponse, "error while deleting instance during host deletion")
+		if err != nil {
+			return err
+		}
+	}
+
+	dresp, err := hostClient.DeleteV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
 		hostID, infra.DeleteV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, "error while deleting host")
+	return checkResponse(dresp.HTTPResponse, "error while deleting host")
 }
 
 // Deauthorizes specific Host - finds a host using resource ID and invalidates it

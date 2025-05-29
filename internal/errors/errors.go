@@ -56,7 +56,7 @@ var errorMessages = map[ErrorCode]string{
 	ErrInternal:               "Internal error",
 	ErrCheckFailed:            "Pre-flight check failed",
 	ErrFileCreate:             "File creation error",
-	ErrImportFailed:           "Failed to import all hosts",
+	ErrImportFailed:           "Failed to import hosts",
 	ErrRegisterFailed:         "Failed to register host",
 	ErrInstanceFailed:         "Failed to create instance",
 	ErrHostSiteMetadataFailed: "Failed to allocate site or metadata",
