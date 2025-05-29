@@ -41,9 +41,10 @@ func getListClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cluster",
 		Short:   "List clusters",
-		Example: "orch-cli list cluster --project some-project",
+		Example: "orch-cli list cluster",
 		RunE:    runListClusterCommand,
 	}
+	cmd.Flags().Bool("not-ready", false, "Show only clusters that are not ready")
 	return cmd
 }
 
@@ -51,7 +52,7 @@ func getDeleteClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cluster <name> [flags]",
 		Short:   "Delete a cluster",
-		Example: "orch-cli delete cluster cli-cluster --project some-project",
+		Example: "orch-cli delete cluster cli-cluster",
 		Args:    cobra.ExactArgs(1),
 		RunE:    runDeleteClusterCommand,
 	}
@@ -148,13 +149,18 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return processError(err)
 	}
+	notReady, err := cmd.Flags().GetBool("not-ready")
+	if err != nil {
+		return processError(err)
+	}
+
 	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
 	var clusters []coapi.ClusterInfo
-	pageSize := 50
+	pageSize := 100
 	offset := 0
 
 	for {
@@ -184,12 +190,41 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 		offset += pageSize
 	}
 
-	fmt.Printf("Total clusters found: %d\n", len(clusters))
-	fmt.Printf("Clusters in project '%s':\n", projectName)
-	for i, cluster := range clusters {
-		fmt.Printf("%v. %s (%s)\n", i, *cluster.Name, *cluster.ProviderStatus.Message)
+	fmt.Printf("Found %d clusters in project '%s'\n", len(clusters), projectName)
+	filteredClusters := 0
+	result := "Clusters:\n"
+	for _, cluster := range clusters {
+		if notReady && clusterReady(cluster) {
+			continue
+		}
+		filteredClusters++
+		result += fmt.Sprintf("- %s (%s)\n", *cluster.Name, *cluster.ProviderStatus.Message)
 	}
+	if notReady {
+		fmt.Printf("Found %d clusters that are not ready in project '%s'\n", filteredClusters, projectName)
+	}
+	fmt.Println(result)
 	return nil
+}
+
+func clusterReady(cluster coapi.ClusterInfo) bool {
+	if cluster.LifecyclePhase == nil || *cluster.LifecyclePhase.Indicator != coapi.STATUSINDICATIONIDLE {
+		return false
+	}
+	if cluster.ProviderStatus == nil || *cluster.ProviderStatus.Indicator != coapi.STATUSINDICATIONIDLE {
+		return false
+	}
+	if cluster.ControlPlaneReady == nil || *cluster.ControlPlaneReady.Indicator != coapi.STATUSINDICATIONIDLE {
+		return false
+	}
+	if cluster.InfrastructureReady == nil || *cluster.InfrastructureReady.Indicator != coapi.STATUSINDICATIONIDLE {
+		return false
+	}
+	if cluster.NodeHealth == nil || *cluster.NodeHealth.Indicator != coapi.STATUSINDICATIONIDLE {
+		return false
+	}
+
+	return true
 }
 
 func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
