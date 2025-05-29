@@ -39,6 +39,17 @@ func getCreateClusterCommand() *cobra.Command {
 	return cmd
 }
 
+func getGetClusterCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "cluster <name>",
+		Short:   "Get details of a cluster",
+		Example: "orch-cli get cluster cli-cluster",
+		Args:    cobra.ExactArgs(1),
+		RunE:    runGetClusterCommand,
+	}
+	return cmd
+}
+
 func getListClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cluster",
@@ -58,7 +69,7 @@ func getDeleteClusterCommand() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE:    runDeleteClusterCommand,
 	}
-	cmd.Flags().Bool("force", false, "Force delete the cluster without waiting for host cleanup")
+	cmd.Flags().Bool("force", false, "Force delete the cluster without waiting for the host cleanup")
 	return cmd
 }
 
@@ -144,6 +155,48 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating cluster %s", clusterName))
+}
+
+func runGetClusterCommand(cmd *cobra.Command, args []string) error {
+	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	clusterName := args[0]
+
+	resp, err := clusterClient.GetV2ProjectsProjectNameClustersNameWithResponse(ctx, projectName, clusterName, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	if resp.JSON200 == nil {
+		return fmt.Errorf("cluster %s not found in project %s", clusterName, projectName)
+	}
+
+	fmt.Printf("Project: %s\n", projectName)
+	fmt.Printf("Name: %s\n", *resp.JSON200.Name)
+	fmt.Printf("Kubernetes Version: %s\n", *resp.JSON200.KubernetesVersion)
+	fmt.Printf("Template: %s\n", *resp.JSON200.Template)
+	fmt.Printf("Nodes:\n")
+	for _, node := range *resp.JSON200.Nodes {
+		fmt.Printf("- ID: %s, Role: %s\n", *node.Id, *node.Role)
+	}
+	fmt.Printf("Status:\n")
+	fmt.Printf("- Lifecycle Phase: %s\n", *resp.JSON200.LifecyclePhase.Message)
+	fmt.Printf("- Provider: %s\n", *resp.JSON200.ProviderStatus.Message)
+	fmt.Printf("- Control Plane Ready: %s\n", *resp.JSON200.ControlPlaneReady.Message)
+	fmt.Printf("- Infrastructure Ready: %s\n", *resp.JSON200.InfrastructureReady.Message)
+	fmt.Printf("- Node Health: %s\n", *resp.JSON200.NodeHealth.Message)
+	if resp.JSON200.Labels != nil {
+		fmt.Printf("Labels:\n")
+		for key, value := range *resp.JSON200.Labels {
+			fmt.Printf("- %s: %s\n", key, value)
+		}
+	} else {
+		fmt.Println("Labels: None")
+	}
+	return nil
 }
 
 func runListClusterCommand(cmd *cobra.Command, _ []string) error {

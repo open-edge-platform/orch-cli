@@ -82,6 +82,7 @@ func getGetCommand() *cobra.Command {
 		getGetNetworkCommand(),
 
 		getGetDeploymentCommand(),
+		getGetClusterCommand(),
 
 		// Add plurals here for consistency with kubectl
 		getListRegistriesCommand(),
