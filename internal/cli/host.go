@@ -260,7 +260,7 @@ func getRegisterHostCommand() *cobra.Command {
 func getDeleteHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "host <resourceID> [flags]",
-		Short:   "Deletes a host",
+		Short:   "Deletes a host and associated instance",
 		Example: deleteHostExamples,
 		Args:    cobra.ExactArgs(1),
 		RunE:    runDeleteHostCommand,
@@ -357,8 +357,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 			return processError(err)
 		}
 
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-			hostHeader, "error getting Hosts"); !proceed {
+		if err := checkResponse(resp.HTTPResponse, "error while retrieving hosts"); err != nil {
 			return err
 		}
 		hosts = append(hosts, *resp.JSON200.Hosts...)
@@ -445,18 +444,48 @@ func runRegisterHostCommand(cmd *cobra.Command, args []string) error {
 // Deletes specific Host - finds a host using resource ID and deletes it
 func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	hostID := args[0]
+	_, verbose := getOutputContext(cmd)
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := hostClient.DeleteV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
+	// retrive the host (to check if it has an instance associated with it)
+	resp1, err := hostClient.GetV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if err := checkResponse(resp1.HTTPResponse, "error while retrieving host"); err != nil {
+		return err
+	}
+	host := *resp1.JSON200
+
+	// delete the instance if it exists
+	instanceID := host.Instance.InstanceID
+	if instanceID != nil && *instanceID != "" {
+		resp2, err := hostClient.DeleteV1ProjectsProjectNameComputeInstancesInstanceIDWithResponse(ctx, projectName, *instanceID, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp2.HTTPResponse, "error while deleting instance"); err != nil {
+			return err
+		}
+		fmt.Printf("Instance %v associated with host deleted successfully\n", *instanceID)
+	} else if verbose {
+		fmt.Printf("Host %s does not have an instance associated with it, deleting host only\n", hostID)
+	}
+
+	// delete the host
+	resp3, err := hostClient.DeleteV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
 		hostID, infra.DeleteV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-
-	return checkResponse(resp.HTTPResponse, "error while deleting host")
+	if err := checkResponse(resp3.HTTPResponse, "error while deleting host"); err != nil {
+		return err
+	}
+	fmt.Printf("Host %s deleted successfully\n", hostID)
+	return nil
 }
 
 // Deauthorizes specific Host - finds a host using resource ID and invalidates it
