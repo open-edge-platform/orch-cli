@@ -368,7 +368,11 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 	}
 	printHosts(writer, &hosts, verbose)
 	if verbose {
-		fmt.Fprintf(writer, "\nTotal Hosts: %d\n", len(hosts))
+		if filter != nil {
+			fmt.Fprintf(writer, "\nTotal Hosts (filter: %v): %d\n", *filter, len(hosts))
+		} else {
+			fmt.Fprintf(writer, "\nTotal Hosts: %d\n", len(hosts))
+		}
 	}
 	return writer.Flush()
 }
