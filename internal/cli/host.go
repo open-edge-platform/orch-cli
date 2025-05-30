@@ -471,9 +471,6 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 		if err := checkResponse(resp2.HTTPResponse, "error while deleting instance"); err != nil {
 			return err
 		}
-		fmt.Printf("Instance %v associated with host deleted successfully\n", *instanceID)
-	} else if verbose {
-		fmt.Printf("Host %s does not have an instance associated with it, deleting host only\n", hostID)
 	}
 
 	// delete the host
