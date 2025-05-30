@@ -109,8 +109,12 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 		host := "Not connected"
 
 		if h.Instance != nil {
-			os = toJSON(h.Instance.CurrentOs.Name)
-			workload = toJSON(h.Instance.WorkloadMembers)
+			if h.Instance.CurrentOs != nil && h.Instance.CurrentOs.Name != nil {
+				os = toJSON(h.Instance.CurrentOs.Name)
+			}
+			if h.Instance.WorkloadMembers != nil {
+				workload = toJSON(h.Instance.WorkloadMembers)
+			}
 		}
 		if h.SiteId != nil {
 			site = toJSON(h.SiteId)
