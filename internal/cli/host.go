@@ -97,10 +97,12 @@ func filterRegionsHelper(r string) (*string, error) {
 
 // Prints Host list in tabular format
 func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
-
 	if verbose {
 		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
 			"Serial Number", "Operating System", "Site", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
+	} else {
+		var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
+		fmt.Fprintf(writer, "%s\n", shortHeader)
 	}
 	for _, h := range *hosts {
 		//TODO clean this up
