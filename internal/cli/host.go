@@ -48,7 +48,6 @@ orch-cli delete host host-1234abcd  --project itep`
 const deauthorizeHostExamples = `#Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
 orch-cli deauthorize host host-1234abcd  --project itep`
 
-var hostHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
 var hostHeaderGet = "\nDetailed Host Information\n"
 
 func filterHelper(f string) *string {
@@ -450,7 +449,7 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// retrive the host (to check if it has an instance associated with it)
+	// retrieve the host (to check if it has an instance associated with it)
 	resp1, err := hostClient.GetV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
