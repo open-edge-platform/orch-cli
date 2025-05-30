@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
+	"github.com/open-edge-platform/cli/pkg/rest/infra"
 )
 
 const createClusterExamples = `# Create a cluster with the name "my-cluster" on the given nodes using the default template
@@ -37,15 +39,37 @@ func getCreateClusterCommand() *cobra.Command {
 	return cmd
 }
 
+func getGetClusterCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "cluster <name>",
+		Short:   "Get details of a cluster",
+		Example: "orch-cli get cluster cli-cluster",
+		Args:    cobra.ExactArgs(1),
+		RunE:    runGetClusterCommand,
+	}
+	return cmd
+}
+
 func getListClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cluster",
 		Short:   "List clusters",
-		Example: "orch-cli list cluster --project some-project",
+		Example: "orch-cli list cluster",
 		RunE:    runListClusterCommand,
 	}
-	cmd.Flags().String("project", "", "Project name to filter clusters")
-	_ = cmd.MarkFlagRequired("project")
+	cmd.Flags().Bool("not-ready", false, "Show only clusters that are not ready")
+	return cmd
+}
+
+func getDeleteClusterCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "cluster <name> [flags]",
+		Short:   "Delete a cluster",
+		Example: "orch-cli delete cluster cli-cluster",
+		Args:    cobra.ExactArgs(1),
+		RunE:    runDeleteClusterCommand,
+	}
+	cmd.Flags().Bool("force", false, "Force delete the cluster without waiting for the host cleanup")
 	return cmd
 }
 
@@ -133,18 +157,63 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating cluster %s", clusterName))
 }
 
+func runGetClusterCommand(cmd *cobra.Command, args []string) error {
+	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	clusterName := args[0]
+
+	cluster, err := getClusterDetails(ctx, clusterClient, projectName, clusterName)
+	if err != nil {
+		return fmt.Errorf("failed to get cluster details: %w", err)
+	}
+
+	fmt.Printf("Project: %s\n", projectName)
+	fmt.Printf("Name: %s\n", *cluster.Name)
+	fmt.Printf("Kubernetes Version: %s\n", *cluster.KubernetesVersion)
+	fmt.Printf("Template: %s\n", *cluster.Template)
+	fmt.Printf("Nodes:\n")
+	if cluster.Nodes != nil {
+		for _, node := range *cluster.Nodes {
+			fmt.Printf("- ID: %s, Role: %s\n", *node.Id, *node.Role)
+		}
+	}
+	fmt.Printf("Status:\n")
+	fmt.Printf("- Lifecycle Phase: %s\n", *cluster.LifecyclePhase.Message)
+	fmt.Printf("- Provider: %s\n", *cluster.ProviderStatus.Message)
+	fmt.Printf("- Control Plane Ready: %s\n", *cluster.ControlPlaneReady.Message)
+	fmt.Printf("- Infrastructure Ready: %s\n", *cluster.InfrastructureReady.Message)
+	fmt.Printf("- Node Health: %s\n", *cluster.NodeHealth.Message)
+	if cluster.Labels != nil {
+		fmt.Printf("Labels:\n")
+		for key, value := range *cluster.Labels {
+			fmt.Printf("- %s: %s\n", key, value)
+		}
+	} else {
+		fmt.Println("Labels: None")
+	}
+	return nil
+}
+
 func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 	verbose, err := cmd.Flags().GetBool("verbose")
 	if err != nil {
 		return processError(err)
 	}
+	notReady, err := cmd.Flags().GetBool("not-ready")
+	if err != nil {
+		return processError(err)
+	}
+
 	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
 	var clusters []coapi.ClusterInfo
-	pageSize := 50
+	pageSize := 100
 	offset := 0
 
 	for {
@@ -174,10 +243,145 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 		offset += pageSize
 	}
 
-	fmt.Printf("Total clusters found: %d\n", len(clusters))
-	fmt.Printf("Clusters in project '%s':\n", projectName)
-	for i, cluster := range clusters {
-		fmt.Printf("%v. %s (%s)\n", i, *cluster.Name, *cluster.ProviderStatus.Message)
+	fmt.Printf("Found %d clusters in project '%s'\n", len(clusters), projectName)
+	filteredClusters := 0
+	result := "Clusters:\n"
+	for _, cluster := range clusters {
+		if notReady && clusterReady(cluster) {
+			continue
+		}
+		filteredClusters++
+		result += fmt.Sprintf("- %s (%s)\n", *cluster.Name, *cluster.ProviderStatus.Message)
+	}
+	if notReady {
+		fmt.Printf("Found %d clusters that are not ready in project '%s'\n", filteredClusters, projectName)
+	}
+	fmt.Println(result)
+	return nil
+}
+
+func clusterReady(cluster coapi.ClusterInfo) bool {
+	if cluster.LifecyclePhase == nil || *cluster.LifecyclePhase.Indicator != coapi.STATUSINDICATIONIDLE {
+		return false
+	}
+	if cluster.ProviderStatus == nil || *cluster.ProviderStatus.Indicator != coapi.STATUSINDICATIONIDLE {
+		return false
+	}
+	if cluster.ControlPlaneReady == nil || *cluster.ControlPlaneReady.Indicator != coapi.STATUSINDICATIONIDLE {
+		return false
+	}
+	if cluster.InfrastructureReady == nil || *cluster.InfrastructureReady.Indicator != coapi.STATUSINDICATIONIDLE {
+		return false
+	}
+	if cluster.NodeHealth == nil || *cluster.NodeHealth.Indicator != coapi.STATUSINDICATIONIDLE {
+		return false
+	}
+
+	return true
+}
+
+func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
+	force, err := cmd.Flags().GetBool("force")
+	if err != nil {
+		return processError(err)
+	}
+
+	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	clusterName := args[0]
+
+	fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
+	if force {
+		ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+		if err != nil {
+			return fmt.Errorf("failed to get infra service context: %w", err)
+		}
+		err = forceDeleteCluster(ctx, hostClient, clusterClient, projectName, clusterName)
+		if err != nil {
+			return fmt.Errorf("failed to force delete cluster '%s': %w", clusterName, err)
+		}
+	} else {
+		err = softDeleteCluster(ctx, clusterClient, projectName, clusterName)
+		if err != nil {
+			return fmt.Errorf("failed to soft delete cluster '%s': %w", clusterName, err)
+		}
+	}
+	fmt.Printf("Cluster '%s' deletion initiated successfully.\n", clusterName)
+	return nil
+}
+
+func getClusterDetails(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) (res coapi.ClusterDetailInfo, err error) {
+	resp, err := clusterClient.GetV2ProjectsProjectNameClustersNameWithResponse(ctx, projectName, clusterName, auth.AddAuthHeader)
+	if err != nil {
+		return res, processError(err)
+	}
+	if resp.JSON200 == nil {
+		return res, fmt.Errorf("cluster %s not found in project %s", clusterName, projectName)
+	}
+	return *resp.JSON200, nil
+}
+
+func softDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
+	resp, err := clusterClient.DeleteV2ProjectsProjectNameClustersNameWithResponse(ctx, projectName, clusterName, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if resp.HTTPResponse.StatusCode != 204 {
+		return fmt.Errorf("failed to delete cluster %s: %s", clusterName, resp.HTTPResponse.Status)
 	}
 	return nil
+}
+
+func forceDeleteCluster(ctx context.Context, hostClient *infra.ClientWithResponses, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
+	cluster, err := getClusterDetails(ctx, clusterClient, projectName, clusterName)
+	if err != nil {
+		return fmt.Errorf("failed to get cluster details for force delete: %w", err)
+	}
+
+	for _, node := range *cluster.Nodes {
+		if node.Id == nil || *node.Id == "" {
+			return fmt.Errorf("node ID is missing for node in cluster %s", clusterName)
+		}
+		hostID := *node.Id
+		uuid, err := getHostUUID(ctx, hostClient, projectName, hostID)
+		if err != nil {
+			return fmt.Errorf("failed to get UUID for host %s: %w", *node.Id, err)
+		}
+		fmt.Printf("Force deleting node %s from cluster %s\n", uuid, clusterName)
+		force := true
+		params := coapi.DeleteV2ProjectsProjectNameClustersNameNodesNodeIdParams{
+			Force: &force,
+		}
+		resp, err := clusterClient.DeleteV2ProjectsProjectNameClustersNameNodesNodeIdWithResponse(ctx, projectName, clusterName, uuid, &params, auth.AddAuthHeader)
+		if err != nil {
+			return fmt.Errorf("failed to delete node %s from cluster %s: %w", uuid, clusterName, err)
+		}
+		if resp.HTTPResponse.StatusCode != 204 {
+			return fmt.Errorf("failed to delete node %s from cluster %s: %s", uuid, clusterName, resp.HTTPResponse.Status)
+		}
+		fmt.Printf("Node %s deleted successfully from cluster %s\n", uuid, clusterName)
+
+	}
+
+	return nil
+}
+
+func getHostUUID(ctx context.Context, hostClient *infra.ClientWithResponses, projectName, hostID string) (string, error) {
+	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+	if err != nil {
+		return "", processError(err)
+	}
+	if resp.JSON200 == nil {
+		return "", fmt.Errorf("host %s not found in project %s", hostID, projectName)
+	}
+
+	host := resp.JSON200
+	uuid := host.Uuid
+	if uuid == nil {
+		return "", fmt.Errorf("host %s does not have a UUID", hostID)
+	}
+	return uuid.String(), nil
 }

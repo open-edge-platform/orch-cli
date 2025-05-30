@@ -82,6 +82,7 @@ func getGetCommand() *cobra.Command {
 		getGetNetworkCommand(),
 
 		getGetDeploymentCommand(),
+		getGetClusterCommand(),
 
 		// Add plurals here for consistency with kubectl
 		getListRegistriesCommand(),
@@ -141,7 +142,7 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteApplicationReferenceCommand(),
 
 		getDeleteDeploymentCommand(),
-
+		getDeleteClusterCommand(),
 		getDeleteNetworkCommand(),
 
 		getDeleteOSProfileCommand(),
