@@ -45,14 +45,35 @@ orch-cli list host --project some-project --region region-1234abcd
 const getHostExamples = `# Get detailed information about specific host using the host Resource ID
 orch-cli get host host-1234abcd --project some-project`
 
-const registerHostExamples = `# Register a host with a name "my-host" to an Edge Orchestrator using a Serial number of the machine and/or it's UUID.
-orch-cli register host my-host --project some-project --serial 12345678 --uuid 0e4ec196-d1c4-4d81-9870-f202ebb498cc
+const createHostExamples = `# Provision a host or a number of hosts from a CSV file
 
-orch-cli register host my-host --project some-project --serial 12345678
+# Generate CSV input file using the --generate-csv flag - the output will be a base test.csv file.
+orch-cli create host --project some-project --generate-csv
 
-orch-cli register host my-host --project some-project --uuid 0e4ec196-d1c4-4d81-9870-f202ebb498cc`
+# Sample input csv file hosts.csv
 
-const createHostExamples = "# Provision a host from a CSV file"
+Serial - Serial Number of the machine - mandatory field
+UUID - UUID of the machine - mandatory field
+OSProfile - OS Profile to be used for provisioning of the host - name of the profile or it's resource ID - mandatory field
+Site - The resource ID of the site to which the host will be provisioned - mandatory field
+Secure - Optional security feature to configure for the host - must be supported by OS Profile if enabled
+Remote User - Optional remote user name or resource ID to configure for the host
+Metadata - Optional metadata to configure for the host
+AMTEnable - Optional AMT feature to be configured for the host
+CloudInitMeta - Optional Cloud Init Metadata to be configured for the host
+K8sClusterTemplate - Optional Cluster template to be used for K8s deployment on the host
+
+Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sClusterTemplate,Error - do not fill
+2500JF3,4c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic,site-c69a3c81,,localaccount-4c2c5f5a
+1500JF3,1c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value1&key2=value2
+15002F3,1c4c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value2&key3=value4
+
+# --dry-run allows for verification of the validity of the input csv file without creating hosts
+orch-cli create host --project some-project --import-from-csv test.csv --dry-run
+
+# Create hosts - --import-from-csv is a mandatory flag pointing to the input file. Succesfully provisioned host indicated by output - errors provided in output file
+orch-cli create host --project some-project --import-from-csv test.csv
+`
 
 const deleteHostExamples = `#Delete a host using it's host Resource ID
 orch-cli delete host host-1234abcd  --project itep`
