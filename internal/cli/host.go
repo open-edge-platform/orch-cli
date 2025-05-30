@@ -445,7 +445,6 @@ func runRegisterHostCommand(cmd *cobra.Command, args []string) error {
 // Deletes specific Host - finds a host using resource ID and deletes it
 func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	hostID := args[0]
-	_, verbose := getOutputContext(cmd)
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
