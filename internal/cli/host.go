@@ -343,22 +343,33 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeHostsParams{
-			Filter: filter,
-			SiteID: site,
-		}, auth.AddAuthHeader)
-	if err != nil {
-		return processError(err)
+	pageSize := 20
+	hosts := make([]infra.Host, 0)
+	for offset := 0; ; offset += pageSize {
+		resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsWithResponse(ctx, projectName,
+			&infra.GetV1ProjectsProjectNameComputeHostsParams{
+				Filter:   filter,
+				SiteID:   site,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+			hostHeader, "error getting Hosts"); !proceed {
+			return err
+		}
+		hosts = append(hosts, *resp.JSON200.Hosts...)
+		if !*resp.JSON200.HasNext {
+			break // No more hosts to process
+		}
 	}
-
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		hostHeader, "error getting Hosts"); !proceed {
-		return err
+	printHosts(writer, &hosts, verbose)
+	if verbose {
+		fmt.Fprintf(writer, "\nTotal Hosts: %d\n", len(hosts))
 	}
-
-	printHosts(writer, resp.JSON200.Hosts, verbose)
-
 	return writer.Flush()
 }
 
