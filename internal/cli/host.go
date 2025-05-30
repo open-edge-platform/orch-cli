@@ -48,7 +48,6 @@ orch-cli delete host host-1234abcd  --project itep`
 const deauthorizeHostExamples = `#Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
 orch-cli deauthorize host host-1234abcd  --project itep`
 
-var hostHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
 var hostHeaderGet = "\nDetailed Host Information\n"
 
 func filterHelper(f string) *string {
@@ -98,10 +97,12 @@ func filterRegionsHelper(r string) (*string, error) {
 
 // Prints Host list in tabular format
 func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
-
 	if verbose {
 		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
 			"Serial Number", "Operating System", "Site", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
+	} else {
+		var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
+		fmt.Fprintf(writer, "%s\n", shortHeader)
 	}
 	for _, h := range *hosts {
 		//TODO clean this up
@@ -109,8 +110,12 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 		host := "Not connected"
 
 		if h.Instance != nil {
-			os = toJSON(h.Instance.CurrentOs.Name)
-			workload = toJSON(h.Instance.WorkloadMembers)
+			if h.Instance.CurrentOs != nil && h.Instance.CurrentOs.Name != nil {
+				os = toJSON(h.Instance.CurrentOs.Name)
+			}
+			if h.Instance.WorkloadMembers != nil {
+				workload = toJSON(h.Instance.WorkloadMembers)
+			}
 		}
 		if h.SiteId != nil {
 			site = toJSON(h.SiteId)
@@ -256,7 +261,7 @@ func getRegisterHostCommand() *cobra.Command {
 func getDeleteHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "host <resourceID> [flags]",
-		Short:   "Deletes a host",
+		Short:   "Deletes a host and associated instance",
 		Example: deleteHostExamples,
 		Args:    cobra.ExactArgs(1),
 		RunE:    runDeleteHostCommand,
@@ -339,22 +344,36 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeHostsParams{
-			Filter: filter,
-			SiteID: site,
-		}, auth.AddAuthHeader)
-	if err != nil {
-		return processError(err)
+	pageSize := 20
+	hosts := make([]infra.Host, 0)
+	for offset := 0; ; offset += pageSize {
+		resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsWithResponse(ctx, projectName,
+			&infra.GetV1ProjectsProjectNameComputeHostsParams{
+				Filter:   filter,
+				SiteID:   site,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		if err := checkResponse(resp.HTTPResponse, "error while retrieving hosts"); err != nil {
+			return err
+		}
+		hosts = append(hosts, *resp.JSON200.Hosts...)
+		if !*resp.JSON200.HasNext {
+			break // No more hosts to process
+		}
 	}
-
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		hostHeader, "error getting Hosts"); !proceed {
-		return err
+	printHosts(writer, &hosts, verbose)
+	if verbose {
+		if filter != nil {
+			fmt.Fprintf(writer, "\nTotal Hosts (filter: %v): %d\n", *filter, len(hosts))
+		} else {
+			fmt.Fprintf(writer, "\nTotal Hosts: %d\n", len(hosts))
+		}
 	}
-
-	printHosts(writer, resp.JSON200.Hosts, verbose)
-
 	return writer.Flush()
 }
 
@@ -431,13 +450,39 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := hostClient.DeleteV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
+	// retrieve the host (to check if it has an instance associated with it)
+	resp1, err := hostClient.GetV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if err := checkResponse(resp1.HTTPResponse, "error while retrieving host"); err != nil {
+		return err
+	}
+	host := *resp1.JSON200
+
+	// delete the instance if it exists
+	instanceID := host.Instance.InstanceID
+	if instanceID != nil && *instanceID != "" {
+		resp2, err := hostClient.DeleteV1ProjectsProjectNameComputeInstancesInstanceIDWithResponse(ctx, projectName, *instanceID, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp2.HTTPResponse, "error while deleting instance"); err != nil {
+			return err
+		}
+	}
+
+	// delete the host
+	resp3, err := hostClient.DeleteV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
 		hostID, infra.DeleteV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-
-	return checkResponse(resp.HTTPResponse, "error while deleting host")
+	if err := checkResponse(resp3.HTTPResponse, "error while deleting host"); err != nil {
+		return err
+	}
+	fmt.Printf("Host %s deleted successfully\n", hostID)
+	return nil
 }
 
 // Deauthorizes specific Host - finds a host using resource ID and invalidates it
