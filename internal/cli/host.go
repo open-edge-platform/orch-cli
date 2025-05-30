@@ -71,7 +71,7 @@ Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8
 # --dry-run allows for verification of the validity of the input csv file without creating hosts
 orch-cli create host --project some-project --import-from-csv test.csv --dry-run
 
-# Create hosts - --import-from-csv is a mandatory flag pointing to the input file. Succesfully provisioned host indicated by output - errors provided in output file
+# Create hosts - --import-from-csv is a mandatory flag pointing to the input file. Successfully provisioned host indicated by output - errors provided in output file
 orch-cli create host --project some-project --import-from-csv test.csv
 `
 
@@ -292,7 +292,7 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 		return
 	}
 
-	err = allocateHostToSiteAndAddMetadata(ctx, hClient, respCache, projectName, hostID, rOut)
+	err = allocateHostToSiteAndAddMetadata(ctx, hClient, projectName, hostID, rOut)
 	if err != nil {
 		rIn.Error = err.Error()
 		*erringRecords = append(*erringRecords, rIn)
@@ -868,7 +868,7 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 					Filter: &hFilter,
 				}, auth.AddAuthHeader)
 			if err != nil {
-				processError(err)
+				return "", processError(err)
 			}
 
 			err = checkResponse(gresp.HTTPResponse, "error while getting host which failed registration")
@@ -882,10 +882,10 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 			} else if (*gresp.JSON200.Hosts)[0].Instance != nil {
 				err = e.NewCustomError(e.ErrAlreadyRegistered)
 				return "", err
-			} else {
-				respCache.HostCache[*(*gresp.JSON200.Hosts)[0].ResourceId] = (*gresp.JSON200.Hosts)[0]
-				return *(*gresp.JSON200.Hosts)[0].ResourceId, nil
 			}
+
+			respCache.HostCache[*(*gresp.JSON200.Hosts)[0].ResourceId] = (*gresp.JSON200.Hosts)[0]
+			return *(*gresp.JSON200.Hosts)[0].ResourceId, nil
 
 		} else {
 			return "", err
@@ -895,9 +895,8 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 		if resp.JSON201 != nil && resp.JSON201.ResourceId != nil {
 			respCache.HostCache[*resp.JSON201.ResourceId] = *resp.JSON201
 			return *resp.JSON201.ResourceId, nil
-		} else {
-			return "", errors.New("host not found")
 		}
+		return "", errors.New("host not found")
 	}
 }
 
@@ -949,7 +948,7 @@ func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, res
 }
 
 // Decode input metadata and add to host, allocate host to site
-func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient *infra.ClientWithResponses, respCache ResponseCache,
+func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient *infra.ClientWithResponses,
 	projectName, hostID string, rOut *types.HostRecord) error {
 
 	// Update host with Site and metadata
