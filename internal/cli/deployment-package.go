@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,11 +6,12 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
-	"io"
-	"strings"
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {

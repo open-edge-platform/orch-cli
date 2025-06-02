@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2025-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -26,7 +25,7 @@ func getCreateApplicationCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Create an application",
 		Args:    cobra.ExactArgs(2),
-		Example: "orch-cli create applications --project some-project",
+		Example: "orch-cli create application my-app 1.0.0 --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry",
 		RunE:    runCreateApplicationCommand,
 	}
 	addEntityFlags(cmd, "application")
@@ -60,6 +59,7 @@ func getGetApplicationCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Get an application",
 		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli get application my-app --project some-project",
 		RunE:    runGetApplicationCommand,
 	}
 	return cmd
@@ -218,7 +218,6 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 		&catapi.CatalogServiceListApplicationsParams{
 			Kinds:    getApplicationKinds(cmd),
 			OrderBy:  getFlag(cmd, "order-by"),
-			Filter:   getFlag(cmd, "filter"),
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}, auth.AddAuthHeader)

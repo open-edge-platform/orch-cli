@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -9,11 +8,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/open-edge-platform/cli/pkg/auth"
-	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/spf13/cobra"
 )
 
 var (

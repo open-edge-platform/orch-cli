@@ -1,15 +1,15 @@
-// SPDX-FileCopyrightText: 2023-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 	"text/tabwriter"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCheckStatus(t *testing.T) {

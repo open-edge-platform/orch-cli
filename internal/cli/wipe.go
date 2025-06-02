@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2023-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,10 +6,11 @@ package cli
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	restapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 func getWipeProjectCommand() *cobra.Command {
@@ -35,7 +35,7 @@ func runWipeProjectCommand(cmd *cobra.Command, _ []string) error {
 
 	yes, _ := cmd.Flags().GetBool("yes")
 	if !yes {
-		return fmt.Errorf("You have to say yes")
+		return fmt.Errorf("you have to say yes")
 	}
 
 	errors := w.wipe(ctx, projectName)

@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -21,7 +20,7 @@ var log = dazl.GetLogger()
 const (
 	CLIName = "orch-cli"
 
-	catalogEndpoint = "catalog-endpoint"
+	catalogEndpoint = "api-endpoint"
 	debugHeaders    = "debug-headers"
 	project         = "project"
 
@@ -62,8 +61,8 @@ func Execute() {
 
 func getRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:           "catalog {create, get, set, list, delete, version} <resource> [flags]",
-		Short:         "Catalog Command Line Interface",
+		Use:           "orch-cli {create, get, set, list, delete, version} <resource> [flags]",
+		Short:         "Orch-cli Command Line Interface",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
@@ -76,7 +75,7 @@ func getRootCmd() *cobra.Command {
 	viper.SetDefault(project, "")
 
 	// Setup global persistent flags for endpoint addresses of various services
-	rootCmd.PersistentFlags().String(catalogEndpoint, viper.GetString(catalogEndpoint), "Catalog Service Endpoint")
+	rootCmd.PersistentFlags().String(catalogEndpoint, viper.GetString(catalogEndpoint), "API Service Endpoint")
 	rootCmd.PersistentFlags().String(deploymentEndpoint, viper.GetString(deploymentEndpoint), "Deployment Service Endpoint")
 	rootCmd.PersistentFlags().Bool(debugHeaders, viper.GetBool(debugHeaders), "emit debug-style headers separating columns via '|' character")
 	rootCmd.PersistentFlags().StringP(project, "p", viper.GetString(project), "Active project name")

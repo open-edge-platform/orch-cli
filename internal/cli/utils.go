@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -261,7 +260,7 @@ func checkStatus(statusCode int, message string, statusMessage string) (proceed 
 	} else if statusCode == 403 {
 		return false, fmt.Errorf("%s: %s. Unauthenticated. Please login", message, statusMessage)
 	}
-	return false, fmt.Errorf("no response from backend - check catalog-endpoint and deployment-endpoint")
+	return false, fmt.Errorf("no response from backend - check api-endpoint and deployment-endpoint")
 }
 
 // Returns an error if the status is abnormal, i.e. status code is not OK and not merely NOT_FOUND
@@ -317,7 +316,7 @@ func getError(body []byte, prefixMessage string) error {
 
 func processError(err error) error {
 	if strings.Contains(err.Error(), "504 DNS look up failed") {
-		return fmt.Errorf("Unauthorized. Please login: token expired")
+		return fmt.Errorf("unauthorized. Please login: token expired")
 	}
 	return err
 }
