@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
+// SPDX-FileCopyrightText: 2025-present Intel Corporation
 //
 // SPDX-License-Identifier: Apache-2.0
 
@@ -7,10 +7,11 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
-	"io"
 )
 
 var (
@@ -25,6 +26,7 @@ func getCreateApplicationCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Create an application",
 		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli create applications --project some-project",
 		RunE:    runCreateApplicationCommand,
 	}
 	addEntityFlags(cmd, "application")
@@ -43,7 +45,8 @@ func getListApplicationsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "applications [flags]",
 		Aliases: []string{"apps", "applications"},
-		Short:   "Get all applications, optionally filtered by publisher",
+		Short:   "List all applications",
+		Example: "orch-cli list applications --project some-project",
 		RunE:    runListApplicationsCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "application")
