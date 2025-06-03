@@ -28,77 +28,77 @@ func TestSanitizeEntries(t *testing.T) {
 		{
 			name: "Empty OSProfile field",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "", Site: "site-c69a3c81"},
 			},
-			expectErr: false,
+			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "", Site: "site-c69a3c81", Error: " OS Profile is required;"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "", Site: "site-c69a3c81", Error: " OS Profile is required;"},
 			},
 		},
 		{
 			name: "Non-empty OSProfile field",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1"},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 			expectErr: false,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1"},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 		},
 		{
 			name: "Successfully validates content1",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 			expectErr: false,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 		},
 		{
 			name: "Successfully validates content2",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 			expectErr: false,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 		},
 		{
 			name: "Empty line",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 				{Serial: "", UUID: "", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "", UUID: "", OSProfile: "", Error: "One of Serial number or UUID required;"},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "", UUID: "", OSProfile: "", Error: "One of Serial number or UUID required; OS Profile is required; Site is required;"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 		},
 		{
 			name: "Empty line spaces",
 			lines: []types.HostRecord{
-				{Serial: " ", UUID: "", OSProfile: ""},
-				{Serial: "", UUID: "", OSProfile: " "},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: " ", UUID: "", OSProfile: "", Site: ""},
+				{Serial: "", UUID: "", OSProfile: "", Site: ""},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "", UUID: "", OSProfile: "", Error: "One of Serial number or UUID required;"},
-				{Serial: "", UUID: "", OSProfile: "", Error: "One of Serial number or UUID required;"},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "", UUID: "", OSProfile: "", Error: "One of Serial number or UUID required; OS Profile is required; Site is required;"},
+				{Serial: "", UUID: "", OSProfile: "", Error: "One of Serial number or UUID required; OS Profile is required; Site is required;"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 		},
 		{
@@ -113,48 +113,48 @@ func TestSanitizeEntries(t *testing.T) {
 		{
 			name: "Serial number unavailable",
 			lines: []types.HostRecord{
-				{Serial: "", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 			expectErr: false,
 			expectStr: []types.HostRecord{
-				{Serial: "", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 		},
 		{
 			name: "UUID unavailable",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 			expectErr: false,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 		},
 		{
 			name: "SN UUID empty",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "", UUID: "", OSProfile: ""},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "", UUID: "", OSProfile: "os2", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "", UUID: "", OSProfile: "", Error: "One of Serial number or UUID required;"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "", UUID: "", OSProfile: "os2", Site: "site-c69a3c81", Error: "One of Serial number or UUID required;"},
 			},
 		},
 		{
 			name: "Invalid SN1",
 			lines: []types.HostRecord{
-				{Serial: "ABCD-123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD-123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
 				{
-					Serial: "ABCD-123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "",
+					Serial: "ABCD-123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
 					Error: "Invalid Serial number;",
 				},
 			},
@@ -162,191 +162,191 @@ func TestSanitizeEntries(t *testing.T) {
 		{
 			name: "Invalid SN2",
 			lines: []types.HostRecord{
-				{Serial: "ABCD", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
+				{Serial: "ABCD", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "", Error: "Invalid Serial number;"},
+				{Serial: "ABCD", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Invalid Serial number;"},
 			},
 		},
 		{
 			name: "Invalid SN3",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123ABCD123ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123ABCD123ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123ABCD123ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", Error: "Invalid Serial number;"},
+				{Serial: "ABCD123ABCD123ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Invalid Serial number;"},
 			},
 		},
 		{
 			name: "Invalid SN4",
 			lines: []types.HostRecord{
-				{Serial: "ABCD\t123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
+				{Serial: "ABCD\t123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD\t123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", Error: "Invalid Serial number;"},
+				{Serial: "ABCD\t123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Invalid Serial number;"},
 			},
 		},
 		{
 			name: "Duplicate SN1",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "2c2c2c2c-0000-1111-2222-333333333333"},
-				{Serial: "ABCD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "2c2c2c2c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "2c2c2c2c-0000-1111-2222-333333333333", Error: "Duplicate Serial number : Row 2;"},
-				{Serial: "ABCD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", Error: "Duplicate Serial number : Row 1;"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "2c2c2c2c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Duplicate Serial number : Row 2;"},
+				{Serial: "ABCD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Duplicate Serial number : Row 1;"},
 			},
 		},
 		{
 			name: "Duplicate SN2",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "2c2c2c2c-0000-1111-2222-333333333333"},
-				{Serial: "ABC*D123", UUID: "1c1c1c1c-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "2c2c2c2c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABC*D123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "2c2c2c2c-0000-1111-2222-333333333333", Error: "Duplicate Serial number : Row 2;"},
-				{Serial: "ABC*D123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", Error: "Invalid Serial number;"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "2c2c2c2c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Duplicate Serial number : Row 2;"},
+				{Serial: "ABC*D123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Invalid Serial number;"},
 			},
 		},
 		{
 			name: "Duplicate SN3 case",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333"},
-				{Serial: "qwerty123", UUID: "2c2c2c2c-0000-1111-2222-333333333333"},
-				{Serial: "AbcD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "qwerty123", UUID: "2c2c2c2c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "AbcD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333"},
-				{Serial: "qwerty123", UUID: "2c2c2c2c-0000-1111-2222-333333333333", Error: "Duplicate Serial number : Row 2;"},
-				{Serial: "AbcD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", Error: "Duplicate Serial number : Row 1;"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "qwerty123", UUID: "2c2c2c2c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Duplicate Serial number : Row 2;"},
+				{Serial: "AbcD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Duplicate Serial number : Row 1;"},
 			},
 		},
 		{
 			name: "Invalid UUID1",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c1-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c1-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c1-0000-1111-2222-333333333333", Error: "Invalid UUID;"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c1-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Invalid UUID;"},
 			},
 		},
 		{
 			name: "Invalid UUID2",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4-0000-1111-2222-333333333333", Error: "Invalid UUID;"},
+				{Serial: "ABCD123", UUID: "4c4c4c4-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Invalid UUID;"},
 			},
 		},
 		{
 			name: "Invalid UUID3",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-11112222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-11112222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-11112222-333333333333", Error: "Invalid UUID;"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-11112222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Invalid UUID;"},
 			},
 		},
 		{
 			name: "Invalid UUID4",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "^4c4c4c4c-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "^4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "^4c4c4c4c-0000-1111-2222-333333333333", Error: "Invalid UUID;"},
+				{Serial: "ABCD123", UUID: "^4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Invalid UUID;"},
 			},
 		},
 		{
 			name: "Invalid UUID5",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111\t-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111\t-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111\t-2222-333333333333", Error: "Invalid UUID;"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111\t-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Invalid UUID;"},
 			},
 		},
 		{
 			name: "Duplicate UUID1",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "ABCD124", UUID: "4c4c4c4c-0000-1111-2222-444444444444"},
-				{Serial: "ABCD125", UUID: "4c4c4c4c-0000-1111-22x22-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD124", UUID: "4c4c4c4c-0000-1111-2222-444444444444", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD125", UUID: "4c4c4c4c-0000-1111-22x22-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "ABCD124", UUID: "4c4c4c4c-0000-1111-2222-444444444444"},
-				{Serial: "ABCD125", UUID: "4c4c4c4c-0000-1111-22x22-333333333333", Error: "Invalid UUID;"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD124", UUID: "4c4c4c4c-0000-1111-2222-444444444444", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD125", UUID: "4c4c4c4c-0000-1111-22x22-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Invalid UUID;"},
 			},
 		},
 		{
 			name: "Duplicate UUID2",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "ABCD124", UUID: "4c4c4c4c-0000-1111-2222-444444444444"},
-				{Serial: "ABCD125", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD124", UUID: "4c4c4c4c-0000-1111-2222-444444444444", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD125", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "ABCD124", UUID: "4c4c4c4c-0000-1111-2222-444444444444"},
-				{Serial: "ABCD125", UUID: "4c4c4c4c-0000-1111-2222-333333333333", Error: "Duplicate UUID : Row 1;"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD124", UUID: "4c4c4c4c-0000-1111-2222-444444444444", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD125", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Duplicate UUID : Row 1;"},
 			},
 		},
 		{
 			name: "Duplicate UUID3 case",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4a4a4a4a-0000-1111-2222-333333333333"},
-				{Serial: "ABCD124", UUID: "4a4a4a4a-0000-1111-2222-444444444444"},
-				{Serial: "ABCD125", UUID: "4A4A4A4A-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4a4a4a4a-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD124", UUID: "4a4a4a4a-0000-1111-2222-444444444444", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD125", UUID: "4A4A4A4A-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4a4a4a4a-0000-1111-2222-333333333333"},
-				{Serial: "ABCD124", UUID: "4a4a4a4a-0000-1111-2222-444444444444"},
-				{Serial: "ABCD125", UUID: "4A4A4A4A-0000-1111-2222-333333333333", Error: "Duplicate UUID : Row 1;"},
+				{Serial: "ABCD123", UUID: "4a4a4a4a-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD124", UUID: "4a4a4a4a-0000-1111-2222-444444444444", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "ABCD125", UUID: "4A4A4A4A-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Duplicate UUID : Row 1;"},
 			},
 		},
 		{
 			name: "Duplicate SN & UUID",
 			lines: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "AbcD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "AbcD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
-				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "3c3c3c3c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 				{
-					Serial: "QWERTY123", UUID: "4c4c4c4c-0000-1111-2222-333333333333",
+					Serial: "QWERTY123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
 					Error: "Duplicate Serial number : Row 2;Duplicate UUID : Row 1;",
 				},
 				{
-					Serial: "AbcD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333",
+					Serial: "AbcD123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
 					Error: "Duplicate Serial number : Row 1;",
 				},
 			},
@@ -382,31 +382,31 @@ func TestCheckCSV(t *testing.T) {
 		{
 			name: "Valid CSV",
 			content: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: ""},
-				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: false,
 			expectStr: []types.HostRecord{
 				{
-					Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "",
-					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,,,,,,",
+					Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
+					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
 				},
 				{
-					Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os2",
-					RawRecord: "QWERTY123,1c1c1c1c-0000-1111-2222-333333333333,os2,,,,,",
+					Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
+					RawRecord: "QWERTY123,1c1c1c1c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
 				},
 			},
 		},
 		{
 			name: "Invalid Serial Number",
 			content: []types.HostRecord{
-				{Serial: "ABCD-123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1"},
+				{Serial: "ABCD-123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
 				{
-					Serial: "ABCD-123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1",
-					Error: "Invalid Serial number;", RawRecord: "ABCD-123,4c4c4c4c-0000-1111-2222-333333333333,os1,,,,,",
+					Serial: "ABCD-123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
+					Error: "Invalid Serial number;", RawRecord: "ABCD-123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
 				},
 			},
 			expectErrStr: "Pre-flight check failed",
@@ -414,18 +414,18 @@ func TestCheckCSV(t *testing.T) {
 		{
 			name: "Duplicate UUID",
 			content: []types.HostRecord{
-				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1"},
-				{Serial: "QWERTY123", UUID: "4c4c4c4c-0000-1111-2222-333333333333"},
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
 			},
 			expectErr: true,
 			expectStr: []types.HostRecord{
 				{
-					Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1",
-					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,os1,,,,,",
+					Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
+					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
 				},
 				{
-					Serial: "QWERTY123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", Error: "Duplicate UUID : Row 1;",
-					RawRecord: "QWERTY123,4c4c4c4c-0000-1111-2222-333333333333,,,,,,",
+					Serial: "QWERTY123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Duplicate UUID : Row 1;",
+					RawRecord: "QWERTY123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
 				},
 			},
 			expectErrStr: "Pre-flight check failed",

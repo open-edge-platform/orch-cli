@@ -115,8 +115,8 @@ func TestReadHostRecords(t *testing.T) {
 				// Create and write to the test file
 				// [{"key":"cluster-name","value":"cl1"},{"key":"app-id","value":""}]
 				content := []byte("Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,Error\n" +
-					"1234,uuid-1234,profile1,site1,true,user1,cluster-name=test&app-id=testApp\n" +
-					"5678,uuid-5678,profile2,site2,,user2,meta2")
+					"1234,uuid-1234,profile1,site1,true,user1,cluster-name=test&app-id=testApp,,,,\n" +
+					"5678,uuid-5678,profile2,site2,,user2,meta2,,,,")
 				err := os.WriteFile(testFilePath, content, 0o600)
 				assert.NoError(t, err)
 			},
@@ -130,7 +130,7 @@ func TestReadHostRecords(t *testing.T) {
 					RemoteUser: "user1",
 					Metadata:   "cluster-name=test&app-id=testApp",
 					Error:      "",
-					RawRecord:  "1234,uuid-1234,profile1,site1,true,user1,cluster-name=test&app-id=testApp,",
+					RawRecord:  "1234,uuid-1234,profile1,site1,true,user1,cluster-name=test&app-id=testApp,,,,",
 				},
 				{
 					Serial:     "5678",
@@ -141,7 +141,7 @@ func TestReadHostRecords(t *testing.T) {
 					RemoteUser: "user2",
 					Metadata:   "meta2",
 					Error:      "",
-					RawRecord:  "5678,uuid-5678,profile2,site2,,user2,meta2,",
+					RawRecord:  "5678,uuid-5678,profile2,site2,,user2,meta2,,,,",
 				},
 			},
 			expectErr: false,
@@ -240,7 +240,7 @@ func TestWriteHostRecords(t *testing.T) {
 				},
 			},
 			expectErr: false,
-			expectStr: "Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,Error - do not fill\n" +
+			expectStr: "Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sClusterTemplate,Error - do not fill\n" +
 				"1234,uuid-1234,profile1,site1,true,user1,meta1,error1\n" +
 				"5678,uuid-5678,profile2,site2,false,user2,meta2,error2\n",
 			setup: func() {
