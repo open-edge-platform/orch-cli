@@ -160,7 +160,7 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
 			"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
 	} else {
-		var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site", "Workload")
+		var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site ID", "Site Name", "Workload")
 		fmt.Fprintf(writer, "%s\n", shortHeader)
 	}
 	for _, h := range *hosts {
@@ -188,7 +188,7 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 			host = *h.HostStatus
 		}
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber, os, site, workload)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber, os, site, siteName, workload)
 		} else {
 			avupdt := "No update"
 			tcomp := "Not compatible"
