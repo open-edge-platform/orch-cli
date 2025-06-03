@@ -973,14 +973,15 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 
 		}
 		return "", err
-	} else {
-		//Cache host and save host ID
-		if resp.JSON201 != nil && resp.JSON201.ResourceId != nil {
-			respCache.HostCache[*resp.JSON201.ResourceId] = *resp.JSON201
-			return *resp.JSON201.ResourceId, nil
-		}
-		return "", errors.New("host not found")
 	}
+
+	//Cache host and save host ID
+	if resp.JSON201 != nil && resp.JSON201.ResourceId != nil {
+		respCache.HostCache[*resp.JSON201.ResourceId] = *resp.JSON201
+		return *resp.JSON201.ResourceId, nil
+	}
+	return "", errors.New("host not found")
+
 }
 
 // If a valid OE Profile exists creates an instance linking to host resource
