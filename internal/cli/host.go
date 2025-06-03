@@ -73,6 +73,17 @@ orch-cli create host --project some-project --import-from-csv test.csv --dry-run
 
 # Create hosts - --import-from-csv is a mandatory flag pointing to the input file. Successfully provisioned host indicated by output - errors provided in output file
 orch-cli create host --project some-project --import-from-csv test.csv
+
+# Optional flag ovverides - the flag will override all instances of an attribute inside the CSV file
+
+--remote-user - name or id of a SSH user
+--site - site ID
+--secure - true or false - security feature configuration
+--os-profile - name or ID of the OS profile
+--metadata - key value paired metatada separated by &, must be put in quotes.
+
+# Create hosts from CSV and override provided values
+/orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
 `
 
 const deleteHostExamples = `#Delete a host using it's host Resource ID
@@ -263,7 +274,7 @@ func generateCSV(filename string) error {
 
 // Runs the registration workflow
 func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, projectName string,
-	rIn types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord) {
+	rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord) {
 
 	// get the required fields from the record
 	sNo := rIn.Serial
@@ -273,7 +284,7 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 	hostID := ""
 	autonboard := true
 
-	rOut, err := sanitizeProvisioningFields(ctx, hClient, projectName, rIn, respCache, erringRecords)
+	rOut, err := sanitizeProvisioningFields(ctx, hClient, projectName, rIn, respCache, globalAttr, erringRecords)
 	if err != nil {
 		return
 	}
@@ -285,7 +296,7 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 		return
 	}
 
-	err = createInstance(ctx, hClient, respCache, projectName, hostID, rOut, rIn)
+	err = createInstance(ctx, hClient, respCache, projectName, hostID, rOut, rIn, globalAttr)
 	if err != nil {
 		rIn.Error = err.Error()
 		*erringRecords = append(*erringRecords, rIn)
@@ -324,30 +335,39 @@ func decodeMetadata(metadata string) (*infra.Metadata, error) {
 	return &metadataList, nil
 }
 
+func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSecure {
+	if globalSecure != recordSecure && globalSecure != types.SecureUnspecified {
+		return globalSecure
+	}
+	return recordSecure
+}
+
 // Sanitize filelds, convert named resources to resource IDs
 func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, record types.HostRecord,
-	respCache ResponseCache, erringRecords *[]types.HostRecord) (*types.HostRecord, error) {
+	respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord) (*types.HostRecord, error) {
 
-	isSecure := record.Secure
+	isSecure := resolveSecure(record.Secure, globalAttr.Secure)
 
-	osProfileID, err := resolveOSProfile(ctx, hClient, projectName, record.OSProfile, record, respCache, erringRecords)
+	osProfileID, err := resolveOSProfile(ctx, hClient, projectName, record.OSProfile, globalAttr.OSProfile, record, respCache, erringRecords)
 	if err != nil {
 		return nil, err
 	}
 
-	if valErr := validateSecurityFeature(record.OSProfile, isSecure, record, respCache, erringRecords); valErr != nil {
+	if valErr := validateSecurityFeature(record.OSProfile, globalAttr.OSProfile, isSecure, record, respCache, erringRecords); valErr != nil {
 		return nil, valErr
 	}
 
-	siteID, err := resolveSite(ctx, hClient, projectName, record.Site, record, respCache, erringRecords)
+	siteID, err := resolveSite(ctx, hClient, projectName, record.Site, globalAttr.Site, record, respCache, erringRecords)
 	if err != nil {
 		return nil, err
 	}
 
-	laID, err := resolveRemoteUser(ctx, hClient, projectName, record.RemoteUser, record, respCache, erringRecords)
+	laID, err := resolveRemoteUser(ctx, hClient, projectName, record.RemoteUser, globalAttr.RemoteUser, record, respCache, erringRecords)
 	if err != nil {
 		return nil, err
 	}
+
+	metadataToUse := resolveMetadata(record.Metadata, globalAttr.Metadata)
 
 	//TODO implement AMT check - will there be a check if a host is capable of AMT
 	// valErr = validateAMT(ctx, hClient, projectName, record.AMTEnable, record, respCache, erringRecords)
@@ -374,7 +394,7 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 		Secure:     isSecure,
 		UUID:       record.UUID,
 		Serial:     record.Serial,
-		Metadata:   record.Metadata,
+		Metadata:   metadataToUse,
 		//AMTEnable:  isAMT,
 		//CloudInitMeta: cloudInitID,
 		//K8sClusterTemplate: K8sTmplID,
@@ -383,20 +403,26 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 
 // Ensures that OS profile exists
 func resolveOSProfile(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, recordOSProfile string,
-	record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
+	globalOSProfile string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
 
-	if recordOSProfile == "" {
+	osProfile := recordOSProfile
+
+	if globalOSProfile != "" {
+		osProfile = globalOSProfile
+	}
+
+	if osProfile == "" {
 		record.Error = e.NewCustomError(e.ErrInvalidOSProfile).Error()
 		*erringRecords = append(*erringRecords, record)
 		return "", e.NewCustomError(e.ErrInvalidOSProfile)
 	}
 
-	if osResource, ok := respCache.OSProfileCache[recordOSProfile]; ok {
+	if osResource, ok := respCache.OSProfileCache[osProfile]; ok {
 		return *osResource.ResourceId, nil
 	}
 
-	ospfilter := fmt.Sprintf("profileName='%s' OR resourceId='%s'", recordOSProfile, recordOSProfile)
+	ospfilter := fmt.Sprintf("profileName='%s' OR resourceId='%s'", osProfile, osProfile)
 	resp, err := hClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
 		&infra.GetV1ProjectsProjectNameComputeOsParams{
 			Filter: &ospfilter,
@@ -409,7 +435,7 @@ func resolveOSProfile(ctx context.Context, hClient *infra.ClientWithResponses, p
 	if resp.JSON200.OperatingSystemResources != nil {
 		osResources := *resp.JSON200.OperatingSystemResources
 		if len(osResources) > 0 {
-			respCache.OSProfileCache[recordOSProfile] = osResources[len(osResources)-1]
+			respCache.OSProfileCache[osProfile] = osResources[len(osResources)-1]
 			return *osResources[len(osResources)-1].ResourceId, nil
 		}
 	}
@@ -419,9 +445,13 @@ func resolveOSProfile(ctx context.Context, hClient *infra.ClientWithResponses, p
 }
 
 // Checks input ecurity feature vs what is capabale by host
-func validateSecurityFeature(osProfileID string, isSecure types.RecordSecure,
+func validateSecurityFeature(osProfileID string, globalOSProfile string, isSecure types.RecordSecure,
 	record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) error {
+	if globalOSProfile != "" {
+		osProfileID = globalOSProfile
+	}
+
 	osProfile, ok := respCache.OSProfileCache[osProfileID]
 	if !ok || (*osProfile.SecurityFeature != infra.SECURITYFEATURESECUREBOOTANDFULLDISKENCRYPTION && isSecure == types.SecureTrue) {
 		record.Error = e.NewCustomError(e.ErrOSSecurityMismatch).Error()
@@ -442,20 +472,26 @@ func validateOSProfile(osProfileID string) error {
 
 // Checks if site is valid and exists
 func resolveSite(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, recordSite string,
-	record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
+	globalSite string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
 
-	if record.Site == "" {
+	siteToQuery := recordSite
+
+	if globalSite != "" {
+		siteToQuery = globalSite
+	}
+
+	if siteToQuery == "" {
 		record.Error = e.NewCustomError(e.ErrInvalidSite).Error()
 		*erringRecords = append(*erringRecords, record)
 		return "", e.NewCustomError(e.ErrInvalidSite)
 	}
 
-	if siteResource, ok := respCache.SiteCache[record.Site]; ok {
+	if siteResource, ok := respCache.SiteCache[siteToQuery]; ok {
 		return *siteResource.ResourceId, nil
 	}
 
-	resp, err := hClient.GetV1ProjectsProjectNameRegionsRegionIDSitesSiteIDWithResponse(ctx, projectName, "regionID", recordSite, auth.AddAuthHeader)
+	resp, err := hClient.GetV1ProjectsProjectNameRegionsRegionIDSitesSiteIDWithResponse(ctx, projectName, "regionID", siteToQuery, auth.AddAuthHeader)
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
@@ -469,24 +505,30 @@ func resolveSite(ctx context.Context, hClient *infra.ClientWithResponses, projec
 		return "", err
 	}
 
-	respCache.SiteCache[recordSite] = *resp.JSON200
+	respCache.SiteCache[siteToQuery] = *resp.JSON200
 	return *resp.JSON200.ResourceId, nil
 }
 
 // Cecks if remote user is valid and exists
 func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, recordRemoteUser string,
-	record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
+	globalRemoteUser string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
 
-	if recordRemoteUser == "" {
+	remoteUserToQuery := recordRemoteUser
+
+	if globalRemoteUser != "" {
+		remoteUserToQuery = globalRemoteUser
+	}
+
+	if remoteUserToQuery == "" {
 		return "", nil
 	}
 
-	if lAResource, ok := respCache.LACache[recordRemoteUser]; ok {
+	if lAResource, ok := respCache.LACache[remoteUserToQuery]; ok {
 		return *lAResource.ResourceId, nil
 	}
 
-	lafilter := fmt.Sprintf("username='%s' OR resourceId='%s'", recordRemoteUser, recordRemoteUser)
+	lafilter := fmt.Sprintf("username='%s' OR resourceId='%s'", remoteUserToQuery, remoteUserToQuery)
 	resp, err := hClient.GetV1ProjectsProjectNameLocalAccountsWithResponse(ctx, projectName,
 		&infra.GetV1ProjectsProjectNameLocalAccountsParams{
 			Filter: &lafilter,
@@ -499,13 +541,20 @@ func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, 
 	if resp.JSON200.LocalAccounts != nil {
 		localAccounts := *resp.JSON200.LocalAccounts
 		if len(localAccounts) > 0 {
-			respCache.LACache[recordRemoteUser] = localAccounts[len(localAccounts)-1]
+			respCache.LACache[remoteUserToQuery] = localAccounts[len(localAccounts)-1]
 			return *localAccounts[len(localAccounts)-1].ResourceId, nil
 		}
 	}
 	record.Error = "Remote User not found"
 	*erringRecords = append(*erringRecords, record)
 	return "", errors.New(record.Error)
+}
+
+func resolveMetadata(recordMetadata, globalMetadata string) string {
+	if globalMetadata != "" {
+		return globalMetadata
+	}
+	return recordMetadata
 }
 
 func getDeauthorizeCommand() *cobra.Command {
@@ -560,6 +609,16 @@ func getCreateHostCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about to be provisioned hosts")
 	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
 	cmd.PersistentFlags().BoolP("generate-csv", "g", viper.GetBool("generate-csv"), "Generates a template CSV file for host import")
+	// Overrides
+	cmd.PersistentFlags().StringP("os-profile", "o", viper.GetString("os-profile"), "Override the OSProfile provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Override the site provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("metadata", "m", viper.GetString("metadata"), "Override the metadata provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("remote-user", "r", viper.GetString("remote-user"), "Override the metadata provided in CSV file for all hosts")
+	//cmd.PersistentFlags().StringP("cluster-template", "c", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
+	//cmd.PersistentFlags().StringP("cloud-init", "i", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
+	//cmd.PersistentFlags().BoolP("amt", "a", viper.GetBool("amt"), "Override the AMT feature configuration provided in CSV file for all hosts")
+
 	return cmd
 }
 
@@ -705,6 +764,19 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	generate, _ := cmd.Flags().GetBool("generate-csv")
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	csvFilePath, _ := cmd.Flags().GetString("import-from-csv")
+	osProfileIn, _ := cmd.Flags().GetString("os-profile")
+	siteIn, _ := cmd.Flags().GetString("site")
+	metadataIn, _ := cmd.Flags().GetString("metadata")
+	remoteUserIn, _ := cmd.Flags().GetString("remote-user")
+	secureIn, _ := cmd.Flags().GetString("secure")
+
+	globalAttr := &types.HostRecord{
+		OSProfile:  osProfileIn,
+		Site:       siteIn,
+		Secure:     types.StringToRecordSecure(secureIn),
+		RemoteUser: remoteUserIn,
+		Metadata:   metadataIn,
+	}
 
 	if generate && (dryRun || csvFilePath != "") {
 		return fmt.Errorf("cannot use --generate-csv flag with --dry-run and/or --import-from-csv")
@@ -756,7 +828,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	erringRecords := []types.HostRecord{}
 
 	for _, record := range validated {
-		doRegister(ctx, hostClient, projectName, record, respCache, &erringRecords)
+		doRegister(ctx, hostClient, projectName, record, respCache, globalAttr, &erringRecords)
 	}
 
 	if len(erringRecords) > 0 {
@@ -887,9 +959,8 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 			respCache.HostCache[*(*gresp.JSON200.Hosts)[0].ResourceId] = (*gresp.JSON200.Hosts)[0]
 			return *(*gresp.JSON200.Hosts)[0].ResourceId, nil
 
-		} else {
-			return "", err
 		}
+		return "", err
 	} else {
 		//Cache host and save host ID
 		if resp.JSON201 != nil && resp.JSON201.ResourceId != nil {
@@ -902,16 +973,21 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 
 // If a valid OE Profile exists creates an instance linking to host resource
 func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, respCache ResponseCache,
-	projectName, hostID string, rOut *types.HostRecord, rIn types.HostRecord) error {
+	projectName, hostID string, rOut *types.HostRecord, rIn types.HostRecord, globalAttr *types.HostRecord) error {
 
 	// Validate OS profile
 	if valErr := validateOSProfile(rOut.OSProfile); valErr != nil {
 		return valErr
 	}
+
+	cachedProfileIndex := rIn.OSProfile
+	if globalAttr.OSProfile != "" {
+		cachedProfileIndex = globalAttr.OSProfile
+	}
 	// Create instance if osProfileID is available
 	// Need not notify user of instance ID. Unnecessary detail for user.
 	kind := infra.INSTANCEKINDUNSPECIFIED
-	osResource, ok := respCache.OSProfileCache[rIn.OSProfile]
+	osResource, ok := respCache.OSProfileCache[cachedProfileIndex]
 	if !ok {
 		return e.NewCustomError(e.ErrInternal)
 	}
