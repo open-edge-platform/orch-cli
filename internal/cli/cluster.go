@@ -183,7 +183,7 @@ func runGetClusterCommand(cmd *cobra.Command, args []string) error {
 			}
 			role := ""
 			if node.Role != nil {
-				role = string(*node.Role)
+				role = *node.Role
 			}
 			fmt.Printf("- ID: %s, Role: %s\n", id, role)
 		}
