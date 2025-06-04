@@ -88,7 +88,7 @@ func login(cmd *cobra.Command, args []string) error {
 		// If user has specified a value then use it
 		keycloakEp = keycloakEpUser
 	} else {
-		catEp := viper.GetString(catalogEndpoint)
+		catEp := viper.GetString(apiEndpoint)
 		u, err := url.Parse(catEp)
 		if err != nil {
 			return err

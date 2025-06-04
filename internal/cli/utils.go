@@ -18,6 +18,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
@@ -41,7 +42,7 @@ func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
 
 // Get the new background context, REST client, and project name given the specified command.
 func getCatalogServiceContext(cmd *cobra.Command) (context.Context, *catapi.ClientWithResponses, string, error) {
-	serverAddress, err := cmd.Flags().GetString(catalogEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -58,7 +59,7 @@ func getCatalogServiceContext(cmd *cobra.Command) (context.Context, *catapi.Clie
 
 // Get the new background context, REST client, and project name given the specified command.
 func getDeploymentServiceContext(cmd *cobra.Command) (context.Context, *depapi.ClientWithResponses, string, error) {
-	serverAddress, err := cmd.Flags().GetString(deploymentEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -75,7 +76,7 @@ func getDeploymentServiceContext(cmd *cobra.Command) (context.Context, *depapi.C
 
 // Get the new background context, REST client, and project name given the specified command.
 func getClusterServiceContext(cmd *cobra.Command) (context.Context, *coapi.ClientWithResponses, string, error) {
-	serverAddress, err := cmd.Flags().GetString(deploymentEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -92,7 +93,7 @@ func getClusterServiceContext(cmd *cobra.Command) (context.Context, *coapi.Clien
 
 // Get the new background context, REST client, and project name given the specified command.
 func getInfraServiceContext(cmd *cobra.Command) (context.Context, *infraapi.ClientWithResponses, string, error) {
-	serverAddress, err := cmd.Flags().GetString(deploymentEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -109,7 +110,7 @@ func getInfraServiceContext(cmd *cobra.Command) (context.Context, *infraapi.Clie
 
 // Get the web socket for receiving event notifications.
 func getCatalogWebSocket(cmd *cobra.Command) (*websocket.Conn, error) {
-	serverAddress, err := cmd.Flags().GetString(catalogEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +261,7 @@ func checkStatus(statusCode int, message string, statusMessage string) (proceed 
 	} else if statusCode == 403 {
 		return false, fmt.Errorf("%s: %s. Unauthenticated. Please login", message, statusMessage)
 	}
-	return false, fmt.Errorf("no response from backend - check api-endpoint and deployment-endpoint")
+	return false, fmt.Errorf("no response from backend - check api-endpoint")
 }
 
 // Returns an error if the status is abnormal, i.e. status code is not OK and not merely NOT_FOUND

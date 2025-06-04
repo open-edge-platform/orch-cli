@@ -245,7 +245,7 @@ func getNetworkContext(cmd *cobra.Command) (context.Context, string, string, err
 	if err != nil {
 		return nil, "", "", err
 	}
-	catEP, err := cmd.Flags().GetString(catalogEndpoint)
+	catEP, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, "", "", err
 	}

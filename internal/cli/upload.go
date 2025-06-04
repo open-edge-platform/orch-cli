@@ -24,7 +24,7 @@ func getUploadCommand() *cobra.Command {
 }
 
 func uploadResources(cmd *cobra.Command, args []string) error {
-	serverAddress, err := cmd.Flags().GetString(catalogEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return err
 	}

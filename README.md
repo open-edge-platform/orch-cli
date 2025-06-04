@@ -88,7 +88,7 @@ For support, start with [Troubleshooting] or [Contact us].
 
 ## License
 
-The Application Orchestration CLI is licensed under [Apache 2.0 License]
+The Orchestrator CLI is licensed under [Apache 2.0 License]
 
 [Application Orchestration Deployment]: https://github.com/open-edge-platform/app-orch-deployment
 [Tenant Controller]: https://github.com/open-edge-platform/app-orch-tenant-controller

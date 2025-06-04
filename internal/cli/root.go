@@ -20,17 +20,12 @@ var log = dazl.GetLogger()
 const (
 	CLIName = "orch-cli"
 
-	catalogEndpoint = "api-endpoint"
-	debugHeaders    = "debug-headers"
-	project         = "project"
+	apiEndpoint  = "api-endpoint"
+	debugHeaders = "debug-headers"
+	project      = "project"
 
 	// Default for dev deployment
-	catalogDefaultEndpoint = "https://api.kind.internal/"
-
-	deploymentEndpoint = "deployment-endpoint"
-
-	// Default for dev deployment
-	deploymentDefaultEndpoint = "https://api.kind.internal/"
+	apiDefaultEndpoint = "https://api.kind.internal/"
 )
 
 // init initializes the command line
@@ -68,15 +63,13 @@ func getRootCmd() *cobra.Command {
 	}
 
 	// Set some factory defaults as a fallback
-	viper.SetDefault(catalogEndpoint, catalogDefaultEndpoint)
-	viper.SetDefault(deploymentEndpoint, deploymentDefaultEndpoint)
+	viper.SetDefault(apiEndpoint, apiDefaultEndpoint)
 	viper.SetDefault(debugHeaders, false)
 	viper.SetDefault("verbose", false)
 	viper.SetDefault(project, "")
 
 	// Setup global persistent flags for endpoint addresses of various services
-	rootCmd.PersistentFlags().String(catalogEndpoint, viper.GetString(catalogEndpoint), "API Service Endpoint")
-	rootCmd.PersistentFlags().String(deploymentEndpoint, viper.GetString(deploymentEndpoint), "Deployment Service Endpoint")
+	rootCmd.PersistentFlags().String(apiEndpoint, viper.GetString(apiEndpoint), "API Service Endpoint")
 	rootCmd.PersistentFlags().Bool(debugHeaders, viper.GetBool(debugHeaders), "emit debug-style headers separating columns via '|' character")
 	rootCmd.PersistentFlags().StringP(project, "p", viper.GetString(project), "Active project name")
 

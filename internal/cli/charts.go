@@ -27,7 +27,7 @@ func getListChartsCommand() *cobra.Command {
 }
 
 func getCharts(cmd *cobra.Command, args []string) error {
-	serverAddress, err := cmd.Flags().GetString(catalogEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return err
 	}
