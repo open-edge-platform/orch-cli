@@ -177,15 +177,50 @@ func runGetClusterCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Nodes:\n")
 	if cluster.Nodes != nil {
 		for _, node := range *cluster.Nodes {
-			fmt.Printf("- ID: %s, Role: %s\n", *node.Id, *node.Role)
+			id := ""
+			if node.Id != nil {
+				id = *node.Id
+			}
+			role := ""
+			if node.Role != nil {
+				role = *node.Role
+			}
+			fmt.Printf("- ID: %s, Role: %s\n", id, role)
 		}
 	}
+	statusUnknown := "<unknown>"
+
 	fmt.Printf("Status:\n")
-	fmt.Printf("- Lifecycle Phase: %s\n", *cluster.LifecyclePhase.Message)
-	fmt.Printf("- Provider: %s\n", *cluster.ProviderStatus.Message)
-	fmt.Printf("- Control Plane Ready: %s\n", *cluster.ControlPlaneReady.Message)
-	fmt.Printf("- Infrastructure Ready: %s\n", *cluster.InfrastructureReady.Message)
-	fmt.Printf("- Node Health: %s\n", *cluster.NodeHealth.Message)
+	lifecyclePhase := statusUnknown
+	if cluster.LifecyclePhase != nil && cluster.LifecyclePhase.Message != nil {
+		lifecyclePhase = *cluster.LifecyclePhase.Message
+	}
+	fmt.Printf("- LifecyclePhase: %s\n", lifecyclePhase)
+
+	providerStatus := statusUnknown
+	if cluster.ProviderStatus != nil && cluster.ProviderStatus.Message != nil {
+		providerStatus = *cluster.ProviderStatus.Message
+	}
+	fmt.Printf("- Provider: %s\n", providerStatus)
+
+	controlPlaneReady := statusUnknown
+	if cluster.ControlPlaneReady != nil && cluster.ControlPlaneReady.Message != nil {
+		controlPlaneReady = *cluster.ControlPlaneReady.Message
+	}
+	fmt.Printf("- ControlPlaneReady: %s\n", controlPlaneReady)
+
+	infrastructureReady := statusUnknown
+	if cluster.InfrastructureReady != nil && cluster.InfrastructureReady.Message != nil {
+		infrastructureReady = *cluster.InfrastructureReady.Message
+	}
+	fmt.Printf("- InfrastructureReady: %s\n", infrastructureReady)
+
+	nodeHealth := statusUnknown
+	if cluster.NodeHealth != nil && cluster.NodeHealth.Message != nil {
+		nodeHealth = *cluster.NodeHealth.Message
+	}
+	fmt.Printf("- NodeHealth: %s\n", nodeHealth)
+
 	if cluster.Labels != nil {
 		fmt.Printf("Labels:\n")
 		for key, value := range *cluster.Labels {
@@ -251,7 +286,7 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 		filteredClusters++
-		result += fmt.Sprintf("- %s (%s)\n", *cluster.Name, *cluster.ProviderStatus.Message)
+		result += fmt.Sprintf("- %s (%s)\n", *cluster.Name, statusMessage(cluster))
 	}
 	if notReady {
 		fmt.Printf("Found %d clusters that are not ready in project '%s'\n", filteredClusters, projectName)
@@ -278,6 +313,25 @@ func clusterReady(cluster coapi.ClusterInfo) bool {
 	}
 
 	return true
+}
+
+func statusMessage(cluster coapi.ClusterInfo) string {
+	if cluster.ProviderStatus == nil || *cluster.ProviderStatus.Indicator != coapi.STATUSINDICATIONIDLE {
+		return *cluster.ProviderStatus.Message
+	}
+	if cluster.ControlPlaneReady == nil || *cluster.ControlPlaneReady.Indicator != coapi.STATUSINDICATIONIDLE {
+		return *cluster.ControlPlaneReady.Message
+	}
+	if cluster.InfrastructureReady == nil || *cluster.InfrastructureReady.Indicator != coapi.STATUSINDICATIONIDLE {
+		return *cluster.InfrastructureReady.Message
+	}
+	if cluster.NodeHealth == nil || *cluster.NodeHealth.Indicator != coapi.STATUSINDICATIONIDLE {
+		return *cluster.NodeHealth.Message
+	}
+	if cluster.LifecyclePhase == nil || *cluster.LifecyclePhase.Indicator != coapi.STATUSINDICATIONIDLE {
+		return *cluster.LifecyclePhase.Message
+	}
+	return "active"
 }
 
 func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
