@@ -286,7 +286,7 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 		filteredClusters++
-		result += fmt.Sprintf("- %s (%s)\n", *cluster.Name, *cluster.ProviderStatus.Message)
+		result += fmt.Sprintf("- %s (%s)\n", *cluster.Name, statusMessage(cluster))
 	}
 	if notReady {
 		fmt.Printf("Found %d clusters that are not ready in project '%s'\n", filteredClusters, projectName)
@@ -313,6 +313,25 @@ func clusterReady(cluster coapi.ClusterInfo) bool {
 	}
 
 	return true
+}
+
+func statusMessage(cluster coapi.ClusterInfo) string {
+	if cluster.ProviderStatus == nil || *cluster.ProviderStatus.Indicator != coapi.STATUSINDICATIONIDLE {
+		return *cluster.ProviderStatus.Message
+	}
+	if cluster.ControlPlaneReady == nil || *cluster.ControlPlaneReady.Indicator != coapi.STATUSINDICATIONIDLE {
+		return *cluster.ControlPlaneReady.Message
+	}
+	if cluster.InfrastructureReady == nil || *cluster.InfrastructureReady.Indicator != coapi.STATUSINDICATIONIDLE {
+		return *cluster.InfrastructureReady.Message
+	}
+	if cluster.NodeHealth == nil || *cluster.NodeHealth.Indicator != coapi.STATUSINDICATIONIDLE {
+		return *cluster.NodeHealth.Message
+	}
+	if cluster.LifecyclePhase == nil || *cluster.LifecyclePhase.Indicator != coapi.STATUSINDICATIONIDLE {
+		return *cluster.LifecyclePhase.Message
+	}
+	return "active"
 }
 
 func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
