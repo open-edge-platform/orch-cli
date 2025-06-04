@@ -61,6 +61,7 @@ func getListCommand() *cobra.Command {
 		getListClusterCommand(),
 		getListClusterTemplatesCommand(),
 
+		getListRegionCommand(),
 		getListOSProfileCommand(),
 		getListHostCommand(),
 	)
@@ -99,6 +100,7 @@ func getGetCommand() *cobra.Command {
 
 		getListNetworksCommand(),
 
+		getGetRegionCommand(),
 		getGetOSProfileCommand(),
 		getGetHostCommand(),
 	)
