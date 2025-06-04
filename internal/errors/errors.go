@@ -41,7 +41,7 @@ const (
 )
 
 var errorMessages = map[ErrorCode]string{
-	ErrNoComment:              "Error not empty",
+	ErrNoComment:              "Error not empty - invalid CSV entry",
 	ErrOneFieldRequired:       "One of Serial number or UUID required",
 	ErrInvalidSN:              "Invalid Serial number",
 	ErrInvalidUUID:            "Invalid UUID",
@@ -56,7 +56,7 @@ var errorMessages = map[ErrorCode]string{
 	ErrInternal:               "Internal error",
 	ErrCheckFailed:            "Pre-flight check failed",
 	ErrFileCreate:             "File creation error",
-	ErrImportFailed:           "Failed to import hosts",
+	ErrImportFailed:           "Failed to provision hosts",
 	ErrRegisterFailed:         "Failed to register host",
 	ErrInstanceFailed:         "Failed to create instance",
 	ErrHostSiteMetadataFailed: "Failed to allocate site or metadata",

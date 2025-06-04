@@ -445,7 +445,7 @@ func resolveOSProfile(ctx context.Context, hClient *infra.ClientWithResponses, p
 	return "", errors.New(record.Error)
 }
 
-// Checks input ecurity feature vs what is capabale by host
+// Checks input security feature vs what is capable by host
 func validateSecurityFeature(osProfileID string, globalOSProfile string, isSecure types.RecordSecure,
 	record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) error {
@@ -609,7 +609,8 @@ func getCreateHostCommand() *cobra.Command {
 	// Local persistent flags
 	cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about to be provisioned hosts")
 	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
-	cmd.PersistentFlags().BoolP("generate-csv", "g", viper.GetBool("generate-csv"), "Generates a template CSV file for host import")
+	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host import")
+	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
 	// Overrides
 	cmd.PersistentFlags().StringP("os-profile", "o", viper.GetString("os-profile"), "Override the OSProfile provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Override the site provided in CSV file for all hosts")
@@ -776,7 +777,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	generate, _ := cmd.Flags().GetBool("generate-csv")
+	generate, _ := cmd.Flags().GetString("generate-csv")
 	dryRun, _ := cmd.Flags().GetBool("dry-run")
 	csvFilePath, _ := cmd.Flags().GetString("import-from-csv")
 	osProfileIn, _ := cmd.Flags().GetString("os-profile")
@@ -793,14 +794,21 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		Metadata:   metadataIn,
 	}
 
-	if generate && (dryRun || csvFilePath != "") {
+	if cmd.Flags().Changed("generate-csv") && (dryRun || csvFilePath != "") {
 		return fmt.Errorf("cannot use --generate-csv flag with --dry-run and/or --import-from-csv")
 	}
 
-	if generate {
-		err = generateCSV(fmt.Sprintf("%s/%s", currentPath, filename))
-		if err != nil {
-			return err
+	if cmd.Flags().Changed("generate-csv") {
+		if generate != filename {
+			filename = generate
+		}
+		if strings.HasSuffix(filename, ".csv") {
+			err = generateCSV(fmt.Sprintf("%s/%s", currentPath, filename))
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("--generate-csv requires that file name ends with .csv")
 		}
 		return nil
 	}

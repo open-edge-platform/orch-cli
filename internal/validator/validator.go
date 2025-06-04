@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	MAXITEMS = 3
-	TRIMSET  = "\t\r\n "
+	TRIMSET = "\t\r\n "
 )
 
 // serial number is alphanumeric ranging from 5 to 20 charaters
