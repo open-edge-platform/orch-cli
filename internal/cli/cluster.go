@@ -177,15 +177,50 @@ func runGetClusterCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Nodes:\n")
 	if cluster.Nodes != nil {
 		for _, node := range *cluster.Nodes {
-			fmt.Printf("- ID: %s, Role: %s\n", *node.Id, *node.Role)
+			id := ""
+			if node.Id != nil {
+				id = *node.Id
+			}
+			role := ""
+			if node.Role != nil {
+				role = string(*node.Role)
+			}
+			fmt.Printf("- ID: %s, Role: %s\n", id, role)
 		}
 	}
+	statusUnknown := "<unknown>"
+
 	fmt.Printf("Status:\n")
-	fmt.Printf("- Lifecycle Phase: %s\n", *cluster.LifecyclePhase.Message)
-	fmt.Printf("- Provider: %s\n", *cluster.ProviderStatus.Message)
-	fmt.Printf("- Control Plane Ready: %s\n", *cluster.ControlPlaneReady.Message)
-	fmt.Printf("- Infrastructure Ready: %s\n", *cluster.InfrastructureReady.Message)
-	fmt.Printf("- Node Health: %s\n", *cluster.NodeHealth.Message)
+	lifecyclePhase := statusUnknown
+	if cluster.LifecyclePhase != nil && cluster.LifecyclePhase.Message != nil {
+		lifecyclePhase = *cluster.LifecyclePhase.Message
+	}
+	fmt.Printf("- LifecyclePhase: %s\n", lifecyclePhase)
+
+	providerStatus := statusUnknown
+	if cluster.ProviderStatus != nil && cluster.ProviderStatus.Message != nil {
+		providerStatus = *cluster.ProviderStatus.Message
+	}
+	fmt.Printf("- Provider: %s\n", providerStatus)
+
+	controlPlaneReady := statusUnknown
+	if cluster.ControlPlaneReady != nil && cluster.ControlPlaneReady.Message != nil {
+		controlPlaneReady = *cluster.ControlPlaneReady.Message
+	}
+	fmt.Printf("- ControlPlaneReady: %s\n", controlPlaneReady)
+
+	infrastructureReady := statusUnknown
+	if cluster.InfrastructureReady != nil && cluster.InfrastructureReady.Message != nil {
+		infrastructureReady = *cluster.InfrastructureReady.Message
+	}
+	fmt.Printf("- InfrastructureReady: %s\n", infrastructureReady)
+
+	nodeHealth := statusUnknown
+	if cluster.NodeHealth != nil && cluster.NodeHealth.Message != nil {
+		nodeHealth = *cluster.NodeHealth.Message
+	}
+	fmt.Printf("- NodeHealth: %s\n", nodeHealth)
+
 	if cluster.Labels != nil {
 		fmt.Printf("Labels:\n")
 		for key, value := range *cluster.Labels {
