@@ -6,6 +6,12 @@ List all cluster templates
 orch-cli list clustertemplates [flags]
 ```
 
+### Examples
+
+```
+orch-cli list clustertemplates --project some-project
+```
+
 ### Options
 
 ```

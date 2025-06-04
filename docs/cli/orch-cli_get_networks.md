@@ -1,6 +1,6 @@
 ## orch-cli get networks
 
-Get all networks
+List all networks
 
 ```
 orch-cli get networks [flags]

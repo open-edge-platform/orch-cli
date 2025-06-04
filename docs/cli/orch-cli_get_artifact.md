@@ -6,6 +6,12 @@ Get an artifact
 orch-cli get artifact <name> [flags]
 ```
 
+### Examples
+
+```
+orch-cli get artifact my-artifact --project some-project
+```
+
 ### Options
 
 ```

@@ -15,6 +15,7 @@ orch-cli list applications --project some-project
 ### Options
 
 ```
+      --filter string     application list filter
   -h, --help              help for applications
       --kind strings      application kind: normal, addon, extension
       --offset int32      application list starting offset

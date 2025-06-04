@@ -6,6 +6,12 @@ Update an application
 orch-cli set application <name> <version> [flags]
 ```
 
+### Examples
+
+```
+orch-cli set application my-app 1.0.0 --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project
+```
+
 ### Options
 
 ```

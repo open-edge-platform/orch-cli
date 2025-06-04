@@ -1,6 +1,6 @@
 ## orch-cli get profiles
 
-Get all application profiles
+List all application profiles
 
 ```
 orch-cli get profiles <application-name> <version> [flags]

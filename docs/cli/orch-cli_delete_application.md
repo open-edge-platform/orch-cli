@@ -6,6 +6,12 @@ Delete an application
 orch-cli delete application <name> <version> [flags]
 ```
 
+### Examples
+
+```
+orch-cli delete application my-app 1.0.0 --project some-project
+```
+
 ### Options
 
 ```

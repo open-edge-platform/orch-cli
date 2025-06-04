@@ -6,6 +6,12 @@ Create an application reference within a deployment package
 orch-cli create application-reference <deployment-package-name> <version> <application-name:version> [flags]
 ```
 
+### Examples
+
+```
+orch-cli create application-reference my-package 1.0.0 my-app:1.0.0 --project some-project
+```
+
 ### Options
 
 ```

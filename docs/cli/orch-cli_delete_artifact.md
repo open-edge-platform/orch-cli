@@ -6,6 +6,12 @@ Delete an artifact
 orch-cli delete artifact <name> [flags]
 ```
 
+### Examples
+
+```
+orch-cli delete artifact my-artifact --project some-project
+```
+
 ### Options
 
 ```

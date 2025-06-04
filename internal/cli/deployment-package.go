@@ -35,7 +35,7 @@ func getListDeploymentPackagesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment-packages [flags]",
 		Aliases: []string{"packages", "bundles", "pkgs"},
-		Short:   "Get all deployment packages, optionally filtered by publisher",
+		Short:   "List all deployment packages",
 		RunE:    runListDeploymentPackagesCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "deployment package")

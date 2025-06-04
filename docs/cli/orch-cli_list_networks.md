@@ -9,6 +9,7 @@ orch-cli list networks [flags]
 ### Options
 
 ```
+      --filter string     network list filter
   -h, --help              help for networks
       --offset int32      network list starting offset
       --order-by string   network list order by

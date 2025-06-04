@@ -15,10 +15,11 @@ import (
 
 func getCreateArtifactCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifact <name> [flags]",
-		Short: "Create an artifact",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runCreateArtifactCommand,
+		Use:     "artifact <name> [flags]",
+		Short:   "Create an artifact",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli create artifact my-artifact --mime-type application/octet-stream --artifact /path/to/artifact --project some-project",
+		RunE:    runCreateArtifactCommand,
 	}
 	addEntityFlags(cmd, "artifact")
 	cmd.Flags().String("mime-type", "", "artifact MIME type (required)")
@@ -29,9 +30,10 @@ func getCreateArtifactCommand() *cobra.Command {
 
 func getListArtifactsCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifacts [flags]",
-		Short: "Get all artifacts, optionally filtered by publisher",
-		RunE:  runListArtifactsCommand,
+		Use:     "artifacts [flags]",
+		Short:   "List all artifacts",
+		Example: "orch-cli list artifacts --project some-project --order-by name",
+		RunE:    runListArtifactsCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "artifact")
 	return cmd
@@ -39,20 +41,22 @@ func getListArtifactsCommand() *cobra.Command {
 
 func getGetArtifactCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifact <name> [flags]",
-		Short: "Get an artifact",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runGetArtifactCommand,
+		Use:     "artifact <name> [flags]",
+		Short:   "Get an artifact",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli get artifact my-artifact --project some-project",
+		RunE:    runGetArtifactCommand,
 	}
 	return cmd
 }
 
 func getSetArtifactCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifact <name> [flags]",
-		Short: "Update an artifact",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runSetArtifactCommand,
+		Use:     "artifact <name> [flags]",
+		Short:   "Update an artifact",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli set artifact my-artifact --mime-type application/octet-stream --artifact /path/to/artifact --project some-project",
+		RunE:    runSetArtifactCommand,
 	}
 	addEntityFlags(cmd, "artifact")
 	cmd.Flags().String("mime-type", "", "artifact MIME type")
@@ -62,10 +66,11 @@ func getSetArtifactCommand() *cobra.Command {
 
 func getDeleteArtifactCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifact <name> [flags]",
-		Short: "Delete an artifact",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runDeleteArtifactCommand,
+		Use:     "artifact <name> [flags]",
+		Short:   "Delete an artifact",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli delete artifact my-artifact --project some-project",
+		RunE:    runDeleteArtifactCommand,
 	}
 	return cmd
 }

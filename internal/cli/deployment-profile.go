@@ -31,7 +31,7 @@ func getListDeploymentProfilesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment-package-profiles <application-name> <version> [flags]",
 		Aliases: []string{"deployment-profiles", "package-profiles", "bundle-profiles"},
-		Short:   "Get all deployment package profiles",
+		Short:   "List all deployment package profiles",
 		Args:    cobra.ExactArgs(2),
 		RunE:    runListDeploymentProfilesCommand,
 	}

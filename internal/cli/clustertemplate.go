@@ -53,6 +53,7 @@ func getListClusterTemplatesCommand() *cobra.Command {
 		Use:     "clustertemplates [flags]",
 		Aliases: []string{"clustertemplate", "template"},
 		Short:   "List all cluster templates",
+		Example: "orch-cli list clustertemplates --project some-project",
 		RunE:    runListClusterTemplatesCommand,
 	}
 	return cmd

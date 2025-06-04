@@ -1,6 +1,6 @@
 ## orch-cli list registries
 
-Get all registries, optionally filtered by publisher
+List all registries
 
 ```
 orch-cli list registries [flags]

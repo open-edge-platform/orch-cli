@@ -6,6 +6,12 @@ Create an artifact
 orch-cli create artifact <name> [flags]
 ```
 
+### Examples
+
+```
+orch-cli create artifact my-artifact --mime-type application/octet-stream --artifact /path/to/artifact --project some-project
+```
+
 ### Options
 
 ```

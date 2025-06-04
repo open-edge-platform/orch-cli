@@ -6,6 +6,12 @@ Delete an application reference within a deployment package
 orch-cli delete application-reference <deployment-package-name> <version> <application-name> [flags]
 ```
 
+### Examples
+
+```
+orch-cli delete application-reference my-package 1.0.0 my-app --project some-project
+```
+
 ### Options
 
 ```

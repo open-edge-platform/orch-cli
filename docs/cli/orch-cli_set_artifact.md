@@ -6,6 +6,12 @@ Update an artifact
 orch-cli set artifact <name> [flags]
 ```
 
+### Examples
+
+```
+orch-cli set artifact my-artifact --mime-type application/octet-stream --artifact /path/to/artifact --project some-project
+```
+
 ### Options
 
 ```

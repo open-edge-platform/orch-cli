@@ -6,9 +6,16 @@ List all artifacts
 orch-cli list artifacts [flags]
 ```
 
+### Examples
+
+```
+orch-cli list artifacts --project some-project --order-by name
+```
+
 ### Options
 
 ```
+      --filter string     artifact list filter
   -h, --help              help for artifacts
       --offset int32      artifact list starting offset
       --order-by string   artifact list order by

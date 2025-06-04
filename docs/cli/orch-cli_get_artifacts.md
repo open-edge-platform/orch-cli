@@ -1,9 +1,15 @@
 ## orch-cli get artifacts
 
-Get all artifacts, optionally filtered by publisher
+List all artifacts
 
 ```
 orch-cli get artifacts [flags]
+```
+
+### Examples
+
+```
+orch-cli list artifacts --project some-project --order-by name
 ```
 
 ### Options

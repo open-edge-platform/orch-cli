@@ -30,7 +30,7 @@ func getCreateProfileCommand() *cobra.Command {
 func getListProfilesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "profiles <application-name> <version> [flags]",
-		Short: "Get all application profiles",
+		Short: "List all application profiles",
 		Args:  cobra.ExactArgs(2),
 		RunE:  runListProfilesCommand,
 	}

@@ -9,6 +9,7 @@ orch-cli list deployment-packages [flags]
 ### Options
 
 ```
+      --filter string     deployment package list filter
   -h, --help              help for deployment-packages
       --kind strings      deployment package kind: normal, addon, extension
       --offset int32      deployment package list starting offset

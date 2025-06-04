@@ -1,20 +1,26 @@
-## orch-cli get deployment-packages
+## orch-cli get applications
 
-List all deployment packages
+List all applications
 
 ```
-orch-cli get deployment-packages [flags]
+orch-cli get applications [flags]
+```
+
+### Examples
+
+```
+orch-cli list applications --project some-project
 ```
 
 ### Options
 
 ```
-      --filter string     deployment package list filter
-  -h, --help              help for deployment-packages
-      --kind strings      deployment package kind: normal, addon, extension
-      --offset int32      deployment package list starting offset
-      --order-by string   deployment package list order by
-      --page-size int32   deployment package list maximum number of items
+      --filter string     application list filter
+  -h, --help              help for applications
+      --kind strings      application kind: normal, addon, extension
+      --offset int32      application list starting offset
+      --order-by string   application list order by
+      --page-size int32   application list maximum number of items
 ```
 
 ### Options inherited from parent commands

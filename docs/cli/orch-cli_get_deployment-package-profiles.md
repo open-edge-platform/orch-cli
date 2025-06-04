@@ -1,6 +1,6 @@
 ## orch-cli get deployment-package-profiles
 
-Get all deployment package profiles
+List all deployment package profiles
 
 ```
 orch-cli get deployment-package-profiles <application-name> <version> [flags]

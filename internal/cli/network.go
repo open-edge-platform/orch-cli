@@ -37,7 +37,7 @@ func getListNetworksCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "networks [flags]",
 		Aliases: []string{"nets", "networks"},
-		Short:   "Get all networks",
+		Short:   "List all networks",
 		RunE:    runListNetworksCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "network")

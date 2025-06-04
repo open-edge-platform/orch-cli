@@ -25,7 +25,7 @@ func getCreateApplicationCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Create an application",
 		Args:    cobra.ExactArgs(2),
-		Example: "orch-cli create application my-app 1.0.0 --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry",
+		Example: "orch-cli create application my-app 1.0.0 --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project",
 		RunE:    runCreateApplicationCommand,
 	}
 	addEntityFlags(cmd, "application")
@@ -71,6 +71,7 @@ func getSetApplicationCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Update an application",
 		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli set application my-app 1.0.0 --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project",
 		RunE:    runSetApplicationCommand,
 	}
 	addEntityFlags(cmd, "application")
@@ -88,6 +89,7 @@ func getDeleteApplicationCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Delete an application",
 		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli delete application my-app 1.0.0 --project some-project",
 		RunE:    runDeleteApplicationCommand,
 	}
 	return cmd

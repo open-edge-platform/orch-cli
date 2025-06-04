@@ -36,7 +36,7 @@ func getListRegistriesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "registries [flags]",
 		Aliases: []string{"regs"},
-		Short:   "Get all registries, optionally filtered by publisher",
+		Short:   "List all registries",
 		RunE:    runListRegistriesCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "registry")
