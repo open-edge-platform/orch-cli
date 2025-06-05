@@ -6,6 +6,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"strconv"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
@@ -19,7 +20,7 @@ orch-cli list region --project some-project
 # List all regions within specific parent region ID - first level only
 orch-cli list region --project some-project --region region-aaaa1111"`
 
-const getRegionExamples = `# Get specific region information using regions resource ID
+const getRegionExamples = `# Get specific regions attached ot a given parent region
 orch-cli get region region-aaaa1111 --project some-project"`
 
 const spaces string = "       "
@@ -136,43 +137,37 @@ func runListRegionCommand(cmd *cobra.Command, _ []string) error {
 		regionMap.Sites[*region.ResourceId] = *sresp.JSON200.Sites
 	}
 
-	printRegions(writer, regionMap, verbose)
+	printRegions(writer, regionMap, verbose, region)
 
 	return writer.Flush()
 }
 
-func printRegions(writer io.Writer, regions region2Site, verbose bool) {
-	if !verbose {
-		//fmt.Fprintf(writer, "%s\t%s\n", "Region ID", "Region name")
-	} else {
-		//fmt.Fprintf(writer, "%s\t%s\t%s\n", "Region ID", "Region name", "Total sites")
-	}
+func printRegions(writer io.Writer, regions region2Site, verbose bool, regionflag *string) {
 
-	//var levelList []string
+	fmt.Fprintf(writer, "Printing regions tree\n\n")
 
 	for _, region := range regions.Region {
 		if !verbose {
-			if region.ParentId == nil {
+			if region.ParentId == nil || (region.ParentId != nil && regionflag != nil && *region.ParentId == *regionflag) {
 				fmt.Fprintf(writer, "Region: %s (%s)\n", *region.ResourceId, *region.Name)
 				fmt.Fprintf(writer, "  |\n")
 				for _, site := range regions.Sites[*region.ResourceId] {
 					fmt.Fprintf(writer, "  └───── Site: %s (%s)\n", *site.ResourceId, *site.Name)
 				}
 				printSubRegions(writer, regions, *region.RegionID, false, spaces, spaces2)
+				fmt.Fprintln(writer)
 			}
-			fmt.Fprintln(writer)
 
 		} else {
-			if region.ParentId == nil {
-				fmt.Fprintf(writer, "Region: %s (%s)\n - Total Sites: %v\n", *region.ResourceId, *region.Name, *region.TotalSites)
+			if region.ParentId == nil || (region.ParentId != nil && regionflag != nil && *region.ParentId == *regionflag) {
+				fmt.Fprintf(writer, "Region: %s (%s)\n- Total Sites: %v\n", *region.ResourceId, *region.Name, *region.TotalSites)
 				fmt.Fprintf(writer, "  |\n")
 				for _, site := range regions.Sites[*region.ResourceId] {
 					fmt.Fprintf(writer, "  └───── Site: %s (%s)\n", *site.ResourceId, *site.Name)
 				}
 				printSubRegions(writer, regions, *region.RegionID, true, spaces, spaces2)
+				fmt.Fprintln(writer)
 			}
-
-			fmt.Fprintln(writer)
 		}
 	}
 }
@@ -180,22 +175,28 @@ func printRegions(writer io.Writer, regions region2Site, verbose bool) {
 func printSubRegions(writer io.Writer, regions region2Site, parentRegion string, verbose bool, spaces string, spaces2 string) {
 
 	track := 0
-	totalRegions := len(regions.Region)
-
+	//totalRegions := len(regions.Region)
+	totalSites := ""
+	//totalSites := "\n- Total Sites:" + *region.TotalSites
 	for _, region := range regions.Region {
 		track++
 		if region.ParentId != nil && *region.ParentId == parentRegion {
-			fmt.Fprintf(writer, "  %s└───── Region: %s (%s)\n", spaces2, *region.ResourceId, *region.Name)
+			if verbose {
+				totalSites = "\n         " + spaces2 + "- Total Sites: " + strconv.Itoa(*region.TotalSites)
+			}
+			fmt.Fprintf(writer, "\n  %s└───── Region: %s (%s)%s\n", spaces2, *region.ResourceId, *region.Name, totalSites)
 			fmt.Fprintf(writer, "  %s|\n", spaces)
 			for _, site := range regions.Sites[*region.ResourceId] {
 				fmt.Fprintf(writer, "  %s└───── Site: %s (%s)\n", spaces, *site.ResourceId, *site.Name)
 			}
-			if track == totalRegions-1 {
-				fmt.Fprintf(writer, "  |\n")
-			}
+			// if track == totalRegions-1 {
+			// 	fmt.Fprintf(writer, "  %s|lol\n", spaces2)
+			// }
 			spaces = spaces + "       "
 			spaces2 = spaces2 + "       "
-			printSubRegions(writer, regions, *region.RegionID, false, spaces, spaces2)
+			printSubRegions(writer, regions, *region.RegionID, verbose, spaces, spaces2)
+			spaces = spaces[:len(spaces)-7]
+			spaces2 = spaces2[:len(spaces2)-7]
 		}
 	}
 }
