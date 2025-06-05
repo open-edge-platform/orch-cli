@@ -35,11 +35,14 @@ orch-cli list host --project some-project --filter provisioned
 # List hosts using a custom filter (see: https://google.aip.dev/160 and API spec @ https://github.com/open-edge-platform/orch-utils/blob/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml )
 orch-cli list host --project some-project --filter "serialNumber='123456789'"
 
-# List hosts using in a specific site uing site ID (--site flag will take precedence over --region flag)
+# List hosts in a specific site using site ID (--site flag will take precedence over --region flag)
 orch-cli list host --project some-project --site site-c69a3c81
 
-# List hosts using in a specific region uing region ID (--site flag will take precedence over --region flag)
+# List hosts in a specific region using region ID (--site flag will take precedence over --region flag)
 orch-cli list host --project some-project --region region-1234abcd
+
+# List hosts with a specific workload using workload name
+orch-cli list host --project some-project --workload cluster-sn000320
 `
 
 const getHostExamples = `# Get detailed information about specific host using the host Resource ID
@@ -165,7 +168,7 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 	}
 	for _, h := range *hosts {
 		//TODO clean this up
-		os, workload, site, siteName := "Not provisioned", "Not provisioned", "Not provisioned", "Not provisioned"
+		os, workload, site, siteName := "Not provisioned", "Not assigned", "Not provisioned", "Not provisioned"
 		host := "Not connected"
 
 		if h.Instance != nil {
@@ -173,7 +176,7 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 				os = toJSON(h.Instance.CurrentOs.Name)
 			}
 			if h.Instance.WorkloadMembers != nil {
-				workload = toJSON(h.Instance.WorkloadMembers)
+				workload = toJSON((*h.Instance.WorkloadMembers)[0].Workload.Name)
 			}
 		}
 		if h.SiteId != nil {
@@ -584,6 +587,7 @@ func getListHostCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec. \n\tPredefined filters: --filter provisioned/onboarded/registered/nor connected/deauthorized")
 	cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Optional filter provided as part of host list to filter hosts by site")
 	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of host list to filter hosts by region")
+	cmd.PersistentFlags().StringP("workload", "w", viper.GetString("workload"), "Optional filter provided as part of host list to filter hosts by workload")
 	return cmd
 }
 
@@ -649,6 +653,7 @@ func getDeauthorizeHostCommand() *cobra.Command {
 // Lists all Hosts - retrieves all hosts and displays selected information in tabular format
 func runListHostCommand(cmd *cobra.Command, _ []string) error {
 
+	workload, _ := cmd.Flags().GetString("workload")
 	filtflag, _ := cmd.Flags().GetString("filter")
 	filter := filterHelper(filtflag)
 
@@ -732,6 +737,47 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 			break // No more hosts to process
 		}
 	}
+
+	// Get instances in order to map additional host details
+	instances := make([]infra.Instance, 0)
+	for offset := 0; ; offset += pageSize {
+		iresp, err := hostClient.GetV1ProjectsProjectNameComputeInstancesWithResponse(ctx, projectName,
+			&infra.GetV1ProjectsProjectNameComputeInstancesParams{
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(iresp.HTTPResponse, "error while retrieving instance"); err != nil {
+			return err
+		}
+		instances = append(instances, *iresp.JSON200.Instances...)
+		if !*iresp.JSON200.HasNext {
+			break // No more instances to process
+		}
+	}
+	matchedHosts := make([]infra.Host, 0)
+
+	//Map workloads to hosts
+	for _, host := range hosts {
+		for _, instance := range instances {
+			if instance.WorkloadMembers != nil && *instance.InstanceID == *host.Instance.InstanceID {
+				host.Instance.WorkloadMembers = instance.WorkloadMembers
+				if workload != "" {
+					if *(*host.Instance.WorkloadMembers)[0].Workload.Name == workload {
+						matchedHosts = append(matchedHosts, host)
+					}
+				}
+				break
+			}
+		}
+	}
+
+	if workload != "" {
+		hosts = matchedHosts
+	}
+
 	printHosts(writer, &hosts, verbose)
 	if verbose {
 		if filter != nil {
