@@ -22,7 +22,7 @@ func getLoginCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "login <username> [<password>] [flags]",
 		Args:  cobra.MinimumNArgs(1),
-		Short: "Login to CLI Server",
+		Short: "Login to Orchestrator",
 		Long: "Login to Keycloak server to retrieve an refresh-token and save locally. " +
 			"Refresh Token is good until Max Session Timout or until logout. " +
 			"If password is not supplied it will be prompted for.",
@@ -41,7 +41,7 @@ func getLoginCommand() *cobra.Command {
 func getLogoutCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "logout",
-		Short: "Logout of CLI Server",
+		Short: "Logout of Orchestrator",
 		Long:  "Discard local api-token",
 		RunE:  logout,
 	}

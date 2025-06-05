@@ -37,6 +37,7 @@ func getListRegistriesCommand() *cobra.Command {
 		Use:     "registries [flags]",
 		Aliases: []string{"regs"},
 		Short:   "List all registries",
+		Example: "orch-cli list registries --project some-project --order-by name",
 		RunE:    runListRegistriesCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "registry")
@@ -46,10 +47,12 @@ func getListRegistriesCommand() *cobra.Command {
 
 func getGetRegistryCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "registry <name> [flags]",
-		Short: "Get a registry",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runGetRegistryCommand,
+		Use:     "registry <name> [flags]",
+		Short:   "Get a registry",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli get registry my-registry --project some-project",
+		Aliases: []string{"reg"},
+		RunE:    runGetRegistryCommand,
 	}
 	cmd.Flags().Bool("show-sensitive-info", false, "show sensitive info, e.g. auth-token, CA certs")
 	return cmd

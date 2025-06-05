@@ -18,6 +18,7 @@ func getUploadCommand() *cobra.Command {
 		Args:              cobra.ExactArgs(1),
 		Short:             "Create catalog resources by uploading YAML files",
 		PersistentPreRunE: auth.CheckAuth,
+		Example:           "orch-cli upload /path/to/resource.yaml --project some-project",
 		RunE:              uploadResources,
 	}
 	return cmd

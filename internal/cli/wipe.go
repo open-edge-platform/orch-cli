@@ -19,6 +19,7 @@ func getWipeProjectCommand() *cobra.Command {
 		Args:              cobra.NoArgs,
 		Short:             "Wipe all data associated with the specified project",
 		PersistentPreRunE: auth.CheckAuth,
+		Example:           "orch-cli wipe --project some-project --yes",
 		RunE:              runWipeProjectCommand,
 	}
 	_ = cmd.MarkFlagRequired(project)
