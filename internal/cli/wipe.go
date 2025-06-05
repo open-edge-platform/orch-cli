@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2023-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,10 +6,11 @@ package cli
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	restapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
-	"net/http"
 )
 
 func getWipeProjectCommand() *cobra.Command {
@@ -19,6 +19,7 @@ func getWipeProjectCommand() *cobra.Command {
 		Args:              cobra.NoArgs,
 		Short:             "Wipe all data associated with the specified project",
 		PersistentPreRunE: auth.CheckAuth,
+		Example:           "orch-cli wipe --project some-project --yes",
 		RunE:              runWipeProjectCommand,
 	}
 	_ = cmd.MarkFlagRequired(project)

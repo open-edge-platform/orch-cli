@@ -1,5 +1,4 @@
-# SPDX-FileCopyrightText: 2022-present Intel Corporation
-#
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 CMD_DIR         ?= ./cmd/orch-cli
@@ -47,8 +46,7 @@ mod-update:
 
 build: mod-update
 	@# Help: Runs build stage
-	@sed "s/VERSION/`cat VERSION`/g" internal/cli/version.go.template > internal/cli/version.go
-	go build -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
+	go build -ldflags "-X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
 
 install: build
 	@# Help: Installs client tool

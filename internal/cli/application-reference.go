@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,10 +6,11 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
-	"strings"
 )
 
 func getCreateApplicationReferenceCommand() *cobra.Command {
@@ -19,6 +19,7 @@ func getCreateApplicationReferenceCommand() *cobra.Command {
 		Aliases: []string{"app-reference"},
 		Short:   "Create an application reference within a deployment package",
 		Args:    cobra.ExactArgs(3),
+		Example: "orch-cli create application-reference my-package 1.0.0 my-app:1.0.0 --project some-project",
 		RunE:    runCreateApplicationReferenceCommand,
 	}
 	return cmd
@@ -30,6 +31,7 @@ func getDeleteApplicationReferenceCommand() *cobra.Command {
 		Aliases: []string{"app-reference"},
 		Short:   "Delete an application reference within a deployment package",
 		Args:    cobra.ExactArgs(3),
+		Example: "orch-cli delete application-reference my-package 1.0.0 my-app --project some-project",
 		RunE:    runDeleteApplicationReferenceCommand,
 	}
 	return cmd

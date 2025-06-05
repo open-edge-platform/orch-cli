@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -17,7 +16,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/open-edge-platform/app-orch-catalog/pkg/restClient"
-	"github.com/open-edge-platform/app-orch-catalog/pkg/restProxy"
+	restproxy "github.com/open-edge-platform/app-orch-catalog/pkg/restProxy"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
 	"github.com/spf13/viper"
