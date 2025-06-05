@@ -789,7 +789,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 	if workload == "NotAssigned" {
 		hosts = notMatchedHosts
 	}
-
+  
 	printHosts(writer, &hosts, verbose)
 	if verbose {
 		if filter != nil {
