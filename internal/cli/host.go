@@ -43,6 +43,9 @@ orch-cli list host --project some-project --region region-1234abcd
 
 # List hosts with a specific workload using workload name
 orch-cli list host --project some-project --workload cluster-sn000320
+
+# List hosts without a workload using NotAssigned argument
+orch-cli list host --project some-project --workload NotAssigned
 `
 
 const getHostExamples = `# Get detailed information about specific host using the host Resource ID
@@ -761,6 +764,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 	matchedHosts := make([]infra.Host, 0)
+	notMatchedHosts := make([]infra.Host, 0)
 
 	//Map workloads to hosts
 	for _, host := range hosts {
@@ -775,10 +779,19 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 				break
 			}
 		}
+		if workload == "NotAssigned" {
+			if host.Instance.WorkloadMembers == nil {
+				notMatchedHosts = append(notMatchedHosts, host)
+			}
+		}
 	}
 
 	if workload != "" {
 		hosts = matchedHosts
+	}
+
+	if workload == "NotAssigned" {
+		hosts = notMatchedHosts
 	}
 
 	printHosts(writer, &hosts, verbose)

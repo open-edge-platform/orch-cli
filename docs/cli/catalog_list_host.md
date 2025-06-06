@@ -27,6 +27,9 @@ orch-cli list host --project some-project --region region-1234abcd
 # List hosts with a specific workload using workload name
 orch-cli list host --project some-project --workload cluster-sn000320
 
+# List hosts without a workload using NotAssigned argument
+orch-cli list host --project some-project --workload NotAssigned
+
 ```
 
 ### Options
