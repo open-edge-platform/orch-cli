@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,11 +6,12 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
-	"io"
-	"strings"
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
@@ -23,7 +23,7 @@ func getCreateDeploymentPackageCommand() *cobra.Command {
 		RunE:    runCreateDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
-	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version>:[<publisher>] constituent application references")
+	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
 	cmd.Flags().Bool("visible", true, "mark deployment package as visible or not")
@@ -35,7 +35,8 @@ func getListDeploymentPackagesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment-packages [flags]",
 		Aliases: []string{"packages", "bundles", "pkgs"},
-		Short:   "Get all deployment packages, optionally filtered by publisher",
+		Short:   "List all deployment packages",
+		Example: "orch-cli list deployment-packages --project some-project",
 		RunE:    runListDeploymentPackagesCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "deployment package")
@@ -49,6 +50,7 @@ func getGetDeploymentPackageCommand() *cobra.Command {
 		Aliases: deploymentPackageAliases,
 		Short:   "Get a deployment package",
 		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli get deployment-package my-package --project some-project",
 		RunE:    runGetDeploymentPackageCommand,
 	}
 	return cmd
@@ -80,6 +82,7 @@ func getDeleteDeploymentPackageCommand() *cobra.Command {
 		Aliases: deploymentPackageAliases,
 		Short:   "Delete a deployment package",
 		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli delete deployment-package my-package --project some-project",
 		RunE:    runDeleteDeploymentPackageCommand,
 	}
 	return cmd

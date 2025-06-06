@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -21,7 +20,8 @@ func getCreateDeploymentCommand() *cobra.Command {
 		Use:   "deployment <application-name> <version> [flags]",
 		Short: "Create a deployment",
 		Args:  cobra.ExactArgs(2),
-		RunE:  runCreateDeploymentCommand,
+
+		RunE: runCreateDeploymentCommand,
 	}
 	cmd.Flags().String("display-name", "", "deployment display name")
 	cmd.Flags().String("profile", "", "deployment profile to use")
@@ -36,6 +36,7 @@ func getListDeploymentsCommand() *cobra.Command {
 		Use:     "deployments [flags]",
 		Aliases: []string{"deployment"},
 		Short:   "List all deployments",
+		Example: "orch-cli list deployments --project some-project",
 		RunE:    runListDeploymentsCommand,
 	}
 	return cmd
@@ -43,10 +44,11 @@ func getListDeploymentsCommand() *cobra.Command {
 
 func getGetDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deployment <deployment-id> [flags]",
-		Short: "Get a deployment",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runGetDeploymentCommand,
+		Use:     "deployment <deployment-id> [flags]",
+		Short:   "Get a deployment",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli get deployment 12345 --project some-project",
+		RunE:    runGetDeploymentCommand,
 	}
 	return cmd
 }
@@ -70,10 +72,11 @@ func getSetDeploymentCommand() *cobra.Command {
 
 func getDeleteDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deployment <deployment-id> [flags]",
-		Short: "Delete a deployment",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runDeleteDeploymentCommand,
+		Use:     "deployment <deployment-id> [flags]",
+		Short:   "Delete a deployment",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli delete deployment 12345 --project some-project",
+		RunE:    runDeleteDeploymentCommand,
 	}
 	return cmd
 }

@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,10 +6,11 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
-	"io"
 )
 
 var (
@@ -25,6 +25,7 @@ func getCreateApplicationCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Create an application",
 		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli create application my-app 1.0.0 --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project",
 		RunE:    runCreateApplicationCommand,
 	}
 	addEntityFlags(cmd, "application")
@@ -43,7 +44,8 @@ func getListApplicationsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "applications [flags]",
 		Aliases: []string{"apps", "applications"},
-		Short:   "Get all applications, optionally filtered by publisher",
+		Short:   "List all applications",
+		Example: "orch-cli list applications --project some-project",
 		RunE:    runListApplicationsCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "application")
@@ -57,6 +59,7 @@ func getGetApplicationCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Get an application",
 		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli get application my-app --project some-project",
 		RunE:    runGetApplicationCommand,
 	}
 	return cmd
@@ -68,6 +71,7 @@ func getSetApplicationCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Update an application",
 		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli set application my-app 1.0.0 --display-name 'My Application' --description 'An example application' --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project",
 		RunE:    runSetApplicationCommand,
 	}
 	addEntityFlags(cmd, "application")
@@ -85,6 +89,7 @@ func getDeleteApplicationCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Delete an application",
 		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli delete application my-app 1.0.0 --project some-project",
 		RunE:    runDeleteApplicationCommand,
 	}
 	return cmd

@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -54,6 +53,7 @@ func getListClusterTemplatesCommand() *cobra.Command {
 		Use:     "clustertemplates [flags]",
 		Aliases: []string{"clustertemplate", "template"},
 		Short:   "List all cluster templates",
+		Example: "orch-cli list clustertemplates --project some-project",
 		RunE:    runListClusterTemplatesCommand,
 	}
 	return cmd

@@ -1,5 +1,5 @@
 <!---
-  SPDX-FileCopyrightText: (C) 2022 Intel Corporation
+  SPDX-FileCopyrightText: (C) 2025 Intel Corporation
   SPDX-License-Identifier: Apache-2.0
 -->
 
@@ -9,13 +9,12 @@
 
 ## Overview
 
-The application orchestrator CLI is a standalone utility which interacts with the Application Catalog and deployment
-services using their REST API endpoints and allows the operator to manage various Catalog resources
+The orchestrator CLI is a standalone utility which interacts and manages various Orchestrator resources
+using its REST API endpoint
 from the command line.
 
 The supported CLI usage allows user to `create`, `get`, `list`, `set` and `delete` the following
-Catalog entities:
-* publishers
+Orchestrator entities:
 * registries
 * artifacts
 * applications
@@ -89,7 +88,7 @@ For support, start with [Troubleshooting] or [Contact us].
 
 ## License
 
-The Application Orchestration Catalog is licensed under [Apache 2.0 License]
+The Orchestrator CLI is licensed under [Apache 2.0 License]
 
 [Application Orchestration Deployment]: https://github.com/open-edge-platform/app-orch-deployment
 [Tenant Controller]: https://github.com/open-edge-platform/app-orch-tenant-controller
