@@ -20,26 +20,12 @@ orch-cli list region --project some-project
 # List all regions within specific parent region ID - first level only
 orch-cli list region --project some-project --region region-aaaa1111"`
 
-const getRegionExamples = `# Get specific regions attached ot a given parent region
-orch-cli get region region-aaaa1111 --project some-project"`
-
 const spaces string = "       "
 const spaces2 string = ""
 
 type region2Site struct {
 	Sites  map[string][]infra.Site
 	Region map[string]infra.Region
-}
-
-func getGetRegionCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "region <region ID> [flags]",
-		Short:   "Get a region",
-		Example: getRegionExamples,
-		Args:    cobra.ExactArgs(1),
-		RunE:    runGetRegionCommand,
-	}
-	return cmd
 }
 
 func getListRegionCommand() *cobra.Command {
@@ -53,38 +39,7 @@ func getListRegionCommand() *cobra.Command {
 	return cmd
 }
 
-// Gets specific OS Profile - retrieves list of profiles and then filters and outputs
-// specifc profile by name
-func runGetRegionCommand(cmd *cobra.Command, args []string) error {
-	// writer, verbose := getOutputContext(cmd)
-	// ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// resp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-	// 	&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
-
-	// if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-	// 	OSProfileHeaderGet, "error getting OS Profile"); !proceed {
-	// 	return err
-	// }
-
-	// name := args[0]
-	// profile, err := filterProfilesByName(resp.JSON200.OperatingSystemResources, name)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// printOSProfile(writer, profile)
-	// return writer.Flush()
-	return nil
-}
-
-// Lists all OS Profiles - retrieves all profiles and displays selected information in tabular format
+// Lists all Regions - retrieves all regions and prints tree
 func runListRegionCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
@@ -174,12 +129,10 @@ func printRegions(writer io.Writer, regions region2Site, verbose bool, regionfla
 
 func printSubRegions(writer io.Writer, regions region2Site, parentRegion string, verbose bool, spaces string, spaces2 string) {
 
-	track := 0
 	//totalRegions := len(regions.Region)
 	totalSites := ""
 	//totalSites := "\n- Total Sites:" + *region.TotalSites
 	for _, region := range regions.Region {
-		track++
 		if region.ParentId != nil && *region.ParentId == parentRegion {
 			if verbose {
 				totalSites = "\n         " + spaces2 + "- Total Sites: " + strconv.Itoa(*region.TotalSites)
@@ -189,9 +142,6 @@ func printSubRegions(writer io.Writer, regions region2Site, parentRegion string,
 			for _, site := range regions.Sites[*region.ResourceId] {
 				fmt.Fprintf(writer, "  %s└───── Site: %s (%s)\n", spaces, *site.ResourceId, *site.Name)
 			}
-			// if track == totalRegions-1 {
-			// 	fmt.Fprintf(writer, "  %s|lol\n", spaces2)
-			// }
 			spaces = spaces + "       "
 			spaces2 = spaces2 + "       "
 			printSubRegions(writer, regions, *region.RegionID, verbose, spaces, spaces2)

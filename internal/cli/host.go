@@ -548,7 +548,7 @@ func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, 
 		*erringRecords = append(*erringRecords, record)
 		return "", err
 	}
-	if resp.JSON200.LocalAccounts != nil {
+	if resp.JSON200 != nil && resp.JSON200.LocalAccounts != nil {
 		localAccounts := *resp.JSON200.LocalAccounts
 		if len(localAccounts) > 0 {
 			respCache.LACache[remoteUserToQuery] = localAccounts[len(localAccounts)-1]
