@@ -29,11 +29,11 @@ func getListSiteCommand() *cobra.Command {
 		Example: listSiteExamples,
 		RunE:    runListSiteCommand,
 	}
-	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of site list to filter region by parent region")
+	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of site list to filter sites by parent region")
 	return cmd
 }
 
-// Lists all OS Profiles - retrieves all profiles and displays selected information in tabular format
+// Lists all sites - retrieves all sites and displays selected information in tabular format
 func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
