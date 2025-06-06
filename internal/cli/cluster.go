@@ -413,7 +413,7 @@ func forceDeleteCluster(ctx context.Context, hostClient *infra.ClientWithRespons
 		if err != nil {
 			return fmt.Errorf("failed to delete node %s from cluster %s: %w", uuid, clusterName, err)
 		}
-		if resp.HTTPResponse.StatusCode != 204 {
+		if resp.HTTPResponse.StatusCode != 204 && resp.HTTPResponse.StatusCode != 200 {
 			return fmt.Errorf("failed to delete node %s from cluster %s: %s", uuid, clusterName, resp.HTTPResponse.Status)
 		}
 		fmt.Printf("Node %s deleted successfully from cluster %s\n", uuid, clusterName)
