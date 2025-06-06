@@ -1,14 +1,14 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
 	"bytes"
+	"os"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/spf13/viper"
-	"os"
 )
 
 func (s *CLITestSuite) login(u string, p string) error {

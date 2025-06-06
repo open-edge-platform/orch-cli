@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,18 +6,20 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
-	"io"
 )
 
 func getCreateRegistryCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "registry <name> [flags]",
-		Short: "Create a registry",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runCreateRegistryCommand,
+		Use:     "registry <name> [flags]",
+		Short:   "Create a registry",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli create registry my-registry --root-url https://my-registry.example.com --username my-user --auth-token my-token --project some-project",
+		RunE:    runCreateRegistryCommand,
 	}
 	addEntityFlags(cmd, "registry")
 	cmd.Flags().String("root-url", "", "root URL of the registry (required)")
@@ -36,7 +37,8 @@ func getListRegistriesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "registries [flags]",
 		Aliases: []string{"regs"},
-		Short:   "Get all registries, optionally filtered by publisher",
+		Short:   "List all registries",
+		Example: "orch-cli list registries --project some-project --order-by name",
 		RunE:    runListRegistriesCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "registry")
@@ -46,10 +48,12 @@ func getListRegistriesCommand() *cobra.Command {
 
 func getGetRegistryCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "registry <name> [flags]",
-		Short: "Get a registry",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runGetRegistryCommand,
+		Use:     "registry <name> [flags]",
+		Short:   "Get a registry",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli get registry my-registry --project some-project",
+		Aliases: []string{"reg"},
+		RunE:    runGetRegistryCommand,
 	}
 	cmd.Flags().Bool("show-sensitive-info", false, "show sensitive info, e.g. auth-token, CA certs")
 	return cmd
@@ -57,10 +61,11 @@ func getGetRegistryCommand() *cobra.Command {
 
 func getSetRegistryCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "registry <name> [flags]",
-		Short: "Update a registry",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runSetRegistryCommand,
+		Use:     "registry <name> [flags]",
+		Short:   "Update a registry",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli set registry my-registry --root-url https://my-registry.example.com --username my-user --auth-token my-token --project some-project",
+		RunE:    runSetRegistryCommand,
 	}
 	addEntityFlags(cmd, "registry")
 	cmd.Flags().String("root-url", "", "root URL of the registry")
@@ -75,10 +80,12 @@ func getSetRegistryCommand() *cobra.Command {
 
 func getDeleteRegistryCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "registry <name> [flags]",
-		Short: "Delete a registry",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runDeleteRegistryCommand,
+		Use:     "registry <name> [flags]",
+		Short:   "Delete a registry",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli delete registry my-registry --project some-project",
+		Aliases: []string{"del-reg", "rm-reg"},
+		RunE:    runDeleteRegistryCommand,
 	}
 	return cmd
 }

@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -9,11 +8,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/open-edge-platform/cli/pkg/auth"
-	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -37,7 +37,8 @@ func getListNetworksCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "networks [flags]",
 		Aliases: []string{"nets", "networks"},
-		Short:   "Get all networks",
+		Short:   "List all networks",
+		Example: "orch-cli list networks --project some-project",
 		RunE:    runListNetworksCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "network")
@@ -49,6 +50,7 @@ func getGetNetworkCommand() *cobra.Command {
 		Use:     "network <name> [flags]",
 		Aliases: networkAliases,
 		Short:   "Get a network",
+		Example: "orch-cli get network my-network --project some-project",
 		Args:    cobra.ExactArgs(1),
 		RunE:    runGetNetworkCommand,
 	}
@@ -73,6 +75,7 @@ func getDeleteNetworkCommand() *cobra.Command {
 		Aliases: networkAliases,
 		Short:   "Delete a network",
 		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli delete network my-network --project some-project",
 		RunE:    runDeleteNetworkCommand,
 	}
 	return cmd
@@ -245,7 +248,7 @@ func getNetworkContext(cmd *cobra.Command) (context.Context, string, string, err
 	if err != nil {
 		return nil, "", "", err
 	}
-	catEP, err := cmd.Flags().GetString(catalogEndpoint)
+	catEP, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, "", "", err
 	}

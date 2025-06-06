@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -17,7 +16,7 @@ func getCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "create",
 		Args:              cobra.MinimumNArgs(1),
-		Short:             "Create various catalog service entities",
+		Short:             "Create various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
 	}
 
@@ -45,7 +44,7 @@ func getListCommand() *cobra.Command {
 	catalogListRootCmd := &cobra.Command{
 		Use:               "list",
 		Aliases:           []string{"ls", "show"},
-		Short:             "List various catalog service entities",
+		Short:             "List various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
 	}
 	catalogListRootCmd.AddCommand(
@@ -72,7 +71,7 @@ func getListCommand() *cobra.Command {
 func getGetCommand() *cobra.Command {
 	catalogGetRootCmd := &cobra.Command{
 		Use:               "get",
-		Short:             "Get various catalog service entities",
+		Short:             "Get various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
 	}
 	catalogGetRootCmd.AddCommand(
@@ -111,7 +110,7 @@ func getSetCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "set",
 		Aliases:           []string{"update"},
-		Short:             "Create various catalog service entities",
+		Short:             "Update various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
 	}
 	cmd.AddCommand(
@@ -132,7 +131,7 @@ func getSetCommand() *cobra.Command {
 func getDeleteCommand() *cobra.Command {
 	catalogDeleteRootCmd := &cobra.Command{
 		Use:               "delete",
-		Short:             "Delete various catalog service entities",
+		Short:             "Delete various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
 	}
 	catalogDeleteRootCmd.AddCommand(
@@ -157,7 +156,7 @@ func getDeleteCommand() *cobra.Command {
 func getWatchCommand() *cobra.Command {
 	catalogWatchCmd := &cobra.Command{
 		Use:               "watch {registries|artifacts|applications|packages}...",
-		Short:             "Watch updates of various catalog service entities",
+		Short:             "Watch updates of various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
 		Args:              cobra.MinimumNArgs(1),
 		RunE:              runWatchAllCommand,

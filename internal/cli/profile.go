@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,12 +6,13 @@ package cli
 import (
 	b64 "encoding/base64"
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/open-edge-platform/orch-library/go/pkg/errors"
 	"github.com/spf13/cobra"
-	"io"
-	"strings"
 )
 
 func getCreateProfileCommand() *cobra.Command {
@@ -29,20 +29,22 @@ func getCreateProfileCommand() *cobra.Command {
 
 func getListProfilesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "profiles <application-name> <version> [flags]",
-		Short: "Get all application profiles",
-		Args:  cobra.ExactArgs(2),
-		RunE:  runListProfilesCommand,
+		Use:     "profiles <application-name> <version> [flags]",
+		Short:   "List all application profiles",
+		Example: "orch-cli list profiles my-app 1.0.0 --project my-project",
+		Args:    cobra.ExactArgs(2),
+		RunE:    runListProfilesCommand,
 	}
 	return cmd
 }
 
 func getGetProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "profile <application-name> <version> <name> [flags]",
-		Short: "Get an application profile",
-		Args:  cobra.ExactArgs(3),
-		RunE:  runGetProfileCommand,
+		Use:     "profile <application-name> <version> <name> [flags]",
+		Short:   "Get an application profile",
+		Example: "orch-cli get profile my-app 1.0.0 my-profile --project my-project",
+		Args:    cobra.ExactArgs(3),
+		RunE:    runGetProfileCommand,
 	}
 	return cmd
 }
@@ -61,10 +63,11 @@ func getSetProfileCommand() *cobra.Command {
 
 func getDeleteProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "profile <application-name> <version> <name> [flags]",
-		Short: "Delete an application profile",
-		Args:  cobra.ExactArgs(3),
-		RunE:  runDeleteProfileCommand,
+		Use:     "profile <application-name> <version> <name> [flags]",
+		Short:   "Delete an application profile",
+		Args:    cobra.ExactArgs(3),
+		Example: "orch-cli delete profile my-app 1.0.0 my-profile --project my-project",
+		RunE:    runDeleteProfileCommand,
 	}
 	return cmd
 }
