@@ -9,8 +9,8 @@
 
 ## Overview
 
-The orchestrator CLI is a standalone utility which interacts with the Application Catalog and deployment
-services using their REST API endpoints and allows the operator to manage various Orchestrator resources
+The orchestrator CLI is a standalone utility which interacts and manages various Orchestrator resources
+using its REST API endpoint
 from the command line.
 
 The supported CLI usage allows user to `create`, `get`, `list`, `set` and `delete` the following
