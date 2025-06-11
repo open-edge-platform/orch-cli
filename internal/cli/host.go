@@ -51,8 +51,11 @@ orch-cli get host host-1234abcd --project some-project`
 
 const createHostExamples = `# Provision a host or a number of hosts from a CSV file
 
-# Generate CSV input file using the --generate-csv flag - the output will be a base test.csv file.
+# Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
 orch-cli create host --project some-project --generate-csv
+
+# Generate CSV input file using the --generate-csv flag - the defined output will be a base myhosts.csv file.
+orch-cli create host --project some-project --generate-csv=myhosts.csv
 
 # Sample input csv file hosts.csv
 
@@ -538,7 +541,7 @@ func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, 
 		*erringRecords = append(*erringRecords, record)
 		return "", err
 	}
-	if resp.JSON200.LocalAccounts != nil {
+	if resp.JSON200 != nil && resp.JSON200.LocalAccounts != nil {
 		localAccounts := resp.JSON200.LocalAccounts
 		if len(localAccounts) > 0 {
 			respCache.LACache[remoteUserToQuery] = localAccounts[len(localAccounts)-1]
@@ -676,7 +679,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	//If all host for a given region are quereied, sites need to be found first
+	//If all host for a given region are queried, sites need to be found first
 	if siteFlag == "" && regFlag != "" {
 
 		regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
