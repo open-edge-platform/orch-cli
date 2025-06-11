@@ -54,11 +54,11 @@ func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	pageSize := 20
-	sites := make([]infra.Site, 0)
+	sites := make([]infra.SiteResource, 0)
 
 	for offset := 0; ; offset += pageSize {
-		resp, err := siteClient.GetV1ProjectsProjectNameRegionsRegionIDSitesWithResponse(ctx, projectName, queryRegion,
-			&infra.GetV1ProjectsProjectNameRegionsRegionIDSitesParams{
+		resp, err := siteClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
+			&infra.SiteServiceListSitesParams{
 				Filter: regFilter,
 				Offset: &offset,
 			}, auth.AddAuthHeader)
@@ -70,8 +70,8 @@ func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 			return err
 		}
 
-		sites = append(sites, *resp.JSON200.Sites...)
-		if !*resp.JSON200.HasNext {
+		sites = append(sites, resp.JSON200.Sites...)
+		if !resp.JSON200.HasNext {
 			break // No more hosts to process
 		}
 	}
@@ -80,7 +80,7 @@ func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 	return writer.Flush()
 }
 
-func printSites(writer io.Writer, sites *[]infra.Site, verbose bool, region string) {
+func printSites(writer io.Writer, sites *[]infra.SiteResource, verbose bool, region string) {
 	if verbose {
 		fmt.Fprintf(writer, "%-20s %-20s %-30s %-10s %-10s\n", "Site ID", "Site Name", "Region (Name)", "Longitude", "Latitude")
 	} else {

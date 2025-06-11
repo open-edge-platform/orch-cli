@@ -24,8 +24,8 @@ const spaces string = "       "
 const spaces2 string = ""
 
 type region2Site struct {
-	Sites  map[string][]infra.Site
-	Region map[string]infra.Region
+	Sites  map[string][]infra.SiteResource
+	Region map[string]infra.RegionResource
 }
 
 func getListRegionCommand() *cobra.Command {
@@ -56,11 +56,17 @@ func runListRegionCommand(cmd *cobra.Command, _ []string) error {
 
 	enableTotalSite := true
 
+	var filterString *string
+	if regFlag != "" {
+		filter := fmt.Sprintf("parent_region.resource_id='%s'", *region)
+		filterString = &filter
+	}
+
 	//Get all regions
-	resp, err := regionClient.GetV1ProjectsProjectNameRegionsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameRegionsParams{
+	resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+		&infra.RegionServiceListRegionsParams{
 			ShowTotalSites: &enableTotalSite,
-			Parent:         region,
+			Filter:         filterString,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -72,24 +78,24 @@ func runListRegionCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	regionMap := region2Site{
-		Sites:  make(map[string][]infra.Site),
-		Region: make(map[string]infra.Region),
+		Sites:  make(map[string][]infra.SiteResource),
+		Region: make(map[string]infra.RegionResource),
 	}
 
 	//Map sites to region
-	for _, region := range *resp.JSON200.Regions {
+	for _, region := range resp.JSON200.Regions {
 		regionMap.Region[*region.ResourceId] = region
 		//Get all sites per region
 		regFilter := fmt.Sprintf("region.resource_id='%s'", *region.ResourceId)
 
-		sresp, err := regionClient.GetV1ProjectsProjectNameRegionsRegionIDSitesWithResponse(ctx, projectName, *region.ResourceId,
-			&infra.GetV1ProjectsProjectNameRegionsRegionIDSitesParams{
+		sresp, err := regionClient.SiteServiceListSitesWithResponse(ctx, projectName, *region.ResourceId,
+			&infra.SiteServiceListSitesParams{
 				Filter: &regFilter,
 			}, auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
 		}
-		regionMap.Sites[*region.ResourceId] = *sresp.JSON200.Sites
+		regionMap.Sites[*region.ResourceId] = sresp.JSON200.Sites
 	}
 
 	printRegions(writer, regionMap, verbose, region)
@@ -103,7 +109,7 @@ func printRegions(writer io.Writer, regions region2Site, verbose bool, regionfla
 
 	for _, region := range regions.Region {
 		if !verbose {
-			if region.ParentId == nil || (region.ParentId != nil && regionflag != nil && *region.ParentId == *regionflag) {
+			if *region.ParentId == "" || (*region.ParentId != "" && regionflag != nil && *region.ParentId == *regionflag) {
 				fmt.Fprintf(writer, "Region: %s (%s)\n", *region.ResourceId, *region.Name)
 				fmt.Fprintf(writer, "  |\n")
 				for _, site := range regions.Sites[*region.ResourceId] {
@@ -114,7 +120,7 @@ func printRegions(writer io.Writer, regions region2Site, verbose bool, regionfla
 			}
 
 		} else {
-			if region.ParentId == nil || (region.ParentId != nil && regionflag != nil && *region.ParentId == *regionflag) {
+			if *region.ParentId == "" || (*region.ParentId != "" && regionflag != nil && *region.ParentId == *regionflag) {
 				fmt.Fprintf(writer, "Region: %s (%s)\n- Total Sites: %v\n", *region.ResourceId, *region.Name, *region.TotalSites)
 				fmt.Fprintf(writer, "  |\n")
 				for _, site := range regions.Sites[*region.ResourceId] {
@@ -135,10 +141,12 @@ func printSubRegions(writer io.Writer, regions region2Site, parentRegion string,
 	for _, region := range regions.Region {
 		if region.ParentId != nil && *region.ParentId == parentRegion {
 			if verbose {
-				totalSites = "\n         " + spaces2 + "- Total Sites: " + strconv.Itoa(*region.TotalSites)
+				totalSites = "\n         " + spaces2 + "- Total Sites: " + strconv.FormatInt(int64(*region.TotalSites), 10)
 			}
 			fmt.Fprintf(writer, "\n  %s└───── Region: %s (%s)%s\n", spaces2, *region.ResourceId, *region.Name, totalSites)
-			fmt.Fprintf(writer, "  %s|\n", spaces)
+			if len(regions.Sites[*region.ResourceId]) > 0 {
+				fmt.Fprintf(writer, "  %s|\n", spaces)
+			}
 			for _, site := range regions.Sites[*region.ResourceId] {
 				fmt.Fprintf(writer, "  %s└───── Site: %s (%s)\n", spaces, *site.ResourceId, *site.Name)
 			}
