@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -1008,8 +1007,8 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 	//Check that valid response was received
 	err = checkResponse(resp.HTTPResponse, "error while registering host")
 	if err != nil {
-		//if host already registered
-		if resp.HTTPResponse.StatusCode == http.StatusPreconditionFailed {
+
+		if strings.Contains(string(resp.Body), `"code":"FailedPrecondition"`) {
 			//form a filter
 			hFilter := fmt.Sprintf("serialNumber='%s' AND uuid='%s'", sNo, uuid)
 
