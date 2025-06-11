@@ -994,8 +994,6 @@ func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 
 // Function containing the logic to register the host and retrieve the host ID
 func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool) (string, error) {
-	//convert uuid
-
 	// Register host
 	resp, err := hClient.HostServiceRegisterHostWithResponse(ctx, projectName,
 		infra.HostServiceRegisterHostJSONRequestBody{

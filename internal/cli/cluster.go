@@ -424,7 +424,7 @@ func forceDeleteCluster(ctx context.Context, hostClient *infra.ClientWithRespons
 }
 
 func getHostUUID(ctx context.Context, hostClient *infra.ClientWithResponses, projectName, hostID string) (string, error) {
-	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+	resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
 	if err != nil {
 		return "", processError(err)
 	}
@@ -437,5 +437,5 @@ func getHostUUID(ctx context.Context, hostClient *infra.ClientWithResponses, pro
 	if uuid == nil {
 		return "", fmt.Errorf("host %s does not have a UUID", hostID)
 	}
-	return uuid.String(), nil
+	return *uuid, nil
 }
