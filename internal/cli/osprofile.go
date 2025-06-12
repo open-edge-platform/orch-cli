@@ -74,8 +74,8 @@ type NestedSpec struct {
 }
 
 // Prints OS Profiles in tabular format
-func printOSProfiles(writer io.Writer, OSProfiles *[]infra.OperatingSystemResource, verbose bool) {
-	for _, osp := range *OSProfiles {
+func printOSProfiles(writer io.Writer, OSProfiles []infra.OperatingSystemResource, verbose bool) {
+	for _, osp := range OSProfiles {
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", *osp.Name, *osp.Architecture, *osp.SecurityFeature)
 		} else {
@@ -146,8 +146,8 @@ func readOSProfileFromYaml(path string) (*NestedSpec, error) {
 }
 
 // Filters list of profiles to find one with specific name
-func filterProfilesByName(OSProfiles *[]infra.OperatingSystemResource, name string) (*infra.OperatingSystemResource, error) {
-	for _, profile := range *OSProfiles {
+func filterProfilesByName(OSProfiles []infra.OperatingSystemResource, name string) (*infra.OperatingSystemResource, error) {
+	for _, profile := range OSProfiles {
 		if *profile.Name == name {
 			return &profile, nil
 		}
@@ -208,8 +208,8 @@ func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+	resp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+		&infra.OperatingSystemServiceListOperatingSystemsParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -241,8 +241,8 @@ func runListOSProfileCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	resp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeOsParams{
+	resp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+		&infra.OperatingSystemServiceListOperatingSystemsParams{
 			Filter: filter,
 		}, auth.AddAuthHeader)
 	if err != nil {
@@ -279,8 +279,8 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	//TODO Delete name check once API accepts only unique names
-	gresp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+	gresp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+		&infra.OperatingSystemServiceListOperatingSystemsParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -295,19 +295,18 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 	// End TODO
 
-	resp, err := OSProfileClient.PostV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		infra.PostV1ProjectsProjectNameComputeOsJSONRequestBody{
+	resp, err := OSProfileClient.OperatingSystemServiceCreateOperatingSystemWithResponse(ctx, projectName,
+		infra.OperatingSystemServiceCreateOperatingSystemJSONRequestBody{
 			Name:            &spec.Spec.Name,
 			Architecture:    &spec.Spec.Architecture,
 			ImageUrl:        &spec.Spec.OsImageURL,
 			ImageId:         &spec.Spec.OsImageVersion,
-			OsType:          (*infra.OperatingSystemType)(&spec.Spec.Type),
-			OsProvider:      (*infra.OperatingSystemProvider)(&spec.Spec.Provider),
+			OsType:          (*infra.OsType)(&spec.Spec.Type),
+			OsProvider:      (*infra.OsProviderKind)(&spec.Spec.Provider),
 			ProfileName:     &spec.Spec.ProfileName,
 			RepoUrl:         &spec.Spec.OsImageURL,
 			SecurityFeature: (*infra.SecurityFeature)(&spec.Spec.SecurityFeature),
 			Sha256:          spec.Spec.OsImageSha256,
-			UpdateSources:   []string{""},
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -322,8 +321,8 @@ func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	gresp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+	gresp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+		&infra.OperatingSystemServiceListOperatingSystemsParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -338,12 +337,11 @@ func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := OSProfileClient.DeleteV1ProjectsProjectNameComputeOsOSResourceIDWithResponse(ctx, projectName,
+	resp, err := OSProfileClient.OperatingSystemServiceDeleteOperatingSystemWithResponse(ctx, projectName,
 		*profile.OsResourceID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS profile %s", name))
-
 }

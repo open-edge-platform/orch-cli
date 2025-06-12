@@ -8,14 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
-	u "github.com/google/uuid"
 	e "github.com/open-edge-platform/cli/internal/errors"
 	"github.com/open-edge-platform/cli/internal/files"
 	"github.com/open-edge-platform/cli/internal/types"
@@ -108,14 +106,9 @@ const kVSize = 2
 
 type ResponseCache struct {
 	OSProfileCache map[string]infra.OperatingSystemResource
-	SiteCache      map[string]infra.Site
-	LACache        map[string]infra.LocalAccount
-	HostCache      map[string]infra.Host
-}
-
-type MetadataItem = struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	SiteCache      map[string]infra.SiteResource
+	LACache        map[string]infra.LocalAccountResource
+	HostCache      map[string]infra.HostResource
 }
 
 func filterHelper(f string) *string {
@@ -164,7 +157,7 @@ func filterRegionsHelper(r string) (*string, error) {
 }
 
 // Prints Host list in tabular format
-func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
+func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 	if verbose {
 		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
 			"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
@@ -181,7 +174,7 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 			if h.Instance.CurrentOs != nil && h.Instance.CurrentOs.Name != nil {
 				os = toJSON(h.Instance.CurrentOs.Name)
 			}
-			if h.Instance.WorkloadMembers != nil {
+			if h.Instance.WorkloadMembers != nil && len(*h.Instance.WorkloadMembers) > 0 {
 				workload = toJSON((*h.Instance.WorkloadMembers)[0].Workload.Name)
 			}
 		}
@@ -207,12 +200,12 @@ func printHosts(writer io.Writer, hosts *[]infra.Host, verbose bool) {
 			//if tcomp is set then reflect
 
 			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber,
-				os, site, siteName, workload, h.Name, h.Uuid, *h.CpuModel, avupdt, tcomp)
+				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp)
 		}
 	}
 }
 
-func printHost(writer io.Writer, host *infra.Host) {
+func printHost(writer io.Writer, host *infra.HostResource) {
 
 	updatestatus := ""
 	hoststatus := "Not connected"
@@ -224,7 +217,7 @@ func printHost(writer io.Writer, host *infra.Host) {
 		updatestatus = toJSON(host.Instance.UpdateStatus)
 	}
 
-	if host != nil && host.Instance != nil && host.Instance.CurrentOs.Name != nil {
+	if host != nil && host.Instance != nil && host.Instance.CurrentOs != nil && host.Instance.CurrentOs.Name != nil {
 		currentOS = toJSON(host.Instance.CurrentOs.Name)
 	}
 
@@ -247,7 +240,7 @@ func printHost(writer io.Writer, host *infra.Host) {
 
 	_, _ = fmt.Fprintf(writer, "Specification: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", *host.SerialNumber)
-	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", host.Uuid)
+	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", *host.Uuid)
 	_, _ = fmt.Fprintf(writer, "-\tOS:\t %v\n", currentOS)
 	_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", *host.BiosVendor)
 	_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", *host.ProductName)
@@ -325,8 +318,8 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 }
 
 // Decodes the provided metadata from input string
-func decodeMetadata(metadata string) (*infra.Metadata, error) {
-	metadataList := make(infra.Metadata, 0)
+func decodeMetadata(metadata string) (*[]infra.MetadataItem, error) {
+	metadataList := make([]infra.MetadataItem, 0)
 	if metadata == "" {
 		return &metadataList, nil
 	}
@@ -336,7 +329,7 @@ func decodeMetadata(metadata string) (*infra.Metadata, error) {
 		if len(kv) != kVSize {
 			return &metadataList, e.NewCustomError(e.ErrInvalidMetadata)
 		}
-		mItem := MetadataItem{
+		mItem := infra.MetadataItem{
 			Key:   kv[0],
 			Value: kv[1],
 		}
@@ -433,8 +426,8 @@ func resolveOSProfile(ctx context.Context, hClient *infra.ClientWithResponses, p
 	}
 
 	ospfilter := fmt.Sprintf("profileName='%s' OR resourceId='%s'", osProfile, osProfile)
-	resp, err := hClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeOsParams{
+	resp, err := hClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+		&infra.OperatingSystemServiceListOperatingSystemsParams{
 			Filter: &ospfilter,
 		}, auth.AddAuthHeader)
 	if err != nil {
@@ -443,7 +436,7 @@ func resolveOSProfile(ctx context.Context, hClient *infra.ClientWithResponses, p
 		return "", err
 	}
 	if resp.JSON200.OperatingSystemResources != nil {
-		osResources := *resp.JSON200.OperatingSystemResources
+		osResources := resp.JSON200.OperatingSystemResources
 		if len(osResources) > 0 {
 			respCache.OSProfileCache[osProfile] = osResources[len(osResources)-1]
 			return *osResources[len(osResources)-1].ResourceId, nil
@@ -501,7 +494,7 @@ func resolveSite(ctx context.Context, hClient *infra.ClientWithResponses, projec
 		return *siteResource.ResourceId, nil
 	}
 
-	resp, err := hClient.GetV1ProjectsProjectNameRegionsRegionIDSitesSiteIDWithResponse(ctx, projectName, "regionID", siteToQuery, auth.AddAuthHeader)
+	resp, err := hClient.SiteServiceGetSiteWithResponse(ctx, projectName, "regionID", siteToQuery, auth.AddAuthHeader)
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
@@ -539,8 +532,8 @@ func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, 
 	}
 
 	lafilter := fmt.Sprintf("username='%s' OR resourceId='%s'", remoteUserToQuery, remoteUserToQuery)
-	resp, err := hClient.GetV1ProjectsProjectNameLocalAccountsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameLocalAccountsParams{
+	resp, err := hClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName,
+		&infra.LocalAccountServiceListLocalAccountsParams{
 			Filter: &lafilter,
 		}, auth.AddAuthHeader)
 	if err != nil {
@@ -549,7 +542,7 @@ func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, 
 		return "", err
 	}
 	if resp.JSON200 != nil && resp.JSON200.LocalAccounts != nil {
-		localAccounts := *resp.JSON200.LocalAccounts
+		localAccounts := resp.JSON200.LocalAccounts
 		if len(localAccounts) > 0 {
 			respCache.LACache[remoteUserToQuery] = localAccounts[len(localAccounts)-1]
 			return *localAccounts[len(localAccounts)-1].ResourceId, nil
@@ -691,8 +684,8 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 
 		regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
 
-		cresp, err := hostClient.GetV1ProjectsProjectNameRegionsRegionIDSitesWithResponse(ctx, projectName, *region,
-			&infra.GetV1ProjectsProjectNameRegionsRegionIDSitesParams{
+		cresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, *region,
+			&infra.SiteServiceListSitesParams{
 				Filter: &regFilter,
 			}, auth.AddAuthHeader)
 		if err != nil {
@@ -701,8 +694,8 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 
 		//create site filter
 		siteFilter := ""
-		if *cresp.JSON200.TotalElements != 0 {
-			for i, s := range *cresp.JSON200.Sites {
+		if cresp.JSON200.TotalElements != 0 {
+			for i, s := range cresp.JSON200.Sites {
 				if i == 0 {
 					siteFilter = fmt.Sprintf("site.resourceId='%s'", *s.ResourceId)
 				} else {
@@ -721,13 +714,21 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
+	if siteFlag != "" {
+		siteFilter := fmt.Sprintf("site.resourceId='%s'", *site)
+		if filtflag != "" {
+			*filter = fmt.Sprintf("%s AND (%s)", *filter, siteFilter)
+		} else {
+			filter = &siteFilter
+		}
+	}
+
 	pageSize := 20
-	hosts := make([]infra.Host, 0)
+	hosts := make([]infra.HostResource, 0)
 	for offset := 0; ; offset += pageSize {
-		resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsWithResponse(ctx, projectName,
-			&infra.GetV1ProjectsProjectNameComputeHostsParams{
+		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{
 				Filter:   filter,
-				SiteID:   site,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -738,17 +739,17 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		if err := checkResponse(resp.HTTPResponse, "error while retrieving hosts"); err != nil {
 			return err
 		}
-		hosts = append(hosts, *resp.JSON200.Hosts...)
-		if !*resp.JSON200.HasNext {
+		hosts = append(hosts, resp.JSON200.Hosts...)
+		if !resp.JSON200.HasNext {
 			break // No more hosts to process
 		}
 	}
 
 	// Get instances in order to map additional host details
-	instances := make([]infra.Instance, 0)
+	instances := make([]infra.InstanceResource, 0)
 	for offset := 0; ; offset += pageSize {
-		iresp, err := hostClient.GetV1ProjectsProjectNameComputeInstancesWithResponse(ctx, projectName,
-			&infra.GetV1ProjectsProjectNameComputeInstancesParams{
+		iresp, err := hostClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
+			&infra.InstanceServiceListInstancesParams{
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -758,20 +759,20 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		if err := checkResponse(iresp.HTTPResponse, "error while retrieving instance"); err != nil {
 			return err
 		}
-		instances = append(instances, *iresp.JSON200.Instances...)
-		if !*iresp.JSON200.HasNext {
+		instances = append(instances, iresp.JSON200.Instances...)
+		if !iresp.JSON200.HasNext {
 			break // No more instances to process
 		}
 	}
-	matchedHosts := make([]infra.Host, 0)
-	notMatchedHosts := make([]infra.Host, 0)
+	matchedHosts := make([]infra.HostResource, 0)
+	notMatchedHosts := make([]infra.HostResource, 0)
 
 	//Map workloads to hosts
 	for _, host := range hosts {
 		for _, instance := range instances {
-			if instance.WorkloadMembers != nil && *instance.InstanceID == *host.Instance.InstanceID {
+			if instance.WorkloadMembers != nil && instance.InstanceID != nil && host.Instance != nil && host.Instance.InstanceID != nil && *instance.InstanceID == *host.Instance.InstanceID {
 				host.Instance.WorkloadMembers = instance.WorkloadMembers
-				if workload != "" {
+				if workload != "" && len(*host.Instance.WorkloadMembers) > 0 {
 					if *(*host.Instance.WorkloadMembers)[0].Workload.Name == workload {
 						matchedHosts = append(matchedHosts, host)
 					}
@@ -780,7 +781,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 			}
 		}
 		if workload == "NotAssigned" {
-			if host.Instance.WorkloadMembers == nil {
+			if (host.Instance != nil && len(*host.Instance.WorkloadMembers) == 0) || host.Instance == nil {
 				notMatchedHosts = append(notMatchedHosts, host)
 			}
 		}
@@ -815,7 +816,7 @@ func runGetHostCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := hostClient.GetV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
+	resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName,
 		hostID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -901,9 +902,9 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 
 	respCache := ResponseCache{
 		OSProfileCache: make(map[string]infra.OperatingSystemResource),
-		SiteCache:      make(map[string]infra.Site),
-		LACache:        make(map[string]infra.LocalAccount),
-		HostCache:      make(map[string]infra.Host),
+		SiteCache:      make(map[string]infra.SiteResource),
+		LACache:        make(map[string]infra.LocalAccountResource),
+		HostCache:      make(map[string]infra.HostResource),
 	}
 
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
@@ -927,6 +928,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	return nil
+
 }
 
 // Deletes specific Host - finds a host using resource ID and deletes it
@@ -938,7 +940,7 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// retrieve the host (to check if it has an instance associated with it)
-	resp1, err := hostClient.GetV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+	resp1, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -948,20 +950,23 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	host := *resp1.JSON200
 
 	// delete the instance if it exists
-	instanceID := host.Instance.InstanceID
-	if instanceID != nil && *instanceID != "" {
-		resp2, err := hostClient.DeleteV1ProjectsProjectNameComputeInstancesInstanceIDWithResponse(ctx, projectName, *instanceID, auth.AddAuthHeader)
-		if err != nil {
-			return processError(err)
-		}
-		if err := checkResponse(resp2.HTTPResponse, "error while deleting instance"); err != nil {
-			return err
+	if host.Instance != nil {
+		instanceID := host.Instance.InstanceID
+
+		if instanceID != nil && *instanceID != "" {
+			resp2, err := hostClient.InstanceServiceDeleteInstanceWithResponse(ctx, projectName, *instanceID, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(resp2.HTTPResponse, "error while deleting instance"); err != nil {
+				return err
+			}
 		}
 	}
 
 	// delete the host
-	resp3, err := hostClient.DeleteV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName,
-		hostID, infra.DeleteV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody{}, auth.AddAuthHeader)
+	resp3, err := hostClient.HostServiceDeleteHostWithResponse(ctx, projectName,
+		hostID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -980,29 +985,23 @@ func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := hostClient.PutV1ProjectsProjectNameComputeHostsHostIDInvalidateWithResponse(ctx, projectName,
-		hostID, infra.PutV1ProjectsProjectNameComputeHostsHostIDInvalidateJSONRequestBody{}, auth.AddAuthHeader)
+	resp, err := hostClient.HostServiceInvalidateHostWithResponse(ctx, projectName,
+		hostID, &infra.HostServiceInvalidateHostParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, "error while deleting host")
+	return checkResponse(resp.HTTPResponse, "error while invalidating host")
 }
 
 // Function containing the logic to register the host and retrieve the host ID
 func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool) (string, error) {
-	//convert uuid
-	var uuidParsed u.UUID
-	if uuid != "" {
-		uuidParsed = u.MustParse(uuid)
-	}
-
 	// Register host
-	resp, err := hClient.PostV1ProjectsProjectNameComputeHostsRegisterWithResponse(ctx, projectName,
-		infra.PostV1ProjectsProjectNameComputeHostsRegisterJSONRequestBody{
+	resp, err := hClient.HostServiceRegisterHostWithResponse(ctx, projectName,
+		infra.HostServiceRegisterHostJSONRequestBody{
 			Name:         &hostName,
 			SerialNumber: &sNo,
-			Uuid:         &uuidParsed,
+			Uuid:         &uuid,
 			AutoOnboard:  &autonboard,
 		}, auth.AddAuthHeader)
 	if err != nil {
@@ -1011,14 +1010,14 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 	//Check that valid response was received
 	err = checkResponse(resp.HTTPResponse, "error while registering host")
 	if err != nil {
-		//if host already registered
-		if resp.HTTPResponse.StatusCode == http.StatusPreconditionFailed {
+
+		if strings.Contains(string(resp.Body), `"code":"FailedPrecondition"`) {
 			//form a filter
 			hFilter := fmt.Sprintf("serialNumber='%s' AND uuid='%s'", sNo, uuid)
 
 			//get all the hosts matching the filter
-			gresp, err := hClient.GetV1ProjectsProjectNameComputeHostsWithResponse(ctx, projectName,
-				&infra.GetV1ProjectsProjectNameComputeHostsParams{
+			gresp, err := hClient.HostServiceListHostsWithResponse(ctx, projectName,
+				&infra.HostServiceListHostsParams{
 					Filter: &hFilter,
 				}, auth.AddAuthHeader)
 			if err != nil {
@@ -1030,25 +1029,25 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 				return "", err
 			}
 
-			if *gresp.JSON200.TotalElements != 1 {
+			if gresp.JSON200.TotalElements != 1 {
 				err = e.NewCustomError(e.ErrHostDetailMismatch)
 				return "", err
-			} else if (*gresp.JSON200.Hosts)[0].Instance != nil {
+			} else if (gresp.JSON200.Hosts)[0].Instance != nil {
 				err = e.NewCustomError(e.ErrAlreadyRegistered)
 				return "", err
 			}
 
-			respCache.HostCache[*(*gresp.JSON200.Hosts)[0].ResourceId] = (*gresp.JSON200.Hosts)[0]
-			return *(*gresp.JSON200.Hosts)[0].ResourceId, nil
+			respCache.HostCache[*(gresp.JSON200.Hosts)[0].ResourceId] = (gresp.JSON200.Hosts)[0]
+			return *(gresp.JSON200.Hosts)[0].ResourceId, nil
 
 		}
 		return "", err
 	}
 
 	//Cache host and save host ID
-	if resp.JSON201 != nil && resp.JSON201.ResourceId != nil {
-		respCache.HostCache[*resp.JSON201.ResourceId] = *resp.JSON201
-		return *resp.JSON201.ResourceId, nil
+	if resp.JSON200 != nil && resp.JSON200.ResourceId != nil {
+		respCache.HostCache[*resp.JSON200.ResourceId] = *resp.JSON200
+		return *resp.JSON200.ResourceId, nil
 	}
 	return "", errors.New("host not found")
 
@@ -1085,8 +1084,8 @@ func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, res
 		locAcc = &rOut.RemoteUser
 	}
 
-	iresp, err := hClient.PostV1ProjectsProjectNameComputeInstancesWithResponse(ctx, projectName,
-		infra.PostV1ProjectsProjectNameComputeInstancesJSONRequestBody{
+	iresp, err := hClient.InstanceServiceCreateInstanceWithResponse(ctx, projectName,
+		infra.InstanceServiceCreateInstanceJSONRequestBody{
 			HostID:          &hostID,
 			OsID:            &rOut.OSProfile,
 			LocalAccountID:  locAcc,
@@ -1111,7 +1110,7 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient *infra.Client
 	projectName, hostID string, rOut *types.HostRecord) error {
 
 	// Update host with Site and metadata
-	var metadata *infra.Metadata
+	var metadata *[]infra.MetadataItem
 	var err error
 	if rOut.Metadata != "" {
 		metadata, err = decodeMetadata(rOut.Metadata)
@@ -1120,8 +1119,8 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient *infra.Client
 		}
 	}
 
-	sresp, err := hClient.PatchV1ProjectsProjectNameComputeHostsHostIDWithResponse(ctx, projectName, hostID,
-		infra.PatchV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody{
+	sresp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+		infra.HostServicePatchHostJSONRequestBody{
 			Name:     hostID,
 			Metadata: metadata,
 			SiteId:   &rOut.Site,
