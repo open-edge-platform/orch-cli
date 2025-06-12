@@ -19,6 +19,7 @@ import (
 	"github.com/open-edge-platform/cli/internal/types"
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -105,10 +106,11 @@ var filename = "test.csv"
 const kVSize = 2
 
 type ResponseCache struct {
-	OSProfileCache map[string]infra.OperatingSystemResource
-	SiteCache      map[string]infra.SiteResource
-	LACache        map[string]infra.LocalAccountResource
-	HostCache      map[string]infra.HostResource
+	OSProfileCache          map[string]infra.OperatingSystemResource
+	SiteCache               map[string]infra.SiteResource
+	LACache                 map[string]infra.LocalAccountResource
+	HostCache               map[string]infra.HostResource
+	K8sClusterTemplateCache map[string]cluster.ClusterTemplateInfo
 }
 
 func filterHelper(f string) *string {
@@ -277,7 +279,7 @@ func generateCSV(filename string) error {
 
 // Runs the registration workflow
 func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, projectName string,
-	rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord) {
+	rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, ctx2 context.Context, cClient *cluster.ClientWithResponses) {
 
 	// get the required fields from the record
 	sNo := rIn.Serial
@@ -287,7 +289,7 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 	hostID := ""
 	autonboard := true
 
-	rOut, err := sanitizeProvisioningFields(ctx, hClient, projectName, rIn, respCache, globalAttr, erringRecords)
+	rOut, err := sanitizeProvisioningFields(ctx, hClient, projectName, rIn, respCache, globalAttr, erringRecords, ctx2, cClient)
 	if err != nil {
 		return
 	}
@@ -347,7 +349,7 @@ func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSe
 
 // Sanitize filelds, convert named resources to resource IDs
 func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, record types.HostRecord,
-	respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord) (*types.HostRecord, error) {
+	respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, ctx2 context.Context, cClient *cluster.ClientWithResponses) (*types.HostRecord, error) {
 
 	isSecure := resolveSecure(record.Secure, globalAttr.Secure)
 
@@ -384,11 +386,15 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 	// 	return nil, err
 	// }
 
-	//TODO implement check for K8s Cluster template
-	// K8sTmplID, err := resolveCloudInit(ctx, hClient, projectName, record., record.K8sClusterTemplate, respCache, erringRecords)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	//TODO do a check if cluster deployment is enabled instead -  then allow for empty template in CSV and use default
+	K8sTmplID := record.K8sClusterTemplate
+	if record.K8sClusterTemplate != "" && globalAttr.K8sClusterTemplate != "" {
+
+		K8sTmplID, err = resolveClusterTemplate(ctx2, cClient, projectName, record.K8sClusterTemplate, globalAttr.K8sClusterTemplate, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return &types.HostRecord{
 		OSProfile:  osProfileID,
@@ -400,7 +406,7 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 		Metadata:   metadataToUse,
 		//AMTEnable:  isAMT,
 		//CloudInitMeta: cloudInitID,
-		//K8sClusterTemplate: K8sTmplID,
+		K8sClusterTemplate: K8sTmplID,
 	}, nil
 }
 
@@ -512,7 +518,48 @@ func resolveSite(ctx context.Context, hClient *infra.ClientWithResponses, projec
 	return *resp.JSON200.ResourceId, nil
 }
 
-// Cecks if remote user is valid and exists
+// Checks if cluster template is valid and existss
+func resolveClusterTemplate(ctx context.Context, cClient *cluster.ClientWithResponses, projectName string, recordClusterTemplate string,
+	globalClusterTemplate string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
+) (string, error) {
+
+	remoteCTempToQuery := recordClusterTemplate
+
+	if globalClusterTemplate != "" {
+		remoteCTempToQuery = globalClusterTemplate
+	}
+
+	if remoteCTempToQuery == "" {
+		return "", nil
+	}
+
+	// TODO double check
+	if cTempResource, ok := respCache.K8sClusterTemplateCache[remoteCTempToQuery]; ok {
+		return *&cTempResource.Name + ":" + *&cTempResource.Version, nil
+	}
+
+	resp, err := cClient.GetV2ProjectsProjectNameTemplatesWithResponse(ctx, projectName,
+		&cluster.GetV2ProjectsProjectNameTemplatesParams{
+			Filter: &lafilter,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		record.Error = err.Error()
+		*erringRecords = append(*erringRecords, record)
+		return "", err
+	}
+	if resp.JSON200 != nil && resp.JSON200.LocalAccounts != nil {
+		localAccounts := resp.JSON200.LocalAccounts
+		if len(localAccounts) > 0 {
+			respCache.LACache[remoteUserToQuery] = localAccounts[len(localAccounts)-1]
+			return *localAccounts[len(localAccounts)-1].ResourceId, nil
+		}
+	}
+	record.Error = "Remote User not found"
+	*erringRecords = append(*erringRecords, record)
+	return "", errors.New(record.Error)
+}
+
+// Checks if remote user is valid and exists
 func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, recordRemoteUser string,
 	globalRemoteUser string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
@@ -619,7 +666,7 @@ func getCreateHostCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Override the site provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("metadata", "m", viper.GetString("metadata"), "Override the metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("remote-user", "r", viper.GetString("remote-user"), "Override the metadata provided in CSV file for all hosts")
-	//cmd.PersistentFlags().StringP("cluster-template", "c", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("cluster-template", "c", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
 	//cmd.PersistentFlags().StringP("cloud-init", "i", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
 	//cmd.PersistentFlags().BoolP("amt", "a", viper.GetBool("amt"), "Override the AMT feature configuration provided in CSV file for all hosts")
@@ -848,13 +895,15 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	metadataIn, _ := cmd.Flags().GetString("metadata")
 	remoteUserIn, _ := cmd.Flags().GetString("remote-user")
 	secureIn, _ := cmd.Flags().GetString("secure")
+	k8sIn, _ := cmd.Flags().GetString("cluster-template")
 
 	globalAttr := &types.HostRecord{
-		OSProfile:  osProfileIn,
-		Site:       siteIn,
-		Secure:     types.StringToRecordSecure(secureIn),
-		RemoteUser: remoteUserIn,
-		Metadata:   metadataIn,
+		OSProfile:          osProfileIn,
+		Site:               siteIn,
+		Secure:             types.StringToRecordSecure(secureIn),
+		RemoteUser:         remoteUserIn,
+		Metadata:           metadataIn,
+		K8sClusterTemplate: k8sIn,
 	}
 
 	if cmd.Flags().Changed("generate-csv") && (dryRun || csvFilePath != "") {
@@ -901,20 +950,27 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	respCache := ResponseCache{
-		OSProfileCache: make(map[string]infra.OperatingSystemResource),
-		SiteCache:      make(map[string]infra.SiteResource),
-		LACache:        make(map[string]infra.LocalAccountResource),
-		HostCache:      make(map[string]infra.HostResource),
+		OSProfileCache:          make(map[string]infra.OperatingSystemResource),
+		SiteCache:               make(map[string]infra.SiteResource),
+		LACache:                 make(map[string]infra.LocalAccountResource),
+		HostCache:               make(map[string]infra.HostResource),
+		K8sClusterTemplateCache: make(map[string]cluster.ClusterTemplateInfo),
 	}
 
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
+
+	ctx2, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
 	erringRecords := []types.HostRecord{}
 
 	for _, record := range validated {
-		doRegister(ctx, hostClient, projectName, record, respCache, globalAttr, &erringRecords)
+		doRegister(ctx, hostClient, projectName, record, respCache, globalAttr, &erringRecords, ctx2, clusterClient)
 	}
 
 	if len(erringRecords) > 0 {
