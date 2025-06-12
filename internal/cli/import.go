@@ -5,6 +5,7 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
@@ -61,7 +62,7 @@ func runImportHelmChartCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	ociURL := args[0]
-	resp, err := catalogClient.CatalogServiceImportWithResponse(ctx, projectName,
+	resp, err := catalogClient.CatalogServiceImport(ctx, projectName,
 		&catapi.CatalogServiceImportParams{
 			Url:                       &ociURL,
 			Username:                  getFlag(cmd, "username"),
@@ -75,10 +76,13 @@ func runImportHelmChartCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if resp != nil && resp.JSON200 != nil && resp.JSON200.ErrorMessages != nil && len(*resp.JSON200.ErrorMessages) > 0 {
-		for _, msg := range *resp.JSON200.ErrorMessages {
-			fmt.Fprintf(os.Stderr, "Error: %s\n", msg)
-		}
+	body, err := io.ReadAll(resp.Body) // xxx
+	if err != nil {
+		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while importing helm chart %s", ociURL))
+	fmt.Println(string(body))
+	defer resp.Body.Close()
+
+	// Print the gRPC error message to the user as it might have insight into the failure.
+	return checkResponseGRPC(resp, fmt.Sprintf("error while importing helm chart %s", ociURL))
 }

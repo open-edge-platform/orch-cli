@@ -22,6 +22,7 @@ import (
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
+	grpcstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -251,6 +252,22 @@ func checkResponseCode(responseCode int, message string, responseMessage string)
 		return fmt.Errorf("%s", responseMessage)
 	}
 	return nil
+}
+
+// For apis that are using grpc-gateway and return a grpc Status in the response body for an error
+func checkResponseGRPC(response *http.Response, message string) error {
+	if response == nil {
+		return nil
+	}
+	if response.StatusCode >= http.StatusBadRequest { // handle 4xx and 5xx errors
+		var status grpcstatus.Status
+		if err := json.NewDecoder(response.Body).Decode(&status); err == nil {
+			if status.Message != "" {
+				return checkResponseCode(response.StatusCode, message, status.Message)
+			}
+		}
+	}
+	return checkResponseCode(response.StatusCode, message, response.Status)
 }
 
 // Checks the status code and returns the appropriate error
