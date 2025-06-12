@@ -64,8 +64,8 @@ func runImportHelmChartCommand(cmd *cobra.Command, args []string) error {
 	resp, err := catalogClient.CatalogServiceImportWithResponse(ctx, projectName,
 		&catapi.CatalogServiceImportParams{
 			Url:                       &ociURL,
-			Username:                  getFlagOrDefault(cmd, "username", nil),
-			AuthToken:                 getFlagOrDefault(cmd, "password", nil),
+			Username:                  getFlag(cmd, "username"),
+			AuthToken:                 getFlag(cmd, "password"),
 			ChartValues:               &chartValues,
 			IncludeAuth:               getBoolFlagOrDefault(cmd, "include-auth", nil),
 			GenerateDefaultValues:     getBoolFlagOrDefault(cmd, "generate-default-values", nil),

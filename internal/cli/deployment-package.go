@@ -7,10 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
 	"github.com/spf13/cobra"
 )
 
@@ -85,6 +88,19 @@ func getDeleteDeploymentPackageCommand() *cobra.Command {
 		Example: "orch-cli delete deployment-package my-package --project some-project",
 		RunE:    runDeleteDeploymentPackageCommand,
 	}
+	return cmd
+}
+
+func getExportDeploymentPackageCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "deployment-package <name> [<version>] [flags]",
+		Aliases: deploymentPackageAliases,
+		Short:   "Export a deployment package as a tarball",
+		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli export deployment-package my-package --project some-project",
+		RunE:    runExportDeploymentPackageCommand,
+	}
+	cmd.Flags().StringP("output-file", "o", "", "Override output filename")
 	return cmd
 }
 
@@ -443,6 +459,78 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 			return err
 		}
 	}
+	return nil
+}
+
+func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
+	ctx, _, projectName, err := getCatalogServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	name := args[0]
+	version := args[1]
+
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return processError(err)
+	}
+
+	utilClient, err := catutilapi.NewClientWithResponses(serverAddress)
+	if err != nil {
+		return processError(err)
+	}
+
+	resp, err := utilClient.CatalogServiceDownloadDeploymentPackageWithResponse(ctx, projectName, name, version, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	if err := checkResponse(resp.HTTPResponse, fmt.Sprintf("error downloading deployment package %s:%s",
+		name, version)); err != nil {
+		return err
+	}
+
+	filename := ""
+	if fileNameFlag := getFlag(cmd, "output-file"); fileNameFlag != nil {
+		filename = *fileNameFlag
+	}
+	if filename == "" {
+		contentDisposition := resp.HTTPResponse.Header.Get("Content-Disposition")
+		if contentDisposition != "" {
+			parts := strings.Split(contentDisposition, ";")
+			for _, part := range parts {
+				part = strings.TrimSpace(part)
+				if strings.HasPrefix(part, "filename=") {
+					filename = strings.Trim(part[len("filename="):], `"`)
+					break
+				}
+			}
+		}
+
+		// We got this from the server, so there should be no path.
+		// But just in case... ensure filename is not a path
+		if filename != "" {
+			filename = filepath.Base(filename)
+		}
+	}
+
+	if filename == "" {
+		// after all that, we still don't have a filename, so use a default one
+		filename = fmt.Sprintf("%s-%s.tar.gz", name, version)
+	}
+
+	outFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s: %w", filename, err)
+	}
+	defer outFile.Close()
+
+	if _, err := outFile.Write(resp.Body); err != nil {
+		return fmt.Errorf("failed to write to file %s: %w", filename, err)
+	}
+	fmt.Printf("Deployment package exported to %s\n", filename)
+
 	return nil
 }
 

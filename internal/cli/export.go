@@ -4,25 +4,24 @@
 package cli
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/open-edge-platform/cli/pkg/auth"
-	"github.com/open-edge-platform/cli/pkg/loader"
 	"github.com/spf13/cobra"
 )
 
 func getExportCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "export {<file-path>|<dir-path>} [flags]",
-		Args:              cobra.ExactArgs(1),
-		Short:             "Export publisher's catalog resources by saving them into a directory structure as YAML files",
+		Use:               "export",
+		Short:             "Export resoources from the orchestrator",
 		PersistentPreRunE: auth.CheckAuth,
-		RunE:              exportResources,
+		Example:           "orch-cli export deployment-package wordpress 0.1.1",
 	}
+	cmd.AddCommand(
+		getExportDeploymentPackageCommand(),
+	)
 	return cmd
 }
 
+/*
 func exportResources(cmd *cobra.Command, args []string) error {
 	_, catalogClient, projectName, err := getCatalogServiceContext(cmd)
 	if err != nil {
@@ -41,3 +40,4 @@ func exportResources(cmd *cobra.Command, args []string) error {
 	}
 	return nil
 }
+*/
