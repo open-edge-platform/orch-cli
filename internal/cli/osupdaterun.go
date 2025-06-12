@@ -11,24 +11,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const listOSUpdatePolicyExamples = `# List all OS Update Policies
-orch-cli list osupdatepolicy --project some-project
+const listOSUpdateRunExamples = `# List all OS Update Policies
+orch-cli list osupdaterun --project some-project
 `
 
-const getOSUpdatePolicyExamples = `# Get detailed information about specific OS Update Policy using the policy name
-orch-cli get osupdatepolicy policyname --project some-project`
+const getOSUpdateRunExamples = `# Get detailed information about specific OS Update Run using the run name
+orch-cli get osupdaterun runname --project some-project`
 
-const createOSUpdatePolicyExamples = `# Create an OS Update Policy.
-orch-cli create osupdatepolicy   --project some-project`
+const deleteOSUpdateRunExamples = `#Delete an OS Update Run  using it's name
+orch-cli delete osupdaterun run --project some-project`
 
-const deleteOSUpdatePolicyExamples = `#Delete an OS Update Policy  using it's name
-orch-cli delete osupdatepolicy policy --project some-project`
-
-var OSUpdatePolicyHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Value", "Value")
-var OSUpdatePolicyGet = fmt.Sprintf("\n%s\t%s", "OS Policy", "Value")
+var OSUpdateRunHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Value", "Value")
+var OSUpdateRunGet = fmt.Sprintf("\n%s\t%s", "OS Run", "Value")
 
 // Prints OS Profiles in tabular format
-func printOSUpdatePolicies(writer io.Writer, OSUpdatePolicies []infra.OSUpdatePolicy, verbose bool) {
+func printOSUpdateRuns(writer io.Writer, OSUpdatePolicies []infra.OSUpdateRun, verbose bool) {
 	// for _, osp := range OSProfiles {
 	// 	if !verbose {
 	// 		fmt.Fprintf(writer, "%s\t%s\t%s\n", *osp.Name, *osp.Architecture, *osp.SecurityFeature)
@@ -45,7 +42,7 @@ func printOSUpdatePolicies(writer io.Writer, OSUpdatePolicies []infra.OSUpdatePo
 }
 
 // Prints output details of OS Profiles
-func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy) {
+func printOSUpdateRun(writer io.Writer, OSUpdateRun *infra.OSUpdateRun) {
 
 	// _, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSProfile.Name)
 	// _, _ = fmt.Fprintf(writer, "Profile Name: \t%s\n", *OSProfile.ProfileName)
@@ -109,53 +106,42 @@ func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy)
 // 	return nil, errors.New("no os profile matches the given name")
 // }
 
-func getGetOSUpdatePolicyCommand() *cobra.Command {
+func getGetOSUpdateRunCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "osupdatepolicy <name> [flags]",
-		Short:   "Get an OS Update policy",
-		Example: getOSUpdatePolicyExamples,
+		Use:     "osupdaterun <name> [flags]",
+		Short:   "Get an OS Update run",
+		Example: getOSUpdateRunExamples,
 		Args:    cobra.ExactArgs(1),
-		RunE:    runGetOSUpdatePolicyCommand,
+		RunE:    runGetOSUpdateRunCommand,
 	}
 	return cmd
 }
 
-func getListOSUpdatePolicyCommand() *cobra.Command {
+func getListOSUpdateRunCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "osupdatepolicy [flags]",
+		Use:     "osupdaterun [flags]",
 		Short:   "List all OS Update policies",
-		Example: listOSUpdatePolicyExamples,
-		RunE:    runListOSUpdatePolicyCommand,
+		Example: listOSUpdateRunExamples,
+		RunE:    runListOSUpdateRunCommand,
 	}
 	//cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")
 	return cmd
 }
 
-func getCreateOSUpdatePolicyCommand() *cobra.Command {
+func getDeleteOSUpdateRunCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "osupdatepolicy  [flags]",
-		Short:   "Creates OS Update policy",
-		Example: createOSUpdatePolicyExamples,
+		Use:     "osupdaterun <name> [flags]",
+		Short:   "Delete an OS Update run",
+		Example: deleteOSUpdateRunExamples,
 		Args:    cobra.ExactArgs(1),
-		RunE:    runCreateOSUpdatePolicyCommand,
+		RunE:    runDeleteOSUpdateRunCommand,
 	}
 	return cmd
 }
 
-func getDeleteOSUpdatePolicyCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "osupdatepolicy <name> [flags]",
-		Short:   "Delete an OS Update policy",
-		Example: deleteOSUpdatePolicyExamples,
-		Args:    cobra.ExactArgs(1),
-		RunE:    runDeleteOSUpdatePolicyCommand,
-	}
-	return cmd
-}
-
-// Gets specific OSUpdatePolicy - retrieves list of policies and then filters and outputs
-// specifc policy by name
-func runGetOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
+// Gets specific OSUpdateRun - retrieves list of policies and then filters and outputs
+// specifc run by name
+func runGetOSUpdateRunCommand(cmd *cobra.Command, args []string) error {
 	// writer, verbose := getOutputContext(cmd)
 	// ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
 	// if err != nil {
@@ -185,18 +171,18 @@ func runGetOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 }
 
 // Lists all OS Update policies - retrieves all policies and displays selected information in tabular format
-func runListOSUpdatePolicyCommand(cmd *cobra.Command, _ []string) error {
+func runListOSUpdateRunCommand(cmd *cobra.Command, _ []string) error {
 	//writer, verbose := getOutputContext(cmd)
 
 	// filtflag, _ := cmd.Flags().GetString("filter")
 	// filter := filterHelper(filtflag)
 
-	// ctx, OSUPolicyClient, projectName, err := getInfraServiceContext(cmd)
+	// ctx, OSURunClient, projectName, err := getInfraServiceContext(cmd)
 	// if err != nil {
 	// 	return err
 	// }
 
-	// resp, err := OSUPolicyClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+	// resp, err := OSURunClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
 	// 	&infra.OperatingSystemServiceListOperatingSystemsParams{
 	// 		//Filter: filter,
 	// 	}, auth.AddAuthHeader)
@@ -205,7 +191,7 @@ func runListOSUpdatePolicyCommand(cmd *cobra.Command, _ []string) error {
 	// }
 
 	// if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-	// 	OSUpdatePolicyHeader, "error getting OS Profiles"); !proceed {
+	// 	OSUpdateRunHeader, "error getting OS Profiles"); !proceed {
 	// 	return err
 	// }
 
@@ -215,64 +201,8 @@ func runListOSUpdatePolicyCommand(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-// Creates OS Update Policy - checks if a OS Update Policy already exists and then creates it if it does not
-func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
-	// path := args[0]
-
-	// err := verifyOSProfileInput(path)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// spec, err := readOSProfileFromYaml(path)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// //TODO Delete name check once API accepts only unique names
-	// gresp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
-	// 	&infra.OperatingSystemServiceListOperatingSystemsParams{}, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
-
-	// if err = checkResponse(gresp.HTTPResponse, "Error getting OS profiles"); err != nil {
-	// 	return err
-	// }
-
-	// _, err = filterProfilesByName(gresp.JSON200.OperatingSystemResources, spec.Spec.Name)
-	// if err == nil {
-	// 	return fmt.Errorf("OS Profile %s already exists", spec.Spec.Name)
-	// }
-	// // End TODO
-
-	// resp, err := OSProfileClient.OperatingSystemServiceCreateOperatingSystemWithResponse(ctx, projectName,
-	// 	infra.OperatingSystemServiceCreateOperatingSystemJSONRequestBody{
-	// 		Name:            &spec.Spec.Name,
-	// 		Architecture:    &spec.Spec.Architecture,
-	// 		ImageUrl:        &spec.Spec.OsImageURL,
-	// 		ImageId:         &spec.Spec.OsImageVersion,
-	// 		OsType:          (*infra.OsType)(&spec.Spec.Type),
-	// 		OsProvider:      (*infra.OsProviderKind)(&spec.Spec.Provider),
-	// 		ProfileName:     &spec.Spec.ProfileName,
-	// 		RepoUrl:         &spec.Spec.OsImageURL,
-	// 		SecurityFeature: (*infra.SecurityFeature)(&spec.Spec.SecurityFeature),
-	// 		Sha256:          spec.Spec.OsImageSha256,
-	// 	}, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
-	// return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating OS Profile from %s", path))
-	return nil
-}
-
-// Deletes OS Update Policy - checks if a policy  already exists and then deletes it if it does
-func runDeleteOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
+// Deletes OS Update Run - checks if a run  already exists and then deletes it if it does
+func runDeleteOSUpdateRunCommand(cmd *cobra.Command, args []string) error {
 	// ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
 	// if err != nil {
 	// 	return err
