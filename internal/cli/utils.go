@@ -253,6 +253,39 @@ func checkResponseCode(responseCode int, message string, responseMessage string)
 	return nil
 }
 
+// grpcStatus is a structure that represents the gRPC status message returned in the response body.
+// Defining this here because the one in the official grpc package does not handle Details well.
+
+type grpcStatus struct {
+	Message string              `json:"message"`
+	Code    int                 `json:"code"`
+	Details []map[string]string `json:"details"`
+}
+
+// checkResponseGRPC is For apis that are using grpc-gateway and return a grpc Status in the response body for an error.
+func checkResponseGRPC(response *http.Response, message string) error {
+	if response == nil {
+		return nil
+	}
+	if response.StatusCode >= http.StatusBadRequest { // handle 4xx and 5xx errors
+		var status grpcStatus
+		if err := json.NewDecoder(response.Body).Decode(&status); err == nil {
+			// if there are details associated with the error, then print them
+			for _, detail := range status.Details {
+				if detailMessage, ok := detail["value"]; ok {
+					fmt.Fprintln(os.Stderr, detailMessage)
+				}
+			}
+			// if the grpc Status included a message then use it and return.
+			// Otherwise, fall back to the standard response message.
+			if status.Message != "" {
+				return checkResponseCode(response.StatusCode, message, status.Message)
+			}
+		}
+	}
+	return checkResponseCode(response.StatusCode, message, response.Status)
+}
+
 // Checks the status code and returns the appropriate error
 func checkStatus(statusCode int, message string, statusMessage string) (proceed bool, err error) {
 	if statusCode == http.StatusOK {
