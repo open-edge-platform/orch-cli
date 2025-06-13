@@ -110,7 +110,7 @@ type ResponseCache struct {
 	SiteCache               map[string]infra.SiteResource
 	LACache                 map[string]infra.LocalAccountResource
 	HostCache               map[string]infra.HostResource
-	K8sClusterTemplateCache map[string]cluster.ClusterTemplateInfo
+	K8sClusterTemplateCache map[string]cluster.TemplateInfo
 }
 
 func filterHelper(f string) *string {
@@ -315,6 +315,15 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 		return
 	}
 
+	if rOut.K8sEnable == "true" {
+		err = createCluster(ctx2, cClient, respCache, projectName, hostID, rOut)
+		if err != nil {
+			rIn.Error = err.Error()
+			*erringRecords = append(*erringRecords, rIn)
+			return
+		}
+	}
+
 	// Print host_id from response if successful
 	fmt.Printf("✔ Host Serial number : %s  UUID : %s registered. Name : %s\n", sNo, uuid, hostID)
 }
@@ -340,6 +349,81 @@ func decodeMetadata(metadata string) (*[]infra.MetadataItem, error) {
 	return &metadataList, nil
 }
 
+func decodeK8sTemplate(ctemplate string) (string, string, error) {
+	template := strings.Split(ctemplate, ":")
+
+	if len(template) != 2 {
+		return "", "", errors.New("invalid cluster template configuration")
+	}
+	tname := strings.TrimSpace(template[0])
+	tver := strings.TrimSpace(template[1])
+
+	return tname, tver, nil
+}
+
+func decodeK8sConfig(config string) (string, string, map[string]string, error) {
+
+	if config == "" {
+		config = "role:all"
+	}
+
+	configSplit := strings.Split(config, ";")
+	roleSplit := strings.Split(strings.TrimSpace(configSplit[0]), ":")
+
+	if strings.TrimSpace(roleSplit[0]) != "role" || len(roleSplit) < 2 {
+		return "", "", nil, errors.New("invalid Cluster role configuration")
+	}
+
+	crole := roleSplit[1]
+	if crole != "all" && crole != "worker" && crole != "controlplane" {
+		return "", "", nil, errors.New("invalid Cluster role set")
+	}
+
+	cname := ""
+	clabellist := ""
+	clabels := make(map[string]string)
+	//check if name was provided correctly
+	if len(configSplit) > 1 {
+		argSplit := strings.Split(strings.TrimSpace(configSplit[1]), ":")
+		if strings.TrimSpace(argSplit[0]) == "name" && len(argSplit) < 2 {
+			return "", "", nil, errors.New("invalid Cluster name configuration")
+		} else if strings.TrimSpace(argSplit[0]) == "name" {
+			cname = argSplit[1]
+		}
+		if strings.TrimSpace(argSplit[0]) == "labels" && len(argSplit) < 2 {
+			return "", "", nil, errors.New("invalid label configuration")
+		} else if strings.TrimSpace(argSplit[0]) == "labels" {
+			clabellist = argSplit[1]
+		}
+		if strings.TrimSpace(argSplit[0]) != "labels" && strings.TrimSpace(argSplit[0]) != "name" {
+			return "", "", nil, errors.New("invalid Cluster configuration")
+		}
+		if len(configSplit) > 2 {
+			argSplit := strings.Split(strings.TrimSpace(configSplit[2]), ":")
+			if strings.TrimSpace(argSplit[0]) == "labels" && len(argSplit) < 2 {
+				return "", "", nil, errors.New("invalid label configuration")
+			} else if strings.TrimSpace(argSplit[0]) == "labels" {
+				clabellist = argSplit[1]
+			} else {
+				return "", "", nil, errors.New("invalid label configuration")
+			}
+		}
+
+		labelPairs := strings.Split(clabellist, "&")
+		for _, pair := range labelPairs {
+			kv := strings.Split(pair, "=")
+			if len(kv) == 2 {
+				key := kv[0]
+				value := kv[1]
+				// Populate the map with the key-value pair
+				clabels[key] = value
+			}
+		}
+	}
+
+	return cname, crole, clabels, nil
+}
+
 func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSecure {
 	if globalSecure != recordSecure && globalSecure != types.SecureUnspecified {
 		return globalSecure
@@ -347,7 +431,7 @@ func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSe
 	return recordSecure
 }
 
-// Sanitize filelds, convert named resources to resource IDs
+// Sanitize fields, convert named resources to resource IDs
 func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, record types.HostRecord,
 	respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, ctx2 context.Context, cClient *cluster.ClientWithResponses) (*types.HostRecord, error) {
 
@@ -386,13 +470,22 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 	// 	return nil, err
 	// }
 
-	//TODO do a check if cluster deployment is enabled instead -  then allow for empty template in CSV and use default
-	K8sTmplID := record.K8sClusterTemplate
-	if record.K8sClusterTemplate != "" && globalAttr.K8sClusterTemplate != "" {
+	isK8s := resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
+	k8sConfig := record.K8sConfig
+	k8sTmplID := record.K8sClusterTemplate
+	if isK8s == "true" {
+		if record.K8sConfig != "" || globalAttr.K8sConfig != "" {
+			k8sTmplID, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig, record, erringRecords)
+			if err != nil {
+				return nil, err
+			}
+		}
 
-		K8sTmplID, err = resolveClusterTemplate(ctx2, cClient, projectName, record.K8sClusterTemplate, globalAttr.K8sClusterTemplate, record, respCache, erringRecords)
-		if err != nil {
-			return nil, err
+		if record.K8sClusterTemplate != "" || globalAttr.K8sClusterTemplate != "" {
+			k8sTmplID, err = resolveClusterTemplate(ctx2, cClient, projectName, record.K8sClusterTemplate, globalAttr.K8sClusterTemplate, record, respCache, erringRecords)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -406,7 +499,9 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 		Metadata:   metadataToUse,
 		//AMTEnable:  isAMT,
 		//CloudInitMeta: cloudInitID,
-		K8sClusterTemplate: K8sTmplID,
+		K8sEnable:          isK8s,
+		K8sClusterTemplate: k8sTmplID,
+		K8sConfig:          k8sConfig,
 	}, nil
 }
 
@@ -518,6 +613,23 @@ func resolveSite(ctx context.Context, hClient *infra.ClientWithResponses, projec
 	return *resp.JSON200.ResourceId, nil
 }
 
+// Checks if cluster deployment is enabled
+func resolveCluster(recordClusterEnable string,
+	globalClusterEnable string) string {
+
+	isEnabled := recordClusterEnable
+
+	if globalClusterEnable != "" {
+		isEnabled = globalClusterEnable
+	}
+
+	if isEnabled != "true" {
+		return ""
+	}
+
+	return isEnabled
+}
+
 // Checks if cluster template is valid and existss
 func resolveClusterTemplate(ctx context.Context, cClient *cluster.ClientWithResponses, projectName string, recordClusterTemplate string,
 	globalClusterTemplate string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
@@ -533,30 +645,39 @@ func resolveClusterTemplate(ctx context.Context, cClient *cluster.ClientWithResp
 		return "", nil
 	}
 
-	// TODO double check
 	if cTempResource, ok := respCache.K8sClusterTemplateCache[remoteCTempToQuery]; ok {
-		return *&cTempResource.Name + ":" + *&cTempResource.Version, nil
+		return cTempResource.Name + ":" + cTempResource.Version, nil
 	}
 
-	resp, err := cClient.GetV2ProjectsProjectNameTemplatesWithResponse(ctx, projectName,
-		&cluster.GetV2ProjectsProjectNameTemplatesParams{
-			Filter: &lafilter,
-		}, auth.AddAuthHeader)
+	template := strings.Split(remoteCTempToQuery, ":")
+
+	resp, err := cClient.GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse(ctx, projectName,
+		strings.TrimSpace(template[0]), strings.TrimSpace(template[1]), auth.AddAuthHeader)
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
 		return "", err
 	}
-	if resp.JSON200 != nil && resp.JSON200.LocalAccounts != nil {
-		localAccounts := resp.JSON200.LocalAccounts
-		if len(localAccounts) > 0 {
-			respCache.LACache[remoteUserToQuery] = localAccounts[len(localAccounts)-1]
-			return *localAccounts[len(localAccounts)-1].ResourceId, nil
-		}
+	if resp.JSON200 != nil {
+		respCache.K8sClusterTemplateCache[remoteCTempToQuery] = *resp.JSON200
+		return resp.JSON200.Name + ":" + resp.JSON200.Version, nil
 	}
-	record.Error = "Remote User not found"
+	record.Error = "Cluster Template not found"
 	*erringRecords = append(*erringRecords, record)
 	return "", errors.New(record.Error)
+}
+
+// Checks if cluster config is valid
+func resolveClusterConfig(recordClusterConfig string, globalClusterConfig string, record types.HostRecord, erringRecords *[]types.HostRecord,
+) (string, error) {
+
+	configToValidate := recordClusterConfig
+
+	if globalClusterConfig != "" {
+		configToValidate = globalClusterConfig
+	}
+
+	return configToValidate, nil
 }
 
 // Checks if remote user is valid and exists
@@ -666,7 +787,9 @@ func getCreateHostCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Override the site provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("metadata", "m", viper.GetString("metadata"), "Override the metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("remote-user", "r", viper.GetString("remote-user"), "Override the metadata provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("cluster-template", "c", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("cluster-deploy", "c", viper.GetString("cluster-deploy"), "Override the cluster deployment flag provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("cluster-template", "t", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("cluster-config", "f", viper.GetString("cluster-config"), "Override the cluster configuration provided in CSV file for all hosts")
 	//cmd.PersistentFlags().StringP("cloud-init", "i", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
 	//cmd.PersistentFlags().BoolP("amt", "a", viper.GetBool("amt"), "Override the AMT feature configuration provided in CSV file for all hosts")
@@ -895,7 +1018,9 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	metadataIn, _ := cmd.Flags().GetString("metadata")
 	remoteUserIn, _ := cmd.Flags().GetString("remote-user")
 	secureIn, _ := cmd.Flags().GetString("secure")
-	k8sIn, _ := cmd.Flags().GetString("cluster-template")
+	k8sIn, _ := cmd.Flags().GetString("cluster-deploy")
+	k8sTmplIn, _ := cmd.Flags().GetString("cluster-template")
+	k8sConfigIn, _ := cmd.Flags().GetString("cluster-config")
 
 	globalAttr := &types.HostRecord{
 		OSProfile:          osProfileIn,
@@ -903,7 +1028,9 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		Secure:             types.StringToRecordSecure(secureIn),
 		RemoteUser:         remoteUserIn,
 		Metadata:           metadataIn,
-		K8sClusterTemplate: k8sIn,
+		K8sEnable:          k8sIn,
+		K8sClusterTemplate: k8sTmplIn,
+		K8sConfig:          k8sConfigIn,
 	}
 
 	if cmd.Flags().Changed("generate-csv") && (dryRun || csvFilePath != "") {
@@ -954,7 +1081,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		SiteCache:               make(map[string]infra.SiteResource),
 		LACache:                 make(map[string]infra.LocalAccountResource),
 		HostCache:               make(map[string]infra.HostResource),
-		K8sClusterTemplateCache: make(map[string]cluster.ClusterTemplateInfo),
+		K8sClusterTemplateCache: make(map[string]cluster.TemplateInfo),
 	}
 
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
@@ -962,7 +1089,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	ctx2, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	ctx2, clusterClient, _, err := getClusterServiceContext(cmd)
 	if err != nil {
 		return err
 	}
@@ -1159,6 +1286,52 @@ func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, res
 	}
 
 	return nil
+}
+
+// If a valid OE Profile exists creates an instance linking to host resource
+func createCluster(ctx context.Context, cClient *cluster.ClientWithResponses, respCache ResponseCache,
+	projectName, hostID string, rOut *types.HostRecord) error {
+
+	clusterTemplateName, clusterTempalteVer, err := decodeK8sTemplate(rOut.K8sClusterTemplate)
+	if err != nil {
+		return err
+	}
+	clusterName, clusterRole, clusterLabels, err := decodeK8sConfig(rOut.K8sConfig)
+	if err != nil {
+		return err
+	}
+
+	if clusterName == "" {
+		clusterName = hostID
+	}
+
+	node := cluster.NodeSpec{
+		Id:   rOut.UUID,
+		Role: cluster.NodeSpecRole(clusterRole),
+	}
+
+	//TODO Cache all nodes in same cluster and provide a list of nodes instead
+	nodes := []cluster.NodeSpec{}
+	nodes = append(nodes, node)
+
+	template := clusterTemplateName + "-" + clusterTempalteVer
+
+	//TODO if only one/first node in the list of nodes create cluster, if additional node update cluster
+	resp, err := cClient.PostV2ProjectsProjectNameClustersWithResponse(ctx, projectName, cluster.PostV2ProjectsProjectNameClustersJSONRequestBody{
+		Name:     &clusterName,
+		Nodes:    nodes,
+		Template: &template,
+		Labels:   &clusterLabels,
+	}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	if resp.JSON201 != nil {
+		fmt.Printf("Cluster '%s' created successfully.\n", clusterName)
+		return nil
+	}
+	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating cluster %s", clusterName))
 }
 
 // Decode input metadata and add to host, allocate host to site
