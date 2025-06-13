@@ -97,7 +97,7 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 		Aliases: deploymentPackageAliases,
 		Short:   "Export a deployment package as a tarball",
 		Args:    cobra.ExactArgs(2),
-		Example: "orch-cli export deployment-package my-package --project some-project",
+		Example: "orch-cli export deployment-package my-package 0.1.1 --project some-project",
 		RunE:    runExportDeploymentPackageCommand,
 	}
 	cmd.Flags().StringP("output-file", "o", "", "Override output filename")
@@ -495,6 +495,8 @@ func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	if fileNameFlag := getFlag(cmd, "output-file"); fileNameFlag != nil {
 		filename = *fileNameFlag
 	}
+
+	// No filename given on command line, so try to get it from the API response
 	if filename == "" {
 		contentDisposition := resp.HTTPResponse.Header.Get("Content-Disposition")
 		if contentDisposition != "" {
@@ -515,8 +517,8 @@ func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		}
 	}
 
+	// If after all that, we still don't have a filename, make up a default one
 	if filename == "" {
-		// after all that, we still don't have a filename, so use a default one
 		filename = fmt.Sprintf("%s-%s.tar.gz", name, version)
 	}
 

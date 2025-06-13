@@ -26,6 +26,13 @@ func getImportCommand() *cobra.Command {
 	return cmd
 }
 
+/*
+ * getImportHelmCharCommand implements a command that imports helm charts into the catalog.
+ *
+ * As this is the only "import" subcommand, it's located here alongside the import command.
+ * If more import commands are added in the future, they can be organized into a separate file.
+ */
+
 func getImportHelmChartCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "helm-chart <chart-path> [flags]",

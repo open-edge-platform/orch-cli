@@ -259,7 +259,7 @@ type grpcStatus struct {
 	Details []map[string]string `json:"details"`
 }
 
-// For apis that are using grpc-gateway and return a grpc Status in the response body for an error
+// checkResponseGRPC is For apis that are using grpc-gateway and return a grpc Status in the response body for an error.
 func checkResponseGRPC(response *http.Response, message string) error {
 	if response == nil {
 		return nil
@@ -273,6 +273,8 @@ func checkResponseGRPC(response *http.Response, message string) error {
 					fmt.Fprintln(os.Stderr, detailMessage)
 				}
 			}
+			// if the grpc Status included a message then use it and return.
+			// Otherwise, fall back to the standard response message.
 			if status.Message != "" {
 				return checkResponseCode(response.StatusCode, message, status.Message)
 			}
