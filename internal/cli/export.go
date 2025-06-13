@@ -16,8 +16,9 @@ func getExportCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "export {<file-path>|<dir-path>} [flags]",
 		Args:              cobra.ExactArgs(1),
-		Short:             "Export publisher's catalog resources by saving them into a directory structure as YAML files",
+		Short:             "Export catalog resources by saving them into a directory structure as YAML files",
 		PersistentPreRunE: auth.CheckAuth,
+		Example:           "orch-cli export /path/to/export --project my-project",
 		RunE:              exportResources,
 	}
 	return cmd

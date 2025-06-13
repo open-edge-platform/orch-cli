@@ -20,6 +20,7 @@ func getCreateDeploymentPackageCommand() *cobra.Command {
 		Aliases: deploymentPackageAliases,
 		Short:   "Create a deployment package",
 		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli create deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1",
 		RunE:    runCreateDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
@@ -62,13 +63,14 @@ func getSetDeploymentPackageCommand() *cobra.Command {
 		Aliases: deploymentPackageAliases,
 		Short:   "Update a deployment package",
 		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli set deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --application-reference app3:1.1.1",
 		RunE:    runSetDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
 	cmd.Flags().String("thumbnail-name", "", "name of the application thumbnail artifact")
 	cmd.Flags().String("icon-name", "", "name of the application icon artifact")
 	cmd.Flags().String("default-profile", "", "default deployment profile")
-	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version>:[<publisher>] constituent application references")
+	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
 	cmd.Flags().Bool("visible", true, "mark deployment package as visible or not")
@@ -144,11 +146,11 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.DeploymentPackag
 	}
 }
 
-// Produces an application reference from the specified <name>:<version>[:<publisher>] string
+// Produces an application reference from the specified <name>:<version> string
 func parseApplicationReference(refSpec string) (*catapi.ApplicationReference, error) {
-	refFields := strings.SplitN(refSpec, ":", 3)
-	if len(refFields) < 2 || len(refFields) > 3 {
-		return nil, fmt.Errorf("application reference must be in form of <name>:<version>[:<publisher>]")
+	refFields := strings.SplitN(refSpec, ":", 2)
+	if len(refFields) != 2 {
+		return nil, fmt.Errorf("application reference must be in form of <name>:<version>")
 	}
 	return &catapi.ApplicationReference{Name: refFields[0], Version: refFields[1]}, nil
 }
