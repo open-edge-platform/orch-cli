@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"os"
 	"path/filepath"
 	"strings"
@@ -498,14 +499,14 @@ func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 
 	// No filename given on command line, so try to get it from the API response
 	if filename == "" {
+		// NOTE: This is untested in production due to an issue in nexus-api-gw that is
+		// stripping the Content-Disposition headers.
 		contentDisposition := resp.HTTPResponse.Header.Get("Content-Disposition")
 		if contentDisposition != "" {
-			parts := strings.Split(contentDisposition, ";")
-			for _, part := range parts {
-				part = strings.TrimSpace(part)
-				if strings.HasPrefix(part, "filename=") {
-					filename = strings.Trim(part[len("filename="):], `"`)
-					break
+			_, params, err := mime.ParseMediaType(contentDisposition)
+			if err == nil {
+				if fname, ok := params["filename"]; ok {
+					filename = fname
 				}
 			}
 		}

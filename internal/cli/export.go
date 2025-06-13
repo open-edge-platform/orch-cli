@@ -11,7 +11,7 @@ import (
 func getExportCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "export",
-		Short:             "Export resoources from the orchestrator",
+		Short:             "Export resources from the orchestrator",
 		PersistentPreRunE: auth.CheckAuth,
 		Example:           "orch-cli export deployment-package wordpress 0.1.1",
 	}
