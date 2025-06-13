@@ -5,7 +5,6 @@ package cli
 
 import (
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
@@ -76,12 +75,6 @@ func runImportHelmChartCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	body, err := io.ReadAll(resp.Body) // xxx
-	if err != nil {
-		return processError(err)
-	}
-	fmt.Println(string(body))
-	defer resp.Body.Close()
 
 	// Print the gRPC error message to the user as it might have insight into the failure.
 	return checkResponseGRPC(resp, fmt.Sprintf("error while importing helm chart %s", ociURL))
