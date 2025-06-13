@@ -253,6 +253,9 @@ func checkResponseCode(responseCode int, message string, responseMessage string)
 	return nil
 }
 
+// grpcStatus is a structure that represents the gRPC status message returned in the response body.
+// Defining this here because the one in the official grpc package does not handle Details well.
+
 type grpcStatus struct {
 	Message string              `json:"message"`
 	Code    int                 `json:"code"`
