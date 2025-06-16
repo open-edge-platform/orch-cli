@@ -9,8 +9,8 @@
 
 ## Overview
 
-The Orchestrator CLI is a standalone utility which offers command line commands\
-to interact and manages various Orchestrator resources using the
+The Orchestrator CLI is a standalone utility which offers command line commands
+to interact and manage various Orchestrator resources using the
 REST API endpoints.
 
 Currently the `edge-cli` is supported for [Infrastructure Management] operations and
@@ -19,14 +19,17 @@ in `beta` for [Application Orchestration] and [Cluster Orchestration].
 Currently allows user to `create`, `get`, `list`, `set` and `delete` the following
 Orchestrator entities:
 
-- registries
-- artifacts
-- applications
-- application profiles
-- deployment packages (a.k.a bundles)
-- deployment profiles (a.k.a. bundle profiles)
-- application references of deployment packages
-- deployments
+- Hosts
+- Operating System Profiles (OsProfiles)
+- Clusters
+- Application images registries
+- Application artifacts
+- Applications
+- Application profiles
+- Deployment packages (a.k.a bundles)
+- Deployment profiles (a.k.a. bundle profiles)
+- Application references of deployment packages
+- Deployments
 
 Additionally, the CLI supports advanced operations.
 
@@ -74,11 +77,17 @@ Build the project as follows:
 make build
 ```
 
-[//]: # (TODO)
-The binaries are installed in the [$OUT_DIR](../common.mk) folder:
+The `orch-cli` binary is created in the `orch-cli/build/_output` directory
 
-- orch-host-preflight
-- orch-host-bulk-import
+To install the cli:
+
+```bash
+# Install go binary
+make install
+```
+
+By default, the binary will be installed to `/usr/local/bin`,
+the location can be overridden by setting the `INSTALL_PATH` environmental variable.
 
 ## Contribute
 
