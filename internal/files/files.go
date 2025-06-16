@@ -162,7 +162,9 @@ func WriteHostRecords(filePath string, records []types.HostRecord) error {
 			record.Metadata,
 			record.AMTEnable,
 			record.CloudInitMeta,
+			record.K8sEnable,
 			record.K8sClusterTemplate,
+			record.K8sConfig,
 			record.Error,
 		}
 

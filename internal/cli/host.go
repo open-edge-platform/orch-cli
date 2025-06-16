@@ -111,6 +111,7 @@ type ResponseCache struct {
 	LACache                 map[string]infra.LocalAccountResource
 	HostCache               map[string]infra.HostResource
 	K8sClusterTemplateCache map[string]cluster.TemplateInfo
+	K8sClusterNodesCache    map[string][]cluster.NodeSpec
 }
 
 func filterHelper(f string) *string {
@@ -1082,6 +1083,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		LACache:                 make(map[string]infra.LocalAccountResource),
 		HostCache:               make(map[string]infra.HostResource),
 		K8sClusterTemplateCache: make(map[string]cluster.TemplateInfo),
+		K8sClusterNodesCache:    make(map[string][]cluster.NodeSpec),
 	}
 
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
@@ -1194,6 +1196,7 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 	err = checkResponse(resp.HTTPResponse, "error while registering host")
 	if err != nil {
 
+		// Check if a host was already registred
 		if strings.Contains(string(resp.Body), `"code":"FailedPrecondition"`) {
 			//form a filter
 			hFilter := fmt.Sprintf("serialNumber='%s' AND uuid='%s'", sNo, uuid)
@@ -1215,11 +1218,9 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 			if gresp.JSON200.TotalElements != 1 {
 				err = e.NewCustomError(e.ErrHostDetailMismatch)
 				return "", err
-			} else if (gresp.JSON200.Hosts)[0].Instance != nil {
-				err = e.NewCustomError(e.ErrAlreadyRegistered)
-				return "", err
 			}
 
+			//If the exact host was already registered cache it - then skip instance creation elsewhere if discovered host has instance assigned
 			respCache.HostCache[*(gresp.JSON200.Hosts)[0].ResourceId] = (gresp.JSON200.Hosts)[0]
 			return *(gresp.JSON200.Hosts)[0].ResourceId, nil
 
@@ -1240,55 +1241,62 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, respCache ResponseCache,
 	projectName, hostID string, rOut *types.HostRecord, rIn types.HostRecord, globalAttr *types.HostRecord) error {
 
-	// Validate OS profile
-	if valErr := validateOSProfile(rOut.OSProfile); valErr != nil {
-		return valErr
-	}
+	//Create instance if not already created in a previous run of create host command
+	if respCache.HostCache[hostID].Instance == nil {
+		// Validate OS profile
+		if valErr := validateOSProfile(rOut.OSProfile); valErr != nil {
+			return valErr
+		}
 
-	cachedProfileIndex := rIn.OSProfile
-	if globalAttr.OSProfile != "" {
-		cachedProfileIndex = globalAttr.OSProfile
-	}
-	// Create instance if osProfileID is available
-	// Need not notify user of instance ID. Unnecessary detail for user.
-	kind := infra.INSTANCEKINDUNSPECIFIED
-	osResource, ok := respCache.OSProfileCache[cachedProfileIndex]
-	if !ok {
-		return e.NewCustomError(e.ErrInternal)
-	}
+		cachedProfileIndex := rIn.OSProfile
+		if globalAttr.OSProfile != "" {
+			cachedProfileIndex = globalAttr.OSProfile
+		}
+		// Create instance if osProfileID is available
+		// Need not notify user of instance ID. Unnecessary detail for user.
+		kind := infra.INSTANCEKINDUNSPECIFIED
+		osResource, ok := respCache.OSProfileCache[cachedProfileIndex]
+		if !ok {
+			return e.NewCustomError(e.ErrInternal)
+		}
 
-	secFeat := *osResource.SecurityFeature
-	if rOut.Secure != types.SecureTrue {
-		secFeat = infra.SECURITYFEATURENONE
-	}
+		secFeat := *osResource.SecurityFeature
+		if rOut.Secure != types.SecureTrue {
+			secFeat = infra.SECURITYFEATURENONE
+		}
 
-	var locAcc *string
-	if rOut.RemoteUser != "" {
-		locAcc = &rOut.RemoteUser
-	}
+		var locAcc *string
+		if rOut.RemoteUser != "" {
+			locAcc = &rOut.RemoteUser
+		}
 
-	iresp, err := hClient.InstanceServiceCreateInstanceWithResponse(ctx, projectName,
-		infra.InstanceServiceCreateInstanceJSONRequestBody{
-			HostID:          &hostID,
-			OsID:            &rOut.OSProfile,
-			LocalAccountID:  locAcc,
-			SecurityFeature: &secFeat,
-			Kind:            &kind,
-		}, auth.AddAuthHeader)
-	if err != nil {
-		err := processError(err)
-		return err
-	}
+		iresp, err := hClient.InstanceServiceCreateInstanceWithResponse(ctx, projectName,
+			infra.InstanceServiceCreateInstanceJSONRequestBody{
+				HostID:          &hostID,
+				OsID:            &rOut.OSProfile,
+				LocalAccountID:  locAcc,
+				SecurityFeature: &secFeat,
+				Kind:            &kind,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			err := processError(err)
+			return err
+		}
 
-	err = checkResponse(iresp.HTTPResponse, "error while creating instance\n\n")
-	if err != nil {
-		return err
-	}
+		err = checkResponse(iresp.HTTPResponse, "error while creating instance\n\n")
+		if err != nil {
+			return err
+		}
 
+		return nil
+	}
+	if respCache.HostCache[hostID].Instance != nil && rOut.K8sEnable != "true" {
+		return errors.New("host already registered")
+	}
 	return nil
 }
 
-// If a valid OE Profile exists creates an instance linking to host resource
+// Create a cluster
 func createCluster(ctx context.Context, cClient *cluster.ClientWithResponses, respCache ResponseCache,
 	projectName, hostID string, rOut *types.HostRecord) error {
 
@@ -1310,28 +1318,52 @@ func createCluster(ctx context.Context, cClient *cluster.ClientWithResponses, re
 		Role: cluster.NodeSpecRole(clusterRole),
 	}
 
-	//TODO Cache all nodes in same cluster and provide a list of nodes instead
-	nodes := []cluster.NodeSpec{}
-	nodes = append(nodes, node)
+	if respCache.K8sClusterNodesCache[clusterName] == nil {
+		respCache.K8sClusterNodesCache[clusterName] = []cluster.NodeSpec{}
+	}
+	respCache.K8sClusterNodesCache[clusterName] = append(respCache.K8sClusterNodesCache[clusterName], node)
+	nodes := respCache.K8sClusterNodesCache[clusterName]
 
-	template := clusterTemplateName + "-" + clusterTempalteVer
+	if len(nodes) == 1 {
 
-	//TODO if only one/first node in the list of nodes create cluster, if additional node update cluster
-	resp, err := cClient.PostV2ProjectsProjectNameClustersWithResponse(ctx, projectName, cluster.PostV2ProjectsProjectNameClustersJSONRequestBody{
-		Name:     &clusterName,
-		Nodes:    nodes,
-		Template: &template,
-		Labels:   &clusterLabels,
-	}, auth.AddAuthHeader)
-	if err != nil {
-		return processError(err)
+		template := clusterTemplateName + "-" + clusterTempalteVer
+		resp, err := cClient.PostV2ProjectsProjectNameClustersWithResponse(ctx, projectName, cluster.PostV2ProjectsProjectNameClustersJSONRequestBody{
+			Name:     &clusterName,
+			Nodes:    nodes,
+			Template: &template,
+			Labels:   &clusterLabels,
+		}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		if resp.JSON201 != nil {
+			return nil
+		}
+
+		err = checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating cluster %s", clusterName))
+		if err != nil {
+			if strings.Contains(string(resp.Body), `already exists`) {
+				return errors.New("cluster already exists")
+			}
+			return err
+		}
+		return err
 	}
 
-	if resp.JSON201 != nil {
-		fmt.Printf("Cluster '%s' created successfully.\n", clusterName)
-		return nil
+	//Multinode currently not supported - return error if multiple cluster with same name requested instead
+	// if len(nodes) > 1 {
+	// 	resp, err := cClient.PutV2ProjectsProjectNameClustersNameNodesWithResponse(ctx, projectName, clusterName, nodes, auth.AddAuthHeader)
+	// 	if err != nil {
+	// 		return processError(err)
+	// 	}
+	// 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error adding host to a cluster cluster %s", clusterName))
+	// }
+	if len(nodes) > 1 {
+		return errors.New("only single node clusters currently supported - two clusters with same name requested")
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating cluster %s", clusterName))
+
+	return errors.New("error getting node(s) for cluster creation/expansion")
 }
 
 // Decode input metadata and add to host, allocate host to site
