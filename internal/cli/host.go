@@ -69,12 +69,15 @@ Remote User - Optional remote user name or resource ID to configure for the host
 Metadata - Optional metadata to configure for the host
 AMTEnable - Optional AMT feature to be configured for the host
 CloudInitMeta - Optional Cloud Init Metadata to be configured for the host
-K8sClusterTemplate - Optional Cluster template to be used for K8s deployment on the host
+K8sEnable - Optional command to enable cluster deployment
+K8sClusterTemplate - Optional Cluster template to be used for K8s deployment on the host, must be provided if K8sEnable is true
+K8sClusterConfig - Optional Cluster config to be used to specify role and cluster name and/or cluster labels
 
-Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sClusterTemplate,Error - do not fill
+Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
 2500JF3,4c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic,site-c69a3c81,,localaccount-4c2c5f5a
 1500JF3,1c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value1&key2=value2
 15002F3,1c4c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value2&key3=value4
+25002F3,2c4c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,user,key1=value2&key3=value4,,,,true,baseline:v2.0.2,,role:all;name:mycluster;labels:key1=val1&key2=val2
 
 # --dry-run allows for verification of the validity of the input csv file without creating hosts
 orch-cli create host --project some-project --import-from-csv test.csv --dry-run
@@ -89,6 +92,9 @@ orch-cli create host --project some-project --import-from-csv test.csv
 --secure - true or false - security feature configuration
 --os-profile - name or ID of the OS profile
 --metadata - key value paired metatada separated by &, must be put in quotes.
+--cluster-deploy - true or false - cluster deployment configuration
+--cluster-template - name and version of the cluster template to be used for cluster cration (sseparated by :)
+--cluster-config - extra configuration for cluster creation empty defaults to "role:all", if not empty role must be defined, name and labels are optional (labels separated by &)
 
 # Create hosts from CSV and override provided values
 /orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
