@@ -482,7 +482,7 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 	k8sTmplID := record.K8sClusterTemplate
 	if isK8s == "true" {
 		if record.K8sConfig != "" || globalAttr.K8sConfig != "" {
-			k8sTmplID, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig, record, erringRecords)
+			k8sConfig, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig, record, erringRecords)
 			if err != nil {
 				return nil, err
 			}
