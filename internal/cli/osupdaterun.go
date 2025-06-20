@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 )
@@ -25,20 +26,20 @@ var OSUpdateRunHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Value", "Value")
 var OSUpdateRunGet = fmt.Sprintf("\n%s\t%s", "OS Run", "Value")
 
 // Prints OS Profiles in tabular format
-func printOSUpdateRuns(writer io.Writer, OSUpdatePolicies []infra.OSUpdateRun, verbose bool) {
-	// for _, osp := range OSProfiles {
-	// 	if !verbose {
-	// 		fmt.Fprintf(writer, "%s\t%s\t%s\n", *osp.Name, *osp.Architecture, *osp.SecurityFeature)
-	// 	} else {
-	// 		_, _ = fmt.Fprintf(writer, "\nName:\t %s\n", *osp.Name)
-	// 		_, _ = fmt.Fprintf(writer, "Profile Name:\t %s\n", *osp.ProfileName)
-	// 		_, _ = fmt.Fprintf(writer, "Security Feature:\t %v\n", toJSON(osp.SecurityFeature))
-	// 		_, _ = fmt.Fprintf(writer, "Architecture:\t %s\n", *osp.Architecture)
-	// 		_, _ = fmt.Fprintf(writer, "Repository URL:\t %s\n", *osp.RepoUrl)
-	// 		_, _ = fmt.Fprintf(writer, "sha256:\t %v\n", osp.Sha256)
-	// 		_, _ = fmt.Fprintf(writer, "Kernel Command:\t %v\n", toJSON(osp.KernelCommand))
-	// 	}
-	// }
+func printOSUpdateRuns(writer io.Writer, OSUpdateRuns []infra.OSUpdateRun, verbose bool) {
+	for _, run := range OSUpdateRuns {
+		if !verbose {
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status)
+		} else {
+			// _, _ = fmt.Fprintf(writer, "\nName:\t %s\n", *osp.Name)
+			// _, _ = fmt.Fprintf(writer, "Profile Name:\t %s\n", *osp.ProfileName)
+			// _, _ = fmt.Fprintf(writer, "Security Feature:\t %v\n", toJSON(osp.SecurityFeature))
+			// _, _ = fmt.Fprintf(writer, "Architecture:\t %s\n", *osp.Architecture)
+			// _, _ = fmt.Fprintf(writer, "Repository URL:\t %s\n", *osp.RepoUrl)
+			// _, _ = fmt.Fprintf(writer, "sha256:\t %v\n", osp.Sha256)
+			// _, _ = fmt.Fprintf(writer, "Kernel Command:\t %v\n", toJSON(osp.KernelCommand))
+		}
+	}
 }
 
 // Prints output details of OS Profiles
@@ -124,7 +125,6 @@ func getListOSUpdateRunCommand() *cobra.Command {
 		Example: listOSUpdateRunExamples,
 		RunE:    runListOSUpdateRunCommand,
 	}
-	//cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")
 	return cmd
 }
 
@@ -142,60 +142,56 @@ func getDeleteOSUpdateRunCommand() *cobra.Command {
 // Gets specific OSUpdateRun - retrieves list of policies and then filters and outputs
 // specifc run by name
 func runGetOSUpdateRunCommand(cmd *cobra.Command, args []string) error {
-	// writer, verbose := getOutputContext(cmd)
-	// ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
-	// if err != nil {
-	// 	return err
-	// }
+	uprun := args[0]
 
-	// resp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
-	// 	&infra.OperatingSystemServiceListOperatingSystemsParams{}, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
+	writer, verbose := getOutputContext(cmd)
+	ctx, OSUpdateRunClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
 
-	// if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-	// 	OSProfileHeaderGet, "error getting OS Profile"); !proceed {
-	// 	return err
-	// }
+	resp, err := OSUpdateRunClient.OSUpdateRunGetOSUpdateRunWithResponse(ctx, projectName,
+		uprun, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
 
-	// name := args[0]
-	// profile, err := filterProfilesByName(resp.JSON200.OperatingSystemResources, name)
-	// if err != nil {
-	// 	return err
-	// }
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+		OSProfileHeaderGet, "error getting OS Update run"); !proceed {
+		return err
+	}
 
-	// printOSProfile(writer, profile)
-	// return writer.Flush()
-	return nil
+	printOSUpdateRun(writer, resp.JSON200)
+	return writer.Flush()
 }
 
 // Lists all OS Update policies - retrieves all policies and displays selected information in tabular format
 func runListOSUpdateRunCommand(cmd *cobra.Command, _ []string) error {
-	//writer, verbose := getOutputContext(cmd)
+	writer, verbose := getOutputContext(cmd)
 
-	// filtflag, _ := cmd.Flags().GetString("filter")
-	// filter := filterHelper(filtflag)
+	filtflag, _ := cmd.Flags().GetString("filter")
+	filter := filterHelper(filtflag)
 
-	// ctx, OSURunClient, projectName, err := getInfraServiceContext(cmd)
-	// if err != nil {
-	// 	return err
-	// }
+	ctx, OSUpdateRunClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
 
-	// resp, err := OSURunClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
-	// 	&infra.OperatingSystemServiceListOperatingSystemsParams{
-	// 		//Filter: filter,
-	// 	}, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
+	//TODO handle multiple pages
+	resp, err := OSUpdateRunClient.OSUpdateRunListOSUpdateRunWithResponse(ctx, projectName,
+		&infra.OSUpdateRunListOSUpdateRunParams{
+			Filter: filter,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
 
-	// if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-	// 	OSUpdateRunHeader, "error getting OS Profiles"); !proceed {
-	// 	return err
-	// }
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+		OSUpdateRunHeader, "error getting OS Update Runs"); !proceed {
+		return err
+	}
 
-	// printOSProfiles(writer, resp.JSON200.OperatingSystemResources, verbose)
+	printOSUpdateRuns(writer, resp.JSON200.OsUpdateRuns, verbose)
 
 	// return writer.Flush()
 	return nil
@@ -203,33 +199,18 @@ func runListOSUpdateRunCommand(cmd *cobra.Command, _ []string) error {
 
 // Deletes OS Update Run - checks if a run  already exists and then deletes it if it does
 func runDeleteOSUpdateRunCommand(cmd *cobra.Command, args []string) error {
-	// ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
-	// if err != nil {
-	// 	return err
-	// }
+	osrun := args[0]
 
-	// gresp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
-	// 	&infra.OperatingSystemServiceListOperatingSystemsParams{}, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
+	ctx, OSUpdateRunClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
 
-	// if err = checkResponse(gresp.HTTPResponse, "Error getting OS profiles"); err != nil {
-	// 	return err
-	// }
+	resp, err := OSUpdateRunClient.OSUpdateRunDeleteOSUpdateRunWithResponse(ctx, projectName,
+		osrun, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
 
-	// name := args[0]
-	// profile, err := filterProfilesByName(gresp.JSON200.OperatingSystemResources, name)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// resp, err := OSProfileClient.OperatingSystemServiceDeleteOperatingSystemWithResponse(ctx, projectName,
-	// 	*profile.OsResourceID, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
-
-	// return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS profile %s", name))
-	return nil
+	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS Update run %s", osrun))
 }
