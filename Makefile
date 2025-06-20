@@ -56,6 +56,12 @@ lint:
 	@# Help: Runs lint stage
 	golangci-lint run --timeout 10m
 	yamllint .
+	mdlint
+
+MD_FILES := $(shell find . -type f \( -name '*.md' \) -print )
+mdlint: ## lint all markdown README.md files
+	markdownlint --version
+	markdownlint *.md
 
 test: mod-update
 	@# Help: Runs test stage
@@ -64,11 +70,11 @@ test: mod-update
 fetch-catalog-openapi:
 	@# Help: Fetch the Catalog OpenAPI spec
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-app-orch-catalog-openapi.yaml -o pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-app-orch-catalog-utilities-openapi.yaml -o pkg/rest/catalogutilities/amc-app-orch-catalog-utilities-openapi.yaml
 
 fetch-cluster-openapi:
 	@# Help: Fetch the Cluster Manager OpenAPI spec
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-cluster-manager-openapi.yaml -o pkg/rest/cluster/amc-cluster-manager-openapi.yaml
-
 
 fetch-infra-openapi:
 	@# Help: Fetch the Infra Manager OpenAPI spec
@@ -81,6 +87,8 @@ rest-client-gen:
 	@# Help: Generate Rest client from the MT GW openapi spec.
 	oapi-codegen -generate client -old-config-style -package catalog -o pkg/rest/catalog/client.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
 	oapi-codegen -generate types -old-config-style -package catalog -o pkg/rest/catalog/types.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
+	oapi-codegen -generate client -old-config-style -package catalogutilities -o pkg/rest/catalogutilities/client.go pkg/rest/catalogutilities/amc-app-orch-catalog-utilities-openapi.yaml
+	oapi-codegen -generate types -old-config-style -package catalogutilities -o pkg/rest/catalogutilities/types.go pkg/rest/catalogutilities/amc-app-orch-catalog-utilities-openapi.yaml	
 	oapi-codegen -generate client -old-config-style -package deployment -o pkg/rest/deployment/client.go pkg/rest/deployment/amc-app-orch-deployment-app-deployment-manager-openapi.yaml
 	oapi-codegen -generate types -old-config-style -package deployment -o pkg/rest/deployment/types.go pkg/rest/deployment/amc-app-orch-deployment-app-deployment-manager-openapi.yaml
 	oapi-codegen -generate client -old-config-style -package cluster -o pkg/rest/cluster/client.go pkg/rest/cluster/amc-cluster-manager-openapi.yaml

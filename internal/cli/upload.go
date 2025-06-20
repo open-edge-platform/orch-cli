@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
-	"github.com/open-edge-platform/cli/pkg/loader"
+	"github.com/open-edge-platform/orch-library/go/pkg/loader"
 	"github.com/spf13/cobra"
 )
 
