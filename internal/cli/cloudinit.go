@@ -4,8 +4,13 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
@@ -69,37 +74,47 @@ func printCloudInit(writer io.Writer, CloudInit *infra.CustomConfigResource) {
 
 }
 
-// // Helper function to verify that the input file exists and is of right format
-// func verifyOSProfileInput(path string) error {
+// Helper function to verify that the input file exists and is of right format
+func verifyCloudInitInput(path string) error {
 
-// 	if _, err := os.Stat(path); os.IsNotExist(err) {
-// 		return fmt.Errorf("file does not exist: %s", path)
-// 	}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return fmt.Errorf("file does not exist: %s", path)
+	}
 
-// 	ext := strings.ToLower(filepath.Ext(path))
-// 	if ext != ".yaml" && ext != ".yml" {
-// 		return errors.New("os Profile input must be a yaml file")
-// 	}
+	ext := strings.ToLower(filepath.Ext(path))
+	if ext != ".yaml" && ext != ".yml" {
+		return errors.New("cloud init input must be a yaml file")
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
-// // Helper function to unmarshal yaml file
-// func readOSProfileFromYaml(path string) (*NestedSpec, error) {
+// Helper function to verify that the input file exists and is of right format
+func verifyName(n string) error {
 
-// 	var input NestedSpec
-// 	data, err := os.ReadFile(path)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	pattern := `^[a-zA-Z0-9]+$`
 
-// 	err = yaml.Unmarshal(data, &input)
-// 	if err != nil {
-// 		log.Fatalf("error unmarshalling YAML: %v", err)
-// 	}
+	// Compile the regular expression
+	re := regexp.MustCompile(pattern)
 
-// 	return &input, nil
-// }
+	// Match the input string against the pattern
+	if re.MatchString(n) {
+		return nil
+	}
+	return errors.New("input is not an alphanumeric single word")
+}
+
+// readCloudInitFromYaml reads the contents of a YAML file and returns it as a string.
+func readCloudInitFromYaml(path string) (string, error) {
+	// Read the file contents
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	// Convert the byte slice to a string
+	return string(data), nil
+}
 
 // // Filters list of profiles to find one with specific name
 // func filterProfilesByName(OSProfiles []infra.OperatingSystemResource, name string) (*infra.OperatingSystemResource, error) {
@@ -215,19 +230,23 @@ func runCreateCloudInitCommand(cmd *cobra.Command, args []string) error {
 	name := args[0]
 	path := args[1]
 
-	// err := verifyOSProfileInput(path)
-	// if err != nil {
-	// 	return err
-	// }
+	err := verifyName(name)
+	if err != nil {
+		return err
+	}
 
-	// spec, err := readOSProfileFromYaml(path)
-	// if err != nil {
-	// 	return err
-	// }
+	err = verifyCloudInitInput(path)
+	if err != nil {
+		return err
+	}
 
-	//TODO remove hardcoded and read from yaml
-	config := "config"
-	desc := "A description"
+	config, err := readCloudInitFromYaml(path)
+	if err != nil {
+		return err
+	}
+
+	//TODO remove hardcoded and read from flag
+	desc := ""
 
 	ctx, cloudInitClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
