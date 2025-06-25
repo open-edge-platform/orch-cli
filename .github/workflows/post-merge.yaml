@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   post-merge-pipeline:
-    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@251aa50fb5878404cbe4e2834bfc5885c6af3568  # v0.1.15
+    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@5ea97eb41959d0922ab99956b4db23910f4fb4a2  # v0.1.31
     with:
       run_version_check: true
       run_dep_version_check: false
