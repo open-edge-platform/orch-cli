@@ -109,6 +109,7 @@ type ResponseCache struct {
 	SiteCache      map[string]infra.SiteResource
 	LACache        map[string]infra.LocalAccountResource
 	HostCache      map[string]infra.HostResource
+	CICache        map[string]infra.CustomConfigResource
 }
 
 func filterHelper(f string) *string {
@@ -338,6 +339,17 @@ func decodeMetadata(metadata string) (*[]infra.MetadataItem, error) {
 	return &metadataList, nil
 }
 
+// Breaks up the provided cloud init metadata from input string
+func breakupCloudInitMetadata(CImetadata string) []string {
+	var CImetaList []string
+	if CImetadata == "" {
+		return CImetaList
+	}
+	CImetaList = strings.Split(CImetadata, "&")
+
+	return CImetaList
+}
+
 func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSecure {
 	if globalSecure != recordSecure && globalSecure != types.SecureUnspecified {
 		return globalSecure
@@ -378,11 +390,10 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 	// 	return nil, valErr
 	// }
 
-	//TODO implement cloud Init check
-	// cloudInitID, err := resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, record, respCache, erringRecords)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	cloudInitIDs, err := resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, globalAttr.CloudInitMeta, record, respCache, erringRecords)
+	if err != nil {
+		return nil, err
+	}
 
 	//TODO implement check for K8s Cluster template
 	// K8sTmplID, err := resolveCloudInit(ctx, hClient, projectName, record., record.K8sClusterTemplate, respCache, erringRecords)
@@ -399,7 +410,7 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 		Serial:     record.Serial,
 		Metadata:   metadataToUse,
 		//AMTEnable:  isAMT,
-		//CloudInitMeta: cloudInitID,
+		CloudInitMeta: cloudInitIDs,
 		//K8sClusterTemplate: K8sTmplID,
 	}, nil
 }
@@ -553,6 +564,63 @@ func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, 
 	return "", errors.New(record.Error)
 }
 
+// Cecks if remote user is valid and exists
+func resolveCloudInit(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, recordCloudInitMeta string,
+	globalCloudInitMeta string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
+) (string, error) {
+
+	cloudInitMetaToQuery := recordCloudInitMeta
+
+	if globalCloudInitMeta != "" {
+		cloudInitMetaToQuery = globalCloudInitMeta
+	}
+
+	if cloudInitMetaToQuery == "" {
+		return "", nil
+	}
+
+	rawCloudInitEntries := breakupCloudInitMetadata(cloudInitMetaToQuery)
+	var sanCloudInitEntries []string
+	wrongCloudInits := ""
+
+	for _, cloudInit := range rawCloudInitEntries {
+
+		if cImetaResource, ok := respCache.CICache[cloudInit]; ok {
+			sanCloudInitEntries = append(sanCloudInitEntries, *cImetaResource.ResourceId)
+			continue
+		}
+
+		cImfilter := fmt.Sprintf("name='%s' OR resourceId='%s'", cloudInit, cloudInit)
+		resp, err := hClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
+			&infra.CustomConfigServiceListCustomConfigsParams{
+				Filter: &cImfilter,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			record.Error = err.Error()
+			*erringRecords = append(*erringRecords, record)
+			continue
+			//return "", err
+		}
+		if resp.JSON200 != nil && resp.JSON200.CustomConfigs != nil {
+			cloudInits := resp.JSON200.CustomConfigs
+			if len(cloudInits) > 0 {
+				respCache.CICache[cloudInit] = cloudInits[len(cloudInits)-1]
+				sanCloudInitEntries = append(sanCloudInitEntries, *cloudInits[len(cloudInits)-1].ResourceId)
+				continue
+			}
+		}
+		wrongCloudInits = wrongCloudInits + " " + cloudInit
+	}
+
+	if wrongCloudInits != "" {
+		erroMsg := fmt.Sprintf("Remote Cloud Init custom config %s not found", wrongCloudInits)
+		record.Error = erroMsg
+		*erringRecords = append(*erringRecords, record)
+		return "", errors.New(record.Error)
+	}
+	return strings.Join(sanCloudInitEntries, "&"), nil
+}
+
 func resolveMetadata(recordMetadata, globalMetadata string) string {
 	if globalMetadata != "" {
 		return globalMetadata
@@ -620,7 +688,7 @@ func getCreateHostCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("metadata", "m", viper.GetString("metadata"), "Override the metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("remote-user", "r", viper.GetString("remote-user"), "Override the metadata provided in CSV file for all hosts")
 	//cmd.PersistentFlags().StringP("cluster-template", "c", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
-	//cmd.PersistentFlags().StringP("cloud-init", "i", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("cloud-init", "j", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
 	//cmd.PersistentFlags().BoolP("amt", "a", viper.GetBool("amt"), "Override the AMT feature configuration provided in CSV file for all hosts")
 
@@ -846,15 +914,17 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	osProfileIn, _ := cmd.Flags().GetString("os-profile")
 	siteIn, _ := cmd.Flags().GetString("site")
 	metadataIn, _ := cmd.Flags().GetString("metadata")
+	cloudInitIn, _ := cmd.Flags().GetString("cloud-init")
 	remoteUserIn, _ := cmd.Flags().GetString("remote-user")
 	secureIn, _ := cmd.Flags().GetString("secure")
 
 	globalAttr := &types.HostRecord{
-		OSProfile:  osProfileIn,
-		Site:       siteIn,
-		Secure:     types.StringToRecordSecure(secureIn),
-		RemoteUser: remoteUserIn,
-		Metadata:   metadataIn,
+		OSProfile:     osProfileIn,
+		Site:          siteIn,
+		Secure:        types.StringToRecordSecure(secureIn),
+		RemoteUser:    remoteUserIn,
+		Metadata:      metadataIn,
+		CloudInitMeta: cloudInitIn,
 	}
 
 	if cmd.Flags().Changed("generate-csv") && (dryRun || csvFilePath != "") {
@@ -905,6 +975,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		SiteCache:      make(map[string]infra.SiteResource),
 		LACache:        make(map[string]infra.LocalAccountResource),
 		HostCache:      make(map[string]infra.HostResource),
+		CICache:        make(map[string]infra.CustomConfigResource),
 	}
 
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
@@ -1084,6 +1155,11 @@ func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, res
 		locAcc = &rOut.RemoteUser
 	}
 
+	var cloudInitIDs []string
+	if rOut.CloudInitMeta != "" {
+		cloudInitIDs = breakupCloudInitMetadata(rOut.CloudInitMeta)
+	}
+
 	iresp, err := hClient.InstanceServiceCreateInstanceWithResponse(ctx, projectName,
 		infra.InstanceServiceCreateInstanceJSONRequestBody{
 			HostID:          &hostID,
@@ -1091,6 +1167,7 @@ func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, res
 			LocalAccountID:  locAcc,
 			SecurityFeature: &secFeat,
 			Kind:            &kind,
+			CustomConfigID:  &cloudInitIDs,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		err := processError(err)

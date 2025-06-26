@@ -181,7 +181,7 @@ func runGetCustomConfigCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		OSProfileHeaderGet, "error getting OS Profile"); !proceed {
+		"", "error getting Cloud Init config"); !proceed {
 		return err
 	}
 
