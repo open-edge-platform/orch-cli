@@ -18,64 +18,50 @@ import (
 	"github.com/spf13/viper"
 )
 
-const listCloudInitExamples = `# List all Cloud Init resources
-orch-cli list cloudinit --project some-project
+const listCustomConfigExamples = `# List all custom config (Cloud Init) resources
+orch-cli list customconfig --project some-project
 `
 
-const getCloudInitExamples = `# Get detailed information about specific Cloud Init resource
-orch-cli get cloudinit policyname --project some-project`
+const getCustomConfigExamples = `# Get detailed information about specific custom config (Cloud Init) resource
+orch-cli get customconfig <resource ID> --project some-project`
 
-const createCloudInitExamples = `# Create a Cloud Init resource
-orch-cli create cloudinit   --project some-project`
+const createCustomConfigExamples = `# Create a custom config (Cloud Init) resource 
+orch-cli create customconfig /path/to/cloudinit.yaml  --project some-project
 
-const deleteCloudInitExamples = `#Delete a Cloud Init resource
-orch-cli delete cloudinit name --project some-project`
+# Create a Cloud Init resource with an optional description 
+orch-cli create customconfig /path/to/cloudinit.yaml  --project some-project --description "This is a cloud init"`
 
-var CloudInitHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Value", "Value")
-var CloudInitGet = fmt.Sprintf("\n%s\t%s", "Cloud Init", "Value")
+const deleteCustomConfigExamples = `#Delete a custom config (Cloud Init) resource
+orch-cli delete customconfig <resourceID> --project some-project`
+
+var CustomConfigHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Description")
 
 // Prints OS Profiles in tabular format
-func printCloudInits(writer io.Writer, CloudInit []infra.CustomConfigResource, verbose bool) {
-	for _, cinit := range CloudInit {
+func printCustomConfigs(writer io.Writer, CustomConfig []infra.CustomConfigResource, verbose bool) {
+	if verbose {
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\n", "Name", "Resource ID", "Description", "Creation Timestamp", "Updated Timestamp")
+	}
+	for _, cinit := range CustomConfig {
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", cinit.Name, *cinit.ResourceId, *cinit.Description)
 		} else {
-			// _, _ = fmt.Fprintf(writer, "\nName:\t %s\n", *osp.Name)
-			// _, _ = fmt.Fprintf(writer, "Profile Name:\t %s\n", *osp.ProfileName)
-			// _, _ = fmt.Fprintf(writer, "Security Feature:\t %v\n", toJSON(osp.SecurityFeature))
-			// _, _ = fmt.Fprintf(writer, "Architecture:\t %s\n", *osp.Architecture)
-			// _, _ = fmt.Fprintf(writer, "Repository URL:\t %s\n", *osp.RepoUrl)
-			// _, _ = fmt.Fprintf(writer, "sha256:\t %v\n", osp.Sha256)
-			// _, _ = fmt.Fprintf(writer, "Kernel Command:\t %v\n", toJSON(osp.KernelCommand))
+
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", cinit.Name, *cinit.ResourceId, *cinit.Description, cinit.Timestamps.CreatedAt, cinit.Timestamps.UpdatedAt)
 		}
 	}
 }
 
 // Prints output details of OS Profiles
-func printCloudInit(writer io.Writer, CloudInit *infra.CustomConfigResource) {
+func printCustomConfig(writer io.Writer, CustomConfig *infra.CustomConfigResource) {
 
-	// _, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSProfile.Name)
-	// _, _ = fmt.Fprintf(writer, "Profile Name: \t%s\n", *OSProfile.ProfileName)
-	// _, _ = fmt.Fprintf(writer, "OS Resource ID: \t%s\n", *OSProfile.OsResourceID)
-	// _, _ = fmt.Fprintf(writer, "version: \t%v\n", toJSON(OSProfile.ProfileVersion))
-	// _, _ = fmt.Fprintf(writer, "sha256: \t%v\n", OSProfile.Sha256)
-	// _, _ = fmt.Fprintf(writer, "Image ID: \t%s\n", *OSProfile.ImageId)
-	// _, _ = fmt.Fprintf(writer, "Image URL: \t%s\n", *OSProfile.ImageUrl)
-	// _, _ = fmt.Fprintf(writer, "Repository URL: \t%s\n", *OSProfile.RepoUrl)
-	// _, _ = fmt.Fprintf(writer, "Security Feature: \t%v\n", toJSON(OSProfile.SecurityFeature))
-	// _, _ = fmt.Fprintf(writer, "Architecture: \t%s\n", *OSProfile.Architecture)
-	// _, _ = fmt.Fprintf(writer, "OS type: \t%s\n", *OSProfile.OsType)
-	// _, _ = fmt.Fprintf(writer, "OS provider: \t%s\n", *OSProfile.OsProvider)
-	// _, _ = fmt.Fprintf(writer, "Platform Bundle: \t%s\n", *OSProfile.PlatformBundle)
-	// _, _ = fmt.Fprintf(writer, "Update Sources: \t%v\n", OSProfile.UpdateSources)
-	// _, _ = fmt.Fprintf(writer, "Installed Packages: \t%v\n", toJSON(OSProfile.InstalledPackages))
-	// _, _ = fmt.Fprintf(writer, "Created: \t%v\n", OSProfile.Timestamps.CreatedAt)
-	// _, _ = fmt.Fprintf(writer, "Updated: \t%v\n", OSProfile.Timestamps.UpdatedAt)
-
+	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", CustomConfig.Name)
+	_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *CustomConfig.ResourceId)
+	_, _ = fmt.Fprintf(writer, "Description: \t%s\n\n", *CustomConfig.Description)
+	_, _ = fmt.Fprintf(writer, "Cloud Init:\n%s\n", CustomConfig.Config)
 }
 
 // Helper function to verify that the input file exists and is of right format
-func verifyCloudInitInput(path string) error {
+func verifyCustomConfigInput(path string) error {
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return fmt.Errorf("file does not exist: %s", path)
@@ -104,8 +90,8 @@ func verifyName(n string) error {
 	return errors.New("input is not an alphanumeric single word")
 }
 
-// readCloudInitFromYaml reads the contents of a YAML file and returns it as a string.
-func readCloudInitFromYaml(path string) (string, error) {
+// readCustomConfigFromYaml reads the contents of a YAML file and returns it as a string.
+func readCustomConfigFromYaml(path string) (string, error) {
 	// Read the file contents
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -116,98 +102,117 @@ func readCloudInitFromYaml(path string) (string, error) {
 	return string(data), nil
 }
 
-// // Filters list of profiles to find one with specific name
-// func filterProfilesByName(OSProfiles []infra.OperatingSystemResource, name string) (*infra.OperatingSystemResource, error) {
-// 	for _, profile := range OSProfiles {
-// 		if *profile.Name == name {
-// 			return &profile, nil
-// 		}
-// 	}
-// 	return nil, errors.New("no os profile matches the given name")
-// }
+// Filters list of pcustom configs to find one with specific name
+func filterCustomConfigsByName(CustomConfigs []infra.CustomConfigResource, name string) (*infra.CustomConfigResource, error) {
+	for _, config := range CustomConfigs {
+		if config.Name == name {
+			return &config, nil
+		}
+	}
+	return nil, errors.New("no custom config matches the given name")
+}
 
-func getGetCloudInitCommand() *cobra.Command {
+func getGetCustomConfigCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "cloudinit <name> [flags]",
+		Use:     "customconfig <name> [flags]",
 		Short:   "Get a Cloud Init configuration",
-		Example: getCloudInitExamples,
+		Example: getCustomConfigExamples,
 		Args:    cobra.ExactArgs(1),
-		RunE:    runGetCloudInitCommand,
+		RunE:    runGetCustomConfigCommand,
 	}
 	return cmd
 }
 
-func getListCloudInitCommand() *cobra.Command {
+func getListCustomConfigCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "cloudinit [flags]",
+		Use:     "customconfig [flags]",
 		Short:   "List all Cloud Init configurations",
-		Example: listCloudInitExamples,
-		RunE:    runListCloudInitCommand,
+		Example: listCustomConfigExamples,
+		RunE:    runListCustomConfigCommand,
 	}
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of cloud init list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter <filter> see https://google.aip.dev/160 and API spec.")
 	return cmd
 }
 
-func getCreateCloudInitCommand() *cobra.Command {
+func getCreateCustomConfigCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "cloudinit  [flags]",
+		Use:     "customconfig  [flags]",
 		Short:   "Creates Cloud Init configuration",
-		Example: createCloudInitExamples,
+		Example: createCustomConfigExamples,
 		Args:    cobra.ExactArgs(2),
-		RunE:    runCreateCloudInitCommand,
+		RunE:    runCreateCustomConfigCommand,
 	}
+	cmd.PersistentFlags().StringP("description", "d", viper.GetString("description"), "Optional flag used to provide a description to a cloud init config resource")
 	return cmd
 }
 
-func getDeleteCloudInitCommand() *cobra.Command {
+func getDeleteCustomConfigCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "cloudinit <name> [flags]",
+		Use:     "customconfig <name> [flags]",
 		Short:   "Delete a Cloud Init config",
-		Example: deleteCloudInitExamples,
+		Example: deleteCustomConfigExamples,
 		Args:    cobra.ExactArgs(1),
-		RunE:    runDeleteCloudInitCommand,
+		RunE:    runDeleteCustomConfigCommand,
 	}
 	return cmd
 }
 
 // Gets specific Cloud Init configuration bu resource ID
-func runGetCloudInitCommand(cmd *cobra.Command, args []string) error {
-	CIID := args[0]
+func runGetCustomConfigCommand(cmd *cobra.Command, args []string) error {
 
 	writer, verbose := getOutputContext(cmd)
-	ctx, cloudInitClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, customConfigClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := cloudInitClient.CustomConfigServiceGetCustomConfigWithResponse(ctx, projectName,
-		CIID, auth.AddAuthHeader)
+	//Leaving this as an example to get by resource ID instead of name
+	//CIID := args[0]
+	// resp, err := customConfigClient.CustomConfigServiceGetCustomConfigWithResponse(ctx, projectName,
+	// 	CIID, auth.AddAuthHeader)
+	// if err != nil {
+	// 	return processError(err)
+	// }
+
+	resp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
+		&infra.CustomConfigServiceListCustomConfigsParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		CloudInitGet, "error getting Cloud Init configuration"); !proceed {
+		OSProfileHeaderGet, "error getting OS Profile"); !proceed {
 		return err
 	}
 
-	printCloudInit(writer, resp.JSON200)
+	name := args[0]
+	cConfig, err := filterCustomConfigsByName(resp.JSON200.CustomConfigs, name)
+	if err != nil {
+		return err
+	}
+
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+		"", "error getting Cloud Init configuration"); !proceed {
+		return err
+	}
+
+	printCustomConfig(writer, cConfig)
 	return writer.Flush()
 }
 
 // Lists all Cloud Init configrations - retrieves all configurations and displays selected information in tabular format
-func runListCloudInitCommand(cmd *cobra.Command, _ []string) error {
+func runListCustomConfigCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
 	filtflag, _ := cmd.Flags().GetString("filter")
 	filter := filterHelper(filtflag)
 
-	ctx, cloudInitClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, customConfigClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := cloudInitClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
+	resp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
 		&infra.CustomConfigServiceListCustomConfigsParams{
 			Filter: filter,
 		}, auth.AddAuthHeader)
@@ -216,47 +221,50 @@ func runListCloudInitCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		CloudInitHeader, "error getting Cloud Init configurations"); !proceed {
+		CustomConfigHeader, "error getting Cloud Init configurations"); !proceed {
 		return err
 	}
 
-	printCloudInits(writer, resp.JSON200.CustomConfigs, verbose)
+	printCustomConfigs(writer, resp.JSON200.CustomConfigs, verbose)
 
 	return writer.Flush()
 }
 
 // Creates Cloud Init config
-func runCreateCloudInitCommand(cmd *cobra.Command, args []string) error {
+func runCreateCustomConfigCommand(cmd *cobra.Command, args []string) error {
 	name := args[0]
 	path := args[1]
+
+	var desc *string
+	descFlag, _ := cmd.Flags().GetString("description")
+	if descFlag != "" {
+		desc = &descFlag
+	}
 
 	err := verifyName(name)
 	if err != nil {
 		return err
 	}
 
-	err = verifyCloudInitInput(path)
+	err = verifyCustomConfigInput(path)
 	if err != nil {
 		return err
 	}
 
-	config, err := readCloudInitFromYaml(path)
+	config, err := readCustomConfigFromYaml(path)
 	if err != nil {
 		return err
 	}
 
-	//TODO remove hardcoded and read from flag
-	desc := ""
-
-	ctx, cloudInitClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, customConfigClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := cloudInitClient.CustomConfigServiceCreateCustomConfigWithResponse(ctx, projectName,
+	resp, err := customConfigClient.CustomConfigServiceCreateCustomConfigWithResponse(ctx, projectName,
 		infra.CustomConfigServiceCreateCustomConfigJSONRequestBody{
 			Name:        name,
-			Description: &desc,
+			Description: desc,
 			Config:      config,
 		}, auth.AddAuthHeader)
 	if err != nil {
@@ -265,20 +273,35 @@ func runCreateCloudInitCommand(cmd *cobra.Command, args []string) error {
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating Cloud Init config from %s", path))
 }
 
-// Deletes OS Update Policy - checks if a policy  already exists and then deletes it if it does
-func runDeleteCloudInitCommand(cmd *cobra.Command, args []string) error {
+// Deletes Cloud Init config - checks if a config already exists and then deletes it if it does
+func runDeleteCustomConfigCommand(cmd *cobra.Command, args []string) error {
 
-	policy := args[0]
-	ctx, cloudInitClient, projectName, err := getInfraServiceContext(cmd)
+	name := args[0]
+	ctx, customConfigClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := cloudInitClient.CustomConfigServiceDeleteCustomConfigWithResponse(ctx, projectName,
-		policy, auth.AddAuthHeader)
+	gresp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
+		&infra.CustomConfigServiceListCustomConfigsParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting Cloud Init config %s", policy))
+	if err = checkResponse(gresp.HTTPResponse, "Error getting custom configs"); err != nil {
+		return err
+	}
+
+	cConfig, err := filterCustomConfigsByName(gresp.JSON200.CustomConfigs, name)
+	if err != nil {
+		return err
+	}
+
+	resp, err := customConfigClient.CustomConfigServiceDeleteCustomConfigWithResponse(ctx, projectName,
+		*cConfig.ResourceId, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting Cloud Init config %s", name))
 }

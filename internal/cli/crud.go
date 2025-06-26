@@ -34,7 +34,7 @@ func getCreateCommand() *cobra.Command {
 
 		getCreateClusterCommand(),
 
-		getCreateCloudInitCommand(),
+		getCreateCustomConfigCommand(),
 		getCreateHostCommand(),
 		getCreateOSProfileCommand(),
 	)
@@ -61,7 +61,7 @@ func getListCommand() *cobra.Command {
 		getListClusterCommand(),
 		getListClusterTemplatesCommand(),
 
-		getListCloudInitCommand(),
+		getListCustomConfigCommand(),
 		getListSiteCommand(),
 		getListRegionCommand(),
 		getListOSProfileCommand(),
@@ -102,7 +102,7 @@ func getGetCommand() *cobra.Command {
 
 		getListNetworksCommand(),
 
-		getGetCloudInitCommand(),
+		getGetCustomConfigCommand(),
 		getGetOSProfileCommand(),
 		getGetHostCommand(),
 	)
@@ -150,7 +150,7 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteClusterCommand(),
 		getDeleteNetworkCommand(),
 
-		getDeleteCloudInitCommand(),
+		getDeleteCustomConfigCommand(),
 		getDeleteOSProfileCommand(),
 		getDeleteHostCommand(),
 	)
