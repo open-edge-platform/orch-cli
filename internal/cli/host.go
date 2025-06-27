@@ -222,7 +222,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		currentOS = toJSON(host.Instance.CurrentOs.Name)
 	}
 
-	if host != nil && host.Instance != nil && host.Instance.Os.Name != nil {
+	if host != nil && host.Instance != nil && host.Instance.Os != nil && host.Instance.Os.Name != nil {
 		osprofile = toJSON(host.Instance.Os.Name)
 	}
 
@@ -340,14 +340,14 @@ func decodeMetadata(metadata string) (*[]infra.MetadataItem, error) {
 }
 
 // Breaks up the provided cloud init metadata from input string
-func breakupCloudInitMetadata(CImetadata string) []string {
+func breakupCloudInitMetadata(CImetadata string) *[]string {
 	var CImetaList []string
 	if CImetadata == "" {
-		return CImetaList
+		return &CImetaList
 	}
 	CImetaList = strings.Split(CImetadata, "&")
 
-	return CImetaList
+	return &CImetaList
 }
 
 func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSecure {
@@ -583,7 +583,7 @@ func resolveCloudInit(ctx context.Context, hClient *infra.ClientWithResponses, p
 	var sanCloudInitEntries []string
 	wrongCloudInits := ""
 
-	for _, cloudInit := range rawCloudInitEntries {
+	for _, cloudInit := range *rawCloudInitEntries {
 
 		if cImetaResource, ok := respCache.CICache[cloudInit]; ok {
 			sanCloudInitEntries = append(sanCloudInitEntries, *cImetaResource.ResourceId)
@@ -1155,7 +1155,7 @@ func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, res
 		locAcc = &rOut.RemoteUser
 	}
 
-	var cloudInitIDs []string
+	var cloudInitIDs *[]string
 	if rOut.CloudInitMeta != "" {
 		cloudInitIDs = breakupCloudInitMetadata(rOut.CloudInitMeta)
 	}
@@ -1167,7 +1167,7 @@ func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, res
 			LocalAccountID:  locAcc,
 			SecurityFeature: &secFeat,
 			Kind:            &kind,
-			CustomConfigID:  &cloudInitIDs,
+			CustomConfigID:  cloudInitIDs,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		err := processError(err)
