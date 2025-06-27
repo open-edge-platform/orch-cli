@@ -74,6 +74,7 @@ Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8
 2500JF3,4c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic,site-c69a3c81,,localaccount-4c2c5f5a
 1500JF3,1c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value1&key2=value2
 15002F3,1c4c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value2&key3=value4
+11002F3,2c4c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value2&key3=value4,,cloudinitname&customconfig-1234abcd
 
 # --dry-run allows for verification of the validity of the input csv file without creating hosts
 orch-cli create host --project some-project --import-from-csv test.csv --dry-run
@@ -88,6 +89,7 @@ orch-cli create host --project some-project --import-from-csv test.csv
 --secure - true or false - security feature configuration
 --os-profile - name or ID of the OS profile
 --metadata - key value paired metatada separated by &, must be put in quotes.
+--cloud-init - name or resource ID of custom config - multiple configs must be separated by &
 
 # Create hosts from CSV and override provided values
 /orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
