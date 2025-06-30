@@ -34,6 +34,7 @@ func getCreateCommand() *cobra.Command {
 
 		getCreateClusterCommand(),
 
+		getCreateRegionCommand(),
 		getCreateHostCommand(),
 		getCreateOSProfileCommand(),
 	)
@@ -101,6 +102,7 @@ func getGetCommand() *cobra.Command {
 		getListNetworksCommand(),
 
 		getGetOSProfileCommand(),
+		getGetRegionCommand(),
 		getGetHostCommand(),
 	)
 	return catalogGetRootCmd
@@ -147,6 +149,7 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteClusterCommand(),
 		getDeleteNetworkCommand(),
 
+		getDeleteRegionCommand(),
 		getDeleteOSProfileCommand(),
 		getDeleteHostCommand(),
 	)
