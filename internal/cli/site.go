@@ -134,6 +134,7 @@ func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 }
 
 func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
+	writer, verbose := getOutputContext(cmd)
 	name := args[0]
 
 	regFlag, _ := cmd.Flags().GetString("region")
@@ -167,13 +168,23 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	//TODO check if region exists
+	rresp, err := siteClient.RegionServiceGetRegionWithResponse(ctx, projectName,
+		*region, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
 
-	resp, err := siteClient.SiteServiceCreateSiteWithResponse(ctx, projectName, *region,
+	if proceed, err := processResponse(rresp.HTTPResponse, rresp.Body, writer, verbose,
+		"", "the region for site creation does not exist"); !proceed {
+		return err
+	}
+
+	resp, err := siteClient.SiteServiceCreateSiteWithResponse(ctx, projectName, "empty",
 		infra.SiteServiceCreateSiteJSONRequestBody{
-			Name:    &name,
-			SiteLat: siteLat,
-			SiteLng: siteLng,
+			Name:     &name,
+			SiteLat:  siteLat,
+			SiteLng:  siteLng,
+			RegionId: region,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
