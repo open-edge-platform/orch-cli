@@ -88,8 +88,8 @@ func getDeleteRegionCommand() *cobra.Command {
 	return cmd
 }
 
-// Gets specific OS Profile - retrieves list of profiles and then filters and outputs
-// specifc profile by name
+// Gets specific Region - retrieves list of regions and then filters and outputs
+// specifc region by name
 func runGetRegionCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, regionClient, projectName, err := getInfraServiceContext(cmd)
