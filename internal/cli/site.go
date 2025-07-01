@@ -276,7 +276,7 @@ func printSites(writer io.Writer, sites *[]infra.SiteResource, verbose bool, reg
 			}
 		} else {
 			if region == "" {
-				fmt.Fprintf(writer, "%-20s %-20v %-30s %-10v %-10v\n", *s.ResourceId, *s.Name, regionDisplay, *s.SiteLng, *s.SiteLat)
+				fmt.Fprintf(writer, "%-20s %-20v %-30s %-10v %-10v\n", *s.ResourceId, *s.Name, regionDisplay, float64(*s.SiteLng)/10000000, float64(*s.SiteLat)/10000000)
 			} else {
 				if *s.RegionId != region {
 					isSubregion++
@@ -284,7 +284,7 @@ func printSites(writer io.Writer, sites *[]infra.SiteResource, verbose bool, reg
 				if isSubregion == 1 {
 					fmt.Fprintf(writer, "\nSites in sub-regions:\n\n")
 				}
-				fmt.Fprintf(writer, "%-20s %-20v %-30s %-10v %-10v\n", *s.ResourceId, *s.Name, regionDisplay, *s.SiteLng, *s.SiteLat)
+				fmt.Fprintf(writer, "%-20s %-20v %-30s %-10v %-10v\n", *s.ResourceId, *s.Name, regionDisplay, float64(*s.SiteLng)/10000000, float64(*s.SiteLat)/10000000)
 			}
 		}
 	}
@@ -296,8 +296,8 @@ func printSite(writer io.Writer, site *infra.SiteResource) {
 	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *site.Name)
 	_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *site.ResourceId)
 	_, _ = fmt.Fprintf(writer, "Region: \t%s %s\n", *site.Region.Name, *site.RegionId)
-	_, _ = fmt.Fprintf(writer, "Longtitude: \t%v\n", *site.SiteLng)
-	_, _ = fmt.Fprintf(writer, "Latitude: \t%v\n", *site.SiteLat)
+	_, _ = fmt.Fprintf(writer, "Longtitude: \t%v\n", float64(*site.SiteLng)/10000000)
+	_, _ = fmt.Fprintf(writer, "Latitude: \t%v\n", float64(*site.SiteLat)/10000000)
 
 }
 
@@ -307,12 +307,13 @@ func resolveLatitude(value string) (*int32, error) {
 		return &defaultVal, nil
 	}
 
-	parsedValue, err := strconv.ParseInt(value, 10, 32)
+	parsedValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return nil, errors.New("invalid latitude value")
 	}
 
-	int32Value := int32(parsedValue)
+	scaling := 10000000
+	int32Value := int32(parsedValue * float64(scaling))
 	return &int32Value, nil
 }
 
@@ -322,11 +323,12 @@ func resolveLongtitude(value string) (*int32, error) {
 		return &defaultVal, nil
 	}
 
-	parsedValue, err := strconv.ParseInt(value, 10, 32)
+	parsedValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return nil, errors.New("invalid longtitude value")
 	}
 
-	int32Value := int32(parsedValue)
+	scaling := 10000000
+	int32Value := int32(parsedValue * float64(scaling))
 	return &int32Value, nil
 }
