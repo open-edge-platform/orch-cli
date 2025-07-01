@@ -12,6 +12,7 @@ require (
 	github.com/atomix/dazl v1.1.4
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/gorilla/websocket v1.5.0
+	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/open-edge-platform/app-orch-catalog v0.11.32
