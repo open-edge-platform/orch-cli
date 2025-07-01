@@ -22,8 +22,8 @@ const listCustomConfigExamples = `# List all custom config (Cloud Init) resource
 orch-cli list customconfig --project some-project
 `
 
-const getCustomConfigExamples = `# Get detailed information about specific custom config (Cloud Init) resource
-orch-cli get customconfig <resource ID> --project some-project`
+const getCustomConfigExamples = `# Get detailed information about specific custom config (Cloud Init) resource using it's name
+orch-cli get customconfig myconfig --project some-project`
 
 const createCustomConfigExamples = `# Create a custom config (Cloud Init) resource with a given name using cloud init file as input
 orch-cli create customconfig myconfig /path/to/cloudinit.yaml  --project some-project
@@ -31,8 +31,8 @@ orch-cli create customconfig myconfig /path/to/cloudinit.yaml  --project some-pr
 # Create a Cloud Init resource with an optional description 
 orch-cli create customconfig myconfig /path/to/cloudinit.yaml  --project some-project --description "This is a cloud init"`
 
-const deleteCustomConfigExamples = `#Delete a custom config (Cloud Init) resource
-orch-cli delete customconfig <resourceID> --project some-project`
+const deleteCustomConfigExamples = `#Delete a custom config (Cloud Init) resource using it's name
+orch-cli delete customconfig myconfig --project some-project`
 
 var CustomConfigHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Description")
 
