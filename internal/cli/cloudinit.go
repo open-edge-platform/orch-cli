@@ -25,11 +25,11 @@ orch-cli list customconfig --project some-project
 const getCustomConfigExamples = `# Get detailed information about specific custom config (Cloud Init) resource
 orch-cli get customconfig <resource ID> --project some-project`
 
-const createCustomConfigExamples = `# Create a custom config (Cloud Init) resource 
-orch-cli create customconfig /path/to/cloudinit.yaml  --project some-project
+const createCustomConfigExamples = `# Create a custom config (Cloud Init) resource wit a given name using cloud init file as input
+orch-cli create customconfig myconfig /path/to/cloudinit.yaml  --project some-project
 
 # Create a Cloud Init resource with an optional description 
-orch-cli create customconfig /path/to/cloudinit.yaml  --project some-project --description "This is a cloud init"`
+orch-cli create customconfig myconfig /path/to/cloudinit.yaml  --project some-project --description "This is a cloud init"`
 
 const deleteCustomConfigExamples = `#Delete a custom config (Cloud Init) resource
 orch-cli delete customconfig <resourceID> --project some-project`
