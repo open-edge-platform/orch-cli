@@ -5,10 +5,14 @@ package cli
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"os"
+	"os/exec"
+	"strings"
 	"text/template"
 )
 
@@ -21,7 +25,7 @@ users:
     shell: /bin/bash
     sudo: ALL=(ALL) NOPASSWD:ALL
     lock_passwd: false
-    passwd: "$6$wEdsdfg24$sDcHV9i9ImzWvUzpslfydFX9ROe3tAjP32W8BiubA1aAqMylYeH5DULATK49EVzKDr6gUvE9kM2FzKQaXUxzW0"
+    passwd: "{{ .passwd }}"
 {{- if .ssh_key }}
 	ssh_authorized_keys:
       - {{ .ssh_key }}
@@ -36,13 +40,10 @@ runcmd:
     grep -qF "NO_PROXY" /etc/environment || echo NO_PROXY={{ .NO_PROXY }} >> /etc/environment
 `
 
-type StandaloneConfig struct {
-	HTTPProxy  string
-	HTTPSProxy string
-	NoProxy    string
-	SSHKey     string
-	UserName   string
-	Password   string
+func generateSalt(length int) string {
+	b := make([]byte, length)
+	_, _ = rand.Read(b)
+	return base64.RawStdEncoding.EncodeToString(b)[:length]
 }
 
 func getStandaloneConfigCommand() *cobra.Command {
@@ -77,6 +78,17 @@ func getConfigFileInput(cmd *cobra.Command) (string, error) {
 	return configFilePath, nil
 }
 
+func hashPassword(password string) (string, error) {
+	cmd := exec.Command("openssl", "passwd", "-6", password)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(out.String()), nil
+}
+
 func loadConfig(path string) (map[string]string, error) {
 	// Load the file into environment variables
 	config, err := godotenv.Read(path)
@@ -84,7 +96,12 @@ func loadConfig(path string) (map[string]string, error) {
 		return nil, fmt.Errorf("error loading config file: %w", err)
 	}
 
-	fmt.Println(config)
+	hashed, err := hashPassword(config["passwd"])
+	if err != nil {
+		return nil, err
+	}
+
+	config["passwd"] = hashed
 
 	return config, nil
 }
