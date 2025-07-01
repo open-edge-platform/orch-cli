@@ -29,9 +29,9 @@ rel_arch  = $(word 3, $(subst -, ,$(notdir $@)))
 
 linux_opts = -trimpath -gcflags="all=-spectre=all -N -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w"
 
-OCI_REGISTRY            	?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
-OCI_REPOSITORY              := edge-orch/en/files/${RELEASE_NAME}
-OCI_PATH					:= ${OCI_REGISTRY}/${OCI_REPOSITORY}
+OCI_REGISTRY		?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
+OCI_REPOSITORY		:= edge-orch/en/files/${RELEASE_NAME}
+OCI_PATH			:= ${OCI_REGISTRY}/${OCI_REPOSITORY}
 
 $(RELEASE_BINS):
 	export GOOS=$(rel_os) ;\
