@@ -11,7 +11,7 @@ func getGenerateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "generate",
 		Short:   "Generic dynamic configuration files",
-		Example: "orch-cli generate standalone-config --file config-file",
+		Example: "orch-cli generate standalone-config --config-file <path-to-config-file>",
 	}
 	cmd.AddCommand(
 		getStandaloneConfigCommand(),
