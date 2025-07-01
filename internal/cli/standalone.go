@@ -5,8 +5,6 @@ package cli
 
 import (
 	"bytes"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
@@ -39,12 +37,6 @@ runcmd:
     grep -qF "HTTPS_PROXY" /etc/environment || echo HTTPS_PROXY={{ .HTTPS_PROXY }} >> /etc/environment
     grep -qF "NO_PROXY" /etc/environment || echo NO_PROXY={{ .NO_PROXY }} >> /etc/environment
 `
-
-func generateSalt(length int) string {
-	b := make([]byte, length)
-	_, _ = rand.Read(b)
-	return base64.RawStdEncoding.EncodeToString(b)[:length]
-}
 
 func getStandaloneConfigCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -120,7 +112,7 @@ func generateCloudInit(config map[string]string) (string, error) {
 	return rendered.String(), nil
 }
 
-func runGenerateStandaloneConfigCommand(cmd *cobra.Command, args []string) error {
+func runGenerateStandaloneConfigCommand(cmd *cobra.Command, _ []string) error {
 	configFilePath, err := getConfigFileInput(cmd)
 	if err != nil {
 		return err
@@ -141,7 +133,7 @@ func runGenerateStandaloneConfigCommand(cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	err = os.WriteFile(out, []byte(cloudInit), 0644)
+	err = os.WriteFile(out, []byte(cloudInit), 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write cloud-init to path %q", out)
 	}
