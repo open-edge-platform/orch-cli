@@ -10,6 +10,8 @@ RELEASE_NAME    ?= orch-cli
 RELEASE_OS_ARCH ?= linux-amd64 linux-arm64 windows-amd64 darwin-amd64
 RELEASE_BINS    := $(foreach rel,$(RELEASE_OS_ARCH),$(RELEASE_DIR)/$(RELEASE_NAME)-$(rel))
 
+VERSION         := $(shell cat VERSION)
+
 GOLANG_COVER_VERSION = v0.2.0
 GOLANG_GOCOVER_COBERTURA_VERSION = v1.2.0
 GOPATH := $(shell go env GOPATH)
@@ -26,6 +28,10 @@ rel_os    = $(word 2, $(subst -, ,$(notdir $@)))
 rel_arch  = $(word 3, $(subst -, ,$(notdir $@)))
 
 linux_opts = -trimpath -gcflags="all=-spectre=all -N -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w"
+
+OCI_REGISTRY            	?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
+OCI_REPOSITORY              := edge-orch/en/files/${RELEASE_NAME}
+OCI_PATH					:= ${OCI_REGISTRY}/${OCI_REPOSITORY}
 
 $(RELEASE_BINS):
 	export GOOS=$(rel_os) ;\
@@ -46,7 +52,7 @@ mod-update:
 
 build: mod-update
 	@# Help: Runs build stage
-	go build -ldflags "-X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
+	CGO_ENABLED=0 go build -ldflags "-X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
 
 install: build
 	@# Help: Installs client tool
@@ -95,6 +101,11 @@ rest-client-gen:
 	oapi-codegen -generate types -old-config-style -package cluster -o pkg/rest/cluster/types.go pkg/rest/cluster/amc-cluster-manager-openapi.yaml
 	oapi-codegen -generate client -old-config-style -package infra -o pkg/rest/infra/client.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 	oapi-codegen -generate types -old-config-style -package infra -o pkg/rest/infra/types.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
+
+artifact-publish:
+	@echo "Publishing Hook OS binary to Production Release Service."
+	cd build/_output/ && \
+	oras push $(OCI_PATH):$(VERSION) --artifact-type application/vnd.intel.orch.en ${RELEASE_NAME}
 
 cli-docs:
 	@# Help: Generates markdowns for the orchestrator cli

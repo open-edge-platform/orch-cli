@@ -26,7 +26,7 @@ jobs:
       run_helm_build: false
       run_helm_push: false
       run_version_tag: true
-      run_artifact: false
+      run_artifact: true
       project_folder: ""
     secrets:
       SYS_ORCH_GITHUB: ${{ secrets.SYS_ORCH_GITHUB }}
