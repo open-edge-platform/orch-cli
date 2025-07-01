@@ -61,7 +61,7 @@ install: build
 lint:
 	@# Help: Runs lint stage
 	golangci-lint run --timeout 10m
-	yamllint .
+	yamllint -c .yamllint.yaml .
 	mdlint
 
 MD_FILES := $(shell find . -type f \( -name '*.md' \) -print )
