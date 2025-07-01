@@ -103,7 +103,7 @@ rest-client-gen:
 	oapi-codegen -generate types -old-config-style -package infra -o pkg/rest/infra/types.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 
 artifact-publish:
-	@echo "Publishing Hook OS binary to Production Release Service."
+	@echo "Publishing orch-cli binary to Production Release Service."
 	cd build/_output/ && \
 	oras push $(OCI_PATH):$(VERSION) --artifact-type application/vnd.intel.orch.en ${RELEASE_NAME}
 
