@@ -9,7 +9,7 @@ orch-cli create customconfig  [flags]
 ### Examples
 
 ```
-# Create a custom config (Cloud Init) resource wit a given name using cloud init file as input
+# Create a custom config (Cloud Init) resource with a given name using cloud init file as input
 orch-cli create customconfig myconfig /path/to/cloudinit.yaml  --project some-project
 
 # Create a Cloud Init resource with an optional description 
