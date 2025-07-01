@@ -7,8 +7,6 @@ ignore: |
   pkg/rest/*/*.yaml
   vendor/
   .github/
-  .ci/**/*.yml
-  .ci/**/*.yaml
 rules:
   line-length:
     level: warning
