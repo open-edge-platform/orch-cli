@@ -439,8 +439,94 @@ func TestCheckCSV(t *testing.T) {
 			err := files.WriteHostRecords(tmpFile, tt.content)
 			assert.NoError(t, err, "Failed to write temporary CSV file")
 
+			globalAttr := &types.HostRecord{
+				OSProfile:     "",
+				Site:          "",
+				Secure:        "",
+				RemoteUser:    "",
+				Metadata:      "",
+				CloudInitMeta: "",
+			}
+
 			// Run CheckCSV
-			out, err := validator.CheckCSV(tmpFile)
+			out, err := validator.CheckCSV(tmpFile, *globalAttr)
+
+			if tt.expectErr {
+				assert.Error(t, err, "CheckCSV() should return an error")
+				assert.Contains(t, err.Error(), tt.expectErrStr, "Error message should contain expected string")
+			} else {
+				assert.NoError(t, err, "CheckCSV() should not return an error")
+			}
+			assert.Equal(t, tt.expectStr, out, "File content should match expected output")
+
+			// Check if error file is generated
+			if tt.expectErr {
+				errorFiles, err := filepath.Glob("preflight_error*")
+				assert.NoError(t, err, "Failed to list error files")
+				assert.NotEmpty(t, errorFiles, "Error file should be generated")
+
+				// Delete error files
+				for _, file := range errorFiles {
+					err := os.Remove(file)
+					assert.NoError(t, err, "Failed to delete error file")
+				}
+			}
+		})
+	}
+}
+
+func TestCheckCSVOverrides(t *testing.T) {
+	// Setup temporary directory for test files
+	tmpDir := t.TempDir()
+
+	// Test Cases
+	tests := []struct {
+		name         string
+		content      []types.HostRecord
+		expectErr    bool
+		expectStr    []types.HostRecord
+		expectErrStr string
+	}{
+		{
+			name: "Valid CSV",
+			content: []types.HostRecord{
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81"},
+			},
+			expectErr: false,
+			expectStr: []types.HostRecord{
+				{
+					Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "profile", Site: "site-aaaa1111",
+					Secure: "true", RemoteUser: "user", Metadata: "key=value", CloudInitMeta: "cloudinit",
+					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
+				},
+				{
+					Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "profile", Site: "site-aaaa1111",
+					Secure: "true", RemoteUser: "user", Metadata: "key=value", CloudInitMeta: "cloudinit",
+					RawRecord: "QWERTY123,1c1c1c1c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a temporary CSV file
+			tmpFile := filepath.Join(tmpDir, fmt.Sprintf("%s.csv", tt.name))
+			err := files.WriteHostRecords(tmpFile, tt.content)
+			assert.NoError(t, err, "Failed to write temporary CSV file")
+
+			globalAttr := &types.HostRecord{
+				OSProfile:     "profile",
+				Site:          "site-aaaa1111",
+				Secure:        "true",
+				RemoteUser:    "user",
+				Metadata:      "key=value",
+				CloudInitMeta: "cloudinit",
+			}
+
+			// Run CheckCSV
+			out, err := validator.CheckCSV(tmpFile, *globalAttr)
 
 			if tt.expectErr {
 				assert.Error(t, err, "CheckCSV() should return an error")

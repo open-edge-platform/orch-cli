@@ -59,8 +59,8 @@ orch-cli create host --project some-project --generate-csv=myhosts.csv
 
 # Sample input csv file hosts.csv
 
-Serial - Serial Number of the machine - mandatory field
-UUID - UUID of the machine - mandatory field
+Serial - Serial Number of the machine - mandatory field (both or one of Serial or UUID must be provided)
+UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided), UUID must be provided if K8s cluste is going to be auto provisioned
 OSProfile - OS Profile to be used for provisioning of the host - name of the profile or it's resource ID - mandatory field
 Site - The resource ID of the site to which the host will be provisioned - mandatory field
 Secure - Optional security feature to configure for the host - must be supported by OS Profile if enabled
@@ -162,16 +162,17 @@ func filterRegionsHelper(r string) (*string, error) {
 // Prints Host list in tabular format
 func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
-			"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status", "Provisioning Status",
+			"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute", "Custom Config")
 	} else {
-		var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site ID", "Site Name", "Workload")
+		var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Provisioning Status", "Serial Number", "Operating System", "Site ID", "Site Name", "Workload")
 		fmt.Fprintf(writer, "%s\n", shortHeader)
 	}
 	for _, h := range *hosts {
 		//TODO clean this up
-		os, workload, site, siteName := "Not provisioned", "Not assigned", "Not provisioned", "Not provisioned"
+		os, workload, site, siteName, provStat := "Not provisioned", "Not assigned", "Not provisioned", "Not provisioned", "Not provisioned"
 		host := "Not connected"
+		customcfg := "None"
 
 		if h.Instance != nil {
 			if h.Instance.CurrentOs != nil && h.Instance.CurrentOs.Name != nil {
@@ -192,8 +193,22 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		if *h.HostStatus != "" {
 			host = *h.HostStatus
 		}
+
+		if h.Instance != nil && h.Instance.ProvisioningStatus != nil {
+			provStat = *h.Instance.ProvisioningStatus
+		}
+
+		if h.Instance != nil && h.Instance.CustomConfig != nil {
+			if len(*h.Instance.CustomConfig) > 0 {
+				configs := ""
+				for _, ccfg := range *h.Instance.CustomConfig {
+					configs = configs + ccfg.Name + " "
+				}
+				customcfg = configs
+			}
+		}
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber, os, site, siteName, workload)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber, os, site, siteName, workload)
 		} else {
 			avupdt := "No update"
 			tcomp := "Not compatible"
@@ -202,8 +217,8 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 			//if h.CurrentOs != h.desiredOS avupdt is available
 			//if tcomp is set then reflect
 
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber,
-				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber,
+				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp, customcfg)
 		}
 	}
 }
@@ -959,7 +974,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 
 	if dryRun {
 		fmt.Println("--dry-run flag provided, validating input, hosts will not be imported")
-		_, err := validator.CheckCSV(csvFilePath)
+		_, err := validator.CheckCSV(csvFilePath, *globalAttr)
 		if err != nil {
 			return err
 		}
@@ -967,7 +982,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	validated, err := validator.CheckCSV(csvFilePath)
+	validated, err := validator.CheckCSV(csvFilePath, *globalAttr)
 	if err != nil {
 		return err
 	}

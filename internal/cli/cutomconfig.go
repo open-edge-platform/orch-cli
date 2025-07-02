@@ -8,9 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"regexp"
-	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
@@ -65,11 +63,6 @@ func verifyCustomConfigInput(path string) error {
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return fmt.Errorf("file does not exist: %s", path)
-	}
-
-	ext := strings.ToLower(filepath.Ext(path))
-	if ext != ".yaml" && ext != ".yml" {
-		return errors.New("cloud init input must be a yaml file")
 	}
 
 	return nil
