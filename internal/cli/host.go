@@ -60,7 +60,7 @@ orch-cli create host --project some-project --generate-csv=myhosts.csv
 # Sample input csv file hosts.csv
 
 Serial - Serial Number of the machine - mandatory field (both or one of Serial or UUID must be provided)
-UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided), UUID must be provided if K8s cluste is going to be auto provisioned
+UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided), UUID must be provided if K8s cluster is going to be auto provisioned
 OSProfile - OS Profile to be used for provisioning of the host - name of the profile or it's resource ID - mandatory field
 Site - The resource ID of the site to which the host will be provisioned - mandatory field
 Secure - Optional security feature to configure for the host - must be supported by OS Profile if enabled
