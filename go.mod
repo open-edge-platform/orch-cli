@@ -10,6 +10,7 @@ toolchain go1.24.0
 
 require (
 	github.com/atomix/dazl v1.1.4
+	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/gorilla/websocket v1.5.0
 	github.com/joho/godotenv v1.5.1
