@@ -56,7 +56,7 @@ lint:
 	@# Help: Runs lint stage
 	golangci-lint run --timeout 10m
 	yamllint .
-	mdlint
+	$(MAKE) mdlint
 
 MD_FILES := $(shell find . -type f \( -name '*.md' \) -print )
 mdlint: ## lint all markdown README.md files
