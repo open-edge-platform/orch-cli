@@ -113,6 +113,7 @@ const (
 	POWERSTATEHIBERNATE   PowerState = "POWER_STATE_HIBERNATE"
 	POWERSTATEOFF         PowerState = "POWER_STATE_OFF"
 	POWERSTATEON          PowerState = "POWER_STATE_ON"
+	POWERSTATEPOWERCYCLE  PowerState = "POWER_STATE_POWER_CYCLE"
 	POWERSTATERESET       PowerState = "POWER_STATE_RESET"
 	POWERSTATESLEEP       PowerState = "POWER_STATE_SLEEP"
 	POWERSTATEUNSPECIFIED PowerState = "POWER_STATE_UNSPECIFIED"
@@ -215,6 +216,25 @@ type AmtState string
 // BaremetalControllerKind The type of BMC.
 type BaremetalControllerKind string
 
+// CustomConfigResource defines model for CustomConfigResource.
+type CustomConfigResource struct {
+	// Config Config content
+	Config string `json:"config"`
+
+	// Description (OPTIONAL) Config description
+	Description *string `json:"description,omitempty"`
+
+	// Name Config provided by admin
+	Name string `json:"name"`
+
+	// ResourceId resource identifier
+	ResourceId *string     `json:"resourceId,omitempty"`
+	Timestamps *Timestamps `json:"timestamps,omitempty"`
+}
+
+// DeleteCustomConfigResponse Response message for DeleteCustomConfig.
+type DeleteCustomConfigResponse = map[string]interface{}
+
 // DeleteHostResponse Reponse message for DeleteHost.
 type DeleteHostResponse = map[string]interface{}
 
@@ -223,6 +243,12 @@ type DeleteInstanceResponse = map[string]interface{}
 
 // DeleteLocalAccountResponse Response message for DeleteLocalAccount.
 type DeleteLocalAccountResponse = map[string]interface{}
+
+// DeleteOSUpdatePolicyResponse Response message for DeleteOperatingSystem.
+type DeleteOSUpdatePolicyResponse = map[string]interface{}
+
+// DeleteOSUpdateRunResponse Response message for DeleteOperatingSystem.
+type DeleteOSUpdateRunResponse = map[string]interface{}
 
 // DeleteOperatingSystemResponse Response message for DeleteOperatingSystem.
 type DeleteOperatingSystemResponse = map[string]interface{}
@@ -598,6 +624,12 @@ type InstanceResource struct {
 	// CurrentState The Instance States.
 	CurrentState *InstanceState `json:"currentState,omitempty"`
 
+	// CustomConfig The list of custom config associated with the instance.
+	CustomConfig *[]CustomConfigResource `json:"customConfig,omitempty"`
+
+	// CustomConfigID The list of custom config associated with the instance.
+	CustomConfigID *[]string `json:"customConfigID,omitempty"`
+
 	// DesiredOs An OS resource.
 	DesiredOs *OperatingSystemResource `json:"desiredOs,omitempty"`
 
@@ -705,6 +737,18 @@ type InvalidateInstanceResponse = map[string]interface{}
 // LinkState The state of the network interface.
 type LinkState string
 
+// ListCustomConfigsResponse Response message for the ListCustomConfigs method.
+type ListCustomConfigsResponse struct {
+	// CustomConfigs Sorted and filtered list of customconfigs.
+	CustomConfigs []CustomConfigResource `json:"customConfigs"`
+
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
 // ListHostsResponse Response message for the ListHosts method.
 type ListHostsResponse struct {
 	// HasNext Inform if there are more elements
@@ -770,6 +814,30 @@ type ListLocationsResponseLocationNode struct {
 
 // ListLocationsResponseResourceKind defines model for ListLocationsResponse.ResourceKind.
 type ListLocationsResponseResourceKind string
+
+// ListOSUpdatePolicyResponse Response message for the ListOSUpdatePolicy method.
+type ListOSUpdatePolicyResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// OsUpdatePolicies Sorted and filtered list of OS Update Policies.
+	OsUpdatePolicies []OSUpdatePolicy `json:"osUpdatePolicies"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListOSUpdateRunResponse Response message for the ListOSUpdateRun method.
+type ListOSUpdateRunResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// OsUpdateRuns Sorted and filtered list of os update runs.
+	OsUpdateRuns []OSUpdateRun `json:"osUpdateRuns"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
 
 // ListOperatingSystemsResponse Response message for the ListOperatingSystems method.
 type ListOperatingSystemsResponse struct {
@@ -983,8 +1051,11 @@ type OSUpdatePolicy struct {
 	ResourceId *string `json:"resourceId,omitempty"`
 
 	// TargetOs An OS resource.
-	TargetOs   *OperatingSystemResource `json:"targetOs,omitempty"`
-	Timestamps *Timestamps              `json:"timestamps,omitempty"`
+	TargetOs *OperatingSystemResource `json:"targetOs,omitempty"`
+
+	// TargetOsId The unique identifier of target OS will be associated with the OS Update policy.
+	TargetOsId *string     `json:"targetOsId,omitempty"`
+	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
 	// UpdatePolicy States of the host.
 	UpdatePolicy *UpdatePolicy `json:"updatePolicy,omitempty"`
@@ -993,6 +1064,307 @@ type OSUpdatePolicy struct {
 	//  Should be in 'DEB822 Source Format' for Debian style OSs.
 	//  Applies only to Mutable OSes.
 	UpdateSources *[]string `json:"updateSources,omitempty"`
+}
+
+// OSUpdateRun defines model for OSUpdateRun.
+type OSUpdateRun struct {
+	AppliedPolicy *OSUpdatePolicy `json:"appliedPolicy,omitempty"`
+
+	// Description Human-readable description.
+	Description *string `json:"description,omitempty"`
+
+	// EndTime A Timestamp represents a point in time independent of any time zone or local
+	//  calendar, encoded as a count of seconds and fractions of seconds at
+	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
+	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
+	//  Gregorian calendar backwards to year one.
+	//
+	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+	//  second table is needed for interpretation, using a [24-hour linear
+	//  smear](https://developers.google.com/time/smear).
+	//
+	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+	//  restricting to that range, we ensure that we can convert to and from [RFC
+	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
+	//
+	//  # Examples
+	//
+	//  Example 1: Compute Timestamp from POSIX `time()`.
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(time(NULL));
+	//      timestamp.set_nanos(0);
+	//
+	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
+	//
+	//      struct timeval tv;
+	//      gettimeofday(&tv, NULL);
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(tv.tv_sec);
+	//      timestamp.set_nanos(tv.tv_usec * 1000);
+	//
+	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
+	//
+	//      FILETIME ft;
+	//      GetSystemTimeAsFileTime(&ft);
+	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+	//
+	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
+	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
+	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
+	//
+	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
+	//
+	//      long millis = System.currentTimeMillis();
+	//
+	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
+	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
+	//
+	//  Example 5: Compute Timestamp from Java `Instant.now()`.
+	//
+	//      Instant now = Instant.now();
+	//
+	//      Timestamp timestamp =
+	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
+	//              .setNanos(now.getNano()).build();
+	//
+	//  Example 6: Compute Timestamp from current time in Python.
+	//
+	//      timestamp = Timestamp()
+	//      timestamp.GetCurrentTime()
+	//
+	//  # JSON Mapping
+	//
+	//  In JSON format, the Timestamp type is encoded as a string in the
+	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
+	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
+	//  where {year} is always expressed using four digits while {month}, {day},
+	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
+	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
+	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
+	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
+	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
+	//  able to accept both UTC and other timezones (as indicated by an offset).
+	//
+	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
+	//  01:30 UTC on January 15, 2017.
+	//
+	//  In JavaScript, one can convert a Date object to this format using the
+	//  standard
+	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
+	//  method. In Python, a standard `datetime.datetime` object can be converted
+	//  to this format using
+	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
+	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
+	//  ) to obtain a formatter capable of generating timestamps in this format.
+	EndTime *GoogleProtobufTimestamp `json:"endTime,omitempty"`
+
+	// Instance InstanceResource describes an instantiated OS install, running on either a
+	//  host or hypervisor.
+	Instance *InstanceResource `json:"instance,omitempty"`
+
+	// Name Human-readable name.
+	Name *string `json:"name,omitempty"`
+
+	// ResourceId resource ID, generated by the inventory on Create.
+	ResourceId *string `json:"resourceId,omitempty"`
+
+	// StartTime A Timestamp represents a point in time independent of any time zone or local
+	//  calendar, encoded as a count of seconds and fractions of seconds at
+	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
+	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
+	//  Gregorian calendar backwards to year one.
+	//
+	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+	//  second table is needed for interpretation, using a [24-hour linear
+	//  smear](https://developers.google.com/time/smear).
+	//
+	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+	//  restricting to that range, we ensure that we can convert to and from [RFC
+	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
+	//
+	//  # Examples
+	//
+	//  Example 1: Compute Timestamp from POSIX `time()`.
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(time(NULL));
+	//      timestamp.set_nanos(0);
+	//
+	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
+	//
+	//      struct timeval tv;
+	//      gettimeofday(&tv, NULL);
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(tv.tv_sec);
+	//      timestamp.set_nanos(tv.tv_usec * 1000);
+	//
+	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
+	//
+	//      FILETIME ft;
+	//      GetSystemTimeAsFileTime(&ft);
+	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+	//
+	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
+	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
+	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
+	//
+	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
+	//
+	//      long millis = System.currentTimeMillis();
+	//
+	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
+	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
+	//
+	//  Example 5: Compute Timestamp from Java `Instant.now()`.
+	//
+	//      Instant now = Instant.now();
+	//
+	//      Timestamp timestamp =
+	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
+	//              .setNanos(now.getNano()).build();
+	//
+	//  Example 6: Compute Timestamp from current time in Python.
+	//
+	//      timestamp = Timestamp()
+	//      timestamp.GetCurrentTime()
+	//
+	//  # JSON Mapping
+	//
+	//  In JSON format, the Timestamp type is encoded as a string in the
+	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
+	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
+	//  where {year} is always expressed using four digits while {month}, {day},
+	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
+	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
+	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
+	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
+	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
+	//  able to accept both UTC and other timezones (as indicated by an offset).
+	//
+	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
+	//  01:30 UTC on January 15, 2017.
+	//
+	//  In JavaScript, one can convert a Date object to this format using the
+	//  standard
+	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
+	//  method. In Python, a standard `datetime.datetime` object can be converted
+	//  to this format using
+	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
+	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
+	//  ) to obtain a formatter capable of generating timestamps in this format.
+	StartTime *GoogleProtobufTimestamp `json:"startTime,omitempty"`
+
+	// Status Short message that describes what happened during the OS Update.
+	Status *string `json:"status,omitempty"`
+
+	// StatusDetails Details about what happened during the OS Update.
+	StatusDetails *string `json:"statusDetails,omitempty"`
+
+	// StatusIndicator The status indicator.
+	StatusIndicator *StatusIndication `json:"statusIndicator,omitempty"`
+
+	// StatusTimestamp A Timestamp represents a point in time independent of any time zone or local
+	//  calendar, encoded as a count of seconds and fractions of seconds at
+	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
+	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
+	//  Gregorian calendar backwards to year one.
+	//
+	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+	//  second table is needed for interpretation, using a [24-hour linear
+	//  smear](https://developers.google.com/time/smear).
+	//
+	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+	//  restricting to that range, we ensure that we can convert to and from [RFC
+	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
+	//
+	//  # Examples
+	//
+	//  Example 1: Compute Timestamp from POSIX `time()`.
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(time(NULL));
+	//      timestamp.set_nanos(0);
+	//
+	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
+	//
+	//      struct timeval tv;
+	//      gettimeofday(&tv, NULL);
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(tv.tv_sec);
+	//      timestamp.set_nanos(tv.tv_usec * 1000);
+	//
+	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
+	//
+	//      FILETIME ft;
+	//      GetSystemTimeAsFileTime(&ft);
+	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+	//
+	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
+	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
+	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
+	//
+	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
+	//
+	//      long millis = System.currentTimeMillis();
+	//
+	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
+	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
+	//
+	//  Example 5: Compute Timestamp from Java `Instant.now()`.
+	//
+	//      Instant now = Instant.now();
+	//
+	//      Timestamp timestamp =
+	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
+	//              .setNanos(now.getNano()).build();
+	//
+	//  Example 6: Compute Timestamp from current time in Python.
+	//
+	//      timestamp = Timestamp()
+	//      timestamp.GetCurrentTime()
+	//
+	//  # JSON Mapping
+	//
+	//  In JSON format, the Timestamp type is encoded as a string in the
+	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
+	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
+	//  where {year} is always expressed using four digits while {month}, {day},
+	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
+	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
+	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
+	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
+	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
+	//  able to accept both UTC and other timezones (as indicated by an offset).
+	//
+	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
+	//  01:30 UTC on January 15, 2017.
+	//
+	//  In JavaScript, one can convert a Date object to this format using the
+	//  standard
+	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
+	//  method. In Python, a standard `datetime.datetime` object can be converted
+	//  to this format using
+	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
+	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
+	//  ) to obtain a formatter capable of generating timestamps in this format.
+	StatusTimestamp *GoogleProtobufTimestamp `json:"statusTimestamp,omitempty"`
+	Timestamps      *Timestamps              `json:"timestamps,omitempty"`
 }
 
 // OnboardHostResponse Response of a Host Register request.
@@ -1007,13 +1379,13 @@ type OperatingSystemResource struct {
 	// ExistingCves The CVEs that are currently present on the Operating System, encoded as a JSON list.
 	ExistingCves *string `json:"existingCves,omitempty"`
 
-	// ExistingCvesUrl URL of the file containing information about the existing CVEs on the Operating System.
+	// ExistingCvesUrl (IMMUTABLE) URL of the file containing information about the existing CVEs on the Operating System.
 	ExistingCvesUrl *string `json:"existingCvesUrl,omitempty"`
 
 	// FixedCves The CVEs that have been fixed by this OS Resource version, encoded as a JSON list.
 	FixedCves *string `json:"fixedCves,omitempty"`
 
-	// FixedCvesUrl URL of the file containing information about the CVEs that have been fixed by this OS Resource version.
+	// FixedCvesUrl (IMMUTABLE) URL of the file containing information about the CVEs that have been fixed by this OS Resource version.
 	FixedCvesUrl *string `json:"fixedCvesUrl,omitempty"`
 
 	// ImageId A unique identifier of the OS image that can be retrieved from the running OS.
@@ -1032,7 +1404,7 @@ type OperatingSystemResource struct {
 	// KernelCommand Deprecated, will be removed in EMF v3.2.0, this has been moved to new resource OSUpdatePolicy. The OS resource's kernel Command Line Options.
 	KernelCommand *string `json:"kernelCommand,omitempty"`
 
-	// Metadata Opaque JSON field storing metadata associated to this OS resource.
+	// Metadata Opaque JSON field storing metadata associated to this OS resource. Expected to be a JSON object with string keys and values, or an empty string.
 	Metadata *string `json:"metadata,omitempty"`
 
 	// Name The OS resource's name.
@@ -1923,6 +2295,24 @@ type WorkloadMemberServiceListWorkloadMembersParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// CustomConfigServiceListCustomConfigsParams defines parameters for CustomConfigServiceListCustomConfigs.
+type CustomConfigServiceListCustomConfigsParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // LocalAccountServiceListLocalAccountsParams defines parameters for LocalAccountServiceListLocalAccounts.
 type LocalAccountServiceListLocalAccountsParams struct {
 	// OrderBy Optional comma separated list of fields to specify a sorting order.
@@ -1951,6 +2341,42 @@ type LocationServiceListLocationsParams struct {
 
 	// ShowRegions Return region locations
 	ShowRegions *bool `form:"showRegions,omitempty" json:"showRegions,omitempty"`
+}
+
+// OSUpdatePolicyListOSUpdatePolicyParams defines parameters for OSUpdatePolicyListOSUpdatePolicy.
+type OSUpdatePolicyListOSUpdatePolicyParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// OSUpdateRunListOSUpdateRunParams defines parameters for OSUpdateRunListOSUpdateRun.
+type OSUpdateRunListOSUpdateRunParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // ProviderServiceListProvidersParams defines parameters for ProviderServiceListProviders.
@@ -2205,8 +2631,14 @@ type WorkloadServiceUpdateWorkloadJSONRequestBody = WorkloadResource
 // WorkloadMemberServiceCreateWorkloadMemberJSONRequestBody defines body for WorkloadMemberServiceCreateWorkloadMember for application/json ContentType.
 type WorkloadMemberServiceCreateWorkloadMemberJSONRequestBody = WorkloadMember
 
+// CustomConfigServiceCreateCustomConfigJSONRequestBody defines body for CustomConfigServiceCreateCustomConfig for application/json ContentType.
+type CustomConfigServiceCreateCustomConfigJSONRequestBody = CustomConfigResource
+
 // LocalAccountServiceCreateLocalAccountJSONRequestBody defines body for LocalAccountServiceCreateLocalAccount for application/json ContentType.
 type LocalAccountServiceCreateLocalAccountJSONRequestBody = LocalAccountResource
+
+// OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody defines body for OSUpdatePolicyCreateOSUpdatePolicy for application/json ContentType.
+type OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody = OSUpdatePolicy
 
 // ProviderServiceCreateProviderJSONRequestBody defines body for ProviderServiceCreateProvider for application/json ContentType.
 type ProviderServiceCreateProviderJSONRequestBody = ProviderResource
