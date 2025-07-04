@@ -214,7 +214,7 @@ func extractYamlBlock(path string) (CloudInitSection, error) {
 }
 
 func getPasswordFromUserInput(username string) (string, error) {
-	fmt.Println("Please Set the Password for ", username)
+	fmt.Printf("Please Set the Password for %q\n", username)
 	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
@@ -278,10 +278,8 @@ func loadConfig(path string) (map[string]interface{}, error) {
 	config["CloudInitServicesDisable"] = cloudInit.Services.Disable
 	config["CloudInitRuncmd"] = cloudInit.RunCmd
 
-	if config["ssh_key"] == "" {
-		if config["passwd"], err = getPasswordFromUserInput(config["user_name"].(string)); err != nil {
-			return nil, err
-		}
+	if config["passwd"], err = getPasswordFromUserInput(config["user_name"].(string)); err != nil {
+		return nil, err
 	}
 
 	hashed, err := hashPassword(config["passwd"].(string))
