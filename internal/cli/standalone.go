@@ -73,11 +73,8 @@ runcmd:
     grep -qF "HTTP_PROXY" /etc/environment || echo HTTP_PROXY={{ .HTTP_PROXY }} >> /etc/environment
     grep -qF "HTTPS_PROXY" /etc/environment || echo HTTPS_PROXY={{ .HTTPS_PROXY }} >> /etc/environment
     grep -qF "NO_PROXY" /etc/environment || echo NO_PROXY={{ .NO_PROXY }} >> /etc/environment
-	
     sed -i 's|^PATH="\(.*\)"$|PATH="\1:/var/lib/rancher/k3s/bin"|' /etc/environment
-	
     source /etc/environment
-
     echo "source /etc/environment" >> /home/{{ .user_name }}/.bashrc
     echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> /home/{{ .user_name }}/.bashrc
     echo "alias k='KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/bin/k3s kubectl'" >> /home/{{ .user_name }}/.bashrc
