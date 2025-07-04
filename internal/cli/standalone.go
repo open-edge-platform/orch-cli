@@ -68,7 +68,7 @@ write_files:
 {{- end }}
   {{- range .CloudInitWriteFiles }}
   - path: {{ .Path }}
-    permissions: {{ .Permissions }}
+    permissions: "{{ .Permissions }}"
     content: |
       {{- .Content | nindent 6 }}
   {{- end }}
