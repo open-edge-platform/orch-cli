@@ -37,7 +37,7 @@ const SITEIDPATTERN = `^site-[0-9a-f]{8}$`
 // Pattern for Localaccount Id as defined in inventory/api/os/v1/localaccount.proto.
 const LAIDPATTERN = `^localaccount-[0-9a-f]{8}$`
 
-const CLSTRTMPLTPATTERN = `^[a-zA-Z0-9]+:v\d+\.\d+\.\d+$`
+const CLSTRTMPLTPATTERN = `^[a-zA-Z0-9_\-\.]+:v\d+\.\d+\.\d+$`
 
 func SanitizeEntries(entries []types.HostRecord) ([]types.HostRecord, error) {
 	var failure error
