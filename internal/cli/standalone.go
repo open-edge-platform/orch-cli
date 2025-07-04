@@ -26,6 +26,12 @@ const (
 var cloudInitTemplate = `
 #cloud-config
 
+merge_how:
+  - name: list
+    settings: [ append ]
+  - name: dict
+    settings: [ no_replace, recurse_list ]
+
 # NTP Time Sync Configuration
 ntp:
   enabled: true
