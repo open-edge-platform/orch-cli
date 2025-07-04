@@ -171,8 +171,8 @@ func filterRegionsHelper(r string) (*string, error) {
 // Prints Host list in tabular format
 func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status", "Provisioning Status",
-			"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute", "Custom Config")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status", "Provisioning Status",
+			"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
 	} else {
 		var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Provisioning Status", "Serial Number", "Operating System", "Site ID", "Site Name", "Workload")
 		fmt.Fprintf(writer, "%s\n", shortHeader)
@@ -181,7 +181,6 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		//TODO clean this up
 		os, workload, site, siteName, provStat := "Not provisioned", "Not assigned", "Not provisioned", "Not provisioned", "Not provisioned"
 		host := "Not connected"
-		customcfg := "None"
 
 		if h.Instance != nil {
 			if h.Instance.CurrentOs != nil && h.Instance.CurrentOs.Name != nil {
@@ -207,15 +206,6 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 			provStat = *h.Instance.ProvisioningStatus
 		}
 
-		if h.Instance != nil && h.Instance.CustomConfig != nil {
-			if len(*h.Instance.CustomConfig) > 0 {
-				configs := ""
-				for _, ccfg := range *h.Instance.CustomConfig {
-					configs = configs + ccfg.Name + " "
-				}
-				customcfg = configs
-			}
-		}
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber, os, site, siteName, workload)
 		} else {
@@ -226,8 +216,8 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 			//if h.CurrentOs != h.desiredOS avupdt is available
 			//if tcomp is set then reflect
 
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber,
-				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp, customcfg)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber,
+				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp)
 		}
 	}
 }
@@ -238,6 +228,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	hoststatus := "Not connected"
 	currentOS := ""
 	osprofile := ""
+	customcfg := ""
 
 	//TODO Build out the host information
 	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
@@ -256,6 +247,16 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		hoststatus = *host.HostStatus
 	}
 
+	if host.Instance != nil && host.Instance.CustomConfig != nil {
+		if len(*host.Instance.CustomConfig) > 0 {
+			configs := ""
+			for _, ccfg := range *host.Instance.CustomConfig {
+				configs = configs + ccfg.Name + " "
+			}
+			customcfg = configs
+		}
+	}
+
 	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Resurce ID:\t %s\n", *host.ResourceId)
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
@@ -271,6 +272,9 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tOS:\t %v\n", currentOS)
 	_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", *host.BiosVendor)
 	_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", *host.ProductName)
+
+	_, _ = fmt.Fprintf(writer, "Customizations: \n\n")
+	_, _ = fmt.Fprintf(writer, "-\tCustom configs:\t %s\n\n", customcfg)
 
 	_, _ = fmt.Fprintf(writer, "CPU Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tCPU Model:\t %v\n", *host.CpuModel)
@@ -1087,6 +1091,24 @@ func runGetHostCommand(cmd *cobra.Command, args []string) error {
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
 		hostHeaderGet, "error getting Host"); !proceed {
 		return err
+	}
+
+	var instanceID *string
+	if resp.JSON200.Instance != nil && resp.JSON200.Instance.InstanceID != nil {
+		instanceID = resp.JSON200.Instance.InstanceID
+
+		iresp, err := hostClient.InstanceServiceGetInstanceWithResponse(ctx, projectName,
+			*instanceID, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		if proceed, err := processResponse(iresp.HTTPResponse, resp.Body, writer, verbose,
+			"", "error getting instance of a host"); !proceed {
+			return err
+		}
+
+		resp.JSON200.Instance = iresp.JSON200
 	}
 
 	printHost(writer, resp.JSON200)
