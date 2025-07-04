@@ -10,6 +10,7 @@ import (
 	sprig "github.com/go-task/slim-sprig"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 	"gopkg.in/yaml.v3"
 	"io"
 	"net/http"
@@ -87,6 +88,9 @@ runcmd:
     echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> /home/{{ .user_name }}/.bashrc
     echo "alias k='KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/bin/k3s kubectl'" >> /home/{{ .user_name }}/.bashrc
 {{- if eq .host_type "kubernetes" }}
+{{- if .huge_page_config }}
+    echo .huge_page_config | tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+{{- end }}
     chmod +x /etc/cloud/k3s-configure.sh
     bash /etc/cloud/k3s-configure.sh
 {{- end }}
@@ -209,6 +213,17 @@ func extractYamlBlock(path string) (CloudInitSection, error) {
 	return parsed, err
 }
 
+func getPasswordFromUserInput(username string) (string, error) {
+	fmt.Println("Please Set the Password for ", username)
+	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
+	if err != nil {
+		return "", err
+	}
+	fmt.Println()
+
+	return string(bytePassword), nil
+}
+
 func loadConfig(path string) (map[string]interface{}, error) {
 	config := make(map[string]interface{})
 
@@ -262,6 +277,12 @@ func loadConfig(path string) (map[string]interface{}, error) {
 	config["CloudInitServicesEnable"] = cloudInit.Services.Enable
 	config["CloudInitServicesDisable"] = cloudInit.Services.Disable
 	config["CloudInitRuncmd"] = cloudInit.RunCmd
+
+	if config["ssh_key"] == "" {
+		if config["passwd"], err = getPasswordFromUserInput(config["user_name"].(string)); err != nil {
+			return nil, err
+		}
+	}
 
 	hashed, err := hashPassword(config["passwd"].(string))
 	if err != nil {
