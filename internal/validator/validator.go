@@ -138,7 +138,7 @@ func validateSite(siteRe *regexp.Regexp, site, errMsg string) string {
 	return errMsg
 }
 
-// checkCSV checks the contents of the given CSV file (or additonal overides) & generates an error
+// checkCSV checks the contents of the given CSV file (or additional overides) & generates an error
 // if errors are found in the CSV (or in overides).
 func CheckCSV(filename string, globalOverrides types.HostRecord) ([]types.HostRecord, error) {
 	fmt.Printf("Checking CSV file: %s\n", filename)

@@ -193,7 +193,7 @@ func runGetCustomConfigCommand(cmd *cobra.Command, args []string) error {
 	return writer.Flush()
 }
 
-// Lists all Cloud Init configrations - retrieves all configurations and displays selected information in tabular format
+// Lists all Cloud Init configurations - retrieves all configurations and displays selected information in tabular format
 func runListCustomConfigCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
