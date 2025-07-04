@@ -4,11 +4,13 @@
 package cli
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	sprig "github.com/go-task/slim-sprig"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 	"io"
 	"net/http"
 	"os"
@@ -39,6 +41,16 @@ ntp:
   servers:
     - time.google.com
 
+services:
+  enable:
+    {{- range .CloudInitServicesEnable }}
+    - {{ . }}
+    {{- end }}
+  disable:
+    {{- range .CloudInitServicesDisable }}
+    - {{ . }}
+    {{- end }}
+
 users:
   - name: {{ .user_name }}
     primary_group: users
@@ -64,6 +76,12 @@ write_files:
     content: |
       {{- .K3sInstallerScript | indent 6 }}
 {{- end }}
+  {{- range .CloudInitWriteFiles }}
+  - path: {{ .Path }}
+    permissions: {{ .Permissions }}
+    content: |
+      {{- .Content | nindent 6 }}
+  {{- end }}
 
 runcmd:
   - |
@@ -82,7 +100,26 @@ runcmd:
     chmod +x /etc/cloud/k3s-configure.sh
     bash /etc/cloud/k3s-configure.sh
 {{- end }}
+{{- range .CloudInitRuncmd }}
+  - |
+    {{- . | nindent 4 }}
+{{- end }}
 `
+
+type CloudInitSection struct {
+	Services struct {
+		Enable  []string `yaml:"enable"`
+		Disable []string `yaml:"disable"`
+	} `yaml:"services"`
+	WriteFiles []WriteFile `yaml:"write_files"`
+	RunCmd     []string    `yaml:"runcmd"`
+}
+
+type WriteFile struct {
+	Path        string `yaml:"path"`
+	Permissions string `yaml:"permissions"`
+	Content     string `yaml:"content"`
+}
 
 func getStandaloneConfigCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -144,14 +181,93 @@ func downloadFileFromURL(url string) (string, error) {
 	return string(data), nil
 }
 
-func loadConfig(path string) (map[string]string, error) {
+func extractYamlBlock(path string) (CloudInitSection, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return CloudInitSection{}, err
+	}
+	defer file.Close()
+
+	var (
+		yamlLines   []string
+		startedYaml bool
+		scanner     = bufio.NewScanner(file)
+	)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "services:") {
+			startedYaml = true
+		}
+		if startedYaml {
+			yamlLines = append(yamlLines, line)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return CloudInitSection{}, err
+	}
+
+	yamlContent := strings.Join(yamlLines, "\n")
+	var parsed CloudInitSection
+	err = yaml.Unmarshal([]byte(yamlContent), &parsed)
+	return parsed, err
+}
+
+func loadConfig(path string) (map[string]interface{}, error) {
+	config := make(map[string]interface{})
+
+	cloudInit, err := extractYamlBlock(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse YAML block: %s", err)
+	}
+
+	tmpFile, err := os.CreateTemp("", "tmp_*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(tmpFile.Name())
+
+	inputFile, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("could not open file: %w", err)
+	}
+	defer inputFile.Close()
+
+	// remove YAML blocks from env file so it's parseable by godotenv
+	writer := bufio.NewWriter(tmpFile)
+
+	scanner := bufio.NewScanner(inputFile)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "Custom cloud-init Config file") {
+			break // Stop copying when we reach the YAML marker
+		}
+		_, err := writer.WriteString(line + "\n")
+		if err != nil {
+			return nil, fmt.Errorf("failed writing to temp file: %w", err)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("scanner error: %w", err)
+	}
+	writer.Flush()
+	tmpFile.Close()
+
 	// Load the file into environment variables
-	config, err := godotenv.Read(path)
+	envVars, err := godotenv.Read(tmpFile.Name())
 	if err != nil {
 		return nil, fmt.Errorf("error loading config file: %w", err)
 	}
+	for k, v := range envVars {
+		config[k] = v
+	}
 
-	hashed, err := hashPassword(config["passwd"])
+	config["CloudInitWriteFiles"] = cloudInit.WriteFiles
+	config["CloudInitServicesEnable"] = cloudInit.Services.Enable
+	config["CloudInitServicesDisable"] = cloudInit.Services.Disable
+	config["CloudInitRuncmd"] = cloudInit.RunCmd
+
+	hashed, err := hashPassword(config["passwd"].(string))
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +296,7 @@ func loadConfig(path string) (map[string]string, error) {
 	return config, nil
 }
 
-func generateCloudInit(config map[string]string) (string, error) {
+func generateCloudInit(config map[string]interface{}) (string, error) {
 
 	tmpl, err := template.New("cloud-init").Option("missingkey=error").Funcs(sprig.TxtFuncMap()).Parse(cloudInitTemplate)
 	if err != nil {
