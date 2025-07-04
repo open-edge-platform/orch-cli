@@ -41,16 +41,6 @@ ntp:
   servers:
     - time.google.com
 
-services:
-  enable:
-    {{- range .CloudInitServicesEnable }}
-    - {{ . }}
-    {{- end }}
-  disable:
-    {{- range .CloudInitServicesDisable }}
-    - {{ . }}
-    {{- end }}
-
 users:
   - name: {{ .user_name }}
     primary_group: users
@@ -99,6 +89,12 @@ runcmd:
 {{- if eq .host_type "kubernetes" }}
     chmod +x /etc/cloud/k3s-configure.sh
     bash /etc/cloud/k3s-configure.sh
+{{- end }}
+{{- range .CloudInitServicesEnable }}
+  - systemctl enable {{ . }}
+{{- end }}
+{{- range .CloudInitServicesDisable }}
+  - systemctl disable {{ . }}
 {{- end }}
 {{- range .CloudInitRuncmd }}
   - |
