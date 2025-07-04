@@ -59,8 +59,8 @@ orch-cli create host --project some-project --generate-csv=myhosts.csv
 
 # Sample input csv file hosts.csv
 
-Serial - Serial Number of the machine - mandatory field
-UUID - UUID of the machine - mandatory field
+Serial - Serial Number of the machine - mandatory field (both or one of Serial or UUID must be provided)
+UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided), UUID must be provided if K8s cluster is going to be auto provisioned
 OSProfile - OS Profile to be used for provisioning of the host - name of the profile or it's resource ID - mandatory field
 Site - The resource ID of the site to which the host will be provisioned - mandatory field
 Secure - Optional security feature to configure for the host - must be supported by OS Profile if enabled
@@ -74,6 +74,7 @@ Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8
 2500JF3,4c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic,site-c69a3c81,,localaccount-4c2c5f5a
 1500JF3,1c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value1&key2=value2
 15002F3,1c4c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value2&key3=value4
+11002F3,2c4c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value2&key3=value4,,cloudinitname&customconfig-1234abcd
 
 # --dry-run allows for verification of the validity of the input csv file without creating hosts
 orch-cli create host --project some-project --import-from-csv test.csv --dry-run
@@ -88,6 +89,7 @@ orch-cli create host --project some-project --import-from-csv test.csv
 --secure - true or false - security feature configuration
 --os-profile - name or ID of the OS profile
 --metadata - key value paired metatada separated by &, must be put in quotes.
+--cloud-init - name or resource ID of custom config - multiple configs must be separated by &
 
 # Create hosts from CSV and override provided values
 /orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
@@ -109,6 +111,7 @@ type ResponseCache struct {
 	SiteCache      map[string]infra.SiteResource
 	LACache        map[string]infra.LocalAccountResource
 	HostCache      map[string]infra.HostResource
+	CICache        map[string]infra.CustomConfigResource
 }
 
 func filterHelper(f string) *string {
@@ -159,16 +162,17 @@ func filterRegionsHelper(r string) (*string, error) {
 // Prints Host list in tabular format
 func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status",
-			"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status", "Provisioning Status",
+			"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute", "Custom Config")
 	} else {
-		var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number", "Operating System", "Site ID", "Site Name", "Workload")
+		var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Provisioning Status", "Serial Number", "Operating System", "Site ID", "Site Name", "Workload")
 		fmt.Fprintf(writer, "%s\n", shortHeader)
 	}
 	for _, h := range *hosts {
 		//TODO clean this up
-		os, workload, site, siteName := "Not provisioned", "Not assigned", "Not provisioned", "Not provisioned"
+		os, workload, site, siteName, provStat := "Not provisioned", "Not assigned", "Not provisioned", "Not provisioned", "Not provisioned"
 		host := "Not connected"
+		customcfg := "None"
 
 		if h.Instance != nil {
 			if h.Instance.CurrentOs != nil && h.Instance.CurrentOs.Name != nil {
@@ -189,8 +193,22 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		if *h.HostStatus != "" {
 			host = *h.HostStatus
 		}
+
+		if h.Instance != nil && h.Instance.ProvisioningStatus != nil {
+			provStat = *h.Instance.ProvisioningStatus
+		}
+
+		if h.Instance != nil && h.Instance.CustomConfig != nil {
+			if len(*h.Instance.CustomConfig) > 0 {
+				configs := ""
+				for _, ccfg := range *h.Instance.CustomConfig {
+					configs = configs + ccfg.Name + " "
+				}
+				customcfg = configs
+			}
+		}
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber, os, site, siteName, workload)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber, os, site, siteName, workload)
 		} else {
 			avupdt := "No update"
 			tcomp := "Not compatible"
@@ -199,8 +217,8 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 			//if h.CurrentOs != h.desiredOS avupdt is available
 			//if tcomp is set then reflect
 
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, *h.SerialNumber,
-				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber,
+				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp, customcfg)
 		}
 	}
 }
@@ -221,7 +239,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		currentOS = toJSON(host.Instance.CurrentOs.Name)
 	}
 
-	if host != nil && host.Instance != nil && host.Instance.Os.Name != nil {
+	if host != nil && host.Instance != nil && host.Instance.Os != nil && host.Instance.Os.Name != nil {
 		osprofile = toJSON(host.Instance.Os.Name)
 	}
 
@@ -338,6 +356,17 @@ func decodeMetadata(metadata string) (*[]infra.MetadataItem, error) {
 	return &metadataList, nil
 }
 
+// Breaks up the provided cloud init metadata from input string
+func breakupCloudInitMetadata(CImetadata string) *[]string {
+	var CImetaList []string
+	if CImetadata == "" {
+		return &CImetaList
+	}
+	CImetaList = strings.Split(CImetadata, "&")
+
+	return &CImetaList
+}
+
 func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSecure {
 	if globalSecure != recordSecure && globalSecure != types.SecureUnspecified {
 		return globalSecure
@@ -378,11 +407,10 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 	// 	return nil, valErr
 	// }
 
-	//TODO implement cloud Init check
-	// cloudInitID, err := resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, record, respCache, erringRecords)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	cloudInitIDs, err := resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, globalAttr.CloudInitMeta, record, respCache, erringRecords)
+	if err != nil {
+		return nil, err
+	}
 
 	//TODO implement check for K8s Cluster template
 	// K8sTmplID, err := resolveCloudInit(ctx, hClient, projectName, record., record.K8sClusterTemplate, respCache, erringRecords)
@@ -399,7 +427,7 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 		Serial:     record.Serial,
 		Metadata:   metadataToUse,
 		//AMTEnable:  isAMT,
-		//CloudInitMeta: cloudInitID,
+		CloudInitMeta: cloudInitIDs,
 		//K8sClusterTemplate: K8sTmplID,
 	}, nil
 }
@@ -553,6 +581,63 @@ func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, 
 	return "", errors.New(record.Error)
 }
 
+// Cecks if remote user is valid and exists
+func resolveCloudInit(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, recordCloudInitMeta string,
+	globalCloudInitMeta string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
+) (string, error) {
+
+	cloudInitMetaToQuery := recordCloudInitMeta
+
+	if globalCloudInitMeta != "" {
+		cloudInitMetaToQuery = globalCloudInitMeta
+	}
+
+	if cloudInitMetaToQuery == "" {
+		return "", nil
+	}
+
+	rawCloudInitEntries := breakupCloudInitMetadata(cloudInitMetaToQuery)
+	var sanCloudInitEntries []string
+	wrongCloudInits := ""
+
+	for _, cloudInit := range *rawCloudInitEntries {
+
+		if cImetaResource, ok := respCache.CICache[cloudInit]; ok {
+			sanCloudInitEntries = append(sanCloudInitEntries, *cImetaResource.ResourceId)
+			continue
+		}
+
+		cImfilter := fmt.Sprintf("name='%s' OR resourceId='%s'", cloudInit, cloudInit)
+		resp, err := hClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
+			&infra.CustomConfigServiceListCustomConfigsParams{
+				Filter: &cImfilter,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			record.Error = err.Error()
+			*erringRecords = append(*erringRecords, record)
+			continue
+			//return "", err
+		}
+		if resp.JSON200 != nil && resp.JSON200.CustomConfigs != nil {
+			cloudInits := resp.JSON200.CustomConfigs
+			if len(cloudInits) > 0 {
+				respCache.CICache[cloudInit] = cloudInits[len(cloudInits)-1]
+				sanCloudInitEntries = append(sanCloudInitEntries, *cloudInits[len(cloudInits)-1].ResourceId)
+				continue
+			}
+		}
+		wrongCloudInits = wrongCloudInits + " " + cloudInit
+	}
+
+	if wrongCloudInits != "" {
+		erroMsg := fmt.Sprintf("Remote Cloud Init custom config %s not found", wrongCloudInits)
+		record.Error = erroMsg
+		*erringRecords = append(*erringRecords, record)
+		return "", errors.New(record.Error)
+	}
+	return strings.Join(sanCloudInitEntries, "&"), nil
+}
+
 func resolveMetadata(recordMetadata, globalMetadata string) string {
 	if globalMetadata != "" {
 		return globalMetadata
@@ -620,7 +705,7 @@ func getCreateHostCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("metadata", "m", viper.GetString("metadata"), "Override the metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("remote-user", "r", viper.GetString("remote-user"), "Override the metadata provided in CSV file for all hosts")
 	//cmd.PersistentFlags().StringP("cluster-template", "c", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
-	//cmd.PersistentFlags().StringP("cloud-init", "i", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("cloud-init", "j", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
 	//cmd.PersistentFlags().BoolP("amt", "a", viper.GetBool("amt"), "Override the AMT feature configuration provided in CSV file for all hosts")
 
@@ -846,15 +931,17 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	osProfileIn, _ := cmd.Flags().GetString("os-profile")
 	siteIn, _ := cmd.Flags().GetString("site")
 	metadataIn, _ := cmd.Flags().GetString("metadata")
+	cloudInitIn, _ := cmd.Flags().GetString("cloud-init")
 	remoteUserIn, _ := cmd.Flags().GetString("remote-user")
 	secureIn, _ := cmd.Flags().GetString("secure")
 
 	globalAttr := &types.HostRecord{
-		OSProfile:  osProfileIn,
-		Site:       siteIn,
-		Secure:     types.StringToRecordSecure(secureIn),
-		RemoteUser: remoteUserIn,
-		Metadata:   metadataIn,
+		OSProfile:     osProfileIn,
+		Site:          siteIn,
+		Secure:        types.StringToRecordSecure(secureIn),
+		RemoteUser:    remoteUserIn,
+		Metadata:      metadataIn,
+		CloudInitMeta: cloudInitIn,
 	}
 
 	if cmd.Flags().Changed("generate-csv") && (dryRun || csvFilePath != "") {
@@ -887,7 +974,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 
 	if dryRun {
 		fmt.Println("--dry-run flag provided, validating input, hosts will not be imported")
-		_, err := validator.CheckCSV(csvFilePath)
+		_, err := validator.CheckCSV(csvFilePath, *globalAttr)
 		if err != nil {
 			return err
 		}
@@ -895,7 +982,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	validated, err := validator.CheckCSV(csvFilePath)
+	validated, err := validator.CheckCSV(csvFilePath, *globalAttr)
 	if err != nil {
 		return err
 	}
@@ -905,6 +992,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		SiteCache:      make(map[string]infra.SiteResource),
 		LACache:        make(map[string]infra.LocalAccountResource),
 		HostCache:      make(map[string]infra.HostResource),
+		CICache:        make(map[string]infra.CustomConfigResource),
 	}
 
 	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
@@ -1084,6 +1172,11 @@ func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, res
 		locAcc = &rOut.RemoteUser
 	}
 
+	var cloudInitIDs *[]string
+	if rOut.CloudInitMeta != "" {
+		cloudInitIDs = breakupCloudInitMetadata(rOut.CloudInitMeta)
+	}
+
 	iresp, err := hClient.InstanceServiceCreateInstanceWithResponse(ctx, projectName,
 		infra.InstanceServiceCreateInstanceJSONRequestBody{
 			HostID:          &hostID,
@@ -1091,6 +1184,7 @@ func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, res
 			LocalAccountID:  locAcc,
 			SecurityFeature: &secFeat,
 			Kind:            &kind,
+			CustomConfigID:  cloudInitIDs,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		err := processError(err)
