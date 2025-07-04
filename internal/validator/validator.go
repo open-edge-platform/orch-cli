@@ -6,6 +6,7 @@ package validator
 import (
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -137,14 +138,28 @@ func validateSite(siteRe *regexp.Regexp, site, errMsg string) string {
 	return errMsg
 }
 
-// checkCSV checks the contents of the given CSV file & generates an error
-// if errors are found in the CSV.
-func CheckCSV(filename string) ([]types.HostRecord, error) {
+// checkCSV checks the contents of the given CSV file (or additional overides) & generates an error
+// if errors are found in the CSV (or in overides).
+func CheckCSV(filename string, globalOverrides types.HostRecord) ([]types.HostRecord, error) {
 	fmt.Printf("Checking CSV file: %s\n", filename)
 
 	content, err := files.ReadHostRecords(filename)
 	if err != nil {
 		return nil, err
+	}
+
+	//replace content with overrides if not empty
+	for i := range content {
+		recordValue := reflect.ValueOf(&content[i]).Elem()
+		overrideValue := reflect.ValueOf(globalOverrides)
+
+		for j := range recordValue.NumField() {
+			field := recordValue.Field(j)
+			overrideField := overrideValue.Field(j)
+			if overrideField.Kind() == reflect.String && overrideField.String() != "" {
+				field.SetString(overrideField.String())
+			}
+		}
 	}
 
 	validated, errVal := SanitizeEntries(content)
