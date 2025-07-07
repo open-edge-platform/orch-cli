@@ -75,6 +75,14 @@ write_files:
   {{- end }}
 
 runcmd:
+{{- if gt (len .UserApps) 0 }}
+  - |
+    mkdir -p /opt/user-apps
+{{- $nginx_fqdn := .NginxFQDN }}
+{{- range .UserApps }}
+    curl --noproxy '*' -k {{ $nginx_fqdn }}/tink-stack/user-apps/{{ . }} -o /opt/user-apps/{{ . }}
+{{- end }}
+{{- end }}
   - |
     grep -qF "http_proxy" /etc/environment || echo http_proxy={{ .http_proxy }} >> /etc/environment
     grep -qF "https_proxy" /etc/environment || echo https_proxy={{ .https_proxy }} >> /etc/environment
@@ -131,6 +139,7 @@ func getStandaloneConfigCommand() *cobra.Command {
 	}
 	cmd.Flags().StringP("config-file", "c", "", "config-file with user inputs")
 	cmd.Flags().StringP("output-file", "o", "cloud-init.cfg", "Override output filename")
+	cmd.Flags().StringP("user-apps", "u", "", "Directory with user apps to pre-load")
 	return cmd
 }
 
@@ -151,6 +160,25 @@ func getConfigFileInput(cmd *cobra.Command) (string, error) {
 		return "", fmt.Errorf("required flag \"config-file\" not set")
 	}
 	return configFilePath, nil
+}
+
+func getUserAppsFlag(cmd *cobra.Command) (string, error) {
+	userAppsDirectory, err := cmd.Flags().GetString("user-apps")
+	if err != nil {
+		return "", err
+	}
+	return userAppsDirectory, nil
+}
+
+func getNginxFQDNFromAPIEndpoint(cmd *cobra.Command) (string, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return "", err
+	}
+
+	nginxFQDN := strings.Replace(serverAddress, "api.", "tinkerbell-nginx.", 1)
+	fmt.Println("getting nginx", nginxFQDN)
+	return nginxFQDN, nil
 }
 
 func hashPassword(password string) (string, error) {
@@ -224,8 +252,9 @@ func getPasswordFromUserInput(username string) (string, error) {
 	return string(bytePassword), nil
 }
 
-func loadConfig(path string) (map[string]interface{}, error) {
+func loadConfig(path, userAppsDir, nginxFQDN string) (map[string]interface{}, error) {
 	config := make(map[string]interface{})
+	config["NginxFQDN"] = nginxFQDN
 
 	cloudInit, err := extractYamlBlock(path)
 	if err != nil {
@@ -308,6 +337,22 @@ func loadConfig(path string) (map[string]interface{}, error) {
 	config["K3sConfigureScript"] = k3sConfigureScript
 	config["K3sInstallerScript"] = k3sInstallerScript
 
+	userApps := make([]string, 0)
+	if userAppsDir != "" {
+		entries, err := os.ReadDir(userAppsDir)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				userApps = append(userApps, entry.Name())
+			}
+		}
+
+		config["UserApps"] = userApps
+	}
+
 	return config, nil
 }
 
@@ -337,10 +382,28 @@ func runGenerateStandaloneConfigCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	config, err := loadConfig(configFilePath)
+	userApps, err := getUserAppsFlag(cmd)
 	if err != nil {
 		return err
 	}
+
+	nginxFQDN := ""
+	if userApps != "" {
+		nginxFQDN, err = getNginxFQDNFromAPIEndpoint(cmd)
+		if err != nil {
+			return err
+		}
+		if nginxFQDN == "" {
+			return fmt.Errorf("setting API endpoint is mandatory when uploading user apps")
+		}
+	}
+
+	config, err := loadConfig(configFilePath, userApps, nginxFQDN)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(config)
 
 	cloudInit, err := generateCloudInit(config)
 	if err != nil {
