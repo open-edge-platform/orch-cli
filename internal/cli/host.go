@@ -307,8 +307,7 @@ func generateCSV(filename string) error {
 }
 
 // Runs the registration workflow
-func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, projectName string,
-	rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, ctx2 context.Context, cClient *cluster.ClientWithResponses) {
+func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, ctx2 context.Context, cClient *cluster.ClientWithResponses) {
 
 	// get the required fields from the record
 	sNo := rIn.Serial
@@ -472,8 +471,7 @@ func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSe
 }
 
 // Sanitize fields, convert named resources to resource IDs
-func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, record types.HostRecord,
-	respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, ctx2 context.Context, cClient *cluster.ClientWithResponses) (*types.HostRecord, error) {
+func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, record types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, ctx2 context.Context, cClient *cluster.ClientWithResponses) (*types.HostRecord, error) {
 
 	isSecure := resolveSecure(record.Secure, globalAttr.Secure)
 
@@ -514,7 +512,7 @@ func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithRe
 	k8sTmplID := record.K8sClusterTemplate
 	if isK8s == "true" {
 		if record.K8sConfig != "" || globalAttr.K8sConfig != "" {
-			k8sConfig, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig, record, erringRecords)
+			k8sConfig, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig)
 			if err != nil {
 				return nil, err
 			}
@@ -707,8 +705,7 @@ func resolveClusterTemplate(ctx context.Context, cClient *cluster.ClientWithResp
 }
 
 // Checks if cluster config is valid
-func resolveClusterConfig(recordClusterConfig string, globalClusterConfig string, record types.HostRecord, erringRecords *[]types.HostRecord,
-) (string, error) {
+func resolveClusterConfig(recordClusterConfig string, globalClusterConfig string) (string, error) {
 
 	configToValidate := recordClusterConfig
 
