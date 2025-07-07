@@ -71,7 +71,7 @@ func verifyCustomConfigInput(path string) error {
 // Helper function to verify that the input file exists and is of right format
 func verifyName(n string) error {
 
-	pattern := `^[a-zA-Z0-9]+$`
+	pattern := `^[a-zA-Z0-9_\-]`
 
 	// Compile the regular expression
 	re := regexp.MustCompile(pattern)

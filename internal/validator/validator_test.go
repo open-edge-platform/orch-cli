@@ -351,6 +351,34 @@ func TestSanitizeEntries(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Invalid cluster template",
+			lines: []types.HostRecord{
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", K8sClusterTemplate: "baselinev2.0.2"},
+			},
+			expectErr: true,
+			expectStr: []types.HostRecord{
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", K8sClusterTemplate: "baselinev2.0.2", Error: "Invalid cluster template;"},
+			},
+		}, {
+			name: "Invalid cluster template2",
+			lines: []types.HostRecord{
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", K8sClusterTemplate: "baseline:2.0.2"},
+			},
+			expectErr: true,
+			expectStr: []types.HostRecord{
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", K8sClusterTemplate: "baseline:2.0.2", Error: "Invalid cluster template;"},
+			},
+		}, {
+			name: "Invalid cluster template3",
+			lines: []types.HostRecord{
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", K8sClusterTemplate: "baseline:v2"},
+			},
+			expectErr: true,
+			expectStr: []types.HostRecord{
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", K8sClusterTemplate: "baseline:v2", Error: "Invalid cluster template;"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -389,11 +417,11 @@ func TestCheckCSV(t *testing.T) {
 			expectStr: []types.HostRecord{
 				{
 					Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
-					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
+					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,,,",
 				},
 				{
 					Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
-					RawRecord: "QWERTY123,1c1c1c1c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
+					RawRecord: "QWERTY123,1c1c1c1c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,,,",
 				},
 			},
 		},
@@ -406,7 +434,7 @@ func TestCheckCSV(t *testing.T) {
 			expectStr: []types.HostRecord{
 				{
 					Serial: "ABCD-123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
-					Error: "Invalid Serial number;", RawRecord: "ABCD-123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
+					Error: "Invalid Serial number;", RawRecord: "ABCD-123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,,,",
 				},
 			},
 			expectErrStr: "Pre-flight check failed",
@@ -421,11 +449,11 @@ func TestCheckCSV(t *testing.T) {
 			expectStr: []types.HostRecord{
 				{
 					Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81",
-					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
+					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,,,",
 				},
 				{
 					Serial: "QWERTY123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", Error: "Duplicate UUID : Row 1;",
-					RawRecord: "QWERTY123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
+					RawRecord: "QWERTY123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,,,",
 				},
 			},
 			expectErrStr: "Pre-flight check failed",
@@ -497,13 +525,13 @@ func TestCheckCSVOverrides(t *testing.T) {
 			expectStr: []types.HostRecord{
 				{
 					Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "profile", Site: "site-aaaa1111",
-					Secure: "true", RemoteUser: "user", Metadata: "key=value", CloudInitMeta: "cloudinit",
-					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
+					Secure: "true", RemoteUser: "user", Metadata: "key=value", CloudInitMeta: "cloudinit", K8sEnable: "true", K8sClusterTemplate: "baseline:v2.0.2", K8sConfig: "role:all;name:mycluster;labels:sample-label=samplevalue",
+					RawRecord: "ABCD123,4c4c4c4c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,,,",
 				},
 				{
 					Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "profile", Site: "site-aaaa1111",
-					Secure: "true", RemoteUser: "user", Metadata: "key=value", CloudInitMeta: "cloudinit",
-					RawRecord: "QWERTY123,1c1c1c1c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,",
+					Secure: "true", RemoteUser: "user", Metadata: "key=value", CloudInitMeta: "cloudinit", K8sEnable: "true", K8sClusterTemplate: "baseline:v2.0.2", K8sConfig: "role:all;name:mycluster;labels:sample-label=samplevalue",
+					RawRecord: "QWERTY123,1c1c1c1c-0000-1111-2222-333333333333,os1,site-c69a3c81,,,,,,,,,",
 				},
 			},
 		},
@@ -517,12 +545,15 @@ func TestCheckCSVOverrides(t *testing.T) {
 			assert.NoError(t, err, "Failed to write temporary CSV file")
 
 			globalAttr := &types.HostRecord{
-				OSProfile:     "profile",
-				Site:          "site-aaaa1111",
-				Secure:        "true",
-				RemoteUser:    "user",
-				Metadata:      "key=value",
-				CloudInitMeta: "cloudinit",
+				OSProfile:          "profile",
+				Site:               "site-aaaa1111",
+				Secure:             "true",
+				RemoteUser:         "user",
+				Metadata:           "key=value",
+				CloudInitMeta:      "cloudinit",
+				K8sEnable:          "true",
+				K8sClusterTemplate: "baseline:v2.0.2",
+				K8sConfig:          "role:all;name:mycluster;labels:sample-label=samplevalue",
 			}
 
 			// Run CheckCSV
