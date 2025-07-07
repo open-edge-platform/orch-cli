@@ -53,7 +53,7 @@ orch-cli create host --project some-project --import-from-csv test.csv
 --os-profile - name or ID of the OS profile
 --metadata - key value paired metatada separated by &, must be put in quotes.
 --cluster-deploy - true or false - cluster deployment configuration
---cluster-template - name and version of the cluster template to be used for cluster cration (sseparated by :)
+--cluster-template - name and version of the cluster template to be used for cluster cration (separated by :)
 --cluster-config - extra configuration for cluster creation empty defaults to "role:all", if not empty role must be defined, name and labels are optional (labels separated by &)
 --cloud-init - name or resource ID of custom config - multiple configs must be separated by &
 

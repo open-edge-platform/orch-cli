@@ -94,7 +94,7 @@ orch-cli create host --project some-project --import-from-csv test.csv
 --os-profile - name or ID of the OS profile
 --metadata - key value paired metatada separated by &, must be put in quotes.
 --cluster-deploy - true or false - cluster deployment configuration
---cluster-template - name and version of the cluster template to be used for cluster cration (sseparated by :)
+--cluster-template - name and version of the cluster template to be used for cluster cration (separated by :)
 --cluster-config - extra configuration for cluster creation empty defaults to "role:all", if not empty role must be defined, name and labels are optional (labels separated by &)
 --cloud-init - name or resource ID of custom config - multiple configs must be separated by &
 
@@ -307,7 +307,7 @@ func generateCSV(filename string) error {
 }
 
 // Runs the registration workflow
-func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, ctx2 context.Context, cClient *cluster.ClientWithResponses) {
+func doRegister(ctx context.Context, ctx2 context.Context, hClient *infra.ClientWithResponses, projectName string, rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient *cluster.ClientWithResponses) {
 
 	// get the required fields from the record
 	sNo := rIn.Serial
@@ -317,7 +317,7 @@ func doRegister(ctx context.Context, hClient *infra.ClientWithResponses, project
 	hostID := ""
 	autonboard := true
 
-	rOut, err := sanitizeProvisioningFields(ctx, hClient, projectName, rIn, respCache, globalAttr, erringRecords, ctx2, cClient)
+	rOut, err := sanitizeProvisioningFields(ctx, ctx2, hClient, projectName, rIn, respCache, globalAttr, erringRecords, cClient)
 	if err != nil {
 		return
 	}
@@ -471,7 +471,7 @@ func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSe
 }
 
 // Sanitize fields, convert named resources to resource IDs
-func sanitizeProvisioningFields(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, record types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, ctx2 context.Context, cClient *cluster.ClientWithResponses) (*types.HostRecord, error) {
+func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClient *infra.ClientWithResponses, projectName string, record types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient *cluster.ClientWithResponses) (*types.HostRecord, error) {
 
 	isSecure := resolveSecure(record.Secure, globalAttr.Secure)
 
@@ -1212,7 +1212,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	erringRecords := []types.HostRecord{}
 
 	for _, record := range validated {
-		doRegister(ctx, hostClient, projectName, record, respCache, globalAttr, &erringRecords, ctx2, clusterClient)
+		doRegister(ctx, ctx2, hostClient, projectName, record, respCache, globalAttr, &erringRecords, clusterClient)
 	}
 
 	if len(erringRecords) > 0 {
