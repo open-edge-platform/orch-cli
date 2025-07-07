@@ -86,7 +86,7 @@ runcmd:
   - |
     grep -qF "http_proxy" /etc/environment || echo http_proxy={{ .http_proxy }} >> /etc/environment
     grep -qF "https_proxy" /etc/environment || echo https_proxy={{ .https_proxy }} >> /etc/environment
-    grep -qF "no_proxy" /etc/environment || echo no_proxy={{ .no_proxy }} >> /etc/environment
+    grep -qF "no_proxy" /etc/environment || echo no_proxy="{{ .no_proxy }}" >> /etc/environment
     grep -qF "HTTP_PROXY" /etc/environment || echo HTTP_PROXY={{ .HTTP_PROXY }} >> /etc/environment
     grep -qF "HTTPS_PROXY" /etc/environment || echo HTTPS_PROXY={{ .HTTPS_PROXY }} >> /etc/environment
     grep -qF "NO_PROXY" /etc/environment || echo NO_PROXY={{ .NO_PROXY }} >> /etc/environment
@@ -177,7 +177,7 @@ func getNginxFQDNFromAPIEndpoint(cmd *cobra.Command) (string, error) {
 	}
 
 	nginxFQDN := strings.Replace(serverAddress, "api.", "tinkerbell-nginx.", 1)
-	fmt.Println("getting nginx", nginxFQDN)
+
 	return nginxFQDN, nil
 }
 
@@ -402,8 +402,6 @@ func runGenerateStandaloneConfigCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(config)
 
 	cloudInit, err := generateCloudInit(config)
 	if err != nil {
