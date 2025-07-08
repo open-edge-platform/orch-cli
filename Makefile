@@ -80,6 +80,10 @@ fetch-infra-openapi:
 	@# Help: Fetch the Infra Manager OpenAPI spec
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 
+fetch-rps-openapi:
+	@# Help: Fetch the OpenDMT RPS OpenAPI spec
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-opendmt-rps-openapi.yaml -o pkg/rest/rps/amc-opendmt-rps-openapi.yaml
+
 fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi fetch-infra-openapi
 	@# Help: Fetch OpenAPI specs for all components
 
@@ -95,6 +99,8 @@ rest-client-gen:
 	oapi-codegen -generate types -old-config-style -package cluster -o pkg/rest/cluster/types.go pkg/rest/cluster/amc-cluster-manager-openapi.yaml
 	oapi-codegen -generate client -old-config-style -package infra -o pkg/rest/infra/client.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 	oapi-codegen -generate types -old-config-style -package infra -o pkg/rest/infra/types.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
+	oapi-codegen -generate client -old-config-style -package rps -o pkg/rest/rps/client.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
+	oapi-codegen -generate types -old-config-style -package rps -o pkg/rest/rps/types.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 
 cli-docs:
 	@# Help: Generates markdowns for the orchestrator cli
