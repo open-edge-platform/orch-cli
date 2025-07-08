@@ -507,6 +507,8 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 		return nil, err
 	}
 
+	isAMT := resolveAMT(record.AMTEnable, globalAttr.AMTEnable)
+
 	isK8s := resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
 	k8sConfig := record.K8sConfig
 	k8sTmplID := record.K8sClusterTemplate
@@ -527,14 +529,14 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 	}
 
 	return &types.HostRecord{
-		OSProfile:  osProfileID,
-		RemoteUser: laID,
-		Site:       siteID,
-		Secure:     isSecure,
-		UUID:       record.UUID,
-		Serial:     record.Serial,
-		Metadata:   metadataToUse,
-		//AMTEnable:  isAMT,
+		OSProfile:          osProfileID,
+		RemoteUser:         laID,
+		Site:               siteID,
+		Secure:             isSecure,
+		UUID:               record.UUID,
+		Serial:             record.Serial,
+		Metadata:           metadataToUse,
+		AMTEnable:          isAMT,
 		CloudInitMeta:      cloudInitIDs,
 		K8sEnable:          isK8s,
 		K8sClusterTemplate: k8sTmplID,
@@ -648,6 +650,23 @@ func resolveSite(ctx context.Context, hClient *infra.ClientWithResponses, projec
 
 	respCache.SiteCache[siteToQuery] = *resp.JSON200
 	return *resp.JSON200.ResourceId, nil
+}
+
+// Checks if AMT is enabled
+func resolveAMT(recordAMTEnable string,
+	globalAMTEnable string) string {
+
+	isEnabled := recordAMTEnable
+
+	if globalAMTEnable != "" {
+		isEnabled = globalAMTEnable
+	}
+
+	if isEnabled != "true" {
+		return ""
+	}
+
+	return isEnabled
 }
 
 // Checks if cluster deployment is enabled
@@ -885,7 +904,7 @@ func getCreateHostCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("cluster-config", "f", viper.GetString("cluster-config"), "Override the cluster configuration provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("cloud-init", "j", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
-	//cmd.PersistentFlags().BoolP("amt", "a", viper.GetBool("amt"), "Override the AMT feature configuration provided in CSV file for all hosts")
+	cmd.PersistentFlags().BoolP("amt", "a", viper.GetBool("amt"), "Override the AMT feature configuration provided in CSV file for all hosts")
 
 	return cmd
 }
@@ -1133,6 +1152,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	k8sIn, _ := cmd.Flags().GetString("cluster-deploy")
 	k8sTmplIn, _ := cmd.Flags().GetString("cluster-template")
 	k8sConfigIn, _ := cmd.Flags().GetString("cluster-config")
+	amtIn, _ := cmd.Flags().GetString("amt")
 
 	globalAttr := &types.HostRecord{
 		OSProfile:          osProfileIn,
@@ -1140,6 +1160,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		Secure:             types.StringToRecordSecure(secureIn),
 		RemoteUser:         remoteUserIn,
 		Metadata:           metadataIn,
+		AMTEnable:          amtIn,
 		K8sEnable:          k8sIn,
 		K8sClusterTemplate: k8sTmplIn,
 		K8sConfig:          k8sConfigIn,

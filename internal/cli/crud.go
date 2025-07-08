@@ -34,6 +34,7 @@ func getCreateCommand() *cobra.Command {
 
 		getCreateClusterCommand(),
 
+		getCreateAmtProfileCommand(),
 		getCreateCustomConfigCommand(),
 		getCreateRegionCommand(),
 		getCreateSiteCommand(),
@@ -63,6 +64,7 @@ func getListCommand() *cobra.Command {
 		getListClusterCommand(),
 		getListClusterTemplatesCommand(),
 
+		getListAmtProfileCommand(),
 		getListCustomConfigCommand(),
 		getListSiteCommand(),
 		getListRegionCommand(),
@@ -104,6 +106,7 @@ func getGetCommand() *cobra.Command {
 
 		getListNetworksCommand(),
 
+		getGetAmtProfileCommand(),
 		getGetCustomConfigCommand(),
 		getGetOSProfileCommand(),
 		getGetRegionCommand(),
@@ -154,6 +157,7 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteClusterCommand(),
 		getDeleteNetworkCommand(),
 
+		getDeleteAmtProfileCommand(),
 		getDeleteCustomConfigCommand(),
 		getDeleteRegionCommand(),
 		getDeleteSiteCommand(),
