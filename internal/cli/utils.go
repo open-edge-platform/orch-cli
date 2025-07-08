@@ -21,6 +21,7 @@ import (
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
+	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/metadata"
 )
@@ -105,6 +106,23 @@ func getInfraServiceContext(cmd *cobra.Command) (context.Context, *infraapi.Clie
 		return nil, nil, "", err
 	}
 	return context.Background(), infraClient, projectName, nil
+}
+
+// Get the new background context, REST client, and project name given the specified command.
+func getRpsServiceContext(cmd *cobra.Command) (context.Context, *rpsapi.ClientWithResponses, string, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	projectName, err := getProjectName(cmd)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	rpsClient, err := rpsapi.NewClientWithResponses(serverAddress)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return context.Background(), rpsClient, projectName, nil
 }
 
 // Get the web socket for receiving event notifications.
