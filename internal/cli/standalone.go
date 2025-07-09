@@ -21,9 +21,10 @@ import (
 )
 
 const (
-	CollectLogsScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/refs/tags/standalone-node/3.0.11/standalone-node/provisioning_scripts/collect-logs.sh"
-	K3sConfigureScriptSource = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/refs/tags/standalone-node/3.0.11/standalone-node/provisioning_scripts/k3s-configure.sh"
-	K3sInstallerScriptSource = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/refs/tags/standalone-node/3.0.11/standalone-node/cluster_installers/sen-k3s-installer.sh"
+	CollectLogsScriptSource   = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/26f84c359e82026712836bfc7397889f9d83c98e/standalone-node/provisioning_scripts/collect-logs.sh"
+	K3sConfigureScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/26f84c359e82026712836bfc7397889f9d83c98e/standalone-node/provisioning_scripts/k3s-configure.sh"
+	K3sInstallerScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/26f84c359e82026712836bfc7397889f9d83c98e/standalone-node/cluster_installers/sen-k3s-installer.sh"
+	K3sPostRebootScriptSource = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/26f84c359e82026712836bfc7397889f9d83c98e/standalone-node/provisioning_scripts/k3s-setup-post-reboot.sh"
 )
 
 var cloudInitTemplate = `
@@ -66,6 +67,9 @@ write_files:
   - path: /tmp/k3s-artifacts/sen-k3s-installer.sh
     content: |
       {{- .K3sInstallerScript | indent 6 }}
+  - path: /etc/cloud/k3s-setup-post-reboot.sh
+    content: |
+      {{- .K3sPostRebootScript | indent 6 }}
 {{- end }}
   {{- range .CloudInitWriteFiles }}
   - path: {{ .Path }}
@@ -333,9 +337,15 @@ func loadConfig(path, userAppsDir, nginxFQDN string) (map[string]interface{}, er
 		return nil, err
 	}
 
+	k3sPostRebootScript, err := downloadFileFromURL(K3sPostRebootScriptSource)
+	if err != nil {
+		return nil, err
+	}
+
 	config["CollectLogsScript"] = collectLogsScript
 	config["K3sConfigureScript"] = k3sConfigureScript
 	config["K3sInstallerScript"] = k3sInstallerScript
+	config["K3sPostRebootScript"] = k3sPostRebootScript
 
 	userApps := make([]string, 0)
 	if userAppsDir != "" {
