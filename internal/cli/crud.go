@@ -134,6 +134,8 @@ func getSetCommand() *cobra.Command {
 		getSetDeploymentCommand(),
 
 		getSetNetworkCommand(),
+
+		getSetHostCommand(),
 	)
 	return cmd
 }

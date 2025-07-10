@@ -109,6 +109,18 @@ orch-cli delete host host-1234abcd  --project itep`
 const deauthorizeHostExamples = `#Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
 orch-cli deauthorize host host-1234abcd  --project itep`
 
+const setHostExamples = `#Set an attribute of a host or execute an action - at least one flag must be specified
+
+#Set host power state to on
+orch-cli set host host-1234abcd  --project itep --power on
+
+#Set host power command policy
+orch-cli set host host-1234abcd  --project itep --power-policy ordered
+
+--power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
+--power-policy - Set the desired power command policy to ordered|immediate
+`
+
 var hostHeaderGet = "\nDetailed Host Information\n"
 var filename = "test.csv"
 
@@ -283,6 +295,19 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tCPU Architecture:\t %v\n", *host.CpuArchitecture)
 	_, _ = fmt.Fprintf(writer, "-\tCPU Threads:\t %v\n", *host.CpuThreads)
 	_, _ = fmt.Fprintf(writer, "-\tCPU Sockets:\t %v\n\n", *host.CpuSockets)
+
+	if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
+		_, _ = fmt.Fprintf(writer, "AMT Info: \n\n")
+		_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", *host.CurrentAmtState)
+		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", *host.CurrentPowerState)
+		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", *host.DesiredPowerState)
+		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", *host.PowerCommandPolicy)
+		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", *host.PowerOnTime)
+	}
+
+	if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
+		_, _ = fmt.Fprintf(writer, "AMT not active or not supported: No info available \n\n")
+	}
 
 }
 
@@ -921,6 +946,20 @@ func getDeleteHostCommand() *cobra.Command {
 	return cmd
 }
 
+func getSetHostCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "host <resourceID> [flags]",
+		Short:   "Sets a host attribute or action",
+		Example: setHostExamples,
+		Args:    cobra.ExactArgs(1),
+		RunE:    runSetHostCommand,
+	}
+	cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
+	cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
+
+	return cmd
+}
+
 func getDeauthorizeHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "host <resourceID> [flags]",
@@ -1297,6 +1336,68 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// Set attributes for specific Host - finds a host using resource ID
+func runSetHostCommand(cmd *cobra.Command, args []string) error {
+	hostID := args[0]
+
+	policyFlag, _ := cmd.Flags().GetString("power-policy")
+	powerFlag, _ := cmd.Flags().GetString("power")
+
+	if policyFlag == "" && powerFlag == "" {
+		return errors.New("a flag must be provided with the set host command")
+	}
+
+	var power *infra.PowerState
+	var policy *infra.PowerCommandPolicy
+
+	if policyFlag != "" {
+		pol, err := resolvePowerPolicy(policyFlag)
+		if err != nil {
+			return err
+		}
+		policy = &pol
+	}
+
+	if powerFlag != "" {
+		pow, err := resolvePower(powerFlag)
+		if err != nil {
+			return err
+		}
+		power = &pow
+	}
+
+	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	// retrieve the host (to check if it has an instance associated with it)
+	iresp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if err := checkResponse(iresp.HTTPResponse, "error while retrieving host"); err != nil {
+		return err
+	}
+	host := *iresp.JSON200
+
+	// If host is onboarded manipulate
+	if host.Instance != nil {
+		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
+			PowerCommandPolicy: policy,
+			DesiredPowerState:  power,
+		}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, "error while executing host set"); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Deauthorizes specific Host - finds a host using resource ID and invalidates it
 func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 	hostID := args[0]
@@ -1538,4 +1639,34 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient *infra.Client
 	}
 
 	return nil
+}
+
+func resolvePowerPolicy(power string) (infra.PowerCommandPolicy, error) {
+	switch power {
+	case "immediate":
+		return infra.PowerCommandPolicy(infra.POWERCOMMANDPOLICYIMMEDIATE), nil
+	case "ordered":
+		return infra.PowerCommandPolicy(infra.POWERCOMMANDPOLICYORDERED), nil
+	default:
+		return "", errors.New("incorrect power policy provided with --power-policy flag use one of immediate|ordered")
+	}
+}
+
+func resolvePower(power string) (infra.PowerState, error) {
+	switch power {
+	case "on":
+		return infra.PowerState(infra.POWERSTATEON), nil
+	case "off":
+		return infra.PowerState(infra.POWERSTATEOFF), nil
+	case "cycle":
+		return infra.PowerState(infra.POWERSTATEPOWERCYCLE), nil
+	case "hibernate":
+		return infra.PowerState(infra.POWERSTATEHIBERNATE), nil
+	case "reset":
+		return infra.PowerState(infra.POWERSTATERESET), nil
+	case "sleep":
+		return infra.PowerState(infra.POWERSTATESLEEP), nil
+	default:
+		return "", errors.New("incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep")
+	}
 }
