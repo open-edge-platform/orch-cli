@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
-	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/open-edge-platform/cli/pkg/rest/rps"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -170,79 +170,79 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runGetAmtProfileCommand(cmd *cobra.Command, args []string) error {
-	// writer, verbose := getOutputContext(cmd)
-	// ctx, siteClient, projectName, err := getInfraServiceContext(cmd)
-	// if err != nil {
-	// 	return err
-	// }
+	writer, verbose := getOutputContext(cmd)
+	ctx, rpsClient, projectName, err := getRpsServiceContext(cmd)
+	if err != nil {
+		return err
+	}
 
-	// id := args[0]
+	name := args[0]
 
-	// resp, err := siteClient.SiteServiceGetSiteWithResponse(ctx, projectName,
-	// 	"empty", id, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
+	resp, err := rpsClient.GetDomainWithResponse(ctx, projectName,
+		name, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
 
-	// if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-	// 	"", "error getting site"); !proceed {
-	// 	return err
-	// }
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+		"", "error getting AMT profile"); !proceed {
+		return err
+	}
 
-	// printSite(writer, resp.JSON200)
-	//return writer.Flush()
-	return nil
+	printAmtProfile(writer, *resp.JSON200)
+	return writer.Flush()
+
 }
 
 func runDeleteAmtProfileCommand(cmd *cobra.Command, args []string) error {
-	// id := args[0]
+	name := args[0]
 
-	// ctx, siteClient, projectName, err := getInfraServiceContext(cmd)
-	// if err != nil {
-	// 	return err
-	// }
+	ctx, rpsClient, projectName, err := getRpsServiceContext(cmd)
+	if err != nil {
+		return err
+	}
 
-	// resp, err := siteClient.SiteServiceDeleteSiteWithResponse(ctx, projectName,
-	// 	"empty", id, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
+	resp, err := rpsClient.RemoveDomainWithResponse(ctx, projectName,
+		name, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
 
-	// err = checkResponse(resp.HTTPResponse, "error while deleting site")
-	// if err != nil {
-	// 	if strings.Contains(string(resp.Body), `"message":"site_resource not found"`) {
-	// 		return errors.New("site does not exist")
-	// 	}
-	// }
-	// return err
-	return nil
+	err = checkResponse(resp.HTTPResponse, "error while deleting AMT profile")
+	if err != nil {
+		if strings.Contains(string(resp.Body), `"Not Found"`) {
+			return errors.New("AMT profile does not exist")
+		}
+	}
+	return err
 }
 
 func printAmtProfiles(writer io.Writer, amtprofiles rps.CountDomainResponse, verbose bool) {
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\n", "AMT Profile Name", "Info")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\n", "AMT Profile Name", "Domain Suffix", "Version", "Format", "Expiration date")
 	} else {
-		var shortHeader = fmt.Sprintf("\n%s", "AMT Profile Name")
+		var shortHeader = fmt.Sprintf("\n%s\t%s", "AMT Profile Name", "Domain Suffix")
 		fmt.Fprintf(writer, "%s\n", shortHeader)
 	}
 	for _, domain := range *amtprofiles.Data {
 
 		if !verbose {
-			fmt.Fprintf(writer, "%s\n", domain.ProfileName)
-		} else {
 			fmt.Fprintf(writer, "%s\t%s\n", domain.ProfileName, domain.DomainSuffix)
+		} else {
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", domain.ProfileName, domain.DomainSuffix, domain.Version, domain.ProvisioningCertStorageFormat, domain.ExpirationDate)
 		}
 	}
 }
 
 // Prints output details of site
-func printAmtProfile(writer io.Writer, site *infra.SiteResource) {
+func printAmtProfile(writer io.Writer, amtprofile rps.DomainResponse) {
 
-	// _, _ = fmt.Fprintf(writer, "Name: \t%s\n", *site.Name)
-	// _, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *site.ResourceId)
-	// _, _ = fmt.Fprintf(writer, "Region: \t%s %s\n", *site.Region.Name, *site.RegionId)
-	// _, _ = fmt.Fprintf(writer, "Longtitude: \t%v\n", float64(*site.SiteLng)/10000000)
-	// _, _ = fmt.Fprintf(writer, "Latitude: \t%v\n", float64(*site.SiteLat)/10000000)
+	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", amtprofile.ProfileName)
+	_, _ = fmt.Fprintf(writer, "Domain Suffix: \t%s\n", amtprofile.DomainSuffix)
+	_, _ = fmt.Fprintf(writer, "Version: \t%s\n", amtprofile.Version)
+	_, _ = fmt.Fprintf(writer, "Tenant ID: \t%s\n", amtprofile.TenantId)
+	_, _ = fmt.Fprintf(writer, "Cert Format: \t%s\n", amtprofile.ProvisioningCertStorageFormat)
+	_, _ = fmt.Fprintf(writer, "Expiration Date: \t%s\n", amtprofile.ExpirationDate)
 
 }
 
