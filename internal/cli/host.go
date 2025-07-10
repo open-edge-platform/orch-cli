@@ -342,13 +342,19 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient *infra.Client
 	hostName := ""
 	hostID := ""
 	autonboard := true
+	amt := false
 
 	rOut, err := sanitizeProvisioningFields(ctx, ctx2, hClient, projectName, rIn, respCache, globalAttr, erringRecords, cClient)
 	if err != nil {
 		return
 	}
 
-	hostID, err = registerHost(ctx, hClient, respCache, projectName, hostName, sNo, uuid, autonboard)
+	//check if vPRO is enabled
+	if rOut.AMTEnable == "true" {
+		amt = true
+	}
+
+	hostID, err = registerHost(ctx, hClient, respCache, projectName, hostName, sNo, uuid, autonboard, amt)
 	if err != nil {
 		rIn.Error = err.Error()
 		*erringRecords = append(*erringRecords, rIn)
@@ -521,12 +527,6 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 	}
 
 	metadataToUse := resolveMetadata(record.Metadata, globalAttr.Metadata)
-
-	//TODO implement AMT check - will there be a check if a host is capable of AMT
-	// valErr = validateAMT(ctx, hClient, projectName, record.AMTEnable, record, respCache, erringRecords)
-	// if err != nil {
-	// 	return nil, valErr
-	// }
 
 	cloudInitIDs, err := resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, globalAttr.CloudInitMeta, record, respCache, erringRecords)
 	if err != nil {
@@ -1416,7 +1416,7 @@ func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 }
 
 // Function containing the logic to register the host and retrieve the host ID
-func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool) (string, error) {
+func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool, amt bool) (string, error) {
 	// Register host
 	resp, err := hClient.HostServiceRegisterHostWithResponse(ctx, projectName,
 		infra.HostServiceRegisterHostJSONRequestBody{
@@ -1424,6 +1424,7 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 			SerialNumber: &sNo,
 			Uuid:         &uuid,
 			AutoOnboard:  &autonboard,
+			EnableVpro:   &amt,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return "", processError(err)
