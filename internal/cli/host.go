@@ -242,6 +242,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	currentOS := ""
 	osprofile := ""
 	customcfg := ""
+	provstatus := "Not Provisioned"
+	hostdetails := ""
 
 	//TODO Build out the host information
 	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
@@ -258,6 +260,14 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 
 	if *host.HostStatus != "" {
 		hoststatus = *host.HostStatus
+	}
+
+	if host.Instance != nil && *host.Instance.ProvisioningStatus != "" {
+		provstatus = *host.Instance.ProvisioningStatus
+	}
+
+	if host.Instance != nil && *host.Instance.InstanceStatusDetail != "" {
+		hostdetails = *host.Instance.InstanceStatusDetail
 	}
 
 	if host.Instance != nil && host.Instance.CustomConfig != nil {
@@ -277,6 +287,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 
 	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
+	_, _ = fmt.Fprintf(writer, "-\tHost Status Details:\t %s\n", hostdetails)
+	_, _ = fmt.Fprintf(writer, "-\tProvisioning Status:\t %s\n", provstatus)
 	_, _ = fmt.Fprintf(writer, "-\tUpdate Status:\t %s\n\n", updatestatus)
 
 	_, _ = fmt.Fprintf(writer, "Specification: \n\n")
@@ -306,7 +318,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
-		_, _ = fmt.Fprintf(writer, "AMT not active or not supported: No info available \n\n")
+		_, _ = fmt.Fprintf(writer, "AMT not active and/or not supported: No info available \n\n")
 	}
 
 }
