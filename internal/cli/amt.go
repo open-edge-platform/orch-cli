@@ -18,30 +18,27 @@ import (
 )
 
 const listAmtProfileExamples = `
-// # List all sites
-// orch-cli list site --project some-project
-
-// # List all sites within specific parent region ID
-// orch-cli list site --project some-project --region region-aaaa1111"
-`
-
-const getAmtProfileExamples = `
-// # Get specific site information
-// orch-cli get site site-aaaa1111 --project some-project
+# List all AMT domain profiles
+orch-cli list amtprofile --project some-project
 `
 
 const createAmtProfileExamples = `
-// # Create specific site
+# Create AMT domain profile information using it's name
+orch-cli create amtprofile name --project some-project --cert ./path/to/cert.pfx --cert-pass password --cert-format string --domain-suffix example.com
 
-// # Create a site in a region (default longitude and latitude set to 0)
-// orch-cli create site name --project some-project --region region-bbbb1111
+--cert - Mandatory path to PFX certificate: --cert ./path/to/cert.pfx
+--cert-pass - Mandatory password used ot decode the provided certificate: --cert-pass mypass
+--cert-format - Mandatory field defining how the cert is stored, accepted value "string" or "raw": --cert-format string
+--domain-suffix - Mandatory field defining the domain suffix for which the cert is created: --domain-suffix example.com
+`
 
-// # Create a site in a region (default longitude and latitude set to 0)
-// orch-cli create site name --project some-project --region region-bbbb1111 --longitude 5 --latitude 5
+const getAmtProfileExamples = `
+# Get an AMT domain profile
+orch-cli get  amtprofile name --project some-project
 `
 const deleteAmtProfileExamples = `
-// # Delete specific site
-// orch-cli delete site region-aaaa1111 --project some-project
+# Delete an AMT domain profile
+orch-cli delete amtprofile name --project some-project
 `
 
 func getListAmtProfileCommand() *cobra.Command {
@@ -143,8 +140,8 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 	if certpass == "" {
 		return errors.New("certificate passoword must be provided with --cert-pass flag ")
 	}
-	if certformat == "" {
-		return errors.New("certificate format must be provided with --cert-format flag ")
+	if certformat == "" || certformat != "string" && certformat != "raw" {
+		return errors.New("certificate format must be provided with --cert-format flag with accepted arguments `string|raw` ")
 	}
 	if domainsuffix == "" {
 		return errors.New("domain suffix format must be provided with --domain-suffix flag ")

@@ -97,6 +97,7 @@ orch-cli create host --project some-project --import-from-csv test.csv
 --cluster-template - name and version of the cluster template to be used for cluster cration (separated by :)
 --cluster-config - extra configuration for cluster creation empty defaults to "role:all", if not empty role must be defined, name and labels are optional (labels separated by &)
 --cloud-init - name or resource ID of custom config - multiple configs must be separated by &
+--amt - flag to enable AMT activation on Edge Node - accepted value true|false
 
 # Create hosts from CSV and override provided values
 /orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
