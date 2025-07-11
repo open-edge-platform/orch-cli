@@ -226,7 +226,7 @@ func extractYamlBlock(path string) (CloudInitSection, error) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "Custom cloud-init Config file") {
+		if strings.Contains(line, "Custom cloud-init Config file") {
 			startedYaml = true
 		}
 		if startedYaml {
