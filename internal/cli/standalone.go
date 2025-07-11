@@ -79,13 +79,11 @@ write_files:
   {{- end }}
 
 runcmd:
-{{- if gt (len .UserApps) 0 }}
+{{- if .WithUserApps }}
   - |
     mkdir -p /opt/user-apps
-{{- $nginx_fqdn := .NginxFQDN }}
-{{- range .UserApps }}
-    curl --noproxy '*' -k {{ $nginx_fqdn }}/tink-stack/user-apps/{{ . }} -o /opt/user-apps/{{ . }}
-{{- end }}
+    curl --noproxy '*' -k {{ .NginxFQDN }}/tink-stack/user-apps/user-apps.tar.gz -o /tmp/user-apps.tar.gz
+	tar -xzvf /tmp/user-apps.tar.gz -C /opt/user-apps
 {{- end }}
   - |
     grep -qF "http_proxy" /etc/environment || echo http_proxy={{ .http_proxy }} >> /etc/environment
@@ -166,12 +164,12 @@ func getConfigFileInput(cmd *cobra.Command) (string, error) {
 	return configFilePath, nil
 }
 
-func getUserAppsFlag(cmd *cobra.Command) (string, error) {
-	userAppsDirectory, err := cmd.Flags().GetString("user-apps")
+func getUserAppsFlag(cmd *cobra.Command) (bool, error) {
+	withUserApps, err := cmd.Flags().GetBool("user-apps")
 	if err != nil {
-		return "", err
+		return false, err
 	}
-	return userAppsDirectory, nil
+	return withUserApps, nil
 }
 
 func getNginxFQDNFromAPIEndpoint(cmd *cobra.Command) (string, error) {
@@ -256,7 +254,7 @@ func getPasswordFromUserInput(username string) (string, error) {
 	return string(bytePassword), nil
 }
 
-func loadConfig(path, userAppsDir, nginxFQDN string) (map[string]interface{}, error) {
+func loadConfig(path string, withUserApps bool, nginxFQDN string) (map[string]interface{}, error) {
 	config := make(map[string]interface{})
 	config["NginxFQDN"] = nginxFQDN
 
@@ -346,22 +344,7 @@ func loadConfig(path, userAppsDir, nginxFQDN string) (map[string]interface{}, er
 	config["K3sConfigureScript"] = k3sConfigureScript
 	config["K3sInstallerScript"] = k3sInstallerScript
 	config["K3sPostRebootScript"] = k3sPostRebootScript
-
-	userApps := make([]string, 0)
-	if userAppsDir != "" {
-		entries, err := os.ReadDir(userAppsDir)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, entry := range entries {
-			if !entry.IsDir() {
-				userApps = append(userApps, entry.Name())
-			}
-		}
-
-		config["UserApps"] = userApps
-	}
+	config["WithUserApps"] = withUserApps
 
 	return config, nil
 }
@@ -392,13 +375,13 @@ func runGenerateStandaloneConfigCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	userApps, err := getUserAppsFlag(cmd)
+	withUserApps, err := getUserAppsFlag(cmd)
 	if err != nil {
 		return err
 	}
 
 	nginxFQDN := ""
-	if userApps != "" {
+	if withUserApps {
 		nginxFQDN, err = getNginxFQDNFromAPIEndpoint(cmd)
 		if err != nil {
 			return err
@@ -408,7 +391,7 @@ func runGenerateStandaloneConfigCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	config, err := loadConfig(configFilePath, userApps, nginxFQDN)
+	config, err := loadConfig(configFilePath, withUserApps, nginxFQDN)
 	if err != nil {
 		return err
 	}
