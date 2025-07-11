@@ -82,7 +82,7 @@ runcmd:
 {{- if .WithUserApps }}
   - |
     mkdir -p /opt/user-apps
-    curl --noproxy '*' -k {{ .NginxFQDN }}/tink-stack/user-apps/user-apps.tar.gz -o /tmp/user-apps.tar.gz
+    curl --noproxy '*' -k {{ .NginxFQDN }}/tink-stack/user-apps.tar.gz -o /tmp/user-apps.tar.gz
     tar -xzvf /tmp/user-apps.tar.gz -C /opt/user-apps
 {{- end }}
   - |
