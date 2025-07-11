@@ -1658,9 +1658,9 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient *infra.Client
 func resolvePowerPolicy(power string) (infra.PowerCommandPolicy, error) {
 	switch power {
 	case "immediate":
-		return infra.PowerCommandPolicy(infra.POWERCOMMANDPOLICYIMMEDIATE), nil
+		return infra.POWERCOMMANDPOLICYIMMEDIATE, nil
 	case "ordered":
-		return infra.PowerCommandPolicy(infra.POWERCOMMANDPOLICYORDERED), nil
+		return infra.POWERCOMMANDPOLICYORDERED, nil
 	default:
 		return "", errors.New("incorrect power policy provided with --power-policy flag use one of immediate|ordered")
 	}
@@ -1669,17 +1669,17 @@ func resolvePowerPolicy(power string) (infra.PowerCommandPolicy, error) {
 func resolvePower(power string) (infra.PowerState, error) {
 	switch power {
 	case "on":
-		return infra.PowerState(infra.POWERSTATEON), nil
+		return infra.POWERSTATEON, nil
 	case "off":
-		return infra.PowerState(infra.POWERSTATEOFF), nil
+		return infra.POWERSTATEOFF, nil
 	case "cycle":
-		return infra.PowerState(infra.POWERSTATEPOWERCYCLE), nil
+		return infra.POWERSTATEPOWERCYCLE, nil
 	case "hibernate":
-		return infra.PowerState(infra.POWERSTATEHIBERNATE), nil
+		return infra.POWERSTATEHIBERNATE, nil
 	case "reset":
-		return infra.PowerState(infra.POWERSTATERESET), nil
+		return infra.POWERSTATERESET, nil
 	case "sleep":
-		return infra.PowerState(infra.POWERSTATESLEEP), nil
+		return infra.POWERSTATESLEEP, nil
 	default:
 		return "", errors.New("incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep")
 	}
