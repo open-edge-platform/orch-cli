@@ -1398,6 +1398,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
 			PowerCommandPolicy: policy,
 			DesiredPowerState:  power,
+			Name:               host.Name,
 		}, auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
