@@ -6,6 +6,7 @@ package validator
 import (
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -37,6 +38,8 @@ const SITEIDPATTERN = `^site-[0-9a-f]{8}$`
 // Pattern for Localaccount Id as defined in inventory/api/os/v1/localaccount.proto.
 const LAIDPATTERN = `^localaccount-[0-9a-f]{8}$`
 
+const CLSTRTMPLTPATTERN = `^[a-zA-Z0-9_\-\.]+:v\d+\.\d+\.\d+$`
+
 func SanitizeEntries(entries []types.HostRecord) ([]types.HostRecord, error) {
 	var failure error
 	sanitizedRecords := []types.HostRecord{}
@@ -46,6 +49,7 @@ func SanitizeEntries(entries []types.HostRecord) ([]types.HostRecord, error) {
 	snRe := regexp.MustCompile(SNPATTERN)
 	uRe := regexp.MustCompile(UPATTERN)
 	siteRe := regexp.MustCompile(SITEIDPATTERN)
+	ctempRe := regexp.MustCompile(CLSTRTMPLTPATTERN)
 
 	for i := 1; i <= len(entries); i++ {
 		record := entries[i-1]
@@ -97,6 +101,15 @@ func SanitizeEntries(entries []types.HostRecord) ([]types.HostRecord, error) {
 			errMsg = fmt.Sprintf("%s %s;", errMsg, e.NewCustomError(e.ErrSiteRequired).Error())
 		}
 
+		//Check if Cluster Template is valid
+
+		// check if uuid is valid
+		if record.K8sClusterTemplate != "" {
+			ctemp := strings.Trim(record.K8sClusterTemplate, TRIMSET)
+			errMsg = validateClusterTemplate(ctempRe, ctemp, errMsg)
+			sanitizedRecord.K8sClusterTemplate = ctemp
+		}
+
 		// if there are error messages, append at last
 		if errMsg != "" {
 			failure = e.NewCustomError(e.ErrCheckFailed)
@@ -119,6 +132,13 @@ func validateUUID(uRe *regexp.Regexp, uuid, errMsg string, mapUUID map[string]in
 	return errMsg
 }
 
+func validateClusterTemplate(ctempRe *regexp.Regexp, ctemp, errMsg string) string {
+	if matched := ctempRe.MatchString(ctemp); !matched {
+		errMsg = fmt.Sprintf("%s%s;", errMsg, e.NewCustomError(e.ErrInvalidClusterTemplate).Error())
+	}
+	return errMsg
+}
+
 func validateSN(snRe *regexp.Regexp, sn, errMsg string, mapSn map[string]int, i int) string {
 	if matched := snRe.MatchString(sn); !matched {
 		errMsg = fmt.Sprintf("%s;", e.NewCustomError(e.ErrInvalidSN).Error())
@@ -137,14 +157,28 @@ func validateSite(siteRe *regexp.Regexp, site, errMsg string) string {
 	return errMsg
 }
 
-// checkCSV checks the contents of the given CSV file & generates an error
-// if errors are found in the CSV.
-func CheckCSV(filename string) ([]types.HostRecord, error) {
+// checkCSV checks the contents of the given CSV file (or additional overides) & generates an error
+// if errors are found in the CSV (or in overides).
+func CheckCSV(filename string, globalOverrides types.HostRecord) ([]types.HostRecord, error) {
 	fmt.Printf("Checking CSV file: %s\n", filename)
 
 	content, err := files.ReadHostRecords(filename)
 	if err != nil {
 		return nil, err
+	}
+
+	//replace content with overrides if not empty
+	for i := range content {
+		recordValue := reflect.ValueOf(&content[i]).Elem()
+		overrideValue := reflect.ValueOf(globalOverrides)
+
+		for j := range recordValue.NumField() {
+			field := recordValue.Field(j)
+			overrideField := overrideValue.Field(j)
+			if overrideField.Kind() == reflect.String && overrideField.String() != "" {
+				field.SetString(overrideField.String())
+			}
+		}
 	}
 
 	validated, errVal := SanitizeEntries(content)

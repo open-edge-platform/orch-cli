@@ -18,7 +18,9 @@ type HostRecord struct {
 	Metadata           string
 	AMTEnable          string
 	CloudInitMeta      string
+	K8sEnable          string
 	K8sClusterTemplate string
+	K8sConfig          string
 	Error              string
 	RawRecord          string
 }
