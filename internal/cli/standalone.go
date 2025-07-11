@@ -21,10 +21,10 @@ import (
 )
 
 const (
-	CollectLogsScriptSource   = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/26f84c359e82026712836bfc7397889f9d83c98e/standalone-node/provisioning_scripts/collect-logs.sh"
-	K3sConfigureScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/26f84c359e82026712836bfc7397889f9d83c98e/standalone-node/provisioning_scripts/k3s-configure.sh"
-	K3sInstallerScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/26f84c359e82026712836bfc7397889f9d83c98e/standalone-node/cluster_installers/sen-k3s-installer.sh"
-	K3sPostRebootScriptSource = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/26f84c359e82026712836bfc7397889f9d83c98e/standalone-node/provisioning_scripts/k3s-setup-post-reboot.sh"
+	CollectLogsScriptSource   = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2/standalone-node/provisioning_scripts/collect-logs.sh"
+	K3sConfigureScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2/standalone-node/provisioning_scripts/k3s-configure.sh"
+	K3sInstallerScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2/standalone-node/cluster_installers/sen-k3s-installer.sh"
+	K3sPostRebootScriptSource = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2/standalone-node/provisioning_scripts/k3s-setup-post-reboot.sh"
 )
 
 var cloudInitTemplate = `
@@ -96,7 +96,7 @@ runcmd:
     source /etc/environment
     echo "source /etc/environment" >> /home/{{ .user_name }}/.bashrc
     echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> /home/{{ .user_name }}/.bashrc
-    echo "alias k='KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/bin/k3s kubectl'" >> /home/{{ .user_name }}/.bashrc
+    echo "alias k='KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/k3s kubectl'" >> /home/{{ .user_name }}/.bashrc
 {{- if eq .host_type "kubernetes" }}
 {{- if .huge_page_config }}
     echo .huge_page_config | tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
