@@ -83,7 +83,7 @@ runcmd:
   - |
     mkdir -p /opt/user-apps
     curl --noproxy '*' -k {{ .NginxFQDN }}/tink-stack/user-apps/user-apps.tar.gz -o /tmp/user-apps.tar.gz
-	tar -xzvf /tmp/user-apps.tar.gz -C /opt/user-apps
+    tar -xzvf /tmp/user-apps.tar.gz -C /opt/user-apps
 {{- end }}
   - |
     grep -qF "http_proxy" /etc/environment || echo http_proxy={{ .http_proxy }} >> /etc/environment
