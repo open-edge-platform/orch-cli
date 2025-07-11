@@ -141,7 +141,7 @@ func getStandaloneConfigCommand() *cobra.Command {
 	}
 	cmd.Flags().StringP("config-file", "c", "", "config-file with user inputs")
 	cmd.Flags().StringP("output-file", "o", "cloud-init.cfg", "Override output filename")
-	cmd.Flags().StringP("user-apps", "u", "", "Directory with user apps to pre-load")
+	cmd.Flags().BoolP("user-apps", "u", false, "Pre-load user apps")
 	return cmd
 }
 
