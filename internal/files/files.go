@@ -15,7 +15,7 @@ import (
 	"github.com/open-edge-platform/cli/internal/types"
 )
 
-const HEADER = "Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sClusterTemplate,Error - do not fill"
+const HEADER = "Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill"
 
 func CreateFile(filePath string) error {
 	// Check if the file already exists
@@ -94,7 +94,7 @@ func ReadHostRecords(filePath string) ([]types.HostRecord, error) {
 		}
 
 		// Ensure the record has at least 11 fields
-		for len(record) < 11 {
+		for len(record) < 13 {
 			record = append(record, "")
 		}
 
@@ -109,8 +109,10 @@ func ReadHostRecords(filePath string) ([]types.HostRecord, error) {
 			Metadata:           getField(record, 6),
 			AMTEnable:          getField(record, 7),
 			CloudInitMeta:      getField(record, 8),
-			K8sClusterTemplate: getField(record, 9),
-			Error:              getField(record, 10),
+			K8sEnable:          getField(record, 9),
+			K8sClusterTemplate: getField(record, 10),
+			K8sConfig:          getField(record, 11),
+			Error:              getField(record, 12),
 			RawRecord:          strings.Join(record, ","),
 		}
 
@@ -160,7 +162,9 @@ func WriteHostRecords(filePath string, records []types.HostRecord) error {
 			record.Metadata,
 			record.AMTEnable,
 			record.CloudInitMeta,
+			record.K8sEnable,
 			record.K8sClusterTemplate,
+			record.K8sConfig,
 			record.Error,
 		}
 
