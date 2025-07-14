@@ -38,6 +38,7 @@ const (
 	ErrOSSecurityMismatch
 	ErrOSProfileRequired
 	ErrSiteRequired
+	ErrInvalidClusterTemplate
 )
 
 var errorMessages = map[ErrorCode]string{
@@ -68,6 +69,7 @@ var errorMessages = map[ErrorCode]string{
 	ErrOSSecurityMismatch:     "OS Profile and Security feature mismatch",
 	ErrOSProfileRequired:      "OS Profile is required",
 	ErrSiteRequired:           "Site is required",
+	ErrInvalidClusterTemplate: "Invalid cluster template",
 }
 
 type CustomError struct {
