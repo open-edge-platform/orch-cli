@@ -22,22 +22,19 @@ orch-cli get osupdaterun runname --project some-project`
 const deleteOSUpdateRunExamples = `#Delete an OS Update Run  using it's name
 orch-cli delete osupdaterun run --project some-project`
 
-var OSUpdateRunHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Value", "Value")
-var OSUpdateRunGet = fmt.Sprintf("\n%s\t%s", "OS Run", "Value")
+var OSUpdateRunHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Status")
 
 // Prints OS Profiles in tabular format
 func printOSUpdateRuns(writer io.Writer, OSUpdateRuns []infra.OSUpdateRun, verbose bool) {
+	if verbose {
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%v\t%s\t%s\n", "Name", "Resource ID", "Status", "Applied Policy", "Start Time", "End Time")
+	}
+
 	for _, run := range OSUpdateRuns {
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status)
 		} else {
-			// _, _ = fmt.Fprintf(writer, "\nName:\t %s\n", *osp.Name)
-			// _, _ = fmt.Fprintf(writer, "Profile Name:\t %s\n", *osp.ProfileName)
-			// _, _ = fmt.Fprintf(writer, "Security Feature:\t %v\n", toJSON(osp.SecurityFeature))
-			// _, _ = fmt.Fprintf(writer, "Architecture:\t %s\n", *osp.Architecture)
-			// _, _ = fmt.Fprintf(writer, "Repository URL:\t %s\n", *osp.RepoUrl)
-			// _, _ = fmt.Fprintf(writer, "sha256:\t %v\n", osp.Sha256)
-			// _, _ = fmt.Fprintf(writer, "Kernel Command:\t %v\n", toJSON(osp.KernelCommand))
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status, *run.AppliedPolicy, *run.StartTime, *run.EndTime)
 		}
 	}
 }
@@ -45,67 +42,15 @@ func printOSUpdateRuns(writer io.Writer, OSUpdateRuns []infra.OSUpdateRun, verbo
 // Prints output details of OS Profiles
 func printOSUpdateRun(writer io.Writer, OSUpdateRun *infra.OSUpdateRun) {
 
-	// _, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSProfile.Name)
-	// _, _ = fmt.Fprintf(writer, "Profile Name: \t%s\n", *OSProfile.ProfileName)
-	// _, _ = fmt.Fprintf(writer, "OS Resource ID: \t%s\n", *OSProfile.OsResourceID)
-	// _, _ = fmt.Fprintf(writer, "version: \t%v\n", toJSON(OSProfile.ProfileVersion))
-	// _, _ = fmt.Fprintf(writer, "sha256: \t%v\n", OSProfile.Sha256)
-	// _, _ = fmt.Fprintf(writer, "Image ID: \t%s\n", *OSProfile.ImageId)
-	// _, _ = fmt.Fprintf(writer, "Image URL: \t%s\n", *OSProfile.ImageUrl)
-	// _, _ = fmt.Fprintf(writer, "Repository URL: \t%s\n", *OSProfile.RepoUrl)
-	// _, _ = fmt.Fprintf(writer, "Security Feature: \t%v\n", toJSON(OSProfile.SecurityFeature))
-	// _, _ = fmt.Fprintf(writer, "Architecture: \t%s\n", *OSProfile.Architecture)
-	// _, _ = fmt.Fprintf(writer, "OS type: \t%s\n", *OSProfile.OsType)
-	// _, _ = fmt.Fprintf(writer, "OS provider: \t%s\n", *OSProfile.OsProvider)
-	// _, _ = fmt.Fprintf(writer, "Platform Bundle: \t%s\n", *OSProfile.PlatformBundle)
-	// _, _ = fmt.Fprintf(writer, "Update Sources: \t%v\n", OSProfile.UpdateSources)
-	// _, _ = fmt.Fprintf(writer, "Installed Packages: \t%v\n", toJSON(OSProfile.InstalledPackages))
-	// _, _ = fmt.Fprintf(writer, "Created: \t%v\n", OSProfile.Timestamps.CreatedAt)
-	// _, _ = fmt.Fprintf(writer, "Updated: \t%v\n", OSProfile.Timestamps.UpdatedAt)
-
+	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSUpdateRun.Name)
+	_, _ = fmt.Fprintf(writer, "ResourceID: \t%s\n", *OSUpdateRun.ResourceId)
+	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", *OSUpdateRun.Status)
+	_, _ = fmt.Fprintf(writer, "Status Detail: \t%s\n", *OSUpdateRun.StatusDetails)
+	_, _ = fmt.Fprintf(writer, "Applied Policy: \t%v\n", *OSUpdateRun.AppliedPolicy)
+	_, _ = fmt.Fprintf(writer, "Description: \t%v\n", *OSUpdateRun.Description)
+	_, _ = fmt.Fprintf(writer, "Start Time: \t%s\n", *OSUpdateRun.StartTime)
+	_, _ = fmt.Fprintf(writer, "End Time: \t%s\n", *OSUpdateRun.StartTime)
 }
-
-// // Helper function to verify that the input file exists and is of right format
-// func verifyOSProfileInput(path string) error {
-
-// 	if _, err := os.Stat(path); os.IsNotExist(err) {
-// 		return fmt.Errorf("file does not exist: %s", path)
-// 	}
-
-// 	ext := strings.ToLower(filepath.Ext(path))
-// 	if ext != ".yaml" && ext != ".yml" {
-// 		return errors.New("os Profile input must be a yaml file")
-// 	}
-
-// 	return nil
-// }
-
-// // Helper function to unmarshal yaml file
-// func readOSProfileFromYaml(path string) (*NestedSpec, error) {
-
-// 	var input NestedSpec
-// 	data, err := os.ReadFile(path)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	err = yaml.Unmarshal(data, &input)
-// 	if err != nil {
-// 		log.Fatalf("error unmarshalling YAML: %v", err)
-// 	}
-
-// 	return &input, nil
-// }
-
-// // Filters list of profiles to find one with specific name
-// func filterProfilesByName(OSProfiles []infra.OperatingSystemResource, name string) (*infra.OperatingSystemResource, error) {
-// 	for _, profile := range OSProfiles {
-// 		if *profile.Name == name {
-// 			return &profile, nil
-// 		}
-// 	}
-// 	return nil, errors.New("no os profile matches the given name")
-// }
 
 func getGetOSUpdateRunCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -192,9 +137,8 @@ func runListOSUpdateRunCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	printOSUpdateRuns(writer, resp.JSON200.OsUpdateRuns, verbose)
+	return writer.Flush()
 
-	// return writer.Flush()
-	return nil
 }
 
 // Deletes OS Update Run - checks if a run  already exists and then deletes it if it does

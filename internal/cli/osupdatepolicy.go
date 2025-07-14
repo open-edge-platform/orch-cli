@@ -4,13 +4,18 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 const listOSUpdatePolicyExamples = `# List all OS Update Policies
@@ -21,27 +26,51 @@ const getOSUpdatePolicyExamples = `# Get detailed information about specific OS 
 orch-cli get osupdatepolicy policyname --project some-project`
 
 const createOSUpdatePolicyExamples = `# Create an OS Update Policy.
-orch-cli create osupdatepolicy   --project some-project`
+orch-cli create osupdatepolicy path/to/osupdatepolicy.yaml  --project some-project
+
+Sample OS update policy file format
+appVersion: apps/v1
+spec:
+  name: myupdate
+  description: "an update profile"
+  installPackages: "wget\nsl"
+  kernelCommand: "hugepages=2"
+  targetOs: "OS profile name"
+  updateSources:
+    - "source1"
+    - "source2"
+  updatePolicy: "UPDATE_POLICY_LATEST"
+`
 
 const deleteOSUpdatePolicyExamples = `#Delete an OS Update Policy  using it's name
 orch-cli delete osupdatepolicy policy --project some-project`
 
-var OSUpdatePolicyHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Value", "Value")
-var OSUpdatePolicyGet = fmt.Sprintf("\n%s\t%s", "OS Policy", "Value")
+var OSUpdatePolicyHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Description")
+
+type OSUpdatePolicy struct {
+	Name            string   `yaml:"name"`
+	Description     string   `yaml:"description"`
+	InstallPackages string   `yaml:"installPackages"`
+	KernelCommand   string   `yaml:"kernelCommand"`
+	TargetOS        string   `yaml:"targetOs"`
+	UpdateSources   []string `yaml:"updateSources"`
+	UpdatePolicy    string   `yaml:"updatePolicy"`
+}
+
+type UpdateNestedSpec struct {
+	Spec OSUpdatePolicy `yaml:"spec"`
+}
 
 // Prints OS Profiles in tabular format
 func printOSUpdatePolicies(writer io.Writer, OSUpdatePolicies []infra.OSUpdatePolicy, verbose bool) {
+	if verbose {
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s", "Name", "Resource ID", "Target OS ID", "Description", "Created", "Updated")
+	}
 	for _, osup := range OSUpdatePolicies {
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", osup.Name, *osup.ResourceId, *osup.Description)
 		} else {
-			// _, _ = fmt.Fprintf(writer, "\nName:\t %s\n", *osp.Name)
-			// _, _ = fmt.Fprintf(writer, "Profile Name:\t %s\n", *osp.ProfileName)
-			// _, _ = fmt.Fprintf(writer, "Security Feature:\t %v\n", toJSON(osp.SecurityFeature))
-			// _, _ = fmt.Fprintf(writer, "Architecture:\t %s\n", *osp.Architecture)
-			// _, _ = fmt.Fprintf(writer, "Repository URL:\t %s\n", *osp.RepoUrl)
-			// _, _ = fmt.Fprintf(writer, "sha256:\t %v\n", osp.Sha256)
-			// _, _ = fmt.Fprintf(writer, "Kernel Command:\t %v\n", toJSON(osp.KernelCommand))
+			fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s", osup.Name, *osup.ResourceId, *osup.TargetOsId, *osup.Description, *osup.Timestamps.CreatedAt, *osup.Timestamps.UpdatedAt)
 		}
 	}
 }
@@ -49,67 +78,48 @@ func printOSUpdatePolicies(writer io.Writer, OSUpdatePolicies []infra.OSUpdatePo
 // Prints output details of OS Profiles
 func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy) {
 
-	// _, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSProfile.Name)
-	// _, _ = fmt.Fprintf(writer, "Profile Name: \t%s\n", *OSProfile.ProfileName)
-	// _, _ = fmt.Fprintf(writer, "OS Resource ID: \t%s\n", *OSProfile.OsResourceID)
-	// _, _ = fmt.Fprintf(writer, "version: \t%v\n", toJSON(OSProfile.ProfileVersion))
-	// _, _ = fmt.Fprintf(writer, "sha256: \t%v\n", OSProfile.Sha256)
-	// _, _ = fmt.Fprintf(writer, "Image ID: \t%s\n", *OSProfile.ImageId)
-	// _, _ = fmt.Fprintf(writer, "Image URL: \t%s\n", *OSProfile.ImageUrl)
-	// _, _ = fmt.Fprintf(writer, "Repository URL: \t%s\n", *OSProfile.RepoUrl)
-	// _, _ = fmt.Fprintf(writer, "Security Feature: \t%v\n", toJSON(OSProfile.SecurityFeature))
-	// _, _ = fmt.Fprintf(writer, "Architecture: \t%s\n", *OSProfile.Architecture)
-	// _, _ = fmt.Fprintf(writer, "OS type: \t%s\n", *OSProfile.OsType)
-	// _, _ = fmt.Fprintf(writer, "OS provider: \t%s\n", *OSProfile.OsProvider)
-	// _, _ = fmt.Fprintf(writer, "Platform Bundle: \t%s\n", *OSProfile.PlatformBundle)
-	// _, _ = fmt.Fprintf(writer, "Update Sources: \t%v\n", OSProfile.UpdateSources)
-	// _, _ = fmt.Fprintf(writer, "Installed Packages: \t%v\n", toJSON(OSProfile.InstalledPackages))
-	// _, _ = fmt.Fprintf(writer, "Created: \t%v\n", OSProfile.Timestamps.CreatedAt)
-	// _, _ = fmt.Fprintf(writer, "Updated: \t%v\n", OSProfile.Timestamps.UpdatedAt)
+	_, _ = fmt.Fprintf(writer, "\nName:\t %s\n", OSUpdatePolicy.Name)
+	_, _ = fmt.Fprintf(writer, "Resource ID:\t %s\n", *OSUpdatePolicy.ResourceId)
+	_, _ = fmt.Fprintf(writer, "Target OS ID:\t %s\n", *OSUpdatePolicy.TargetOsId)
+	_, _ = fmt.Fprintf(writer, "Description:\t %v\n", *OSUpdatePolicy.Description)
+	_, _ = fmt.Fprintf(writer, "Install Packages:\t %s\n", *OSUpdatePolicy.InstallPackages)
+	_, _ = fmt.Fprintf(writer, "Update Policy:\t %s\n", *OSUpdatePolicy.UpdatePolicy)
+	_, _ = fmt.Fprintf(writer, "Create at:\t %v\n", *OSUpdatePolicy.Timestamps.CreatedAt)
+	_, _ = fmt.Fprintf(writer, "Updated at:\t %v\n", *OSUpdatePolicy.Timestamps.CreatedAt)
 
 }
 
-// // Helper function to verify that the input file exists and is of right format
-// func verifyOSProfileInput(path string) error {
+// Helper function to verify that the input file exists and is of right format
+func verifyUpdateProfileInput(path string) error {
 
-// 	if _, err := os.Stat(path); os.IsNotExist(err) {
-// 		return fmt.Errorf("file does not exist: %s", path)
-// 	}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return fmt.Errorf("file does not exist: %s", path)
+	}
 
-// 	ext := strings.ToLower(filepath.Ext(path))
-// 	if ext != ".yaml" && ext != ".yml" {
-// 		return errors.New("os Profile input must be a yaml file")
-// 	}
+	ext := strings.ToLower(filepath.Ext(path))
+	if ext != ".yaml" && ext != ".yml" {
+		return errors.New("update profile input must be a yaml file")
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
-// // Helper function to unmarshal yaml file
-// func readOSProfileFromYaml(path string) (*NestedSpec, error) {
+// Helper function to unmarshal yaml file
+func readUpdateProfileFromYaml(path string) (*UpdateNestedSpec, error) {
 
-// 	var input NestedSpec
-// 	data, err := os.ReadFile(path)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	var input UpdateNestedSpec
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
 
-// 	err = yaml.Unmarshal(data, &input)
-// 	if err != nil {
-// 		log.Fatalf("error unmarshalling YAML: %v", err)
-// 	}
+	err = yaml.Unmarshal(data, &input)
+	if err != nil {
+		log.Fatalf("error unmarshalling YAML: %v", err)
+	}
 
-// 	return &input, nil
-// }
-
-// // Filters list of profiles to find one with specific name
-// func filterProfilesByName(OSProfiles []infra.OperatingSystemResource, name string) (*infra.OperatingSystemResource, error) {
-// 	for _, profile := range OSProfiles {
-// 		if *profile.Name == name {
-// 			return &profile, nil
-// 		}
-// 	}
-// 	return nil, errors.New("no os profile matches the given name")
-// }
+	return &input, nil
+}
 
 func getGetOSUpdatePolicyCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -173,7 +183,7 @@ func runGetOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		OSProfileHeaderGet, "error getting OS Update Policy"); !proceed {
+		"", "error getting OS Update Policy"); !proceed {
 		return err
 	}
 
@@ -214,38 +224,57 @@ func runListOSUpdatePolicyCommand(cmd *cobra.Command, _ []string) error {
 // Creates OS Update Policy - checks if a OS Update Policy already exists and then creates it if it does not
 func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	path := args[0]
+	writer, verbose := getOutputContext(cmd)
 
-	// err := verifyOSProfileInput(path)
-	// if err != nil {
-	// 	return err
-	// }
+	err := verifyUpdateProfileInput(path)
+	if err != nil {
+		return err
+	}
 
-	// spec, err := readOSProfileFromYaml(path)
-	// if err != nil {
-	// 	return err
-	// }
-
-	//TODO remove hardcoded and read from yaml
-	name := "profile"
-	desc := "A description"
-	installpackages := "package1"
-	kcmdline := "hugepages=1"
-	targetOSID := "ragetid"
-	var updatesrc []string
+	spec, err := readUpdateProfileFromYaml(path)
+	if err != nil {
+		return err
+	}
 
 	ctx, OSUPolicyClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
+	var profile *infra.OperatingSystemResource
+	var updpol infra.UpdatePolicy
+	if spec.Spec.TargetOS != "" {
+		//check if target OS exists
+		oresp, err := OSUPolicyClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+			&infra.OperatingSystemServiceListOperatingSystemsParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		if proceed, err := processResponse(oresp.HTTPResponse, oresp.Body, writer, verbose,
+			OSProfileHeaderGet, "error getting OS Profile"); !proceed {
+			return err
+		}
+
+		name := spec.Spec.TargetOS
+		profile, err = filterProfilesByName(oresp.JSON200.OperatingSystemResources, name)
+		if err != nil {
+			return err
+		}
+	}
+	if spec.Spec.UpdatePolicy != "" {
+		updpol = infra.UpdatePolicy(spec.Spec.UpdatePolicy)
+	}
+	//Create policy
 	resp, err := OSUPolicyClient.OSUpdatePolicyCreateOSUpdatePolicyWithResponse(ctx, projectName,
 		infra.OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody{
-			Name:            name,
-			Description:     &desc,
-			InstallPackages: &installpackages,
-			KernelCommand:   &kcmdline,
-			TargetOsId:      &targetOSID,
-			UpdateSources:   &updatesrc,
+			Name:            spec.Spec.Name,
+			Description:     &spec.Spec.Description,
+			InstallPackages: &spec.Spec.InstallPackages,
+			KernelCommand:   &spec.Spec.KernelCommand,
+			TargetOs:        profile,
+			UpdateSources:   &spec.Spec.UpdateSources,
+			UpdatePolicy:    &updpol,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
