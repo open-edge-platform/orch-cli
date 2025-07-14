@@ -32,11 +32,7 @@ var (
 var cloudInitTemplate = `
 #cloud-config
 
-merge_how:
-  - name: list
-    settings: [ append ]
-  - name: dict
-    settings: [ no_replace, recurse_list ]
+merge_how: 'dict(recurse_array,no_replace)+list(append)'
 
 # NTP Time Sync Configuration
 ntp:
