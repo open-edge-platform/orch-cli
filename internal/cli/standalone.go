@@ -20,11 +20,13 @@ import (
 	"text/template"
 )
 
-const (
-	CollectLogsScriptSource   = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2/standalone-node/provisioning_scripts/collect-logs.sh"
-	K3sConfigureScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2/standalone-node/provisioning_scripts/k3s-configure.sh"
-	K3sInstallerScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2/standalone-node/cluster_installers/sen-k3s-installer.sh"
-	K3sPostRebootScriptSource = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2/standalone-node/provisioning_scripts/k3s-setup-post-reboot.sh"
+const defaultEmtsRepoCommitID = "a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2"
+
+var (
+	CollectLogsScriptSource   = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/collect-logs.sh"
+	K3sConfigureScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/k3s-configure.sh"
+	K3sInstallerScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/cluster_installers/sen-k3s-installer.sh"
+	K3sPostRebootScriptSource = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/k3s-setup-post-reboot.sh"
 )
 
 var cloudInitTemplate = `
@@ -131,17 +133,31 @@ type WriteFile struct {
 	Content     string `yaml:"content"`
 }
 
+const commandHelp = `# Generate cloud-init config for EMT-Standalone nodes (config-file must be populated before)
+orch-cli generate standalone-config -c config-file 
+
+# Generate cloud-init config for EMT-Standalone nodes, specify output file
+orch-cli generate standalone-config -c config-file -o /tmp/cloud-init.cfg
+
+# Generate cloud-init config for EMT-Standalone nodes with user apps (--api-endpoint is mandatory if user apps are enabled)
+orch-cli generate standalone-config -c config-file --user-apps=true --api-endpoint https://api.cluster.onprem
+
+# Generate cloud-init config for EMT-Standalone nodes in sync with a specific EMT-S repository commit ID
+orch-cli generate standalone-config -c config-file --emts-repo-version <commit-ID>
+`
+
 func getStandaloneConfigCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "standalone-config",
 		Short:   "Generate custom config for standalone nodes",
 		Args:    cobra.ExactArgs(0),
 		RunE:    runGenerateStandaloneConfigCommand,
-		Example: "orch-cli generate standalone-config",
+		Example: commandHelp,
 	}
 	cmd.Flags().StringP("config-file", "c", "", "config-file with user inputs")
 	cmd.Flags().StringP("output-file", "o", "cloud-init.cfg", "Override output filename")
 	cmd.Flags().BoolP("user-apps", "u", false, "Pre-load user apps")
+	cmd.Flags().StringP("emts-repo-version", "", defaultEmtsRepoCommitID, "Commit ID of EMT-S repository to sync with")
 	return cmd
 }
 
@@ -151,6 +167,14 @@ func getOutFile(cmd *cobra.Command) (string, error) {
 		return "", err
 	}
 	return outPath, nil
+}
+
+func getEMTSRepoID(cmd *cobra.Command) (string, error) {
+	repoID, err := cmd.Flags().GetString("emts-repo-version")
+	if err != nil {
+		return "", err
+	}
+	return repoID, nil
 }
 
 func getConfigFileInput(cmd *cobra.Command) (string, error) {
@@ -195,6 +219,7 @@ func hashPassword(password string) (string, error) {
 }
 
 func downloadFileFromURL(url string) (string, error) {
+	//nolint:gosec //
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", fmt.Errorf("failed to download: %w", err)
@@ -254,7 +279,7 @@ func getPasswordFromUserInput(username string) (string, error) {
 	return string(bytePassword), nil
 }
 
-func loadConfig(path string, withUserApps bool, nginxFQDN string) (map[string]interface{}, error) {
+func loadConfig(path string, withUserApps bool, nginxFQDN, emtsRepoID string) (map[string]interface{}, error) {
 	config := make(map[string]interface{})
 	config["NginxFQDN"] = nginxFQDN
 
@@ -320,22 +345,27 @@ func loadConfig(path string, withUserApps bool, nginxFQDN string) (map[string]in
 
 	config["passwd"] = hashed
 
-	collectLogsScript, err := downloadFileFromURL(CollectLogsScriptSource)
+	CollectLogsScriptSourceURL := fmt.Sprintf(CollectLogsScriptSource, emtsRepoID)
+	K3sConfigureScriptSourceURL := fmt.Sprintf(K3sConfigureScriptSource, emtsRepoID)
+	K3sInstallerScriptSourceURL := fmt.Sprintf(K3sInstallerScriptSource, emtsRepoID)
+	K3sPostRebootScriptSourceURL := fmt.Sprintf(K3sPostRebootScriptSource, emtsRepoID)
+
+	collectLogsScript, err := downloadFileFromURL(CollectLogsScriptSourceURL)
 	if err != nil {
 		return nil, err
 	}
 
-	k3sConfigureScript, err := downloadFileFromURL(K3sConfigureScriptSource)
+	k3sConfigureScript, err := downloadFileFromURL(K3sConfigureScriptSourceURL)
 	if err != nil {
 		return nil, err
 	}
 
-	k3sInstallerScript, err := downloadFileFromURL(K3sInstallerScriptSource)
+	k3sInstallerScript, err := downloadFileFromURL(K3sInstallerScriptSourceURL)
 	if err != nil {
 		return nil, err
 	}
 
-	k3sPostRebootScript, err := downloadFileFromURL(K3sPostRebootScriptSource)
+	k3sPostRebootScript, err := downloadFileFromURL(K3sPostRebootScriptSourceURL)
 	if err != nil {
 		return nil, err
 	}
@@ -375,6 +405,11 @@ func runGenerateStandaloneConfigCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	emtsRepoID, err := getEMTSRepoID(cmd)
+	if err != nil {
+		return err
+	}
+
 	withUserApps, err := getUserAppsFlag(cmd)
 	if err != nil {
 		return err
@@ -391,7 +426,7 @@ func runGenerateStandaloneConfigCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	config, err := loadConfig(configFilePath, withUserApps, nginxFQDN)
+	config, err := loadConfig(configFilePath, withUserApps, nginxFQDN, emtsRepoID)
 	if err != nil {
 		return err
 	}
