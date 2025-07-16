@@ -257,41 +257,60 @@ func (s *CLITestSuite) SetupSuite() {
 		// Helper function for string pointers
 		stringPtr := func(s string) *string { return &s }
 
+		// Get the project name from the command flags
+		projectName, err := cmd.Flags().GetString("project")
+		if err != nil || projectName == "" {
+			projectName = "test-project" // Default fallback
+		}
+
 		// Mock ListOperatingSystems (used by list, get, create, delete commands)
 		mockInfraClient.EXPECT().OperatingSystemServiceListOperatingSystemsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.OperatingSystemServiceListOperatingSystemsParams, reqEditors ...infra.RequestEditorFn) (*infra.OperatingSystemServiceListOperatingSystemsResponse, error) {
-				resp := &infra.OperatingSystemServiceListOperatingSystemsResponse{
-					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &infra.ListOperatingSystemsResponse{
-						OperatingSystemResources: []infra.OperatingSystemResource{
-							{
-								Name:              stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
-								Architecture:      stringPtr("x86_64"),
-								SecurityFeature:   (*infra.SecurityFeature)(stringPtr("SECURITY_FEATURE_NONE")),
-								ProfileName:       stringPtr("microvisor-nonrt"),
-								RepoUrl:           stringPtr("files-edge-orch/repository/microvisor/non_rt/"),
-								OsResourceID:      stringPtr("test-os-resource-id"),
-								ImageId:           stringPtr("3.0.20250504"),
-								ImageUrl:          stringPtr("files-edge-orch/repository/microvisor/non_rt/artifact.raw.gz"),
-								OsType:            (*infra.OsType)(stringPtr("OPERATING_SYSTEM_TYPE_IMMUTABLE")),
-								OsProvider:        (*infra.OsProviderKind)(stringPtr("OPERATING_SYSTEM_PROVIDER_INFRA")),
-								PlatformBundle:    stringPtr(""),
-								Sha256:            "abc123def456",
-								ProfileVersion:    stringPtr("3.0.20250504"),
-								KernelCommand:     stringPtr("console=ttyS0, root=/dev/sda1"),
-								UpdateSources:     &[]string{"https://updates.example.com"},
-								InstalledPackages: stringPtr("wget\ncurl\nvim"),
-								Timestamps: &infra.Timestamps{
-									CreatedAt: timestampPtr(timestamp),
-									UpdatedAt: timestampPtr(timestamp),
+				switch projectName {
+				case "nonexistent-project":
+					return &infra.OperatingSystemServiceListOperatingSystemsResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.OperatingSystemServiceListOperatingSystemsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListOperatingSystemsResponse{
+							OperatingSystemResources: []infra.OperatingSystemResource{
+								{
+									Name:              stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+									Architecture:      stringPtr("x86_64"),
+									SecurityFeature:   (*infra.SecurityFeature)(stringPtr("SECURITY_FEATURE_NONE")),
+									ProfileName:       stringPtr("microvisor-nonrt"),
+									RepoUrl:           stringPtr("files-edge-orch/repository/microvisor/non_rt/"),
+									OsResourceID:      stringPtr("test-os-resource-id"),
+									ImageId:           stringPtr("3.0.20250504"),
+									ImageUrl:          stringPtr("files-edge-orch/repository/microvisor/non_rt/artifact.raw.gz"),
+									OsType:            (*infra.OsType)(stringPtr("OPERATING_SYSTEM_TYPE_IMMUTABLE")),
+									OsProvider:        (*infra.OsProviderKind)(stringPtr("OPERATING_SYSTEM_PROVIDER_INFRA")),
+									PlatformBundle:    stringPtr(""),
+									Sha256:            "abc123def456",
+									ProfileVersion:    stringPtr("3.0.20250504"),
+									KernelCommand:     stringPtr("console=ttyS0, root=/dev/sda1"),
+									UpdateSources:     &[]string{"https://updates.example.com"},
+									InstalledPackages: stringPtr("wget\ncurl\nvim"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
 								},
 							},
 						},
-					},
+					}, nil
 				}
-				return resp, nil
 			},
 		).AnyTimes()
 
@@ -300,29 +319,43 @@ func (s *CLITestSuite) SetupSuite() {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, body infra.OperatingSystemServiceCreateOperatingSystemJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.OperatingSystemServiceCreateOperatingSystemResponse, error) {
-				resp := &infra.OperatingSystemServiceCreateOperatingSystemResponse{
-					HTTPResponse: &http.Response{StatusCode: 200, Status: "Created"},
-					JSON200: &infra.OperatingSystemResource{
-						Name:            body.Name,
-						Architecture:    body.Architecture,
-						SecurityFeature: body.SecurityFeature,
-						ProfileName:     body.ProfileName,
-						RepoUrl:         body.RepoUrl,
-						OsResourceID:    stringPtr("test-os-resource-id-new"),
-						ImageId:         body.ImageId,
-						ImageUrl:        body.ImageUrl,
-						OsType:          body.OsType,
-						OsProvider:      body.OsProvider,
-						PlatformBundle:  stringPtr(""),
-						Sha256:          body.Sha256,
-						ProfileVersion:  stringPtr("1.0.0"),
-						Timestamps: &infra.Timestamps{
-							CreatedAt: timestampPtr(timestamp),
-							UpdatedAt: timestampPtr(timestamp),
+				switch projectName {
+				case "invalid-project":
+					return &infra.OperatingSystemServiceCreateOperatingSystemResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
 						},
-					},
+					}, nil
+
+				default:
+					return &infra.OperatingSystemServiceCreateOperatingSystemResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "Created"},
+						JSON200: &infra.OperatingSystemResource{
+							Name:            body.Name,
+							Architecture:    body.Architecture,
+							SecurityFeature: body.SecurityFeature,
+							ProfileName:     body.ProfileName,
+							RepoUrl:         body.RepoUrl,
+							OsResourceID:    stringPtr("test-os-resource-id-new"),
+							ImageId:         body.ImageId,
+							ImageUrl:        body.ImageUrl,
+							OsType:          body.OsType,
+							OsProvider:      body.OsProvider,
+							PlatformBundle:  stringPtr(""),
+							Sha256:          body.Sha256,
+							ProfileVersion:  stringPtr("1.0.0"),
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
 				}
-				return resp, nil
 			},
 		).AnyTimes()
 
@@ -331,10 +364,23 @@ func (s *CLITestSuite) SetupSuite() {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, osResourceId string, reqEditors ...infra.RequestEditorFn) (*infra.OperatingSystemServiceDeleteOperatingSystemResponse, error) {
-				resp := &infra.OperatingSystemServiceDeleteOperatingSystemResponse{
-					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+				switch projectName {
+				case "invalid-project":
+					return &infra.OperatingSystemServiceDeleteOperatingSystemResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.OperatingSystemServiceDeleteOperatingSystemResponse{
+						HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+					}, nil
 				}
-				return resp, nil
 			},
 		).AnyTimes()
 
@@ -345,7 +391,6 @@ func (s *CLITestSuite) SetupSuite() {
 		// etc.
 
 		ctx := context.Background()
-		projectName := "test-project"
 		return ctx, mockInfraClient, projectName, nil
 	}
 }

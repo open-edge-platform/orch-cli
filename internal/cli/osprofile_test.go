@@ -62,10 +62,20 @@ func (s *CLITestSuite) TestOSProfile() {
 	_, err = s.createOSProfile(project, path, OSPArgs)
 	s.EqualError(err, "os Profile input must be a yaml file")
 
-	//Invalid endpoint
+	//Invalid endpoint (fail at list)
 	path = "./testdata/osprofile.yaml"
 	_, err = s.createOSProfile("nonexistent-project", path, OSPArgs)
-	s.EqualError(err, "os Profile input must be a yaml file")
+	s.EqualError(err, "Error getting OS profiles: Internal Server Error")
+
+	//Invalid endpoint (fail at get)
+	path = "./testdata/osprofile.yaml"
+	_, err = s.createOSProfile("invalid-project", path, OSPArgs)
+	s.EqualError(err, "error while creating OS Profile from ./testdata/osprofile.yaml: Internal Server Error")
+
+	//Duplicate name
+	path = "./testdata/osprofilenameduplicate.yaml"
+	_, err = s.createOSProfile(project, path, OSPArgs)
+	s.EqualError(err, "OS Profile Edge Microvisor Toolkit 3.0.20250504 already exists")
 
 	// Test Listing OSProfiles
 	OSPArgs["filter"] = "osType=OS_TYPE_IMMUTABLE"
@@ -114,10 +124,14 @@ func (s *CLITestSuite) TestOSProfile() {
 	// fmt.Printf("=== END DEBUG ===\n")
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
+	_, err = s.listOSProfile("nonexistent-project", OSPArgs)
+	s.EqualError(err, "error getting OS Profiles:[Internal Server Error]")
 
 	// Test Getting OSProfile
 
 	OSPArgs = map[string]string{}
+
+	//Get os profile
 	getOutput, err := s.getOSProfile(project, name, OSPArgs)
 	s.NoError(err)
 
@@ -143,15 +157,30 @@ func (s *CLITestSuite) TestOSProfile() {
 		"Updated":            expectedTimestamp,
 	}
 
+	//Get invalid os profile
 	_, err = s.getOSProfile(project, "random", OSPArgs)
 	s.EqualError(err, "no os profile matches the given name")
 
+	//Server error sim
+	_, err = s.getOSProfile("nonexistent-project", name, OSPArgs)
+	s.EqualError(err, "error getting OS Profile:[Internal Server Error]")
+
 	//Test deleting OSProfile
 
+	//Delete profile
 	s.compareGetOutput(expectedOutput, parsedOutput)
 	_, err = s.deleteOSProfile(project, name, OSPArgs)
 	s.NoError(err)
 
+	//Non existing profile deletion
 	_, err = s.deleteOSProfile(project, "random", OSPArgs)
 	s.EqualError(err, "no os profile matches the given name")
+
+	//Server error sim
+	_, err = s.deleteOSProfile("invalid-project", name, OSPArgs)
+	s.EqualError(err, "error deleting OS profile Edge Microvisor Toolkit 3.0.20250504: Internal Server Error")
+
+	//Server error sim list
+	_, err = s.deleteOSProfile("nonexistent-project", name, OSPArgs)
+	s.EqualError(err, "Error getting OS profiles: Internal Server Error")
 }
