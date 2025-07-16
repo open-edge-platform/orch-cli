@@ -27,6 +27,14 @@ import (
 
 const timeLayout = "2006-01-02T15:04:05"
 
+var CatalogFactory = func(cmd *cobra.Command) (context.Context, catapi.ClientWithResponsesInterface, string, error) {
+	return getCatalogServiceContext(cmd)
+}
+
+var InfraFactory = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
+	return getInfraServiceContext(cmd)
+}
+
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	debugHeadersValue, _ := cmd.Flags().GetBool(debugHeaders)
