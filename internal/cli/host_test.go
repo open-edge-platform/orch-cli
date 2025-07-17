@@ -134,11 +134,26 @@ func (s *CLITestSuite) TestHost() {
 	}
 
 	s.compareListOutput(expectedOutputList, parsedOutputList)
-	fmt.Println("List host completed successfully.")
 
 	// Test list hosts with invalid project
 	_, err = s.listHost("nonexistent-project", make(map[string]string))
 	s.Error(err)
+
+	// Test list hosts functionality with site filter
+	HostArgs = map[string]string{
+		"site":   "site-7ceae560",
+		"region": "region-abcd1234",
+	}
+	_, err = s.listHost(project, HostArgs)
+	s.NoError(err)
+
+	// Test list hosts functionality with region filters
+	// Host creation with duplicate host scenario
+	HostArgs = map[string]string{
+		"region": "region-abcd1234",
+	}
+	_, err = s.listHost(project, HostArgs)
+	s.NoError(err)
 
 	// Test get specific host
 	hostID := resourceID
@@ -199,7 +214,7 @@ func (s *CLITestSuite) TestHost() {
 
 	// Test get host with non-existent instance
 	_, err = s.getHost("invalid-instance", hostID, make(map[string]string))
-	s.NoError(err, "error getting Host")
+	s.EqualError(err, "error getting instance of a host:[Internal Server Error]")
 
 	// Test deauthorize host
 	_, err = s.deauthorizeHost(project, hostID, make(map[string]string))

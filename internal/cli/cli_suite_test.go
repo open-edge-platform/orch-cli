@@ -587,6 +587,7 @@ func (s *CLITestSuite) SetupSuite() {
 								SiteId:                      stringPtr("site-abc123"),
 								Instance: &infra.InstanceResource{
 									ResourceId: stringPtr("instance-abcd1234"),
+									InstanceID: stringPtr("instance-abcd1234"),
 								},
 								Timestamps: &infra.Timestamps{
 									CreatedAt: timestampPtr(timestamp),
@@ -903,9 +904,9 @@ func (s *CLITestSuite) SetupSuite() {
 
 		// Mock ListSites (used by list, get, create, delete commands)
 		mockInfraClient.EXPECT().SiteServiceListSitesWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, params *infra.SiteServiceListSitesParams, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceListSitesResponse, error) {
+			func(ctx context.Context, projectName, resourceId string, params *infra.SiteServiceListSitesParams, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceListSitesResponse, error) {
 				switch projectName {
 				case "nonexistent-project":
 					return &infra.SiteServiceListSitesResponse{
