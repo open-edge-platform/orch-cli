@@ -425,6 +425,37 @@ func (s *CLITestSuite) SetupSuite() {
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
 									},
+									Instance: &infra.InstanceResource{
+										ResourceId: stringPtr("instance-abcd1234"),
+										Name:       stringPtr("edge-instance-001"),
+										HostID:     stringPtr("host-abc12345"),
+										InstanceID: stringPtr("instance-abcd1234"),
+										WorkloadMembers: &[]infra.WorkloadMember{
+											{
+												ResourceId:       stringPtr("workload-abcd1234"),
+												WorkloadId:       stringPtr("workload-abcd1234"),
+												InstanceId:       stringPtr("instance-abc12345"),
+												WorkloadMemberId: stringPtr("workload-abcd1234"),
+												Kind:             infra.WORKLOADMEMBERKINDCLUSTERNODE,
+												Workload: &infra.WorkloadResource{
+													ResourceId: stringPtr("workload-abcd1234"),
+													WorkloadId: stringPtr("workload-abcd1234"),
+													Name:       stringPtr("Edge Kubernetes Cluster"),
+													Kind:       infra.WORKLOADKINDCLUSTER,
+													Status:     stringPtr("Running"),
+													ExternalId: stringPtr("k8s-cluster-east-001"),
+													Timestamps: &infra.Timestamps{
+														CreatedAt: timestampPtr(timestamp),
+														UpdatedAt: timestampPtr(timestamp),
+													},
+												},
+												Timestamps: &infra.Timestamps{
+													CreatedAt: timestampPtr(timestamp),
+													UpdatedAt: timestampPtr(timestamp),
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -919,6 +950,14 @@ func (s *CLITestSuite) SetupSuite() {
 							}(),
 						},
 					}, nil
+				case "nonexistent-site":
+					return &infra.SiteServiceListSitesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListSitesResponse{
+							Sites:         []infra.SiteResource{},
+							TotalElements: 0,
+						},
+					}, nil
 				default:
 					return &infra.SiteServiceListSitesResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
@@ -945,6 +984,7 @@ func (s *CLITestSuite) SetupSuite() {
 									},
 								},
 							},
+							TotalElements: 1,
 						},
 					}, nil
 				}
@@ -1257,7 +1297,44 @@ func (s *CLITestSuite) SetupSuite() {
 							Instances: []infra.InstanceResource{
 								{
 									ResourceId:   stringPtr("instance-abcd1234"),
+									InstanceID:   stringPtr("instance-abcd1234"),
 									Name:         stringPtr("edge-instance-001"),
+									CurrentState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
+									DesiredState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
+									Kind:         (*infra.InstanceKind)(stringPtr("INSTANCE_KIND_OPERATING_SYSTEM")),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+									WorkloadMembers: &[]infra.WorkloadMember{
+										{
+											ResourceId:       stringPtr("workload-abcd1234"),
+											WorkloadId:       stringPtr("workload-abcd1234"),
+											InstanceId:       stringPtr("instance-abc12345"),
+											WorkloadMemberId: stringPtr("workload-abcd1234"),
+											Kind:             infra.WORKLOADMEMBERKINDCLUSTERNODE,
+											Workload: &infra.WorkloadResource{
+												ResourceId: stringPtr("workload-abcd1234"),
+												WorkloadId: stringPtr("workload-abcd1234"),
+												Name:       stringPtr("Edge Kubernetes Cluster"),
+												Kind:       infra.WORKLOADKINDCLUSTER,
+												Status:     stringPtr("Running"),
+												ExternalId: stringPtr("k8s-cluster-east-001"),
+												Timestamps: &infra.Timestamps{
+													CreatedAt: timestampPtr(timestamp),
+													UpdatedAt: timestampPtr(timestamp),
+												},
+											},
+											Timestamps: &infra.Timestamps{
+												CreatedAt: timestampPtr(timestamp),
+												UpdatedAt: timestampPtr(timestamp),
+											},
+										},
+									},
+								},
+								{
+									ResourceId:   stringPtr("instance-abcd5678"),
+									Name:         stringPtr("edge-instance-002"),
 									CurrentState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
 									DesiredState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
 									Kind:         (*infra.InstanceKind)(stringPtr("INSTANCE_KIND_OPERATING_SYSTEM")),

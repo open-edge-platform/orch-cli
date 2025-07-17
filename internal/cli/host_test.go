@@ -40,7 +40,11 @@ func (s *CLITestSuite) TestHost() {
 	operatingSystem := "Not provisioned"
 	siteID := "Not provisioned"
 	siteName := "Not provisioned"
-	workload := "Not assigned"
+	workload := "\"Edge Kubernetes Cluster\""
+	uuid := "550e8400-e29b-41d4-a716-446655440000"
+	processor := "Intel(R) Xeon(R) CPU E5-2670 v3"
+	update := "No update"
+	compute := "Not compatible"
 
 	//hostID := "host-abc12345"
 	HostArgs := map[string]string{}
@@ -135,22 +139,66 @@ func (s *CLITestSuite) TestHost() {
 
 	s.compareListOutput(expectedOutputList, parsedOutputList)
 
+	// Test list hosts  verbose functionality
+	HostArgs = map[string]string{
+		"verbose": "true",
+	}
+	listOutput, err = s.listHost(project, HostArgs)
+	s.NoError(err)
+
+	parsedOutputList = mapListOutput(listOutput)
+
+	expectedOutputList = listCommandOutput{
+		{
+			"Resource ID":         resourceID,
+			"Name":                name,
+			"Host Status":         hostStatus,
+			"Provisioning Status": provisioningStatus,
+			"Serial Number":       serialNumber,
+			"Operating System":    operatingSystem,
+			"Site ID":             siteID,
+			"Site Name":           siteName,
+			"Workload":            workload,
+			"Host ID":             name,
+			"UUID":                uuid,
+			"Processor":           processor,
+			"Available Update":    update,
+			"Trusted Compute":     compute,
+		},
+		{
+			"Resource ID": "Total Hosts: 1",
+		},
+	}
+
+	s.compareListOutput(expectedOutputList, parsedOutputList)
+
 	// Test list hosts with invalid project
 	_, err = s.listHost("nonexistent-project", make(map[string]string))
 	s.Error(err)
 
 	// Test list hosts functionality with site filter
 	HostArgs = map[string]string{
-		"site":   "site-7ceae560",
-		"region": "region-abcd1234",
+		"site":     "site-7ceae560",
+		"region":   "region-abcd1234",
+		"filter":   "filter=0",
+		"workload": "workload-abcd1234",
 	}
 	_, err = s.listHost(project, HostArgs)
 	s.NoError(err)
 
-	// Test list hosts functionality with region filters
-	// Host creation with duplicate host scenario
+	// Test list hosts functionality with region filters - non existent site
 	HostArgs = map[string]string{
-		"region": "region-abcd1234",
+		"region":   "region-abcd1234",
+		"workload": "NotAssigned",
+	}
+	_, err = s.listHost("nonexistent-site", HostArgs)
+	s.EqualError(err, "no site was found in provided region")
+
+	// Test list hosts functionality with region filters -existent site
+	HostArgs = map[string]string{
+		"region":   "region-abcd1234",
+		"workload": "NotAssigned",
+		"filter":   "filter=0",
 	}
 	_, err = s.listHost(project, HostArgs)
 	s.NoError(err)
