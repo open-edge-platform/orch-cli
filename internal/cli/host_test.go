@@ -117,6 +117,33 @@ func (s *CLITestSuite) TestHost() {
 	s.Error(err)
 	fmt.Println("Host creation with duplicates completed successfully.")
 
+	// Host creation with no site
+	HostArgs = map[string]string{
+		"import-from-csv": "./testdata/mock.csv",
+		"site":            "",
+	}
+	_, err = s.createHost(project, HostArgs)
+	s.EqualError(err, "Pre-flight check failed")
+
+	// Host creation with invaid security setting
+	HostArgs = map[string]string{
+		"import-from-csv": "./testdata/mock.csv",
+		"secure":          "true",
+		"os-profile":      "microvisor-rt",
+	}
+	_, err = s.createHost(project, HostArgs)
+	s.EqualError(err, "Failed to provision hosts")
+
+	//Dry run host creation with wrong template
+	HostArgs = map[string]string{
+		"import-from-csv":  "./testdata/mock.csv",
+		"cluster-deploy":   "true",
+		"cluster-config":   "role:all;name:mycluster;labels:sample-label=samplevalue&sample-label2=samplevalue",
+		"cluster-template": "nonexistent-template:v2.0.2",
+	}
+	_, err = s.createHost(project, HostArgs)
+	s.EqualError(err, "Failed to provision hosts")
+
 	// Test list hosts functionality
 	listOutput, err := s.listHost(project, make(map[string]string))
 	s.NoError(err)

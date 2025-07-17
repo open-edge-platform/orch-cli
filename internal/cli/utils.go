@@ -35,6 +35,10 @@ var InfraFactory = func(cmd *cobra.Command) (context.Context, infraapi.ClientWit
 	return getInfraServiceContext(cmd)
 }
 
+var ClusterFactory = func(cmd *cobra.Command) (context.Context, coapi.ClientWithResponsesInterface, string, error) {
+	return getClusterServiceContext(cmd)
+}
+
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	debugHeadersValue, _ := cmd.Flags().GetBool(debugHeaders)

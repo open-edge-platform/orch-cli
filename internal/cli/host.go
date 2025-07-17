@@ -307,7 +307,7 @@ func generateCSV(filename string) error {
 }
 
 // Runs the registration workflow
-func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientWithResponsesInterface, projectName string, rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient *cluster.ClientWithResponses) {
+func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientWithResponsesInterface, projectName string, rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient cluster.ClientWithResponsesInterface) {
 
 	// get the required fields from the record
 	sNo := rIn.Serial
@@ -471,7 +471,7 @@ func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSe
 }
 
 // Sanitize fields, convert named resources to resource IDs
-func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClient infra.ClientWithResponsesInterface, projectName string, record types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient *cluster.ClientWithResponses) (*types.HostRecord, error) {
+func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClient infra.ClientWithResponsesInterface, projectName string, record types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient cluster.ClientWithResponsesInterface) (*types.HostRecord, error) {
 
 	isSecure := resolveSecure(record.Secure, globalAttr.Secure)
 
@@ -668,7 +668,7 @@ func resolveCluster(recordClusterEnable string,
 }
 
 // Checks if cluster template is valid and existss
-func resolveClusterTemplate(ctx context.Context, cClient *cluster.ClientWithResponses, projectName string, recordClusterTemplate string,
+func resolveClusterTemplate(ctx context.Context, cClient cluster.ClientWithResponsesInterface, projectName string, recordClusterTemplate string,
 	globalClusterTemplate string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
 
@@ -1204,7 +1204,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	ctx2, clusterClient, _, err := getClusterServiceContext(cmd)
+	ctx2, clusterClient, _, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -1416,7 +1416,7 @@ func createInstance(ctx context.Context, hClient infra.ClientWithResponsesInterf
 }
 
 // Create a cluster
-func createCluster(ctx context.Context, cClient *cluster.ClientWithResponses, respCache ResponseCache,
+func createCluster(ctx context.Context, cClient cluster.ClientWithResponsesInterface, respCache ResponseCache,
 	projectName, hostID string, rOut *types.HostRecord) error {
 
 	clusterTemplateName, clusterTempalteVer, err := decodeK8sTemplate(rOut.K8sClusterTemplate)
