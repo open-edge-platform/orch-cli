@@ -198,7 +198,7 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 			siteName = toJSON(h.Site.Name)
 		}
 
-		if *h.HostStatus != "" {
+		if h.HostStatus != nil && *h.HostStatus != "" {
 			host = *h.HostStatus
 		}
 

@@ -15,22 +15,32 @@ func (s *CLITestSuite) listHost(publisher string, args commandArgs) (string, err
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) getHost(publisher string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`get host --project %s`, publisher))
+func (s *CLITestSuite) getHost(publisher string, hostID string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`get host %s --project %s`, hostID, publisher))
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) deauthorizeHost(publisher string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`deauthorize host --project %s`, publisher))
+func (s *CLITestSuite) deauthorizeHost(publisher string, hostID string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`deauthorize host %s --project %s`, hostID, publisher))
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) deleteHost(publisher string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`delete host --project %s`, publisher))
+func (s *CLITestSuite) deleteHost(publisher string, hostID string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`delete host %s --project %s`, hostID, publisher))
 	return s.runCommand(commandString)
 }
 
 func (s *CLITestSuite) TestHost() {
+
+	resourceID := "host-abc12345"
+	name := "edge-host-001"
+	hostStatus := "Not connected"
+	provisioningStatus := "Not provisioned"
+	serialNumber := "1234567890"
+	operatingSystem := "Not provisioned"
+	siteID := "Not provisioned"
+	siteName := "Not provisioned"
+	workload := "Not assigned"
 
 	//hostID := "host-abc12345"
 	HostArgs := map[string]string{}
@@ -73,26 +83,145 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.createHost(project, HostArgs)
 	s.NoError(err)
 
-	//host creation wrong fil
+	//host creation
 	HostArgs = map[string]string{
 		"import-from-csv": "./testdata/mock.csv",
 	}
 	_, err = s.createHost(project, HostArgs)
 	s.NoError(err)
 
-	// _, err = s.listHost(project, make(map[string]string))
-	// fmt.Printf("listHost: %v\n", err)
-	// s.EqualError(err, `no response from backend - check catalog-endpoint and deployment-endpoint`)
+	// Host creation with invalid project
+	HostArgs = map[string]string{
+		"import-from-csv": "./testdata/mock.csv",
+	}
+	_, err = s.createHost("invalid-project", HostArgs)
+	s.Error(err)
 
-	// _, err = s.getHost(project, make(map[string]string))
-	// fmt.Printf("getHost: %v\n", err)
-	// s.EqualError(err, `no response from backend - check catalog-endpoint and deployment-endpoint`)
+	// Host creation with minimal CSV (no overrides)
+	HostArgs = map[string]string{
+		"import-from-csv": "./testdata/minimal.csv",
+	}
+	_, err = s.createHost(project, HostArgs)
+	s.NoError(err)
+	fmt.Println("Host creation tests completed successfully.")
 
-	// _, err = s.deauthorizeHost(project, make(map[string]string))
-	// fmt.Printf("deauthorizeHost: %v\n", err)
-	// s.EqualError(err, `no response from backend - check catalog-endpoint and deployment-endpoint`)
+	// Host creation with duplicate host scenario
+	HostArgs = map[string]string{
+		"import-from-csv": "./testdata/mock.csv",
+	}
+	_, err = s.createHost("duplicate-host-project", HostArgs)
+	s.Error(err)
+	fmt.Println("Host creation with duplicates completed successfully.")
 
-	// _, err = s.deleteHost(project, make(map[string]string))
-	// fmt.Printf("deleteHost: %v\n", err)
-	// s.EqualError(err, `no response from backend - check catalog-endpoint and deployment-endpoint`)
+	// Test list hosts functionality
+	listOutput, err := s.listHost(project, make(map[string]string))
+	s.NoError(err)
+
+	parsedOutputList := mapListOutput(listOutput)
+
+	expectedOutputList := listCommandOutput{
+		{
+			"Resource ID":         resourceID,
+			"Name":                name,
+			"Host Status":         hostStatus,
+			"Provisioning Status": provisioningStatus,
+			"Serial Number":       serialNumber,
+			"Operating System":    operatingSystem,
+			"Site ID":             siteID,
+			"Site Name":           siteName,
+			"Workload":            workload,
+		},
+	}
+
+	s.compareListOutput(expectedOutputList, parsedOutputList)
+	fmt.Println("List host completed successfully.")
+
+	// Test list hosts with invalid project
+	_, err = s.listHost("nonexistent-project", make(map[string]string))
+	s.Error(err)
+
+	// Test get specific host
+	hostID := resourceID
+	getOutput, err := s.getHost(project, hostID, make(map[string]string))
+	s.NoError(err)
+
+	parsedOutput := mapGetOutput(getOutput)
+	expectedOutput := map[string]string{
+		"Host Info:":            "",
+		"-   Host Resurce ID:":  "host-abc12345",
+		"-   Name:":             "edge-host-001",
+		"-   OS Profile:":       "",
+		"Status details:":       "",
+		"-   Host Status:":      "Running",
+		"-   Update Status:":    "",
+		"Specification:":        "",
+		"-   Serial Number:":    "1234567890",
+		"-   UUID:":             "550e8400-e29b-41d4-a716-446655440000",
+		"-   OS:":               "",
+		"-   BIOS Vendor:":      "Lenovo",
+		"-   Product Name:":     "ThinkSystem SR650",
+		"Customizations:":       "",
+		"-   Custom configs:":   "",
+		"CPU Info:":             "",
+		"-   CPU Model:":        "Intel(R) Xeon(R) CPU E5-2670 v3",
+		"-   CPU Cores:":        "8",
+		"-   CPU Architecture:": "x86_64",
+		"-   CPU Threads:":      "32",
+		"-   CPU Sockets:":      "2",
+	}
+
+	// // DEBUG: Print parsed output
+	// fmt.Printf("=== DEBUG: Parsed output ===\n")
+	// if len(parsedOutput) == 0 {
+	// 	fmt.Printf("  (empty parsed output)\n")
+	// } else {
+	// 	for key, value := range parsedOutput {
+	// 		fmt.Printf("  '%s': '%s'\n", key, value)
+	// 	}
+	// }
+	// fmt.Printf("=== END DEBUG ===\n")
+	// // DEBUG: Print expected output
+	// fmt.Printf("=== DEBUG: Expected output ===\n")
+	// for key, value := range expectedOutput {
+	// 	fmt.Printf("  '%s': '%s'\n", key, value)
+	// }
+	// fmt.Printf("=== END DEBUG ===\n")
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	// Test get host with invalid project
+	_, err = s.getHost("invalid-project", hostID, make(map[string]string))
+	s.Error(err)
+
+	// Test get host with non-existent host
+	_, err = s.getHost(project, "host-11111111", make(map[string]string))
+	s.EqualError(err, "error getting Host")
+
+	// Test get host with non-existent instance
+	_, err = s.getHost("invalid-instance", hostID, make(map[string]string))
+	s.NoError(err, "error getting Host")
+
+	// Test deauthorize host
+	_, err = s.deauthorizeHost(project, hostID, make(map[string]string))
+	s.NoError(err)
+
+	// Test deauthorize host with invalid project
+	_, err = s.deauthorizeHost("invalid-project", hostID, make(map[string]string))
+	s.Error(err)
+
+	// Test deauthorize host with non-existent host
+	_, err = s.deauthorizeHost(project, "host-11111111", make(map[string]string))
+	s.Error(err)
+
+	// Test delete host
+	_, err = s.deleteHost(project, hostID, make(map[string]string))
+	s.NoError(err)
+
+	// Test delete host with invalid project
+	_, err = s.deleteHost("invalid-project", hostID, make(map[string]string))
+	s.Error(err)
+
+	// Test delete host with non-existent host
+	_, err = s.deleteHost(project, "host-11111111", make(map[string]string))
+	s.Error(err)
 }

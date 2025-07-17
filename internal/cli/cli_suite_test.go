@@ -338,7 +338,7 @@ func (s *CLITestSuite) SetupSuite() {
 							SecurityFeature: body.SecurityFeature,
 							ProfileName:     body.ProfileName,
 							RepoUrl:         body.RepoUrl,
-							OsResourceID:    stringPtr("test-os-resource-id-new"),
+							OsResourceID:    stringPtr("os-1234abcd"),
 							ImageId:         body.ImageId,
 							ImageUrl:        body.ImageUrl,
 							OsType:          body.OsType,
@@ -414,7 +414,7 @@ func (s *CLITestSuite) SetupSuite() {
 									CpuSockets:      (*int)(func() *int { i := 2; return &i }()),
 									CpuThreads:      (*int)(func() *int { i := 32; return &i }()),
 									MemoryBytes:     stringPtr("17179869184"), // 16GB in bytes
-									SerialNumber:    stringPtr(""),
+									SerialNumber:    stringPtr("1234567890"),
 									Uuid:            stringPtr("550e8400-e29b-41d4-a716-446655440000"),
 									ProductName:     stringPtr("ThinkSystem SR650"),
 									BiosVendor:      stringPtr("Lenovo"),
@@ -539,45 +539,62 @@ func (s *CLITestSuite) SetupSuite() {
 						},
 					}, nil
 				default:
-					return &infra.HostServiceGetHostResponse{
-						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-						JSON200: &infra.HostResource{
-							ResourceId:                  stringPtr(hostId),
-							Name:                        "edge-host-001",
-							Hostname:                    stringPtr("edge-host-001.example.com"),
-							Note:                        stringPtr("Edge computing host"),
-							CpuArchitecture:             stringPtr("x86_64"),
-							CpuCores:                    (*int)(func() *int { i := 8; return &i }()),
-							CpuModel:                    stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
-							CpuSockets:                  (*int)(func() *int { i := 2; return &i }()),
-							CpuThreads:                  (*int)(func() *int { i := 32; return &i }()),
-							MemoryBytes:                 stringPtr("17179869184"), // 16GB in bytes
-							SerialNumber:                stringPtr("SN123456789"),
-							Uuid:                        stringPtr("550e8400-e29b-41d4-a716-446655440000"),
-							ProductName:                 stringPtr("ThinkSystem SR650"),
-							BiosVendor:                  stringPtr("Lenovo"),
-							BiosVersion:                 stringPtr("TEE142L-2.61"),
-							BiosReleaseDate:             stringPtr("03/25/2023"),
-							BmcIp:                       stringPtr("192.168.1.101"),
-							BmcKind:                     (*infra.BaremetalControllerKind)(stringPtr("BAREMETAL_CONTROLLER_KIND_IPMI")),
-							CurrentState:                (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDED")),
-							CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
-							CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
-							HostStatus:                  stringPtr("Running"),
-							HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
-							OnboardingStatus:            stringPtr("Onboarded successfully"),
-							OnboardingStatusIndicator:   (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
-							PowerStatus:                 stringPtr("Powered on"),
-							PowerStatusIndicator:        (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
-							RegistrationStatus:          stringPtr("Registered"),
-							RegistrationStatusIndicator: (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
-							SiteId:                      stringPtr("site-abc123"),
-							Timestamps: &infra.Timestamps{
-								CreatedAt: timestampPtr(timestamp),
-								UpdatedAt: timestampPtr(timestamp),
+					switch hostId {
+					case "host-11111111", "non-existent-host", "invalid-host-id":
+						return &infra.HostServiceGetHostResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("Host not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
 							},
-						},
-					}, nil
+						}, nil
+					default:
+						return &infra.HostServiceGetHostResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.HostResource{
+								ResourceId:                  stringPtr(hostId),
+								Name:                        "edge-host-001",
+								Hostname:                    stringPtr("edge-host-001.example.com"),
+								Note:                        stringPtr("Edge computing host"),
+								CpuArchitecture:             stringPtr("x86_64"),
+								CpuCores:                    (*int)(func() *int { i := 8; return &i }()),
+								CpuModel:                    stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
+								CpuSockets:                  (*int)(func() *int { i := 2; return &i }()),
+								CpuThreads:                  (*int)(func() *int { i := 32; return &i }()),
+								MemoryBytes:                 stringPtr("17179869184"), // 16GB in bytes
+								SerialNumber:                stringPtr("1234567890"),  // Match ListHosts
+								Uuid:                        stringPtr("550e8400-e29b-41d4-a716-446655440000"),
+								ProductName:                 stringPtr("ThinkSystem SR650"),
+								BiosVendor:                  stringPtr("Lenovo"),
+								BiosVersion:                 stringPtr("TEE142L-2.61"),
+								BiosReleaseDate:             stringPtr("03/25/2023"),
+								BmcIp:                       stringPtr("192.168.1.101"),
+								BmcKind:                     (*infra.BaremetalControllerKind)(stringPtr("BAREMETAL_CONTROLLER_KIND_IPMI")),
+								CurrentState:                (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDED")),
+								CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
+								CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+								HostStatus:                  stringPtr("Running"),
+								HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+								OnboardingStatus:            stringPtr("Onboarded successfully"),
+								OnboardingStatusIndicator:   (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+								PowerStatus:                 stringPtr("Powered on"),
+								PowerStatusIndicator:        (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+								RegistrationStatus:          stringPtr("Registered"),
+								RegistrationStatusIndicator: (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+								SiteId:                      stringPtr("site-abc123"),
+								Instance: &infra.InstanceResource{
+									ResourceId: stringPtr("instance-abcd1234"),
+								},
+								Timestamps: &infra.Timestamps{
+									CreatedAt: timestampPtr(timestamp),
+									UpdatedAt: timestampPtr(timestamp),
+								},
+							},
+						}, nil
+					}
 				}
 			},
 		).AnyTimes()
@@ -644,6 +661,45 @@ func (s *CLITestSuite) SetupSuite() {
 							},
 						},
 					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock InvalidateHost (used by invalidate command)
+		mockInfraClient.EXPECT().HostServiceInvalidateHostWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, hostId string, params *infra.HostServiceInvalidateHostParams, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceInvalidateHostResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.HostServiceInvalidateHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch hostId {
+					case "host-11111111", "non-existent-host", "invalid-host-id":
+						return &infra.HostServiceInvalidateHostResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("Host not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.HostServiceInvalidateHostResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
 				}
 			},
 		).AnyTimes()
@@ -845,11 +901,6 @@ func (s *CLITestSuite) SetupSuite() {
 			},
 		).AnyTimes()
 
-		// Add more infrastructure service mocks as needed:
-		// - Host management operations
-		// - Network operations
-		// - Storage operations
-		// etc.
 		// Mock ListSites (used by list, get, create, delete commands)
 		mockInfraClient.EXPECT().SiteServiceListSitesWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -1140,7 +1191,7 @@ func (s *CLITestSuite) SetupSuite() {
 		).DoAndReturn(
 			func(ctx context.Context, projectName, instanceId string, reqEditors ...infra.RequestEditorFn) (*infra.InstanceServiceGetInstanceResponse, error) {
 				switch projectName {
-				case "invalid-project":
+				case "invalid-project", "invalid-instance":
 					return &infra.InstanceServiceGetInstanceResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 						JSONDefault: &infra.ConnectError{
@@ -1204,7 +1255,7 @@ func (s *CLITestSuite) SetupSuite() {
 						JSON200: &infra.ListInstancesResponse{
 							Instances: []infra.InstanceResource{
 								{
-									ResourceId:   stringPtr("instance-abc12345"),
+									ResourceId:   stringPtr("instance-abcd1234"),
 									Name:         stringPtr("edge-instance-001"),
 									CurrentState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
 									DesiredState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
@@ -1220,6 +1271,7 @@ func (s *CLITestSuite) SetupSuite() {
 				}
 			},
 		).AnyTimes()
+
 		ctx := context.Background()
 		return ctx, mockInfraClient, projectName, nil
 	}
@@ -1292,8 +1344,8 @@ func (s *CLITestSuite) compareListOutput(expected []map[string]string, actual []
 		// Make sure the entries match
 		for k, v := range expectedRow {
 			s.Contains(actualRow, k, "Row %d should contain field %s", i, k)
-			matches, _ := regexp.MatchString(v, actualRow[k])
-			s.True(matches, "Row %d field %s: expected '%s' to match '%s'", i, k, actualRow[k], v)
+			// Use exact string comparison instead of regex
+			s.Equal(v, actualRow[k], "Row %d field %s: expected '%s' but got '%s'", i, k, v, actualRow[k])
 		}
 	}
 }
@@ -1478,21 +1530,39 @@ func mapGetOutput(output string) map[string]string {
 			continue
 		}
 
-		// Split by the first | character
-		parts := strings.SplitN(line, "|", 2)
-		if len(parts) == 2 {
-			key := strings.TrimSpace(parts[0])
-			value := strings.TrimSpace(parts[1])
+		// Handle lines that contain pipe separators
+		if strings.Contains(line, "|") {
+			parts := strings.Split(line, "|")
+			if len(parts) >= 2 {
+				key := strings.TrimSpace(parts[0])
+				value := strings.TrimSpace(parts[1])
 
-			// Remove trailing colon from key
-			key = strings.TrimSuffix(key, ":")
-
-			// Remove quotes from value if present
-			if strings.HasPrefix(value, `"`) && strings.HasSuffix(value, `"`) {
+				// Remove quotes from value if present
 				value = strings.Trim(value, `"`)
-			}
 
-			result[key] = value
+				// Handle host format lines that start with "-   |"
+				if strings.HasPrefix(line, "-   |") {
+					// For host format: "-   |Host Resurce ID:   | host-abc12345"
+					// Remove the "-   |" prefix from the line, then extract key
+					content := strings.TrimPrefix(line, "-   |")
+					contentParts := strings.Split(content, "|")
+					if len(contentParts) >= 2 {
+						hostKey := strings.TrimSpace(contentParts[0])
+						hostValue := strings.TrimSpace(contentParts[1])
+						hostValue = strings.Trim(hostValue, `"`)
+						result["-   "+hostKey] = hostValue
+					}
+				} else {
+					// Handle OS profile format and other formats
+					// For OS profile format: "Name:               | Edge Microvisor Toolkit"
+					result[key] = value
+				}
+			}
+		} else {
+			// Handle section headers (lines ending with ":")
+			if strings.HasSuffix(line, ":") && !strings.Contains(line, "|") {
+				result[line] = ""
+			}
 		}
 	}
 

@@ -33,7 +33,7 @@ func (s *CLITestSuite) TestOSProfile() {
 	expectedSecurityFeature := "SECURITY_FEATURE_NONE"
 	expectedProfileName := "microvisor-nonrt"
 	expectedRepoURL := "files-edge-orch/repository/microvisor/non_rt/"
-	expectedOsResourceID := "test-os-resource-id"
+	expectedOsResourceID := "os-1234abcd"
 	expectedImageID := "3.0.20250504"
 	expectedImageURL := "files-edge-orch/repository/microvisor/non_rt/artifact.raw.gz"
 	expectedOsType := "OPERATING_SYSTEM_TYPE_IMMUTABLE"
@@ -92,19 +92,21 @@ func (s *CLITestSuite) TestOSProfile() {
 	}
 	s.compareListOutput(expectedOutputList, parsedOutputList)
 
+	//Test Listing OSProfiles with verbose
 	OSPArgs["verbose"] = "true"
 	listOutput, err = s.listOSProfile(project, OSPArgs)
 	s.NoError(err)
 
+	fmt.Printf(listOutput)
 	parsedOutput := mapGetOutput(listOutput)
 	expectedOutput := map[string]string{
-		"Name":             name,
-		"Profile Name":     expectedProfileName,
-		"Security Feature": expectedSecurityFeature,
-		"Architecture":     expectedArchitecture,
-		"Repository URL":   expectedRepoURL,
-		"sha256":           expectedSHA,
-		"Kernel Command":   expectedKernelCommand,
+		"Name:":             name,
+		"Profile Name:":     expectedProfileName,
+		"Security Feature:": expectedSecurityFeature,
+		"Architecture:":     expectedArchitecture,
+		"Repository URL:":   expectedRepoURL,
+		"sha256:":           expectedSHA,
+		"Kernel Command:":   expectedKernelCommand,
 	}
 	// // DEBUG: Print parsed output
 	// fmt.Printf("=== DEBUG: Parsed output ===\n")
@@ -124,6 +126,7 @@ func (s *CLITestSuite) TestOSProfile() {
 	// fmt.Printf("=== END DEBUG ===\n")
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
+
 	_, err = s.listOSProfile("nonexistent-project", OSPArgs)
 	s.EqualError(err, "error getting OS Profiles:[Internal Server Error]")
 
@@ -137,25 +140,27 @@ func (s *CLITestSuite) TestOSProfile() {
 
 	parsedOutput = mapGetOutput(getOutput)
 	expectedOutput = map[string]string{
-		"OS Profile Field":   "Value",
-		"Name":               name,
-		"Profile Name":       expectedProfileName,
-		"OS Resource ID":     expectedOsResourceID,
-		"version":            expectedProfileVersion,
-		"sha256":             expectedSHA,
-		"Image ID":           expectedImageID,
-		"Image URL":          expectedImageURL,
-		"Repository URL":     expectedRepoURL,
-		"Security Feature":   expectedSecurityFeature,
-		"Architecture":       expectedArchitecture,
-		"OS type":            expectedOsType,
-		"OS provider":        expectedOsProvider,
-		"Platform Bundle":    expectedPlatformBundle,
-		"Update Sources":     expectedUpdateSources,
-		"Installed Packages": expectedInstalledPackages,
-		"Created":            expectedTimestamp,
-		"Updated":            expectedTimestamp,
+		"OS Profile Field":    "Value",
+		"Name:":               name,
+		"Profile Name:":       expectedProfileName,
+		"OS Resource ID:":     expectedOsResourceID,
+		"version:":            expectedProfileVersion,
+		"sha256:":             expectedSHA,
+		"Image ID:":           expectedImageID,
+		"Image URL:":          expectedImageURL,
+		"Repository URL:":     expectedRepoURL,
+		"Security Feature:":   expectedSecurityFeature,
+		"Architecture:":       expectedArchitecture,
+		"OS type:":            expectedOsType,
+		"OS provider:":        expectedOsProvider,
+		"Platform Bundle:":    expectedPlatformBundle,
+		"Update Sources:":     expectedUpdateSources,
+		"Installed Packages:": expectedInstalledPackages,
+		"Created:":            expectedTimestamp,
+		"Updated:":            expectedTimestamp,
 	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
 
 	//Get invalid os profile
 	_, err = s.getOSProfile(project, "random", OSPArgs)
@@ -168,7 +173,6 @@ func (s *CLITestSuite) TestOSProfile() {
 	//Test deleting OSProfile
 
 	//Delete profile
-	s.compareGetOutput(expectedOutput, parsedOutput)
 	_, err = s.deleteOSProfile(project, name, OSPArgs)
 	s.NoError(err)
 
