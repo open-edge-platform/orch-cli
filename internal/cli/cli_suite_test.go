@@ -240,10 +240,6 @@ func (s *CLITestSuite) SetupSuite() {
 				return resp, nil
 			},
 		).AnyTimes()
-		// Add more methods as needed:
-		// - CatalogServiceCreateRegistryWithResponse
-		// - CatalogServiceUpdateRegistryWithResponse
-		// - CatalogServiceDeleteRegistryWithResponse
 
 		ctx := context.Background()
 		projectName := "test-project"
@@ -291,7 +287,8 @@ func (s *CLITestSuite) SetupSuite() {
 									SecurityFeature:   (*infra.SecurityFeature)(stringPtr("SECURITY_FEATURE_NONE")),
 									ProfileName:       stringPtr("microvisor-nonrt"),
 									RepoUrl:           stringPtr("files-edge-orch/repository/microvisor/non_rt/"),
-									OsResourceID:      stringPtr("test-os-resource-id"),
+									OsResourceID:      stringPtr("os-1234abcd"),
+									ResourceId:        stringPtr("os-1234abcd"),
 									ImageId:           stringPtr("3.0.20250504"),
 									ImageUrl:          stringPtr("files-edge-orch/repository/microvisor/non_rt/artifact.raw.gz"),
 									OsType:            (*infra.OsType)(stringPtr("OPERATING_SYSTEM_TYPE_IMMUTABLE")),
@@ -384,12 +381,845 @@ func (s *CLITestSuite) SetupSuite() {
 			},
 		).AnyTimes()
 
+		// Mock ListHosts (used by list, get, create, delete commands)
+		mockInfraClient.EXPECT().HostServiceListHostsWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *infra.HostServiceListHostsParams, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceListHostsResponse, error) {
+				switch projectName {
+				case "nonexistent-project":
+					return &infra.HostServiceListHostsResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.HostServiceListHostsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListHostsResponse{
+							Hosts: []infra.HostResource{
+								{
+									ResourceId:      stringPtr("host-abc12345"),
+									Name:            "edge-host-001",
+									Hostname:        stringPtr("edge-host-001.example.com"),
+									Note:            stringPtr("Edge computing host"),
+									CpuArchitecture: stringPtr("x86_64"),
+									CpuCores:        (*int)(func() *int { i := 8; return &i }()),
+									CpuModel:        stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
+									CpuSockets:      (*int)(func() *int { i := 2; return &i }()),
+									CpuThreads:      (*int)(func() *int { i := 32; return &i }()),
+									MemoryBytes:     stringPtr("17179869184"), // 16GB in bytes
+									SerialNumber:    stringPtr(""),
+									Uuid:            stringPtr("550e8400-e29b-41d4-a716-446655440000"),
+									ProductName:     stringPtr("ThinkSystem SR650"),
+									BiosVendor:      stringPtr("Lenovo"),
+									BiosVersion:     stringPtr("TEE142L-2.61"),
+									BiosReleaseDate: stringPtr("03/25/2023"),
+									BmcIp:           stringPtr("192.168.1.101"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+								},
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock CreateHost (used by create command)
+		mockInfraClient.EXPECT().HostServiceCreateHostWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, body infra.HostServiceCreateHostJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceCreateHostResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.HostServiceCreateHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.HostServiceCreateHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.HostResource{
+							ResourceId:                  stringPtr("host-new-12345"),
+							Name:                        body.Name,
+							Hostname:                    body.Hostname,
+							Note:                        body.Note,
+							CpuArchitecture:             body.CpuArchitecture,
+							CpuCores:                    body.CpuCores,
+							CpuModel:                    body.CpuModel,
+							CpuSockets:                  body.CpuSockets,
+							CpuThreads:                  body.CpuThreads,
+							CpuCapabilities:             body.CpuCapabilities,
+							CpuTopology:                 body.CpuTopology,
+							MemoryBytes:                 body.MemoryBytes,
+							SerialNumber:                body.SerialNumber,
+							Uuid:                        body.Uuid,
+							ProductName:                 body.ProductName,
+							BiosVendor:                  body.BiosVendor,
+							BiosVersion:                 body.BiosVersion,
+							BiosReleaseDate:             body.BiosReleaseDate,
+							BmcIp:                       body.BmcIp,
+							BmcKind:                     body.BmcKind,
+							CurrentState:                (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDING")),
+							CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_OFF")),
+							CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
+							HostStatus:                  stringPtr("Provisioning"),
+							HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_WORKING")),
+							OnboardingStatus:            stringPtr("Onboarding in progress"),
+							OnboardingStatusIndicator:   (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_WORKING")),
+							PowerStatus:                 stringPtr("Powered off"),
+							PowerStatusIndicator:        (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							RegistrationStatus:          stringPtr("Registering"),
+							RegistrationStatusIndicator: (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_WORKING")),
+							SiteId:                      body.SiteId,
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock DeleteHost (used by delete command)
+		mockInfraClient.EXPECT().HostServiceDeleteHostWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, hostId string, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceDeleteHostResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.HostServiceDeleteHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.HostServiceDeleteHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock GetHost (used by get command)
+		mockInfraClient.EXPECT().HostServiceGetHostWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, hostId string, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceGetHostResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.HostServiceGetHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.HostServiceGetHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.HostResource{
+							ResourceId:                  stringPtr(hostId),
+							Name:                        "edge-host-001",
+							Hostname:                    stringPtr("edge-host-001.example.com"),
+							Note:                        stringPtr("Edge computing host"),
+							CpuArchitecture:             stringPtr("x86_64"),
+							CpuCores:                    (*int)(func() *int { i := 8; return &i }()),
+							CpuModel:                    stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
+							CpuSockets:                  (*int)(func() *int { i := 2; return &i }()),
+							CpuThreads:                  (*int)(func() *int { i := 32; return &i }()),
+							MemoryBytes:                 stringPtr("17179869184"), // 16GB in bytes
+							SerialNumber:                stringPtr("SN123456789"),
+							Uuid:                        stringPtr("550e8400-e29b-41d4-a716-446655440000"),
+							ProductName:                 stringPtr("ThinkSystem SR650"),
+							BiosVendor:                  stringPtr("Lenovo"),
+							BiosVersion:                 stringPtr("TEE142L-2.61"),
+							BiosReleaseDate:             stringPtr("03/25/2023"),
+							BmcIp:                       stringPtr("192.168.1.101"),
+							BmcKind:                     (*infra.BaremetalControllerKind)(stringPtr("BAREMETAL_CONTROLLER_KIND_IPMI")),
+							CurrentState:                (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDED")),
+							CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
+							CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+							HostStatus:                  stringPtr("Running"),
+							HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							OnboardingStatus:            stringPtr("Onboarded successfully"),
+							OnboardingStatusIndicator:   (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							PowerStatus:                 stringPtr("Powered on"),
+							PowerStatusIndicator:        (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							RegistrationStatus:          stringPtr("Registered"),
+							RegistrationStatusIndicator: (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							SiteId:                      stringPtr("site-abc123"),
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock RegisterHost (used by create command)
+		mockInfraClient.EXPECT().HostServiceRegisterHostWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, body infra.HostServiceRegisterHostJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceRegisterHostResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.HostServiceRegisterHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				case "duplicate-host-project":
+					// Simulate FailedPrecondition error for duplicate host registration
+					return &infra.HostServiceRegisterHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 409, Status: "Conflict"},
+						Body:         []byte(`{"code":"FailedPrecondition","message":"Host with same serial number and UUID already exists"}`),
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Host with same serial number and UUID already exists"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.FailedPrecondition
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					// Generate a new host ID based on serial number or UUID
+					hostID := "host-1111abcd"
+					hostName := hostID
+					if body.Name != nil && *body.Name != "" {
+						hostName = *body.Name
+					}
+
+					return &infra.HostServiceRegisterHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.HostResource{
+							ResourceId:                  stringPtr(hostID),
+							Name:                        hostName,
+							SerialNumber:                body.SerialNumber,
+							Uuid:                        body.Uuid,
+							CurrentState:                (*infra.HostState)(stringPtr("HOST_STATE_REGISTERED")),
+							HostStatus:                  stringPtr("registered"),
+							HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							OnboardingStatus:            stringPtr("Registered successfully"),
+							OnboardingStatusIndicator:   (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							PowerStatus:                 stringPtr("Unknown"),
+							PowerStatusIndicator:        (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							RegistrationStatus:          stringPtr("Registered"),
+							RegistrationStatusIndicator: (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_UNKNOWN")),
+							CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock PatchHost (used by patch command)
+		mockInfraClient.EXPECT().HostServicePatchHostWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, hostId string, body infra.HostServicePatchHostJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.HostServicePatchHostResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.HostServicePatchHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				case "host-not-found-project":
+					return &infra.HostServicePatchHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Host not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.NotFound
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.HostServicePatchHostResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.HostResource{
+							ResourceId: stringPtr(hostId),
+							Name: func() string {
+								if body.Name != "" {
+									return body.Name
+								}
+								return "edge-host-001"
+							}(),
+							Hostname: func() *string {
+								if body.Hostname != nil {
+									return body.Hostname
+								}
+								return stringPtr("edge-host-001.example.com")
+							}(),
+							Note: func() *string {
+								if body.Note != nil {
+									return body.Note
+								}
+								return stringPtr("Edge computing host")
+							}(),
+							CpuArchitecture: func() *string {
+								if body.CpuArchitecture != nil {
+									return body.CpuArchitecture
+								}
+								return stringPtr("x86_64")
+							}(),
+							CpuCores: func() *int {
+								if body.CpuCores != nil {
+									return body.CpuCores
+								}
+								i := 8
+								return &i
+							}(),
+							CpuModel: func() *string {
+								if body.CpuModel != nil {
+									return body.CpuModel
+								}
+								return stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3")
+							}(),
+							CpuSockets: func() *int {
+								if body.CpuSockets != nil {
+									return body.CpuSockets
+								}
+								i := 2
+								return &i
+							}(),
+							CpuThreads: func() *int {
+								if body.CpuThreads != nil {
+									return body.CpuThreads
+								}
+								i := 32
+								return &i
+							}(),
+							CpuCapabilities: body.CpuCapabilities,
+							CpuTopology:     body.CpuTopology,
+							MemoryBytes: func() *string {
+								if body.MemoryBytes != nil {
+									return body.MemoryBytes
+								}
+								return stringPtr("17179869184")
+							}(),
+							SerialNumber: func() *string {
+								if body.SerialNumber != nil {
+									return body.SerialNumber
+								}
+								return stringPtr("SN123456789")
+							}(),
+							Uuid: func() *string {
+								if body.Uuid != nil {
+									return body.Uuid
+								}
+								return stringPtr("550e8400-e29b-41d4-a716-446655440000")
+							}(),
+							ProductName: func() *string {
+								if body.ProductName != nil {
+									return body.ProductName
+								}
+								return stringPtr("ThinkSystem SR650")
+							}(),
+							BiosVendor: func() *string {
+								if body.BiosVendor != nil {
+									return body.BiosVendor
+								}
+								return stringPtr("Lenovo")
+							}(),
+							BiosVersion: func() *string {
+								if body.BiosVersion != nil {
+									return body.BiosVersion
+								}
+								return stringPtr("TEE142L-2.61")
+							}(),
+							BiosReleaseDate: func() *string {
+								if body.BiosReleaseDate != nil {
+									return body.BiosReleaseDate
+								}
+								return stringPtr("03/25/2023")
+							}(),
+							BmcIp: func() *string {
+								if body.BmcIp != nil {
+									return body.BmcIp
+								}
+								return stringPtr("192.168.1.101")
+							}(),
+							BmcKind: func() *infra.BaremetalControllerKind {
+								if body.BmcKind != nil {
+									return body.BmcKind
+								}
+								return (*infra.BaremetalControllerKind)(stringPtr("BAREMETAL_CONTROLLER_KIND_IPMI"))
+							}(),
+
+							// System-managed fields (not patchable)
+							CurrentState:      (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDED")),
+							CurrentPowerState: (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
+							CurrentAmtState:   (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+
+							// User-controlled desired states
+							DesiredState: func() *infra.HostState {
+								if body.DesiredState != nil {
+									return body.DesiredState
+								}
+								return (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDED"))
+							}(),
+							DesiredPowerState: func() *infra.PowerState {
+								if body.DesiredPowerState != nil {
+									return body.DesiredPowerState
+								}
+								return (*infra.PowerState)(stringPtr("POWER_STATE_ON"))
+							}(),
+							DesiredAmtState: func() *infra.AmtState {
+								if body.DesiredAmtState != nil {
+									return body.DesiredAmtState
+								}
+								return (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED"))
+							}(),
+
+							// Status fields (system-managed)
+							HostStatus:                  stringPtr("Running"),
+							HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							OnboardingStatus:            stringPtr("Onboarded successfully"),
+							OnboardingStatusIndicator:   (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							PowerStatus:                 stringPtr("Powered on"),
+							PowerStatusIndicator:        (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+							RegistrationStatus:          stringPtr("Registered"),
+							RegistrationStatusIndicator: (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
+
+							// User-controlled fields
+							PowerCommandPolicy: body.PowerCommandPolicy,
+							SiteId: func() *string {
+								if body.SiteId != nil {
+									return body.SiteId
+								}
+								return stringPtr("site-abc123")
+							}(),
+							Metadata: body.Metadata,
+
+							// Timestamps
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
 		// Add more infrastructure service mocks as needed:
 		// - Host management operations
 		// - Network operations
 		// - Storage operations
 		// etc.
+		// Mock ListSites (used by list, get, create, delete commands)
+		mockInfraClient.EXPECT().SiteServiceListSitesWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *infra.SiteServiceListSitesParams, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceListSitesResponse, error) {
+				switch projectName {
+				case "nonexistent-project":
+					return &infra.SiteServiceListSitesResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.SiteServiceListSitesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListSitesResponse{
+							Sites: []infra.SiteResource{
+								{
+									ResourceId: stringPtr("site-7ceae560"),
+									SiteID:     stringPtr("site-7ceae560"), // Deprecated alias
+									Name:       stringPtr("Edge Site East"),
+									RegionId:   stringPtr("region-abcd1234"),
+									SiteLat:    (*int32)(func() *int32 { lat := int32(404783900); return &lat }()),  // 40.4783900° N (NYC) in E7 format
+									SiteLng:    (*int32)(func() *int32 { lng := int32(-740020000); return &lng }()), // -74.0020000° W (NYC) in E7 format
+									Metadata: &[]infra.MetadataItem{
+										{Key: "environment", Value: "production"},
+										{Key: "datacenter", Value: "nyc-east-1"},
+									},
+									InheritedMetadata: &[]infra.MetadataItem{
+										{Key: "region", Value: "us-east"},
+										{Key: "zone", Value: "east-coast"},
+									},
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+								},
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
 
+		// Mock CreateSite (used by create command)
+		mockInfraClient.EXPECT().SiteServiceCreateSiteWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, body infra.SiteServiceCreateSiteJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceCreateSiteResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.SiteServiceCreateSiteResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.SiteServiceCreateSiteResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.SiteResource{
+							ResourceId:        stringPtr("site-new-456"),
+							SiteID:            stringPtr("site-new-456"), // Deprecated alias
+							Name:              body.Name,
+							RegionId:          body.RegionId,
+							SiteLat:           body.SiteLat,
+							SiteLng:           body.SiteLng,
+							Metadata:          body.Metadata,
+							InheritedMetadata: body.InheritedMetadata,
+							Provider:          body.Provider,
+							Region:            body.Region,
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock DeleteSite (used by delete command)
+		mockInfraClient.EXPECT().SiteServiceDeleteSiteWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, siteId string, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceDeleteSiteResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.SiteServiceDeleteSiteResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.SiteServiceDeleteSiteResponse{
+						HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock GetSite (used by get command)
+		mockInfraClient.EXPECT().SiteServiceGetSiteWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, region string, siteId string, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceGetSiteResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.SiteServiceGetSiteResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.SiteServiceGetSiteResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.SiteResource{
+							ResourceId: stringPtr(siteId),
+							SiteID:     stringPtr(siteId), // Deprecated alias
+							Name:       stringPtr("Edge Site East"),
+							RegionId:   stringPtr("region-abcd1111"),
+							SiteLat:    (*int32)(func() *int32 { lat := int32(404783900); return &lat }()),  // 40.4783900° N (NYC) in E7 format
+							SiteLng:    (*int32)(func() *int32 { lng := int32(-740020000); return &lng }()), // -74.0020000° W (NYC) in E7 format
+							Metadata: &[]infra.MetadataItem{
+								{Key: "environment", Value: "production"},
+								{Key: "datacenter", Value: "nyc-east-1"},
+							},
+							InheritedMetadata: &[]infra.MetadataItem{
+								{Key: "region", Value: "us-east"},
+								{Key: "zone", Value: "east-coast"},
+							},
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock UpdateSite (used by update command)
+		mockInfraClient.EXPECT().SiteServiceUpdateSiteWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, siteId string, body infra.SiteServiceUpdateSiteJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceUpdateSiteResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.SiteServiceUpdateSiteResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.SiteServiceUpdateSiteResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.SiteResource{
+							ResourceId:        stringPtr(siteId),
+							SiteID:            stringPtr(siteId), // Deprecated alias
+							Name:              body.Name,
+							RegionId:          body.RegionId,
+							SiteLat:           body.SiteLat,
+							SiteLng:           body.SiteLng,
+							Metadata:          body.Metadata,
+							InheritedMetadata: body.InheritedMetadata,
+							Provider:          body.Provider,
+							Region:            body.Region,
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock CreateInstance (used by create command)
+		mockInfraClient.EXPECT().InstanceServiceCreateInstanceWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, body infra.InstanceServiceCreateInstanceJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.InstanceServiceCreateInstanceResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.InstanceServiceCreateInstanceResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				case "invalid-host-project":
+					return &infra.InstanceServiceCreateInstanceResponse{
+						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Host not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.NotFound
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.InstanceServiceCreateInstanceResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.InstanceResource{
+							ResourceId:   stringPtr("instance-abcd1234"),
+							Name:         body.Name,
+							CurrentState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_PROVISIONING")),
+							DesiredState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
+							Kind:         (*infra.InstanceKind)(stringPtr("INSTANCE_KIND_OPERATING_SYSTEM")),
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock DeleteInstance (used by delete command)
+		mockInfraClient.EXPECT().InstanceServiceDeleteInstanceWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, instanceId string, reqEditors ...infra.RequestEditorFn) (*infra.InstanceServiceDeleteInstanceResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.InstanceServiceDeleteInstanceResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				case "instance-not-found-project":
+					return &infra.InstanceServiceDeleteInstanceResponse{
+						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Instance not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.NotFound
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.InstanceServiceDeleteInstanceResponse{
+						HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock GetInstance (used by get command) - Optional but helpful for completeness
+		mockInfraClient.EXPECT().InstanceServiceGetInstanceWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, instanceId string, reqEditors ...infra.RequestEditorFn) (*infra.InstanceServiceGetInstanceResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.InstanceServiceGetInstanceResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				case "instance-not-found-project":
+					return &infra.InstanceServiceGetInstanceResponse{
+						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Instance not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.NotFound
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.InstanceServiceGetInstanceResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.InstanceResource{
+							ResourceId:   stringPtr(instanceId),
+							Name:         stringPtr("edge-instance-001"),
+							CurrentState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
+							DesiredState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
+							Kind:         (*infra.InstanceKind)(stringPtr("INSTANCE_KIND_OPERATING_SYSTEM")),
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock ListInstances (used by list command) - Optional but helpful for completeness
+		mockInfraClient.EXPECT().InstanceServiceListInstancesWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *infra.InstanceServiceListInstancesParams, reqEditors ...infra.RequestEditorFn) (*infra.InstanceServiceListInstancesResponse, error) {
+				switch projectName {
+				case "nonexistent-project":
+					return &infra.InstanceServiceListInstancesResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.InstanceServiceListInstancesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListInstancesResponse{
+							Instances: []infra.InstanceResource{
+								{
+									ResourceId:   stringPtr("instance-abc12345"),
+									Name:         stringPtr("edge-instance-001"),
+									CurrentState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
+									DesiredState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
+									Kind:         (*infra.InstanceKind)(stringPtr("INSTANCE_KIND_OPERATING_SYSTEM")),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+								},
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
 		ctx := context.Background()
 		return ctx, mockInfraClient, projectName, nil
 	}
