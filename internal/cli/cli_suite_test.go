@@ -284,7 +284,7 @@ func (s *CLITestSuite) SetupSuite() {
 							CustomConfigs: []infra.CustomConfigResource{
 								{
 									Name:        "nginx-config",
-									Config:      "server {\n    listen 80;\n    server_name example.com;\n    location / {\n        proxy_pass http://backend;\n    }\n}",
+									Config:      "test:",
 									Description: stringPtr("Nginx configuration for web services"),
 									ResourceId:  stringPtr("config-abc12345"),
 									Timestamps: &infra.Timestamps{
@@ -297,6 +297,91 @@ func (s *CLITestSuite) SetupSuite() {
 							TotalElements: 1,
 						},
 					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock CustomConfigServiceCreateCustomConfigWithResponse (used by create custom config command)
+		mockInfraClient.EXPECT().CustomConfigServiceCreateCustomConfigWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, body infra.CustomConfigServiceCreateCustomConfigJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.CustomConfigServiceCreateCustomConfigResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.CustomConfigServiceCreateCustomConfigResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				case "duplicate-config-project":
+					return &infra.CustomConfigServiceCreateCustomConfigResponse{
+						HTTPResponse: &http.Response{StatusCode: 409, Status: "Conflict"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Custom config with same name already exists"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.AlreadyExists
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.CustomConfigServiceCreateCustomConfigResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.CustomConfigResource{
+							Name:        body.Name,
+							Config:      body.Config,
+							Description: body.Description,
+							ResourceId:  stringPtr("config-abc12345"),
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock CustomConfigServiceDeleteCustomConfigWithResponse (used by delete custom config command)
+		mockInfraClient.EXPECT().CustomConfigServiceDeleteCustomConfigWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, configName string, reqEditors ...infra.RequestEditorFn) (*infra.CustomConfigServiceDeleteCustomConfigResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.CustomConfigServiceDeleteCustomConfigResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch configName {
+					case "nonexistent-config", "invalid-config-name":
+						return &infra.CustomConfigServiceDeleteCustomConfigResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("Custom config not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.CustomConfigServiceDeleteCustomConfigResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
 				}
 			},
 		).AnyTimes()
