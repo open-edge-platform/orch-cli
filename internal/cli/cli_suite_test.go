@@ -260,6 +260,88 @@ func (s *CLITestSuite) SetupSuite() {
 			projectName = "test-project" // Default fallback
 		}
 
+		// Mock CustomConfigServiceListCustomConfigsWithResponse (used by list custom configs command)
+		mockInfraClient.EXPECT().CustomConfigServiceListCustomConfigsWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *infra.CustomConfigServiceListCustomConfigsParams, reqEditors ...infra.RequestEditorFn) (*infra.CustomConfigServiceListCustomConfigsResponse, error) {
+				switch projectName {
+				case "nonexistent-project", "nonexistent-init":
+					return &infra.CustomConfigServiceListCustomConfigsResponse{
+						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.NotFound
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.CustomConfigServiceListCustomConfigsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListCustomConfigsResponse{
+							CustomConfigs: []infra.CustomConfigResource{
+								{
+									Name:        "nginx-config",
+									Config:      "server {\n    listen 80;\n    server_name example.com;\n    location / {\n        proxy_pass http://backend;\n    }\n}",
+									Description: stringPtr("Nginx configuration for web services"),
+									ResourceId:  stringPtr("config-abc12345"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+								},
+							},
+							HasNext:       false,
+							TotalElements: 1,
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock LocalAccountServiceListLocalAccountsWithResponse (used by list local accounts command)
+		mockInfraClient.EXPECT().LocalAccountServiceListLocalAccountsWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *infra.LocalAccountServiceListLocalAccountsParams, reqEditors ...infra.RequestEditorFn) (*infra.LocalAccountServiceListLocalAccountsResponse, error) {
+				switch projectName {
+				case "nonexistent-project", "nonexistent-user":
+					return &infra.LocalAccountServiceListLocalAccountsResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.LocalAccountServiceListLocalAccountsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListLocalAccountsResponse{
+							LocalAccounts: []infra.LocalAccountResource{
+								{
+									ResourceId:     stringPtr("account-abc12345"),
+									LocalAccountID: stringPtr("account-abc12345"), // Deprecated alias
+									Username:       "admin",
+									SshKey:         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7... admin@example.com",
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+								},
+							},
+							TotalElements: 1,
+							HasNext:       false,
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
 		// Mock ListOperatingSystems (used by list, get, create, delete commands)
 		mockInfraClient.EXPECT().OperatingSystemServiceListOperatingSystemsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -455,6 +537,24 @@ func (s *CLITestSuite) SetupSuite() {
 													UpdatedAt: timestampPtr(timestamp),
 												},
 											},
+										},
+										CustomConfig: &[]infra.CustomConfigResource{
+											{
+												Name:        "nginx-config",
+												Config:      "server {\n    listen 80;\n    server_name example.com;\n    location / {\n        proxy_pass http://backend;\n    }\n}",
+												Description: stringPtr("Nginx configuration for web services"),
+												ResourceId:  stringPtr("config-abc12345"),
+												Timestamps: &infra.Timestamps{
+													CreatedAt: timestampPtr(timestamp),
+													UpdatedAt: timestampPtr(timestamp),
+												},
+											},
+										},
+										Os: &infra.OperatingSystemResource{
+											Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+										},
+										CurrentOs: &infra.OperatingSystemResource{
+											Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
 										},
 									},
 								},
@@ -1268,6 +1368,24 @@ func (s *CLITestSuite) SetupSuite() {
 								CreatedAt: timestampPtr(timestamp),
 								UpdatedAt: timestampPtr(timestamp),
 							},
+							CustomConfig: &[]infra.CustomConfigResource{
+								{
+									Name:        "nginx-config",
+									Config:      "server {\n    listen 80;\n    server_name example.com;\n    location / {\n        proxy_pass http://backend;\n    }\n}",
+									Description: stringPtr("Nginx configuration for web services"),
+									ResourceId:  stringPtr("config-abc12345"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+								},
+							},
+							Os: &infra.OperatingSystemResource{
+								Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+							},
+							CurrentOs: &infra.OperatingSystemResource{
+								Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+							},
 						},
 					}, nil
 				}
@@ -1331,6 +1449,24 @@ func (s *CLITestSuite) SetupSuite() {
 												UpdatedAt: timestampPtr(timestamp),
 											},
 										},
+									},
+									CustomConfig: &[]infra.CustomConfigResource{
+										{
+											Name:        "nginx-config",
+											Config:      "server {\n    listen 80;\n    server_name example.com;\n    location / {\n        proxy_pass http://backend;\n    }\n}",
+											Description: stringPtr("Nginx configuration for web services"),
+											ResourceId:  stringPtr("config-abc12345"),
+											Timestamps: &infra.Timestamps{
+												CreatedAt: timestampPtr(timestamp),
+												UpdatedAt: timestampPtr(timestamp),
+											},
+										},
+									},
+									Os: &infra.OperatingSystemResource{
+										Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+									},
+									CurrentOs: &infra.OperatingSystemResource{
+										Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
 									},
 								},
 								{

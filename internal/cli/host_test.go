@@ -30,6 +30,36 @@ func (s *CLITestSuite) deleteHost(publisher string, hostID string, args commandA
 	return s.runCommand(commandString)
 }
 
+func (s *CLITestSuite) filterTest() {
+	testCases := []struct {
+		input    string
+		expected *string
+	}{
+		{"", nil},
+		{"onboarded", stringPtr("hostStatus='onboarded'")},
+		{"registered", stringPtr("hostStatus='registered'")},
+		{"provisioned", stringPtr("hostStatus='provisioned'")},
+		{"deauthorized", stringPtr("hostStatus='invalidated'")},
+		{"not connected", stringPtr("hostStatus=''")},
+		{"error", stringPtr("hostStatus='error'")},
+		{"unknown", stringPtr("unknown")},
+	}
+
+	for _, tc := range testCases {
+		result := filterHelper(tc.input)
+		if tc.expected == nil {
+			s.Nil(result)
+		} else {
+			s.Equal(*tc.expected, *result)
+		}
+	}
+}
+
+// Helper function to create string pointers
+func stringPtr(s string) *string {
+	return &s
+}
+
 func (s *CLITestSuite) TestHost() {
 
 	resourceID := "host-abc12345"
@@ -37,7 +67,7 @@ func (s *CLITestSuite) TestHost() {
 	hostStatus := "Not connected"
 	provisioningStatus := "Not provisioned"
 	serialNumber := "1234567890"
-	operatingSystem := "Not provisioned"
+	operatingSystem := "\"Edge Microvisor Toolkit 3.0.20250504\""
 	siteID := "Not provisioned"
 	siteName := "Not provisioned"
 	workload := "\"Edge Kubernetes Cluster\""
@@ -48,6 +78,10 @@ func (s *CLITestSuite) TestHost() {
 
 	//hostID := "host-abc12345"
 	HostArgs := map[string]string{}
+
+	///////////////////////////////////
+	// Host Creation Tests
+	///////////////////////////////////
 
 	//Generate CSV
 	HostArgs["generate-csv"] = "test.csv"
@@ -109,6 +143,13 @@ func (s *CLITestSuite) TestHost() {
 	s.NoError(err)
 	fmt.Println("Host creation tests completed successfully.")
 
+	// Host creation with duplicate cluster scenario
+	HostArgs = map[string]string{
+		"import-from-csv": "./testdata/mock.csv",
+	}
+	_, err = s.createHost("duplicate-cluster-project", HostArgs)
+	s.Error(err)
+
 	// Host creation with duplicate host scenario
 	HostArgs = map[string]string{
 		"import-from-csv": "./testdata/mock.csv",
@@ -124,6 +165,22 @@ func (s *CLITestSuite) TestHost() {
 	}
 	_, err = s.createHost(project, HostArgs)
 	s.EqualError(err, "Pre-flight check failed")
+
+	// Host creation with wrong cloud init
+	HostArgs = map[string]string{
+		"import-from-csv": "./testdata/mock.csv",
+		"cloud-init":      "init",
+	}
+	_, err = s.createHost("nonexistent-init", HostArgs)
+	s.EqualError(err, "Failed to provision hosts")
+
+	// Host creation with wrong user
+	HostArgs = map[string]string{
+		"import-from-csv": "./testdata/mock.csv",
+		"remote-user":     "init",
+	}
+	_, err = s.createHost("nonexistent-user", HostArgs)
+	s.EqualError(err, "Failed to provision hosts")
 
 	// Host creation with invaid security setting
 	HostArgs = map[string]string{
@@ -144,7 +201,14 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.createHost(project, HostArgs)
 	s.EqualError(err, "Failed to provision hosts")
 
+	////////////////////////////////
 	// Test list hosts functionality
+	////////////////////////////////
+
+	//Test filter
+	s.filterTest()
+
+	// Test list hosts with no filters
 	listOutput, err := s.listHost(project, make(map[string]string))
 	s.NoError(err)
 
@@ -240,18 +304,18 @@ func (s *CLITestSuite) TestHost() {
 		"Host Info:":            "",
 		"-   Host Resurce ID:":  "host-abc12345",
 		"-   Name:":             "edge-host-001",
-		"-   OS Profile:":       "",
+		"-   OS Profile:":       "Edge Microvisor Toolkit 3.0.20250504",
 		"Status details:":       "",
 		"-   Host Status:":      "Running",
 		"-   Update Status:":    "",
 		"Specification:":        "",
 		"-   Serial Number:":    "1234567890",
 		"-   UUID:":             "550e8400-e29b-41d4-a716-446655440000",
-		"-   OS:":               "",
+		"-   OS:":               "Edge Microvisor Toolkit 3.0.20250504",
 		"-   BIOS Vendor:":      "Lenovo",
 		"-   Product Name:":     "ThinkSystem SR650",
 		"Customizations:":       "",
-		"-   Custom configs:":   "",
+		"-   Custom configs:":   "nginx-config",
 		"CPU Info:":             "",
 		"-   CPU Model:":        "Intel(R) Xeon(R) CPU E5-2670 v3",
 		"-   CPU Cores:":        "8",
