@@ -71,7 +71,7 @@ func getCreateSiteCommand() *cobra.Command {
 	}
 	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Region to which the site will be deployed: --region region-aaaa1111")
 	cmd.PersistentFlags().StringP("latitude", "l", viper.GetString("latitude"), "Optional flag to provide latitude: --latitude 5")
-	cmd.PersistentFlags().StringP("longtitude", "g", viper.GetString("longtitude"), "Optional flag to provide longtitude: longtitude 5 ")
+	cmd.PersistentFlags().StringP("longitude", "g", viper.GetString("longitude"), "Optional flag to provide longitude: longitude 5 ")
 	return cmd
 }
 
@@ -101,7 +101,7 @@ func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 		regFilter = &filterString
 	}
 
-	ctx, siteClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, siteClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 
 	regFlag, _ := cmd.Flags().GetString("region")
 	ltdFlag, _ := cmd.Flags().GetString("latitude")
-	lngFlag, _ := cmd.Flags().GetString("longtitude")
+	lngFlag, _ := cmd.Flags().GetString("longitude")
 
 	if regFlag == "" {
 		return errors.New("region flag required")
@@ -149,7 +149,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ctx, siteClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, siteClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	siteLng, err := resolveLongtitude(lngFlag)
+	siteLng, err := resolveLongitude(lngFlag)
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 
 func runGetSiteCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, siteClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, siteClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -219,7 +219,7 @@ func runGetSiteCommand(cmd *cobra.Command, args []string) error {
 func runDeleteSiteCommand(cmd *cobra.Command, args []string) error {
 	id := args[0]
 
-	ctx, siteClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, siteClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -296,7 +296,7 @@ func printSite(writer io.Writer, site *infra.SiteResource) {
 	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *site.Name)
 	_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *site.ResourceId)
 	_, _ = fmt.Fprintf(writer, "Region: \t%s %s\n", *site.Region.Name, *site.RegionId)
-	_, _ = fmt.Fprintf(writer, "Longtitude: \t%v\n", float64(*site.SiteLng)/10000000)
+	_, _ = fmt.Fprintf(writer, "Longitude: \t%v\n", float64(*site.SiteLng)/10000000)
 	_, _ = fmt.Fprintf(writer, "Latitude: \t%v\n", float64(*site.SiteLat)/10000000)
 
 }
@@ -317,7 +317,7 @@ func resolveLatitude(value string) (*int32, error) {
 	return &int32Value, nil
 }
 
-func resolveLongtitude(value string) (*int32, error) {
+func resolveLongitude(value string) (*int32, error) {
 	defaultVal := int32(0)
 	if value == "" {
 		return &defaultVal, nil
@@ -325,7 +325,7 @@ func resolveLongtitude(value string) (*int32, error) {
 
 	parsedValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		return nil, errors.New("invalid longtitude value")
+		return nil, errors.New("invalid longitude value")
 	}
 
 	scaling := 10000000

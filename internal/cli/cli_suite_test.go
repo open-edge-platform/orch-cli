@@ -1152,10 +1152,10 @@ func (s *CLITestSuite) SetupSuite() {
 								{
 									ResourceId: stringPtr("site-7ceae560"),
 									SiteID:     stringPtr("site-7ceae560"), // Deprecated alias
-									Name:       stringPtr("Edge Site East"),
+									Name:       stringPtr("site"),
 									RegionId:   stringPtr("region-abcd1234"),
-									SiteLat:    (*int32)(func() *int32 { lat := int32(404783900); return &lat }()),  // 40.4783900° N (NYC) in E7 format
-									SiteLng:    (*int32)(func() *int32 { lng := int32(-740020000); return &lng }()), // -74.0020000° W (NYC) in E7 format
+									SiteLat:    func() *int32 { lng := int32(50000000); return &lng }(),
+									SiteLng:    func() *int32 { lng := int32(50000000); return &lng }(),
 									Metadata: &[]infra.MetadataItem{
 										{Key: "environment", Value: "production"},
 										{Key: "datacenter", Value: "nyc-east-1"},
@@ -1168,50 +1168,16 @@ func (s *CLITestSuite) SetupSuite() {
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
 									},
+									Region: &infra.RegionResource{
+										ResourceId: stringPtr("region-abcd1234"),
+										RegionID:   stringPtr("region-abcd1234"), // Deprecated alias
+										Name:       stringPtr("region"),
+										ParentId:   stringPtr(""),
+										TotalSites: func() *int32 { i := int32(15); return &i }(),
+									},
 								},
 							},
 							TotalElements: 1,
-						},
-					}, nil
-				}
-			},
-		).AnyTimes()
-
-		// Mock CreateSite (used by create command)
-		mockInfraClient.EXPECT().SiteServiceCreateSiteWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-		).DoAndReturn(
-			func(ctx context.Context, projectName string, body infra.SiteServiceCreateSiteJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceCreateSiteResponse, error) {
-				switch projectName {
-				case "invalid-project":
-					return &infra.SiteServiceCreateSiteResponse{
-						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
-					}, nil
-				default:
-					return &infra.SiteServiceCreateSiteResponse{
-						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
-						JSON200: &infra.SiteResource{
-							ResourceId:        stringPtr("site-new-456"),
-							SiteID:            stringPtr("site-new-456"), // Deprecated alias
-							Name:              body.Name,
-							RegionId:          body.RegionId,
-							SiteLat:           body.SiteLat,
-							SiteLng:           body.SiteLng,
-							Metadata:          body.Metadata,
-							InheritedMetadata: body.InheritedMetadata,
-							Provider:          body.Provider,
-							Region:            body.Region,
-							Timestamps: &infra.Timestamps{
-								CreatedAt: timestampPtr(timestamp),
-								UpdatedAt: timestampPtr(timestamp),
-							},
 						},
 					}, nil
 				}
@@ -1243,6 +1209,44 @@ func (s *CLITestSuite) SetupSuite() {
 			},
 		).AnyTimes()
 
+		// Mock CreateSite (used by create command)
+		mockInfraClient.EXPECT().SiteServiceCreateSiteWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, regionId string, body infra.SiteServiceCreateSiteJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceCreateSiteResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.SiteServiceCreateSiteResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.SiteServiceCreateSiteResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.SiteResource{
+							ResourceId:        stringPtr("site-abcd1111"),
+							SiteID:            stringPtr("site-abcd1111"), // Deprecated alias
+							Name:              body.Name,
+							RegionId:          body.RegionId,
+							SiteLat:           body.SiteLat,
+							SiteLng:           body.SiteLng,
+							Metadata:          body.Metadata,
+							InheritedMetadata: body.InheritedMetadata,
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
 		// Mock GetSite (used by get command)
 		mockInfraClient.EXPECT().SiteServiceGetSiteWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -1288,14 +1292,14 @@ func (s *CLITestSuite) SetupSuite() {
 			},
 		).AnyTimes()
 
-		// Mock UpdateSite (used by update command)
-		mockInfraClient.EXPECT().SiteServiceUpdateSiteWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		// Mock RegionServiceGetRegionWithResponse (used by get region command)
+		mockInfraClient.EXPECT().RegionServiceGetRegionWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName, siteId string, body infra.SiteServiceUpdateSiteJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceUpdateSiteResponse, error) {
+			func(ctx context.Context, projectName, regionId string, reqEditors ...infra.RequestEditorFn) (*infra.RegionServiceGetRegionResponse, error) {
 				switch projectName {
 				case "invalid-project":
-					return &infra.SiteServiceUpdateSiteResponse{
+					return &infra.RegionServiceGetRegionResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 						JSONDefault: &infra.ConnectError{
 							Message: stringPtr("Project not found"),
@@ -1306,25 +1310,43 @@ func (s *CLITestSuite) SetupSuite() {
 						},
 					}, nil
 				default:
-					return &infra.SiteServiceUpdateSiteResponse{
-						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-						JSON200: &infra.SiteResource{
-							ResourceId:        stringPtr(siteId),
-							SiteID:            stringPtr(siteId), // Deprecated alias
-							Name:              body.Name,
-							RegionId:          body.RegionId,
-							SiteLat:           body.SiteLat,
-							SiteLng:           body.SiteLng,
-							Metadata:          body.Metadata,
-							InheritedMetadata: body.InheritedMetadata,
-							Provider:          body.Provider,
-							Region:            body.Region,
-							Timestamps: &infra.Timestamps{
-								CreatedAt: timestampPtr(timestamp),
-								UpdatedAt: timestampPtr(timestamp),
+					switch regionId {
+					case "region-11111111", "invalid-region-id":
+						return &infra.RegionServiceGetRegionResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("Region not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
 							},
-						},
-					}, nil
+						}, nil
+					default:
+						return &infra.RegionServiceGetRegionResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.RegionResource{
+								ResourceId: stringPtr(regionId),
+								RegionID:   stringPtr(regionId), // Deprecated alias
+								Name:       stringPtr("US East Region"),
+								ParentId:   stringPtr("region-abcd1111"),
+								Metadata: &[]infra.MetadataItem{
+									{Key: "region", Value: "us-east"},
+									{Key: "zone", Value: "east-coast"},
+									{Key: "environment", Value: "production"},
+								},
+								InheritedMetadata: &[]infra.MetadataItem{
+									{Key: "organization", Value: "acme-corp"},
+									{Key: "datacenter-type", Value: "primary"},
+								},
+								TotalSites: func() *int32 { i := int32(15); return &i }(),
+								Timestamps: &infra.Timestamps{
+									CreatedAt: timestampPtr(timestamp),
+									UpdatedAt: timestampPtr(timestamp),
+								},
+							},
+						}, nil
+					}
 				}
 			},
 		).AnyTimes()
@@ -1886,28 +1908,40 @@ func mapCliOutput(output string) map[string]map[string]string {
 	return retval
 }
 
-func mapListOutput(output string) []map[string]string {
-	var retval []map[string]string
-	lines := strings.Split(output, "\n")
+func mapListOutput(output string) listCommandOutput {
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) < 2 {
+		return listCommandOutput{}
+	}
+
+	headerLine := lines[0]
+
+	// Try to detect if this is space-separated (like site output) or pipe-separated (like host output)
+	if strings.Contains(headerLine, "|") {
+		// Pipe-separated format (existing host tests)
+		return parsePipeSeparatedOutput(lines)
+	} else {
+		// Space-separated format (new site tests)
+		return parseSpaceSeparatedOutput(lines)
+	}
+}
+
+func parsePipeSeparatedOutput(lines []string) listCommandOutput {
 	var headers []string
-	headerFound := false
+	result := listCommandOutput{}
 
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		if !headerFound {
-			// First non-empty line is the headers
+	for i, line := range lines {
+		if i == 0 {
+			// First line is the headers
 			headers = strings.Split(line, "|")
 			// Clean up headers
 			for j := range headers {
 				headers[j] = strings.TrimSpace(headers[j])
 			}
-			headerFound = true
+		} else if strings.TrimSpace(line) == "" {
+			continue
 		} else {
-			// Split data line by | to match headers
+			// Split data line by |
 			fields := strings.Split(line, "|")
 
 			// Clean up fields
@@ -1921,7 +1955,7 @@ func mapListOutput(output string) []map[string]string {
 
 			row := make(map[string]string)
 
-			// Only process fields that have corresponding headers
+			// Process fields that have corresponding headers
 			maxFields := len(headers)
 			if len(fields) < maxFields {
 				maxFields = len(fields)
@@ -1934,10 +1968,73 @@ func mapListOutput(output string) []map[string]string {
 				}
 			}
 
-			retval = append(retval, row)
+			result = append(result, row)
 		}
 	}
-	return retval
+	return result
+}
+
+func parseSpaceSeparatedOutput(lines []string) listCommandOutput {
+	if len(lines) < 2 {
+		return listCommandOutput{}
+	}
+
+	headerLine := lines[0]
+
+	// Simple approach: find column positions by looking for gaps of 2+ spaces
+	headers := []string{}
+	positions := []int{}
+
+	// Split by multiple spaces to get rough column boundaries
+	parts := strings.Split(headerLine, "  ") // Split by 2+ spaces
+	currentPos := 0
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			// Find where this header actually starts in the original line
+			headerStart := strings.Index(headerLine[currentPos:], trimmed)
+			if headerStart >= 0 {
+				actualStart := currentPos + headerStart
+				headers = append(headers, trimmed)
+				positions = append(positions, actualStart)
+				currentPos = actualStart + len(trimmed)
+			}
+		}
+	}
+
+	result := listCommandOutput{}
+
+	// Parse data rows using detected positions
+	for _, line := range lines[1:] {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		row := make(map[string]string)
+
+		for i, header := range headers {
+			start := positions[i]
+			var end int
+			if i < len(positions)-1 {
+				end = positions[i+1]
+			} else {
+				end = len(line)
+			}
+
+			if start < len(line) {
+				if end > len(line) {
+					end = len(line)
+				}
+				value := strings.TrimSpace(line[start:end])
+				row[header] = value
+			}
+		}
+
+		result = append(result, row)
+	}
+
+	return result
 }
 
 func mapGetOutput(output string) map[string]string {
