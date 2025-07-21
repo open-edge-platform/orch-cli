@@ -1186,9 +1186,9 @@ func (s *CLITestSuite) SetupSuite() {
 
 		// Mock DeleteSite (used by delete command)
 		mockInfraClient.EXPECT().SiteServiceDeleteSiteWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName, siteId string, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceDeleteSiteResponse, error) {
+			func(ctx context.Context, projectName, regionId, siteId string, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceDeleteSiteResponse, error) {
 				switch projectName {
 				case "invalid-project":
 					return &infra.SiteServiceDeleteSiteResponse{
@@ -1202,9 +1202,23 @@ func (s *CLITestSuite) SetupSuite() {
 						},
 					}, nil
 				default:
-					return &infra.SiteServiceDeleteSiteResponse{
-						HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
-					}, nil
+					switch siteId {
+					case "nonexistent-site", "invalid-site-id":
+						return &infra.SiteServiceDeleteSiteResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("Site not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.SiteServiceDeleteSiteResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
 				}
 			},
 		).AnyTimes()
@@ -1270,10 +1284,10 @@ func (s *CLITestSuite) SetupSuite() {
 						JSON200: &infra.SiteResource{
 							ResourceId: stringPtr(siteId),
 							SiteID:     stringPtr(siteId), // Deprecated alias
-							Name:       stringPtr("Edge Site East"),
-							RegionId:   stringPtr("region-abcd1111"),
-							SiteLat:    (*int32)(func() *int32 { lat := int32(404783900); return &lat }()),  // 40.4783900° N (NYC) in E7 format
-							SiteLng:    (*int32)(func() *int32 { lng := int32(-740020000); return &lng }()), // -74.0020000° W (NYC) in E7 format
+							Name:       stringPtr("site"),
+							RegionId:   stringPtr("region-abcd1234"),
+							SiteLat:    func() *int32 { lng := int32(50000000); return &lng }(),
+							SiteLng:    func() *int32 { lng := int32(50000000); return &lng }(),
 							Metadata: &[]infra.MetadataItem{
 								{Key: "environment", Value: "production"},
 								{Key: "datacenter", Value: "nyc-east-1"},
@@ -1285,6 +1299,13 @@ func (s *CLITestSuite) SetupSuite() {
 							Timestamps: &infra.Timestamps{
 								CreatedAt: timestampPtr(timestamp),
 								UpdatedAt: timestampPtr(timestamp),
+							},
+							Region: &infra.RegionResource{
+								ResourceId: stringPtr("region-abcd1234"),
+								RegionID:   stringPtr("region-abcd1234"), // Deprecated alias
+								Name:       stringPtr("region"),
+								ParentId:   stringPtr(""),
+								TotalSites: func() *int32 { i := int32(15); return &i }(),
 							},
 						},
 					}, nil

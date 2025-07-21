@@ -34,6 +34,7 @@ func (s *CLITestSuite) TestSite() {
 	regionID := "region-abcd1234"
 	longitude := "5"
 	latitiude := "5"
+
 	/////////////////////////////
 	// Test Site Creation
 	/////////////////////////////
@@ -124,50 +125,77 @@ func (s *CLITestSuite) TestSite() {
 		},
 	}
 
-	fmt.Println("=== DEBUG: Raw list output ===")
-	fmt.Println(listOutput)
-	fmt.Println("=== END DEBUG ===")
-	fmt.Println("=== DEBUG: Parsed output ===")
-	for i, row := range parsedOutputList {
-		fmt.Printf("Row %d: %+v\n", i, row)
+	s.compareListOutput(expectedOutputList, parsedOutputList)
+
+	//List site --verbose and region filter
+	SArgs = map[string]string{
+		"verbose": "true",
+		"region":  regionID,
 	}
-	fmt.Println("=== END DEBUG ===")
-	fmt.Println("=== DEBUG: Expected output ===")
-	for i, row := range expectedOutputList {
-		fmt.Printf("Row %d: %+v\n", i, row)
+	listOutput, err = s.listSite(project, SArgs)
+	s.NoError(err)
+
+	parsedOutputList = mapListOutput(listOutput)
+
+	expectedOutputList = listCommandOutput{
+		{
+			"Site ID":       resourceID,
+			"Site Name":     name,
+			"Region (Name)": regionID + (" (region)"),
+			"Longitude":     longitude,
+			"Latitude":      latitiude,
+		},
 	}
-	fmt.Println("=== END DEBUG ===")
+
+	s.compareListOutput(expectedOutputList, parsedOutputList)
+
+	//List site withregion filter
+	SArgs = map[string]string{
+		"region": regionID,
+	}
+	listOutput, err = s.listSite(project, SArgs)
+	s.NoError(err)
+
+	parsedOutputList = mapListOutput(listOutput)
+
+	expectedOutputList = listCommandOutput{
+		{
+			"Site ID":       resourceID,
+			"Site Name":     name,
+			"Region (Name)": regionID + (" (region)"),
+		},
+	}
 
 	s.compareListOutput(expectedOutputList, parsedOutputList)
 
 	// /////////////////////////////
-	// // Test Custom Config Get
+	// // Test Site Get
 	// /////////////////////////////
 
-	// getOutput, err := s.getSite(project, name, make(map[string]string))
-	// s.NoError(err)
+	getOutput, err := s.getSite(project, resourceID, make(map[string]string))
+	s.NoError(err)
 
-	// parsedOutput := mapGetOutput(getOutput)
-	// expectedOutput := map[string]string{
-	// 	"Name:":        "nginx-config",
-	// 	"Resource ID:": "config-abc12345",
-	// 	"Description:": "Nginx configuration for web services",
-	// 	"Cloud Init:":  "",
-	// 	"test:":        "",
-	// }
+	parsedOutput := mapGetOutput(getOutput)
+	expectedOutput := map[string]string{
+		"Name:":        name,
+		"Resource ID:": resourceID,
+		"Region:":      "region " + regionID,
+		"Longitude:":   longitude,
+		"Latitude:":    latitiude,
+	}
 
-	// s.compareGetOutput(expectedOutput, parsedOutput)
+	s.compareGetOutput(expectedOutput, parsedOutput)
 
 	// /////////////////////////////
 	// // Test Custom Config Delete
 	// /////////////////////////////
 
-	// //delete custom config
-	// _, err = s.deleteSite(project, name, make(map[string]string))
-	// s.NoError(err)
+	//delete custom config
+	_, err = s.deleteSite(project, resourceID, make(map[string]string))
+	s.NoError(err)
 
-	// //delete invalid cusotm config
-	// _, err = s.deleteSite(project, "nonexistent-config", make(map[string]string))
-	// s.EqualError(err, "no custom config matches the given name")
+	//delete invalid custom config
+	_, err = s.deleteSite(project, "nonexistent-site", make(map[string]string))
+	s.EqualError(err, "error while deleting site: Not Found")
 
 }
