@@ -7,17 +7,18 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	sprig "github.com/go-task/slim-sprig"
-	"github.com/joho/godotenv"
-	"github.com/spf13/cobra"
-	"golang.org/x/term"
-	"gopkg.in/yaml.v3"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
 	"text/template"
+
+	sprig "github.com/go-task/slim-sprig"
+	"github.com/joho/godotenv"
+	"github.com/spf13/cobra"
+	"golang.org/x/term"
+	"gopkg.in/yaml.v3"
 )
 
 const defaultEmtsRepoCommitID = "a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2"
@@ -28,6 +29,8 @@ var (
 	K3sInstallerScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/cluster_installers/sen-k3s-installer.sh"
 	K3sPostRebootScriptSource = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/k3s-setup-post-reboot.sh"
 )
+
+var getPasswordFromUser = getPasswordFromUserInput
 
 var cloudInitTemplate = `
 #cloud-config
@@ -330,7 +333,7 @@ func loadConfig(path string, withUserApps bool, nginxFQDN, emtsRepoID string) (m
 	config["CloudInitServicesDisable"] = cloudInit.Services.Disable
 	config["CloudInitRuncmd"] = cloudInit.RunCmd
 
-	if config["passwd"], err = getPasswordFromUserInput(config["user_name"].(string)); err != nil {
+	if config["passwd"], err = getPasswordFromUser(config["user_name"].(string)); err != nil {
 		return nil, err
 	}
 

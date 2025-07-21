@@ -168,7 +168,7 @@ func (s *CLITestSuite) TestRegion() {
 		"",
 		"Printing regions tree",
 		"",
-		"Region: " + resourceID + " (region)",
+		"Region: region-abcd1111 (region)",
 		"  |",
 		"  └───── Site: " + siteID + " (site)",
 		"",
@@ -203,7 +203,7 @@ func (s *CLITestSuite) TestRegion() {
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
 	/////////////////////////////
-	// Test Custom Config Delete
+	// Test Region Delete
 	/////////////////////////////
 
 	//delete custom config
