@@ -199,7 +199,12 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		}
 
 		if *h.HostStatus != "" {
-			host = *h.HostStatus
+			// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
+			if strings.EqualFold(*h.HostStatus, "error") && h.Instance != nil && h.Instance.InstanceStatusDetail != nil && strings.Contains(*h.Instance.InstanceStatusDetail, "of 10 components running") {
+				host = "Waiting on node agents"
+			} else {
+				host = *h.HostStatus
+			}
 		}
 
 		if h.Instance != nil && h.Instance.ProvisioningStatus != nil {
@@ -244,7 +249,12 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	if *host.HostStatus != "" {
-		hoststatus = *host.HostStatus
+		// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
+		if strings.EqualFold(*host.HostStatus, "error") && host.Instance != nil && host.Instance.InstanceStatusDetail != nil && strings.Contains(*host.Instance.InstanceStatusDetail, "of 10 components running") {
+			hoststatus = "Waiting on node agents"
+		} else {
+			hoststatus = *host.HostStatus
+		}
 	}
 
 	if host.Instance != nil && host.Instance.CustomConfig != nil {
