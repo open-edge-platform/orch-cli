@@ -199,7 +199,12 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		}
 
 		if *h.HostStatus != "" {
-			host = *h.HostStatus
+			// If HostStatus is "Error" (case-insensitive), show "Waiting on node agents"
+			if strings.EqualFold(*h.HostStatus, "error") {
+				host = "Waiting on node agents"
+			} else {
+				host = *h.HostStatus
+			}
 		}
 
 		if h.Instance != nil && h.Instance.ProvisioningStatus != nil {
@@ -244,7 +249,12 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	if *host.HostStatus != "" {
-		hoststatus = *host.HostStatus
+		// If HostStatus is "Error" (case-insensitive), show "Waiting on node agents"
+		if strings.EqualFold(*host.HostStatus, "error") {
+			hoststatus = "Waiting on node agents"
+		} else {
+			hoststatus = *host.HostStatus
+		}
 	}
 
 	if host.Instance != nil && host.Instance.CustomConfig != nil {
