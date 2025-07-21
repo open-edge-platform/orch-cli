@@ -199,8 +199,15 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		}
 
 		if *h.HostStatus != "" {
-			// If HostStatus is "n of 10 components running" (case-insensitive), show "Waiting on node agents"
-			if strings.EqualFold(*h.HostStatus, "of 10 components running") {
+			// If HostStatus is "error" (case-insensitive), or InstanceStatusDetail contains '10 components running', show "Waiting on node agents"
+			waiting := false
+			if strings.EqualFold(*h.HostStatus, "error") {
+				waiting = true
+			}
+			if h.Instance != nil && h.Instance.InstanceStatusDetail != nil && strings.Contains(*h.Instance.InstanceStatusDetail, "of 10 components running") {
+				waiting = true
+			}
+			if waiting {
 				host = "Waiting on node agents"
 			} else {
 				host = *h.HostStatus
@@ -249,8 +256,15 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	if *host.HostStatus != "" {
-		// If HostStatus is "n of 10 components running" (case-insensitive), show "Waiting on node agents"
-		if strings.EqualFold(*host.HostStatus, "of 10 components running") {
+		// If HostStatus is "error" (case-insensitive), or InstanceStatusDetail contains '10 components running', show "Waiting on node agents"
+		waiting := false
+		if strings.EqualFold(*host.HostStatus, "error") {
+			waiting = true
+		}
+		if host.Instance != nil && host.Instance.InstanceStatusDetail != nil && strings.Contains(*host.Instance.InstanceStatusDetail, "of 10 components running") {
+			waiting = true
+		}
+		if waiting {
 			hoststatus = "Waiting on node agents"
 		} else {
 			hoststatus = *host.HostStatus
