@@ -86,4 +86,13 @@ func (s *CLITestSuite) TestStandalone() {
 	_, err = s.generateStandaloneConfig(project, SArgs)
 	s.EqualError(err, "bad status: 404 Not Found")
 
+	// Test standalone config with specific invalid output
+	SArgs = map[string]string{
+		"config-file": filename,
+		"output-file": "/",
+	}
+
+	_, err = s.generateStandaloneConfig(project, SArgs)
+	s.EqualError(err, "failed to write cloud-init to path \"/\"")
+
 }
