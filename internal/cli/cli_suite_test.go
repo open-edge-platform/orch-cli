@@ -1174,7 +1174,7 @@ func (s *CLITestSuite) SetupSuite() {
 										RegionID:   stringPtr("region-abcd1234"), // Deprecated alias
 										Name:       stringPtr("region"),
 										ParentId:   stringPtr(""),
-										TotalSites: func() *int32 { i := int32(15); return &i }(),
+										TotalSites: func() *int32 { i := int32(1); return &i }(),
 									},
 								},
 							},
@@ -1306,7 +1306,7 @@ func (s *CLITestSuite) SetupSuite() {
 								RegionID:   stringPtr("region-abcd1234"), // Deprecated alias
 								Name:       stringPtr("region"),
 								ParentId:   stringPtr(""),
-								TotalSites: func() *int32 { i := int32(15); return &i }(),
+								TotalSites: func() *int32 { i := int32(1); return &i }(),
 							},
 						},
 					}, nil
@@ -1375,6 +1375,131 @@ func (s *CLITestSuite) SetupSuite() {
 			},
 		).AnyTimes()
 
+		// Mock RegionServiceListRegionsWithResponse (used by list regions command)
+		mockInfraClient.EXPECT().RegionServiceListRegionsWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *infra.RegionServiceListRegionsParams, reqEditors ...infra.RequestEditorFn) (*infra.RegionServiceListRegionsResponse, error) {
+				switch projectName {
+				case "nonexistent-project":
+					return &infra.RegionServiceListRegionsResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				case "empty-regions-project":
+					return &infra.RegionServiceListRegionsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListRegionsResponse{
+							Regions:       []infra.RegionResource{},
+							TotalElements: 0,
+						},
+					}, nil
+				default:
+					switch projectName {
+					case "parent-region":
+						return &infra.RegionServiceListRegionsResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ListRegionsResponse{
+								Regions: []infra.RegionResource{
+									{
+										ResourceId: stringPtr("region-abcd1111"),
+										RegionID:   stringPtr("region-abcd1111"), // Deprecated alias
+										Name:       stringPtr("region"),
+										ParentId:   stringPtr(""),
+										Metadata: &[]infra.MetadataItem{
+											{Key: "region", Value: "us-east"},
+											{Key: "zone", Value: "east-coast"},
+											{Key: "environment", Value: "production"},
+										},
+										InheritedMetadata: &[]infra.MetadataItem{
+											{Key: "organization", Value: "acme-corp"},
+											{Key: "datacenter-type", Value: "primary"},
+										},
+										TotalSites: func() *int32 { i := int32(1); return &i }(),
+										Timestamps: &infra.Timestamps{
+											CreatedAt: timestampPtr(timestamp),
+											UpdatedAt: timestampPtr(timestamp),
+										},
+										ParentRegion: &infra.RegionResource{
+											ResourceId: stringPtr(""),
+											RegionID:   stringPtr(""),
+											Name:       stringPtr(""),
+										},
+									},
+									{
+										ResourceId: stringPtr("region-abcd2222"),
+										RegionID:   stringPtr("region-abcd2222"), // Deprecated alias
+										Name:       stringPtr("region"),
+										ParentId:   stringPtr("region-abcd1111"),
+										Metadata: &[]infra.MetadataItem{
+											{Key: "region", Value: "us-east"},
+											{Key: "zone", Value: "east-coast"},
+											{Key: "environment", Value: "production"},
+										},
+										InheritedMetadata: &[]infra.MetadataItem{
+											{Key: "organization", Value: "acme-corp"},
+											{Key: "datacenter-type", Value: "primary"},
+										},
+										TotalSites: func() *int32 { i := int32(1); return &i }(),
+										Timestamps: &infra.Timestamps{
+											CreatedAt: timestampPtr(timestamp),
+											UpdatedAt: timestampPtr(timestamp),
+										},
+										ParentRegion: &infra.RegionResource{
+											ResourceId: stringPtr("region-abcd1111"),
+											RegionID:   stringPtr("region-abcd1111"),
+											Name:       stringPtr("region"),
+										},
+									},
+								},
+								TotalElements: 2,
+							},
+						}, nil
+					default:
+						return &infra.RegionServiceListRegionsResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ListRegionsResponse{
+								Regions: []infra.RegionResource{
+									{
+										ResourceId: stringPtr("region-abcd1111"),
+										RegionID:   stringPtr("region-abcd1111"), // Deprecated alias
+										Name:       stringPtr("region"),
+										ParentId:   stringPtr(""),
+										Metadata: &[]infra.MetadataItem{
+											{Key: "region", Value: "us-east"},
+											{Key: "zone", Value: "east-coast"},
+											{Key: "environment", Value: "production"},
+										},
+										InheritedMetadata: &[]infra.MetadataItem{
+											{Key: "organization", Value: "acme-corp"},
+											{Key: "datacenter-type", Value: "primary"},
+										},
+										TotalSites: func() *int32 { i := int32(1); return &i }(),
+										Timestamps: &infra.Timestamps{
+											CreatedAt: timestampPtr(timestamp),
+											UpdatedAt: timestampPtr(timestamp),
+										},
+										ParentRegion: &infra.RegionResource{
+											ResourceId: stringPtr(""),
+											RegionID:   stringPtr(""),
+											Name:       stringPtr(""),
+										},
+									},
+								},
+								TotalElements: 1,
+							},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
 		// Mock RegionServiceGetRegionWithResponse (used by get region command)
 		mockInfraClient.EXPECT().RegionServiceGetRegionWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -1411,23 +1536,65 @@ func (s *CLITestSuite) SetupSuite() {
 							JSON200: &infra.RegionResource{
 								ResourceId: stringPtr(regionId),
 								RegionID:   stringPtr(regionId), // Deprecated alias
-								Name:       stringPtr("US East Region"),
+								Name:       stringPtr("region"),
 								ParentId:   stringPtr("region-abcd1111"),
 								Metadata: &[]infra.MetadataItem{
 									{Key: "region", Value: "us-east"},
-									{Key: "zone", Value: "east-coast"},
-									{Key: "environment", Value: "production"},
 								},
 								InheritedMetadata: &[]infra.MetadataItem{
 									{Key: "organization", Value: "acme-corp"},
 									{Key: "datacenter-type", Value: "primary"},
 								},
-								TotalSites: func() *int32 { i := int32(15); return &i }(),
+								TotalSites: func() *int32 { i := int32(1); return &i }(),
 								Timestamps: &infra.Timestamps{
 									CreatedAt: timestampPtr(timestamp),
 									UpdatedAt: timestampPtr(timestamp),
 								},
+								ParentRegion: &infra.RegionResource{
+									ResourceId: stringPtr(""),
+									RegionID:   stringPtr(""),
+									Name:       stringPtr(""),
+								},
 							},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock RegionServiceDeleteRegionWithResponse (used by delete region command)
+		mockInfraClient.EXPECT().RegionServiceDeleteRegionWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, regionId string, reqEditors ...infra.RequestEditorFn) (*infra.RegionServiceDeleteRegionResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.RegionServiceDeleteRegionResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch regionId {
+					case "nonexistent-region", "invalid-region-id":
+						return &infra.RegionServiceDeleteRegionResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("Region not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.RegionServiceDeleteRegionResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
 						}, nil
 					}
 				}
@@ -1888,6 +2055,22 @@ func (s *CLITestSuite) compareGetOutput(expected map[string]string, actual map[s
 	}
 }
 
+func (s *CLITestSuite) compareLinesOutput(expected linesCommandOutput, actual linesCommandOutput) {
+	s.Equal(len(expected), len(actual), "Number of lines should match")
+
+	for i, expectedLine := range expected {
+		if i >= len(actual) {
+			s.Fail("Missing line at index %d", i)
+			continue
+		}
+
+		actualLine := actual[i]
+
+		// Use exact string comparison for line content
+		s.Equal(expectedLine, actualLine, "Line %d: expected '%s' but got '%s'", i, expectedLine, actualLine)
+	}
+}
+
 func parseArgs(input string) []string {
 	var args []string
 	var current strings.Builder
@@ -2007,6 +2190,22 @@ func mapListOutput(output string) listCommandOutput {
 		// Space-separated format (new site tests)
 		return parseSpaceSeparatedOutput(lines)
 	}
+}
+
+func mapLinesOutput(output string) linesCommandOutput {
+	lines := strings.Split(output, "\n")
+	result := linesCommandOutput{}
+
+	// Remove only the trailing newline if present, but preserve internal structure
+	if len(lines) > 0 && lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+
+	for _, line := range lines {
+		result = append(result, line)
+	}
+
+	return result
 }
 
 func parsePipeSeparatedOutput(lines []string) listCommandOutput {
