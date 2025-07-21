@@ -38,6 +38,7 @@ const (
 type commandArgs map[string]string
 type commandOutput map[string]map[string]string
 type listCommandOutput []map[string]string
+type linesCommandOutput []string
 
 type CLITestSuite struct {
 	suite.Suite
@@ -1307,6 +1308,67 @@ func (s *CLITestSuite) SetupSuite() {
 								ParentId:   stringPtr(""),
 								TotalSites: func() *int32 { i := int32(15); return &i }(),
 							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock RegionServiceCreateRegionWithResponse (used by create region command)
+		mockInfraClient.EXPECT().RegionServiceCreateRegionWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, body infra.RegionServiceCreateRegionJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.RegionServiceCreateRegionResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.RegionServiceCreateRegionResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				case "invalid-parent-project":
+					return &infra.RegionServiceCreateRegionResponse{
+						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Parent region not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.NotFound
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.RegionServiceCreateRegionResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.RegionResource{
+							ResourceId: stringPtr("region-abcd1111"),
+							RegionID:   stringPtr("region-abcd1111"), // Deprecated alias
+							Name:       body.Name,
+							ParentId:   body.ParentId,
+							Metadata:   body.Metadata,
+							InheritedMetadata: &[]infra.MetadataItem{
+								{Key: "organization", Value: "acme-corp"},
+							},
+							TotalSites: func() *int32 { i := int32(0); return &i }(),
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+							ParentRegion: func() *infra.RegionResource {
+								if body.ParentId != nil {
+									return &infra.RegionResource{
+										ResourceId: body.ParentId,
+										RegionID:   body.ParentId,
+										Name:       stringPtr("Parent Region"),
+									}
+								}
+								return nil
+							}(),
 						},
 					}, nil
 				}

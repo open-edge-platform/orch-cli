@@ -84,9 +84,9 @@ func (s *CLITestSuite) TestSite() {
 	_, err = s.createSite(project, name, SArgs)
 	s.EqualError(err, "invalid latitude value")
 
-	// /////////////////////////////
-	// // Test Custom Config Listing
-	// /////////////////////////////
+	/////////////////////////////
+	// Test Site Listing
+	/////////////////////////////
 
 	//List site
 
@@ -168,9 +168,9 @@ func (s *CLITestSuite) TestSite() {
 
 	s.compareListOutput(expectedOutputList, parsedOutputList)
 
-	// /////////////////////////////
-	// // Test Site Get
-	// /////////////////////////////
+	/////////////////////////////
+	// Test Site Get
+	/////////////////////////////
 
 	getOutput, err := s.getSite(project, resourceID, make(map[string]string))
 	s.NoError(err)
@@ -186,9 +186,9 @@ func (s *CLITestSuite) TestSite() {
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
-	// /////////////////////////////
-	// // Test Custom Config Delete
-	// /////////////////////////////
+	/////////////////////////////
+	// Test Site Delete
+	/////////////////////////////
 
 	//delete custom config
 	_, err = s.deleteSite(project, resourceID, make(map[string]string))

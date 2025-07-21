@@ -563,7 +563,7 @@ func resolveOSProfile(ctx context.Context, hClient infra.ClientWithResponsesInte
 		return *osResource.ResourceId, nil
 	}
 
-	ospfilter := fmt.Sprintf("profileName='%s' OR resourceId='%s'", osProfile, osProfile)
+	ospfilter := fmt.Sprintf("name='%s' OR resourceId='%s'", osProfile, osProfile)
 	resp, err := hClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
 		&infra.OperatingSystemServiceListOperatingSystemsParams{
 			Filter: &ospfilter,

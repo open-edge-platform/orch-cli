@@ -92,7 +92,7 @@ func getDeleteRegionCommand() *cobra.Command {
 // specifc region by name
 func runGetRegionCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, regionClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, regionClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func runCreateRegionCommand(cmd *cobra.Command, args []string) error {
 	parentFlag, _ := cmd.Flags().GetString("parent")
 	typeFlag, _ := cmd.Flags().GetString("type")
 
-	ctx, regionClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, regionClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func runCreateRegionCommand(cmd *cobra.Command, args []string) error {
 func runDeleteRegionCommand(cmd *cobra.Command, args []string) error {
 	id := args[0]
 
-	ctx, regionClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, regionClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -201,7 +201,7 @@ func runListRegionCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	ctx, regionClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, regionClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
