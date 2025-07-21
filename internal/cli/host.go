@@ -199,8 +199,8 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		}
 
 		if *h.HostStatus != "" {
-			// If HostStatus is "Error" (case-insensitive), show "Waiting on node agents"
-			if strings.EqualFold(*h.HostStatus, "error") {
+			// If HostStatus is "n of 10 components running" (case-insensitive), show "Waiting on node agents"
+			if strings.EqualFold(*h.HostStatus, "of 10 components running") {
 				host = "Waiting on node agents"
 			} else {
 				host = *h.HostStatus
@@ -249,8 +249,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	if *host.HostStatus != "" {
-		// If HostStatus is "Error" (case-insensitive), show "Waiting on node agents"
-		if strings.EqualFold(*host.HostStatus, "error") {
+		// If HostStatus is "n of 10 components running" (case-insensitive), show "Waiting on node agents"
+		if strings.EqualFold(*host.HostStatus, "of 10 components running") {
 			hoststatus = "Waiting on node agents"
 		} else {
 			hoststatus = *host.HostStatus
