@@ -234,6 +234,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	currentOS := ""
 	osprofile := ""
 	customcfg := ""
+	ip := ""
 
 	//TODO Build out the host information
 	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
@@ -267,10 +268,23 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		}
 	}
 
+	if host.Instance != nil && host.Instance.Host != nil && host.Instance.Host.HostNics != nil && len(*host.Instance.Host.HostNics) > 0 {
+		for _, nic := range *host.Instance.Host.HostNics {
+			fmt.Println("\n\ngot nic\n\n\n")
+			if nic.Ipaddresses != nil && len(*nic.Ipaddresses) > 0 && nic.DeviceName != nil && (*nic.Ipaddresses)[0].Address != nil {
+				deviceName := *nic.DeviceName
+				address := *(*nic.Ipaddresses)[0].Address
+				fmt.Println("got address")
+				ip = ip + deviceName + " " + address + "; "
+			}
+		}
+	}
+
 	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Resurce ID:\t %s\n", *host.ResourceId)
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
-	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n\n", osprofile)
+	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
+	_, _ = fmt.Fprintf(writer, "-\tIP Address:\t %v\n\n", ip)
 
 	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
