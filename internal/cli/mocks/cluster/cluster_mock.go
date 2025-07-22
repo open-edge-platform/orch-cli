@@ -84,12 +84,60 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 									Version:           "v1.0.0",
 									KubernetesVersion: "v1.28.0",
 									Description:       stringPtr("Default Kubernetes cluster template"),
+									Controlplaneprovidertype: func() *cluster.TemplateInfoControlplaneprovidertype {
+										provider := cluster.TemplateInfoControlplaneprovidertype("kubernetes")
+										return &provider
+									}(),
+									Infraprovidertype: func() *cluster.TemplateInfoInfraprovidertype {
+										provider := cluster.TemplateInfoInfraprovidertype("type")
+										return &provider
+									}(),
+									ClusterLabels: &map[string]string{ // Changed from interface{} to string
+										"created-by": "test",
+									},
+									ClusterNetwork: &cluster.ClusterNetwork{
+										Pods: &cluster.NetworkRanges{
+											CidrBlocks: []string{"10.244.0.0/16"},
+										},
+										Services: &cluster.NetworkRanges{
+											CidrBlocks: []string{"10.96.0.0/12"},
+										},
+									},
+									Clusterconfiguration: &map[string]interface{}{
+										"apiServer": map[string]interface{}{
+											"port": 6443,
+										},
+									},
 								},
 								{
 									Name:              "ha-template",
 									Version:           "v1.1.0",
 									KubernetesVersion: "v1.28.0",
 									Description:       stringPtr("High availability cluster template"),
+									Controlplaneprovidertype: func() *cluster.TemplateInfoControlplaneprovidertype {
+										provider := cluster.TemplateInfoControlplaneprovidertype("kubernetes")
+										return &provider
+									}(),
+									Infraprovidertype: func() *cluster.TemplateInfoInfraprovidertype {
+										provider := cluster.TemplateInfoInfraprovidertype("type")
+										return &provider
+									}(),
+									ClusterLabels: &map[string]string{ // Changed from interface{} to string
+										"created-by": "test",
+									},
+									ClusterNetwork: &cluster.ClusterNetwork{
+										Pods: &cluster.NetworkRanges{
+											CidrBlocks: []string{"10.244.0.0/16"},
+										},
+										Services: &cluster.NetworkRanges{
+											CidrBlocks: []string{"10.96.0.0/12"},
+										},
+									},
+									Clusterconfiguration: &map[string]interface{}{
+										"apiServer": map[string]interface{}{
+											"port": 6443,
+										},
+									},
 								},
 							},
 							TotalElements: func() *int32 { count := int32(2); return &count }(),

@@ -12,6 +12,20 @@ func (s *CLITestSuite) listClusterTemplates(publisher string, args commandArgs) 
 }
 
 func (s *CLITestSuite) TestClusterTemplate() {
-	_, err := s.listClusterTemplates(project, make(map[string]string))
+
+	/////////////////////////////
+	// Test Cluster List
+	/////////////////////////////
+
+	//List cluster
+	CArgs := map[string]string{}
+	_, err := s.listClusterTemplates(project, CArgs)
+	s.NoError(err)
+
+	//List cluster --verbose
+	CArgs = map[string]string{
+		"verbose": "",
+	}
+	_, err = s.listClusterTemplates(project, CArgs)
 	s.NoError(err)
 }
