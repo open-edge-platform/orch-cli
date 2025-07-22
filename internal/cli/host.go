@@ -268,8 +268,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		}
 	}
 
-	if host.Instance != nil && host.Instance.Host != nil && host.Instance.Host.HostNics != nil && len(*host.Instance.Host.HostNics) > 0 {
-		for _, nic := range *host.Instance.Host.HostNics {
+	if host.HostNics != nil && len(*host.HostNics) > 0 {
+		for _, nic := range *host.HostNics {
 			if nic.Ipaddresses != nil && len(*nic.Ipaddresses) > 0 && nic.DeviceName != nil && (*nic.Ipaddresses)[0].Address != nil {
 				deviceName := *nic.DeviceName
 				address := *(*nic.Ipaddresses)[0].Address
@@ -282,7 +282,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tHost Resurce ID:\t %s\n", *host.ResourceId)
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
 	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
-	_, _ = fmt.Fprintf(writer, "-\tIP Address:\t %v\n\n", ip)
+	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n\n", ip)
 
 	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
