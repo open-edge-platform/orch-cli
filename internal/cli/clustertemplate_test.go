@@ -13,6 +13,5 @@ func (s *CLITestSuite) listClusterTemplates(publisher string, args commandArgs) 
 
 func (s *CLITestSuite) TestClusterTemplate() {
 	_, err := s.listClusterTemplates(project, make(map[string]string))
-	fmt.Printf("listClusterTemplates: %v\n", err)
-	s.EqualError(err, `no response from backend - check catalog-endpoint and deployment-endpoint`)
+	s.NoError(err)
 }

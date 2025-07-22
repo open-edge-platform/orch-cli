@@ -349,7 +349,7 @@ func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
 	if force {
-		ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+		ctx, hostClient, projectName, err := InfraFactory(cmd)
 		if err != nil {
 			return fmt.Errorf("failed to get infra service context: %w", err)
 		}
@@ -389,7 +389,7 @@ func softDeleteCluster(ctx context.Context, clusterClient coapi.ClientWithRespon
 	return nil
 }
 
-func forceDeleteCluster(ctx context.Context, hostClient *infra.ClientWithResponses, clusterClient coapi.ClientWithResponsesInterface, projectName, clusterName string) error {
+func forceDeleteCluster(ctx context.Context, hostClient infra.ClientWithResponsesInterface, clusterClient coapi.ClientWithResponsesInterface, projectName, clusterName string) error {
 	cluster, err := getClusterDetails(ctx, clusterClient, projectName, clusterName)
 	if err != nil {
 		return fmt.Errorf("failed to get cluster details for force delete: %w", err)
@@ -423,7 +423,7 @@ func forceDeleteCluster(ctx context.Context, hostClient *infra.ClientWithRespons
 	return nil
 }
 
-func getHostUUID(ctx context.Context, hostClient *infra.ClientWithResponses, projectName, hostID string) (string, error) {
+func getHostUUID(ctx context.Context, hostClient infra.ClientWithResponsesInterface, projectName, hostID string) (string, error) {
 	resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
 	if err != nil {
 		return "", processError(err)
