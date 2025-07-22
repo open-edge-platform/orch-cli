@@ -270,11 +270,9 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 
 	if host.Instance != nil && host.Instance.Host != nil && host.Instance.Host.HostNics != nil && len(*host.Instance.Host.HostNics) > 0 {
 		for _, nic := range *host.Instance.Host.HostNics {
-			fmt.Println("\n\ngot nic\n\n\n")
 			if nic.Ipaddresses != nil && len(*nic.Ipaddresses) > 0 && nic.DeviceName != nil && (*nic.Ipaddresses)[0].Address != nil {
 				deviceName := *nic.DeviceName
 				address := *(*nic.Ipaddresses)[0].Address
-				fmt.Println("got address")
 				ip = ip + deviceName + " " + address + "; "
 			}
 		}
