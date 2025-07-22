@@ -17,10 +17,10 @@ orch-cli list osupdaterun --project some-project
 `
 
 const getOSUpdateRunExamples = `# Get detailed information about specific OS Update Run using the run name
-orch-cli get osupdaterun runname --project some-project`
+orch-cli get osupdaterun <resourceid> --project some-project`
 
 const deleteOSUpdateRunExamples = `#Delete an OS Update Run  using it's name
-orch-cli delete osupdaterun run --project some-project`
+orch-cli delete osupdaterun <resourceid> --project some-project`
 
 var OSUpdateRunHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Status")
 

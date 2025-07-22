@@ -55,15 +55,15 @@ type UpdateNestedSpec struct {
 	Spec OSUpdatePolicy `yaml:"spec"`
 }
 
-// Filters list of profiles to find one with specific name
-func filterPoliciesByName(OSPolicies []infra.OSUpdatePolicy, name string) (*infra.OSUpdatePolicy, error) {
-	for _, policy := range OSPolicies {
-		if policy.Name == name {
-			return &policy, nil
-		}
-	}
-	return nil, errors.New("no os update policy matches the given name")
-}
+// // Filters list of profiles to find one with specific name
+// func filterPoliciesByName(OSPolicies []infra.OSUpdatePolicy, name string) (*infra.OSUpdatePolicy, error) {
+// 	for _, policy := range OSPolicies {
+// 		if policy.Name == name {
+// 			return &policy, nil
+// 		}
+// 	}
+// 	return nil, errors.New("no os update policy matches the given name")
+// }
 
 // Prints OS Profiles in tabular format
 func printOSUpdatePolicies(writer io.Writer, OSUpdatePolicies []infra.OSUpdatePolicy, verbose bool) {
@@ -305,6 +305,7 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	if spec.Spec.UpdateSources != nil {
 		sources = &spec.Spec.UpdateSources
 	}
+	fmt.Println(*profile.Name, *profile.ResourceId)
 
 	//Create policy
 	resp, err := OSUPolicyClient.OSUpdatePolicyCreateOSUpdatePolicyWithResponse(ctx, projectName,
@@ -313,9 +314,10 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 			Description:     &spec.Spec.Description,
 			InstallPackages: packages,
 			KernelCommand:   kernel,
-			TargetOs:        profile,
-			UpdateSources:   sources,
-			UpdatePolicy:    &updpol,
+			//TargetOs:        profile,
+			TargetOsId:    profile.ResourceId,
+			UpdateSources: sources,
+			UpdatePolicy:  &updpol,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
