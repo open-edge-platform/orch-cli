@@ -17,10 +17,11 @@ import (
 
 func getCreateProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "profile <application-name> <version> <name> [flags]",
-		Short: "Create an application profile",
-		Args:  cobra.ExactArgs(3),
-		RunE:  runCreateProfileCommand,
+		Use:     "profile <application-name> <version> <name> [flags]",
+		Short:   "Create an application profile",
+		Args:    cobra.ExactArgs(3),
+		Example: "orch-cli create profile my-app 1.0.0 my-profile --display-name 'My Profile' --description 'This is my profile' --chart-values values.yaml --project my-project",
+		RunE:    runCreateProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
 	cmd.Flags().String("chart-values", "-", "path to the values.yaml file; - for stdin")
@@ -51,10 +52,11 @@ func getGetProfileCommand() *cobra.Command {
 
 func getSetProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "profile <application-name> <version> <name> [flags]",
-		Short: "Update an application profile",
-		Args:  cobra.ExactArgs(3),
-		RunE:  runSetProfileCommand,
+		Use:     "profile <application-name> <version> <name> [flags]",
+		Short:   "Update an application profile",
+		Args:    cobra.ExactArgs(3),
+		Example: "orch-cli set profile my-app 1.0.0 my-profile --display-name 'Updated Profile' --description 'Updated description' --chart-values new-values.yaml --project my-project",
+		RunE:    runSetProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
 	cmd.Flags().String("chart-values", "", "path to the values.yaml file; - for stdin")
@@ -100,7 +102,23 @@ func printProfiles(writer io.Writer, profileList *[]catapi.Profile, verbose bool
 						pt.Name, pt.Type, valueOrNone(pt.DisplayName), *pt.Default, strings.Join((*pt.SuggestedValues)[:], ","))
 				}
 			}
-			// TODO: add listing of chart values
+
+			if p.ChartValues != nil && *p.ChartValues != "" {
+				_, _ = fmt.Fprintf(writer, "Chart Values:\n")
+				decodedValues, err := b64.StdEncoding.DecodeString(*p.ChartValues)
+
+				if err == nil {
+					lines := strings.Split(string(decodedValues), "\n")
+					for _, line := range lines {
+						_, _ = fmt.Fprintf(writer, "  %s\n", line)
+					}
+				} else {
+					_, _ = fmt.Fprintf(writer, "  [Error decoding chart values: %v]\n", err)
+					// If decoding fails, show the raw encoded data
+					_, _ = fmt.Fprintf(writer, "  Raw encoded data: %s\n", *p.ChartValues)
+				}
+				_, _ = fmt.Fprintf(writer, "\n")
+			}
 		}
 	}
 }
