@@ -56,17 +56,19 @@ var OSProfileHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Architecture", "Secur
 var OSProfileHeaderGet = fmt.Sprintf("\n%s\t%s", "OS Profile Field", "Value")
 
 type OSProfileSpec struct {
-	Name            string `yaml:"name"`
-	Type            string `yaml:"type"`
-	Provider        string `yaml:"provider"`
-	Architecture    string `yaml:"architecture"`
-	ProfileName     string `yaml:"profileName"`
-	OsImageURL      string `yaml:"osImageUrl"`
-	OsImageSha256   string `yaml:"osImageSha256"`
-	OsImageVersion  string `yaml:"osImageVersion"`
-	OSPackageURL    string `yaml:"osPackageManifestURL"`
-	SecurityFeature string `yaml:"securityFeature"`
-	PlatformBundle  string `yaml:"platformBundle"`
+	Name              string `yaml:"name"`
+	Type              string `yaml:"type"`
+	Provider          string `yaml:"provider"`
+	Architecture      string `yaml:"architecture"`
+	ProfileName       string `yaml:"profileName"`
+	OsImageURL        string `yaml:"osImageUrl"`
+	OsImageSha256     string `yaml:"osImageSha256"`
+	OsImageVersion    string `yaml:"osImageVersion"`
+	OSPackageURL      string `yaml:"osPackageManifestURL"`
+	SecurityFeature   string `yaml:"securityFeature"`
+	PlatformBundle    string `yaml:"platformBundle"`
+	OsExistingCvesURL string `yaml:"osExistingCvesURL"`
+	OsFixedCvesURL    string `yaml:"osFixedCvesURL"`
 }
 
 type NestedSpec struct {
@@ -340,6 +342,8 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 			RepoUrl:         &spec.Spec.OsImageURL,
 			SecurityFeature: (*infra.SecurityFeature)(&spec.Spec.SecurityFeature),
 			Sha256:          spec.Spec.OsImageSha256,
+			FixedCvesUrl:    &spec.Spec.OsFixedCvesURL,
+			ExistingCvesUrl: &spec.Spec.OsExistingCvesURL,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
