@@ -23,27 +23,21 @@ orch-cli list osupdatepolicy --project some-project
 `
 
 const getOSUpdatePolicyExamples = `# Get detailed information about specific OS Update Policy using the policy name
-orch-cli get osupdatepolicy policyname --project some-project`
+orch-cli get osupdatepolicy <resourceID> --project some-project`
 
 const createOSUpdatePolicyExamples = `# Create an OS Update Policy.
 orch-cli create osupdatepolicy path/to/osupdatepolicy.yaml  --project some-project
 
-Sample OS update policy file format
+Sample OS update policy file format for immutable OS
 appVersion: apps/v1
 spec:
   name: myupdate
   description: "an update profile"
-  installPackages: "wget\nsl"
-  kernelCommand: "hugepages=2"
-  targetOs: "OS profile name"
-  updateSources:
-    - "source1"
-    - "source2"
   updatePolicy: "UPDATE_POLICY_LATEST"
 `
 
 const deleteOSUpdatePolicyExamples = `#Delete an OS Update Policy  using it's name
-orch-cli delete osupdatepolicy policy --project some-project`
+orch-cli delete <resourceID> policy --project some-project`
 
 var OSUpdatePolicyHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Description")
 
@@ -61,16 +55,26 @@ type UpdateNestedSpec struct {
 	Spec OSUpdatePolicy `yaml:"spec"`
 }
 
+// Filters list of profiles to find one with specific name
+func filterPoliciesByName(OSPolicies []infra.OSUpdatePolicy, name string) (*infra.OSUpdatePolicy, error) {
+	for _, policy := range OSPolicies {
+		if policy.Name == name {
+			return &policy, nil
+		}
+	}
+	return nil, errors.New("no os update policy matches the given name")
+}
+
 // Prints OS Profiles in tabular format
 func printOSUpdatePolicies(writer io.Writer, OSUpdatePolicies []infra.OSUpdatePolicy, verbose bool) {
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s", "Name", "Resource ID", "Target OS ID", "Description", "Created", "Updated")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\n", "Name", "Resource ID", "Target OS ID", "Description", "Created", "Updated")
 	}
 	for _, osup := range OSUpdatePolicies {
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", osup.Name, *osup.ResourceId, *osup.Description)
 		} else {
-			fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s", osup.Name, *osup.ResourceId, *osup.TargetOsId, *osup.Description, *osup.Timestamps.CreatedAt, *osup.Timestamps.UpdatedAt)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", osup.Name, *osup.ResourceId, *osup.TargetOsId, *osup.Description, *osup.Timestamps.CreatedAt, *osup.Timestamps.UpdatedAt)
 		}
 	}
 }
@@ -78,7 +82,7 @@ func printOSUpdatePolicies(writer io.Writer, OSUpdatePolicies []infra.OSUpdatePo
 // Prints output details of OS Profiles
 func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy) {
 
-	_, _ = fmt.Fprintf(writer, "\nName:\t %s\n", OSUpdatePolicy.Name)
+	_, _ = fmt.Fprintf(writer, "Name:\t %s\n", OSUpdatePolicy.Name)
 	_, _ = fmt.Fprintf(writer, "Resource ID:\t %s\n", *OSUpdatePolicy.ResourceId)
 	_, _ = fmt.Fprintf(writer, "Target OS ID:\t %s\n", *OSUpdatePolicy.TargetOsId)
 	_, _ = fmt.Fprintf(writer, "Description:\t %v\n", *OSUpdatePolicy.Description)
@@ -168,7 +172,6 @@ func getDeleteOSUpdatePolicyCommand() *cobra.Command {
 // Gets specific OSUpdatePolicy - retrieves list of policies and then filters and outputs
 // specifc policy by name
 func runGetOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
-	OSUPID := args[0]
 
 	writer, verbose := getOutputContext(cmd)
 	ctx, OSUpdatePolicyClient, projectName, err := getInfraServiceContext(cmd)
@@ -176,8 +179,30 @@ func runGetOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// In future get policy by name istead of resourceid
+	// name := args[0]
+
+	// lresp, err := OSUpdatePolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+	// 	&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
+	// if err != nil {
+	// 	return processError(err)
+	// }
+
+	// if err = checkResponse(lresp.HTTPResponse, "Error getting OS Update policies"); err != nil {
+	// 	return err
+	// }
+
+	// policy, err := filterPoliciesByName(lresp.JSON200.OsUpdatePolicies, name)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// policyID := *policy.ResourceId
+
+	policyID := args[0]
+
 	resp, err := OSUpdatePolicyClient.OSUpdatePolicyGetOSUpdatePolicyWithResponse(ctx, projectName,
-		OSUPID, auth.AddAuthHeader)
+		policyID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -243,6 +268,9 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 
 	var profile *infra.OperatingSystemResource
 	var updpol infra.UpdatePolicy
+	var packages *string
+	var kernel *string
+	var sources *[]string
 	if spec.Spec.TargetOS != "" {
 		//check if target OS exists
 		oresp, err := OSUPolicyClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
@@ -265,15 +293,28 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	if spec.Spec.UpdatePolicy != "" {
 		updpol = infra.UpdatePolicy(spec.Spec.UpdatePolicy)
 	}
+
+	if spec.Spec.InstallPackages != "" {
+		packages = &spec.Spec.InstallPackages
+	}
+
+	if spec.Spec.KernelCommand != "" {
+		kernel = &spec.Spec.KernelCommand
+	}
+
+	if spec.Spec.UpdateSources != nil {
+		sources = &spec.Spec.UpdateSources
+	}
+
 	//Create policy
 	resp, err := OSUPolicyClient.OSUpdatePolicyCreateOSUpdatePolicyWithResponse(ctx, projectName,
 		infra.OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody{
 			Name:            spec.Spec.Name,
 			Description:     &spec.Spec.Description,
-			InstallPackages: &spec.Spec.InstallPackages,
-			KernelCommand:   &spec.Spec.KernelCommand,
+			InstallPackages: packages,
+			KernelCommand:   kernel,
 			TargetOs:        profile,
-			UpdateSources:   &spec.Spec.UpdateSources,
+			UpdateSources:   sources,
 			UpdatePolicy:    &updpol,
 		}, auth.AddAuthHeader)
 	if err != nil {
@@ -285,17 +326,37 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 // Deletes OS Update Policy - checks if a policy  already exists and then deletes it if it does
 func runDeleteOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 
-	policy := args[0]
 	ctx, OSUPolicyClient, projectName, err := getInfraServiceContext(cmd)
 	if err != nil {
 		return err
 	}
 
+	// In future delete by name instead of resource id
+	// name := args[0]
+	// lresp, err := OSUPolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+	// 	&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
+	// if err != nil {
+	// 	return processError(err)
+	// }
+
+	// if err = checkResponse(lresp.HTTPResponse, "Error getting OS Update policies"); err != nil {
+	// 	return err
+	// }
+
+	// policy, err := filterPoliciesByName(lresp.JSON200.OsUpdatePolicies, name)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// policyID := *policy.ResourceId
+
+	policyID := args[0]
+
 	resp, err := OSUPolicyClient.OSUpdatePolicyDeleteOSUpdatePolicyWithResponse(ctx, projectName,
-		policy, auth.AddAuthHeader)
+		policyID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS profile %s", policy))
+	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS Update policy %s", policyID))
 }
