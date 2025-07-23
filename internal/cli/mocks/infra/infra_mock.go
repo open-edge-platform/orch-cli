@@ -1615,6 +1615,324 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			},
 		).AnyTimes()
 
+		// Mock OSUpdateRunListOSUpdateRunWithResponse (used by list os update runs command)
+		mockInfraClient.EXPECT().OSUpdateRunListOSUpdateRunWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *infra.OSUpdateRunListOSUpdateRunParams, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdateRunListOSUpdateRunResponse, error) {
+				switch projectName {
+				case "nonexistent-project":
+					return &infra.OSUpdateRunListOSUpdateRunResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.OSUpdateRunListOSUpdateRunResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListOSUpdateRunResponse{
+							OsUpdateRuns: []infra.OSUpdateRun{
+								{
+									Name:          stringPtr("security-update-jan-2025"),
+									ResourceId:    stringPtr("osupdate-run-abc123"),
+									Status:        stringPtr("completed"),
+									StatusDetails: stringPtr("All updates applied successfully"),
+									AppliedPolicy: &infra.OSUpdatePolicy{
+										Name:        "security-policy-v1.2",
+										Description: stringPtr("Security update policy"),
+										// Add other fields as needed based on the actual struct
+									},
+									Description: stringPtr("Monthly security updates for edge devices"),
+									StartTime:   timestampPtr(timestamp),
+									EndTime:     timestampPtr(timestamp),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+								},
+							},
+							TotalElements: 1,
+							HasNext:       false,
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock OSUpdateRunGetOSUpdateRunWithResponse (used by get os update run command)
+		mockInfraClient.EXPECT().OSUpdateRunGetOSUpdateRunWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, osUpdateRunId string, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdateRunGetOSUpdateRunResponse, error) {
+				switch projectName {
+				case "nonexistent-project":
+					return &infra.OSUpdateRunGetOSUpdateRunResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch osUpdateRunId {
+					case "nonexistent-run", "invalid-run-id":
+						return &infra.OSUpdateRunGetOSUpdateRunResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("OS Update Run not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.OSUpdateRunGetOSUpdateRunResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.OSUpdateRun{
+								Name:          stringPtr("security-update-jan-2025"),
+								ResourceId:    stringPtr(osUpdateRunId),
+								Status:        stringPtr("completed"),
+								StatusDetails: stringPtr("All updates applied successfully"),
+								AppliedPolicy: &infra.OSUpdatePolicy{
+									Name:        "security-policy-v1.2",
+									Description: stringPtr("Monthly security update policy"),
+									// Remove Version field if it doesn't exist in OSUpdatePolicy
+								},
+								Description:     stringPtr("Monthly security updates for edge devices"),
+								StartTime:       timestampPtr(timestamp),
+								EndTime:         timestampPtr(timestamp),
+								StatusTimestamp: timestampPtr(timestamp), // This field exists
+								Timestamps: &infra.Timestamps{
+									CreatedAt: timestampPtr(timestamp),
+									UpdatedAt: timestampPtr(timestamp),
+								},
+							},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock OSUpdateRunDeleteOSUpdateRunWithResponse (used by delete os update run command)
+		mockInfraClient.EXPECT().OSUpdateRunDeleteOSUpdateRunWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, osUpdateRunId string, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdateRunDeleteOSUpdateRunResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.OSUpdateRunDeleteOSUpdateRunResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch osUpdateRunId {
+					case "nonexistent-run", "invalid-run-id":
+						return &infra.OSUpdateRunDeleteOSUpdateRunResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("OS Update Run not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.OSUpdateRunDeleteOSUpdateRunResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock OSUpdatePolicyListOSUpdatePolicyWithResponse (used by list os update policies command)
+		mockInfraClient.EXPECT().OSUpdatePolicyListOSUpdatePolicyWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *infra.OSUpdatePolicyListOSUpdatePolicyParams, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdatePolicyListOSUpdatePolicyResponse, error) {
+				switch projectName {
+				case "nonexistent-project":
+					return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListOSUpdatePolicyResponse{
+							OsUpdatePolicies: []infra.OSUpdatePolicy{
+								{
+									Name:            "security-policy-v1.2", // string, not *string
+									ResourceId:      stringPtr("osupdatepolicy-abc12345"),
+									Description:     stringPtr("Monthly security update policy"),
+									TargetOsId:      stringPtr("os-1234abcd"),
+									InstallPackages: stringPtr("curl wget vim"),
+									UpdatePolicy:    (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
+									UpdateSources:   &[]string{"https://updates.example.com"},
+									KernelCommand:   stringPtr("console=ttyS0"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+								},
+							},
+							TotalElements: 1,
+							HasNext:       false,
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock OSUpdatePolicyGetOSUpdatePolicyWithResponse (used by get os update policy command)
+		mockInfraClient.EXPECT().OSUpdatePolicyGetOSUpdatePolicyWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, policyId string, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdatePolicyGetOSUpdatePolicyResponse, error) {
+				switch projectName {
+				case "nonexistent-project":
+					return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch policyId {
+					case "nonexistent-policy", "invalid-policy-id":
+						return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("OS Update Policy not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.OSUpdatePolicy{
+								Name:            "security-policy-v1.2",
+								ResourceId:      stringPtr(policyId),
+								Description:     stringPtr("Monthly security update policy"),
+								TargetOsId:      stringPtr("os-1234abcd"),
+								InstallPackages: stringPtr("curl wget vim"),
+								UpdatePolicy:    (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
+								UpdateSources:   &[]string{"https://updates.example.com"},
+								KernelCommand:   stringPtr("console=ttyS0"),
+								Timestamps: &infra.Timestamps{
+									CreatedAt: timestampPtr(timestamp),
+									UpdatedAt: timestampPtr(timestamp),
+								},
+							},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock OSUpdatePolicyCreateOSUpdatePolicyWithResponse (used by create os update policy command)
+		mockInfraClient.EXPECT().OSUpdatePolicyCreateOSUpdatePolicyWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, body infra.OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdatePolicyCreateOSUpdatePolicyResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.OSUpdatePolicyCreateOSUpdatePolicyResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.OSUpdatePolicyCreateOSUpdatePolicyResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.OSUpdatePolicy{
+							Name:        body.Name,
+							ResourceId:  stringPtr("updatepolicy-abc12345"),
+							Description: body.Description,
+							TargetOsId:  body.TargetOsId,
+							Timestamps: &infra.Timestamps{
+								CreatedAt: timestampPtr(timestamp),
+								UpdatedAt: timestampPtr(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock OSUpdatePolicyDeleteOSUpdatePolicyWithResponse (used by delete os update policy command)
+		mockInfraClient.EXPECT().OSUpdatePolicyDeleteOSUpdatePolicyWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName, policyId string, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdatePolicyDeleteOSUpdatePolicyResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.OSUpdatePolicyDeleteOSUpdatePolicyResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: stringPtr("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch policyId {
+					case "nonexistent-policy", "invalid-policy-id":
+						return &infra.OSUpdatePolicyDeleteOSUpdatePolicyResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("OS Update Policy not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.OSUpdatePolicyDeleteOSUpdatePolicyResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
 		ctx := context.Background()
 		return ctx, mockInfraClient, projectName, nil
 	}

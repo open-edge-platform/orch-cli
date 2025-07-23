@@ -137,11 +137,7 @@ func (s *CLITestSuite) TestOSProfile() {
 	linesOutput, err := s.getOSProfile(project, name, OSPArgs)
 	s.NoError(err)
 
-	fmt.Println(linesOutput)
-
 	parsedLinesOutput := mapLinesOutput(linesOutput)
-
-	fmt.Println(parsedLinesOutput)
 
 	expectedLinesOutput := []string{
 		"",

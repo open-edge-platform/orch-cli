@@ -12,7 +12,8 @@ spec:
     htop
     net-tools
   kernelCommand: "hugepages=2"
-  targetOs: "Ubuntu 22.04.5 LTS"
+  #For mock purpose the EMT name is used as it already exists
+  targetOs: "Edge Microvisor Toolkit 3.0.20250504"
   updateSources:
     - "source1"
     - "source2"
