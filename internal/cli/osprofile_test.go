@@ -33,18 +33,18 @@ func (s *CLITestSuite) TestOSProfile() {
 	expectedSecurityFeature := "SECURITY_FEATURE_NONE"
 	expectedProfileName := "microvisor-nonrt"
 	expectedRepoURL := "files-edge-orch/repository/microvisor/non_rt/"
-	expectedOsResourceID := "os-1234abcd"
-	expectedImageID := "3.0.20250504"
-	expectedImageURL := "files-edge-orch/repository/microvisor/non_rt/artifact.raw.gz"
-	expectedOsType := "OPERATING_SYSTEM_TYPE_IMMUTABLE"
-	expectedOsProvider := "OPERATING_SYSTEM_PROVIDER_INFRA"
-	expectedPlatformBundle := ""
+	//expectedOsResourceID := "os-1234abcd"
+	//expectedImageID := "3.0.20250504"
+	//expectedImageURL := "files-edge-orch/repository/microvisor/non_rt/artifact.raw.gz"
+	//expectedOsType := "OPERATING_SYSTEM_TYPE_IMMUTABLE"
+	//expectedOsProvider := "OPERATING_SYSTEM_PROVIDER_INFRA"
+	//expectedPlatformBundle := ""
 	expectedSHA := "abc123def456"
-	expectedProfileVersion := "3.0.20250504"
+	//expectedProfileVersion := "3.0.20250504"
 	expectedKernelCommand := "console=ttyS0, root=/dev/sda1"
-	expectedUpdateSources := "&[https://updates.example.com]"
-	expectedInstalledPackages := "wget\\ncurl\\nvim"
-	expectedTimestamp := "2025-01-15 10:30:00 +0000 UTC"
+	//expectedUpdateSources := "&[https://updates.example.com]"
+	//expectedInstalledPackages := "wget\\ncurl\\nvim"
+	//SexpectedTimestamp := "2025-01-15 10:30:00 +0000 UTC"
 	path := "./testdata/osprofile.yaml"
 	OSPArgs := map[string]string{}
 
@@ -97,7 +97,6 @@ func (s *CLITestSuite) TestOSProfile() {
 	listOutput, err = s.listOSProfile(project, OSPArgs)
 	s.NoError(err)
 
-	fmt.Printf(listOutput)
 	parsedOutput := mapGetOutput(listOutput)
 	expectedOutput := map[string]string{
 		"Name:":             name,
@@ -135,32 +134,52 @@ func (s *CLITestSuite) TestOSProfile() {
 	OSPArgs = map[string]string{}
 
 	//Get os profile
-	getOutput, err := s.getOSProfile(project, name, OSPArgs)
+	linesOutput, err := s.getOSProfile(project, name, OSPArgs)
 	s.NoError(err)
 
-	parsedOutput = mapGetOutput(getOutput)
-	expectedOutput = map[string]string{
-		"OS Profile Field":    "Value",
-		"Name:":               name,
-		"Profile Name:":       expectedProfileName,
-		"OS Resource ID:":     expectedOsResourceID,
-		"version:":            expectedProfileVersion,
-		"sha256:":             expectedSHA,
-		"Image ID:":           expectedImageID,
-		"Image URL:":          expectedImageURL,
-		"Repository URL:":     expectedRepoURL,
-		"Security Feature:":   expectedSecurityFeature,
-		"Architecture:":       expectedArchitecture,
-		"OS type:":            expectedOsType,
-		"OS provider:":        expectedOsProvider,
-		"Platform Bundle:":    expectedPlatformBundle,
-		"Update Sources:":     expectedUpdateSources,
-		"Installed Packages:": expectedInstalledPackages,
-		"Created:":            expectedTimestamp,
-		"Updated:":            expectedTimestamp,
+	fmt.Println(linesOutput)
+
+	parsedLinesOutput := mapLinesOutput(linesOutput)
+
+	fmt.Println(parsedLinesOutput)
+
+	expectedLinesOutput := []string{
+		"",
+		"OS Profile Field       |Value",
+		"Name:                  |Edge Microvisor Toolkit 3.0.20250504",
+		"Profile Name:          |microvisor-nonrt",
+		"OS Resource ID:        |os-1234abcd",
+		"version:               |\"3.0.20250504\"",
+		"sha256:                |abc123def456",
+		"Image ID:              |3.0.20250504",
+		"Image URL:             |files-edge-orch/repository/microvisor/non_rt/artifact.raw.gz",
+		"Repository URL:        |files-edge-orch/repository/microvisor/non_rt/",
+		"Security Feature:      |\"SECURITY_FEATURE_NONE\"",
+		"Architecture:          |x86_64",
+		"OS type:               |OPERATING_SYSTEM_TYPE_IMMUTABLE",
+		"OS provider:           |OPERATING_SYSTEM_PROVIDER_INFRA",
+		"Platform Bundle:       |",
+		"Update Sources:        |&[https://updates.example.com]",
+		"Installed Packages:    |\"wget\\ncurl\\nvim\"",
+		"Created:               |2025-01-15 10:30:00 +0000 UTC",
+		"Updated:               |2025-01-15 10:30:00 +0000 UTC",
+		"",
+		"CVE Info:",
+		"   | Existing CVEs: ",
+		"",
+		"-   |   |CVE ID:              | CVE-2021-1234",
+		"-   |   |Priority:            | HIGH",
+		"-   |   |Affected Packages:   | [fluent-bit-3.1.9-11.emt3.x86_64]",
+		"",
+		"   | Fixed CVEs: ",
+		"",
+		"-   |   |CVE ID:              | CVE-2021-5678",
+		"-   |   |Priority:            | MEDIUM",
+		"-   |   |Affected Packages:   | [curl-7.68.0-1ubuntu2.24]",
+		"",
 	}
 
-	s.compareGetOutput(expectedOutput, parsedOutput)
+	s.compareLinesOutput(expectedLinesOutput, parsedLinesOutput)
 
 	//Get invalid os profile
 	_, err = s.getOSProfile(project, "random", OSPArgs)

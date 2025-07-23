@@ -241,6 +241,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
 									},
+									ExistingCves: stringPtr(`[{"cve_id":"CVE-2021-1234","priority":"HIGH","affected_packages":["fluent-bit-3.1.9-11.emt3.x86_64"]}]`),
+									FixedCves:    stringPtr(`[{"cve_id":"CVE-2021-5678","priority":"MEDIUM","affected_packages":["curl-7.68.0-1ubuntu2.24"]}]`),
 								},
 							},
 						},
