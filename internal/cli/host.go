@@ -5,6 +5,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -123,6 +124,12 @@ type ResponseCache struct {
 	CICache                 map[string]infra.CustomConfigResource
 }
 
+type CVEEntry struct {
+	CVEID            string   `json:"cve_id"`
+	Priority         string   `json:"priority"`
+	AffectedPackages []string `json:"affected_packages"`
+}
+
 func filterHelper(f string) *string {
 	if f != "" {
 		switch f {
@@ -235,6 +242,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	osprofile := ""
 	customcfg := ""
 	ip := ""
+	var cveEntries []CVEEntry
 
 	//TODO Build out the host information
 	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
@@ -305,6 +313,23 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tCPU Threads:\t %v\n", *host.CpuThreads)
 	_, _ = fmt.Fprintf(writer, "-\tCPU Sockets:\t %v\n\n", *host.CpuSockets)
 
+	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.CurrentOs.FixedCves != nil {
+
+		if *host.Instance.ExistingCves != "" {
+			err := json.Unmarshal([]byte(*host.Instance.ExistingCves), &cveEntries)
+			if err != nil {
+				fmt.Println("Error unmarshaling JSON: existing CVE entries:", err)
+				return
+			}
+		}
+
+		_, _ = fmt.Fprintf(writer, "CVE Info (existing CVEs): \n\n")
+		for _, cve := range cveEntries {
+			_, _ = fmt.Fprintf(writer, "-\tCVE ID:\t %v\n", cve.CVEID)
+			_, _ = fmt.Fprintf(writer, "-\tPriority:\t %v\n", cve.Priority)
+			_, _ = fmt.Fprintf(writer, "-\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
+		}
+	}
 }
 
 // Helper function to verify that the input file exists and is of right format
