@@ -25,6 +25,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *catapi.CatalogServiceListRegistriesParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceListRegistriesResponse, error) {
+				_ = ctx // Acknowledge we're not using it
 				stringPtr := func(s string) *string { return &s }
 				resp := &catapi.CatalogServiceListRegistriesResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
@@ -49,6 +50,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, name string, params *catapi.CatalogServiceGetRegistryParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetRegistryResponse, error) {
+				_ = ctx // Acknowledge we're not using it
 				stringPtr := func(s string) *string { return &s }
 				resp := &catapi.CatalogServiceGetRegistryResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
@@ -71,6 +73,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *catapi.CatalogServiceListRegistriesParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceListRegistriesResponse, error) {
+				_ = ctx // Acknowledge we're not using it
 				stringPtr := func(s string) *string { return &s }
 				resp := &catapi.CatalogServiceListRegistriesResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
@@ -94,6 +97,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, body interface{}, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateRegistryResponse, error) {
+				_ = ctx // Acknowledge we're not using it
 				stringPtr := func(s string) *string { return &s }
 				resp := &catapi.CatalogServiceCreateRegistryResponse{
 					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
@@ -112,7 +116,6 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		).AnyTimes()
 
 		ctx := context.Background()
-		projectName = "test-project"
 		return ctx, mockClient, projectName, nil
 	}
 }

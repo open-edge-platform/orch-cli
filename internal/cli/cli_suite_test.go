@@ -282,10 +282,10 @@ func mapListOutput(output string) listCommandOutput {
 	if strings.Contains(headerLine, "|") {
 		// Pipe-separated format (existing host tests)
 		return parsePipeSeparatedOutput(lines)
-	} else {
-		// Space-separated format (new site tests)
-		return parseSpaceSeparatedOutput(lines)
 	}
+	// Space-separated format (new site tests)
+	return parseSpaceSeparatedOutput(lines)
+
 }
 
 func mapLinesOutput(output string) linesCommandOutput {

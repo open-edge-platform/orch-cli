@@ -24,7 +24,7 @@ func (s *CLITestSuite) TestStandalone() {
 	defer func() { getPasswordFromUser = originalFunc }()
 
 	// Mock the function to return test password
-	getPasswordFromUser = func(username string) (string, error) {
+	getPasswordFromUser = func(_ string) (string, error) {
 		return "pass", nil
 	}
 
