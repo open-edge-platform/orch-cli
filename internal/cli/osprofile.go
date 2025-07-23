@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -55,17 +56,19 @@ var OSProfileHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Architecture", "Secur
 var OSProfileHeaderGet = fmt.Sprintf("\n%s\t%s", "OS Profile Field", "Value")
 
 type OSProfileSpec struct {
-	Name            string `yaml:"name"`
-	Type            string `yaml:"type"`
-	Provider        string `yaml:"provider"`
-	Architecture    string `yaml:"architecture"`
-	ProfileName     string `yaml:"profileName"`
-	OsImageURL      string `yaml:"osImageUrl"`
-	OsImageSha256   string `yaml:"osImageSha256"`
-	OsImageVersion  string `yaml:"osImageVersion"`
-	OSPackageURL    string `yaml:"osPackageManifestURL"`
-	SecurityFeature string `yaml:"securityFeature"`
-	PlatformBundle  string `yaml:"platformBundle"`
+	Name              string `yaml:"name"`
+	Type              string `yaml:"type"`
+	Provider          string `yaml:"provider"`
+	Architecture      string `yaml:"architecture"`
+	ProfileName       string `yaml:"profileName"`
+	OsImageURL        string `yaml:"osImageUrl"`
+	OsImageSha256     string `yaml:"osImageSha256"`
+	OsImageVersion    string `yaml:"osImageVersion"`
+	OSPackageURL      string `yaml:"osPackageManifestURL"`
+	SecurityFeature   string `yaml:"securityFeature"`
+	PlatformBundle    string `yaml:"platformBundle"`
+	OsExistingCvesURL string `yaml:"osExistingCvesURL"`
+	OsFixedCvesURL    string `yaml:"osFixedCvesURL"`
 }
 
 type NestedSpec struct {
@@ -92,7 +95,8 @@ func printOSProfiles(writer io.Writer, OSProfiles []infra.OperatingSystemResourc
 
 // Prints output details of OS Profiles
 func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) {
-
+	var cveEntries []CVEEntry
+	var fcveEntries []CVEEntry
 	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSProfile.Name)
 	_, _ = fmt.Fprintf(writer, "Profile Name: \t%s\n", *OSProfile.ProfileName)
 	_, _ = fmt.Fprintf(writer, "OS Resource ID: \t%s\n", *OSProfile.OsResourceID)
@@ -111,6 +115,37 @@ func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) 
 	_, _ = fmt.Fprintf(writer, "Created: \t%v\n", OSProfile.Timestamps.CreatedAt)
 	_, _ = fmt.Fprintf(writer, "Updated: \t%v\n", OSProfile.Timestamps.UpdatedAt)
 
+	if OSProfile.ExistingCves != nil && OSProfile.FixedCves != nil {
+
+		if *OSProfile.ExistingCves != "" {
+			err := json.Unmarshal([]byte(*OSProfile.ExistingCves), &cveEntries)
+			if err != nil {
+				fmt.Println("Error unmarshaling JSON: existing CVE entries:", err)
+				return
+			}
+		}
+		if *OSProfile.FixedCves != "" {
+			err := json.Unmarshal([]byte(*OSProfile.FixedCves), &fcveEntries)
+			if err != nil {
+				fmt.Println("Error unmarshaling JSON: fixed CVE entries:", err)
+				return
+			}
+		}
+
+		_, _ = fmt.Fprintf(writer, "\nCVE Info:\n")
+		_, _ = fmt.Fprintf(writer, "\t Existing CVEs): \n\n")
+		for _, cve := range cveEntries {
+			_, _ = fmt.Fprintf(writer, "-\t\tCVE ID:\t %v\n", cve.CVEID)
+			_, _ = fmt.Fprintf(writer, "-\t\tPriority:\t %v\n", cve.Priority)
+			_, _ = fmt.Fprintf(writer, "-\t\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
+		}
+		_, _ = fmt.Fprintf(writer, "\t Fixed CVEs): \n\n")
+		for _, fcve := range fcveEntries {
+			_, _ = fmt.Fprintf(writer, "-\t\tCVE ID:\t %v\n", fcve.CVEID)
+			_, _ = fmt.Fprintf(writer, "-\t\tPriority:\t %v\n", fcve.Priority)
+			_, _ = fmt.Fprintf(writer, "-\t\tAffected Packages:\t %v\n\n", fcve.AffectedPackages)
+		}
+	}
 }
 
 // Helper function to verify that the input file exists and is of right format
@@ -307,6 +342,8 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 			RepoUrl:         &spec.Spec.OsImageURL,
 			SecurityFeature: (*infra.SecurityFeature)(&spec.Spec.SecurityFeature),
 			Sha256:          spec.Spec.OsImageSha256,
+			FixedCvesUrl:    &spec.Spec.OsFixedCvesURL,
+			ExistingCvesUrl: &spec.Spec.OsExistingCvesURL,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
