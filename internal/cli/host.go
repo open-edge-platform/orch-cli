@@ -5,6 +5,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -74,11 +75,11 @@ K8sClusterTemplate - Optional Cluster template to be used for K8s deployment on 
 K8sClusterConfig - Optional Cluster config to be used to specify role and cluster name and/or cluster labels
 
 Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
-2500JF3,4c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic,site-c69a3c81,,localaccount-4c2c5f5a
-1500JF3,1c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value1&key2=value2
-15002F3,114c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value2&key3=value4
-11002F3,2c4c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value2&key3=value4,,cloudinitname&customconfig-1234abcd
-25002F3,214c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,user,key1=value2&key3=value4,,,true,baseline:v2.0.2,,role:all;name:mycluster;labels:key1=val1&key2=val2
+2500JF3,4c4c4544-2046-5310-8052-cac04f515233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,,localaccount-4c2c5f5a
+1500JF3,1c4c4544-2046-5310-8052-cac04f515233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,,key1=value1&key2=value2
+15002F3,114c4544-2046-5310-8052-cac04f512233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,,key1=value2&key3=value4
+11002F3,2c4c4544-2046-5310-8052-cac04f512233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,,key1=value2&key3=value4,,cloudinitname&customconfig-1234abcd
+25002F3,214c4544-2046-5310-8052-cac04f512233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,user,key1=value2&key3=value4,,,true,baseline:v2.0.2,,role:all;name:mycluster;labels:key1=val1&key2=val2
 
 # --dry-run allows for verification of the validity of the input csv file without creating hosts
 orch-cli create host --project some-project --import-from-csv test.csv --dry-run
@@ -121,6 +122,12 @@ type ResponseCache struct {
 	K8sClusterTemplateCache map[string]cluster.TemplateInfo
 	K8sClusterNodesCache    map[string][]cluster.NodeSpec
 	CICache                 map[string]infra.CustomConfigResource
+}
+
+type CVEEntry struct {
+	CVEID            string   `json:"cve_id"`
+	Priority         string   `json:"priority"`
+	AffectedPackages []string `json:"affected_packages"`
 }
 
 func filterHelper(f string) *string {
@@ -199,7 +206,12 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		}
 
 		if h.HostStatus != nil && *h.HostStatus != "" {
-			host = *h.HostStatus
+			// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
+			if strings.EqualFold(*h.HostStatus, "error") && h.Instance != nil && h.Instance.InstanceStatusDetail != nil && strings.Contains(*h.Instance.InstanceStatusDetail, "of 10 components running") {
+				host = "Waiting on node agents"
+			} else {
+				host = *h.HostStatus
+			}
 		}
 
 		if h.Instance != nil && h.Instance.ProvisioningStatus != nil {
@@ -229,6 +241,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	currentOS := ""
 	osprofile := ""
 	customcfg := ""
+	ip := ""
+	var cveEntries []CVEEntry
 
 	//TODO Build out the host information
 	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
@@ -244,7 +258,12 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	if *host.HostStatus != "" {
-		hoststatus = *host.HostStatus
+		// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
+		if strings.EqualFold(*host.HostStatus, "error") && host.Instance != nil && host.Instance.InstanceStatusDetail != nil && strings.Contains(*host.Instance.InstanceStatusDetail, "of 10 components running") {
+			hoststatus = "Waiting on node agents"
+		} else {
+			hoststatus = *host.HostStatus
+		}
 	}
 
 	if host.Instance != nil && host.Instance.CustomConfig != nil {
@@ -257,10 +276,21 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		}
 	}
 
+	if host.HostNics != nil && len(*host.HostNics) > 0 {
+		for _, nic := range *host.HostNics {
+			if nic.Ipaddresses != nil && len(*nic.Ipaddresses) > 0 && nic.DeviceName != nil && (*nic.Ipaddresses)[0].Address != nil {
+				deviceName := *nic.DeviceName
+				address := *(*nic.Ipaddresses)[0].Address
+				ip = ip + deviceName + " " + address + "; "
+			}
+		}
+	}
+
 	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Resurce ID:\t %s\n", *host.ResourceId)
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
-	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n\n", osprofile)
+	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
+	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n\n", ip)
 
 	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
@@ -283,6 +313,23 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tCPU Threads:\t %v\n", *host.CpuThreads)
 	_, _ = fmt.Fprintf(writer, "-\tCPU Sockets:\t %v\n\n", *host.CpuSockets)
 
+	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.CurrentOs.FixedCves != nil {
+
+		if *host.Instance.ExistingCves != "" {
+			err := json.Unmarshal([]byte(*host.Instance.ExistingCves), &cveEntries)
+			if err != nil {
+				fmt.Println("Error unmarshaling JSON: existing CVE entries:", err)
+				return
+			}
+		}
+
+		_, _ = fmt.Fprintf(writer, "CVE Info (existing CVEs): \n\n")
+		for _, cve := range cveEntries {
+			_, _ = fmt.Fprintf(writer, "-\tCVE ID:\t %v\n", cve.CVEID)
+			_, _ = fmt.Fprintf(writer, "-\tPriority:\t %v\n", cve.Priority)
+			_, _ = fmt.Fprintf(writer, "-\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
+		}
+	}
 }
 
 // Helper function to verify that the input file exists and is of right format

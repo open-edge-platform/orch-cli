@@ -17,10 +17,11 @@ import (
 
 func getListChartsCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "charts <registry-name> [<chart-name>} [flags]",
+		Use:               "charts <registry-name> [<chart-name>] [flags]",
 		Args:              cobra.MinimumNArgs(1),
 		Short:             "Get chart names or chart versions from a HELM registry",
 		PersistentPreRunE: auth.CheckAuth,
+		Example:           "orch-cli get charts my-registry --project my-project",
 		RunE:              getCharts,
 	}
 	return cmd
@@ -58,6 +59,7 @@ func getRegistryContent(url string) ([]byte, error) {
 	ctx := context.Background()
 	r, _ := http.NewRequest("GET", url, nil)
 	r.Header.Add("Content-Type", "application/json")
+	r.Header.Add("CORS", "true")
 	if err := auth.AddAuthHeader(ctx, r); err != nil {
 		return nil, err
 	}

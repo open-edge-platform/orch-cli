@@ -26,6 +26,7 @@ func getCreateNetworkCommand() *cobra.Command {
 		Aliases: networkAliases,
 		Short:   "Create a Network",
 		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli create network my-network --project some-project",
 		RunE:    runCreateNetworkCommand,
 	}
 	addEntityFlags(cmd, "network")
@@ -63,6 +64,7 @@ func getSetNetworkCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Update a network",
 		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli set network my-updated-network --project some-project --type application-mesh",
 		RunE:    runSetNetworkCommand,
 	}
 	addEntityFlags(cmd, "network")
