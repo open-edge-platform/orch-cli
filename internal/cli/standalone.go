@@ -148,7 +148,7 @@ func getStandaloneConfigCommand() *cobra.Command {
 	}
 	cmd.Flags().StringP("config-file", "c", "", "config-file with user inputs")
 	cmd.Flags().StringP("output-file", "o", "cloud-init.cfg", "Override output filename")
-	cmd.Flags().StringP("emts-repo-version", "", defaultEmtsRepoCommitID, "Commit ID of EMT-S repository to sync with")
+	cmd.Flags().StringP("emts-repo-version", "", defaultEmtsRepoCommitID, "Tag or commit ID of EMT-S repository to sync with")
 	return cmd
 }
 

@@ -24,7 +24,7 @@ orch-cli generate standalone-config -c config-file --emts-repo-version <tag/comm
 
 ```
   -c, --config-file string         config-file with user inputs
-      --emts-repo-version string   Commit ID of EMT-S repository to sync with (default "standalone-node/3.1.0")
+      --emts-repo-version string   Tag or commit ID of EMT-S repository to sync with (default "standalone-node/3.1.0")
   -h, --help                       help for standalone-config
   -o, --output-file string         Override output filename (default "cloud-init.cfg")
 ```
