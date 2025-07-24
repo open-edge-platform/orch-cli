@@ -307,6 +307,8 @@ func (s *CLITestSuite) TestHost() {
 		"-   Host Resurce ID:":         "host-abc12345",
 		"-   Name:":                    "edge-host-001",
 		"-   OS Profile:":              "Edge Microvisor Toolkit 3.0.20250504",
+		"-   Host Status Details:":     "",
+		"-   Provisioning Status:":     "Not Provisioned",
 		"Status details:":              "",
 		"-   Host Status:":             "Running",
 		"-   Update Status:":           "",
@@ -325,7 +327,15 @@ func (s *CLITestSuite) TestHost() {
 		"-   CPU Architecture:":        "x86_64",
 		"-   CPU Threads:":             "32",
 		"-   CPU Sockets:":             "2",
+		"AMT Info:":                    "",
+		"-   AMT Status:":              "AMT_STATE_PROVISIONED",
+		"-   Current Power Status:":    "POWER_STATE_ON",
+		"-   Desired Power Status:":    "POWER_STATE_ON",
+		"-   Power Command Policy :":   "POWER_COMMAND_POLICY_ALWAYS_ON",
+		"-   PowerOn Time :":           "1",
 	}
+
+	fmt.Println(parsedOutput)
 
 	// // DEBUG: Print parsed output
 	// fmt.Printf("=== DEBUG: Parsed output ===\n")

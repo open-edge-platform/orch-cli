@@ -281,19 +281,11 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		}
 	}
 
-	if host.Instance != nil && *host.Instance.ProvisioningStatus != "" {
+	if host.Instance != nil && host.Instance.ProvisioningStatus != nil && *host.Instance.ProvisioningStatus != "" {
 		provstatus = *host.Instance.ProvisioningStatus
 	}
 
-	if host.Instance != nil && *host.Instance.InstanceStatusDetail != "" {
-		hostdetails = *host.Instance.InstanceStatusDetail
-	}
-
-	if host.Instance != nil && *host.Instance.ProvisioningStatus != "" {
-		provstatus = *host.Instance.ProvisioningStatus
-	}
-
-	if host.Instance != nil && *host.Instance.InstanceStatusDetail != "" {
+	if host.Instance != nil && host.Instance.InstanceStatusDetail != nil && *host.Instance.InstanceStatusDetail != "" {
 		hostdetails = *host.Instance.InstanceStatusDetail
 	}
 
