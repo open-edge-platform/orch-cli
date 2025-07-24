@@ -21,12 +21,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const defaultEmtsRepoCommitID = "a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2"
+const defaultEmtsRepoCommitID = "standalone-node/3.1.0"
 
 var (
 	CollectLogsScriptSource   = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/collect-logs.sh"
 	K3sConfigureScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/k3s-configure.sh"
-	K3sInstallerScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/cluster_installers/sen-k3s-installer.sh"
+	K3sInstallerScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/sen-k3s-installer.sh"
 	K3sPostRebootScriptSource = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/k3s-setup-post-reboot.sh"
 )
 
@@ -65,7 +65,7 @@ write_files:
   - path: /etc/cloud/k3s-configure.sh
     content: |
       {{- .K3sConfigureScript | indent 6 }}
-  - path: /tmp/k3s-artifacts/sen-k3s-installer.sh
+  - path: /etc/cloud/sen-k3s-installer.sh
     content: |
       {{- .K3sInstallerScript | indent 6 }}
   - path: /etc/cloud/k3s-setup-post-reboot.sh
@@ -80,12 +80,10 @@ write_files:
   {{- end }}
 
 runcmd:
-{{- if .WithUserApps }}
   - |
     mkdir -p /opt/user-apps
     curl --noproxy '*' -k {{ .NginxFQDN }}/tink-stack/user-apps.tar.gz -o /tmp/user-apps.tar.gz
-    tar -xzvf /tmp/user-apps.tar.gz -C /opt/user-apps
-{{- end }}
+    tar -xzvf /tmp/user-apps.tar.gz -C /opt
   - |
     grep -qF "http_proxy" /etc/environment || echo http_proxy={{ .http_proxy }} >> /etc/environment
     grep -qF "https_proxy" /etc/environment || echo https_proxy={{ .https_proxy }} >> /etc/environment
@@ -97,7 +95,7 @@ runcmd:
     source /etc/environment
     echo "source /etc/environment" >> /home/{{ .user_name }}/.bashrc
     echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> /home/{{ .user_name }}/.bashrc
-    echo "alias k='KUBECONFIG=/etc/rancher/k3s/k3s.yaml /usr/local/bin/k3s kubectl'" >> /home/{{ .user_name }}/.bashrc
+    echo "alias k='KUBECONFIG=/etc/rancher/k3s/k3s.yaml /var/lib/rancher/k3s/bin/k3s kubectl'" >> /home/{{ .user_name }}/.bashrc
 {{- if eq .host_type "kubernetes" }}
 {{- if .huge_page_config }}
     echo .huge_page_config | tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
@@ -138,11 +136,8 @@ orch-cli generate standalone-config -c config-file
 # Generate cloud-init config for EMT-Standalone nodes, specify output file
 orch-cli generate standalone-config -c config-file -o /tmp/cloud-init.cfg
 
-# Generate cloud-init config for EMT-Standalone nodes with user apps (--api-endpoint is mandatory if user apps are enabled)
-orch-cli generate standalone-config -c config-file --user-apps=true --api-endpoint https://api.cluster.onprem
-
-# Generate cloud-init config for EMT-Standalone nodes in sync with a specific EMT-S repository commit ID
-orch-cli generate standalone-config -c config-file --emts-repo-version <commit-ID>
+# Generate cloud-init config for EMT-Standalone nodes in sync with a specific EMT-S repository tag or commit ID
+orch-cli generate standalone-config -c config-file --emts-repo-version <tag/commit-ID>
 `
 
 func getStandaloneConfigCommand() *cobra.Command {
@@ -155,8 +150,7 @@ func getStandaloneConfigCommand() *cobra.Command {
 	}
 	cmd.Flags().StringP("config-file", "c", "", "config-file with user inputs")
 	cmd.Flags().StringP("output-file", "o", "cloud-init.cfg", "Override output filename")
-	cmd.Flags().BoolP("user-apps", "u", false, "Pre-load user apps")
-	cmd.Flags().StringP("emts-repo-version", "", defaultEmtsRepoCommitID, "Commit ID of EMT-S repository to sync with")
+	cmd.Flags().StringP("emts-repo-version", "", defaultEmtsRepoCommitID, "Tag or commit ID of EMT-S repository to sync with")
 	return cmd
 }
 
@@ -185,14 +179,6 @@ func getConfigFileInput(cmd *cobra.Command) (string, error) {
 		return "", fmt.Errorf("required flag \"config-file\" not set")
 	}
 	return configFilePath, nil
-}
-
-func getUserAppsFlag(cmd *cobra.Command) (bool, error) {
-	withUserApps, err := cmd.Flags().GetBool("user-apps")
-	if err != nil {
-		return false, err
-	}
-	return withUserApps, nil
 }
 
 func getNginxFQDNFromAPIEndpoint(cmd *cobra.Command) (string, error) {
@@ -278,7 +264,7 @@ func getPasswordFromUserInput(username string) (string, error) {
 	return string(bytePassword), nil
 }
 
-func loadConfig(path string, withUserApps bool, nginxFQDN, emtsRepoID string) (map[string]interface{}, error) {
+func loadConfig(path string, nginxFQDN, emtsRepoID string) (map[string]interface{}, error) {
 	config := make(map[string]interface{})
 	config["NginxFQDN"] = nginxFQDN
 
@@ -373,7 +359,6 @@ func loadConfig(path string, withUserApps bool, nginxFQDN, emtsRepoID string) (m
 	config["K3sConfigureScript"] = k3sConfigureScript
 	config["K3sInstallerScript"] = k3sInstallerScript
 	config["K3sPostRebootScript"] = k3sPostRebootScript
-	config["WithUserApps"] = withUserApps
 
 	return config, nil
 }
@@ -409,23 +394,12 @@ func runGenerateStandaloneConfigCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	withUserApps, err := getUserAppsFlag(cmd)
+	nginxFQDN, err := getNginxFQDNFromAPIEndpoint(cmd)
 	if err != nil {
 		return err
 	}
 
-	nginxFQDN := ""
-	if withUserApps {
-		nginxFQDN, err = getNginxFQDNFromAPIEndpoint(cmd)
-		if err != nil {
-			return err
-		}
-		if nginxFQDN == "" {
-			return fmt.Errorf("setting API endpoint is mandatory when uploading user apps")
-		}
-	}
-
-	config, err := loadConfig(configFilePath, withUserApps, nginxFQDN, emtsRepoID)
+	config, err := loadConfig(configFilePath, nginxFQDN, emtsRepoID)
 	if err != nil {
 		return err
 	}
