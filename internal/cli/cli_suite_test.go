@@ -5,20 +5,21 @@ package cli
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/open-edge-platform/app-orch-catalog/pkg/restClient"
 	restproxy "github.com/open-edge-platform/app-orch-catalog/pkg/restProxy"
+	authmock "github.com/open-edge-platform/cli/internal/cli/mocks/auth"
+	catalogmock "github.com/open-edge-platform/cli/internal/cli/mocks/catalog"
+	clustermock "github.com/open-edge-platform/cli/internal/cli/mocks/cluster"
+	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
-	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
@@ -33,6 +34,8 @@ const (
 
 type commandArgs map[string]string
 type commandOutput map[string]map[string]string
+type listCommandOutput []map[string]string
+type linesCommandOutput []string
 
 type CLITestSuite struct {
 	suite.Suite
@@ -46,166 +49,25 @@ func (s *CLITestSuite) SetupSuite() {
 	viper.Set(auth.KeycloakEndpointField, "")
 	viper.Set(auth.TrustCertField, "")
 
+	// In your SetupSuite method, replace the existing timestamp line with:
+	timestamp, _ := time.Parse(time.RFC3339, "2025-01-15T10:30:00Z")
+	// Helper function to create timestamp pointers
+
 	mctrl := gomock.NewController(s.T())
 
-	kcTokenEndpoint := fmt.Sprintf("%s/protocol/openid-connect/token", kcTest)
+	// Setup all mocks
+	auth.KeycloakFactory = authmock.CreateKeycloakMock(&s.Suite, mctrl)
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": "u",
-		"typ":      "Refresh",
-		"azp":      "system-client",
-		"iss":      kcTest,
-		"nbf":      time.Now(),
-	})
-
-	rt, err := token.SignedString([]byte("test-key"))
-	s.NoError(err)
-
-	auth.KeycloakFactory = func(ctx context.Context, _ string) (openidconnect.ClientWithResponsesInterface, error) {
-		mockClient := openidconnect.NewMockClientWithResponsesInterface(mctrl)
-
-		mockClient.EXPECT().GetWellKnownOpenidConfigurationWithResponse(ctx, gomock.Any()).DoAndReturn(
-			func(_ context.Context, _ ...openidconnect.RequestEditorFn) (*openidconnect.GetWellKnownOpenidConfigurationResponse, error) {
-				return &openidconnect.GetWellKnownOpenidConfigurationResponse{
-					JSON200: &openidconnect.WellKnownResponse{
-						TokenEndpoint: &kcTokenEndpoint,
-					},
-				}, nil
-			},
-		).AnyTimes()
-
-		mockClient.EXPECT().PostProtocolOpenidConnectTokenWithFormdataBodyWithResponse(gomock.Any(), auth.GrantTypeMatcher{GrantType: "password"}, gomock.Any()).DoAndReturn(
-			func(_ context.Context, body openidconnect.PostProtocolOpenidConnectTokenFormdataRequestBody, _ ...openidconnect.RequestEditorFn) (*openidconnect.PostProtocolOpenidConnectTokenResponse, error) {
-				s.NotNil(body.Username)
-				s.NotNil(body.Password)
-				s.NotNil(body.ClientId)
-				s.Nil(body.RefreshToken)
-
-				resp := new(openidconnect.PostProtocolOpenidConnectTokenResponse)
-				resp.HTTPResponse = &http.Response{
-					StatusCode: 200,
-					Status:     "OK",
-				}
-				at := "test access token after login"
-				expireSec := 60
-				tokenResponse := openidconnect.TokenResponse{
-					AccessToken:      &at,
-					DeviceSecret:     nil,
-					ExpiresIn:        &expireSec,
-					IdToken:          nil,
-					RefreshExpiresIn: &expireSec,
-					RefreshToken:     &rt,
-					Scope:            nil,
-					TokenType:        nil,
-				}
-				resp.JSON200 = &tokenResponse
-
-				return resp, nil
-			}).AnyTimes()
-
-		mockClient.EXPECT().PostProtocolOpenidConnectTokenWithFormdataBodyWithResponse(gomock.Any(), auth.GrantTypeMatcher{GrantType: "refresh_token"}, gomock.Any()).DoAndReturn(
-			func(_ context.Context, body openidconnect.PostProtocolOpenidConnectTokenFormdataRequestBody, _ ...openidconnect.RequestEditorFn) (*openidconnect.PostProtocolOpenidConnectTokenResponse, error) {
-				s.Nil(body.Username)
-				s.Nil(body.Password)
-				s.NotNil(body.ClientId)
-				s.NotNil(body.RefreshToken)
-
-				resp := new(openidconnect.PostProtocolOpenidConnectTokenResponse)
-				resp.HTTPResponse = &http.Response{
-					StatusCode: 200,
-					Status:     "OK",
-				}
-				at := "test access token after refresh"
-				expireSec := 60
-				tokenResponse := openidconnect.TokenResponse{
-					AccessToken:      &at,
-					DeviceSecret:     nil,
-					ExpiresIn:        &expireSec,
-					IdToken:          nil,
-					RefreshExpiresIn: &expireSec,
-					RefreshToken:     &rt,
-					Scope:            nil,
-					TokenType:        nil,
-				}
-				resp.JSON200 = &tokenResponse
-
-				return resp, nil
-			}).AnyTimes()
-
-		return mockClient, nil
-	}
-
-	////DeploymentFactory = func(_ context.Context, _ string) (depapi.ClientWithResponsesInterface, error) {
-	////	mockClient := NewMockClientWithResponsesInterface(mctrl)
-	////	msg := "ok"
-	////
-	////	mockClient.EXPECT().DeploymentServiceCreateDeploymentWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-	////		func(_ context.Context, _ depapi.DeploymentServiceCreateDeploymentJSONRequestBody, _ ...depapi.RequestEditorFn) (*depapi.DeploymentServiceCreateDeploymentResponse, error) {
-	////			resp := &depapi.DeploymentServiceCreateDeploymentResponse{
-	////				JSONDefault: &depapi.Status{
-	////					Message: &msg,
-	////				},
-	////			}
-	////			return resp, nil
-	////		}).
-	////		AnyTimes()
-	////
-	////	mockClient.EXPECT().DeploymentServiceListDeploymentsWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-	////		func(_ context.Context, _ *depapi.DeploymentServiceListDeploymentsParams, _ ...depapi.RequestEditorFn) (*depapi.DeploymentServiceListDeploymentsResponse, error) {
-	////			resp := &depapi.DeploymentServiceListDeploymentsResponse{
-	////				JSONDefault: &depapi.Status{
-	////					Message: &msg,
-	////				},
-	////			}
-	////			return resp, nil
-	////		}).
-	////		AnyTimes()
-	////
-	////	mockClient.EXPECT().DeploymentServiceGetDeploymentWithResponse(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-	////		func(_ context.Context, _ string, _ ...depapi.RequestEditorFn) (*depapi.DeploymentServiceGetDeploymentResponse, error) {
-	////			resp := &depapi.DeploymentServiceGetDeploymentResponse{
-	////				JSONDefault: &depapi.Status{
-	////					Message: &msg,
-	////				},
-	////				JSON200: &depapi.GetDeploymentResponse{
-	////					Deployment: depapi.Deployment{
-	////						AppName:    "test-app",
-	////						AppVersion: "test-version",
-	////					},
-	////				},
-	////			}
-	////			return resp, nil
-	////		}).
-	////		AnyTimes()
-	////
-	////	mockClient.EXPECT().DeploymentServiceUpdateDeploymentWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-	////		func(_ context.Context, _ string, _ depapi.DeploymentServiceUpdateDeploymentJSONRequestBody, _ ...depapi.RequestEditorFn) (*depapi.DeploymentServiceUpdateDeploymentResponse, error) {
-	////			resp := &depapi.DeploymentServiceUpdateDeploymentResponse{
-	////				JSONDefault: &depapi.Status{
-	////					Message: &msg,
-	////				},
-	////			}
-	////			return resp, nil
-	////		}).
-	////		AnyTimes()
-	////
-	////	mockClient.EXPECT().DeploymentServiceDeleteDeploymentWithResponse(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-	////		func(_ context.Context, _ string, _ *depapi.DeploymentServiceDeleteDeploymentParams, _ ...depapi.RequestEditorFn) (*depapi.DeploymentServiceDeleteDeploymentResponse, error) {
-	////			resp := &depapi.DeploymentServiceDeleteDeploymentResponse{
-	////				JSONDefault: &depapi.Status{
-	////					Message: &msg,
-	////				},
-	////			}
-	////			return resp, nil
-	////		}).
-	////		AnyTimes()
-	////
-	//	return mockClient, nil
-	//}
+	CatalogFactory = catalogmock.CreateCatalogMock(mctrl)
+	InfraFactory = inframock.CreateInfraMock(mctrl, timestamp)
+	ClusterFactory = clustermock.CreateClusterMock(mctrl)
 }
 
 func (s *CLITestSuite) TearDownSuite() {
 	auth.KeycloakFactory = nil
+	CatalogFactory = nil
+	InfraFactory = nil
+	ClusterFactory = nil
 	viper.Set(auth.UserName, "")
 	viper.Set(auth.RefreshTokenField, "")
 	viper.Set(auth.ClientIDField, "")
@@ -230,7 +92,7 @@ func (s *CLITestSuite) TearDownTest() {
 }
 
 func TestCLI(t *testing.T) {
-	t.Skip("defunct; to be reworked")
+	//t.Skip("defunct; to be reworked")
 	suite.Run(t, &CLITestSuite{})
 }
 
@@ -253,12 +115,97 @@ func (s *CLITestSuite) compareOutput(expected commandOutput, actual commandOutpu
 	}
 }
 
+func (s *CLITestSuite) compareListOutput(expected []map[string]string, actual []map[string]string) {
+	s.Equal(len(expected), len(actual), "Number of rows should match")
+
+	for i, expectedRow := range expected {
+		if i >= len(actual) {
+			s.Fail("Missing row at index %d", i)
+			continue
+		}
+
+		actualRow := actual[i]
+
+		// Make sure there are no extra entries
+		s.Equal(len(expectedRow), len(actualRow), "Row %d should have same number of fields", i)
+
+		// Make sure the entries match
+		for k, v := range expectedRow {
+			s.Contains(actualRow, k, "Row %d should contain field %s", i, k)
+			// Use exact string comparison instead of regex
+			s.Equal(v, actualRow[k], "Row %d field %s: expected '%s' but got '%s'", i, k, v, actualRow[k])
+		}
+	}
+}
+
+func (s *CLITestSuite) compareGetOutput(expected map[string]string, actual map[string]string) {
+	// Make sure there are no extra entries
+	s.Equal(len(expected), len(actual), "Number of fields should match")
+
+	// Make sure the entries match
+	for key, expectedValue := range expected {
+		s.Contains(actual, key, "Should contain field %s", key)
+		if actualValue, exists := actual[key]; exists {
+			s.Equal(expectedValue, actualValue, "Field %s should match", key)
+		}
+	}
+}
+
+func (s *CLITestSuite) compareLinesOutput(expected linesCommandOutput, actual linesCommandOutput) {
+	s.Equal(len(expected), len(actual), "Number of lines should match")
+
+	for i, expectedLine := range expected {
+		if i >= len(actual) {
+			s.Fail("Missing line at index %d", i)
+			continue
+		}
+
+		actualLine := actual[i]
+
+		// Use exact string comparison for line content
+		s.Equal(expectedLine, actualLine, "Line %d: expected '%s' but got '%s'", i, expectedLine, actualLine)
+	}
+}
+
+func parseArgs(input string) []string {
+	var args []string
+	var current strings.Builder
+	inQuotes := false
+
+	for _, char := range input {
+		switch char {
+		case '"':
+			inQuotes = !inQuotes
+		case ' ':
+			if !inQuotes {
+				if current.Len() > 0 {
+					args = append(args, current.String())
+					current.Reset()
+				}
+			} else {
+				current.WriteRune(char)
+			}
+		default:
+			current.WriteRune(char)
+		}
+	}
+
+	if current.Len() > 0 {
+		args = append(args, current.String())
+	}
+
+	return args
+}
+
 func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
 	c := s.proxy.RestClient().ClientInterface.(*restClient.Client)
 	cmd := getRootCmd()
-	args := strings.Fields(commandArgs)
+
+	// Use custom parser instead of strings.Fields
+	args := parseArgs(commandArgs)
+
 	args = append(args, "--debug-headers")
-	args = append(args, "--catalog-endpoint")
+	args = append(args, "--api-endpoint")
 	args = append(args, c.Server)
 	cmd.SetArgs(args)
 	stdout := new(bytes.Buffer)
@@ -284,20 +231,237 @@ func mapCliOutput(output string) map[string]map[string]string {
 		if i == 0 {
 			// First line is the headers
 			headers = strings.Split(line, "|")
+			// Clean up headers
+			for j := range headers {
+				headers[j] = strings.TrimSpace(headers[j])
+			}
 		} else if line == "" {
 			break
 		} else {
-			fields := strings.Fields(line)
+			// Split data line by | instead of whitespace to match headers
+			fields := strings.Split(line, "|")
+
+			// Clean up fields
+			for j := range fields {
+				fields[j] = strings.TrimSpace(fields[j])
+			}
+
+			if len(fields) == 0 {
+				continue
+			}
+
 			key := fields[0]
 			retval[key] = make(map[string]string)
 
-			for fieldNumber, field := range fields {
-				headerKey := strings.Trim(strings.Trim(headers[fieldNumber], " "), "|")
-				retval[key][headerKey] = strings.Trim(field, "|")
+			// Only process fields that have corresponding headers
+			maxFields := len(headers)
+			if len(fields) < maxFields {
+				maxFields = len(fields)
+			}
+
+			for fieldNumber := 0; fieldNumber < maxFields; fieldNumber++ {
+				if fieldNumber < len(headers) && fieldNumber < len(fields) {
+					headerKey := headers[fieldNumber]
+					retval[key][headerKey] = fields[fieldNumber]
+				}
 			}
 		}
 	}
 	return retval
+}
+
+func mapListOutput(output string) listCommandOutput {
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) < 2 {
+		return listCommandOutput{}
+	}
+
+	headerLine := lines[0]
+
+	// Try to detect if this is space-separated (like site output) or pipe-separated (like host output)
+	if strings.Contains(headerLine, "|") {
+		// Pipe-separated format (existing host tests)
+		return parsePipeSeparatedOutput(lines)
+	}
+	// Space-separated format (new site tests)
+	return parseSpaceSeparatedOutput(lines)
+
+}
+
+func mapLinesOutput(output string) linesCommandOutput {
+	lines := strings.Split(output, "\n")
+	result := linesCommandOutput{}
+
+	// Remove only the trailing newline if present, but preserve internal structure
+	if len(lines) > 0 && lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+
+	for _, line := range lines {
+		result = append(result, line)
+	}
+
+	return result
+}
+
+func parsePipeSeparatedOutput(lines []string) listCommandOutput {
+	var headers []string
+	result := listCommandOutput{}
+
+	for i, line := range lines {
+		if i == 0 {
+			// First line is the headers
+			headers = strings.Split(line, "|")
+			// Clean up headers
+			for j := range headers {
+				headers[j] = strings.TrimSpace(headers[j])
+			}
+		} else if strings.TrimSpace(line) == "" {
+			continue
+		} else {
+			// Split data line by |
+			fields := strings.Split(line, "|")
+
+			// Clean up fields
+			for j := range fields {
+				fields[j] = strings.TrimSpace(fields[j])
+			}
+
+			if len(fields) == 0 {
+				continue
+			}
+
+			row := make(map[string]string)
+
+			// Process fields that have corresponding headers
+			maxFields := len(headers)
+			if len(fields) < maxFields {
+				maxFields = len(fields)
+			}
+
+			for fieldNumber := 0; fieldNumber < maxFields; fieldNumber++ {
+				if fieldNumber < len(headers) && fieldNumber < len(fields) {
+					headerKey := headers[fieldNumber]
+					row[headerKey] = fields[fieldNumber]
+				}
+			}
+
+			result = append(result, row)
+		}
+	}
+	return result
+}
+
+func parseSpaceSeparatedOutput(lines []string) listCommandOutput {
+	if len(lines) < 2 {
+		return listCommandOutput{}
+	}
+
+	headerLine := lines[0]
+
+	// Simple approach: find column positions by looking for gaps of 2+ spaces
+	headers := []string{}
+	positions := []int{}
+
+	// Split by multiple spaces to get rough column boundaries
+	parts := strings.Split(headerLine, "  ") // Split by 2+ spaces
+	currentPos := 0
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			// Find where this header actually starts in the original line
+			headerStart := strings.Index(headerLine[currentPos:], trimmed)
+			if headerStart >= 0 {
+				actualStart := currentPos + headerStart
+				headers = append(headers, trimmed)
+				positions = append(positions, actualStart)
+				currentPos = actualStart + len(trimmed)
+			}
+		}
+	}
+
+	result := listCommandOutput{}
+
+	// Parse data rows using detected positions
+	for _, line := range lines[1:] {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		row := make(map[string]string)
+
+		for i, header := range headers {
+			start := positions[i]
+			var end int
+			if i < len(positions)-1 {
+				end = positions[i+1]
+			} else {
+				end = len(line)
+			}
+
+			if start < len(line) {
+				if end > len(line) {
+					end = len(line)
+				}
+				value := strings.TrimSpace(line[start:end])
+				row[header] = value
+			}
+		}
+
+		result = append(result, row)
+	}
+
+	return result
+}
+
+func mapGetOutput(output string) map[string]string {
+	result := make(map[string]string)
+	lines := strings.Split(output, "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// Handle lines that contain pipe separators
+		if strings.Contains(line, "|") {
+			parts := strings.Split(line, "|")
+			if len(parts) >= 2 {
+				key := strings.TrimSpace(parts[0])
+				value := strings.TrimSpace(parts[1])
+
+				// Remove quotes from value if present
+				value = strings.Trim(value, `"`)
+
+				// Handle host format lines that start with "-   |"
+				if strings.HasPrefix(line, "-   |") {
+					// For host format: "-   |Host Resurce ID:   | host-abc12345"
+					// Remove the "-   |" prefix from the line, then extract key
+					content := strings.TrimPrefix(line, "-   |")
+					contentParts := strings.Split(content, "|")
+					if len(contentParts) >= 2 {
+						hostKey := strings.TrimSpace(contentParts[0])
+						hostValue := strings.TrimSpace(contentParts[1])
+						hostValue = strings.Trim(hostValue, `"`)
+						result["-   "+hostKey] = hostValue
+					}
+				} else {
+					// Handle OS profile format and other formats
+					// For OS profile format: "Name:               | Edge Microvisor Toolkit"
+					result[key] = value
+				}
+			}
+		} else {
+			// Handle section headers (lines ending with ":")
+			if strings.HasSuffix(line, ":") && !strings.Contains(line, "|") {
+				result[line] = ""
+			}
+		}
+	}
+
+	return result
 }
 
 func mapVerboseCliOutput(output string) map[string]map[string]string {

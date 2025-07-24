@@ -144,7 +144,7 @@ func runCreateRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func runCreateRegistryCommand(cmd *cobra.Command, args []string) error {
 
 func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 
 func runGetRegistryCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -230,7 +230,7 @@ func runGetRegistryCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetRegistryCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -268,7 +268,7 @@ func runSetRegistryCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runDeleteRegistryCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}

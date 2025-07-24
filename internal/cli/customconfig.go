@@ -154,7 +154,7 @@ func getDeleteCustomConfigCommand() *cobra.Command {
 func runGetCustomConfigCommand(cmd *cobra.Command, args []string) error {
 
 	writer, verbose := getOutputContext(cmd)
-	ctx, customConfigClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, customConfigClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ func runListCustomConfigCommand(cmd *cobra.Command, _ []string) error {
 	filtflag, _ := cmd.Flags().GetString("filter")
 	filter := filterHelper(filtflag)
 
-	ctx, customConfigClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, customConfigClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func runCreateCustomConfigCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ctx, customConfigClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, customConfigClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -270,7 +270,7 @@ func runCreateCustomConfigCommand(cmd *cobra.Command, args []string) error {
 func runDeleteCustomConfigCommand(cmd *cobra.Command, args []string) error {
 
 	name := args[0]
-	ctx, customConfigClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, customConfigClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
