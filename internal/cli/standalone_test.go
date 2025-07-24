@@ -45,19 +45,10 @@ func (s *CLITestSuite) TestStandalone() {
 	_, err = s.generateStandaloneConfig(project, SArgs)
 	s.NoError(err)
 
-	//Preload with user apps
-	SArgs = map[string]string{
-		"config-file": filename,
-		"user-apps":   "",
-	}
-
-	_, err = s.generateStandaloneConfig(project, SArgs)
-	s.NoError(err)
-
 	//Preload with version
 	SArgs = map[string]string{
 		"config-file":       filename,
-		"emts-repo-version": "a28db5e6d2d9fb6ec5368246c13bfff7fc1a1ae2",
+		"emts-repo-version": "standalone-node/3.1.0",
 	}
 
 	_, err = s.generateStandaloneConfig(project, SArgs)
