@@ -21,7 +21,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const defaultEmtsRepoCommitID = "e2eb7e2ffcc28d0a6cccea5e8dfe793f201f105d"
+const defaultEmtsRepoCommitID = "standalone-node/3.1.0"
 
 var (
 	CollectLogsScriptSource   = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/collect-logs.sh"
@@ -134,8 +134,8 @@ orch-cli generate standalone-config -c config-file
 # Generate cloud-init config for EMT-Standalone nodes, specify output file
 orch-cli generate standalone-config -c config-file -o /tmp/cloud-init.cfg
 
-# Generate cloud-init config for EMT-Standalone nodes in sync with a specific EMT-S repository commit ID
-orch-cli generate standalone-config -c config-file --emts-repo-version <commit-ID>
+# Generate cloud-init config for EMT-Standalone nodes in sync with a specific EMT-S repository tag or commit ID
+orch-cli generate standalone-config -c config-file --emts-repo-version <tag/commit-ID>
 `
 
 func getStandaloneConfigCommand() *cobra.Command {

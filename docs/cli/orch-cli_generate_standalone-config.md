@@ -15,8 +15,8 @@ orch-cli generate standalone-config -c config-file
 # Generate cloud-init config for EMT-Standalone nodes, specify output file
 orch-cli generate standalone-config -c config-file -o /tmp/cloud-init.cfg
 
-# Generate cloud-init config for EMT-Standalone nodes in sync with a specific EMT-S repository commit ID
-orch-cli generate standalone-config -c config-file --emts-repo-version <commit-ID>
+# Generate cloud-init config for EMT-Standalone nodes in sync with a specific EMT-S repository tag or commit ID
+orch-cli generate standalone-config -c config-file --emts-repo-version <tag/commit-ID>
 
 ```
 
@@ -24,7 +24,7 @@ orch-cli generate standalone-config -c config-file --emts-repo-version <commit-I
 
 ```
   -c, --config-file string         config-file with user inputs
-      --emts-repo-version string   Commit ID of EMT-S repository to sync with (default "e2eb7e2ffcc28d0a6cccea5e8dfe793f201f105d")
+      --emts-repo-version string   Commit ID of EMT-S repository to sync with (default "standalone-node/3.1.0")
   -h, --help                       help for standalone-config
   -o, --output-file string         Override output filename (default "cloud-init.cfg")
 ```
