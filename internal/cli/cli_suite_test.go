@@ -18,6 +18,7 @@ import (
 	catalogmock "github.com/open-edge-platform/cli/internal/cli/mocks/catalog"
 	clustermock "github.com/open-edge-platform/cli/internal/cli/mocks/cluster"
 	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
+	rpsmock "github.com/open-edge-platform/cli/internal/cli/mocks/rps"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/spf13/viper"
@@ -61,6 +62,7 @@ func (s *CLITestSuite) SetupSuite() {
 	CatalogFactory = catalogmock.CreateCatalogMock(mctrl)
 	InfraFactory = inframock.CreateInfraMock(mctrl, timestamp)
 	ClusterFactory = clustermock.CreateClusterMock(mctrl)
+	RpsFactory = rpsmock.CreateRpsMock(mctrl)
 }
 
 func (s *CLITestSuite) TearDownSuite() {
@@ -68,6 +70,7 @@ func (s *CLITestSuite) TearDownSuite() {
 	CatalogFactory = nil
 	InfraFactory = nil
 	ClusterFactory = nil
+	RpsFactory = nil
 	viper.Set(auth.UserName, "")
 	viper.Set(auth.RefreshTokenField, "")
 	viper.Set(auth.ClientIDField, "")
