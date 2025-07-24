@@ -35,6 +35,7 @@ func getCreateCommand() *cobra.Command {
 		getCreateClusterCommand(),
 
 		getCreateOSUpdatePolicyCommand(),
+		getCreateAmtProfileCommand(),
 		getCreateCustomConfigCommand(),
 		getCreateRegionCommand(),
 		getCreateSiteCommand(),
@@ -66,6 +67,7 @@ func getListCommand() *cobra.Command {
 
 		getListOSUpdateRunCommand(),
 		getListOSUpdatePolicyCommand(),
+		getListAmtProfileCommand(),
 		getListCustomConfigCommand(),
 		getListSiteCommand(),
 		getListRegionCommand(),
@@ -109,6 +111,7 @@ func getGetCommand() *cobra.Command {
 
 		getGetOSUpdateRunCommand(),
 		getGetOSUpdatePolicyCommand(),
+		getGetAmtProfileCommand(),
 		getGetCustomConfigCommand(),
 		getGetOSProfileCommand(),
 		getGetRegionCommand(),
@@ -136,6 +139,8 @@ func getSetCommand() *cobra.Command {
 		getSetDeploymentCommand(),
 
 		getSetNetworkCommand(),
+
+		getSetHostCommand(),
 	)
 	return cmd
 }
@@ -161,6 +166,7 @@ func getDeleteCommand() *cobra.Command {
 
 		getDeleteOSUpdateRunCommand(),
 		getDeleteOSUpdatePolicyCommand(),
+		getDeleteAmtProfileCommand(),
 		getDeleteCustomConfigCommand(),
 		getDeleteRegionCommand(),
 		getDeleteSiteCommand(),
