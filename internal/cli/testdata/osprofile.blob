@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+appVersion: apps/v1
+metadata:
+  release: 0.1.0
+  version: 0.1.0
+spec:
+  name: osprofile
+  type: OS_TYPE_IMMUTABLE
+  provider: OS_PROVIDER_KIND_INFRA
+  architecture: x86_64
+  profileName: osprofile
+  osImageUrl: url.raw.gz
+  osImageVersion: 0.0.1
+  osImageSha256: 133975d949e3de495048afd55eb484475e311a19898c2744608cf0f69fe39502
+  osPackageManifestURL: sample.json
+  securityFeature: SECURITY_FEATURE_NONE
+  platformBundle: ""

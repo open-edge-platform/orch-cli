@@ -78,7 +78,7 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runGetClusterCommand(cmd *cobra.Command, args []string) error {
-	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 		return processError(err)
 	}
 
-	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -340,7 +340,7 @@ func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	ctx, clusterClient, projectName, err := getClusterServiceContext(cmd)
+	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -349,7 +349,7 @@ func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
 	if force {
-		ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+		ctx, hostClient, projectName, err := InfraFactory(cmd)
 		if err != nil {
 			return fmt.Errorf("failed to get infra service context: %w", err)
 		}
@@ -367,7 +367,7 @@ func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getClusterDetails(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) (res coapi.ClusterDetailInfo, err error) {
+func getClusterDetails(ctx context.Context, clusterClient coapi.ClientWithResponsesInterface, projectName, clusterName string) (res coapi.ClusterDetailInfo, err error) {
 	resp, err := clusterClient.GetV2ProjectsProjectNameClustersNameWithResponse(ctx, projectName, clusterName, auth.AddAuthHeader)
 	if err != nil {
 		return res, processError(err)
@@ -378,7 +378,7 @@ func getClusterDetails(ctx context.Context, clusterClient *coapi.ClientWithRespo
 	return *resp.JSON200, nil
 }
 
-func softDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
+func softDeleteCluster(ctx context.Context, clusterClient coapi.ClientWithResponsesInterface, projectName, clusterName string) error {
 	resp, err := clusterClient.DeleteV2ProjectsProjectNameClustersNameWithResponse(ctx, projectName, clusterName, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -389,7 +389,7 @@ func softDeleteCluster(ctx context.Context, clusterClient *coapi.ClientWithRespo
 	return nil
 }
 
-func forceDeleteCluster(ctx context.Context, hostClient *infra.ClientWithResponses, clusterClient *coapi.ClientWithResponses, projectName, clusterName string) error {
+func forceDeleteCluster(ctx context.Context, hostClient infra.ClientWithResponsesInterface, clusterClient coapi.ClientWithResponsesInterface, projectName, clusterName string) error {
 	cluster, err := getClusterDetails(ctx, clusterClient, projectName, clusterName)
 	if err != nil {
 		return fmt.Errorf("failed to get cluster details for force delete: %w", err)
@@ -423,7 +423,7 @@ func forceDeleteCluster(ctx context.Context, hostClient *infra.ClientWithRespons
 	return nil
 }
 
-func getHostUUID(ctx context.Context, hostClient *infra.ClientWithResponses, projectName, hostID string) (string, error) {
+func getHostUUID(ctx context.Context, hostClient infra.ClientWithResponsesInterface, projectName, hostID string) (string, error) {
 	resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
 	if err != nil {
 		return "", processError(err)

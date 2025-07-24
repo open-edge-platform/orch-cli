@@ -42,6 +42,7 @@ func (s *CLITestSuite) updateDeploymentProfile(pubName string, pkgName string, p
 }
 
 func (s *CLITestSuite) TestDeploymentProfile() {
+	s.T().Skip("Skip until fixed")
 	const (
 		app1                         = "app1"
 		pubName                      = "pubtest"

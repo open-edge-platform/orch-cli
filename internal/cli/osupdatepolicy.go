@@ -174,7 +174,7 @@ func getDeleteOSUpdatePolicyCommand() *cobra.Command {
 func runGetOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 
 	writer, verbose := getOutputContext(cmd)
-	ctx, OSUpdatePolicyClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSUpdatePolicyClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ func runListOSUpdatePolicyCommand(cmd *cobra.Command, _ []string) error {
 	filtflag, _ := cmd.Flags().GetString("filter")
 	filter := filterHelper(filtflag)
 
-	ctx, OSUPolicyClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSUPolicyClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -261,12 +261,13 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ctx, OSUPolicyClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSUPolicyClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
 	var profile *infra.OperatingSystemResource
+	var profileID *string
 	var updpol infra.UpdatePolicy
 	var packages *string
 	var kernel *string
@@ -305,7 +306,10 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	if spec.Spec.UpdateSources != nil {
 		sources = &spec.Spec.UpdateSources
 	}
-	fmt.Println(*profile.Name, *profile.ResourceId)
+
+	if profile != nil && profile.ResourceId != nil {
+		profileID = profile.ResourceId
+	}
 
 	//Create policy
 	resp, err := OSUPolicyClient.OSUpdatePolicyCreateOSUpdatePolicyWithResponse(ctx, projectName,
@@ -315,7 +319,7 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 			InstallPackages: packages,
 			KernelCommand:   kernel,
 			//TargetOs:        profile,
-			TargetOsId:    profile.ResourceId,
+			TargetOsId:    profileID,
 			UpdateSources: sources,
 			UpdatePolicy:  &updpol,
 		}, auth.AddAuthHeader)
@@ -328,7 +332,7 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 // Deletes OS Update Policy - checks if a policy  already exists and then deletes it if it does
 func runDeleteOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 
-	ctx, OSUPolicyClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSUPolicyClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}

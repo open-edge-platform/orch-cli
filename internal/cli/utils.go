@@ -16,8 +16,10 @@ import (
 	"text/tabwriter"
 
 	"github.com/gorilla/websocket"
+	"github.com/open-edge-platform/cli/internal/cli/interfaces"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
@@ -26,6 +28,19 @@ import (
 )
 
 const timeLayout = "2006-01-02T15:04:05"
+
+// Use the interface type instead of the concrete function type
+var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
+	return getInfraServiceContext(cmd)
+}
+
+var ClusterFactory interfaces.ClusterFactoryFunc = func(cmd *cobra.Command) (context.Context, cluster.ClientWithResponsesInterface, string, error) {
+	return getClusterServiceContext(cmd)
+}
+
+var CatalogFactory interfaces.CatalogFactoryFunc = func(cmd *cobra.Command) (context.Context, catapi.ClientWithResponsesInterface, string, error) {
+	return getCatalogServiceContext(cmd)
+}
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
 	verbose, _ := cmd.Flags().GetBool("verbose")

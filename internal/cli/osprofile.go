@@ -133,13 +133,13 @@ func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) 
 		}
 
 		_, _ = fmt.Fprintf(writer, "\nCVE Info:\n")
-		_, _ = fmt.Fprintf(writer, "\t Existing CVEs): \n\n")
+		_, _ = fmt.Fprintf(writer, "\t Existing CVEs: \n\n")
 		for _, cve := range cveEntries {
 			_, _ = fmt.Fprintf(writer, "-\t\tCVE ID:\t %v\n", cve.CVEID)
 			_, _ = fmt.Fprintf(writer, "-\t\tPriority:\t %v\n", cve.Priority)
 			_, _ = fmt.Fprintf(writer, "-\t\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
 		}
-		_, _ = fmt.Fprintf(writer, "\t Fixed CVEs): \n\n")
+		_, _ = fmt.Fprintf(writer, "\t Fixed CVEs: \n\n")
 		for _, fcve := range fcveEntries {
 			_, _ = fmt.Fprintf(writer, "-\t\tCVE ID:\t %v\n", fcve.CVEID)
 			_, _ = fmt.Fprintf(writer, "-\t\tPriority:\t %v\n", fcve.Priority)
@@ -238,7 +238,7 @@ func getDeleteOSProfileCommand() *cobra.Command {
 // specifc profile by name
 func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -271,7 +271,7 @@ func runListOSProfileCommand(cmd *cobra.Command, _ []string) error {
 	filtflag, _ := cmd.Flags().GetString("filter")
 	filter := filterHelper(filtflag)
 
-	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -308,7 +308,7 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -353,7 +353,7 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 
 // Deletes OS Profile - checks if a profile already exists and then deletes it if it does
 func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
