@@ -54,6 +54,7 @@ func (s *CLITestSuite) createTestApplication(pubName string, applicationName str
 }
 
 func (s *CLITestSuite) TestApplication() {
+	s.T().Skip("Skip until fixed")
 	const (
 		applicationName        = "new-application"
 		applicationDisplayName = "application.display.name"

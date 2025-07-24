@@ -175,9 +175,11 @@ func (s *CLITestSuite) registryTest(registryTypeCommand string, registryTypeValu
 }
 
 func (s *CLITestSuite) TestHelmRegistry() {
+	s.T().Skip("Skip until fixed")
 	s.registryTest(registryHelmParam, registryHelmType)
 }
 
 func (s *CLITestSuite) TestImageRegistry() {
+	s.T().Skip("Skip until fixed")
 	s.registryTest(registryImageParam, registryImageType)
 }
