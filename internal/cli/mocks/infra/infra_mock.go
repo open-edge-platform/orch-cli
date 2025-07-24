@@ -549,10 +549,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								Hostname:                    stringPtr("edge-host-001.example.com"),
 								Note:                        stringPtr("Edge computing host"),
 								CpuArchitecture:             stringPtr("x86_64"),
-								CpuCores:                    (*int)(func() *int { i := 8; return &i }()),
+								CpuCores:                    func() *int { i := 8; return &i }(),
 								CpuModel:                    stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
-								CpuSockets:                  (*int)(func() *int { i := 2; return &i }()),
-								CpuThreads:                  (*int)(func() *int { i := 32; return &i }()),
+								CpuSockets:                  func() *int { i := 2; return &i }(),
+								CpuThreads:                  func() *int { i := 32; return &i }(),
 								MemoryBytes:                 stringPtr("17179869184"), // 16GB in bytes
 								SerialNumber:                stringPtr("1234567890"),  // Match ListHosts
 								Uuid:                        stringPtr("550e8400-e29b-41d4-a716-446655440000"),
