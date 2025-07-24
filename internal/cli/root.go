@@ -95,6 +95,7 @@ func getRootCmd() *cobra.Command {
 		getWipeProjectCommand(),
 		versionCommand(),
 		getImportCommand(),
+		getGenerateCommand(),
 	)
 	return rootCmd
 }

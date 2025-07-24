@@ -102,6 +102,14 @@ rest-client-gen:
 	oapi-codegen -generate client -old-config-style -package rps -o pkg/rest/rps/client.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 	oapi-codegen -generate types -old-config-style -package rps -o pkg/rest/rps/types.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 
+mock-client-gen:
+	@# Help: Generate mock clients for testing
+	mockgen -source=pkg/rest/catalog/client.go -destination=pkg/rest/catalog/mock_client.go -package=catalog
+	mockgen -source=pkg/rest/catalogutilities/client.go -destination=pkg/rest/catalogutilities/mock_client.go -package=catalogutilities
+	mockgen -source=pkg/rest/deployment/client.go -destination=pkg/rest/deployment/mock_client.go -package=deployment
+	mockgen -source=pkg/rest/cluster/client.go -destination=pkg/rest/cluster/mock_client.go -package=cluster
+	mockgen -source=pkg/rest/infra/client.go -destination=pkg/rest/infra/mock_client.go -package=infra
+
 cli-docs:
 	@# Help: Generates markdowns for the orchestrator cli
 	go run cmd/cli-docs-gen/main.go

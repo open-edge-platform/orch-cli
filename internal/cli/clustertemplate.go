@@ -62,7 +62,7 @@ func getListClusterTemplatesCommand() *cobra.Command {
 func runListClusterTemplatesCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
-	ctx, clusterTemplateClient, projectName, err := getClusterServiceContext(cmd)
+	ctx, clusterTemplateClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}

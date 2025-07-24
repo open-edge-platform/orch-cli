@@ -5,6 +5,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -74,11 +75,11 @@ K8sClusterTemplate - Optional Cluster template to be used for K8s deployment on 
 K8sClusterConfig - Optional Cluster config to be used to specify role and cluster name and/or cluster labels
 
 Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
-2500JF3,4c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic,site-c69a3c81,,localaccount-4c2c5f5a
-1500JF3,1c4c4544-2046-5310-8052-cac04f515233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value1&key2=value2
-15002F3,114c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value2&key3=value4
-11002F3,2c4c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,,key1=value2&key3=value4,,cloudinitname&customconfig-1234abcd
-25002F3,214c4544-2046-5310-8052-cac04f512233,ubuntu-22.04-lts-generic-ext,site-c69a3c81,false,user,key1=value2&key3=value4,,,true,baseline:v2.0.2,,role:all;name:mycluster;labels:key1=val1&key2=val2
+2500JF3,4c4c4544-2046-5310-8052-cac04f515233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,,localaccount-4c2c5f5a
+1500JF3,1c4c4544-2046-5310-8052-cac04f515233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,,key1=value1&key2=value2
+15002F3,114c4544-2046-5310-8052-cac04f512233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,,key1=value2&key3=value4
+11002F3,2c4c4544-2046-5310-8052-cac04f512233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,,key1=value2&key3=value4,,cloudinitname&customconfig-1234abcd
+25002F3,214c4544-2046-5310-8052-cac04f512233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,user,key1=value2&key3=value4,,,true,baseline:v2.0.2,,role:all;name:mycluster;labels:key1=val1&key2=val2
 
 # --dry-run allows for verification of the validity of the input csv file without creating hosts
 orch-cli create host --project some-project --import-from-csv test.csv --dry-run
@@ -134,6 +135,12 @@ type ResponseCache struct {
 	K8sClusterTemplateCache map[string]cluster.TemplateInfo
 	K8sClusterNodesCache    map[string][]cluster.NodeSpec
 	CICache                 map[string]infra.CustomConfigResource
+}
+
+type CVEEntry struct {
+	CVEID            string   `json:"cve_id"`
+	Priority         string   `json:"priority"`
+	AffectedPackages []string `json:"affected_packages"`
 }
 
 func filterHelper(f string) *string {
@@ -211,8 +218,13 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 			siteName = toJSON(h.Site.Name)
 		}
 
-		if *h.HostStatus != "" {
-			host = *h.HostStatus
+		if h.HostStatus != nil && *h.HostStatus != "" {
+			// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
+			if strings.EqualFold(*h.HostStatus, "error") && h.Instance != nil && h.Instance.InstanceStatusDetail != nil && strings.Contains(*h.Instance.InstanceStatusDetail, "of 10 components running") {
+				host = "Waiting on node agents"
+			} else {
+				host = *h.HostStatus
+			}
 		}
 
 		if h.Instance != nil && h.Instance.ProvisioningStatus != nil {
@@ -242,6 +254,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	currentOS := ""
 	osprofile := ""
 	customcfg := ""
+	ip := ""
+	var cveEntries []CVEEntry
 	provstatus := "Not Provisioned"
 	hostdetails := ""
 
@@ -259,7 +273,20 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	if *host.HostStatus != "" {
-		hoststatus = *host.HostStatus
+		// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
+		if strings.EqualFold(*host.HostStatus, "error") && host.Instance != nil && host.Instance.InstanceStatusDetail != nil && strings.Contains(*host.Instance.InstanceStatusDetail, "of 10 components running") {
+			hoststatus = "Waiting on node agents"
+		} else {
+			hoststatus = *host.HostStatus
+		}
+	}
+
+	if host.Instance != nil && *host.Instance.ProvisioningStatus != "" {
+		provstatus = *host.Instance.ProvisioningStatus
+	}
+
+	if host.Instance != nil && *host.Instance.InstanceStatusDetail != "" {
+		hostdetails = *host.Instance.InstanceStatusDetail
 	}
 
 	if host.Instance != nil && *host.Instance.ProvisioningStatus != "" {
@@ -280,10 +307,21 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		}
 	}
 
+	if host.HostNics != nil && len(*host.HostNics) > 0 {
+		for _, nic := range *host.HostNics {
+			if nic.Ipaddresses != nil && len(*nic.Ipaddresses) > 0 && nic.DeviceName != nil && (*nic.Ipaddresses)[0].Address != nil {
+				deviceName := *nic.DeviceName
+				address := *(*nic.Ipaddresses)[0].Address
+				ip = ip + deviceName + " " + address + "; "
+			}
+		}
+	}
+
 	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Resurce ID:\t %s\n", *host.ResourceId)
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
-	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n\n", osprofile)
+	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
+	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n\n", ip)
 
 	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
@@ -308,6 +346,23 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tCPU Threads:\t %v\n", *host.CpuThreads)
 	_, _ = fmt.Fprintf(writer, "-\tCPU Sockets:\t %v\n\n", *host.CpuSockets)
 
+	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.CurrentOs.FixedCves != nil {
+
+		if *host.Instance.ExistingCves != "" {
+			err := json.Unmarshal([]byte(*host.Instance.ExistingCves), &cveEntries)
+			if err != nil {
+				fmt.Println("Error unmarshaling JSON: existing CVE entries:", err)
+				return
+			}
+		}
+
+		_, _ = fmt.Fprintf(writer, "CVE Info (existing CVEs): \n\n")
+		for _, cve := range cveEntries {
+			_, _ = fmt.Fprintf(writer, "-\tCVE ID:\t %v\n", cve.CVEID)
+			_, _ = fmt.Fprintf(writer, "-\tPriority:\t %v\n", cve.Priority)
+			_, _ = fmt.Fprintf(writer, "-\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
+		}
+	}
 	if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
 		_, _ = fmt.Fprintf(writer, "AMT Info: \n\n")
 		_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", *host.CurrentAmtState)
@@ -345,7 +400,7 @@ func generateCSV(filename string) error {
 }
 
 // Runs the registration workflow
-func doRegister(ctx context.Context, ctx2 context.Context, hClient *infra.ClientWithResponses, projectName string, rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient *cluster.ClientWithResponses) {
+func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientWithResponsesInterface, projectName string, rIn types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient cluster.ClientWithResponsesInterface) {
 
 	// get the required fields from the record
 	sNo := rIn.Serial
@@ -515,7 +570,7 @@ func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSe
 }
 
 // Sanitize fields, convert named resources to resource IDs
-func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClient *infra.ClientWithResponses, projectName string, record types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient *cluster.ClientWithResponses) (*types.HostRecord, error) {
+func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClient infra.ClientWithResponsesInterface, projectName string, record types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient cluster.ClientWithResponsesInterface) (*types.HostRecord, error) {
 
 	isSecure := resolveSecure(record.Secure, globalAttr.Secure)
 
@@ -583,7 +638,7 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 }
 
 // Ensures that OS profile exists
-func resolveOSProfile(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, recordOSProfile string,
+func resolveOSProfile(ctx context.Context, hClient infra.ClientWithResponsesInterface, projectName string, recordOSProfile string,
 	globalOSProfile string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
 
@@ -603,7 +658,7 @@ func resolveOSProfile(ctx context.Context, hClient *infra.ClientWithResponses, p
 		return *osResource.ResourceId, nil
 	}
 
-	ospfilter := fmt.Sprintf("profileName='%s' OR resourceId='%s'", osProfile, osProfile)
+	ospfilter := fmt.Sprintf("name='%s' OR resourceId='%s'", osProfile, osProfile)
 	resp, err := hClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
 		&infra.OperatingSystemServiceListOperatingSystemsParams{
 			Filter: &ospfilter,
@@ -652,7 +707,7 @@ func validateOSProfile(osProfileID string) error {
 }
 
 // Checks if site is valid and exists
-func resolveSite(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, recordSite string,
+func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface, projectName string, recordSite string,
 	globalSite string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
 
@@ -725,7 +780,7 @@ func resolveCluster(recordClusterEnable string,
 }
 
 // Checks if cluster template is valid and existss
-func resolveClusterTemplate(ctx context.Context, cClient *cluster.ClientWithResponses, projectName string, recordClusterTemplate string,
+func resolveClusterTemplate(ctx context.Context, cClient cluster.ClientWithResponsesInterface, projectName string, recordClusterTemplate string,
 	globalClusterTemplate string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
 
@@ -774,7 +829,7 @@ func resolveClusterConfig(recordClusterConfig string, globalClusterConfig string
 }
 
 // Checks if remote user is valid and exists
-func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, recordRemoteUser string,
+func resolveRemoteUser(ctx context.Context, hClient infra.ClientWithResponsesInterface, projectName string, recordRemoteUser string,
 	globalRemoteUser string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
 
@@ -815,7 +870,7 @@ func resolveRemoteUser(ctx context.Context, hClient *infra.ClientWithResponses, 
 }
 
 // Cecks if remote user is valid and exists
-func resolveCloudInit(ctx context.Context, hClient *infra.ClientWithResponses, projectName string, recordCloudInitMeta string,
+func resolveCloudInit(ctx context.Context, hClient infra.ClientWithResponsesInterface, projectName string, recordCloudInitMeta string,
 	globalCloudInitMeta string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
 
@@ -1008,7 +1063,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 
 	writer, verbose := getOutputContext(cmd)
 
-	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -1145,7 +1200,7 @@ func runGetHostCommand(cmd *cobra.Command, args []string) error {
 
 	hostID := args[0]
 	writer, verbose := getOutputContext(cmd)
-	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -1272,12 +1327,12 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		CICache:                 make(map[string]infra.CustomConfigResource),
 	}
 
-	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	ctx2, clusterClient, _, err := getClusterServiceContext(cmd)
+	ctx2, clusterClient, _, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -1305,7 +1360,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 // Deletes specific Host - finds a host using resource ID and deletes it
 func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	hostID := args[0]
-	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -1414,7 +1469,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 // Deauthorizes specific Host - finds a host using resource ID and invalidates it
 func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 	hostID := args[0]
-	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -1429,7 +1484,7 @@ func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 }
 
 // Function containing the logic to register the host and retrieve the host ID
-func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool, amt bool) (string, error) {
+func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterface, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool, amt bool) (string, error) {
 	// Register host
 	resp, err := hClient.HostServiceRegisterHostWithResponse(ctx, projectName,
 		infra.HostServiceRegisterHostJSONRequestBody{
@@ -1488,7 +1543,7 @@ func registerHost(ctx context.Context, hClient *infra.ClientWithResponses, respC
 }
 
 // If a valid OE Profile exists creates an instance linking to host resource
-func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, respCache ResponseCache,
+func createInstance(ctx context.Context, hClient infra.ClientWithResponsesInterface, respCache ResponseCache,
 	projectName, hostID string, rOut *types.HostRecord, rIn types.HostRecord, globalAttr *types.HostRecord) error {
 
 	//Create instance if not already created in a previous run of create host command
@@ -1553,7 +1608,7 @@ func createInstance(ctx context.Context, hClient *infra.ClientWithResponses, res
 }
 
 // Create a cluster
-func createCluster(ctx context.Context, cClient *cluster.ClientWithResponses, respCache ResponseCache,
+func createCluster(ctx context.Context, cClient cluster.ClientWithResponsesInterface, respCache ResponseCache,
 	projectName, hostID string, rOut *types.HostRecord) error {
 
 	clusterTemplateName, clusterTempalteVer, err := decodeK8sTemplate(rOut.K8sClusterTemplate)
@@ -1623,7 +1678,7 @@ func createCluster(ctx context.Context, cClient *cluster.ClientWithResponses, re
 }
 
 // Decode input metadata and add to host, allocate host to site
-func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient *infra.ClientWithResponses,
+func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientWithResponsesInterface,
 	projectName, hostID string, rOut *types.HostRecord) error {
 
 	// Update host with Site and metadata

@@ -17,9 +17,10 @@ import (
 
 func getCreateDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deployment <application-name> <version> [flags]",
-		Short: "Create a deployment",
-		Args:  cobra.ExactArgs(2),
+		Use:     "deployment <application-name> <version> [flags]",
+		Short:   "Create a deployment",
+		Example: "orch-cli create deployment my-package 1.0.0 --project sample-project --display-name my-deployment --profile sample-profile --application-label <app>.<label>=<label-value>",
+		Args:    cobra.ExactArgs(2),
 
 		RunE: runCreateDeploymentCommand,
 	}
@@ -55,10 +56,11 @@ func getGetDeploymentCommand() *cobra.Command {
 
 func getSetDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deployment <deployment-id> [flags]",
-		Short: "Update a deployment",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runSetDeploymentCommand,
+		Use:     "deployment <deployment-id> [flags]",
+		Short:   "Update a deployment",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli set deployment 12345 --project some-project --name my-deployment --package-name my-package --package-version 1.0.0 --profile sample-profile --application-namespace <app>=<namespace> --application-set <app>.<prop>=<prop-value> --application-label <app>.<label>=<label-value>",
+		RunE:    runSetDeploymentCommand,
 	}
 	cmd.Flags().String("name", "", "deployment name")
 	cmd.Flags().String("package-name", "", "deployment package name")
