@@ -98,6 +98,7 @@ orch-cli create host --project some-project --import-from-csv test.csv
 --cluster-template - name and version of the cluster template to be used for cluster cration (separated by :)
 --cluster-config - extra configuration for cluster creation empty defaults to "role:all", if not empty role must be defined, name and labels are optional (labels separated by &)
 --cloud-init - name or resource ID of custom config - multiple configs must be separated by &
+--amt - flag to enable AMT activation on Edge Node - accepted value true|false
 
 # Create hosts from CSV and override provided values
 /orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
@@ -108,6 +109,18 @@ orch-cli delete host host-1234abcd  --project itep`
 
 const deauthorizeHostExamples = `#Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
 orch-cli deauthorize host host-1234abcd  --project itep`
+
+const setHostExamples = `#Set an attribute of a host or execute an action - at least one flag must be specified
+
+#Set host power state to on
+orch-cli set host host-1234abcd  --project itep --power on
+
+#Set host power command policy
+orch-cli set host host-1234abcd  --project itep --power-policy ordered
+
+--power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
+--power-policy - Set the desired power command policy to ordered|immediate
+`
 
 var hostHeaderGet = "\nDetailed Host Information\n"
 var filename = "test.csv"
@@ -243,6 +256,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	customcfg := ""
 	ip := ""
 	var cveEntries []CVEEntry
+	provstatus := "Not Provisioned"
+	hostdetails := ""
 
 	//TODO Build out the host information
 	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
@@ -264,6 +279,14 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		} else {
 			hoststatus = *host.HostStatus
 		}
+	}
+
+	if host.Instance != nil && host.Instance.ProvisioningStatus != nil && *host.Instance.ProvisioningStatus != "" {
+		provstatus = *host.Instance.ProvisioningStatus
+	}
+
+	if host.Instance != nil && host.Instance.InstanceStatusDetail != nil && *host.Instance.InstanceStatusDetail != "" {
+		hostdetails = *host.Instance.InstanceStatusDetail
 	}
 
 	if host.Instance != nil && host.Instance.CustomConfig != nil {
@@ -294,6 +317,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 
 	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
+	_, _ = fmt.Fprintf(writer, "-\tHost Status Details:\t %s\n", hostdetails)
+	_, _ = fmt.Fprintf(writer, "-\tProvisioning Status:\t %s\n", provstatus)
 	_, _ = fmt.Fprintf(writer, "-\tUpdate Status:\t %s\n\n", updatestatus)
 
 	_, _ = fmt.Fprintf(writer, "Specification: \n\n")
@@ -330,6 +355,19 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 			_, _ = fmt.Fprintf(writer, "-\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
 		}
 	}
+	if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
+		_, _ = fmt.Fprintf(writer, "AMT Info: \n\n")
+		_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", *host.CurrentAmtState)
+		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", *host.CurrentPowerState)
+		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", *host.DesiredPowerState)
+		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", *host.PowerCommandPolicy)
+		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", *host.PowerOnTime)
+	}
+
+	if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
+		_, _ = fmt.Fprintf(writer, "AMT not active and/or not supported: No info available \n\n")
+	}
+
 }
 
 // Helper function to verify that the input file exists and is of right format
@@ -363,13 +401,19 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 	hostName := ""
 	hostID := ""
 	autonboard := true
+	amt := false
 
 	rOut, err := sanitizeProvisioningFields(ctx, ctx2, hClient, projectName, rIn, respCache, globalAttr, erringRecords, cClient)
 	if err != nil {
 		return
 	}
 
-	hostID, err = registerHost(ctx, hClient, respCache, projectName, hostName, sNo, uuid, autonboard)
+	//check if vPRO is enabled
+	if rOut.AMTEnable == "true" {
+		amt = true
+	}
+
+	hostID, err = registerHost(ctx, hClient, respCache, projectName, hostName, sNo, uuid, autonboard, amt)
 	if err != nil {
 		rIn.Error = err.Error()
 		*erringRecords = append(*erringRecords, rIn)
@@ -543,16 +587,12 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 
 	metadataToUse := resolveMetadata(record.Metadata, globalAttr.Metadata)
 
-	//TODO implement AMT check - will there be a check if a host is capable of AMT
-	// valErr = validateAMT(ctx, hClient, projectName, record.AMTEnable, record, respCache, erringRecords)
-	// if err != nil {
-	// 	return nil, valErr
-	// }
-
 	cloudInitIDs, err := resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, globalAttr.CloudInitMeta, record, respCache, erringRecords)
 	if err != nil {
 		return nil, err
 	}
+
+	isAMT := resolveAMT(record.AMTEnable, globalAttr.AMTEnable)
 
 	isK8s := resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
 	k8sConfig := record.K8sConfig
@@ -574,14 +614,14 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 	}
 
 	return &types.HostRecord{
-		OSProfile:  osProfileID,
-		RemoteUser: laID,
-		Site:       siteID,
-		Secure:     isSecure,
-		UUID:       record.UUID,
-		Serial:     record.Serial,
-		Metadata:   metadataToUse,
-		//AMTEnable:  isAMT,
+		OSProfile:          osProfileID,
+		RemoteUser:         laID,
+		Site:               siteID,
+		Secure:             isSecure,
+		UUID:               record.UUID,
+		Serial:             record.Serial,
+		Metadata:           metadataToUse,
+		AMTEnable:          isAMT,
 		CloudInitMeta:      cloudInitIDs,
 		K8sEnable:          isK8s,
 		K8sClusterTemplate: k8sTmplID,
@@ -695,6 +735,23 @@ func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface
 
 	respCache.SiteCache[siteToQuery] = *resp.JSON200
 	return *resp.JSON200.ResourceId, nil
+}
+
+// Checks if AMT is enabled
+func resolveAMT(recordAMTEnable string,
+	globalAMTEnable string) string {
+
+	isEnabled := recordAMTEnable
+
+	if globalAMTEnable != "" {
+		isEnabled = globalAMTEnable
+	}
+
+	if isEnabled != "true" {
+		return ""
+	}
+
+	return isEnabled
 }
 
 // Checks if cluster deployment is enabled
@@ -932,7 +989,7 @@ func getCreateHostCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("cluster-config", "f", viper.GetString("cluster-config"), "Override the cluster configuration provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("cloud-init", "j", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
-	//cmd.PersistentFlags().BoolP("amt", "a", viper.GetBool("amt"), "Override the AMT feature configuration provided in CSV file for all hosts")
+	cmd.PersistentFlags().BoolP("amt", "a", viper.GetBool("amt"), "Override the AMT feature configuration provided in CSV file for all hosts")
 
 	return cmd
 }
@@ -945,6 +1002,20 @@ func getDeleteHostCommand() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE:    runDeleteHostCommand,
 	}
+	return cmd
+}
+
+func getSetHostCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "host <resourceID> [flags]",
+		Short:   "Sets a host attribute or action",
+		Example: setHostExamples,
+		Args:    cobra.ExactArgs(1),
+		RunE:    runSetHostCommand,
+	}
+	cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
+	cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
+
 	return cmd
 }
 
@@ -1180,6 +1251,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	k8sIn, _ := cmd.Flags().GetString("cluster-deploy")
 	k8sTmplIn, _ := cmd.Flags().GetString("cluster-template")
 	k8sConfigIn, _ := cmd.Flags().GetString("cluster-config")
+	amtIn, _ := cmd.Flags().GetString("amt")
 
 	globalAttr := &types.HostRecord{
 		OSProfile:          osProfileIn,
@@ -1187,6 +1259,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		Secure:             types.StringToRecordSecure(secureIn),
 		RemoteUser:         remoteUserIn,
 		Metadata:           metadataIn,
+		AMTEnable:          amtIn,
 		K8sEnable:          k8sIn,
 		K8sClusterTemplate: k8sTmplIn,
 		K8sConfig:          k8sConfigIn,
@@ -1322,6 +1395,69 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// Set attributes for specific Host - finds a host using resource ID
+func runSetHostCommand(cmd *cobra.Command, args []string) error {
+	hostID := args[0]
+
+	policyFlag, _ := cmd.Flags().GetString("power-policy")
+	powerFlag, _ := cmd.Flags().GetString("power")
+
+	if policyFlag == "" && powerFlag == "" {
+		return errors.New("a flag must be provided with the set host command")
+	}
+
+	var power *infra.PowerState
+	var policy *infra.PowerCommandPolicy
+
+	if policyFlag != "" {
+		pol, err := resolvePowerPolicy(policyFlag)
+		if err != nil {
+			return err
+		}
+		policy = &pol
+	}
+
+	if powerFlag != "" {
+		pow, err := resolvePower(powerFlag)
+		if err != nil {
+			return err
+		}
+		power = &pow
+	}
+
+	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	if err != nil {
+		return err
+	}
+
+	// retrieve the host (to check if it has an instance associated with it)
+	iresp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if err := checkResponse(iresp.HTTPResponse, "error while retrieving host"); err != nil {
+		return err
+	}
+	host := *iresp.JSON200
+
+	// If host is onboarded manipulate
+	if host.Instance != nil {
+		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
+			PowerCommandPolicy: policy,
+			DesiredPowerState:  power,
+			Name:               host.Name,
+		}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, "error while executing host set"); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Deauthorizes specific Host - finds a host using resource ID and invalidates it
 func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 	hostID := args[0]
@@ -1340,7 +1476,7 @@ func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 }
 
 // Function containing the logic to register the host and retrieve the host ID
-func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterface, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool) (string, error) {
+func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterface, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool, amt bool) (string, error) {
 	// Register host
 	resp, err := hClient.HostServiceRegisterHostWithResponse(ctx, projectName,
 		infra.HostServiceRegisterHostJSONRequestBody{
@@ -1348,6 +1484,7 @@ func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterfac
 			SerialNumber: &sNo,
 			Uuid:         &uuid,
 			AutoOnboard:  &autonboard,
+			EnableVpro:   &amt,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return "", processError(err)
@@ -1563,4 +1700,34 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientW
 	}
 
 	return nil
+}
+
+func resolvePowerPolicy(power string) (infra.PowerCommandPolicy, error) {
+	switch power {
+	case "immediate":
+		return infra.POWERCOMMANDPOLICYIMMEDIATE, nil
+	case "ordered":
+		return infra.POWERCOMMANDPOLICYORDERED, nil
+	default:
+		return "", errors.New("incorrect power policy provided with --power-policy flag use one of immediate|ordered")
+	}
+}
+
+func resolvePower(power string) (infra.PowerState, error) {
+	switch power {
+	case "on":
+		return infra.POWERSTATEON, nil
+	case "off":
+		return infra.POWERSTATEOFF, nil
+	case "cycle":
+		return infra.POWERSTATEPOWERCYCLE, nil
+	case "hibernate":
+		return infra.POWERSTATEHIBERNATE, nil
+	case "reset":
+		return infra.POWERSTATERESET, nil
+	case "sleep":
+		return infra.POWERSTATESLEEP, nil
+	default:
+		return "", errors.New("incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep")
+	}
 }
