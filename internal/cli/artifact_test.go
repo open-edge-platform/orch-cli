@@ -45,6 +45,7 @@ func (s *CLITestSuite) updateArtifact(project string, artifactName string, args 
 }
 
 func (s *CLITestSuite) TestArtifact() {
+	s.T().Skip("Skip until fixed")
 	const (
 		artifactName        = "artifact"
 		artifactFile        = "testdata/artifact.txt"

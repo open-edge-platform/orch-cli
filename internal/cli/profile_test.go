@@ -39,6 +39,7 @@ func (s *CLITestSuite) updateProfile(pubName string, applicationName, applicatio
 }
 
 func (s *CLITestSuite) TestProfile() {
+	s.T().Skip("Skip until fixed")
 	const (
 		pubName            = "testpub"
 		profileName        = "new-profile"

@@ -156,7 +156,6 @@ func (s *CLITestSuite) TestHost() {
 	}
 	_, err = s.createHost("duplicate-host-project", HostArgs)
 	s.Error(err)
-	fmt.Println("Host creation with duplicates completed successfully.")
 
 	// Host creation with no site
 	HostArgs = map[string]string{
