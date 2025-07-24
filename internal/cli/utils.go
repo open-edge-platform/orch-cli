@@ -43,6 +43,10 @@ var CatalogFactory interfaces.CatalogFactoryFunc = func(cmd *cobra.Command) (con
 	return getCatalogServiceContext(cmd)
 }
 
+var RpsFactory interfaces.RpsFactoryFunc = func(cmd *cobra.Command) (context.Context, rpsapi.ClientWithResponsesInterface, string, error) {
+	return getRpsServiceContext(cmd)
+}
+
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	debugHeadersValue, _ := cmd.Flags().GetBool(debugHeaders)

@@ -109,6 +109,7 @@ mock-client-gen:
 	mockgen -source=pkg/rest/deployment/client.go -destination=pkg/rest/deployment/mock_client.go -package=deployment
 	mockgen -source=pkg/rest/cluster/client.go -destination=pkg/rest/cluster/mock_client.go -package=cluster
 	mockgen -source=pkg/rest/infra/client.go -destination=pkg/rest/infra/mock_client.go -package=infra
+	mockgen -source=pkg/rest/rps/client.go -destination=pkg/rest/rps/mock_client.go -package=rps
 
 cli-docs:
 	@# Help: Generates markdowns for the orchestrator cli

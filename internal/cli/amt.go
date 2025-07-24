@@ -94,7 +94,7 @@ func getDeleteAmtProfileCommand() *cobra.Command {
 func runListAmtProfileCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	count := true
-	ctx, rpsClient, projectName, err := getRpsServiceContext(cmd)
+	ctx, rpsClient, projectName, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 		return errors.New("domain suffix format must be provided with --domain-suffix flag ")
 	}
 
-	ctx, rpsClient, projectName, err := getRpsServiceContext(cmd)
+	ctx, rpsClient, projectName, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 
 func runGetAmtProfileCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, rpsClient, projectName, err := getRpsServiceContext(cmd)
+	ctx, rpsClient, projectName, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func runGetAmtProfileCommand(cmd *cobra.Command, args []string) error {
 func runDeleteAmtProfileCommand(cmd *cobra.Command, args []string) error {
 	name := args[0]
 
-	ctx, rpsClient, projectName, err := getRpsServiceContext(cmd)
+	ctx, rpsClient, projectName, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}

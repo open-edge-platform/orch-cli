@@ -335,25 +335,6 @@ func (s *CLITestSuite) TestHost() {
 		"-   PowerOn Time :":           "1",
 	}
 
-	fmt.Println(parsedOutput)
-
-	// // DEBUG: Print parsed output
-	// fmt.Printf("=== DEBUG: Parsed output ===\n")
-	// if len(parsedOutput) == 0 {
-	// 	fmt.Printf("  (empty parsed output)\n")
-	// } else {
-	// 	for key, value := range parsedOutput {
-	// 		fmt.Printf("  '%s': '%s'\n", key, value)
-	// 	}
-	// }
-	// fmt.Printf("=== END DEBUG ===\n")
-	// // DEBUG: Print expected output
-	// fmt.Printf("=== DEBUG: Expected output ===\n")
-	// for key, value := range expectedOutput {
-	// 	fmt.Printf("  '%s': '%s'\n", key, value)
-	// }
-	// fmt.Printf("=== END DEBUG ===\n")
-
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
 	// Test get host with invalid project
