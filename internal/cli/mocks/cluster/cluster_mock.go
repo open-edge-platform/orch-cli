@@ -30,7 +30,8 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, templateName, version string, reqEditors ...cluster.RequestEditorFn) (*cluster.GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse, error) {
-				_ = ctx // Acknowledge we're not using it
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				fmt.Printf("The name of the template is %s", templateName)
 				switch projectName {
 				case "nonexistent-project":
@@ -67,7 +68,9 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *cluster.GetV2ProjectsProjectNameTemplatesParams, reqEditors ...cluster.RequestEditorFn) (*cluster.GetV2ProjectsProjectNameTemplatesResponse, error) {
-				_ = ctx // Acknowledge we're not using it
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &cluster.GetV2ProjectsProjectNameTemplatesResponse{
@@ -154,7 +157,8 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, clusterName string, reqEditors ...cluster.RequestEditorFn) (*cluster.GetV2ProjectsProjectNameClustersNameResponse, error) {
-				_ = ctx // Acknowledge we're not using it
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch {
 				case projectName == "nonexistent-project":
 					return &cluster.GetV2ProjectsProjectNameClustersNameResponse{
@@ -234,7 +238,9 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *cluster.GetV2ProjectsProjectNameClustersParams, reqEditors ...cluster.RequestEditorFn) (*cluster.GetV2ProjectsProjectNameClustersResponse, error) {
-				_ = ctx // Acknowledge we're not using it
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &cluster.GetV2ProjectsProjectNameClustersResponse{
@@ -317,7 +323,9 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, clusterName string, reqEditors ...cluster.RequestEditorFn) (*cluster.DeleteV2ProjectsProjectNameClustersNameResponse, error) {
-				_ = ctx // Acknowledge we're not using it
+				_ = ctx         // Acknowledge we're not using it
+				_ = reqEditors  // Acknowledge we're not using it
+				_ = clusterName // Acknowledge we're not using it
 				switch {
 				case projectName == "nonexistent-project":
 					return &cluster.DeleteV2ProjectsProjectNameClustersNameResponse{
@@ -340,7 +348,12 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, clusterName, nodeId string, params *cluster.DeleteV2ProjectsProjectNameClustersNameNodesNodeIdParams, reqEditors ...cluster.RequestEditorFn) (*cluster.DeleteV2ProjectsProjectNameClustersNameNodesNodeIdResponse, error) {
-				_ = ctx // Acknowledge we're not using it
+				_ = ctx         // Acknowledge we're not using it
+				_ = params      // Acknowledge we're not using it
+				_ = reqEditors  // Acknowledge we're not using it
+				_ = clusterName // Acknowledge we're not using it
+				_ = nodeId      // Acknowledge we're not using it
+				_ = projectName // Acknowledge we're not using it
 				return &cluster.DeleteV2ProjectsProjectNameClustersNameNodesNodeIdResponse{
 					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
 				}, nil
@@ -352,7 +365,9 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, body cluster.PostV2ProjectsProjectNameClustersJSONRequestBody, reqEditors ...cluster.RequestEditorFn) (*cluster.PostV2ProjectsProjectNameClustersResponse, error) {
-				_ = ctx // Acknowledge we're not using it
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
+				_ = body       // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &cluster.PostV2ProjectsProjectNameClustersResponse{

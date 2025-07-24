@@ -18,7 +18,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		mockInfraClient := infra.NewMockClientWithResponsesInterface(mctrl)
 
 		timestampPtr := func(t time.Time) *infra.GoogleProtobufTimestamp {
-			return (*infra.GoogleProtobufTimestamp)(&t)
+			return &t
 		}
 
 		// Helper function for string pointers
@@ -35,6 +35,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.CustomConfigServiceListCustomConfigsParams, reqEditors ...infra.RequestEditorFn) (*infra.CustomConfigServiceListCustomConfigsResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project", "nonexistent-init":
 					return &infra.CustomConfigServiceListCustomConfigsResponse{
@@ -76,6 +79,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, body infra.CustomConfigServiceCreateCustomConfigJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.CustomConfigServiceCreateCustomConfigResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.CustomConfigServiceCreateCustomConfigResponse{
@@ -122,6 +127,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, configName string, reqEditors ...infra.RequestEditorFn) (*infra.CustomConfigServiceDeleteCustomConfigResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.CustomConfigServiceDeleteCustomConfigResponse{
@@ -161,6 +168,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.LocalAccountServiceListLocalAccountsParams, reqEditors ...infra.RequestEditorFn) (*infra.LocalAccountServiceListLocalAccountsResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project", "nonexistent-user":
 					return &infra.LocalAccountServiceListLocalAccountsResponse{
@@ -202,6 +212,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.OperatingSystemServiceListOperatingSystemsParams, reqEditors ...infra.RequestEditorFn) (*infra.OperatingSystemServiceListOperatingSystemsResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &infra.OperatingSystemServiceListOperatingSystemsResponse{
@@ -256,6 +269,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, body infra.OperatingSystemServiceCreateOperatingSystemJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.OperatingSystemServiceCreateOperatingSystemResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.OperatingSystemServiceCreateOperatingSystemResponse{
@@ -301,6 +316,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, osResourceId string, reqEditors ...infra.RequestEditorFn) (*infra.OperatingSystemServiceDeleteOperatingSystemResponse, error) {
+				_ = ctx          // Acknowledge we're not using it
+				_ = reqEditors   // Acknowledge we're not using it
+				_ = osResourceId // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.OperatingSystemServiceDeleteOperatingSystemResponse{
@@ -326,6 +344,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.HostServiceListHostsParams, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceListHostsResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &infra.HostServiceListHostsResponse{
@@ -427,6 +448,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, body infra.HostServiceCreateHostJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceCreateHostResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.HostServiceCreateHostResponse{
@@ -490,6 +513,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, hostId string, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceDeleteHostResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
+				_ = hostId     // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.HostServiceDeleteHostResponse{
@@ -515,6 +541,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, hostId string, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceGetHostResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
+				_ = hostId     // Acknowledge we're not using it
+
 				switch projectName {
 				case "invalid-project":
 					return &infra.HostServiceGetHostResponse{
@@ -594,6 +624,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, body infra.HostServiceRegisterHostJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceRegisterHostResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.HostServiceRegisterHostResponse{
@@ -660,6 +692,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, hostId string, params *infra.HostServiceInvalidateHostParams, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceInvalidateHostResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.HostServiceInvalidateHostResponse{
@@ -699,6 +734,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, hostId string, body infra.HostServicePatchHostJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.HostServicePatchHostResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.HostServicePatchHostResponse{
@@ -896,6 +933,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, resourceId string, params *infra.SiteServiceListSitesParams, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceListSitesResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
+				_ = resourceId // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &infra.SiteServiceListSitesResponse{
@@ -961,6 +1002,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, regionId, siteId string, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceDeleteSiteResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
+				_ = regionId   // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.SiteServiceDeleteSiteResponse{
@@ -1000,6 +1044,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, regionId string, body infra.SiteServiceCreateSiteJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceCreateSiteResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
+				_ = regionId   // Acknowledge we're not using it
+
 				switch projectName {
 				case "invalid-project":
 					return &infra.SiteServiceCreateSiteResponse{
@@ -1038,6 +1086,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, region string, siteId string, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceGetSiteResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
+				_ = region     // Acknowledge we're not using it
+
 				switch projectName {
 				case "invalid-project":
 					return &infra.SiteServiceGetSiteResponse{
@@ -1090,6 +1142,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, body infra.RegionServiceCreateRegionJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.RegionServiceCreateRegionResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.RegionServiceCreateRegionResponse{
@@ -1151,6 +1205,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.RegionServiceListRegionsParams, reqEditors ...infra.RequestEditorFn) (*infra.RegionServiceListRegionsResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &infra.RegionServiceListRegionsResponse{
@@ -1276,6 +1333,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, regionId string, reqEditors ...infra.RequestEditorFn) (*infra.RegionServiceGetRegionResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.RegionServiceGetRegionResponse{
@@ -1338,6 +1397,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, regionId string, reqEditors ...infra.RequestEditorFn) (*infra.RegionServiceDeleteRegionResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.RegionServiceDeleteRegionResponse{
@@ -1377,6 +1438,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, body infra.InstanceServiceCreateInstanceJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.InstanceServiceCreateInstanceResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.InstanceServiceCreateInstanceResponse{
@@ -1424,6 +1487,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, instanceId string, reqEditors ...infra.RequestEditorFn) (*infra.InstanceServiceDeleteInstanceResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
+				_ = instanceId // Acknowledge we're not using it
+
 				switch projectName {
 				case "invalid-project":
 					return &infra.InstanceServiceDeleteInstanceResponse{
@@ -1460,6 +1527,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, instanceId string, reqEditors ...infra.RequestEditorFn) (*infra.InstanceServiceGetInstanceResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project", "invalid-instance":
 					return &infra.InstanceServiceGetInstanceResponse{
@@ -1525,6 +1594,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.InstanceServiceListInstancesParams, reqEditors ...infra.RequestEditorFn) (*infra.InstanceServiceListInstancesResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &infra.InstanceServiceListInstancesResponse{
@@ -1620,6 +1692,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.OSUpdateRunListOSUpdateRunParams, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdateRunListOSUpdateRunResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &infra.OSUpdateRunListOSUpdateRunResponse{
@@ -1669,6 +1744,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, osUpdateRunId string, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdateRunGetOSUpdateRunResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &infra.OSUpdateRunGetOSUpdateRunResponse{
@@ -1727,6 +1804,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, osUpdateRunId string, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdateRunDeleteOSUpdateRunResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.OSUpdateRunDeleteOSUpdateRunResponse{
@@ -1766,6 +1845,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.OSUpdatePolicyListOSUpdatePolicyParams, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdatePolicyListOSUpdatePolicyResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
@@ -1811,6 +1893,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, policyId string, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdatePolicyGetOSUpdatePolicyResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
 					return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
@@ -1864,6 +1948,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, body infra.OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdatePolicyCreateOSUpdatePolicyResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.OSUpdatePolicyCreateOSUpdatePolicyResponse{
@@ -1899,6 +1985,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(ctx context.Context, projectName, policyId string, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdatePolicyDeleteOSUpdatePolicyResponse, error) {
+				_ = ctx        // Acknowledge we're not using it
+				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.OSUpdatePolicyDeleteOSUpdatePolicyResponse{

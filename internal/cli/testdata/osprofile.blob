@@ -15,4 +15,4 @@ spec:
   osImageSha256: 133975d949e3de495048afd55eb484475e311a19898c2744608cf0f69fe39502
   osPackageManifestURL: sample.json
   securityFeature: SECURITY_FEATURE_NONE
-  platformBundle:
+  platformBundle: ""

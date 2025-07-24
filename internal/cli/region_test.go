@@ -159,7 +159,7 @@ func (s *CLITestSuite) TestRegion() {
 	SArgs = map[string]string{
 		"region": resourceID,
 	}
-	linesOutput, err = s.listRegion("parent-region", SArgs)
+	_, err = s.listRegion("parent-region", SArgs)
 	s.NoError(err)
 
 	//Output comparison commented out for now, output is not deterministic sometim causes test to fail
