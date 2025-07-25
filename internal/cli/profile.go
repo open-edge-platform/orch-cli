@@ -124,7 +124,7 @@ func printProfiles(writer io.Writer, profileList *[]catapi.Profile, verbose bool
 }
 
 func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 
 func runListProfilesCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -210,7 +210,7 @@ func runListProfilesCommand(cmd *cobra.Command, args []string) error {
 
 func runGetProfileCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func runGetProfileCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -309,7 +309,7 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runDeleteProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}

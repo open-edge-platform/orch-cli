@@ -170,7 +170,98 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			},
 		).AnyTimes()
 
+		mockClient.EXPECT().CatalogServiceGetApplicationWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, publisher string, appName string, appVersion string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetApplicationResponse, error) {
+				displayName := "profile.display.name"
+				description := "Profile.Description"
+				chartValues := "dmFsdWVzOiAxCnZhbDoy" // You can set a base64 string if needed
+
+				profiles := []catapi.Profile{
+					{
+						Name:        "new-profile",
+						DisplayName: &displayName,
+						Description: &description,
+						ChartValues: &chartValues,
+						DeploymentRequirement: &[]catapi.DeploymentRequirement{
+							{
+								Name:                  "requirement",
+								Version:               "1.2.3",
+								DeploymentProfileName: stringPtr("Web server"),
+							},
+						},
+						CreateTime: timePtr(testTime),
+						UpdateTime: timePtr(testTime),
+						ParameterTemplates: &[]catapi.ParameterTemplate{
+							{
+								Name:            "param1",
+								DisplayName:     stringPtr("Parameter 1"),
+								Type:            "string",
+								Default:         stringPtr("default-value"),
+								SuggestedValues: &[]string{"value1", "value2"},
+							},
+						},
+					},
+				}
+
+				return &catapi.CatalogServiceGetApplicationResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					JSON200: &catapi.GetApplicationResponse{
+						Application: catapi.Application{
+							Name:               appName,
+							Version:            appVersion,
+							DisplayName:        &displayName,
+							Description:        &description,
+							ChartName:          "chart-name",
+							ChartVersion:       "22.33.44",
+							HelmRegistryName:   "myreg",
+							ImageRegistryName:  nil,
+							Profiles:           &profiles,
+							DefaultProfileName: stringPtr("new-profile"),
+							// Add other fields as needed
+						},
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceUpdateApplicationWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, applicationName string, version string, body catapi.CatalogServiceUpdateApplicationJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateApplicationResponse, error) {
+				respBody, err := json.Marshal(struct {
+					Success bool   `json:"success"`
+					Message string `json:"message"`
+				}{
+					Success: true,
+					Message: "Application updated successfully",
+				})
+				if err != nil {
+					return nil, err
+				}
+				return &catapi.CatalogServiceUpdateApplicationResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					Body:         respBody,
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceCreateApplicationWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, publisher string, body interface{}, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateApplicationResponse, error) {
+				return &catapi.CatalogServiceCreateApplicationResponse{
+					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+					JSON200:      &catapi.CreateApplicationResponse{
+						// Fill with mock application data as needed
+					},
+				}, nil
+			},
+		).AnyTimes()
+
 		ctx := context.Background()
 		return ctx, mockClient, projectName, nil
 	}
+
 }
