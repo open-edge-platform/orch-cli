@@ -17,6 +17,7 @@ import (
 	authmock "github.com/open-edge-platform/cli/internal/cli/mocks/auth"
 	catalogmock "github.com/open-edge-platform/cli/internal/cli/mocks/catalog"
 	clustermock "github.com/open-edge-platform/cli/internal/cli/mocks/cluster"
+	deploymentmock "github.com/open-edge-platform/cli/internal/cli/mocks/deployment"
 	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
 	rpsmock "github.com/open-edge-platform/cli/internal/cli/mocks/rps"
 
@@ -63,6 +64,7 @@ func (s *CLITestSuite) SetupSuite() {
 	InfraFactory = inframock.CreateInfraMock(mctrl, timestamp)
 	ClusterFactory = clustermock.CreateClusterMock(mctrl)
 	RpsFactory = rpsmock.CreateRpsMock(mctrl)
+	DeploymentFactory = deploymentmock.CreateDeploymentMock(mctrl)
 }
 
 func (s *CLITestSuite) TearDownSuite() {
