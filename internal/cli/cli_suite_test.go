@@ -109,7 +109,11 @@ func (s *CLITestSuite) compareOutput(expected commandOutput, actual commandOutpu
 		// Make sure the entries match
 		for k, v := range expectedMap {
 			s.NotNil(actualMap[k])
-			matches, _ := regexp.MatchString(v, actualMap[k])
+			matchPattern := v
+			if v != timestampRegex {
+				matchPattern = regexp.QuoteMeta(v)
+			}
+			matches, _ := regexp.MatchString(matchPattern, actualMap[k])
 			if !matches {
 				s.True(matches, "Values don't match for %s", k)
 			}
