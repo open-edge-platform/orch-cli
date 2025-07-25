@@ -260,6 +260,71 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			},
 		).AnyTimes()
 
+		mockClient.EXPECT().CatalogServiceCreateDeploymentPackageWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, body catapi.CatalogServiceCreateDeploymentPackageJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateDeploymentPackageResponse, error) {
+				return &catapi.CatalogServiceCreateDeploymentPackageResponse{
+					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+					JSON200:      &catapi.CreateDeploymentPackageResponse{
+						// Fill with mock deployment package data as needed
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceGetDeploymentPackageWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, deploymentPackageName string, version string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetDeploymentPackageResponse, error) {
+
+				return &catapi.CatalogServiceGetDeploymentPackageResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					JSON200: &catapi.GetDeploymentPackageResponse{
+						DeploymentPackage: catapi.DeploymentPackage{
+							Name:        deploymentPackageName,
+							Version:     version,
+							DisplayName: stringPtr("displayName"),
+							Description: stringPtr("description"),
+							Profiles: &[]catapi.DeploymentProfile{
+								{
+									Name:                "deployment-package-profile",
+									DisplayName:         stringPtr("deployment.profile.display.name"),
+									Description:         stringPtr("Profile.for.testing"),
+									CreateTime:          timePtr(testTime),
+									UpdateTime:          timePtr(testTime),
+									ApplicationProfiles: map[string]string{},
+								},
+							},
+							DefaultProfileName: stringPtr("default-profile"),
+							// Add other fields as needed for your tests
+						},
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceUpdateDeploymentPackageWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, deploymentPackageName string, version string, body catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
+				respBody, err := json.Marshal(struct {
+					Success bool   `json:"success"`
+					Message string `json:"message"`
+				}{
+					Success: true,
+					Message: "Registry updated successfully",
+				})
+				if err != nil {
+					return nil, err
+				}
+				return &catapi.CatalogServiceUpdateDeploymentPackageResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					Body:         respBody,
+				}, nil
+			},
+		).AnyTimes()
+
 		ctx := context.Background()
 		return ctx, mockClient, projectName, nil
 	}
