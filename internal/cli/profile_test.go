@@ -97,8 +97,6 @@ func (s *CLITestSuite) TestProfile() {
 	listVerboseOutput, err := s.listProfiles(pubName, applicationName, applicationVersion, verboseOutput)
 	s.NoError(err)
 
-	fmt.Println(listVerboseOutput)
-
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
 	expectedVerboseOutput := commandOutput{
 		profileName: {

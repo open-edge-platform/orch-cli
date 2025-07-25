@@ -50,23 +50,23 @@ func (s *CLITestSuite) listDeployment(publisher string, args commandArgs) (strin
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) getDeployment(deployment string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`get deployment %s`, deployment))
+func (s *CLITestSuite) getDeployment(publisher string, deployment string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`get deployment %s --project %s`, deployment, publisher))
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) setDeployment(deployment string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`set deployment %s`, deployment))
+func (s *CLITestSuite) setDeployment(publisher string, deployment string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`set deployment %s --project %s`, deployment, publisher))
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) deleteDeployment(deployment string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`delete deployment %s`,
-		deployment))
+func (s *CLITestSuite) deleteDeployment(publisher string, deployment string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`delete deployment %s --project %s`, deployment, publisher))
 	return s.runCommand(commandString)
 }
 
 func (s *CLITestSuite) TestDeployment() {
+	//TODO: These test should be expanded to compare outputs for list and get
 	err := s.createDeployment("test-app", "v1.0.0", map[string]string{
 		"project":           project,
 		"display-name":      "Test",
@@ -76,14 +76,14 @@ func (s *CLITestSuite) TestDeployment() {
 	s.NoError(err)
 
 	_, err = s.listDeployment(project, make(map[string]string))
-	s.EqualError(err, `no response from backend - check catalog-endpoint and deployment-endpoint`)
-
-	_, err = s.getDeployment("test-deployment", make(map[string]string))
-	s.EqualError(err, `no response from backend - check catalog-endpoint and deployment-endpoint`)
-
-	_, err = s.setDeployment("test-deployment", make(map[string]string))
 	s.NoError(err)
 
-	_, err = s.deleteDeployment("test-deployment", make(map[string]string))
+	_, err = s.getDeployment(project, "test-deployment", make(map[string]string))
+	s.NoError(err)
+
+	_, err = s.setDeployment(project, "test-deployment", make(map[string]string))
+	s.NoError(err)
+
+	_, err = s.deleteDeployment(project, "test-deployment", make(map[string]string))
 	s.NoError(err)
 }
