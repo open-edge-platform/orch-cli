@@ -97,9 +97,6 @@ func (s *CLITestSuite) TestDeploymentProfile() {
 		},
 	}
 
-	fmt.Println(listVerboseOutput)
-	fmt.Printf("Parsed output:\n%v\n", parsedVerboseOutput)
-	fmt.Printf("Expected output:\n%v\n", expectedVerboseOutput)
 	s.compareOutput(expectedVerboseOutput, parsedVerboseOutput)
 
 	// Update the deployment profile

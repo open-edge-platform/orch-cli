@@ -296,7 +296,12 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 									ApplicationProfiles: map[string]string{},
 								},
 							},
-							DefaultProfileName: stringPtr("default-profile"),
+							DefaultProfileName:      stringPtr("default-profile"),
+							ApplicationDependencies: &[]catapi.ApplicationDependency{},
+							ApplicationReferences: []catapi.ApplicationReference{
+								{Name: "app1", Version: "1.0"},
+								{Name: "app2", Version: "1.0"},
+							},
 							// Add other fields as needed for your tests
 						},
 					},
@@ -325,8 +330,93 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			},
 		).AnyTimes()
 
+		mockClient.EXPECT().CatalogServiceListDeploymentPackagesWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *catapi.CatalogServiceListDeploymentPackagesParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceListDeploymentPackagesResponse, error) {
+				return &catapi.CatalogServiceListDeploymentPackagesResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					JSON200: &catapi.ListDeploymentPackagesResponse{
+						DeploymentPackages: []catapi.DeploymentPackage{
+							{
+								Name:        "deployment-pkg",
+								Version:     "1.0",
+								DisplayName: stringPtr("deployment.package.display.name"),
+								Description: stringPtr("Publisher.for.testing"),
+								Profiles: &[]catapi.DeploymentProfile{
+									{
+										Name:                "deployment-package-profile",
+										DisplayName:         stringPtr("deployment.profile.display.name"),
+										Description:         stringPtr("Profile.for.testing"),
+										CreateTime:          timePtr(testTime),
+										UpdateTime:          timePtr(testTime),
+										ApplicationProfiles: map[string]string{},
+									},
+								},
+								ApplicationDependencies: &[]catapi.ApplicationDependency{},
+								ApplicationReferences: []catapi.ApplicationReference{
+									{Name: "app1", Version: "1.0"},
+									{Name: "app2", Version: "1.0"},
+								},
+								Artifacts:          []catapi.ArtifactReference{},
+								Extensions:         []catapi.APIExtension{},
+								IsDeployed:         boolPtr(false),
+								IsVisible:          boolPtr(true),
+								DefaultProfileName: stringPtr("default-profile"),
+								CreateTime:         timePtr(testTime),
+								UpdateTime:         timePtr(testTime),
+								// Add other fields as needed for your tests
+							},
+						},
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceDeleteDeploymentPackageWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, deploymentPackageName string, version string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteDeploymentPackageResponse, error) {
+				return &catapi.CatalogServiceDeleteDeploymentPackageResponse{
+					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceGetDeploymentPackageVersionsWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, deploymentPackageName string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetDeploymentPackageVersionsResponse, error) {
+				return &catapi.CatalogServiceGetDeploymentPackageVersionsResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					JSON200: &catapi.GetDeploymentPackageVersionsResponse{
+						DeploymentPackages: []catapi.DeploymentPackage{
+							{
+								Name:        deploymentPackageName,
+								Version:     "1.0",
+								DisplayName: stringPtr("deployment.package.display.name"),
+								Description: stringPtr("Publisher.for.testing"),
+								Profiles: &[]catapi.DeploymentProfile{
+									{
+										Name:                "deployment-package-profile",
+										DisplayName:         stringPtr("deployment.profile.display.name"),
+										Description:         stringPtr("Profile.for.testing"),
+										CreateTime:          timePtr(testTime),
+										UpdateTime:          timePtr(testTime),
+										ApplicationProfiles: map[string]string{},
+									},
+								},
+							},
+						},
+					},
+				}, nil
+			},
+		).AnyTimes()
+
 		ctx := context.Background()
 		return ctx, mockClient, projectName, nil
 	}
 
 }
+
+func boolPtr(b bool) *bool { return &b }
