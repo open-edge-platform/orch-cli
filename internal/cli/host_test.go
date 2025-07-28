@@ -3,7 +3,11 @@
 
 package cli
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/open-edge-platform/cli/pkg/rest/infra"
+)
 
 func (s *CLITestSuite) createHost(publisher string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`create host --project %s`, publisher))
@@ -30,6 +34,11 @@ func (s *CLITestSuite) deleteHost(publisher string, hostID string, args commandA
 	return s.runCommand(commandString)
 }
 
+func (s *CLITestSuite) setHost(publisher string, hostID string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`set host %s --project %s`, hostID, publisher))
+	return s.runCommand(commandString)
+}
+
 func (s *CLITestSuite) filterTest() {
 	testCases := []struct {
 		input    string
@@ -51,6 +60,32 @@ func (s *CLITestSuite) filterTest() {
 			s.Nil(result)
 		} else {
 			s.Equal(*tc.expected, *result)
+		}
+	}
+}
+func (s *CLITestSuite) testResolvePower() {
+	tests := []struct {
+		input    string
+		expected infra.PowerState
+		wantErr  bool
+	}{
+		{"on", infra.POWERSTATEON, false},
+		{"off", infra.POWERSTATEOFF, false},
+		{"cycle", infra.POWERSTATEPOWERCYCLE, false},
+		{"hibernate", infra.POWERSTATEHIBERNATE, false},
+		{"reset", infra.POWERSTATERESET, false},
+		{"sleep", infra.POWERSTATESLEEP, false},
+		{"invalid", "", true},
+		{"", "", true},
+	}
+
+	for _, tc := range tests {
+		result, err := resolvePower(tc.input)
+		if tc.wantErr {
+			s.Error(err, "expected error for input %q", tc.input)
+		} else {
+			s.NoError(err, "unexpected error for input %q", tc.input)
+			s.Equal(tc.expected, result, "unexpected result for input %q", tc.input)
 		}
 	}
 }
@@ -210,6 +245,8 @@ func (s *CLITestSuite) TestHost() {
 	//Test filter
 	s.filterTest()
 
+	s.testResolvePower()
+
 	// Test list hosts with no filters
 	listOutput, err := s.listHost(project, make(map[string]string))
 	s.NoError(err)
@@ -348,6 +385,28 @@ func (s *CLITestSuite) TestHost() {
 	// Test get host with non-existent instance
 	_, err = s.getHost("invalid-instance", hostID, make(map[string]string))
 	s.EqualError(err, "error getting instance of a host:[Internal Server Error]")
+
+	HostArgs = map[string]string{
+		"power-policy": "ordered",
+		"power":        "off",
+	}
+
+	// Test set host with non-existent host
+	_, err = s.setHost(project, "host-11111111", HostArgs)
+	s.Error(err)
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	HostArgs = map[string]string{
+		"power-policy": "immediate",
+		"power":        "on",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
 
 	// Test deauthorize host
 	_, err = s.deauthorizeHost(project, hostID, make(map[string]string))
