@@ -95,9 +95,6 @@ func (s *CLITestSuite) TestArtifact() {
 		},
 	}
 
-	fmt.Printf(listVerboseOutput)
-	fmt.Printf("Parsed: %+v\n", parsedVerboseOutput)
-	fmt.Printf("Expected: %+v\n", expectedVerboseOutput)
 	s.compareOutput(expectedVerboseOutput, parsedVerboseOutput)
 
 	// Update the artifact
