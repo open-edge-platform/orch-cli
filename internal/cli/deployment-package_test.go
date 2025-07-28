@@ -56,6 +56,12 @@ func (s *CLITestSuite) createTestDeploymentPackage(project string, pkgName strin
 	return s.createDeploymentPackage(project, pkgName, pkgVersion, createArgs)
 }
 
+func (s *CLITestSuite) exportDeploymentPackage(project string, pkgName string, pkgVersion string, args commandArgs) error {
+	commandString := addCommandArgs(args, fmt.Sprintf(`export deployment-package --project %s %s %s`, project, pkgName, pkgVersion))
+	_, err := s.runCommand(commandString)
+	return err
+}
+
 func (s *CLITestSuite) TestDeploymentPackage() {
 	const (
 		app1                         = "app1"

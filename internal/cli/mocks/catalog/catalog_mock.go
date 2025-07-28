@@ -413,6 +413,85 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			},
 		).AnyTimes()
 
+		mockClient.EXPECT().CatalogServiceCreateArtifactWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, body catapi.CatalogServiceCreateArtifactJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateArtifactResponse, error) {
+				return &catapi.CatalogServiceCreateArtifactResponse{
+					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+					JSON200:      &catapi.CreateArtifactResponse{
+						// Fill with mock artifact data as needed
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceListArtifactsWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *catapi.CatalogServiceListArtifactsParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceListArtifactsResponse, error) {
+				return &catapi.CatalogServiceListArtifactsResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					JSON200: &catapi.ListArtifactsResponse{
+						Artifacts: []catapi.Artifact{
+
+							{
+								Name:        "artifact",
+								DisplayName: stringPtr("artifact-display-name"),
+								Description: stringPtr("Artifact-Description"),
+								MimeType:    "text/plain",
+								CreateTime:  timePtr(time.Now()),
+								UpdateTime:  timePtr(time.Now()),
+								// Add other fields as needed
+							},
+						},
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceGetArtifactWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, artifactName string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetArtifactResponse, error) {
+				return &catapi.CatalogServiceGetArtifactResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					JSON200: &catapi.GetArtifactResponse{
+						Artifact: catapi.Artifact{
+							Name:        artifactName,
+							DisplayName: stringPtr("artifact-display-name"),
+							Description: stringPtr("Artifact-Description"),
+							MimeType:    "text/plain",
+							CreateTime:  timePtr(time.Now()),
+							UpdateTime:  timePtr(time.Now()),
+							// Add other fields as needed
+						},
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceUpdateArtifactWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, artifactName string, body catapi.CatalogServiceUpdateArtifactJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateArtifactResponse, error) {
+				return &catapi.CatalogServiceUpdateArtifactResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					Body:         []byte(`{"success":true,"message":"Artifact updated successfully"}`),
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceDeleteArtifactWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, artifactName string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteArtifactResponse, error) {
+				return &catapi.CatalogServiceDeleteArtifactResponse{
+					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+				}, nil
+			},
+		).AnyTimes()
+
 		ctx := context.Background()
 		return ctx, mockClient, projectName, nil
 	}
