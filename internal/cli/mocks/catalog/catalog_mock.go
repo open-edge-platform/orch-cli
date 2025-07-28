@@ -3,6 +3,7 @@ package catalog
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time" // Make sure this import is present
 
@@ -11,6 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/mock/gomock"
 )
+
+func applicationKindPtr(k catapi.ApplicationKind) *catapi.ApplicationKind { return &k }
+func boolPtr(b bool) *bool                                                { return &b }
 
 func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 	return func(cmd *cobra.Command) (context.Context, catapi.ClientWithResponsesInterface, string, error) {
@@ -260,6 +264,108 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			},
 		).AnyTimes()
 
+		mockClient.EXPECT().CatalogServiceListApplicationsWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, params *catapi.CatalogServiceListApplicationsParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceListApplicationsResponse, error) {
+				return &catapi.CatalogServiceListApplicationsResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					JSON200: &catapi.ListApplicationsResponse{
+						Applications: []catapi.Application{
+							{
+								Name:               "new-application",
+								Version:            "1.2.3",
+								Kind:               applicationKindPtr(catapi.ApplicationKindKINDNORMAL),
+								DisplayName:        stringPtr("application.display.name"),
+								Description:        stringPtr("Application.Description"),
+								ChartName:          "chart-name",
+								ChartVersion:       "22.33.44",
+								HelmRegistryName:   "test-registry",
+								ImageRegistryName:  nil,
+								Profiles:           &[]catapi.Profile{},
+								DefaultProfileName: stringPtr(""),
+								CreateTime:         timePtr(testTime),
+								UpdateTime:         timePtr(testTime),
+							},
+							{
+								Name:               "addon-app",
+								Version:            "1.0.0",
+								Kind:               applicationKindPtr(catapi.ApplicationKindKINDADDON),
+								DisplayName:        stringPtr("addon.display.name"),
+								Description:        stringPtr("Addon Description"),
+								ChartName:          "addon-chart",
+								ChartVersion:       "1.0.0",
+								HelmRegistryName:   "addon-registry",
+								ImageRegistryName:  nil,
+								Profiles:           &[]catapi.Profile{},
+								DefaultProfileName: stringPtr(""),
+								CreateTime:         timePtr(testTime),
+								UpdateTime:         timePtr(testTime),
+							},
+							{
+								Name:               "extension-app",
+								Version:            "2.0.0",
+								Kind:               applicationKindPtr(catapi.ApplicationKindKINDEXTENSION),
+								DisplayName:        stringPtr("extension.display.name"),
+								Description:        stringPtr("Extension Description"),
+								ChartName:          "extension-chart",
+								ChartVersion:       "2.0.0",
+								HelmRegistryName:   "extension-registry",
+								ImageRegistryName:  nil,
+								Profiles:           &[]catapi.Profile{},
+								DefaultProfileName: stringPtr(""),
+								CreateTime:         timePtr(testTime),
+								UpdateTime:         timePtr(testTime),
+							},
+						},
+						TotalElements: 3,
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceGetApplicationVersionsWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, applicationName string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetApplicationVersionsResponse, error) {
+				return &catapi.CatalogServiceGetApplicationVersionsResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					JSON200: &catapi.GetApplicationVersionsResponse{
+						Application: []catapi.Application{
+							{
+								Name:               "new-application",
+								Version:            "1.2.3",
+								Kind:               applicationKindPtr(catapi.ApplicationKindKINDNORMAL),
+								DisplayName:        stringPtr("application.display.name"),
+								Description:        stringPtr("Application.Description"),
+								ChartName:          "chart-name",
+								ChartVersion:       "22.33.44",
+								HelmRegistryName:   "test-registry",
+								ImageRegistryName:  nil,
+								Profiles:           &[]catapi.Profile{},
+								DefaultProfileName: stringPtr(""),
+								CreateTime:         timePtr(testTime),
+								UpdateTime:         timePtr(testTime),
+							},
+						},
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().CatalogServiceDeleteApplicationWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(ctx context.Context, projectName string, applicationName string, version string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteApplicationResponse, error) {
+				if applicationName == "missing-app" {
+					return nil, fmt.Errorf("application %s:%s not found", applicationName, version)
+				}
+				return &catapi.CatalogServiceDeleteApplicationResponse{
+					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+				}, nil
+			},
+		).AnyTimes()
+
 		mockClient.EXPECT().CatalogServiceCreateDeploymentPackageWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
@@ -497,5 +603,3 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 	}
 
 }
-
-func boolPtr(b bool) *bool { return &b }
