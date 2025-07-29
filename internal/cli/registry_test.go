@@ -4,7 +4,14 @@
 package cli
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"testing"
+
+	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -186,4 +193,23 @@ func (s *CLITestSuite) TestHelmRegistry() {
 
 func (s *CLITestSuite) TestImageRegistry() {
 	s.registryTest(registryImageParam, registryImageType, registryImageName)
+}
+
+func TestPrintRegistryEvent(t *testing.T) {
+	reg := catapi.Registry{
+		Name:        "test-registry",
+		DisplayName: strPtr("Test Registry"),
+		Description: strPtr("A test registry"),
+		Type:        "HELM",
+	}
+	payload, err := json.Marshal(reg)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+	err = printRegistryEvent(&buf, "Registry", payload, false)
+	assert.NoError(t, err)
+	output := buf.String()
+	assert.Contains(t, output, "test-registry")
+	assert.Contains(t, output, "Test Registry")
+	assert.Contains(t, output, "A test registry")
 }

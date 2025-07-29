@@ -4,7 +4,13 @@
 package cli
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"testing"
+
+	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+	"github.com/stretchr/testify/assert"
 )
 
 func (s *CLITestSuite) createApplication(project string, applicationName string, applicationVersion string, args commandArgs) error {
@@ -204,3 +210,32 @@ func (s *CLITestSuite) TestApplication() {
 	err = s.createApplication(project, applicationName, applicationVersion, createArgs)
 	s.NoError(err)
 }
+
+func TestPrintApplicationEvent(t *testing.T) {
+	kind := catapi.ApplicationKindKINDNORMAL
+	app := catapi.Application{
+		Name:               "test-app",
+		Version:            "1.0.0",
+		Kind:               &kind, // take address of variable, not constant
+		DisplayName:        strPtr("Test App"),
+		Description:        strPtr("A test application"),
+		ChartName:          "test-chart",
+		ChartVersion:       "0.1.0",
+		HelmRegistryName:   "test-registry",
+		Profiles:           &[]catapi.Profile{},
+		DefaultProfileName: strPtr("default"),
+	}
+	payload, err := json.Marshal(app)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+	err = printApplicationEvent(&buf, "Application", payload, false)
+	assert.NoError(t, err)
+	output := buf.String()
+	assert.Contains(t, output, "test-app")
+	assert.Contains(t, output, "1.0.0")
+	assert.Contains(t, output, "test-chart")
+	assert.Contains(t, output, "test-registry")
+}
+
+func strPtr(s string) *string { return &s }

@@ -4,7 +4,13 @@
 package cli
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"testing"
+
+	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+	"github.com/stretchr/testify/assert"
 )
 
 func (s *CLITestSuite) createDeploymentPackage(project string, applicationName string, applicationVersion string, args commandArgs) error {
@@ -171,4 +177,25 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	// err = s.deleteDeploymentPackageNoVersion(project, pkgName)
 	// s.Error(err)
 	// s.Contains(err.Error(), fmt.Sprintf("deployment package versions %s: 404 Not Found", pkgName))
+}
+
+func TestPrintDeploymentPackageEvent(t *testing.T) {
+	kind := catapi.DeploymentPackageKind("normal")
+	dp := catapi.DeploymentPackage{
+		Name:        "test-deployment-pkg",
+		Version:     "1.0.0",
+		DisplayName: strPtr("Test Deployment Package"),
+		Description: strPtr("A test deployment package"),
+		Kind:        &kind,
+	}
+	payload, err := json.Marshal(dp)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+	err = printDeploymentPackageEvent(&buf, "DeploymentPackage", payload, false)
+	assert.NoError(t, err)
+	output := buf.String()
+	assert.Contains(t, output, "test-deployment-pkg")
+	assert.Contains(t, output, "1.0.0")
+	assert.Contains(t, output, "Test Deployment Package")
 }

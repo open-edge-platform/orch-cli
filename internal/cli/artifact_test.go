@@ -4,7 +4,13 @@
 package cli
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"testing"
+
+	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+	"github.com/stretchr/testify/assert"
 )
 
 func (s *CLITestSuite) createArtifact(project string, artifactName string, args commandArgs) error {
@@ -122,4 +128,23 @@ func (s *CLITestSuite) TestArtifact() {
 	// _, err = s.getArtifact(project, artifactName)
 	// s.Error(err)
 	// s.Contains(err.Error(), `artifact not found`)
+}
+
+func TestPrintArtifactEvent(t *testing.T) {
+	artifact := catapi.Artifact{
+		Name:        "test-artifact",
+		DisplayName: strPtr("Test Artifact"),
+		Description: strPtr("A test artifact"),
+		MimeType:    "application/octet-stream",
+	}
+	payload, err := json.Marshal(artifact)
+	assert.NoError(t, err)
+
+	var buf bytes.Buffer
+	err = printArtifactEvent(&buf, "Artifact", payload, false)
+	assert.NoError(t, err)
+	output := buf.String()
+	assert.Contains(t, output, "test-artifact")
+	assert.Contains(t, output, "Test Artifact")
+	assert.Contains(t, output, "A test artifact")
 }

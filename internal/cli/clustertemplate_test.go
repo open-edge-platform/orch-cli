@@ -22,6 +22,10 @@ func (s *CLITestSuite) TestClusterTemplate() {
 	_, err := s.listClusterTemplates(project, CArgs)
 	s.NoError(err)
 
+	//List cluster with non existent project
+	_, err = s.listClusterTemplates("nonexistent-project", CArgs)
+	s.Error(err)
+
 	//List cluster --verbose
 	CArgs = map[string]string{
 		"verbose": "",
