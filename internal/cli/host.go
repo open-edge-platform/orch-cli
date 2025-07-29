@@ -120,6 +120,11 @@ orch-cli set host host-1234abcd  --project itep --power-policy ordered
 
 --power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
 --power-policy - Set the desired power command policy to ordered|immediate
+
+#Set host OS Update policy
+orch-cli set host host-1234abcd  --project itep --osupdatepolicy <resourceID>
+
+--osupdatepolicy - Set the OS Update policy for the host, must be a valid resource ID of an OS Update policy
 `
 
 var hostHeaderGet = "\nDetailed Host Information\n"
@@ -1447,7 +1452,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 	host := *iresp.JSON200
 
-	if (powerFlag != "" || policyFlag != "") && host.Instance == nil {
+	if (powerFlag != "" || policyFlag != "") && host.Instance != nil {
 		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
 			PowerCommandPolicy: policy,
 			DesiredPowerState:  power,
