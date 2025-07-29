@@ -49,7 +49,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceGetRegistryWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName, registryName string, params *catapi.CatalogServiceGetRegistryParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetRegistryResponse, error) {
+			func(_ context.Context, _, registryName string, _ *catapi.CatalogServiceGetRegistryParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetRegistryResponse, error) {
 				name, displayName, regType := getRegistryInfo(registryName)
 				resp := &catapi.CatalogServiceGetRegistryResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
@@ -75,7 +75,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceListRegistriesWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, params *catapi.CatalogServiceListRegistriesParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceListRegistriesResponse, error) {
+			func(_ context.Context, _ string, params *catapi.CatalogServiceListRegistriesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListRegistriesResponse, error) {
 				// You may want to simulate both registries in the list
 				registries := []catapi.Registry{}
 				for _, registryName := range []string{"registry-image", "registry-helm"} {
@@ -114,7 +114,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceCreateRegistryWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, body interface{}, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateRegistryResponse, error) {
+			func(_ context.Context, _ string, body interface{}, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateRegistryResponse, error) {
 				// Extract registry name from body if possible
 				var registryName string
 				if b, ok := body.(map[string]interface{}); ok {
@@ -145,7 +145,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceUpdateRegistryWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, registryName string, body catapi.CatalogServiceUpdateRegistryJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateRegistryResponse, error) {
+			func(_ context.Context, _ string, _ string, _ catapi.CatalogServiceUpdateRegistryJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateRegistryResponse, error) {
 				respBody, err := json.Marshal(struct {
 					Success bool   `json:"success"`
 					Message string `json:"message"`
@@ -167,7 +167,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceDeleteRegistryWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, registryName string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteRegistryResponse, error) {
+			func(_ context.Context, _ string, _ string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteRegistryResponse, error) {
 				return &catapi.CatalogServiceDeleteRegistryResponse{
 					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
 				}, nil
@@ -177,7 +177,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceGetApplicationWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, publisher string, appName string, appVersion string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetApplicationResponse, error) {
+			func(_ context.Context, _ string, appName string, appVersion string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetApplicationResponse, error) {
 				displayName := "profile.display.name"
 				description := "Profile.Description"
 				chartValues := "dmFsdWVzOiAxCnZhbDoy" // You can set a base64 string if needed
@@ -233,7 +233,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceUpdateApplicationWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, applicationName string, version string, body catapi.CatalogServiceUpdateApplicationJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateApplicationResponse, error) {
+			func(_ context.Context, _ string, _ string, _ string, _ catapi.CatalogServiceUpdateApplicationJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateApplicationResponse, error) {
 				respBody, err := json.Marshal(struct {
 					Success bool   `json:"success"`
 					Message string `json:"message"`
@@ -254,7 +254,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceCreateApplicationWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, publisher string, body interface{}, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateApplicationResponse, error) {
+			func(_ context.Context, _ string, _ interface{}, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateApplicationResponse, error) {
 				return &catapi.CatalogServiceCreateApplicationResponse{
 					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
 					JSON200:      &catapi.CreateApplicationResponse{
@@ -267,7 +267,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceListApplicationsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, params *catapi.CatalogServiceListApplicationsParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceListApplicationsResponse, error) {
+			func(_ context.Context, _ string, _ *catapi.CatalogServiceListApplicationsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListApplicationsResponse, error) {
 				return &catapi.CatalogServiceListApplicationsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.ListApplicationsResponse{
@@ -327,7 +327,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceGetApplicationVersionsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, applicationName string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetApplicationVersionsResponse, error) {
+			func(_ context.Context, _ string, _ string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetApplicationVersionsResponse, error) {
 				return &catapi.CatalogServiceGetApplicationVersionsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.GetApplicationVersionsResponse{
@@ -356,7 +356,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceDeleteApplicationWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, applicationName string, version string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteApplicationResponse, error) {
+			func(_ context.Context, _ string, applicationName string, version string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteApplicationResponse, error) {
 				if applicationName == "missing-app" {
 					return nil, fmt.Errorf("application %s:%s not found", applicationName, version)
 				}
@@ -369,7 +369,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceCreateDeploymentPackageWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, body catapi.CatalogServiceCreateDeploymentPackageJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateDeploymentPackageResponse, error) {
+			func(_ context.Context, _ string, _ catapi.CatalogServiceCreateDeploymentPackageJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateDeploymentPackageResponse, error) {
 				return &catapi.CatalogServiceCreateDeploymentPackageResponse{
 					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
 					JSON200:      &catapi.CreateDeploymentPackageResponse{
@@ -382,7 +382,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceGetDeploymentPackageWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, deploymentPackageName string, version string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetDeploymentPackageResponse, error) {
+			func(_ context.Context, _ string, deploymentPackageName string, version string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetDeploymentPackageResponse, error) {
 
 				return &catapi.CatalogServiceGetDeploymentPackageResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
@@ -418,7 +418,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceUpdateDeploymentPackageWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, deploymentPackageName string, version string, body catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
+			func(_ context.Context, _ string, _ string, _ string, _ catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
 				respBody, err := json.Marshal(struct {
 					Success bool   `json:"success"`
 					Message string `json:"message"`
@@ -439,7 +439,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceListDeploymentPackagesWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, params *catapi.CatalogServiceListDeploymentPackagesParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceListDeploymentPackagesResponse, error) {
+			func(_ context.Context, _ string, _ *catapi.CatalogServiceListDeploymentPackagesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListDeploymentPackagesResponse, error) {
 				return &catapi.CatalogServiceListDeploymentPackagesResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.ListDeploymentPackagesResponse{
@@ -482,7 +482,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceDeleteDeploymentPackageWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, deploymentPackageName string, version string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteDeploymentPackageResponse, error) {
+			func(_ context.Context, _ string, _ string, _ string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteDeploymentPackageResponse, error) {
 				return &catapi.CatalogServiceDeleteDeploymentPackageResponse{
 					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
 				}, nil
@@ -492,7 +492,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceGetDeploymentPackageVersionsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, deploymentPackageName string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetDeploymentPackageVersionsResponse, error) {
+			func(_ context.Context, _ string, deploymentPackageName string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetDeploymentPackageVersionsResponse, error) {
 				return &catapi.CatalogServiceGetDeploymentPackageVersionsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.GetDeploymentPackageVersionsResponse{
@@ -522,7 +522,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceCreateArtifactWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, body catapi.CatalogServiceCreateArtifactJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateArtifactResponse, error) {
+			func(_ context.Context, _ string, _ catapi.CatalogServiceCreateArtifactJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateArtifactResponse, error) {
 				return &catapi.CatalogServiceCreateArtifactResponse{
 					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
 					JSON200:      &catapi.CreateArtifactResponse{
@@ -535,7 +535,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceListArtifactsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, params *catapi.CatalogServiceListArtifactsParams, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceListArtifactsResponse, error) {
+			func(_ context.Context, _ string, _ *catapi.CatalogServiceListArtifactsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListArtifactsResponse, error) {
 				return &catapi.CatalogServiceListArtifactsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.ListArtifactsResponse{
@@ -559,7 +559,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceGetArtifactWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, artifactName string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetArtifactResponse, error) {
+			func(_ context.Context, _ string, artifactName string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetArtifactResponse, error) {
 				return &catapi.CatalogServiceGetArtifactResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.GetArtifactResponse{
@@ -580,7 +580,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceUpdateArtifactWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, artifactName string, body catapi.CatalogServiceUpdateArtifactJSONRequestBody, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateArtifactResponse, error) {
+			func(_ context.Context, _ string, _ string, _ catapi.CatalogServiceUpdateArtifactJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateArtifactResponse, error) {
 				return &catapi.CatalogServiceUpdateArtifactResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					Body:         []byte(`{"success":true,"message":"Artifact updated successfully"}`),
@@ -591,7 +591,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceDeleteArtifactWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, artifactName string, reqEditors ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteArtifactResponse, error) {
+			func(_ context.Context, _ string, _ string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceDeleteArtifactResponse, error) {
 				return &catapi.CatalogServiceDeleteArtifactResponse{
 					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
 				}, nil

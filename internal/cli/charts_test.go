@@ -15,7 +15,7 @@ func (s *CLITestSuite) listCharts(project string, registry string, args commandA
 func (s *CLITestSuite) TestCharts() {
 
 	registry := "my-registry"
-	//TODO only testing fail as not feasable to mock at this time
+	//TODO only testing fail as not feasible to mock at this time
 	_, err := s.listCharts(project, registry, map[string]string{})
 	s.Error(err)
 

@@ -69,18 +69,22 @@ func (s *CLITestSuite) SetupSuite() {
 	RpsFactory = rpsmock.CreateRpsMock(mctrl)
 	DeploymentFactory = deploymentmock.CreateDeploymentMock(mctrl)
 
-	//Mock server for netowrk tests - TODO rework network
+	//Mock server for network tests - TODO rework network
 	s.testServer = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/networks") && r.Method == "GET" {
 			// List networks
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`[{"name":"test-net","spec":{"type":"application-mesh","description":"desc"}}]`))
+			if _, err := w.Write([]byte(`[{"name":"test-net","spec":{"type":"application-mesh","description":"desc"}}]`)); err != nil {
+				return
+			}
 			return
 		}
 		if strings.Contains(r.URL.Path, "/networks/") && r.Method == "GET" {
 			// Get network
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"type":"application-mesh","description":"desc"}`))
+			if _, err := w.Write([]byte(`{"type":"application-mesh","description":"desc"}`)); err != nil {
+				return
+			}
 			return
 		}
 		// ...add more as needed...
