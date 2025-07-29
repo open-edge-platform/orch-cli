@@ -365,6 +365,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						JSON200: &infra.ListHostsResponse{
 							Hosts: []infra.HostResource{
 								{
+									HostStatus:      stringPtr("Running"),
 									ResourceId:      stringPtr("host-abc12345"),
 									Name:            "edge-host-001",
 									Hostname:        stringPtr("edge-host-001.example.com"),
@@ -382,6 +383,15 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									BiosVersion:     stringPtr("TEE142L-2.61"),
 									BiosReleaseDate: stringPtr("03/25/2023"),
 									BmcIp:           stringPtr("192.168.1.101"),
+									SiteId:          stringPtr("site-abcd1234"),
+									Site: &infra.SiteResource{
+										ResourceId: stringPtr("site-abcd1234"),
+										Name:       stringPtr("site"),
+										Timestamps: &infra.Timestamps{
+											CreatedAt: timestampPtr(timestamp),
+											UpdatedAt: timestampPtr(timestamp),
+										},
+									},
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
@@ -434,6 +444,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 										CurrentOs: &infra.OperatingSystemResource{
 											Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
 										},
+										ProvisioningStatus: stringPtr("PROVISIONING_STATUS_COMPLETED"),
 									},
 								},
 							},
@@ -575,31 +586,42 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						return &infra.HostServiceGetHostResponse{
 							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 							JSON200: &infra.HostResource{
-								ResourceId:                  stringPtr(hostId),
-								Name:                        "edge-host-001",
-								Hostname:                    stringPtr("edge-host-001.example.com"),
-								Note:                        stringPtr("Edge computing host"),
-								CpuArchitecture:             stringPtr("x86_64"),
-								CpuCores:                    func() *int { i := 8; return &i }(),
-								CpuModel:                    stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
-								CpuSockets:                  func() *int { i := 2; return &i }(),
-								CpuThreads:                  func() *int { i := 32; return &i }(),
-								MemoryBytes:                 stringPtr("17179869184"), // 16GB in bytes
-								SerialNumber:                stringPtr("1234567890"),  // Match ListHosts
-								Uuid:                        stringPtr("550e8400-e29b-41d4-a716-446655440000"),
-								ProductName:                 stringPtr("ThinkSystem SR650"),
-								BiosVendor:                  stringPtr("Lenovo"),
-								BiosVersion:                 stringPtr("TEE142L-2.61"),
-								BiosReleaseDate:             stringPtr("03/25/2023"),
-								BmcIp:                       stringPtr("192.168.1.101"),
-								BmcKind:                     (*infra.BaremetalControllerKind)(stringPtr("BAREMETAL_CONTROLLER_KIND_IPMI")),
-								CurrentState:                (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDED")),
-								CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
-								CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
-								DesiredAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
-								DesiredPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
-								PowerCommandPolicy:          (*infra.PowerCommandPolicy)(stringPtr("POWER_COMMAND_POLICY_ALWAYS_ON")),
-								PowerOnTime:                 &stamp,
+								ResourceId:         stringPtr(hostId),
+								Name:               "edge-host-001",
+								Hostname:           stringPtr("edge-host-001.example.com"),
+								Note:               stringPtr("Edge computing host"),
+								CpuArchitecture:    stringPtr("x86_64"),
+								CpuCores:           func() *int { i := 8; return &i }(),
+								CpuModel:           stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
+								CpuSockets:         func() *int { i := 2; return &i }(),
+								CpuThreads:         func() *int { i := 32; return &i }(),
+								MemoryBytes:        stringPtr("17179869184"), // 16GB in bytes
+								SerialNumber:       stringPtr("1234567890"),  // Match ListHosts
+								Uuid:               stringPtr("550e8400-e29b-41d4-a716-446655440000"),
+								ProductName:        stringPtr("ThinkSystem SR650"),
+								BiosVendor:         stringPtr("Lenovo"),
+								BiosVersion:        stringPtr("TEE142L-2.61"),
+								BiosReleaseDate:    stringPtr("03/25/2023"),
+								BmcIp:              stringPtr("192.168.1.101"),
+								BmcKind:            (*infra.BaremetalControllerKind)(stringPtr("BAREMETAL_CONTROLLER_KIND_IPMI")),
+								CurrentState:       (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDED")),
+								CurrentPowerState:  (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
+								CurrentAmtState:    (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+								DesiredAmtState:    (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+								DesiredPowerState:  (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
+								PowerCommandPolicy: (*infra.PowerCommandPolicy)(stringPtr("POWER_COMMAND_POLICY_ALWAYS_ON")),
+								PowerOnTime:        &stamp,
+								HostNics: &[]infra.HostnicResource{
+									{
+										DeviceName: stringPtr("eth0"),
+										Ipaddresses: &[]infra.IPAddressResource{
+											{
+												Address: stringPtr("192.168.1.102"),
+												// Fill other fields as needed, e.g. Type, Version, etc.
+											},
+										},
+									},
+								},
 								HostStatus:                  stringPtr("Running"),
 								HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
 								OnboardingStatus:            stringPtr("Onboarded successfully"),
@@ -1561,11 +1583,13 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 					return &infra.InstanceServiceGetInstanceResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.InstanceResource{
-							ResourceId:   stringPtr(instanceId),
-							Name:         stringPtr("edge-instance-001"),
-							CurrentState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
-							DesiredState: (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
-							Kind:         (*infra.InstanceKind)(stringPtr("INSTANCE_KIND_OPERATING_SYSTEM")),
+							ResourceId:           stringPtr(instanceId),
+							ProvisioningStatus:   stringPtr("PROVISIONING_STATUS_COMPLETED"),
+							InstanceStatusDetail: stringPtr("INSTANCE_STATUS_RUNNING"),
+							Name:                 stringPtr("edge-instance-001"),
+							CurrentState:         (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
+							DesiredState:         (*infra.InstanceState)(stringPtr("INSTANCE_STATE_RUNNING")),
+							Kind:                 (*infra.InstanceKind)(stringPtr("INSTANCE_KIND_OPERATING_SYSTEM")),
 							Timestamps: &infra.Timestamps{
 								CreatedAt: timestampPtr(timestamp),
 								UpdatedAt: timestampPtr(timestamp),
@@ -1586,8 +1610,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
 							},
 							CurrentOs: &infra.OperatingSystemResource{
-								Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+								Name:      stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+								FixedCves: stringPtr(""),
 							},
+							ExistingCves: stringPtr(`[{"cve_id":"CVE-2021-1234","priority":"HIGH","affected_packages":["fluent-bit-3.1.9-11.emt3.x86_64"]}]`),
 						},
 					}, nil
 				}

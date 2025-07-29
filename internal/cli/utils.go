@@ -47,6 +47,10 @@ var RpsFactory interfaces.RpsFactoryFunc = func(cmd *cobra.Command) (context.Con
 	return getRpsServiceContext(cmd)
 }
 
+var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command) (context.Context, depapi.ClientWithResponsesInterface, string, error) {
+	return getDeploymentServiceContext(cmd)
+}
+
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
 	verbose, _ := cmd.Flags().GetBool("verbose")
 	debugHeadersValue, _ := cmd.Flags().GetBool(debugHeaders)

@@ -6,6 +6,8 @@ package cli
 import (
 	"bytes"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
@@ -17,6 +19,7 @@ import (
 	authmock "github.com/open-edge-platform/cli/internal/cli/mocks/auth"
 	catalogmock "github.com/open-edge-platform/cli/internal/cli/mocks/catalog"
 	clustermock "github.com/open-edge-platform/cli/internal/cli/mocks/cluster"
+	deploymentmock "github.com/open-edge-platform/cli/internal/cli/mocks/deployment"
 	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
 	rpsmock "github.com/open-edge-platform/cli/internal/cli/mocks/rps"
 
@@ -40,7 +43,8 @@ type linesCommandOutput []string
 
 type CLITestSuite struct {
 	suite.Suite
-	proxy restproxy.MockRestProxy
+	proxy      restproxy.MockRestProxy
+	testServer *httptest.Server
 }
 
 func (s *CLITestSuite) SetupSuite() {
@@ -63,6 +67,30 @@ func (s *CLITestSuite) SetupSuite() {
 	InfraFactory = inframock.CreateInfraMock(mctrl, timestamp)
 	ClusterFactory = clustermock.CreateClusterMock(mctrl)
 	RpsFactory = rpsmock.CreateRpsMock(mctrl)
+	DeploymentFactory = deploymentmock.CreateDeploymentMock(mctrl)
+
+	//Mock server for network tests - TODO rework network
+	s.testServer = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/networks") && r.Method == "GET" {
+			// List networks
+			w.WriteHeader(http.StatusOK)
+			if _, err := w.Write([]byte(`[{"name":"test-net","spec":{"type":"application-mesh","description":"desc"}}]`)); err != nil {
+				return
+			}
+			return
+		}
+		if strings.Contains(r.URL.Path, "/networks/") && r.Method == "GET" {
+			// Get network
+			w.WriteHeader(http.StatusOK)
+			if _, err := w.Write([]byte(`{"type":"application-mesh","description":"desc"}`)); err != nil {
+				return
+			}
+			return
+		}
+		// ...add more as needed...
+		w.WriteHeader(http.StatusOK)
+	}))
+	httpClient = s.testServer.Client()
 }
 
 func (s *CLITestSuite) TearDownSuite() {
@@ -109,7 +137,11 @@ func (s *CLITestSuite) compareOutput(expected commandOutput, actual commandOutpu
 		// Make sure the entries match
 		for k, v := range expectedMap {
 			s.NotNil(actualMap[k])
-			matches, _ := regexp.MatchString(v, actualMap[k])
+			matchPattern := v
+			if v != timestampRegex {
+				matchPattern = regexp.QuoteMeta(v)
+			}
+			matches, _ := regexp.MatchString(matchPattern, actualMap[k])
 			if !matches {
 				s.True(matches, "Values don't match for %s", k)
 			}
@@ -208,8 +240,13 @@ func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
 	args := parseArgs(commandArgs)
 
 	args = append(args, "--debug-headers")
-	args = append(args, "--api-endpoint")
-	args = append(args, c.Server)
+	if strings.Contains(commandArgs, "network") {
+		args = append(args, "--api-endpoint")
+		args = append(args, s.testServer.URL)
+	} else {
+		args = append(args, "--api-endpoint")
+		args = append(args, c.Server)
+	}
 	cmd.SetArgs(args)
 	stdout := new(bytes.Buffer)
 	cmd.SetOut(stdout)

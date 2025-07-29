@@ -173,7 +173,7 @@ func parseApplicationReference(refSpec string) (*catapi.ApplicationReference, er
 }
 
 func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -275,7 +275,7 @@ func getDeploymentPackageKinds(cmd *cobra.Command) *[]catapi.CatalogServiceListD
 
 func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -306,7 +306,7 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 
 func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -346,7 +346,7 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -413,7 +413,7 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -466,7 +466,7 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 }
 
 func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	ctx, _, projectName, err := getCatalogServiceContext(cmd)
+	ctx, _, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
