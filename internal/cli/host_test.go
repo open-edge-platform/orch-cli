@@ -99,12 +99,12 @@ func (s *CLITestSuite) TestHost() {
 
 	resourceID := "host-abc12345"
 	name := "edge-host-001"
-	hostStatus := "Not connected"
-	provisioningStatus := "Not provisioned"
+	hostStatus := "Running"
+	provisioningStatus := "PROVISIONING_STATUS_COMPLETED"
 	serialNumber := "1234567890"
 	operatingSystem := "\"Edge Microvisor Toolkit 3.0.20250504\""
-	siteID := "Not provisioned"
-	siteName := "Not provisioned"
+	siteID := "\"site-abcd1234\""
+	siteName := "\"site\""
 	workload := "\"Edge Kubernetes Cluster\""
 	uuid := "550e8400-e29b-41d4-a716-446655440000"
 	processor := "Intel(R) Xeon(R) CPU E5-2670 v3"
@@ -344,12 +344,12 @@ func (s *CLITestSuite) TestHost() {
 		"-   Host Resurce ID:":         "host-abc12345",
 		"-   Name:":                    "edge-host-001",
 		"-   OS Profile:":              "Edge Microvisor Toolkit 3.0.20250504",
-		"-   Host Status Details:":     "",
-		"-   Provisioning Status:":     "Not Provisioned",
+		"-   Host Status Details:":     "INSTANCE_STATUS_RUNNING",
+		"-   Provisioning Status:":     "PROVISIONING_STATUS_COMPLETED",
 		"Status details:":              "",
 		"-   Host Status:":             "Running",
 		"-   Update Status:":           "",
-		"-   NIC Name and IP Address:": "",
+		"-   NIC Name and IP Address:": "eth0 192.168.1.102;",
 		"Specification:":               "",
 		"-   Serial Number:":           "1234567890",
 		"-   UUID:":                    "550e8400-e29b-41d4-a716-446655440000",
@@ -370,6 +370,10 @@ func (s *CLITestSuite) TestHost() {
 		"-   Desired Power Status:":    "POWER_STATE_ON",
 		"-   Power Command Policy :":   "POWER_COMMAND_POLICY_ALWAYS_ON",
 		"-   PowerOn Time :":           "1",
+		"-   Affected Packages:":       "[fluent-bit-3.1.9-11.emt3.x86_64]",
+		"-   CVE ID:":                  "CVE-2021-1234",
+		"-   Priority:":                "HIGH",
+		"CVE Info (existing CVEs):":    "",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
