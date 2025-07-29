@@ -38,7 +38,7 @@ func getDeleteApplicationReferenceCommand() *cobra.Command {
 }
 
 func runCreateApplicationReferenceCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func runCreateApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 }
 
 func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 		applicationName, pkgName, pkgVersion))
 }
 
-func updateDeploymentPackage(ctx context.Context, projectName string, client *catapi.ClientWithResponses, pkg catapi.DeploymentPackage) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
+func updateDeploymentPackage(ctx context.Context, projectName string, client catapi.ClientWithResponsesInterface, pkg catapi.DeploymentPackage) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
 	return client.CatalogServiceUpdateDeploymentPackageWithResponse(ctx, projectName, pkg.Name, pkg.Version,
 		catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody{
 			Name:                    pkg.Name,

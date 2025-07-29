@@ -91,7 +91,7 @@ func printArtifacts(writer io.Writer, artifactList *[]catapi.Artifact, verbose b
 }
 
 func runCreateArtifactCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func runCreateArtifactCommand(cmd *cobra.Command, args []string) error {
 
 func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 
 func runGetArtifactCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func runGetArtifactCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetArtifactCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -212,7 +212,7 @@ func runSetArtifactCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}

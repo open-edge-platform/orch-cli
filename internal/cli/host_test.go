@@ -3,7 +3,11 @@
 
 package cli
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/open-edge-platform/cli/pkg/rest/infra"
+)
 
 func (s *CLITestSuite) createHost(publisher string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`create host --project %s`, publisher))
@@ -27,6 +31,11 @@ func (s *CLITestSuite) deauthorizeHost(publisher string, hostID string, args com
 
 func (s *CLITestSuite) deleteHost(publisher string, hostID string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`delete host %s --project %s`, hostID, publisher))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) setHost(publisher string, hostID string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`set host %s --project %s`, hostID, publisher))
 	return s.runCommand(commandString)
 }
 
@@ -54,6 +63,32 @@ func (s *CLITestSuite) filterTest() {
 		}
 	}
 }
+func (s *CLITestSuite) testResolvePower() {
+	tests := []struct {
+		input    string
+		expected infra.PowerState
+		wantErr  bool
+	}{
+		{"on", infra.POWERSTATEON, false},
+		{"off", infra.POWERSTATEOFF, false},
+		{"cycle", infra.POWERSTATEPOWERCYCLE, false},
+		{"hibernate", infra.POWERSTATEHIBERNATE, false},
+		{"reset", infra.POWERSTATERESET, false},
+		{"sleep", infra.POWERSTATESLEEP, false},
+		{"invalid", "", true},
+		{"", "", true},
+	}
+
+	for _, tc := range tests {
+		result, err := resolvePower(tc.input)
+		if tc.wantErr {
+			s.Error(err, "expected error for input %q", tc.input)
+		} else {
+			s.NoError(err, "unexpected error for input %q", tc.input)
+			s.Equal(tc.expected, result, "unexpected result for input %q", tc.input)
+		}
+	}
+}
 
 // Helper function to create string pointers
 func stringPtr(s string) *string {
@@ -64,12 +99,12 @@ func (s *CLITestSuite) TestHost() {
 
 	resourceID := "host-abc12345"
 	name := "edge-host-001"
-	hostStatus := "Not connected"
-	provisioningStatus := "Not provisioned"
+	hostStatus := "Running"
+	provisioningStatus := "PROVISIONING_STATUS_COMPLETED"
 	serialNumber := "1234567890"
 	operatingSystem := "\"Edge Microvisor Toolkit 3.0.20250504\""
-	siteID := "Not provisioned"
-	siteName := "Not provisioned"
+	siteID := "\"site-abcd1234\""
+	siteName := "\"site\""
 	workload := "\"Edge Kubernetes Cluster\""
 	uuid := "550e8400-e29b-41d4-a716-446655440000"
 	processor := "Intel(R) Xeon(R) CPU E5-2670 v3"
@@ -210,6 +245,8 @@ func (s *CLITestSuite) TestHost() {
 	//Test filter
 	s.filterTest()
 
+	s.testResolvePower()
+
 	// Test list hosts with no filters
 	listOutput, err := s.listHost(project, make(map[string]string))
 	s.NoError(err)
@@ -307,12 +344,12 @@ func (s *CLITestSuite) TestHost() {
 		"-   Host Resurce ID:":         "host-abc12345",
 		"-   Name:":                    "edge-host-001",
 		"-   OS Profile:":              "Edge Microvisor Toolkit 3.0.20250504",
-		"-   Host Status Details:":     "",
-		"-   Provisioning Status:":     "Not Provisioned",
+		"-   Host Status Details:":     "INSTANCE_STATUS_RUNNING",
+		"-   Provisioning Status:":     "PROVISIONING_STATUS_COMPLETED",
 		"Status details:":              "",
 		"-   Host Status:":             "Running",
 		"-   Update Status:":           "",
-		"-   NIC Name and IP Address:": "",
+		"-   NIC Name and IP Address:": "eth0 192.168.1.102;",
 		"Specification:":               "",
 		"-   Serial Number:":           "1234567890",
 		"-   UUID:":                    "550e8400-e29b-41d4-a716-446655440000",
@@ -333,6 +370,10 @@ func (s *CLITestSuite) TestHost() {
 		"-   Desired Power Status:":    "POWER_STATE_ON",
 		"-   Power Command Policy :":   "POWER_COMMAND_POLICY_ALWAYS_ON",
 		"-   PowerOn Time :":           "1",
+		"-   Affected Packages:":       "[fluent-bit-3.1.9-11.emt3.x86_64]",
+		"-   CVE ID:":                  "CVE-2021-1234",
+		"-   Priority:":                "HIGH",
+		"CVE Info (existing CVEs):":    "",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
@@ -348,6 +389,28 @@ func (s *CLITestSuite) TestHost() {
 	// Test get host with non-existent instance
 	_, err = s.getHost("invalid-instance", hostID, make(map[string]string))
 	s.EqualError(err, "error getting instance of a host:[Internal Server Error]")
+
+	HostArgs = map[string]string{
+		"power-policy": "ordered",
+		"power":        "off",
+	}
+
+	// Test set host with non-existent host
+	_, err = s.setHost(project, "host-11111111", HostArgs)
+	s.Error(err)
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	HostArgs = map[string]string{
+		"power-policy": "immediate",
+		"power":        "on",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
 
 	// Test deauthorize host
 	_, err = s.deauthorizeHost(project, hostID, make(map[string]string))

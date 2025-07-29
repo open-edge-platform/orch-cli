@@ -104,7 +104,7 @@ func printDeployments(writer *tabwriter.Writer, deployments *[]depapi.Deployment
 }
 
 func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
-	ctx, deploymentClient, projectName, err := getDeploymentServiceContext(cmd)
+	ctx, deploymentClient, projectName, err := DeploymentFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -241,7 +241,7 @@ func getTargetClusters(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
 
 func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, deploymentClient, projectName, err := getDeploymentServiceContext(cmd)
+	ctx, deploymentClient, projectName, err := DeploymentFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -261,7 +261,7 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 
 func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, deploymentClient, projectName, err := getDeploymentServiceContext(cmd)
+	ctx, deploymentClient, projectName, err := DeploymentFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -282,7 +282,7 @@ func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
-	ctx, deploymentClient, projectName, err := getDeploymentServiceContext(cmd)
+	ctx, deploymentClient, projectName, err := DeploymentFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -332,7 +332,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
-	ctx, deploymentClient, projectName, err := getDeploymentServiceContext(cmd)
+	ctx, deploymentClient, projectName, err := DeploymentFactory(cmd)
 	if err != nil {
 		return err
 	}

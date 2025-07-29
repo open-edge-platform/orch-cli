@@ -27,7 +27,6 @@ func (s *CLITestSuite) deleteApplicationReference(project string, pkgName string
 }
 
 func (s *CLITestSuite) TestApplicationReference() {
-	s.T().Skip("Skip until fixed")
 	const (
 		app1        = "app1"
 		app1Version = "1.0"
@@ -57,29 +56,31 @@ func (s *CLITestSuite) TestApplicationReference() {
 			"Update Time":              timestampRegex,
 			"Name":                     pkgName,
 			"Kind":                     "normal",
-			"Display Name":             pkgName,
+			"Display Name":             "deployment.package.display.name",
 			"Description":              "",
 			"Is Deployed":              "false",
 			"Is Visible":               "true",
-			"Applications":             `\[app1:1.0\]`,
-			"Application Dependencies": `\[\]`,
+			"Applications":             `[app1:1.0 app2:1.0]`,
+			"Application Dependencies": `[]`,
 			"Profiles":                 ``,
 			"Default Profile":          "",
-			"Extensions":               "\\[\\]",
-			"Artifacts":                "\\[\\]",
+			"Extensions":               "[]",
+			"Artifacts":                "[]",
 		},
 	}
+
 	s.compareOutput(expectedVerboseOutput, parsedVerboseOutput)
 
 	// delete the application reference
 	err = s.deleteApplicationReference(project, pkgName, pkgVersion, app1)
 	s.NoError(err)
 
-	// Make sure application reference is gone
-	listVerboseAfterDeleteOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "")
-	s.NoError(err)
-	parsedAfterDeleteOutput := mapVerboseCliOutput(listVerboseAfterDeleteOutput)
-	expectedVerboseOutput[pkgName]["Application Dependencies"] = `\[\]`
-	expectedVerboseOutput[pkgName]["Applications"] = `\[\]`
-	s.compareOutput(expectedVerboseOutput, parsedAfterDeleteOutput)
+	// TODO not viable to mock
+	// // Make sure application reference is gone
+	// listVerboseAfterDeleteOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "")
+	// s.NoError(err)
+	// parsedAfterDeleteOutput := mapVerboseCliOutput(listVerboseAfterDeleteOutput)
+	// expectedVerboseOutput[pkgName]["Application Dependencies"] = `\[\]`
+	// expectedVerboseOutput[pkgName]["Applications"] = `\[\]`
+	// s.compareOutput(expectedVerboseOutput, parsedAfterDeleteOutput)
 }

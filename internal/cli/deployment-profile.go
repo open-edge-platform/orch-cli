@@ -97,7 +97,7 @@ func printDeploymentProfiles(writer io.Writer, profileList *[]catapi.DeploymentP
 }
 
 func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 
 func runListDeploymentProfilesCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func runListDeploymentProfilesCommand(cmd *cobra.Command, args []string) error {
 
 func runGetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func runGetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -260,7 +260,7 @@ func runSetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runDeleteDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
