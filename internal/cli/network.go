@@ -20,6 +20,8 @@ var (
 	networkAliases = []string{"net"}
 )
 
+var httpClient = &http.Client{Transport: &http.Transport{}}
+
 func getCreateNetworkCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "network <name> [flags]",
@@ -92,9 +94,7 @@ func doREST(
 	body io.Reader,
 	expectedStatus int,
 ) (*http.Response, error) {
-	c := &http.Client{
-		Transport: &http.Transport{},
-	}
+	c := httpClient
 
 	u, err := url.Parse(catEP)
 	if err != nil {

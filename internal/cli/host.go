@@ -1425,7 +1425,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		power = &pow
 	}
 
-	ctx, hostClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}

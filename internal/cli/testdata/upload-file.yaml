@@ -1,0 +1,9 @@
+# testdata/upload-file.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-upload
+  namespace: default
+data:
+  key1: value1
+  key2: value2

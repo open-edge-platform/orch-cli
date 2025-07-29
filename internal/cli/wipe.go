@@ -28,11 +28,11 @@ func getWipeProjectCommand() *cobra.Command {
 }
 
 func runWipeProjectCommand(cmd *cobra.Command, _ []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
-	w := &wiper{client: *catalogClient, reqEditors: []restapi.RequestEditorFn{auth.AddAuthHeader}}
+	w := &wiper{client: catalogClient, reqEditors: []restapi.RequestEditorFn{auth.AddAuthHeader}}
 
 	yes, _ := cmd.Flags().GetBool("yes")
 	if !yes {
@@ -47,7 +47,7 @@ func runWipeProjectCommand(cmd *cobra.Command, _ []string) error {
 }
 
 type wiper struct {
-	client     restapi.ClientWithResponses
+	client     restapi.ClientWithResponsesInterface
 	reqEditors []restapi.RequestEditorFn
 }
 

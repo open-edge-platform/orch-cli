@@ -128,7 +128,7 @@ func printApplications(writer io.Writer, appList *[]catapi.Application, verbose 
 }
 
 func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func getApplicationKinds(cmd *cobra.Command) *[]catapi.CatalogServiceListApplica
 
 func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 
 func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -276,7 +276,7 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetApplicationCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -316,7 +316,7 @@ func runSetApplicationCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
