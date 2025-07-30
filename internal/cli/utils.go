@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/signal"
 	"strings"
 	"text/tabwriter"
 
@@ -414,78 +413,4 @@ func obscureValue(s *string) string {
 		return "********"
 	}
 	return "<none>"
-}
-
-// Message represents subscription control messages
-type Message struct {
-	Op      string `json:"op"`
-	Kind    string `json:"kind"`
-	Project string `json:"project"`
-	Payload []byte `json:"payload"`
-}
-
-// Subscribe for updates of a particular kind of entity
-func subscribe(ws *websocket.Conn, kind string, projectUUID string) error {
-	return ws.WriteJSON(Message{Op: "subscribe", Kind: kind, Project: projectUUID})
-}
-
-// Unsubscribe from updates of aparticular kind of entity
-func unsubscribe(ws *websocket.Conn, kind string) {
-	_ = ws.WriteJSON(Message{Op: "unsubscribe", Kind: kind})
-}
-
-// Unsubscribe from updates of a particular kind of entity when keyboard interrupt is detected.
-func unsubscribeOnInterrupt(ws *websocket.Conn, kinds ...string) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		for range c {
-			for _, kind := range kinds {
-				unsubscribe(ws, kind)
-			}
-			os.Exit(0)
-		}
-	}()
-}
-
-func isEvent(op string) bool {
-	return op == "created" || op == "updated" || op == "deleted"
-}
-
-// Runs the main body of the watch command
-func runWatchCommand(cmd *cobra.Command, printer func(io.Writer, string, []byte, bool) error, kinds ...string) error {
-	ws, err := getCatalogWebSocket(cmd)
-	if err != nil {
-		return err
-	}
-
-	projectUUID, err := getProjectName(cmd)
-	if err != nil {
-		return err
-	}
-
-	// subscribe and on interrupt unsubscribe and exit
-	for _, kind := range kinds {
-		if err := subscribe(ws, kind, projectUUID); err != nil {
-			return err
-		}
-		defer unsubscribe(ws, kind)
-	}
-	unsubscribeOnInterrupt(ws, kinds...)
-
-	// consume acknowledgement and any events and print them
-	msg := &Message{}
-	writer, verbose := getOutputContext(cmd)
-	for {
-		if err = ws.ReadJSON(msg); err != nil {
-			return err
-		}
-		if isEvent(msg.Op) {
-			_, _ = fmt.Fprintf(writer, "%s: %s %s\t", shortenUUID(msg.Project), msg.Kind, msg.Op)
-			if err := printer(writer, msg.Kind, msg.Payload, verbose); err != nil {
-				return err
-			}
-			_ = writer.Flush()
-		}
-	}
 }
