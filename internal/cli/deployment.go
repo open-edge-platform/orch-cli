@@ -231,12 +231,12 @@ func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.TargetClu
 		return targetClustersByLabel, "auto-scaling", nil
 	} else if targetClustersByID != nil && len(*targetClustersByID) > 0 {
 		return targetClustersByID, "targeted", nil
-	} else {
-		if !allowEmpty {
-			return nil, "", fmt.Errorf("no target clusters specified, use either --application-label or --application-cluster-id")
-		}
-		return &[]depapi.TargetClusters{}, "", nil
 	}
+
+	if !allowEmpty {
+		return nil, "", fmt.Errorf("no target clusters specified, use either --application-label or --application-cluster-id")
+	}
+	return &[]depapi.TargetClusters{}, "", nil
 }
 
 func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
