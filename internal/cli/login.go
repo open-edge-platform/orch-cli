@@ -69,7 +69,7 @@ func login(cmd *cobra.Command, args []string) error {
 	}
 
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12},
+		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS13},
 		Proxy:           http.ProxyFromEnvironment,
 	}
 	trustCert, err := cmd.Flags().GetBool("trust-cert")
