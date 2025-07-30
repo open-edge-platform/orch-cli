@@ -4,8 +4,6 @@
 package cli
 
 import (
-	"strings"
-
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/spf13/cobra"
 )
@@ -172,12 +170,4 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteHostCommand(),
 	)
 	return catalogDeleteRootCmd
-}
-
-func shortenUUID(uuid string) string {
-	f := strings.SplitN(uuid, "-", 5)
-	if len(f) == 5 {
-		return f[4]
-	}
-	return uuid
 }

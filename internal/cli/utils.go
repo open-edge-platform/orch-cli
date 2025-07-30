@@ -9,14 +9,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"text/tabwriter"
 
-	"github.com/gorilla/websocket"
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
-	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
@@ -24,7 +21,6 @@ import (
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/metadata"
 )
 
 const timeLayout = "2006-01-02T15:04:05"
@@ -145,42 +141,6 @@ func getRpsServiceContext(cmd *cobra.Command) (context.Context, *rpsapi.ClientWi
 		return nil, nil, "", err
 	}
 	return context.Background(), rpsClient, projectName, nil
-}
-
-// Get the web socket for receiving event notifications.
-func getCatalogWebSocket(cmd *cobra.Command) (*websocket.Conn, error) {
-	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
-	if err != nil {
-		return nil, err
-	}
-	serverAddress = strings.Replace(serverAddress, "https", "wss", 1)
-	serverAddress = strings.Replace(serverAddress, "http", "ws", 1)
-
-	u, err := url.JoinPath(serverAddress, "/catalog.orchestrator.apis/events")
-	if err != nil {
-		return nil, err
-	}
-
-	projectUUID, err := getProjectName(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create an auxiliary request so that we can inject required auth headers into it
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Inject the headers
-	ctx := metadata.NewOutgoingContext(context.Background(), map[string][]string{auth.ActiveProjectID: {projectUUID}})
-	if err := auth.AddAuthHeader(ctx, req); err != nil {
-		return nil, err
-	}
-
-	// Dial to the web-socket using the annotated headers
-	ws, _, err := websocket.DefaultDialer.Dial(u, req.Header)
-	return ws, err
 }
 
 // Adds the mandatory project UUID, and the standard display-name, and description
