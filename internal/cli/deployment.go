@@ -30,7 +30,7 @@ func getCreateDeploymentCommand() *cobra.Command {
 	cmd.Flags().StringToString("application-namespace", map[string]string{}, "application target namespaces in format '<app>=<namespace>'")
 	cmd.Flags().StringToString("application-set", map[string]string{}, "application set value overrides in form of '<app>.<prop>=<prop-value>'")
 	cmd.Flags().StringToString("application-label", map[string]string{}, "automatic deployment of application to clusters in the form of '<app>.<label>=<label-value>'")
-	cmd.Flags().StringToString("application-cluster-id", map[string]string{}, "manunal deployment of application to clusters in the form of '<app>=<cluster-id>'")
+	cmd.Flags().StringToString("application-cluster-id", map[string]string{}, "manual deployment of application to clusters in the form of '<app>=<cluster-id>'")
 	return cmd
 }
 
@@ -251,12 +251,12 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 		app := fields[0]
 		label := fields[1]
 
-		target, ok := targets[app]
+		target, alreadyExists := targets[app]
 		lbls := make(map[string]string, 1)
 		lbls[label] = value
 
-		if ok {
-			// NOTE: Expect ok can never be true because GetStringToString overwrites existing map keys
+		if alreadyExists {
+			// NOTE: Expect alreadyExists can never be true because GetStringToString overwrites existing map keys
 			// TODO: Support multiple labels for the same app
 			return nil, fmt.Errorf("application %s already has a target cluster: %+v", app, target)
 		}
@@ -274,14 +274,14 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 }
 
 func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
-	// Accumulate any app target cluster IDs in format "<app-name>=<cluster-id>""
+	// Accumulate any app target cluster IDs in format "<app-name>=<cluster-id>"
 	targets := make(map[string]depapi.TargetClusters, 0)
 	clusterIDs, _ := cmd.Flags().GetStringToString("application-cluster-id")
 	for app, clusterID := range clusterIDs {
-		target, ok := targets[app]
+		target, alreadyExists := targets[app]
 
-		if ok {
-			// NOTE: Expect ok can never be true because GetStringToString overwrites existing map keys
+		if alreadyExists {
+			// NOTE: Expect alreadyExists can never be true because GetStringToString overwrites existing map keys
 			// TODO: Support multiple clusters for the same app
 			return nil, fmt.Errorf("application %s already has a target cluster: %+v", app, target)
 		}
