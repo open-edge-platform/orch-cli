@@ -256,6 +256,7 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 		lbls[label] = value
 
 		if ok {
+			// NOTE: Expect ok can never be true because GetStringToString overwrites existing map keys
 			// TODO: Support multiple labels for the same app
 			return nil, fmt.Errorf("application %s already has a target cluster: %+v", app, target)
 		}
@@ -280,6 +281,7 @@ func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error)
 		target, ok := targets[app]
 
 		if ok {
+			// NOTE: Expect ok can never be true because GetStringToString overwrites existing map keys
 			// TODO: Support multiple clusters for the same app
 			return nil, fmt.Errorf("application %s already has a target cluster: %+v", app, target)
 		}
