@@ -225,6 +225,8 @@ func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.TargetClu
 	}
 
 	if targetClustersByLabel != nil && len(*targetClustersByLabel) > 0 {
+		// ADM does not allow a deployment to be both Automatic and Manual,
+		// so both labels and cluster-ids are not allowed at the same time.
 		if targetClustersByID != nil && len(*targetClustersByID) > 0 {
 			return nil, "", fmt.Errorf("cannot specify both application-label and application-cluster-id flags")
 		}
