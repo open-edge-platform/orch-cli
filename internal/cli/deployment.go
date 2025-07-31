@@ -276,7 +276,7 @@ func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error)
 	targets := make(map[string]depapi.TargetClusters, 0)
 	clusterIDs, _ := cmd.Flags().GetStringToString("application-cluster-id")
 	for app, clusterID := range clusterIDs {
-		// We  targets[app] does not exist because GetStringToString returns a map, and app is the key
+		// We know targets[app] does not exist because GetStringToString returns a map, and app is the key
 		target := depapi.TargetClusters{AppName: &app, ClusterId: &clusterID}
 		targets[app] = target
 	}
