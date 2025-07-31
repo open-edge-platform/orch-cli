@@ -67,7 +67,7 @@ func getSetDeploymentCommand() *cobra.Command {
 	cmd.Flags().String("name", "", "deployment name")
 	cmd.Flags().String("package-name", "", "deployment package name")
 	cmd.Flags().String("package-version", "", "deployment package version")
-	cmd.Flags().String("profile", "", "deployment profileto use")
+	cmd.Flags().String("profile", "", "deployment profile to use")
 	cmd.Flags().StringToString("application-namespace", map[string]string{}, "application target namespaces in format '<app>=<namespace>'")
 	cmd.Flags().StringToString("application-set", map[string]string{}, "application set value overrides in form of '<app>.<prop>=<prop-value>'")
 	cmd.Flags().StringToString("application-label", map[string]string{}, "automatic deployment of application to clusters in the form of '<app>.<label>=<label-value>'")
