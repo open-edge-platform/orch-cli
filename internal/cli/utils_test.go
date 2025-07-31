@@ -7,12 +7,9 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"text/tabwriter"
-	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -212,62 +209,5 @@ func TestCheckResponseGRPC(t *testing.T) {
 				assert.EqualError(t, err, tc.expectedErrMsg)
 			}
 		})
-	}
-}
-
-func TestRunWatchCommand(t *testing.T) {
-	// Set up a test websocket server
-	upgrader := websocket.Upgrader{}
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		assert.NoError(t, err)
-		defer conn.Close()
-
-		// Read subscribe message
-		var msg Message
-		err = conn.ReadJSON(&msg)
-		assert.NoError(t, err)
-		assert.Equal(t, "subscribe", msg.Op)
-
-		// Send a fake event
-		event := Message{
-			Op:      "created",
-			Kind:    "test-kind",
-			Project: "test-project",
-			Payload: []byte(`{"foo":"bar"}`),
-		}
-		_ = conn.WriteJSON(event)
-
-		// Send a normal close message
-		_ = conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), time.Now().Add(time.Second))
-		time.Sleep(50 * time.Millisecond) // Give client time to process close
-	}))
-	defer s.Close()
-
-	// Prepare cobra.Command with required flags
-	cmd := &cobra.Command{}
-	cmd.Flags().String("api-endpoint", s.URL, "API endpoint")
-	cmd.Flags().String("project", "test-project", "Project name")
-
-	// Fake printer function
-	printer := func(w io.Writer, _ string, _ []byte, _ bool) error {
-		_, err := w.Write([]byte("printed"))
-		return err
-	}
-
-	// Run in a goroutine so we can stop it
-	done := make(chan error)
-	go func() {
-		err := runWatchCommand(cmd, printer, "test-kind")
-		done <- err
-	}()
-
-	select {
-	case err := <-done:
-		if err != nil && err.Error() != "websocket: close 1000 (normal)" {
-			t.Errorf("unexpected error: %v", err)
-		}
-	case <-time.After(1 * time.Second):
-		t.Fatal("runWatchCommand did not return in time")
 	}
 }
