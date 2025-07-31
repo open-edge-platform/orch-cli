@@ -254,17 +254,13 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 		label := fields[1]
 
 		target, alreadyExists := targets[app]
-		lbls := make(map[string]string, 1)
-		lbls[label] = value
 
-		if alreadyExists {
-			// NOTE: Expect alreadyExists can never be true because GetStringToString overwrites existing map keys
-			// TODO: Support multiple labels for the same app
-			return nil, fmt.Errorf("application %s already has a target cluster: %+v", app, target)
+		if !alreadyExists {
+			lbls := make(map[string]string, 1)
+			target = depapi.TargetClusters{AppName: &app, Labels: &lbls}
+			targets[app] = target
 		}
-
-		target = depapi.TargetClusters{AppName: &app, Labels: &lbls}
-		targets[app] = target
+		(*target.Labels)[label] = value
 	}
 
 	// Transform targets map into array
@@ -280,15 +276,8 @@ func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error)
 	targets := make(map[string]depapi.TargetClusters, 0)
 	clusterIDs, _ := cmd.Flags().GetStringToString("application-cluster-id")
 	for app, clusterID := range clusterIDs {
-		target, alreadyExists := targets[app]
-
-		if alreadyExists {
-			// NOTE: Expect alreadyExists can never be true because GetStringToString overwrites existing map keys
-			// TODO: Support multiple clusters for the same app
-			return nil, fmt.Errorf("application %s already has a target cluster: %+v", app, target)
-		}
-
-		target = depapi.TargetClusters{AppName: &app, ClusterId: &clusterID}
+		// We  targets[app] does not exist because GetStringToString returns a map, and app is the key
+		target := depapi.TargetClusters{AppName: &app, ClusterId: &clusterID}
 		targets[app] = target
 	}
 
