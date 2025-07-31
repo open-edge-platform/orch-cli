@@ -5,6 +5,7 @@ package cli
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -28,7 +29,8 @@ func getCreateDeploymentCommand() *cobra.Command {
 	cmd.Flags().String("profile", "", "deployment profile to use")
 	cmd.Flags().StringToString("application-namespace", map[string]string{}, "application target namespaces in format '<app>=<namespace>'")
 	cmd.Flags().StringToString("application-set", map[string]string{}, "application set value overrides in form of '<app>.<prop>=<prop-value>'")
-	cmd.Flags().StringToString("application-label", map[string]string{}, "application cluster labels in form of '<app>.<label>=<label-value>'")
+	cmd.Flags().StringToString("application-label", map[string]string{}, "automatic deployment of application to clusters in the form of '<app>.<label>=<label-value>'")
+	cmd.Flags().StringToString("application-cluster-id", map[string]string{}, "manual deployment of application to clusters in the form of '<app>=<cluster-id>'")
 	return cmd
 }
 
@@ -65,10 +67,11 @@ func getSetDeploymentCommand() *cobra.Command {
 	cmd.Flags().String("name", "", "deployment name")
 	cmd.Flags().String("package-name", "", "deployment package name")
 	cmd.Flags().String("package-version", "", "deployment package version")
-	cmd.Flags().String("profile", "", "deployment profileto use")
+	cmd.Flags().String("profile", "", "deployment profile to use")
 	cmd.Flags().StringToString("application-namespace", map[string]string{}, "application target namespaces in format '<app>=<namespace>'")
 	cmd.Flags().StringToString("application-set", map[string]string{}, "application set value overrides in form of '<app>.<prop>=<prop-value>'")
-	cmd.Flags().StringToString("application-label", map[string]string{}, "application cluster labels in form of '<app>.<label>=<label-value>'")
+	cmd.Flags().StringToString("application-label", map[string]string{}, "automatic deployment of application to clusters in the form of '<app>.<label>=<label-value>'")
+	cmd.Flags().StringToString("application-cluster-id", map[string]string{}, "manual deployment of application to clusters in the form of '<app>=<cluster-id>'")
 	return cmd
 }
 
@@ -117,7 +120,7 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	targetClusters, err := getTargetClusters(cmd)
+	targetClusters, deploymentType, err := getTargetClusters(cmd, false) // do not allow empty target clusters
 	if err != nil {
 		return err
 	}
@@ -130,6 +133,7 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 			ProfileName:    getFlag(cmd, "profile"),
 			OverrideValues: &overrideValues,
 			TargetClusters: targetClusters,
+			DeploymentType: &deploymentType,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -209,8 +213,36 @@ func parseValue(value string) interface{} {
 	return value
 }
 
-func getTargetClusters(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
-	// Next accumulate any app target cluster labels in format "<app-name>.<label-name>=<label-value>"
+func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.TargetClusters, string, error) {
+	targetClustersByLabel, err := getTargetClustersByLabel(cmd)
+	if err != nil {
+		return nil, "", err
+	}
+
+	targetClustersByID, err := getTargetClustersByID(cmd)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if targetClustersByLabel != nil && len(*targetClustersByLabel) > 0 {
+		// ADM does not allow a deployment to be both Automatic and Manual,
+		// so both labels and cluster-ids are not allowed at the same time.
+		if targetClustersByID != nil && len(*targetClustersByID) > 0 {
+			return nil, "", fmt.Errorf("cannot specify both application-label and application-cluster-id flags")
+		}
+		return targetClustersByLabel, "auto-scaling", nil
+	} else if targetClustersByID != nil && len(*targetClustersByID) > 0 {
+		return targetClustersByID, "targeted", nil
+	}
+
+	if !allowEmpty {
+		return nil, "", fmt.Errorf("no target clusters specified, use either --application-label or --application-cluster-id")
+	}
+	return &[]depapi.TargetClusters{}, "", nil
+}
+
+func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
+	// Accumulate any app target cluster labels in format "<app-name>.<label-name>=<label-value>"
 	targets := make(map[string]depapi.TargetClusters, 0)
 	labels, _ := cmd.Flags().GetStringToString("application-label")
 	for appLabel, value := range labels {
@@ -221,13 +253,31 @@ func getTargetClusters(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
 		app := fields[0]
 		label := fields[1]
 
-		target, ok := targets[app]
-		lbls := make(map[string]string, 1)
-		lbls[label] = value
+		target, alreadyExists := targets[app]
 
-		if !ok {
+		if !alreadyExists {
+			lbls := make(map[string]string, 1)
 			target = depapi.TargetClusters{AppName: &app, Labels: &lbls}
+			targets[app] = target
 		}
+		(*target.Labels)[label] = value
+	}
+
+	// Transform targets map into array
+	targetClusters := make([]depapi.TargetClusters, 0, len(targets))
+	for _, target := range targets {
+		targetClusters = append(targetClusters, target)
+	}
+	return &targetClusters, nil
+}
+
+func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
+	// Accumulate any app target cluster IDs in format "<app-name>=<cluster-id>"
+	targets := make(map[string]depapi.TargetClusters, 0)
+	clusterIDs, _ := cmd.Flags().GetStringToString("application-cluster-id")
+	for app, clusterID := range clusterIDs {
+		// We know targets[app] does not exist because GetStringToString returns a map, and app is the key
+		target := depapi.TargetClusters{AppName: &app, ClusterId: &clusterID}
 		targets[app] = target
 	}
 
@@ -294,7 +344,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	targetClusters, err := getTargetClusters(cmd)
+	targetClusters, deploymentType, err := getTargetClusters(cmd, true)
 	if err != nil {
 		return err
 	}
@@ -303,6 +353,10 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		auth.AddAuthHeader)
 	if err != nil {
 		return err
+	}
+
+	if gresp.HTTPResponse.StatusCode != http.StatusOK {
+		return checkResponse(gresp.HTTPResponse, fmt.Sprintf("error getting for application %s", deploymentID))
 	}
 
 	dep := gresp.JSON200.Deployment
@@ -322,6 +376,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	}
 	if len(*targetClusters) > 0 {
 		request.TargetClusters = targetClusters
+		request.DeploymentType = &deploymentType
 	}
 
 	resp, err := deploymentClient.DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)

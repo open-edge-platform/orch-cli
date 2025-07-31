@@ -454,6 +454,17 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			},
 		).AnyTimes()
 
+		mockInfraClient.EXPECT().InstanceServicePatchInstanceWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, _ string, _ string, _ infra.InstanceServicePatchInstanceJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.InstanceServicePatchInstanceResponse, error) {
+				return &infra.InstanceServicePatchInstanceResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					// Add JSON200 or other fields if your code expects them
+				}, nil
+			},
+		).AnyTimes()
+
 		// Mock CreateHost (used by create command)
 		mockInfraClient.EXPECT().HostServiceCreateHostWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
