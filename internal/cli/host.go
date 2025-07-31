@@ -1285,8 +1285,8 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	if csvFilePath == "" {
-		return fmt.Errorf("--import-from-csv <path/to/file.csv> is required")
+	if csvFilePath == "" || strings.HasPrefix(csvFilePath, "--") {
+		return fmt.Errorf("--import-from-csv <path/to/file.csv> is required, cannot be empty")
 	}
 
 	err = verifyCSVInput(csvFilePath)
@@ -1402,8 +1402,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	policyFlag, _ := cmd.Flags().GetString("power-policy")
 	powerFlag, _ := cmd.Flags().GetString("power")
 
-	if policyFlag == "" && powerFlag == "" {
-		return errors.New("a flag must be provided with the set host command")
+	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) {
+		return errors.New("a flag must be provided with the set host command and value cannot be \"\"")
 	}
 
 	var power *infra.PowerState
