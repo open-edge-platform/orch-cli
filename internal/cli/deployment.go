@@ -356,7 +356,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if gresp.HTTPResponse.StatusCode != http.StatusOK {
-		return fmt.Errorf("error getting deployment %s: %s", deploymentID, gresp.HTTPResponse.Status)
+		return checkResponse(gresp.HTTPResponse, fmt.Sprintf("error getting for application %s", deploymentID))
 	}
 
 	dep := gresp.JSON200.Deployment
