@@ -27,9 +27,12 @@ const getRegionExamples = `# Get specific region information
 orch-cli get region region-aaaa1111 --project some-project`
 
 const createRegionExamples = `# Create specific region
+orch-cli create region name --project some-project --type country
 
 # Create specific region as a subregion to another region
-orch-cli create region name --project some-project --parent-region region-bbbb1111`
+orch-cli create region name --project some-project --parent-region region-bbbb1111 --type country
+
+--type = country/state/county/region/city`
 
 const deleteRegionExamples = `# Delete specific region
 orch-cli delete region region-aaaa1111 --project some-project`
