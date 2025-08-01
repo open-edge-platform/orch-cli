@@ -162,7 +162,7 @@ func (s *CLITestSuite) TestAMT() {
 
 }
 
-func FuzzCreateAMTProfile(f *testing.F) {
+func FuzzAMTProfile(f *testing.F) {
 	// Initial corpus with basic input
 	f.Add("project", "host-abcd1234", "./testdata/sample.pfx", "pass", "string", "example.com")
 	f.Add("project", "host-abcd1234", "", "pass", "string", "example.com")                  // missing cert
@@ -178,7 +178,7 @@ func FuzzCreateAMTProfile(f *testing.F) {
 		testSuite.SetupTest()
 		defer testSuite.TearDownTest()
 
-		HostArgs := map[string]string{
+		args := map[string]string{
 			"cert":          cert,
 			"cert-pass":     certPass,
 			"cert-format":   certFormat,
@@ -190,7 +190,7 @@ func FuzzCreateAMTProfile(f *testing.F) {
 		expErr3 := "certificate format must be provided with --cert-format flag with accepted arguments `string|raw`"
 		expErr4 := "domain suffix format must be provided with --domain-suffix flag"
 		expErr5 := "failed to read certificate file"
-		_, err := testSuite.createAMT(project, name, HostArgs)
+		_, err := testSuite.createAMT(project, name, args)
 
 		switch {
 		case cert == "" || strings.TrimSpace(cert) == "":
@@ -221,6 +221,62 @@ func FuzzCreateAMTProfile(f *testing.F) {
 			if !testSuite.NoError(err) {
 				t.Errorf("Unexpected result for AMT profile creation: %v", err)
 			}
+		}
+
+		args = map[string]string{}
+
+		// --- List ---
+		_, err = testSuite.listAMT(project, args)
+		if project == "nonexistent-project" {
+			if err == nil || !strings.Contains(err.Error(), "error getting AMT Profiles") {
+				t.Errorf("Expected error for nonexistent project in list, got: %v", err)
+			}
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid AMT Profile list: %v", err)
+		}
+
+		// --- Get ---
+		_, err = testSuite.getAMT(project, name, args)
+		if name == "" || strings.TrimSpace(name) == "" {
+			if err == nil || !strings.Contains(err.Error(), "no amt profile matches the given name") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
+				t.Errorf("Expected error for missing profile name in get, got: %v", err)
+			}
+		} else if project == "nonexistent-project" {
+			if err == nil || !strings.Contains(err.Error(), "error getting AMT Profile") {
+				t.Errorf("Expected error for nonexistent project in get, got: %v", err)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), "no amt profile matches the given name") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 3")) {
+			// Acceptable error for missing profile
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid AMT Profile get: %v", err)
+		}
+
+		// --- Delete ---
+		_, err = testSuite.deleteAMT(project, name, args)
+		if name == "" || strings.TrimSpace(name) == "" {
+			if err == nil || !strings.Contains(err.Error(), "no amt profile matches the given name") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
+				t.Errorf("Expected error for missing profile name in delete, got: %v", err)
+			}
+		} else if project == "invalid-project" {
+			if err == nil || !strings.Contains(err.Error(), "error deleting AMT profile") {
+				t.Errorf("Expected error for invalid project in delete, got: %v", err)
+			}
+		} else if project == "nonexistent-project" {
+			if err == nil || !strings.Contains(err.Error(), "Error getting AMT profiles") {
+				t.Errorf("Expected error for nonexistent project in delete, got: %v", err)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), "no amt profile matches the given name") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 3")) {
+			// Acceptable error for missing profile
+		} else if err != nil && strings.Contains(err.Error(), "already exists") {
+			// Acceptable error for duplicate profile
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid AMT Profile delete: %v", err)
 		}
 	})
 }
