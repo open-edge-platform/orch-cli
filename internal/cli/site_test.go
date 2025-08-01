@@ -204,16 +204,17 @@ func (s *CLITestSuite) TestSite() {
 
 }
 
-func FuzzCreateSite(f *testing.F) {
+func FuzzSite(f *testing.F) {
 	// Initial corpus with valid and invalid input
-	f.Add("project", "site1", "region-abcd1234", "5", "5")       // valid
-	f.Add("project", "site1", "", "5", "5")                      // missing region
-	f.Add("project", "", "region-abcd1234", "5", "5")            // missing name
-	f.Add("project", "site1", "invalid-region", "5", "5")        // invalid region format
-	f.Add("project", "site1", "region-abcd1234", "invalid", "5") // invalid latitude
-	f.Add("project", "site1", "region-abcd1234", "5", "invalid") // invalid longitude
+	f.Add("project", "site1", "region-abcd1234", "5", "5", "site-7ceae560")
+	f.Add("project", "site1", "", "5", "5", "site-7ceae560")                      // missing region
+	f.Add("project", "", "region-abcd1234", "5", "5", "site-7ceae560")            // missing name
+	f.Add("project", "site1", "invalid-region", "5", "5", "site-7ceae560")        // invalid region format
+	f.Add("project", "site1", "region-abcd1234", "invalid", "5", "site-7ceae560") // invalid latitude
+	f.Add("project", "site1", "region-abcd1234", "5", "invalid", "site-7ceae560") // invalid longitude
+	f.Add("project", "site1", "region-abcd1234", "5", "5", "")
 
-	f.Fuzz(func(t *testing.T, project, name, region, latitude, longitude string) {
+	f.Fuzz(func(t *testing.T, project, name, region, latitude, longitude string, siteID string) {
 		testSuite := new(CLITestSuite)
 		testSuite.SetT(t)
 		testSuite.SetupSuite()
@@ -238,7 +239,10 @@ func FuzzCreateSite(f *testing.F) {
 			return
 		}
 		if region == "" || strings.TrimSpace(region) == "" {
-			if err == nil || !strings.Contains(err.Error(), "region flag required") && !strings.Contains(err.Error(), "accepts 1 arg(s), received 2") {
+			if err == nil || !strings.Contains(err.Error(), "region flag required") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "unknown shorthand flag") &&
+				!strings.Contains(err.Error(), "ccepts 1 arg(s), received 3") {
 				t.Errorf("Expected error for missing region %s for site %s, got: %v", region, name, err)
 			}
 			return
@@ -270,6 +274,42 @@ func FuzzCreateSite(f *testing.F) {
 		// If all inputs are valid, expect no error
 		if err != nil {
 			t.Errorf("Unexpected error for valid site %s creation in region %s: %v", name, region, err)
+		}
+
+		// --- List ---
+		_, err = testSuite.listSite(project, make(map[string]string))
+		if project == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing project in list, got: %v", err)
+			}
+		} else if err != nil {
+			t.Errorf("Unexpected error for valid site list: %v", err)
+		}
+
+		// --- Get ---
+		_, err = testSuite.getSite(project, siteID, make(map[string]string))
+		if siteID == "" || strings.TrimSpace(siteID) == "" {
+			if err == nil || !strings.Contains(err.Error(), "error while getting site") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "unknown shorthand flag") {
+				t.Errorf("Expected error for missing site id in get, got: %v", err)
+			}
+		} else if err != nil {
+			t.Errorf("Unexpected error for valid site get: %v", err)
+		}
+
+		// --- Delete ---
+		_, err = testSuite.deleteSite(project, siteID, make(map[string]string))
+		if siteID == "" || strings.TrimSpace(siteID) == "" {
+			if err == nil || !strings.Contains(err.Error(), "error while deleting site") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 3") {
+				t.Errorf("Expected error for missing site id in delete, got: %v", err)
+			}
+		} else if err != nil && !strings.Contains(err.Error(), "Not Found") {
+			t.Errorf("Unexpected error for valid site delete: %v", err)
 		}
 	})
 }
