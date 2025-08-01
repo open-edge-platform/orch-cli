@@ -440,12 +440,12 @@ func (s *CLITestSuite) TestHost() {
 	s.Error(err)
 }
 
-func FuzzCreateHost(f *testing.F) {
+func FuzzHost(f *testing.F) {
 	// Initial corpus with basic input
-	f.Add("project", "./testdata/mock.csv", "", "", "", "", "", "", "", "", "", "")
-	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true")
-
-	f.Fuzz(func(t *testing.T, project string, path string, remoteUser string, site string, secure string, osProfile string, metadata string, clusterDeploy string, clusterTemplate string, clusterConfig string, cloudInit string, amt string) {
+	f.Add("project", "./testdata/mock.csv", "", "", "", "", "", "", "", "", "", "", "host-abcd1234", "on", "immediate")
+	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "host-abcd1234", "", "")
+	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "", "on", "immediate")
+	f.Fuzz(func(t *testing.T, project string, path string, remoteUser string, site string, secure string, osProfile string, metadata string, clusterDeploy string, clusterTemplate string, clusterConfig string, cloudInit string, amt string, name string, pwr string, pol string) {
 		testSuite := new(CLITestSuite)
 		testSuite.SetT(t) // Set the testing.T instance
 		testSuite.SetupSuite()
@@ -454,6 +454,7 @@ func FuzzCreateHost(f *testing.F) {
 		testSuite.SetupTest()
 		defer testSuite.TearDownTest()
 
+		//Fuzz create host command
 		// Host arguments with override flags
 		HostArgs := map[string]string{
 			"import-from-csv":  path,
@@ -491,34 +492,18 @@ func FuzzCreateHost(f *testing.F) {
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected result for path %s", path)
 		}
-	})
-}
-func FuzzSetHost(f *testing.F) {
-	// Initial corpus with basic input
-	f.Add("project", "host-abcd1234", "on", "immediate")
-	f.Add("project", "host-abcd1234", "", "")
-	f.Add("project", "", "on", "immediate")
 
-	f.Fuzz(func(t *testing.T, project string, name string, pwr string, pol string) {
-		testSuite := new(CLITestSuite)
-		testSuite.SetT(t) // Set the testing.T instance
-		testSuite.SetupSuite()
-		defer testSuite.TearDownSuite()
-
-		testSuite.SetupTest()
-		defer testSuite.TearDownTest()
-
-		// Host arguments with override flags
-		HostArgs := map[string]string{
+		//Fuzz set host command
+		HostArgs = map[string]string{
 			"power":        pwr,
 			"power-policy": pol,
 		}
 
-		expErr1 := "incorrect power policy provided with --power-policy flag use one of immediate|ordered"
-		expErr2 := "accepts 1 arg(s), received 2"
-		expErr3 := "incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep"
+		expErr1 = "incorrect power policy provided with --power-policy flag use one of immediate|ordered"
+		expErr2 = "accepts 1 arg(s), received 2"
+		expErr3 = "incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep"
 
-		_, err := testSuite.setHost(project, name, HostArgs)
+		_, err = testSuite.setHost(project, name, HostArgs)
 
 		if (pwr == "" || strings.TrimSpace(pwr) == "") || (pol == "" || strings.TrimSpace(pol) == "") || (name == "" || strings.TrimSpace(name) == "") {
 			if !testSuite.Error(err) {
@@ -529,6 +514,33 @@ func FuzzSetHost(f *testing.F) {
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected result for %s power %s or policy %s", name, pwr, pol)
 		}
+
+		// --- Get Host ---
+		_, err = testSuite.getHost(project, name, make(map[string]string))
+		if name == "" || strings.TrimSpace(name) == "" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for missing host name in getHost, got: %v", err)
+			}
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for getHost with name %s: %v", name, err)
+		}
+
+		// --- Delete Host ---
+		_, err = testSuite.deleteHost(project, name, make(map[string]string))
+		if name == "" || strings.TrimSpace(name) == "" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for missing host name in deleteHost, got: %v", err)
+			}
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for deleteHost with name %s: %v", name, err)
+		}
+
+		// --- List Host ---
+		_, err = testSuite.listHost(project, make(map[string]string))
+		if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for listHost with project %s: %v", project, err)
+		}
+
 	})
 }
 
