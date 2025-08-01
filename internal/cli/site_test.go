@@ -5,6 +5,10 @@ package cli
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+	"testing"
 )
 
 func (s *CLITestSuite) createSite(project string, name string, args commandArgs) (string, error) {
@@ -198,4 +202,74 @@ func (s *CLITestSuite) TestSite() {
 	_, err = s.deleteSite(project, "nonexistent-site", make(map[string]string))
 	s.EqualError(err, "error while deleting site: Not Found")
 
+}
+
+func FuzzCreateSite(f *testing.F) {
+	// Initial corpus with valid and invalid input
+	f.Add("project", "site1", "region-abcd1234", "5", "5")       // valid
+	f.Add("project", "site1", "", "5", "5")                      // missing region
+	f.Add("project", "", "region-abcd1234", "5", "5")            // missing name
+	f.Add("project", "site1", "invalid-region", "5", "5")        // invalid region format
+	f.Add("project", "site1", "region-abcd1234", "invalid", "5") // invalid latitude
+	f.Add("project", "site1", "region-abcd1234", "5", "invalid") // invalid longitude
+
+	f.Fuzz(func(t *testing.T, project, name, region, latitude, longitude string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		args := map[string]string{
+			"region":    region,
+			"latitude":  latitude,
+			"longitude": longitude,
+		}
+
+		// Call your site creation logic (replace with your actual function if needed)
+		_, err := testSuite.createSite(project, name, args)
+
+		// Error expectations
+		if name == "" || strings.TrimSpace(name) == "" || !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(name) {
+			if err == nil {
+				t.Errorf("Expected error for missing site name, got: %v", err)
+			}
+			return
+		}
+		if region == "" || strings.TrimSpace(region) == "" {
+			if err == nil || !strings.Contains(err.Error(), "region flag required") && !strings.Contains(err.Error(), "accepts 1 arg(s), received 2") {
+				t.Errorf("Expected error for missing region %s for site %s, got: %v", region, name, err)
+			}
+			return
+		}
+		if !regexp.MustCompile(`^region-[0-9a-f]{8}$`).MatchString(region) {
+			if err == nil || !strings.Contains(err.Error(), "invalid region id") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "unknown shorthand flag") {
+				t.Errorf("Expected error for invalid region %s format for site %s, got: %v", region, name, err)
+			}
+			return
+		}
+		if latitude != "" {
+			if _, latErr := strconv.ParseFloat(latitude, 64); latErr != nil {
+				if err == nil || !strings.Contains(err.Error(), "invalid latitude value") {
+					t.Errorf("Expected error for invalid latitude, got: %v", err)
+				}
+				return
+			}
+		}
+		if longitude != "" {
+			if _, lngErr := strconv.ParseFloat(longitude, 64); lngErr != nil {
+				if err == nil || !strings.Contains(err.Error(), "invalid longitude value") {
+					t.Errorf("Expected error for invalid longitude, got: %v", err)
+				}
+				return
+			}
+		}
+		// If all inputs are valid, expect no error
+		if err != nil {
+			t.Errorf("Unexpected error for valid site %s creation in region %s: %v", name, region, err)
+		}
+	})
 }
