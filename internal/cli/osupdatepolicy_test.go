@@ -3,7 +3,11 @@
 
 package cli
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+	"testing"
+)
 
 func (s *CLITestSuite) listOSUpdatePolicy(publisher string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`list osupdatepolicy --project %s`,
@@ -106,4 +110,57 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 	OArgs = map[string]string{}
 	_, err = s.deleteOSUpdatePolicy(project, id, OArgs)
 	s.NoError(err)
+}
+
+func FuzzCreateOSUpdatePolicy(f *testing.F) {
+	// Initial corpus with valid and invalid input
+	f.Add("project", "./testdata/mutableosupdateprofile.yaml")         // valid
+	f.Add("project", "./testdata/latestosupdateprofile.yaml")          // valid
+	f.Add("project", "")                                               // missing file
+	f.Add("project", "./testdata/invalid.yaml")                        // invalid file
+	f.Add("invalid-project", "./testdata/mutableosupdateprofile.yaml") // invalid project
+	f.Add("project", "./testdata/duplicate.yaml")                      // duplicate name
+
+	f.Fuzz(func(t *testing.T, project, path string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		args := map[string]string{}
+
+		_, err := testSuite.createOSUpdatePolicy(project, path, args)
+
+		// Error expectations
+		if path != "./testdata/mutableosupdateprofile.yaml" && path != "./testdata/latestosupdateprofile.yaml" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for missing or invalid file, got: %v", err)
+			}
+			return
+		}
+		if project == "" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for missing project, got: %v", err)
+			}
+			return
+		}
+		if project == "invalid-project" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for invalid project, got: %v", err)
+			}
+			return
+		}
+		if strings.Contains(path, "duplicate") {
+			if err == nil || !strings.Contains(err.Error(), "already exists") {
+				t.Errorf("Expected error for duplicate OS Update Policy name, got: %v", err)
+			}
+			return
+		}
+		// If all inputs are valid, expect no error
+		if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid OS Update Policy creation: %v", err)
+		}
+	})
 }
