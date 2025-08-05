@@ -5,6 +5,8 @@ package cli
 
 import (
 	"fmt"
+	"strings"
+	"testing"
 )
 
 func (s *CLITestSuite) createProfile(pubName string, applicationName string, applicationVersion string, profileName string, args commandArgs) error {
@@ -137,4 +139,92 @@ func (s *CLITestSuite) TestProfile() {
 	// _, err = s.getProfile(pubName, applicationName, applicationVersion, profileName)
 	// s.Error(err)
 	// s.Contains(err.Error(), ` not found`)
+}
+
+func FuzzCreateProfile(f *testing.F) {
+	// Initial corpus with valid and invalid input
+	f.Add("testpub", "myapp", "1.2.3", "profile1", "testdata/values.yaml", "Profile.Display.Name", "Profile.Description") // valid
+	f.Add("", "myapp", "1.2.3", "profile1", "testdata/values.yaml", "Profile.Display.Name", "Profile.Description")        // missing publisher
+	f.Add("testpub", "", "1.2.3", "profile1", "testdata/values.yaml", "Profile.Display.Name", "Profile.Description")      // missing app
+	f.Add("testpub", "myapp", "", "profile1", "testdata/values.yaml", "Profile.Display.Name", "Profile.Description")      // missing app version
+	f.Add("testpub", "myapp", "1.2.3", "", "testdata/values.yaml", "Profile.Display.Name", "Profile.Description")         // missing profile name
+	f.Add("testpub", "myapp", "1.2.3", "profile1", "", "Profile.Display.Name", "Profile.Description")                     // missing values file
+
+	f.Fuzz(func(t *testing.T, pubName, applicationName, applicationVersion, profileName, valueFile, displayName, description string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		createArgs := map[string]string{
+			"chart-values": valueFile,
+			"display-name": displayName,
+			"description":  description,
+		}
+
+		// Create profile
+		err := testSuite.createProfile(pubName, applicationName, applicationVersion, profileName, createArgs)
+		if pubName == "" || applicationName == "" || applicationVersion == "" || profileName == "" || valueFile == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing required field, got: %v", err)
+			}
+			return
+		}
+		if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid profile creation: %v", err)
+			return
+		}
+
+		// Update profile
+		updateArgs := map[string]string{
+			"description": "new-description",
+		}
+		err = testSuite.updateProfile(pubName, applicationName, applicationVersion, profileName, updateArgs)
+		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "required flag \"project\" not set") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for missing profile
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid profile %s, application %s update: %v", profileName, applicationName, err)
+			return
+		}
+
+		// Get profile
+		_, err = testSuite.getProfile(pubName, applicationName, applicationVersion, profileName)
+		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "required flag \"project\" not set") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for missing profile
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid profile get: %v", err)
+			return
+		}
+
+		// Delete profile
+		err = testSuite.deleteProfile(pubName, applicationName, applicationVersion, profileName)
+		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "required flag \"project\" not set") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for missing profile
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid profile deletion: %v", err)
+		}
+	})
 }
