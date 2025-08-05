@@ -105,10 +105,11 @@ func doREST(
 	req, err := http.NewRequestWithContext(ctx, method,
 		netURL,
 		body)
-	req.Header.Add("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Content-Type", "application/json")
+
 	err = auth.AddAuthHeader(ctx, req)
 	if err != nil {
 		return nil, err
