@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
@@ -212,4 +213,136 @@ func TestPrintRegistryEvent(t *testing.T) {
 	assert.Contains(t, output, "test-registry")
 	assert.Contains(t, output, "Test Registry")
 	assert.Contains(t, output, "A test registry")
+}
+
+func FuzzRegistry(f *testing.F) {
+	// Seed with valid and invalid input combinations
+	f.Add("project", "reg1", "HELM", "http://1.2.3.4", "Registry-Description", "user", "token")
+	f.Add("project", "", "HELM", "http://1.2.3.4", "Registry-Description", "user", "token") // missing name
+	f.Add("", "reg1", "HELM", "http://1.2.3.4", "Registry-Description", "user", "token")    // missing project
+	f.Add("project", "reg1", "", "http://1.2.3.4", "Registry-Description", "user", "token") // missing type
+	f.Add("project", "reg1", "HELM", "", "Registry-Description", "user", "token")           // missing root-url
+	f.Add("project", "reg1", "HELM", "http://1.2.3.4", "", "user", "token")                 // missing description
+
+	f.Fuzz(func(t *testing.T, project, name, regType, rootURL, description, username, token string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		createArgs := map[string]string{
+			"registry-type": regType,
+			"root-url":      rootURL,
+			"description":   description,
+			"username":      username,
+			"auth-token":    token,
+		}
+
+		// --- Create ---
+		err := testSuite.createRegistry(project, name, createArgs)
+		if project == "" || name == "" || regType == "" || rootURL == "" || description == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing required field, got: %v", err)
+			}
+			return
+		} else if regType != "helm" && regType != "image" {
+			if err == nil {
+				t.Errorf("Expected error for invalid registry type, got: %v", err)
+			}
+			return
+		} else if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "required flag \"project\" not set") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for missing or invalid profile
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid registry creation: %v", err)
+			return
+		}
+
+		// --- List ---
+		_, err = testSuite.listRegistries(project, false, false, "", "")
+		if project == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing project in list, got: %v", err)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "required flag \"project\" not set") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for missing or invalid profile
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid registry list: %v", err)
+		}
+
+		// --- Get ---
+		_, err = testSuite.getRegistry(project, name)
+		if name == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing registry name in get, got: %v", err)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "required flag \"project\" not set") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for missing or invalid profile
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid registry get: %v", err)
+		}
+
+		// --- Update ---
+		updateArgs := map[string]string{
+			"description": "new-description",
+		}
+		err = testSuite.updateRegistry(project, name, updateArgs)
+		if name == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing registry name in update, got: %v", err)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "required flag \"project\" not set") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for missing or invalid profile
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid registry update: %v", err)
+		}
+
+		// --- Delete ---
+		err = testSuite.deleteRegistry(project, name)
+		if name == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing registry name in delete, got: %v", err)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "required flag \"project\" not set") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for missing or invalid profile
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid registry delete: %v", err)
+		}
+	})
 }
