@@ -73,7 +73,7 @@ fuzz:
 	for pkg in $$(go list ./cmd/... ./internal/... ./pkg/...); do \
 		for fuzzfunc in $$(go test -list '^Fuzz' $$pkg | grep '^Fuzz' | awk '{print $$1}'); do \
 			echo "==> go test -fuzz=$$fuzzfunc -fuzztime=10s $$pkg" ; \
-			go test -fuzz=^$$fuzzfunc$$ -fuzztime=10s $$pkg || exit 1; \
+			go test -fuzz=^$$fuzzfunc$$ -fuzztime=30s $$pkg || exit 1; \
 		done \
 	done
 
