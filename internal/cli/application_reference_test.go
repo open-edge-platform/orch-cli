@@ -5,6 +5,8 @@ package cli
 
 import (
 	"fmt"
+	"strings"
+	"testing"
 )
 
 func (s *CLITestSuite) createApplicationReference(project string, pkgName string,
@@ -83,4 +85,51 @@ func (s *CLITestSuite) TestApplicationReference() {
 	// expectedVerboseOutput[pkgName]["Application Dependencies"] = `\[\]`
 	// expectedVerboseOutput[pkgName]["Applications"] = `\[\]`
 	// s.compareOutput(expectedVerboseOutput, parsedAfterDeleteOutput)
+}
+
+func FuzzApplicationReference(f *testing.F) {
+	// Seed with valid and invalid input combinations
+	f.Add("project", "deployment-pkg", "1.0", "app1", "1.0") // valid
+	f.Add("", "deployment-pkg", "1.0", "app1", "1.0")        // missing project
+	f.Add("project", "", "1.0", "app1", "1.0")               // missing pkgName
+	f.Add("project", "deployment-pkg", "", "app1", "1.0")    // missing pkgVersion
+	f.Add("project", "deployment-pkg", "1.0", "", "1.0")     // missing applicationName
+	f.Add("project", "deployment-pkg", "1.0", "app1", "")    // missing applicationVersion
+
+	f.Fuzz(func(t *testing.T, project, pkgName, pkgVersion, applicationName, applicationVersion string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		// --- Create Application Reference ---
+		err := testSuite.createApplicationReference(project, pkgName, pkgVersion, applicationName, applicationVersion)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts 3 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 3 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 3 arg(s), received 4") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for invalid reference
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid application reference create: %v", err)
+		}
+
+		// --- Delete Application Reference ---
+		err = testSuite.deleteApplicationReference(project, pkgName, pkgVersion, applicationName)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts 3 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 3 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 3 arg(s), received 4") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for invalid reference
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid application reference delete: %v", err)
+		}
+	})
 }
