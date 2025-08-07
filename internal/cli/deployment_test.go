@@ -6,6 +6,8 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"testing"
 )
 
 func (s *CLITestSuite) TestDeploymentGetOverrideValues() {
@@ -86,4 +88,96 @@ func (s *CLITestSuite) TestDeployment() {
 
 	_, err = s.deleteDeployment(project, "test-deployment", make(map[string]string))
 	s.NoError(err)
+}
+
+func FuzzDeployment(f *testing.F) {
+	// Seed with valid and invalid input combinations
+	f.Add("test-app", "v1.0.0", "test-deployment", project, "test-profile", "Test", "test-app.l1=l1value,test-app.l2=l2value")
+	f.Add("", "v1.0.0", "test-deployment", project, "test-profile", "Test", "")
+	f.Add("test-app", "", "test-deployment", project, "test-profile", "Test", "")
+	f.Add("test-app", "v1.0.0", "", project, "test-profile", "Test", "")
+	f.Add("test-app", "v1.0.0", "test-deployment", "", "test-profile", "Test", "")
+	f.Add("test-app", "v1.0.0", "test-deployment", project, "", "Test", "")
+	f.Add("test-app", "v1.0.0", "test-deployment", project, "test-profile", "", "")
+
+	f.Fuzz(func(t *testing.T, appName, version, deployment, publisher, profile, displayName, appLabel string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		args := map[string]string{
+			"project":           publisher,
+			"display-name":      displayName,
+			"profile":           profile,
+			"application-label": appLabel,
+		}
+
+		// --- Create Deployment ---
+		err := testSuite.createDeployment(appName, version, args)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "must be formatted as key=value")) {
+			// Acceptable error for invalid create
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment create: %v", err)
+		}
+
+		// --- List Deployments ---
+		_, err = testSuite.listDeployment(publisher, make(map[string]string))
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "must be formatted as key=value")) {
+			// Acceptable error for invalid list
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment list: %v", err)
+		}
+
+		// --- Get Deployment ---
+		_, err = testSuite.getDeployment(publisher, deployment, make(map[string]string))
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "must be formatted as key=value")) {
+			// Acceptable error for invalid get
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment get: %v", err)
+		}
+
+		// --- Set Deployment ---
+		_, err = testSuite.setDeployment(publisher, deployment, make(map[string]string))
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "must be formatted as key=value")) {
+			// Acceptable error for invalid set
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment set: %v", err)
+		}
+
+		// --- Delete Deployment ---
+		_, err = testSuite.deleteDeployment(publisher, deployment, make(map[string]string))
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "must be formatted as key=value")) {
+			// Acceptable error for invalid delete
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment delete: %v", err)
+		}
+	})
 }
