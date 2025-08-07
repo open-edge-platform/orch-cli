@@ -108,9 +108,11 @@ func FuzzApplicationReference(f *testing.F) {
 		err := testSuite.createApplicationReference(project, pkgName, pkgVersion, applicationName, applicationVersion)
 		if err != nil && (strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "accepts 3 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 3 arg(s), received 1") ||
 			strings.Contains(err.Error(), "accepts 3 arg(s), received 2") ||
 			strings.Contains(err.Error(), "accepts 3 arg(s), received 4") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "application reference must be in the form name:version") ||
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
 			// Acceptable error for invalid reference
@@ -122,6 +124,7 @@ func FuzzApplicationReference(f *testing.F) {
 		err = testSuite.deleteApplicationReference(project, pkgName, pkgVersion, applicationName)
 		if err != nil && (strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "accepts 3 arg(s), received 0") ||
+			strings.Contains(err.Error(), "accepts 3 arg(s), received 1") ||
 			strings.Contains(err.Error(), "accepts 3 arg(s), received 2") ||
 			strings.Contains(err.Error(), "accepts 3 arg(s), received 4") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||

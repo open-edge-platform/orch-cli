@@ -33,7 +33,6 @@ func (s *CLITestSuite) listApplications(project string, verbose bool, orderBy st
 	}
 	if kind != "" {
 		args = args + " kind=" + kind
-		fmt.Println("yoyoyoyoyoyowe-qor wefopkfk XXXXXXXXX:wq")
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err

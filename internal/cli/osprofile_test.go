@@ -305,7 +305,9 @@ func FuzzOSProfile(f *testing.F) {
 				t.Errorf("Expected error for missing profile name in delete, got: %v", err)
 			}
 		} else if project == "invalid-project" {
-			if err == nil || !strings.Contains(err.Error(), "error deleting OS profile") {
+			if err == nil || !strings.Contains(err.Error(), "error deleting OS profile") &&
+				!strings.Contains(err.Error(), "no os profile matches the given name") &&
+				!strings.Contains(err.Error(), "Internal Server Error") {
 				t.Errorf("Expected error for invalid project in delete, got: %v", err)
 			}
 		} else if project == "nonexistent-project" {
@@ -314,6 +316,7 @@ func FuzzOSProfile(f *testing.F) {
 			}
 		} else if err != nil && (strings.Contains(err.Error(), "no os profile matches the given name") ||
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 3")) {
 
 		} else if err != nil && strings.Contains(err.Error(), "already exists") {

@@ -338,7 +338,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tCPU Threads:\t %v\n", *host.CpuThreads)
 	_, _ = fmt.Fprintf(writer, "-\tCPU Sockets:\t %v\n\n", *host.CpuSockets)
 
-	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.CurrentOs.FixedCves != nil {
+	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.CurrentOs != nil && host.Instance.CurrentOs.FixedCves != nil {
 
 		if *host.Instance.ExistingCves != "" {
 			err := json.Unmarshal([]byte(*host.Instance.ExistingCves), &cveEntries)

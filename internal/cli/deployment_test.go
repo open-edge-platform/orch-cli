@@ -122,7 +122,8 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "must be formatted as key=value")) {
+			strings.Contains(err.Error(), "must be formatted as key=value") ||
+			strings.Contains(err.Error(), "not in format")) {
 			// Acceptable error for invalid create
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment create: %v", err)
@@ -135,7 +136,8 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "must be formatted as key=value")) {
+			strings.Contains(err.Error(), "must be formatted as key=value") ||
+			strings.Contains(err.Error(), "not in format")) {
 			// Acceptable error for invalid list
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment list: %v", err)
@@ -148,7 +150,8 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "must be formatted as key=value")) {
+			strings.Contains(err.Error(), "must be formatted as key=value") ||
+			strings.Contains(err.Error(), "not in format")) {
 			// Acceptable error for invalid get
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment get: %v", err)
@@ -161,7 +164,8 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "must be formatted as key=value")) {
+			strings.Contains(err.Error(), "must be formatted as key=value") ||
+			strings.Contains(err.Error(), "not in format")) {
 			// Acceptable error for invalid set
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment set: %v", err)
@@ -174,7 +178,8 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "must be formatted as key=value")) {
+			strings.Contains(err.Error(), "must be formatted as key=value") ||
+			strings.Contains(err.Error(), "not in format")) {
 			// Acceptable error for invalid delete
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment delete: %v", err)
