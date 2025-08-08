@@ -5,6 +5,8 @@ package cli
 
 import (
 	"fmt"
+	"strings"
+	"testing"
 )
 
 func (s *CLITestSuite) createDeploymentProfile(pubName string, pkgName string, pkgVersion string, pkgProfileName string, args commandArgs) error {
@@ -123,4 +125,85 @@ func (s *CLITestSuite) TestDeploymentProfile() {
 	// _, err = s.getDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName)
 	// s.Error(err)
 	// s.Contains(err.Error(), ` not found`)
+}
+
+func FuzzDeploymentProfile(f *testing.F) {
+	// Seed with valid and invalid input combinations
+	f.Add("pubtest", "deployment-pkg", "1.0", "deployment-package-profile", "display.name", "desc")
+	f.Add("", "deployment-pkg", "1.0", "deployment-package-profile", "display.name", "desc")     // missing pubName
+	f.Add("pubtest", "", "1.0", "deployment-package-profile", "display.name", "desc")            // missing pkgName
+	f.Add("pubtest", "deployment-pkg", "", "deployment-package-profile", "display.name", "desc") // missing pkgVersion
+	f.Add("pubtest", "deployment-pkg", "1.0", "", "display.name", "desc")                        // missing pkgProfileName
+
+	f.Fuzz(func(t *testing.T, pubName, pkgName, pkgVersion, pkgProfileName, displayName, description string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		createArgs := map[string]string{
+			"display-name": displayName,
+			"description":  description,
+		}
+
+		// --- Create Deployment Profile ---
+		err := testSuite.createDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName, createArgs)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment profile create: %v", err)
+		}
+
+		// --- List Deployment Profiles ---
+		_, err = testSuite.listDeploymentProfiles(pubName, pkgName, pkgVersion, false)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment profile list: %v", err)
+		}
+
+		// --- Get Deployment Profile ---
+		_, err = testSuite.getDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment profile get: %v", err)
+		}
+
+		// --- Update Deployment Profile ---
+		updateArgs := map[string]string{
+			"display-name": "new.display.name",
+		}
+		err = testSuite.updateDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName, updateArgs)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment profile update: %v", err)
+		}
+
+		// --- Delete Deployment Profile ---
+		err = testSuite.deleteDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment profile delete: %v", err)
+		}
+	})
 }

@@ -3,7 +3,11 @@
 
 package cli
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+	"testing"
+)
 
 func (s *CLITestSuite) listOSUpdatePolicy(publisher string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`list osupdatepolicy --project %s`,
@@ -106,4 +110,79 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 	OArgs = map[string]string{}
 	_, err = s.deleteOSUpdatePolicy(project, id, OArgs)
 	s.NoError(err)
+}
+
+func FuzzOSUpdatePolicy(f *testing.F) {
+	// Initial corpus with valid and invalid input
+	f.Add("project", "./testdata/mutableosupdateprofile.yaml", "osupdatepolicy-abc12345")
+	f.Add("project", "./testdata/latestosupdateprofile.yaml", "osupdatepolicy-abc12345")
+	f.Add("project", "", "osupdatepolicy-abc12345")                                               // missing file
+	f.Add("project", "./testdata/invalid.yaml", "osupdatepolicy-abc12345")                        // invalid file
+	f.Add("invalid-project", "./testdata/mutableosupdateprofile.yaml", "osupdatepolicy-abc12345") // invalid project
+	f.Add("project", "./testdata/duplicate.yaml", "osupdatepolicy-abc12345")                      // duplicate name
+	f.Add("", "./testdata/mutableosupdateprofile.yaml", "osupdatepolicy-abc12345")                // missing project
+	f.Add("project", "./testdata/mutableosupdateprofile.yaml", "")                                // missing id for delete/list
+
+	f.Fuzz(func(t *testing.T, project, path, id string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		args := map[string]string{}
+
+		// --- Create ---
+		_, err := testSuite.createOSUpdatePolicy(project, path, args)
+		if path != "./testdata/mutableosupdateprofile.yaml" && path != "./testdata/latestosupdateprofile.yaml" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for missing or invalid file, got: %v", err)
+			}
+		} else if project == "invalid-project" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for invalid project, got: %v", err)
+			}
+		} else if strings.Contains(path, "duplicate") {
+			if err == nil || !strings.Contains(err.Error(), "already exists") {
+				t.Errorf("Expected error for duplicate OS Update Policy name, got: %v", err)
+			}
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid OS Update Policy creation: %v", err)
+		}
+
+		// --- List ---
+		_, err = testSuite.listOSUpdatePolicy(project, args)
+		if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid OS Update Policy list: %v", err)
+		}
+
+		// --- Delete ---
+		_, err = testSuite.getOSUpdatePolicy(project, id, args)
+		if id == "" || strings.TrimSpace(id) == "" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for missing id in get, got: %v", err)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), "Internal Server Error") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid OS Update Policy get: %v", err)
+		}
+
+		// --- Delete ---
+		_, err = testSuite.deleteOSUpdatePolicy(project, id, args)
+		if id == "" || strings.TrimSpace(id) == "" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for missing id in delete, got: %v", err)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), "Internal Server Error") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "accepts 1 arg(s), received 2")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid OS Update Policy delete: %v", err)
+		}
+	})
 }

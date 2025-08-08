@@ -5,6 +5,9 @@ package cli
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+	"testing"
 )
 
 func (s *CLITestSuite) createRegion(project string, name string, args commandArgs) (string, error) {
@@ -215,4 +218,98 @@ func (s *CLITestSuite) TestRegion() {
 	_, err = s.deleteRegion(project, "nonexistent-region", make(map[string]string))
 	s.EqualError(err, "invalid region id")
 
+}
+
+func FuzzRegion(f *testing.F) {
+	// Initial corpus with valid and invalid input
+	f.Add("project", "region1", "country", "", "region-abcd1111")                 // valid, no parent
+	f.Add("project", "region-123", "state", "region-abcd1111", "region-abcd1111") // valid with parent
+	f.Add("project", "", "country", "", "")                                       // missing name
+	f.Add("project", "region1", "", "", "")                                       // missing type
+	f.Add("project", "region1", "invalidtype", "", "")                            // invalid type
+	f.Add("project", "region1", "city", "invalid-parent", "")                     // invalid parent
+	f.Add("project", "region1", "country", "", "")                                // valid for get/delete
+	f.Add("project", "nonexistent-region", "country", "", "")                     // invalid region for get/delete
+
+	f.Fuzz(func(t *testing.T, project, name, rtype, parent string, resourceID string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		args := map[string]string{
+			"type": rtype,
+		}
+		if parent != "" {
+			args["parent"] = parent
+		}
+
+		_, err := testSuite.createRegion(project, name, args)
+
+		// Error expectations
+		if name == "" || !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(name) {
+			if err == nil {
+				t.Errorf("Expected error for invalid or missing region name, got: %v", err)
+			}
+			return
+		}
+		if rtype == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing region type, got: %v", err)
+			}
+			return
+		}
+		if rtype != "country" && rtype != "state" && rtype != "county" && rtype != "region" && rtype != "city" {
+			if err == nil {
+				t.Errorf("Expected error for invalid region type, got: %v", err)
+			}
+			return
+		}
+		if parent != "" && !regexp.MustCompile(`^region-[0-9a-f]{8}$`).MatchString(parent) {
+			if err == nil {
+				t.Errorf("Expected error for invalid parent region id, got: %v", err)
+			}
+			return
+		}
+		// If all inputs are valid, expect no error
+		if err != nil {
+			t.Errorf("Unexpected error for valid region %s creation: %v", name, err)
+		}
+
+		// --- List ---
+		_, err = testSuite.listRegion(project, make(map[string]string))
+		if project == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing project in list, got: %v", err)
+			}
+		} else if err != nil {
+			t.Errorf("Unexpected error for valid region list: %v", err)
+		}
+
+		// --- Get ---
+		_, err = testSuite.getRegion(project, resourceID, make(map[string]string))
+		if resourceID == "" || !regexp.MustCompile(`^region-[a-z0-9]+$`).MatchString(resourceID) {
+			if err == nil || !strings.Contains(err.Error(), "invalid region id") && !strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
+				t.Errorf("Expected error for missing or invalid region id in delete, got: %v", err)
+			}
+		} else if err != nil && strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
+			t.Log("Expected error:", err)
+		} else if err != nil {
+			t.Errorf("Unexpected error for valid region get: %v", err)
+		}
+
+		// --- Delete ---
+		_, err = testSuite.deleteRegion(project, resourceID, make(map[string]string))
+		if resourceID == "" || !regexp.MustCompile(`^region-[a-z0-9]+$`).MatchString(resourceID) {
+			if err == nil || !strings.Contains(err.Error(), "invalid region id") && !strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
+				t.Errorf("Expected error for missing or invalid region id in delete, got: %v", err)
+			}
+		} else if err != nil && strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
+			t.Log("Expected error:", err)
+		} else if err != nil {
+			t.Errorf("Unexpected error for valid region delete: %v", err)
+		}
+	})
 }

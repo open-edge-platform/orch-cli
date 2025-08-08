@@ -5,6 +5,9 @@ package cli
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"testing"
 
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 )
@@ -200,7 +203,7 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.createHost(project, HostArgs)
 	// Accept either error message as valid
 	s.True(err != nil && (err.Error() == "Pre-flight check failed" ||
-		err.Error() == "--import-from-csv <path/to/file.csv> is required"),
+		err.Error() == "--import-from-csv <path/to/file.csv> is required, cannot be empty"),
 		"Expected either pre-flight check failure or missing CSV error, got: %v", err)
 
 	// Host creation with wrong cloud init
@@ -445,4 +448,120 @@ func (s *CLITestSuite) TestHost() {
 	// Test delete host with non-existent host
 	_, err = s.deleteHost(project, "host-11111111", make(map[string]string))
 	s.Error(err)
+}
+
+func FuzzHost(f *testing.F) {
+	// Initial corpus with basic input
+	f.Add("project", "./testdata/mock.csv", "", "", "", "", "", "", "", "", "", "", "host-abcd1234", "on", "immediate")
+	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "host-abcd1234", "", "")
+	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "", "on", "immediate")
+	f.Fuzz(func(t *testing.T, project string, path string, remoteUser string, site string, secure string, osProfile string, metadata string, clusterDeploy string, clusterTemplate string, clusterConfig string, cloudInit string, amt string, name string, pwr string, pol string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t) // Set the testing.T instance
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		//Fuzz create host command
+		// Host arguments with override flags
+		HostArgs := map[string]string{
+			"import-from-csv":  path,
+			"remote-user":      remoteUser,
+			"site":             site,
+			"secure":           secure,
+			"os-profile":       osProfile,
+			"metadata":         metadata,
+			"cluster-deploy":   clusterDeploy,
+			"cluster-template": clusterTemplate,
+			"cluster-config":   clusterConfig,
+			"cloud-init":       cloudInit,
+			"amt":              amt,
+		}
+
+		expErr1 := "--import-from-csv <path/to/file.csv> is required, cannot be empty"
+		expErr2 := "host import input file must be a CSV file"
+		expErr3 := "Failed to provision hosts"
+		expErr4 := "Pre-flight check failed"
+
+		_, err := testSuite.createHost(project, HostArgs)
+
+		if path == "" || strings.TrimSpace(path) == "" {
+			if !testSuite.Error(err) {
+				t.Errorf("Unexpected result for path %s", path)
+			}
+		} else if !PathExists(path) || !HasCSVExtension(path) {
+			if !testSuite.Error(err) {
+				t.Errorf("Unexpected result for path %s", path)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), expErr1) || strings.Contains(err.Error(), expErr2) || strings.Contains(err.Error(), expErr3) || strings.Contains(err.Error(), expErr4)) {
+			if !testSuite.Error(err) {
+				t.Errorf("Unexpected result for path %s", path)
+			}
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected result for path %s", path)
+		}
+
+		//Fuzz set host command
+		HostArgs = map[string]string{
+			"power":        pwr,
+			"power-policy": pol,
+		}
+
+		expErr1 = "incorrect power policy provided with --power-policy flag use one of immediate|ordered"
+		expErr2 = "accepts 1 arg(s), received 2"
+		expErr3 = "incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep"
+
+		_, err = testSuite.setHost(project, name, HostArgs)
+
+		if (pwr == "" || strings.TrimSpace(pwr) == "") || (pol == "" || strings.TrimSpace(pol) == "") || (name == "" || strings.TrimSpace(name) == "") {
+			if !testSuite.Error(err) {
+				t.Errorf("Unexpected result for %s for power %s or policy %s", name, pwr, pol)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), expErr1) || strings.Contains(err.Error(), expErr2) || strings.Contains(err.Error(), expErr3)) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected result for %s power %s or policy %s", name, pwr, pol)
+		}
+
+		// --- Get Host ---
+		_, err = testSuite.getHost(project, name, make(map[string]string))
+		if name == "" || strings.TrimSpace(name) == "" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for missing host name in getHost, got: %v", err)
+			}
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for getHost with name %s: %v", name, err)
+		}
+
+		// --- Delete Host ---
+		_, err = testSuite.deleteHost(project, name, make(map[string]string))
+		if name == "" || strings.TrimSpace(name) == "" {
+			if !testSuite.Error(err) {
+				t.Errorf("Expected error for missing host name in deleteHost, got: %v", err)
+			}
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for deleteHost with name %s: %v", name, err)
+		}
+
+		// --- List Host ---
+		_, err = testSuite.listHost(project, make(map[string]string))
+		if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for listHost with project %s: %v", project, err)
+		}
+
+	})
+}
+
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return err == nil
+}
+
+func HasCSVExtension(path string) bool {
+	return strings.HasSuffix(path, ".csv")
 }

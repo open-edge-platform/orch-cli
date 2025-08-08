@@ -46,7 +46,8 @@ mod-update:
 
 build: mod-update
 	@# Help: Runs build stage
-	go build -ldflags "-X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
+	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
+	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w -extldflags=-static -X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
 
 install: build
 	@# Help: Installs client tool
@@ -66,6 +67,15 @@ mdlint: ## lint all markdown README.md files
 test: mod-update
 	@# Help: Runs test stage
 	go test -race -gcflags=-l `go list $(PKG)/cmd/... $(PKG)/internal/... $(PKG)/pkg/...`
+
+fuzz:
+	@# Help: Runs all Go fuzzing functions, one at a time, in each package
+	for pkg in $$(go list ./cmd/... ./internal/... ./pkg/...); do \
+		for fuzzfunc in $$(go test -list '^Fuzz' $$pkg | grep '^Fuzz' | awk '{print $$1}'); do \
+			echo "==> go test -fuzz=$$fuzzfunc -fuzztime=30s $$pkg" ; \
+			go test -fuzz=^$$fuzzfunc$$ -fuzztime=30s $$pkg || exit 1; \
+		done \
+	done
 
 fetch-catalog-openapi:
 	@# Help: Fetch the Catalog OpenAPI spec
