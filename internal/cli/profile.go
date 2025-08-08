@@ -13,6 +13,7 @@ import (
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/open-edge-platform/orch-library/go/pkg/errors"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 func getCreateProfileCommand() *cobra.Command {
@@ -140,6 +141,9 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 	chartBytes, err := readInput(*getFlag(cmd, "chart-values"))
 	if err != nil {
 		return fmt.Errorf("error reading values.yaml content: %w", err)
+	}
+	if err := validateValuesYAML(chartBytes); err != nil {
+		return fmt.Errorf("invalid values.yaml: %w", err)
 	}
 
 	chartValues := b64.StdEncoding.EncodeToString(chartBytes)
@@ -288,6 +292,9 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("error reading chart-values content: %w", err)
 		}
+		if err := validateValuesYAML(chartValueBytes); err != nil {
+			return fmt.Errorf("invalid values.yaml: %w", err)
+		}
 		newChartValues := b64.StdEncoding.EncodeToString(chartValueBytes)
 		profile.ChartValues = &newChartValues
 	}
@@ -367,4 +374,16 @@ func runDeleteProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting profile %s of application %s:%s",
 		profileName, name, version))
+}
+
+func validateValuesYAML(data []byte) error {
+	var out interface{}
+	if err := yaml.Unmarshal(data, &out); err != nil {
+		return fmt.Errorf("invalid YAML: %w", err)
+	}
+	// Optionally enforce top-level map/object
+	if _, ok := out.(map[interface{}]interface{}); !ok {
+		return fmt.Errorf("values.yaml must have a map/object at the top level")
+	}
+	return nil
 }

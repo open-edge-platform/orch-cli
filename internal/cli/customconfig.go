@@ -9,11 +9,13 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 const listCustomConfigExamples = `# List all custom config (Cloud Init) resources
@@ -85,13 +87,17 @@ func verifyName(n string) error {
 
 // readCustomConfigFromYaml reads the contents of a YAML file and returns it as a string.
 func readCustomConfigFromYaml(path string) (string, error) {
-	// Read the file contents
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
-
-	// Convert the byte slice to a string
+	if !strings.HasPrefix(strings.TrimSpace(string(data)), "#cloud-config") {
+		return "", fmt.Errorf("file does not start with #cloud-config")
+	}
+	var out interface{}
+	if err := yaml.Unmarshal(data, &out); err != nil {
+		return "", fmt.Errorf("invalid YAML: %w", err)
+	}
 	return string(data), nil
 }
 
