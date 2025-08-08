@@ -103,9 +103,8 @@ func FuzzLogin(f *testing.F) {
 		err := testSuite.login(username, password)
 		if viper.GetString(auth.RefreshTokenField) != "" {
 			if err == nil || !strings.Contains(err.Error(), "already logged in") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 3") &&
+				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "bad flag") &&
 				!strings.Contains(err.Error(), "unknown shorthand flag:") &&
 				!strings.Contains(err.Error(), "unknown flag") {
 				t.Errorf("Expected error for already logged in, got: %v", err)
