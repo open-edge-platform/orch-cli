@@ -50,6 +50,10 @@ func runCreateApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 
 	applicationFields := strings.SplitN(args[2], ":", 3)
 
+	if len(applicationFields) < 2 {
+		return fmt.Errorf("application reference must be in the form name:version, got %q", args[2])
+	}
+
 	gresp, err := catalogClient.CatalogServiceGetDeploymentPackageWithResponse(ctx, projectName, pkgName, pkgVersion,
 		auth.AddAuthHeader)
 	if err != nil {

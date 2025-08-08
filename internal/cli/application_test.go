@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
@@ -32,7 +33,6 @@ func (s *CLITestSuite) listApplications(project string, verbose bool, orderBy st
 	}
 	if kind != "" {
 		args = args + " kind=" + kind
-		fmt.Println("yoyoyoyoyoyowe-qor wefopkfk XXXXXXXXX:wq")
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -239,3 +239,97 @@ func TestPrintApplicationEvent(t *testing.T) {
 }
 
 func strPtr(s string) *string { return &s }
+
+func FuzzApplication(f *testing.F) {
+	// Initial corpus with valid and invalid input
+	f.Add("project", "app1", "1.0.0", "chart1", "reg1", "addon", "App Display", "App Description")
+	f.Add("project", "", "1.0.0", "chart1", "reg1", "addon", "App Display", "App Description")           // missing app name
+	f.Add("project", "app1", "", "chart1", "reg1", "addon", "App Display", "App Description")            // missing version
+	f.Add("project", "app1", "1.0.0", "", "reg1", "addon", "App Display", "App Description")             // missing chart name
+	f.Add("project", "app1", "1.0.0", "chart1", "", "addon", "App Display", "App Description")           // missing registry
+	f.Add("project", "app1", "1.0.0", "chart1", "reg1", "invalidkind", "App Display", "App Description") // invalid kind
+	f.Add("", "app1", "1.0.0", "chart1", "reg1", "addon", "App Display", "App Description")              // missing project
+
+	f.Fuzz(func(t *testing.T, project, appName, appVersion, chartName, registryName, kind, displayName, description string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		createArgs := map[string]string{
+			"chart-name":     chartName,
+			"chart-registry": registryName,
+			"chart-version":  appVersion,
+			"display-name":   displayName,
+			"description":    description,
+			"kind":           kind,
+		}
+
+		// --- Create ---
+		err := testSuite.createApplication(project, appName, appVersion, createArgs)
+		if kind == "" || kind == "addon" || kind == "normal" || kind == "extension" {
+			if kind != "" && kind != "addon" && kind != "normal" && kind != "extension" {
+				if err == nil {
+					t.Errorf("Expected error for invalid kind, got: %v", err)
+				}
+				return
+			}
+		} else if err != nil && (strings.Contains(err.Error(), "not set") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "accepts")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid application creation: %v", err)
+			return
+		}
+
+		// --- List ---
+		_, err = testSuite.listApplications(project, false, "version", "version="+appVersion, kind)
+		if err != nil && (strings.Contains(err.Error(), "not set") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "accepts")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid application list: %v", err)
+		}
+
+		// --- Get ---
+		_, err = testSuite.getApplication(project, appName, appVersion)
+		if err != nil && (strings.Contains(err.Error(), "not set") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "accepts")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid application get: %v", err)
+		}
+
+		// --- Update ---
+		updateArgs := map[string]string{
+			"display-name": "new.display.name",
+		}
+		err = testSuite.updateApplication(project, appName, appVersion, updateArgs)
+		if appName == "" && appVersion == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing app name or version in update, got: %v", err)
+			}
+		} else if err != nil && (strings.Contains(err.Error(), "not set") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "accepts")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid application update: %v", err)
+		}
+
+		// --- Delete ---
+		err = testSuite.deleteApplication(project, appName, appVersion)
+		if err != nil && (strings.Contains(err.Error(), "not set") ||
+			strings.Contains(err.Error(), "unknown shorthand flag:") ||
+			strings.Contains(err.Error(), "accepts")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid application delete: %v", err)
+		}
+	})
+}

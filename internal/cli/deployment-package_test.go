@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
@@ -192,4 +193,105 @@ func TestPrintDeploymentPackageEvent(t *testing.T) {
 	assert.Contains(t, output, "test-deployment-pkg")
 	assert.Contains(t, output, "1.0.0")
 	assert.Contains(t, output, "Test Deployment Package")
+}
+
+func FuzzDeploymentPackage(f *testing.F) {
+	// Seed with valid and invalid input combinations
+	f.Add("pubtest", "deployment-pkg", "1.0", "app1", "1.0", "display.name", "desc")
+	f.Add("", "deployment-pkg", "1.0", "app1", "1.0", "display.name", "desc")     // missing project
+	f.Add("pubtest", "", "1.0", "app1", "1.0", "display.name", "desc")            // missing pkgName
+	f.Add("pubtest", "deployment-pkg", "", "app1", "1.0", "display.name", "desc") // missing pkgVersion
+	f.Add("pubtest", "deployment-pkg", "1.0", "", "1.0", "display.name", "desc")  // missing appName
+	f.Add("pubtest", "deployment-pkg", "1.0", "app1", "", "display.name", "desc") // missing appVersion
+
+	f.Fuzz(func(t *testing.T, project, pkgName, pkgVersion, appName, appVersion, displayName, description string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		createArgs := map[string]string{
+			"application-reference": appName + ":" + appVersion + ":" + project,
+			"display-name":          displayName,
+			"description":           description,
+		}
+
+		// --- Create Deployment Package ---
+		err := testSuite.createDeploymentPackage(project, pkgName, pkgVersion, createArgs)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment package create: %v", err)
+		}
+
+		// --- List Deployment Packages ---
+		_, err = testSuite.listDeploymentPackages(project, false, "", "")
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			// Acceptable error for invalid list
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment package list: %v", err)
+		}
+
+		// --- Get Deployment Package ---
+		_, err = testSuite.getDeploymentPackage(project, pkgName, pkgVersion)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment package get: %v", err)
+		}
+
+		// --- Update Deployment Package ---
+		updateArgs := map[string]string{
+			"display-name": "new.display.name",
+		}
+		err = testSuite.updateDeploymentPackage(project, pkgName, pkgVersion, updateArgs)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment package update: %v", err)
+		}
+
+		// --- Delete Deployment Package ---
+		err = testSuite.deleteDeploymentPackage(project, pkgName, pkgVersion)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment package delete: %v", err)
+		}
+
+		// --- Delete Deployment Package (No Version) ---
+		err = testSuite.deleteDeploymentPackageNoVersion(project, pkgName)
+		if err != nil && (strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
+			strings.Contains(err.Error(), "no such file or directory")) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error for valid deployment package delete no version: %v", err)
+		}
+	})
 }

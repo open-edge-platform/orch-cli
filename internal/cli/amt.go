@@ -137,14 +137,14 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if certpass == "" {
-		return errors.New("certificate passoword must be provided with --cert-pass flag ")
+	if certpass == "" || strings.HasPrefix(certpass, "--") {
+		return errors.New("certificate password must be provided with --cert-pass flag and cannot be empty")
 	}
 	if certformat == "" || certformat != "string" && certformat != "raw" {
 		return errors.New("certificate format must be provided with --cert-format flag with accepted arguments `string|raw` ")
 	}
-	if domainsuffix == "" {
-		return errors.New("domain suffix format must be provided with --domain-suffix flag ")
+	if domainsuffix == "" || strings.HasPrefix(domainsuffix, "--") {
+		return errors.New("domain suffix format must be provided with --domain-suffix flag and cannot be empty")
 	}
 
 	ctx, rpsClient, projectName, err := RpsFactory(cmd)
@@ -245,8 +245,8 @@ func printAmtProfile(writer io.Writer, amtprofile rps.DomainResponse) {
 
 func readCert(certPath string) ([]byte, error) {
 
-	if certPath == "" {
-		return nil, errors.New("certificate path must be provided with --cert flag ")
+	if certPath == "" || strings.HasPrefix(certPath, "--") {
+		return nil, errors.New("certificate path must be provided with --cert flag and cannot be empty")
 	}
 	certData, err := os.ReadFile(certPath)
 	if err != nil {
