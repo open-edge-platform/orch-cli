@@ -91,6 +91,9 @@ func readCustomConfigFromYaml(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if len(data) > 1<<20 { // 1MB limit
+		return "", fmt.Errorf("YAML file too large")
+	}
 	if !strings.HasPrefix(strings.TrimSpace(string(data)), "#cloud-config") {
 		return "", fmt.Errorf("file does not start with #cloud-config")
 	}

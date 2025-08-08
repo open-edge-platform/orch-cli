@@ -25,6 +25,7 @@ import (
 )
 
 const timeLayout = "2006-01-02T15:04:05"
+const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 // Use the interface type instead of the concrete function type
 var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
@@ -229,6 +230,29 @@ func readInput(path string) ([]byte, error) {
 		return io.ReadAll(os.Stdin)
 	}
 	return os.ReadFile(path)
+}
+
+func readInputWithLimit(path string) ([]byte, error) {
+	var reader io.Reader
+	if path == "-" {
+		reader = os.Stdin
+	} else {
+		file, err := os.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		reader = file
+	}
+	limited := io.LimitReader(reader, maxValuesYAMLSize+1)
+	data, err := io.ReadAll(limited)
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > maxValuesYAMLSize {
+		return nil, fmt.Errorf("input exceeds maximum allowed size of %d bytes", maxValuesYAMLSize)
+	}
+	return data, nil
 }
 
 // Checks the specified REST status and if it signals an anomaly, return an error formatted using the specified message

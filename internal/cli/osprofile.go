@@ -205,6 +205,10 @@ func readOSProfileFromYaml(path string) (*NestedSpec, error) {
 		return nil, err
 	}
 
+	if len(data) > 1<<20 { // 1MB limit
+		return nil, fmt.Errorf("YAML file too large")
+	}
+
 	// Unmarshal YAML to map[interface{}]interface{}
 	var raw interface{}
 	if err := yaml.Unmarshal(data, &raw); err != nil {

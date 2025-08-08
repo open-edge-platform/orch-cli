@@ -139,6 +139,9 @@ func readUpdateProfileFromYaml(path string) (*UpdateNestedSpec, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(data) > 1<<20 { // 1MB limit
+		return nil, fmt.Errorf("YAML file too large")
+	}
 
 	// Unmarshal YAML to map[interface{}]interface{}
 	var raw interface{}

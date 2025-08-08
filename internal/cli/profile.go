@@ -138,7 +138,7 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 	version := args[1]
 	profileName := args[2]
 
-	chartBytes, err := readInput(*getFlag(cmd, "chart-values"))
+	chartBytes, err := readInputWithLimit(*getFlag(cmd, "chart-values"))
 	if err != nil {
 		return fmt.Errorf("error reading values.yaml content: %w", err)
 	}
@@ -288,7 +288,7 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 	// If the chart-values flag was given, fetch the new content to replace the existing one
 	newChartValuesPath := *getFlag(cmd, "chart-values")
 	if len(newChartValuesPath) > 0 {
-		chartValueBytes, err := readInput(*getFlag(cmd, "chart-values"))
+		chartValueBytes, err := readInputWithLimit(*getFlag(cmd, "chart-values"))
 		if err != nil {
 			return fmt.Errorf("error reading chart-values content: %w", err)
 		}
