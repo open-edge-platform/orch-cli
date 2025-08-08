@@ -153,19 +153,19 @@ func WriteHostRecords(filePath string, records []types.HostRecord) error {
 	for _, record := range records {
 		// Create a slice of fields from the HostRecord
 		fields := []string{
-			record.Serial,
-			record.UUID,
-			record.OSProfile,
-			record.Site,
-			string(record.Secure),
-			record.RemoteUser,
-			record.Metadata,
-			record.AMTEnable,
-			record.CloudInitMeta,
-			record.K8sEnable,
-			record.K8sClusterTemplate,
-			record.K8sConfig,
-			record.Error,
+			sanitizeCSVField(record.Serial),
+			sanitizeCSVField(record.UUID),
+			sanitizeCSVField(record.OSProfile),
+			sanitizeCSVField(record.Site),
+			sanitizeCSVField(string(record.Secure)),
+			sanitizeCSVField(record.RemoteUser),
+			sanitizeCSVField(record.Metadata),
+			sanitizeCSVField(record.AMTEnable),
+			sanitizeCSVField(record.CloudInitMeta),
+			sanitizeCSVField(record.K8sEnable),
+			sanitizeCSVField(record.K8sClusterTemplate),
+			sanitizeCSVField(record.K8sConfig),
+			sanitizeCSVField(record.Error),
 		}
 
 		// Write the fields to the CSV file
@@ -180,4 +180,17 @@ func WriteHostRecords(filePath string, records []types.HostRecord) error {
 	}
 
 	return nil
+}
+
+func sanitizeCSVField(field string) string {
+	if field == "" {
+		return field
+	}
+	dangerous := []byte{'=', '+', '-', '@', '\t', '\r'}
+	for _, c := range dangerous {
+		if field[0] == c {
+			return "'" + field
+		}
+	}
+	return field
 }

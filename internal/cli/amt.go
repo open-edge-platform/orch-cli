@@ -15,6 +15,7 @@ import (
 	"github.com/open-edge-platform/cli/pkg/rest/rps"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 )
 
 const listAmtProfileExamples = `
@@ -135,6 +136,15 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 	cert, err := readCert(certpath)
 	if err != nil {
 		return err
+	}
+
+	if certpass == "" {
+		fmt.Print("Enter Certificate Password: ")
+		bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
+		if err != nil {
+			return err
+		}
+		certpass = string(bytePassword)
 	}
 
 	if certpass == "" || strings.HasPrefix(certpass, "--") {
