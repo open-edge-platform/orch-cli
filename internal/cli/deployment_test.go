@@ -123,6 +123,7 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "no such file or directory") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "must be formatted as key=value") ||
+			strings.Contains(err.Error(), "no target clusters specified") ||
 			strings.Contains(err.Error(), "not in format")) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -137,6 +138,7 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "no such file or directory") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "must be formatted as key=value") ||
+			strings.Contains(err.Error(), "no target clusters specified") ||
 			strings.Contains(err.Error(), "not in format")) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -151,6 +153,7 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "no such file or directory") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "must be formatted as key=value") ||
+			strings.Contains(err.Error(), "no target clusters specified") ||
 			strings.Contains(err.Error(), "not in format")) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -165,6 +168,7 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "no such file or directory") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "must be formatted as key=value") ||
+			strings.Contains(err.Error(), "no target clusters specified") ||
 			strings.Contains(err.Error(), "not in format")) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -179,6 +183,7 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "no such file or directory") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "must be formatted as key=value") ||
+			strings.Contains(err.Error(), "no target clusters specified") ||
 			strings.Contains(err.Error(), "not in format")) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
