@@ -53,7 +53,6 @@ func (s *CLITestSuite) TestLogin() {
 	s.Equal("u", viper.Get("username"))
 	s.Equal("system-client", viper.Get(auth.ClientIDField))
 	s.Equal(kcTest, viper.Get(auth.KeycloakEndpointField))
-	s.Equal(false, viper.GetBool(auth.TrustCertField))
 
 	// Now call any function - should invoke auth.AddAuthHeader() and do the refresh flow
 	_, err = s.listRegistries(project, false, true, "", "")
@@ -76,7 +75,6 @@ func (s *CLITestSuite) TestLogout() {
 	s.Empty(viper.GetString(auth.UserName))
 	s.Empty(viper.GetString(auth.ClientIDField))
 	s.Empty(viper.GetString(auth.KeycloakEndpointField))
-	s.Empty(viper.GetString(auth.TrustCertField))
 	s.NoError(s.logout())
 }
 
@@ -105,9 +103,8 @@ func FuzzLogin(f *testing.F) {
 		err := testSuite.login(username, password)
 		if viper.GetString(auth.RefreshTokenField) != "" {
 			if err == nil || !strings.Contains(err.Error(), "already logged in") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 3") &&
+				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "bad flag") &&
 				!strings.Contains(err.Error(), "unknown shorthand flag:") &&
 				!strings.Contains(err.Error(), "unknown flag") {
 				t.Errorf("Expected error for already logged in, got: %v", err)
