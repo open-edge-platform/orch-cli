@@ -5,6 +5,7 @@ package cli
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -68,7 +69,7 @@ func getCatalogServiceContext(cmd *cobra.Command) (context.Context, *catapi.Clie
 	if err != nil {
 		return nil, nil, "", err
 	}
-	catalogClient, err := catapi.NewClientWithResponses(serverAddress)
+	catalogClient, err := catapi.NewClientWithResponses(serverAddress, TLS13CatalogClientOption())
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -85,7 +86,7 @@ func getDeploymentServiceContext(cmd *cobra.Command) (context.Context, *depapi.C
 	if err != nil {
 		return nil, nil, "", err
 	}
-	deploymentClient, err := depapi.NewClientWithResponses(serverAddress)
+	deploymentClient, err := depapi.NewClientWithResponses(serverAddress, TLS13DeploymentClientOption())
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -102,7 +103,7 @@ func getClusterServiceContext(cmd *cobra.Command) (context.Context, *coapi.Clien
 	if err != nil {
 		return nil, nil, "", err
 	}
-	coClient, err := coapi.NewClientWithResponses(serverAddress)
+	coClient, err := coapi.NewClientWithResponses(serverAddress, TLS13ClusterClientOption())
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -119,7 +120,7 @@ func getInfraServiceContext(cmd *cobra.Command) (context.Context, *infraapi.Clie
 	if err != nil {
 		return nil, nil, "", err
 	}
-	infraClient, err := infraapi.NewClientWithResponses(serverAddress)
+	infraClient, err := infraapi.NewClientWithResponses(serverAddress, TLS13InfraClientOption())
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -136,7 +137,7 @@ func getRpsServiceContext(cmd *cobra.Command) (context.Context, *rpsapi.ClientWi
 	if err != nil {
 		return nil, nil, "", err
 	}
-	rpsClient, err := rpsapi.NewClientWithResponses(serverAddress)
+	rpsClient, err := rpsapi.NewClientWithResponses(serverAddress, TLS13RPSClientOption())
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -373,4 +374,71 @@ func obscureValue(s *string) string {
 		return "********"
 	}
 	return "<none>"
+}
+
+func TLS13CatalogClientOption() func(*catapi.Client) error {
+	return func(c *catapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+func TLS13DeploymentClientOption() func(*depapi.Client) error {
+	return func(c *depapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+func TLS13InfraClientOption() func(*infraapi.Client) error {
+	return func(c *infraapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+func TLS13ClusterClientOption() func(*coapi.Client) error {
+	return func(c *coapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+
+func TLS13RPSClientOption() func(*rpsapi.Client) error {
+	return func(c *rpsapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
 }
