@@ -6,15 +6,17 @@ package auth
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
+	"os"
+	"strings"
+
 	"github.com/atomix/dazl"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"net/http"
-	"os"
-	"strings"
 )
 
 const (
@@ -36,8 +38,22 @@ var log = dazl.GetPackageLogger()
 // can be replaced during test to point at a mock implementation
 var KeycloakFactory = newKeycloakClient
 
+func TLS13ClientOption() openidconnect.ClientOption {
+	return func(c *openidconnect.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+
 func newKeycloakClient(_ context.Context, endpoint string) (openidconnect.ClientWithResponsesInterface, error) {
-	client, err := openidconnect.NewClientWithResponses(endpoint)
+	client, err := openidconnect.NewClientWithResponses(endpoint, TLS13ClientOption())
 	if err != nil {
 		return nil, err
 	}
