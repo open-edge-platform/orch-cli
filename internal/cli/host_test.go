@@ -510,7 +510,7 @@ func FuzzHost(f *testing.F) {
 				t.Errorf("Unexpected result for %s for power %s or policy %s", name, pwr, pol)
 			}
 		} else if err != nil && (strings.Contains(err.Error(), expErr1) || strings.Contains(err.Error(), expErr2) || strings.Contains(err.Error(), expErr3)) {
-
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected result for %s power %s or policy %s", name, pwr, pol)
 		}

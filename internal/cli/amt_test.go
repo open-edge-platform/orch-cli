@@ -249,7 +249,7 @@ func FuzzAMTProfile(f *testing.F) {
 		} else if err != nil && (strings.Contains(err.Error(), "no amt profile matches the given name") ||
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 3")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid AMT Profile get: %v", err)
 		}
@@ -272,9 +272,9 @@ func FuzzAMTProfile(f *testing.F) {
 		} else if err != nil && (strings.Contains(err.Error(), "no amt profile matches the given name") ||
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 3")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if err != nil && strings.Contains(err.Error(), "already exists") {
-			// Acceptable error for duplicate profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid AMT Profile delete: %v", err)
 		}

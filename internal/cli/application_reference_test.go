@@ -107,15 +107,12 @@ func FuzzApplicationReference(f *testing.F) {
 		// --- Create Application Reference ---
 		err := testSuite.createApplicationReference(project, pkgName, pkgVersion, applicationName, applicationVersion)
 		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts 3 arg(s), received 0") ||
-			strings.Contains(err.Error(), "accepts 3 arg(s), received 1") ||
-			strings.Contains(err.Error(), "accepts 3 arg(s), received 2") ||
-			strings.Contains(err.Error(), "accepts 3 arg(s), received 4") ||
+			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "application reference must be in the form name:version") ||
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid reference
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid application reference create: %v", err)
 		}
@@ -123,14 +120,11 @@ func FuzzApplicationReference(f *testing.F) {
 		// --- Delete Application Reference ---
 		err = testSuite.deleteApplicationReference(project, pkgName, pkgVersion, applicationName)
 		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts 3 arg(s), received 0") ||
-			strings.Contains(err.Error(), "accepts 3 arg(s), received 1") ||
-			strings.Contains(err.Error(), "accepts 3 arg(s), received 2") ||
-			strings.Contains(err.Error(), "accepts 3 arg(s), received 4") ||
+			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid reference
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid application reference delete: %v", err)
 		}

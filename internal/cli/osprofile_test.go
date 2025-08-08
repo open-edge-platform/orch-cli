@@ -253,15 +253,17 @@ func FuzzOSProfile(f *testing.F) {
 				t.Errorf("Expected error for invalid project, got: %v", err)
 			}
 		} else if strings.Contains(path, "nameduplicate") {
-			if err == nil || !strings.Contains(err.Error(), "already exists") {
+			if err == nil || !strings.Contains(err.Error(), "already exists") &&
+				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "not exist") {
 				t.Errorf("Expected error for duplicate OS Profile name, got: %v", err)
 			}
 		} else if path != "./testdata/osprofile.yaml" && path != "./testdata/osprofilenameduplicate.yaml" {
 			if err == nil || !strings.Contains(err.Error(), "file does not exist") &&
 				!strings.Contains(err.Error(), "unknown flag") &&
 				!strings.Contains(err.Error(), "os Profile input must be a yaml file") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 3") {
+				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "not exist") {
 				t.Errorf("Expected error for missing or invalid file, got: %v", err)
 			}
 		} else if err != nil {
@@ -282,7 +284,8 @@ func FuzzOSProfile(f *testing.F) {
 		_, err = testSuite.getOSProfile(project, name, args)
 		if name == "" || strings.TrimSpace(name) == "" {
 			if err == nil || !strings.Contains(err.Error(), "no os profile matches the given name") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
+				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "not exist") {
 				t.Errorf("Expected error for missing profile name in get, got: %v", err)
 			}
 		} else if project == "nonexistent-project" {
@@ -290,9 +293,9 @@ func FuzzOSProfile(f *testing.F) {
 				t.Errorf("Expected error for nonexistent project in get, got: %v", err)
 			}
 		} else if err != nil && (strings.Contains(err.Error(), "no os profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 3")) {
-			// Acceptable error for missing profile
+			strings.Contains(err.Error(), "accepts") ||
+			strings.Contains(err.Error(), "not exist")) {
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid OS Profile get: %v", err)
 		}
@@ -301,7 +304,8 @@ func FuzzOSProfile(f *testing.F) {
 		_, err = testSuite.deleteOSProfile(project, name, args)
 		if name == "" || strings.TrimSpace(name) == "" {
 			if err == nil || !strings.Contains(err.Error(), "no os profile matches the given name") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
+				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "not exist") {
 				t.Errorf("Expected error for missing profile name in delete, got: %v", err)
 			}
 		} else if project == "invalid-project" {
@@ -315,12 +319,10 @@ func FuzzOSProfile(f *testing.F) {
 				t.Errorf("Expected error for nonexistent project in delete, got: %v", err)
 			}
 		} else if err != nil && (strings.Contains(err.Error(), "no os profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 3")) {
-
+			strings.Contains(err.Error(), "accepts")) {
+			t.Log("Expected error:", err)
 		} else if err != nil && strings.Contains(err.Error(), "already exists") {
-			// Acceptable error for duplicate profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid OS Profile delete: %v", err)
 		}

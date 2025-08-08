@@ -124,7 +124,7 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "must be formatted as key=value") ||
 			strings.Contains(err.Error(), "not in format")) {
-			// Acceptable error for invalid create
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment create: %v", err)
 		}
@@ -138,7 +138,7 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "must be formatted as key=value") ||
 			strings.Contains(err.Error(), "not in format")) {
-			// Acceptable error for invalid list
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment list: %v", err)
 		}
@@ -152,7 +152,7 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "must be formatted as key=value") ||
 			strings.Contains(err.Error(), "not in format")) {
-			// Acceptable error for invalid get
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment get: %v", err)
 		}
@@ -166,7 +166,7 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "must be formatted as key=value") ||
 			strings.Contains(err.Error(), "not in format")) {
-			// Acceptable error for invalid set
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment set: %v", err)
 		}
@@ -180,7 +180,7 @@ func FuzzDeployment(f *testing.F) {
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "must be formatted as key=value") ||
 			strings.Contains(err.Error(), "not in format")) {
-			// Acceptable error for invalid delete
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment delete: %v", err)
 		}

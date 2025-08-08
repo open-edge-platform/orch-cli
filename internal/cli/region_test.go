@@ -295,7 +295,7 @@ func FuzzRegion(f *testing.F) {
 				t.Errorf("Expected error for missing or invalid region id in delete, got: %v", err)
 			}
 		} else if err != nil && strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
-			// Acceptable error for duplicate profile
+			t.Log("Expected error:", err)
 		} else if err != nil {
 			t.Errorf("Unexpected error for valid region get: %v", err)
 		}
@@ -307,7 +307,7 @@ func FuzzRegion(f *testing.F) {
 				t.Errorf("Expected error for missing or invalid region id in delete, got: %v", err)
 			}
 		} else if err != nil && strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
-			// Acceptable error for duplicate profile
+			t.Log("Expected error:", err)
 		} else if err != nil {
 			t.Errorf("Unexpected error for valid region delete: %v", err)
 		}

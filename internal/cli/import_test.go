@@ -64,7 +64,7 @@ func FuzzImportHelmChart(f *testing.F) {
 			strings.Contains(err.Error(), "Not Found") ||
 			strings.Contains(err.Error(), "required flag \"project\" not set") ||
 			strings.Contains(err.Error(), "is a directory")) {
-			// Acceptable error for invalid import
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid import: %v", err)
 		}

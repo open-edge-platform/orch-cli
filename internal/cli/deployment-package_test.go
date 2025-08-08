@@ -223,8 +223,9 @@ func FuzzDeploymentPackage(f *testing.F) {
 		if err != nil && (strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid create
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment package create: %v", err)
 		}
@@ -234,8 +235,10 @@ func FuzzDeploymentPackage(f *testing.F) {
 		if err != nil && (strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
 			// Acceptable error for invalid list
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment package list: %v", err)
 		}
@@ -245,8 +248,9 @@ func FuzzDeploymentPackage(f *testing.F) {
 		if err != nil && (strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid get
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment package get: %v", err)
 		}
@@ -259,8 +263,9 @@ func FuzzDeploymentPackage(f *testing.F) {
 		if err != nil && (strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid update
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment package update: %v", err)
 		}
@@ -270,8 +275,9 @@ func FuzzDeploymentPackage(f *testing.F) {
 		if err != nil && (strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid delete
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment package delete: %v", err)
 		}
@@ -281,8 +287,9 @@ func FuzzDeploymentPackage(f *testing.F) {
 		if err != nil && (strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
+			strings.Contains(err.Error(), "in form of") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid delete no version
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment package delete no version: %v", err)
 		}

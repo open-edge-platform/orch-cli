@@ -65,6 +65,7 @@ func FuzzNetwork(f *testing.F) {
 	f.Add("project", "net1", "invalidtype") // invalid type
 
 	f.Fuzz(func(t *testing.T, project, name, ntype string) {
+		_ = project //todo use properly
 		testSuite := new(CLITestSuite)
 		testSuite.SetT(t)
 		testSuite.SetupSuite()
@@ -93,7 +94,7 @@ func FuzzNetwork(f *testing.F) {
 			strings.Contains(err.Error(), "required flag \"project\" not set") ||
 
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid network %s creation, type %s: %v", name, ntype, err)
 			return
@@ -115,7 +116,7 @@ func FuzzNetwork(f *testing.F) {
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
 
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid network set: %v", err)
 		}
@@ -135,7 +136,7 @@ func FuzzNetwork(f *testing.F) {
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
 
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid network get: %v", err)
 		}
@@ -151,7 +152,7 @@ func FuzzNetwork(f *testing.F) {
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
 
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid network list: %v", err)
 		}
@@ -171,7 +172,7 @@ func FuzzNetwork(f *testing.F) {
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
 
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid network delete: %v", err)
 		}

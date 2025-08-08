@@ -166,7 +166,7 @@ func FuzzOSUpdatePolicy(f *testing.F) {
 		} else if err != nil && (strings.Contains(err.Error(), "Internal Server Error") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 2")) {
-			// Acceptable error for backend/server issues
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid OS Update Policy get: %v", err)
 		}
@@ -180,7 +180,7 @@ func FuzzOSUpdatePolicy(f *testing.F) {
 		} else if err != nil && (strings.Contains(err.Error(), "Internal Server Error") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 2")) {
-			// Acceptable error for backend/server issues
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid OS Update Policy delete: %v", err)
 		}

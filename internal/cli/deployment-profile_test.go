@@ -154,7 +154,7 @@ func FuzzDeploymentProfile(f *testing.F) {
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid create
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment profile create: %v", err)
 		}
@@ -165,7 +165,7 @@ func FuzzDeploymentProfile(f *testing.F) {
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid list
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment profile list: %v", err)
 		}
@@ -176,7 +176,7 @@ func FuzzDeploymentProfile(f *testing.F) {
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid get
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment profile get: %v", err)
 		}
@@ -190,7 +190,7 @@ func FuzzDeploymentProfile(f *testing.F) {
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid update
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment profile update: %v", err)
 		}
@@ -201,7 +201,7 @@ func FuzzDeploymentProfile(f *testing.F) {
 			strings.Contains(err.Error(), "accepts") ||
 			strings.Contains(err.Error(), "unknown flag") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid delete
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid deployment profile delete: %v", err)
 		}

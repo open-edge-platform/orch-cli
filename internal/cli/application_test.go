@@ -279,7 +279,7 @@ func FuzzApplication(f *testing.F) {
 		} else if err != nil && (strings.Contains(err.Error(), "not set") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "accepts")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid application creation: %v", err)
 			return
@@ -290,7 +290,7 @@ func FuzzApplication(f *testing.F) {
 		if err != nil && (strings.Contains(err.Error(), "not set") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "accepts")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid application list: %v", err)
 		}
@@ -300,7 +300,7 @@ func FuzzApplication(f *testing.F) {
 		if err != nil && (strings.Contains(err.Error(), "not set") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "accepts")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid application get: %v", err)
 		}
@@ -317,7 +317,7 @@ func FuzzApplication(f *testing.F) {
 		} else if err != nil && (strings.Contains(err.Error(), "not set") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "accepts")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid application update: %v", err)
 		}
@@ -327,7 +327,7 @@ func FuzzApplication(f *testing.F) {
 		if err != nil && (strings.Contains(err.Error(), "not set") ||
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "accepts")) {
-			// Acceptable error for missing profile
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid application delete: %v", err)
 		}
