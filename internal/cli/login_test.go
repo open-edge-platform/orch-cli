@@ -51,7 +51,6 @@ func (s *CLITestSuite) TestLogin() {
 	s.Equal("u", viper.Get("username"))
 	s.Equal("system-client", viper.Get(auth.ClientIDField))
 	s.Equal(kcTest, viper.Get(auth.KeycloakEndpointField))
-	s.Equal(false, viper.GetBool(auth.TrustCertField))
 
 	// Now call any function - should invoke auth.AddAuthHeader() and do the refresh flow
 	_, err = s.listRegistries(project, false, true, "", "")
@@ -74,6 +73,5 @@ func (s *CLITestSuite) TestLogout() {
 	s.Empty(viper.GetString(auth.UserName))
 	s.Empty(viper.GetString(auth.ClientIDField))
 	s.Empty(viper.GetString(auth.KeycloakEndpointField))
-	s.Empty(viper.GetString(auth.TrustCertField))
 	s.NoError(s.logout())
 }

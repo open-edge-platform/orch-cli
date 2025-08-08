@@ -28,8 +28,8 @@ const (
 
 	ActiveProjectID = "ActiveProjectID"
 	DefaultClientID = "system-client"
-	TrustCertField  = "trust-cert"
-	UserName        = "username"
+
+	UserName = "username"
 )
 
 var log = dazl.GetPackageLogger()

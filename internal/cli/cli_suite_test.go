@@ -52,7 +52,6 @@ func (s *CLITestSuite) SetupSuite() {
 	viper.Set(auth.RefreshTokenField, "")
 	viper.Set(auth.ClientIDField, "")
 	viper.Set(auth.KeycloakEndpointField, "")
-	viper.Set(auth.TrustCertField, "")
 
 	// In your SetupSuite method, replace the existing timestamp line with:
 	timestamp, _ := time.Parse(time.RFC3339, "2025-01-15T10:30:00Z")
@@ -103,7 +102,6 @@ func (s *CLITestSuite) TearDownSuite() {
 	viper.Set(auth.RefreshTokenField, "")
 	viper.Set(auth.ClientIDField, "")
 	viper.Set(auth.KeycloakEndpointField, "")
-	viper.Set(auth.TrustCertField, "")
 }
 
 func (s *CLITestSuite) SetupTest() {
@@ -119,7 +117,6 @@ func (s *CLITestSuite) TearDownTest() {
 	viper.Set(auth.RefreshTokenField, "")
 	viper.Set(auth.ClientIDField, "")
 	viper.Set(auth.KeycloakEndpointField, "")
-	viper.Set(auth.TrustCertField, "")
 }
 
 func TestCLI(t *testing.T) {

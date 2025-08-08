@@ -4,9 +4,7 @@
 package cli
 
 import (
-	"crypto/tls"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -33,7 +31,6 @@ func getLoginCommand() *cobra.Command {
 	cmd.Flags().String("keycloak", "", "keycloak OIDC endpoint - will be retrieved from api-endpoint/openidc-issuer by default")
 	cmd.Flags().String("claims", "openid profile email", "keycloak OIDC endpoint")
 	cmd.Flags().Bool("quiet", false, "use to silence login message")
-	cmd.Flags().Bool("trust-cert", false, "use to accept invalid Keycloak https cert")
 	cmd.Flags().Bool("show-token", false, "display the access token, e.g. for use in 'curl'")
 
 	return cmd
@@ -66,18 +63,6 @@ func login(cmd *cobra.Command, args []string) error {
 	clientID, err := cmd.Flags().GetString("client-id")
 	if err != nil {
 		return err
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS13},
-		Proxy:           http.ProxyFromEnvironment,
-	}
-	trustCert, err := cmd.Flags().GetBool("trust-cert")
-	if err != nil {
-		return err
-	}
-	if trustCert {
-		tr.TLSClientConfig.InsecureSkipVerify = true
 	}
 
 	var keycloakEp string
@@ -163,7 +148,6 @@ func login(cmd *cobra.Command, args []string) error {
 	viper.Set(auth.UserName, username)
 	viper.Set(auth.ClientIDField, clientID)
 	viper.Set(auth.KeycloakEndpointField, keycloakEp)
-	viper.Set(auth.TrustCertField, trustCert)
 
 	if err = viper.WriteConfig(); err != nil {
 		return err
@@ -199,7 +183,7 @@ func logout(_ *cobra.Command, _ []string) error {
 		viper.Set(auth.UserName, "")
 		viper.Set(auth.ClientIDField, "")
 		viper.Set(auth.KeycloakEndpointField, "")
-		viper.Set(auth.TrustCertField, "")
+
 		return viper.WriteConfig()
 	}
 	log.Info("Was not logged in - no-op")
