@@ -415,6 +415,16 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.setHost(project, hostID, HostArgs)
 	s.NoError(err)
 
+	// Test OSupdate policy set
+
+	HostArgs = map[string]string{
+		"osupdatepolicy": "osupdatepolicy-1234abcd",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
 	// Test deauthorize host
 	_, err = s.deauthorizeHost(project, hostID, make(map[string]string))
 	s.NoError(err)

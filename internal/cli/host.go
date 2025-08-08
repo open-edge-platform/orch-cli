@@ -120,6 +120,11 @@ orch-cli set host host-1234abcd  --project itep --power-policy ordered
 
 --power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
 --power-policy - Set the desired power command policy to ordered|immediate
+
+#Set host OS Update policy
+orch-cli set host host-1234abcd  --project itep --osupdatepolicy <resourceID>
+
+--osupdatepolicy - Set the OS Update policy for the host, must be a valid resource ID of an OS Update policy
 `
 
 var hostHeaderGet = "\nDetailed Host Information\n"
@@ -1015,6 +1020,7 @@ func getSetHostCommand() *cobra.Command {
 	}
 	cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
 	cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
+	cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
 
 	return cmd
 }
@@ -1401,13 +1407,15 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 
 	policyFlag, _ := cmd.Flags().GetString("power-policy")
 	powerFlag, _ := cmd.Flags().GetString("power")
+	updFlag, _ := cmd.Flags().GetString("osupdatepolicy")
 
-	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) {
+	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" {
 		return errors.New("a flag must be provided with the set host command and value cannot be \"\"")
 	}
 
 	var power *infra.PowerState
 	var policy *infra.PowerCommandPolicy
+	var updatePolicy *string
 
 	if policyFlag != "" {
 		pol, err := resolvePowerPolicy(policyFlag)
@@ -1425,6 +1433,10 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		power = &pow
 	}
 
+	if updFlag != "" {
+		updatePolicy = &updFlag
+	}
+
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
@@ -1440,8 +1452,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 	host := *iresp.JSON200
 
-	// If host is onboarded manipulate
-	if host.Instance != nil {
+	if (powerFlag != "" || policyFlag != "") && host.Instance != nil {
 		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
 			PowerCommandPolicy: policy,
 			DesiredPowerState:  power,
@@ -1450,7 +1461,19 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if err := checkResponse(resp.HTTPResponse, "error while executing host set"); err != nil {
+		if err := checkResponse(resp.HTTPResponse, "error while executing host set for AMT"); err != nil {
+			return err
+		}
+	}
+
+	if updatePolicy != nil && host.Instance != nil && host.Instance.InstanceID != nil && updFlag != "" {
+		resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
+			OsUpdatePolicyID: updatePolicy,
+		}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, "error while executing host set OS update policy"); err != nil {
 			return err
 		}
 	}

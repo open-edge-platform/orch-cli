@@ -9,15 +9,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
-	"os/signal"
 	"strings"
 	"text/tabwriter"
 
-	"github.com/gorilla/websocket"
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
-	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
@@ -25,7 +21,6 @@ import (
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/metadata"
 )
 
 const timeLayout = "2006-01-02T15:04:05"
@@ -146,42 +141,6 @@ func getRpsServiceContext(cmd *cobra.Command) (context.Context, *rpsapi.ClientWi
 		return nil, nil, "", err
 	}
 	return context.Background(), rpsClient, projectName, nil
-}
-
-// Get the web socket for receiving event notifications.
-func getCatalogWebSocket(cmd *cobra.Command) (*websocket.Conn, error) {
-	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
-	if err != nil {
-		return nil, err
-	}
-	serverAddress = strings.Replace(serverAddress, "https", "wss", 1)
-	serverAddress = strings.Replace(serverAddress, "http", "ws", 1)
-
-	u, err := url.JoinPath(serverAddress, "/catalog.orchestrator.apis/events")
-	if err != nil {
-		return nil, err
-	}
-
-	projectUUID, err := getProjectName(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create an auxiliary request so that we can inject required auth headers into it
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Inject the headers
-	ctx := metadata.NewOutgoingContext(context.Background(), map[string][]string{auth.ActiveProjectID: {projectUUID}})
-	if err := auth.AddAuthHeader(ctx, req); err != nil {
-		return nil, err
-	}
-
-	// Dial to the web-socket using the annotated headers
-	ws, _, err := websocket.DefaultDialer.Dial(u, req.Header)
-	return ws, err
 }
 
 // Adds the mandatory project UUID, and the standard display-name, and description
@@ -414,78 +373,4 @@ func obscureValue(s *string) string {
 		return "********"
 	}
 	return "<none>"
-}
-
-// Message represents subscription control messages
-type Message struct {
-	Op      string `json:"op"`
-	Kind    string `json:"kind"`
-	Project string `json:"project"`
-	Payload []byte `json:"payload"`
-}
-
-// Subscribe for updates of a particular kind of entity
-func subscribe(ws *websocket.Conn, kind string, projectUUID string) error {
-	return ws.WriteJSON(Message{Op: "subscribe", Kind: kind, Project: projectUUID})
-}
-
-// Unsubscribe from updates of aparticular kind of entity
-func unsubscribe(ws *websocket.Conn, kind string) {
-	_ = ws.WriteJSON(Message{Op: "unsubscribe", Kind: kind})
-}
-
-// Unsubscribe from updates of a particular kind of entity when keyboard interrupt is detected.
-func unsubscribeOnInterrupt(ws *websocket.Conn, kinds ...string) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		for range c {
-			for _, kind := range kinds {
-				unsubscribe(ws, kind)
-			}
-			os.Exit(0)
-		}
-	}()
-}
-
-func isEvent(op string) bool {
-	return op == "created" || op == "updated" || op == "deleted"
-}
-
-// Runs the main body of the watch command
-func runWatchCommand(cmd *cobra.Command, printer func(io.Writer, string, []byte, bool) error, kinds ...string) error {
-	ws, err := getCatalogWebSocket(cmd)
-	if err != nil {
-		return err
-	}
-
-	projectUUID, err := getProjectName(cmd)
-	if err != nil {
-		return err
-	}
-
-	// subscribe and on interrupt unsubscribe and exit
-	for _, kind := range kinds {
-		if err := subscribe(ws, kind, projectUUID); err != nil {
-			return err
-		}
-		defer unsubscribe(ws, kind)
-	}
-	unsubscribeOnInterrupt(ws, kinds...)
-
-	// consume acknowledgement and any events and print them
-	msg := &Message{}
-	writer, verbose := getOutputContext(cmd)
-	for {
-		if err = ws.ReadJSON(msg); err != nil {
-			return err
-		}
-		if isEvent(msg.Op) {
-			_, _ = fmt.Fprintf(writer, "%s: %s %s\t", shortenUUID(msg.Project), msg.Kind, msg.Op)
-			if err := printer(writer, msg.Kind, msg.Payload, verbose); err != nil {
-				return err
-			}
-			_ = writer.Flush()
-		}
-	}
 }
