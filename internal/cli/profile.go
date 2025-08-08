@@ -274,6 +274,10 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 		application.DefaultProfileName = &profileName
 	}
 
+	if profile == nil {
+		return errors.NewNotFound("profile %s for application %s:%s not found", profileName, name, version)
+	}
+
 	profile.DisplayName = getFlagOrDefault(cmd, "display-name", profile.DisplayName)
 	profile.Description = getFlagOrDefault(cmd, "description", profile.Description)
 

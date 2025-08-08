@@ -343,7 +343,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tCPU Threads:\t %v\n", *host.CpuThreads)
 	_, _ = fmt.Fprintf(writer, "-\tCPU Sockets:\t %v\n\n", *host.CpuSockets)
 
-	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.CurrentOs.FixedCves != nil {
+	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.CurrentOs != nil && host.Instance.CurrentOs.FixedCves != nil {
 
 		if *host.Instance.ExistingCves != "" {
 			err := json.Unmarshal([]byte(*host.Instance.ExistingCves), &cveEntries)
@@ -1291,8 +1291,8 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	if csvFilePath == "" {
-		return fmt.Errorf("--import-from-csv <path/to/file.csv> is required")
+	if csvFilePath == "" || strings.HasPrefix(csvFilePath, "--") {
+		return fmt.Errorf("--import-from-csv <path/to/file.csv> is required, cannot be empty")
 	}
 
 	err = verifyCSVInput(csvFilePath)
@@ -1409,8 +1409,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	powerFlag, _ := cmd.Flags().GetString("power")
 	updFlag, _ := cmd.Flags().GetString("osupdatepolicy")
 
-	if policyFlag == "" && powerFlag == "" && updFlag == "" {
-		return errors.New("a flag must be provided with the set host command")
+	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" {
+		return errors.New("a flag must be provided with the set host command and value cannot be \"\"")
 	}
 
 	var power *infra.PowerState

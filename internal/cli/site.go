@@ -141,7 +141,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 	ltdFlag, _ := cmd.Flags().GetString("latitude")
 	lngFlag, _ := cmd.Flags().GetString("longitude")
 
-	if regFlag == "" {
+	if regFlag == "" || strings.HasPrefix(regFlag, "--") {
 		return errors.New("region flag required")
 	}
 	region, err := filterRegionsHelper(regFlag)

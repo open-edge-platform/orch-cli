@@ -5,6 +5,10 @@ package cli
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+	"testing"
 )
 
 func (s *CLITestSuite) createSite(project string, name string, args commandArgs) (string, error) {
@@ -198,4 +202,114 @@ func (s *CLITestSuite) TestSite() {
 	_, err = s.deleteSite(project, "nonexistent-site", make(map[string]string))
 	s.EqualError(err, "error while deleting site: Not Found")
 
+}
+
+func FuzzSite(f *testing.F) {
+	// Initial corpus with valid and invalid input
+	f.Add("project", "site1", "region-abcd1234", "5", "5", "site-7ceae560")
+	f.Add("project", "site1", "", "5", "5", "site-7ceae560")                      // missing region
+	f.Add("project", "", "region-abcd1234", "5", "5", "site-7ceae560")            // missing name
+	f.Add("project", "site1", "invalid-region", "5", "5", "site-7ceae560")        // invalid region format
+	f.Add("project", "site1", "region-abcd1234", "invalid", "5", "site-7ceae560") // invalid latitude
+	f.Add("project", "site1", "region-abcd1234", "5", "invalid", "site-7ceae560") // invalid longitude
+	f.Add("project", "site1", "region-abcd1234", "5", "5", "")
+
+	f.Fuzz(func(t *testing.T, project, name, region, latitude, longitude string, siteID string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		args := map[string]string{
+			"region":    region,
+			"latitude":  latitude,
+			"longitude": longitude,
+		}
+
+		// Call your site creation logic (replace with your actual function if needed)
+		_, err := testSuite.createSite(project, name, args)
+
+		// Error expectations
+		if name == "" || strings.TrimSpace(name) == "" || !regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString(name) {
+			if err == nil {
+				t.Errorf("Expected error for missing site name, got: %v", err)
+			}
+			return
+		}
+		if region == "" || strings.TrimSpace(region) == "" {
+			if err == nil || !strings.Contains(err.Error(), "region flag required") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "unknown shorthand flag") &&
+				!strings.Contains(err.Error(), "ccepts 1 arg(s), received 3") {
+				t.Errorf("Expected error for missing region %s for site %s, got: %v", region, name, err)
+			}
+			return
+		}
+		if !regexp.MustCompile(`^region-[0-9a-f]{8}$`).MatchString(region) {
+			if err == nil || !strings.Contains(err.Error(), "invalid region id") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "unknown shorthand flag") {
+				t.Errorf("Expected error for invalid region %s format for site %s, got: %v", region, name, err)
+			}
+			return
+		}
+		if latitude != "" {
+			if _, latErr := strconv.ParseFloat(latitude, 64); latErr != nil {
+				if err == nil || !strings.Contains(err.Error(), "invalid latitude value") {
+					t.Errorf("Expected error for invalid latitude, got: %v", err)
+				}
+				return
+			}
+		}
+		if longitude != "" {
+			if _, lngErr := strconv.ParseFloat(longitude, 64); lngErr != nil {
+				if err == nil || !strings.Contains(err.Error(), "invalid longitude value") {
+					t.Errorf("Expected error for invalid longitude, got: %v", err)
+				}
+				return
+			}
+		}
+		// If all inputs are valid, expect no error
+		if err != nil {
+			t.Errorf("Unexpected error for valid site %s creation in region %s: %v", name, region, err)
+		}
+
+		// --- List ---
+		_, err = testSuite.listSite(project, make(map[string]string))
+		if project == "" {
+			if err == nil {
+				t.Errorf("Expected error for missing project in list, got: %v", err)
+			}
+		} else if err != nil {
+			t.Errorf("Unexpected error for valid site list: %v", err)
+		}
+
+		// --- Get ---
+		_, err = testSuite.getSite(project, siteID, make(map[string]string))
+		if siteID == "" || strings.TrimSpace(siteID) == "" {
+			if err == nil || !strings.Contains(err.Error(), "error while getting site") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "unknown shorthand flag") {
+				t.Errorf("Expected error for missing site id in get, got: %v", err)
+			}
+		} else if err != nil {
+			t.Errorf("Unexpected error for valid site get: %v", err)
+		}
+
+		// --- Delete ---
+		_, err = testSuite.deleteSite(project, siteID, make(map[string]string))
+		if siteID == "" || strings.TrimSpace(siteID) == "" {
+			if err == nil || !strings.Contains(err.Error(), "error while deleting site") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "accepts 1 arg(s), received 3") {
+				t.Errorf("Expected error for missing site id in delete, got: %v", err)
+			}
+		} else if err != nil && !strings.Contains(err.Error(), "Not Found") {
+			t.Errorf("Unexpected error for valid site delete: %v", err)
+		}
+	})
 }
