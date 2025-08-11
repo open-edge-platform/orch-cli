@@ -57,7 +57,7 @@ func (s *CLITestSuite) TestOSProfile() {
 	//Invalid profile path
 	path = "./testdata/sadasd.yaml"
 	_, err = s.createOSProfile(project, path, OSPArgs)
-	s.EqualError(err, "file does not exist: ./testdata/sadasd.yaml")
+	s.EqualError(err, "open ./testdata/sadasd.yaml: no such file or directory")
 
 	//Invalid profile format
 	path = "./testdata/osprofile.blob"
@@ -230,7 +230,7 @@ func FuzzOSProfile(f *testing.F) {
 		// --- Create ---
 		_, err := testSuite.createOSProfile(project, path, args)
 		if path == "" || strings.TrimSpace(path) == "" {
-			if err == nil || !strings.Contains(err.Error(), "file does not exist") &&
+			if err == nil || !strings.Contains(err.Error(), "no such file or director") &&
 				!strings.Contains(err.Error(), "unknown flag") &&
 				!strings.Contains(err.Error(), "os Profile input must be a yaml file") &&
 				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
@@ -239,7 +239,7 @@ func FuzzOSProfile(f *testing.F) {
 		} else if !strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml") {
 			if err == nil || !strings.Contains(err.Error(), "os Profile input must be a yaml file") &&
 				!strings.Contains(err.Error(), "unknown flag") &&
-				!strings.Contains(err.Error(), "file does not exist") &&
+				!strings.Contains(err.Error(), "no such file or director") &&
 				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
 				!strings.Contains(err.Error(), "accepts 1 arg(s), received 3") {
 				t.Errorf("Expected error for invalid file format, got: %v", err)
@@ -259,7 +259,7 @@ func FuzzOSProfile(f *testing.F) {
 				t.Errorf("Expected error for duplicate OS Profile name, got: %v", err)
 			}
 		} else if path != "./testdata/osprofile.yaml" && path != "./testdata/osprofilenameduplicate.yaml" {
-			if err == nil || !strings.Contains(err.Error(), "file does not exist") &&
+			if err == nil || !strings.Contains(err.Error(), "no such file or director") &&
 				!strings.Contains(err.Error(), "unknown flag") &&
 				!strings.Contains(err.Error(), "os Profile input must be a yaml file") &&
 				!strings.Contains(err.Error(), "accepts") &&

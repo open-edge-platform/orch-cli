@@ -42,7 +42,7 @@ func (s *CLITestSuite) TestCustomConfig() {
 
 	//invalid path
 	_, err := s.createCustomConfig(project, name, "notest", CArgs)
-	s.EqualError(err, "file does not exist: notest")
+	s.EqualError(err, "open notest: no such file or directory")
 
 	//invalid name
 	_, err = s.createCustomConfig(project, "&*5sd", "notest", CArgs)

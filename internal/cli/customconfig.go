@@ -61,16 +61,6 @@ func printCustomConfig(writer io.Writer, CustomConfig *infra.CustomConfigResourc
 }
 
 // Helper function to verify that the input file exists and is of right format
-func verifyCustomConfigInput(path string) error {
-
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("file does not exist: %s", path)
-	}
-
-	return nil
-}
-
-// Helper function to verify that the input file exists and is of right format
 func verifyName(n string) error {
 
 	pattern := `^[a-zA-Z0-9_\-]`
@@ -87,6 +77,10 @@ func verifyName(n string) error {
 
 // readCustomConfigFromYaml reads the contents of a YAML file and returns it as a string.
 func readCustomConfigFromYaml(path string) (string, error) {
+
+	if err := isSafePath(path); err != nil {
+		return "", err
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
@@ -244,11 +238,6 @@ func runCreateCustomConfigCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	err := verifyName(name)
-	if err != nil {
-		return err
-	}
-
-	err = verifyCustomConfigInput(path)
 	if err != nil {
 		return err
 	}

@@ -258,6 +258,11 @@ func readCert(certPath string) ([]byte, error) {
 	if certPath == "" || strings.HasPrefix(certPath, "--") {
 		return nil, errors.New("certificate path must be provided with --cert flag and cannot be empty")
 	}
+
+	if err := isSafePath(certPath); err != nil {
+		return nil, err
+	}
+
 	certData, err := os.ReadFile(certPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read certificate file: %w", err)

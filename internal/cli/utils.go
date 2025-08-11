@@ -7,10 +7,12 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/tabwriter"
 
@@ -226,6 +228,9 @@ func getPageSizeOffset(cmd *cobra.Command) (int32, int32, error) {
 
 // Reads input from the specified file path; from stdin if the path is "-"
 func readInput(path string) ([]byte, error) {
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
 	if path == "-" {
 		return io.ReadAll(os.Stdin)
 	}
@@ -234,6 +239,9 @@ func readInput(path string) ([]byte, error) {
 
 func readInputWithLimit(path string) ([]byte, error) {
 	var reader io.Reader
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
 	if path == "-" {
 		reader = os.Stdin
 	} else {
@@ -398,6 +406,18 @@ func obscureValue(s *string) string {
 		return "********"
 	}
 	return "<none>"
+}
+
+// isSafePath checks for path traversal and null byte injection.
+func isSafePath(path string) error {
+	clean := filepath.Clean(path)
+	if strings.Contains(clean, ".."+string(os.PathSeparator)) || strings.HasPrefix(clean, "..") {
+		return errors.New("path traversal detected: '..' not allowed in file paths")
+	}
+	if strings.ContainsRune(path, '\x00') {
+		return errors.New("null byte detected in file path")
+	}
+	return nil
 }
 
 func TLS13CatalogClientOption() func(*catapi.Client) error {

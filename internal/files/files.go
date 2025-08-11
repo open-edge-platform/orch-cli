@@ -5,6 +5,7 @@ package files
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -62,6 +63,12 @@ func writeHeaders(file *os.File) error {
 
 //nolint:mnd // indices of fields are fixed in csv
 func ReadHostRecords(filePath string) ([]types.HostRecord, error) {
+
+	// Check path is safe
+	if err := isSafePath(filePath); err != nil {
+		return nil, err // or handle error
+	}
+
 	// Open the file for reading
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -193,4 +200,16 @@ func sanitizeCSVField(field string) string {
 		}
 	}
 	return field
+}
+
+// isSafePath checks for path traversal and null byte injection.
+func isSafePath(path string) error {
+	clean := filepath.Clean(path)
+	if strings.Contains(clean, ".."+string(os.PathSeparator)) || strings.HasPrefix(clean, "..") {
+		return errors.New("path traversal detected: '..' not allowed in file paths")
+	}
+	if strings.ContainsRune(path, '\x00') {
+		return errors.New("null byte detected in file path")
+	}
+	return nil
 }

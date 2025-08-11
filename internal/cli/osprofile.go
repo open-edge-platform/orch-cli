@@ -184,10 +184,6 @@ func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) 
 // Helper function to verify that the input file exists and is of right format
 func verifyOSProfileInput(path string) error {
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("file does not exist: %s", path)
-	}
-
 	ext := strings.ToLower(filepath.Ext(path))
 	if ext != ".yaml" && ext != ".yml" {
 		return errors.New("os Profile input must be a yaml file")
@@ -200,6 +196,11 @@ func verifyOSProfileInput(path string) error {
 func readOSProfileFromYaml(path string) (*NestedSpec, error) {
 
 	var input NestedSpec
+
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err

@@ -120,10 +120,6 @@ func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy)
 // Helper function to verify that the input file exists and is of right format
 func verifyUpdateProfileInput(path string) error {
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("file does not exist: %s", path)
-	}
-
 	ext := strings.ToLower(filepath.Ext(path))
 	if ext != ".yaml" && ext != ".yml" {
 		return errors.New("update profile input must be a yaml file")
@@ -135,6 +131,10 @@ func verifyUpdateProfileInput(path string) error {
 // Helper function to unmarshal yaml file
 func readUpdateProfileFromYaml(path string) (*UpdateNestedSpec, error) {
 	var input UpdateNestedSpec
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
