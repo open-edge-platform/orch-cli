@@ -5,6 +5,7 @@ package files
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -62,6 +63,12 @@ func writeHeaders(file *os.File) error {
 
 //nolint:mnd // indices of fields are fixed in csv
 func ReadHostRecords(filePath string) ([]types.HostRecord, error) {
+
+	// Check path is safe
+	if err := isSafePath(filePath); err != nil {
+		return nil, err // or handle error
+	}
+
 	// Open the file for reading
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -153,19 +160,19 @@ func WriteHostRecords(filePath string, records []types.HostRecord) error {
 	for _, record := range records {
 		// Create a slice of fields from the HostRecord
 		fields := []string{
-			record.Serial,
-			record.UUID,
-			record.OSProfile,
-			record.Site,
-			string(record.Secure),
-			record.RemoteUser,
-			record.Metadata,
-			record.AMTEnable,
-			record.CloudInitMeta,
-			record.K8sEnable,
-			record.K8sClusterTemplate,
-			record.K8sConfig,
-			record.Error,
+			sanitizeCSVField(record.Serial),
+			sanitizeCSVField(record.UUID),
+			sanitizeCSVField(record.OSProfile),
+			sanitizeCSVField(record.Site),
+			sanitizeCSVField(string(record.Secure)),
+			sanitizeCSVField(record.RemoteUser),
+			sanitizeCSVField(record.Metadata),
+			sanitizeCSVField(record.AMTEnable),
+			sanitizeCSVField(record.CloudInitMeta),
+			sanitizeCSVField(record.K8sEnable),
+			sanitizeCSVField(record.K8sClusterTemplate),
+			sanitizeCSVField(record.K8sConfig),
+			sanitizeCSVField(record.Error),
 		}
 
 		// Write the fields to the CSV file
@@ -179,5 +186,30 @@ func WriteHostRecords(filePath string, records []types.HostRecord) error {
 		return e.NewCustomError(e.ErrFileRW)
 	}
 
+	return nil
+}
+
+func sanitizeCSVField(field string) string {
+	if field == "" {
+		return field
+	}
+	dangerous := []byte{'=', '+', '-', '@', '\t', '\r'}
+	for _, c := range dangerous {
+		if field[0] == c {
+			return "'" + field
+		}
+	}
+	return field
+}
+
+// isSafePath checks for path traversal and null byte injection.
+func isSafePath(path string) error {
+	clean := filepath.Clean(path)
+	if strings.Contains(clean, ".."+string(os.PathSeparator)) || strings.HasPrefix(clean, "..") {
+		return errors.New("path traversal detected: '..' not allowed in file paths")
+	}
+	if strings.ContainsRune(path, '\x00') {
+		return errors.New("null byte detected in file path")
+	}
 	return nil
 }

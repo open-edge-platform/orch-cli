@@ -15,6 +15,7 @@ import (
 	"github.com/open-edge-platform/cli/pkg/rest/rps"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 )
 
 const listAmtProfileExamples = `
@@ -137,6 +138,15 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if certpass == "" {
+		fmt.Print("Enter Certificate Password: ")
+		bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
+		if err != nil {
+			return err
+		}
+		certpass = string(bytePassword)
+	}
+
 	if certpass == "" || strings.HasPrefix(certpass, "--") {
 		return errors.New("certificate password must be provided with --cert-pass flag and cannot be empty")
 	}
@@ -248,6 +258,11 @@ func readCert(certPath string) ([]byte, error) {
 	if certPath == "" || strings.HasPrefix(certPath, "--") {
 		return nil, errors.New("certificate path must be provided with --cert flag and cannot be empty")
 	}
+
+	if err := isSafePath(certPath); err != nil {
+		return nil, err
+	}
+
 	certData, err := os.ReadFile(certPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read certificate file: %w", err)

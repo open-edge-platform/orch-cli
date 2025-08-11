@@ -7,10 +7,12 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/tabwriter"
 
@@ -25,6 +27,7 @@ import (
 )
 
 const timeLayout = "2006-01-02T15:04:05"
+const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 // Use the interface type instead of the concrete function type
 var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
@@ -225,10 +228,39 @@ func getPageSizeOffset(cmd *cobra.Command) (int32, int32, error) {
 
 // Reads input from the specified file path; from stdin if the path is "-"
 func readInput(path string) ([]byte, error) {
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
 	if path == "-" {
 		return io.ReadAll(os.Stdin)
 	}
 	return os.ReadFile(path)
+}
+
+func readInputWithLimit(path string) ([]byte, error) {
+	var reader io.Reader
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
+	if path == "-" {
+		reader = os.Stdin
+	} else {
+		file, err := os.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		reader = file
+	}
+	limited := io.LimitReader(reader, maxValuesYAMLSize+1)
+	data, err := io.ReadAll(limited)
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > maxValuesYAMLSize {
+		return nil, fmt.Errorf("input exceeds maximum allowed size of %d bytes", maxValuesYAMLSize)
+	}
+	return data, nil
 }
 
 // Checks the specified REST status and if it signals an anomaly, return an error formatted using the specified message
@@ -374,6 +406,18 @@ func obscureValue(s *string) string {
 		return "********"
 	}
 	return "<none>"
+}
+
+// isSafePath checks for path traversal and null byte injection.
+func isSafePath(path string) error {
+	clean := filepath.Clean(path)
+	if strings.Contains(clean, ".."+string(os.PathSeparator)) || strings.HasPrefix(clean, "..") {
+		return errors.New("path traversal detected: '..' not allowed in file paths")
+	}
+	if strings.ContainsRune(path, '\x00') {
+		return errors.New("null byte detected in file path")
+	}
+	return nil
 }
 
 func TLS13CatalogClientOption() func(*catapi.Client) error {
