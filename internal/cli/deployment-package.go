@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,11 +6,16 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
 	"github.com/spf13/cobra"
-	"io"
-	"strings"
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
@@ -20,10 +24,11 @@ func getCreateDeploymentPackageCommand() *cobra.Command {
 		Aliases: deploymentPackageAliases,
 		Short:   "Create a deployment package",
 		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli create deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1",
 		RunE:    runCreateDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
-	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version>:[<publisher>] constituent application references")
+	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
 	cmd.Flags().Bool("visible", true, "mark deployment package as visible or not")
@@ -35,7 +40,8 @@ func getListDeploymentPackagesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment-packages [flags]",
 		Aliases: []string{"packages", "bundles", "pkgs"},
-		Short:   "Get all deployment packages, optionally filtered by publisher",
+		Short:   "List all deployment packages",
+		Example: "orch-cli list deployment-packages --project some-project",
 		RunE:    runListDeploymentPackagesCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "deployment package")
@@ -49,6 +55,7 @@ func getGetDeploymentPackageCommand() *cobra.Command {
 		Aliases: deploymentPackageAliases,
 		Short:   "Get a deployment package",
 		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli get deployment-package my-package --project some-project",
 		RunE:    runGetDeploymentPackageCommand,
 	}
 	return cmd
@@ -60,13 +67,14 @@ func getSetDeploymentPackageCommand() *cobra.Command {
 		Aliases: deploymentPackageAliases,
 		Short:   "Update a deployment package",
 		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli set deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --application-reference app3:1.1.1",
 		RunE:    runSetDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
 	cmd.Flags().String("thumbnail-name", "", "name of the application thumbnail artifact")
 	cmd.Flags().String("icon-name", "", "name of the application icon artifact")
 	cmd.Flags().String("default-profile", "", "default deployment profile")
-	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version>:[<publisher>] constituent application references")
+	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
 	cmd.Flags().Bool("visible", true, "mark deployment package as visible or not")
@@ -80,8 +88,22 @@ func getDeleteDeploymentPackageCommand() *cobra.Command {
 		Aliases: deploymentPackageAliases,
 		Short:   "Delete a deployment package",
 		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli delete deployment-package my-package --project some-project",
 		RunE:    runDeleteDeploymentPackageCommand,
 	}
+	return cmd
+}
+
+func getExportDeploymentPackageCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "deployment-package <name> [<version>] [flags]",
+		Aliases: deploymentPackageAliases,
+		Short:   "Export a deployment package as a tarball",
+		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli export deployment-package my-package 0.1.1 --project some-project",
+		RunE:    runExportDeploymentPackageCommand,
+	}
+	cmd.Flags().StringP("output-file", "o", "", "Override output filename")
 	return cmd
 }
 
@@ -141,17 +163,17 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.DeploymentPackag
 	}
 }
 
-// Produces an application reference from the specified <name>:<version>[:<publisher>] string
+// Produces an application reference from the specified <name>:<version> string
 func parseApplicationReference(refSpec string) (*catapi.ApplicationReference, error) {
-	refFields := strings.SplitN(refSpec, ":", 3)
-	if len(refFields) < 2 || len(refFields) > 3 {
-		return nil, fmt.Errorf("application reference must be in form of <name>:<version>[:<publisher>]")
+	refFields := strings.SplitN(refSpec, ":", 2)
+	if len(refFields) != 2 {
+		return nil, fmt.Errorf("application reference must be in form of <name>:<version>")
 	}
 	return &catapi.ApplicationReference{Name: refFields[0], Version: refFields[1]}, nil
 }
 
 func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -253,7 +275,7 @@ func getDeploymentPackageKinds(cmd *cobra.Command) *[]catapi.CatalogServiceListD
 
 func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -284,7 +306,7 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 
 func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -324,7 +346,7 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -391,7 +413,7 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -440,6 +462,80 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 			return err
 		}
 	}
+	return nil
+}
+
+func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
+	ctx, _, projectName, err := CatalogFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	name := args[0]
+	version := args[1]
+
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return processError(err)
+	}
+
+	utilClient, err := catutilapi.NewClientWithResponses(serverAddress)
+	if err != nil {
+		return processError(err)
+	}
+
+	resp, err := utilClient.CatalogServiceDownloadDeploymentPackageWithResponse(ctx, projectName, name, version, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	if err := checkResponse(resp.HTTPResponse, fmt.Sprintf("error downloading deployment package %s:%s",
+		name, version)); err != nil {
+		return err
+	}
+
+	filename := ""
+	if fileNameFlag := getFlag(cmd, "output-file"); fileNameFlag != nil {
+		filename = *fileNameFlag
+	}
+
+	// No filename given on command line, so try to get it from the API response
+	if filename == "" {
+		// NOTE: This is untested in production due to an issue in nexus-api-gw that is
+		// stripping the Content-Disposition headers.
+		contentDisposition := resp.HTTPResponse.Header.Get("Content-Disposition")
+		if contentDisposition != "" {
+			_, params, err := mime.ParseMediaType(contentDisposition)
+			if err == nil {
+				if fname, ok := params["filename"]; ok {
+					filename = fname
+				}
+			}
+		}
+
+		// We got this from the server, so there should be no path.
+		// But just in case... ensure filename is not a path
+		if filename != "" {
+			filename = filepath.Base(filename)
+		}
+	}
+
+	// If after all that, we still don't have a filename, make up a default one
+	if filename == "" {
+		filename = fmt.Sprintf("%s-%s.tar.gz", name, version)
+	}
+
+	outFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s: %w", filename, err)
+	}
+	defer outFile.Close()
+
+	if _, err := outFile.Write(resp.Body); err != nil {
+		return fmt.Errorf("failed to write to file %s: %w", filename, err)
+	}
+	fmt.Printf("Deployment package exported to %s\n", filename)
+
 	return nil
 }
 

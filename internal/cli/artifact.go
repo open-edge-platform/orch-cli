@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,18 +6,20 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
-	"io"
 )
 
 func getCreateArtifactCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifact <name> [flags]",
-		Short: "Create an artifact",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runCreateArtifactCommand,
+		Use:     "artifact <name> [flags]",
+		Short:   "Create an artifact",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli create artifact my-artifact --mime-type application/octet-stream --artifact /path/to/artifact --project some-project",
+		RunE:    runCreateArtifactCommand,
 	}
 	addEntityFlags(cmd, "artifact")
 	cmd.Flags().String("mime-type", "", "artifact MIME type (required)")
@@ -29,9 +30,10 @@ func getCreateArtifactCommand() *cobra.Command {
 
 func getListArtifactsCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifacts [flags]",
-		Short: "Get all artifacts, optionally filtered by publisher",
-		RunE:  runListArtifactsCommand,
+		Use:     "artifacts [flags]",
+		Short:   "List all artifacts",
+		Example: "orch-cli list artifacts --project some-project --order-by name",
+		RunE:    runListArtifactsCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "artifact")
 	return cmd
@@ -39,20 +41,22 @@ func getListArtifactsCommand() *cobra.Command {
 
 func getGetArtifactCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifact <name> [flags]",
-		Short: "Get an artifact",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runGetArtifactCommand,
+		Use:     "artifact <name> [flags]",
+		Short:   "Get an artifact",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli get artifact my-artifact --project some-project",
+		RunE:    runGetArtifactCommand,
 	}
 	return cmd
 }
 
 func getSetArtifactCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifact <name> [flags]",
-		Short: "Update an artifact",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runSetArtifactCommand,
+		Use:     "artifact <name> [flags]",
+		Short:   "Update an artifact",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli set artifact my-artifact --mime-type application/octet-stream --artifact /path/to/artifact --project some-project",
+		RunE:    runSetArtifactCommand,
 	}
 	addEntityFlags(cmd, "artifact")
 	cmd.Flags().String("mime-type", "", "artifact MIME type")
@@ -62,10 +66,11 @@ func getSetArtifactCommand() *cobra.Command {
 
 func getDeleteArtifactCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "artifact <name> [flags]",
-		Short: "Delete an artifact",
-		Args:  cobra.ExactArgs(1),
-		RunE:  runDeleteArtifactCommand,
+		Use:     "artifact <name> [flags]",
+		Short:   "Delete an artifact",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli delete artifact my-artifact --project some-project",
+		RunE:    runDeleteArtifactCommand,
 	}
 	return cmd
 }
@@ -86,7 +91,7 @@ func printArtifacts(writer io.Writer, artifactList *[]catapi.Artifact, verbose b
 }
 
 func runCreateArtifactCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -117,7 +122,7 @@ func runCreateArtifactCommand(cmd *cobra.Command, args []string) error {
 
 func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -147,7 +152,7 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 
 func runGetArtifactCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -166,7 +171,7 @@ func runGetArtifactCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetArtifactCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -207,7 +212,7 @@ func runSetArtifactCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}

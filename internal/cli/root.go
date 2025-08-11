@@ -1,17 +1,17 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/atomix/dazl"
 	clilib "github.com/open-edge-platform/orch-library/go/pkg/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
-	"os"
 )
 
 var log = dazl.GetLogger()
@@ -20,17 +20,12 @@ var log = dazl.GetLogger()
 const (
 	CLIName = "orch-cli"
 
-	catalogEndpoint = "catalog-endpoint"
-	debugHeaders    = "debug-headers"
-	project         = "project"
+	apiEndpoint  = "api-endpoint"
+	debugHeaders = "debug-headers"
+	project      = "project"
 
 	// Default for dev deployment
-	catalogDefaultEndpoint = "https://api.kind.internal/"
-
-	deploymentEndpoint = "deployment-endpoint"
-
-	// Default for dev deployment
-	deploymentDefaultEndpoint = "https://api.kind.internal/"
+	apiDefaultEndpoint = "https://api.kind.internal/"
 )
 
 // init initializes the command line
@@ -61,22 +56,20 @@ func Execute() {
 
 func getRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:           "catalog {create, get, set, list, delete, version} <resource> [flags]",
-		Short:         "Catalog Command Line Interface",
+		Use:           "orch-cli {create, get, set, list, delete, version} <resource> [flags]",
+		Short:         "Orch-cli Command Line Interface",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
 
 	// Set some factory defaults as a fallback
-	viper.SetDefault(catalogEndpoint, catalogDefaultEndpoint)
-	viper.SetDefault(deploymentEndpoint, deploymentDefaultEndpoint)
+	viper.SetDefault(apiEndpoint, apiDefaultEndpoint)
 	viper.SetDefault(debugHeaders, false)
 	viper.SetDefault("verbose", false)
 	viper.SetDefault(project, "")
 
 	// Setup global persistent flags for endpoint addresses of various services
-	rootCmd.PersistentFlags().String(catalogEndpoint, viper.GetString(catalogEndpoint), "Catalog Service Endpoint")
-	rootCmd.PersistentFlags().String(deploymentEndpoint, viper.GetString(deploymentEndpoint), "Deployment Service Endpoint")
+	rootCmd.PersistentFlags().String(apiEndpoint, viper.GetString(apiEndpoint), "API Service Endpoint")
 	rootCmd.PersistentFlags().Bool(debugHeaders, viper.GetBool(debugHeaders), "emit debug-style headers separating columns via '|' character")
 	rootCmd.PersistentFlags().StringP(project, "p", viper.GetString(project), "Active project name")
 
@@ -93,13 +86,15 @@ func getRootCmd() *cobra.Command {
 		getGetCommand(),
 		getSetCommand(),
 		getDeleteCommand(),
-		getWatchCommand(),
 		getUploadCommand(),
 		getLoginCommand(),
 		getLogoutCommand(),
 		getExportCommand(),
+		getDeauthorizeCommand(),
 		getWipeProjectCommand(),
 		versionCommand(),
+		getImportCommand(),
+		getGenerateCommand(),
 	)
 	return rootCmd
 }

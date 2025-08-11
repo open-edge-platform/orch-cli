@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -9,16 +8,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/open-edge-platform/cli/pkg/auth"
-	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/spf13/cobra"
 )
 
 var (
 	networkAliases = []string{"net"}
 )
+
+var httpClient = &http.Client{Transport: &http.Transport{}}
 
 func getCreateNetworkCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -26,6 +28,7 @@ func getCreateNetworkCommand() *cobra.Command {
 		Aliases: networkAliases,
 		Short:   "Create a Network",
 		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli create network my-network --project some-project",
 		RunE:    runCreateNetworkCommand,
 	}
 	addEntityFlags(cmd, "network")
@@ -37,7 +40,8 @@ func getListNetworksCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "networks [flags]",
 		Aliases: []string{"nets", "networks"},
-		Short:   "Get all networks",
+		Short:   "List all networks",
+		Example: "orch-cli list networks --project some-project",
 		RunE:    runListNetworksCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "network")
@@ -49,6 +53,7 @@ func getGetNetworkCommand() *cobra.Command {
 		Use:     "network <name> [flags]",
 		Aliases: networkAliases,
 		Short:   "Get a network",
+		Example: "orch-cli get network my-network --project some-project",
 		Args:    cobra.ExactArgs(1),
 		RunE:    runGetNetworkCommand,
 	}
@@ -61,6 +66,7 @@ func getSetNetworkCommand() *cobra.Command {
 		Aliases: applicationAliases,
 		Short:   "Update a network",
 		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli set network my-updated-network --project some-project --type application-mesh",
 		RunE:    runSetNetworkCommand,
 	}
 	addEntityFlags(cmd, "network")
@@ -73,6 +79,7 @@ func getDeleteNetworkCommand() *cobra.Command {
 		Aliases: networkAliases,
 		Short:   "Delete a network",
 		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli delete network my-network --project some-project",
 		RunE:    runDeleteNetworkCommand,
 	}
 	return cmd
@@ -87,9 +94,7 @@ func doREST(
 	body io.Reader,
 	expectedStatus int,
 ) (*http.Response, error) {
-	c := &http.Client{
-		Transport: &http.Transport{},
-	}
+	c := httpClient
 
 	u, err := url.Parse(catEP)
 	if err != nil {
@@ -100,10 +105,11 @@ func doREST(
 	req, err := http.NewRequestWithContext(ctx, method,
 		netURL,
 		body)
-	req.Header.Add("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Add("Content-Type", "application/json")
+
 	err = auth.AddAuthHeader(ctx, req)
 	if err != nil {
 		return nil, err
@@ -245,7 +251,7 @@ func getNetworkContext(cmd *cobra.Command) (context.Context, string, string, err
 	if err != nil {
 		return nil, "", "", err
 	}
-	catEP, err := cmd.Flags().GetString(catalogEndpoint)
+	catEP, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, "", "", err
 	}

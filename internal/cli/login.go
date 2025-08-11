@@ -1,38 +1,36 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
-	"crypto/tls"
 	"fmt"
+	"net/url"
+	"os"
+	"strings"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
-	"net/http"
-	"net/url"
-	"os"
-	"strings"
 )
 
 func getLoginCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "login <username> [<password>] [flags]",
-		Args:  cobra.MinimumNArgs(1),
-		Short: "Login to Catalog Server",
+		Use:     "login <username> [<password>] [flags]",
+		Args:    cobra.MinimumNArgs(1),
+		Short:   "Login to Orchestrator",
+		Example: "orch-cli login admin",
 		Long: "Login to Keycloak server to retrieve an refresh-token and save locally. " +
 			"Refresh Token is good until Max Session Timout or until logout. " +
 			"If password is not supplied it will be prompted for.",
 		RunE: login,
 	}
 	cmd.Flags().String("client-id", auth.DefaultClientID, "client-id (application name) in keycloak")
-	cmd.Flags().String("keycloak", "", "keycloak OIDC endpoint - will be retrieved from catalog-endpoint/openidc-issuer by default")
+	cmd.Flags().String("keycloak", "", "keycloak OIDC endpoint - will be retrieved from api-endpoint/openidc-issuer by default")
 	cmd.Flags().String("claims", "openid profile email", "keycloak OIDC endpoint")
 	cmd.Flags().Bool("quiet", false, "use to silence login message")
-	cmd.Flags().Bool("trust-cert", false, "use to accept invalid Keycloak https cert")
 	cmd.Flags().Bool("show-token", false, "display the access token, e.g. for use in 'curl'")
 
 	return cmd
@@ -40,10 +38,11 @@ func getLoginCommand() *cobra.Command {
 
 func getLogoutCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "logout",
-		Short: "Logout of Catalog Server",
-		Long:  "Discard local api-token",
-		RunE:  logout,
+		Use:     "logout",
+		Short:   "Logout of Orchestrator",
+		Long:    "Discard local api-token",
+		Example: "orch-cli logout",
+		RunE:    logout,
 	}
 	return cmd
 }
@@ -66,20 +65,8 @@ func login(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12},
-		Proxy:           http.ProxyFromEnvironment,
-	}
-	trustCert, err := cmd.Flags().GetBool("trust-cert")
-	if err != nil {
-		return err
-	}
-	if trustCert {
-		tr.TLSClientConfig.InsecureSkipVerify = true
-	}
-
 	var keycloakEp string
-	// If user has not given a keycloak endpoint, ask the catalog-endpoint what it should be
+	// If user has not given a keycloak endpoint, ask the api-endpoint what it should be
 	keycloakEpUser, err := cmd.Flags().GetString("keycloak")
 	if err != nil {
 		return err
@@ -88,17 +75,17 @@ func login(cmd *cobra.Command, args []string) error {
 		// If user has specified a value then use it
 		keycloakEp = keycloakEpUser
 	} else {
-		catEp := viper.GetString(catalogEndpoint)
+		catEp := viper.GetString(apiEndpoint)
 		u, err := url.Parse(catEp)
 		if err != nil {
 			return err
 		}
 		parts := strings.SplitN(u.Host, ".", 2)
 		if len(parts) != 2 {
-			return fmt.Errorf("Failed to determine keycloak enpoint from catalog endpoint. Consider using --kyecloak flag")
+			return fmt.Errorf("Failed to determine keycloak enpoint from api endpoint. Consider using --keycloak flag")
 		}
 		keycloakEp = fmt.Sprintf("https://keycloak.%s/realms/master", parts[1])
-		fmt.Printf("Determined keycloak endpoint from catalog endpoint: %s\n", keycloakEp)
+		fmt.Printf("Determined keycloak endpoint from api endpoint: %s\n", keycloakEp)
 	}
 
 	claims, err := cmd.Flags().GetString("claims")
@@ -161,7 +148,6 @@ func login(cmd *cobra.Command, args []string) error {
 	viper.Set(auth.UserName, username)
 	viper.Set(auth.ClientIDField, clientID)
 	viper.Set(auth.KeycloakEndpointField, keycloakEp)
-	viper.Set(auth.TrustCertField, trustCert)
 
 	if err = viper.WriteConfig(); err != nil {
 		return err
@@ -197,7 +183,7 @@ func logout(_ *cobra.Command, _ []string) error {
 		viper.Set(auth.UserName, "")
 		viper.Set(auth.ClientIDField, "")
 		viper.Set(auth.KeycloakEndpointField, "")
-		viper.Set(auth.TrustCertField, "")
+
 		return viper.WriteConfig()
 	}
 	log.Info("Was not logged in - no-op")

@@ -1,0 +1,19 @@
+---
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+appVersion: apps/v1
+spec:
+  name: myupdateubuntu
+  updatePolicy: "UPDATE_POLICY_TARGET"
+  description: "an update profile"
+  installPackages: |
+    curl
+    vim
+    htop
+    net-tools
+  kernelCommand: "hugepages=2"
+  # For mock purpose the EMT name is used as it already exists
+  targetOs: "Edge Microvisor Toolkit 3.0.20250504"
+  updateSources:
+    - "source1"
+    - "source2"

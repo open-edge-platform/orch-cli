@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,20 +6,23 @@ package cli
 import (
 	b64 "encoding/base64"
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/open-edge-platform/orch-library/go/pkg/errors"
 	"github.com/spf13/cobra"
-	"io"
-	"strings"
+	"gopkg.in/yaml.v2"
 )
 
 func getCreateProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "profile <application-name> <version> <name> [flags]",
-		Short: "Create an application profile",
-		Args:  cobra.ExactArgs(3),
-		RunE:  runCreateProfileCommand,
+		Use:     "profile <application-name> <version> <name> [flags]",
+		Short:   "Create an application profile",
+		Args:    cobra.ExactArgs(3),
+		Example: "orch-cli create profile my-app 1.0.0 my-profile --display-name 'My Profile' --description 'This is my profile' --chart-values values.yaml --project my-project",
+		RunE:    runCreateProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
 	cmd.Flags().String("chart-values", "-", "path to the values.yaml file; - for stdin")
@@ -29,30 +31,33 @@ func getCreateProfileCommand() *cobra.Command {
 
 func getListProfilesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "profiles <application-name> <version> [flags]",
-		Short: "Get all application profiles",
-		Args:  cobra.ExactArgs(2),
-		RunE:  runListProfilesCommand,
+		Use:     "profiles <application-name> <version> [flags]",
+		Short:   "List all application profiles",
+		Example: "orch-cli list profiles my-app 1.0.0 --project my-project",
+		Args:    cobra.ExactArgs(2),
+		RunE:    runListProfilesCommand,
 	}
 	return cmd
 }
 
 func getGetProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "profile <application-name> <version> <name> [flags]",
-		Short: "Get an application profile",
-		Args:  cobra.ExactArgs(3),
-		RunE:  runGetProfileCommand,
+		Use:     "profile <application-name> <version> <name> [flags]",
+		Short:   "Get an application profile",
+		Example: "orch-cli get profile my-app 1.0.0 my-profile --project my-project",
+		Args:    cobra.ExactArgs(3),
+		RunE:    runGetProfileCommand,
 	}
 	return cmd
 }
 
 func getSetProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "profile <application-name> <version> <name> [flags]",
-		Short: "Update an application profile",
-		Args:  cobra.ExactArgs(3),
-		RunE:  runSetProfileCommand,
+		Use:     "profile <application-name> <version> <name> [flags]",
+		Short:   "Update an application profile",
+		Args:    cobra.ExactArgs(3),
+		Example: "orch-cli set profile my-app 1.0.0 my-profile --display-name 'Updated Profile' --description 'Updated description' --chart-values new-values.yaml --project my-project",
+		RunE:    runSetProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
 	cmd.Flags().String("chart-values", "", "path to the values.yaml file; - for stdin")
@@ -61,10 +66,11 @@ func getSetProfileCommand() *cobra.Command {
 
 func getDeleteProfileCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "profile <application-name> <version> <name> [flags]",
-		Short: "Delete an application profile",
-		Args:  cobra.ExactArgs(3),
-		RunE:  runDeleteProfileCommand,
+		Use:     "profile <application-name> <version> <name> [flags]",
+		Short:   "Delete an application profile",
+		Args:    cobra.ExactArgs(3),
+		Example: "orch-cli delete profile my-app 1.0.0 my-profile --project my-project",
+		RunE:    runDeleteProfileCommand,
 	}
 	return cmd
 }
@@ -97,13 +103,29 @@ func printProfiles(writer io.Writer, profileList *[]catapi.Profile, verbose bool
 						pt.Name, pt.Type, valueOrNone(pt.DisplayName), *pt.Default, strings.Join((*pt.SuggestedValues)[:], ","))
 				}
 			}
-			// TODO: add listing of chart values
+
+			if p.ChartValues != nil && *p.ChartValues != "" {
+				_, _ = fmt.Fprintf(writer, "Chart Values:\n")
+				decodedValues, err := b64.StdEncoding.DecodeString(*p.ChartValues)
+
+				if err == nil {
+					lines := strings.Split(string(decodedValues), "\n")
+					for _, line := range lines {
+						_, _ = fmt.Fprintf(writer, "  %s\n", line)
+					}
+				} else {
+					_, _ = fmt.Fprintf(writer, "  [Error decoding chart values: %v]\n", err)
+					// If decoding fails, show the raw encoded data
+					_, _ = fmt.Fprintf(writer, "  Raw encoded data: %s\n", *p.ChartValues)
+				}
+				_, _ = fmt.Fprintf(writer, "\n")
+			}
 		}
 	}
 }
 
 func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -116,9 +138,12 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 	version := args[1]
 	profileName := args[2]
 
-	chartBytes, err := readInput(*getFlag(cmd, "chart-values"))
+	chartBytes, err := readInputWithLimit(*getFlag(cmd, "chart-values"))
 	if err != nil {
 		return fmt.Errorf("error reading values.yaml content: %w", err)
+	}
+	if err := validateValuesYAML(chartBytes); err != nil {
+		return fmt.Errorf("invalid values.yaml: %w", err)
 	}
 
 	chartValues := b64.StdEncoding.EncodeToString(chartBytes)
@@ -166,7 +191,7 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 
 func runListProfilesCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -189,7 +214,7 @@ func runListProfilesCommand(cmd *cobra.Command, args []string) error {
 
 func runGetProfileCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -218,7 +243,7 @@ func runGetProfileCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -253,15 +278,22 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 		application.DefaultProfileName = &profileName
 	}
 
+	if profile == nil {
+		return errors.NewNotFound("profile %s for application %s:%s not found", profileName, name, version)
+	}
+
 	profile.DisplayName = getFlagOrDefault(cmd, "display-name", profile.DisplayName)
 	profile.Description = getFlagOrDefault(cmd, "description", profile.Description)
 
 	// If the chart-values flag was given, fetch the new content to replace the existing one
 	newChartValuesPath := *getFlag(cmd, "chart-values")
 	if len(newChartValuesPath) > 0 {
-		chartValueBytes, err := readInput(*getFlag(cmd, "chart-values"))
+		chartValueBytes, err := readInputWithLimit(*getFlag(cmd, "chart-values"))
 		if err != nil {
 			return fmt.Errorf("error reading chart-values content: %w", err)
+		}
+		if err := validateValuesYAML(chartValueBytes); err != nil {
+			return fmt.Errorf("invalid values.yaml: %w", err)
 		}
 		newChartValues := b64.StdEncoding.EncodeToString(chartValueBytes)
 		profile.ChartValues = &newChartValues
@@ -288,7 +320,7 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runDeleteProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -342,4 +374,16 @@ func runDeleteProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting profile %s of application %s:%s",
 		profileName, name, version))
+}
+
+func validateValuesYAML(data []byte) error {
+	var out interface{}
+	if err := yaml.Unmarshal(data, &out); err != nil {
+		return fmt.Errorf("invalid YAML: %w", err)
+	}
+	// Optionally enforce top-level map/object
+	if _, ok := out.(map[interface{}]interface{}); !ok {
+		return fmt.Errorf("values.yaml must have a map/object at the top level")
+	}
+	return nil
 }
