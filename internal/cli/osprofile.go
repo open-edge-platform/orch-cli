@@ -16,6 +16,7 @@ import (
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v2"
 )
 
@@ -54,6 +55,38 @@ orch-cli delete osprofile "Edge Microvisor Toolkit 3.0.20250504" --project some-
 
 var OSProfileHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Architecture", "Security Feature")
 var OSProfileHeaderGet = fmt.Sprintf("\n%s\t%s", "OS Profile Field", "Value")
+
+var osProfileSchema = `
+{
+  "type": "object",
+  "properties": {
+    "spec": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "provider": { "type": "string" },
+        "architecture": { "type": "string" },
+        "profileName": { "type": "string" },
+        "osImageUrl": { "type": "string" },
+        "osImageSha256": { "type": "string" },
+        "osImageVersion": { "type": "string" },
+        "osPackageManifestURL": { "type": "string" },
+		"existingCvesURL": { "type": ["string", "null"] },
+		"fixedCvesURL": { "type": ["string", "null"] },
+        "securityFeature": { "type": "string" },
+        "platformBundle": { "type": ["string", "null"] }
+      },
+      "required": [
+        "name", "type", "provider", "architecture", "profileName",
+        "osImageUrl", "osImageSha256", "osImageVersion",
+        "osPackageManifestURL", "securityFeature", "platformBundle"
+      ]
+    }
+  },
+  "required": ["spec"]
+}
+`
 
 type OSProfileSpec struct {
 	Name              string `yaml:"name"`
@@ -151,10 +184,6 @@ func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) 
 // Helper function to verify that the input file exists and is of right format
 func verifyOSProfileInput(path string) error {
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("file does not exist: %s", path)
-	}
-
 	ext := strings.ToLower(filepath.Ext(path))
 	if ext != ".yaml" && ext != ".yml" {
 		return errors.New("os Profile input must be a yaml file")
@@ -167,14 +196,53 @@ func verifyOSProfileInput(path string) error {
 func readOSProfileFromYaml(path string) (*NestedSpec, error) {
 
 	var input NestedSpec
+
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	err = yaml.Unmarshal(data, &input)
+	if len(data) > 1<<20 { // 1MB limit
+		return nil, fmt.Errorf("YAML file too large")
+	}
+
+	// Unmarshal YAML to map[interface{}]interface{}
+	var raw interface{}
+	if err := yaml.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("error unmarshalling YAML: %v", err)
+	}
+
+	// Convert to map[string]interface{}
+	converted := toStringKeyMap(raw)
+
+	// Marshal to JSON for schema validation
+	jsonData, err := json.Marshal(converted)
 	if err != nil {
-		log.Fatalf("error unmarshalling YAML: %v", err)
+		return nil, fmt.Errorf("error converting YAML to JSON: %v", err)
+	}
+	documentLoader := gojsonschema.NewBytesLoader(jsonData)
+	schemaLoader := gojsonschema.NewStringLoader(osProfileSchema)
+
+	// Validate
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	if err != nil {
+		return nil, fmt.Errorf("schema validation error: %v", err)
+	}
+	if !result.Valid() {
+		var sb strings.Builder
+		for _, desc := range result.Errors() {
+			sb.WriteString(fmt.Sprintf("- %s\n", desc))
+		}
+		return nil, fmt.Errorf("YAML does not conform to schema:\n%s", sb.String())
+	}
+
+	// Unmarshal YAML to struct after validation
+	if err := yaml.Unmarshal(data, &input); err != nil {
+		return nil, fmt.Errorf("error unmarshalling YAML to struct: %v", err)
 	}
 
 	return &input, nil
@@ -381,4 +449,21 @@ func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS profile %s", name))
+}
+
+// Converts map[interface{}]interface{} to map[string]interface{} recursively
+func toStringKeyMap(m interface{}) interface{} {
+	switch x := m.(type) {
+	case map[interface{}]interface{}:
+		n := make(map[string]interface{})
+		for k, v := range x {
+			n[fmt.Sprintf("%v", k)] = toStringKeyMap(v)
+		}
+		return n
+	case []interface{}:
+		for i, v := range x {
+			x[i] = toStringKeyMap(v)
+		}
+	}
+	return m
 }

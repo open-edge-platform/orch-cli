@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v2"
 )
 
@@ -40,6 +42,28 @@ const deleteOSUpdatePolicyExamples = `#Delete an OS Update Policy  using it's na
 orch-cli delete <resourceID> policy --project some-project`
 
 var OSUpdatePolicyHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Description")
+
+var osUpdatePolicySchema = `
+{
+  "type": "object",
+  "properties": {
+    "spec": {
+      "type": "object",
+      "properties": {
+        "name":            { "type": "string" },
+        "description":     { "type": "string" },
+        "installPackages": { "type": "string" },
+        "kernelCommand":   { "type": "string" },
+        "targetOs":        { "type": "string" },
+        "updateSources":   { "type": ["array", "null"], "items": { "type": "string" } },
+        "updatePolicy":    { "type": "string" }
+      },
+      "required": ["name", "description", "updatePolicy"]
+    }
+  },
+  "required": ["spec"]
+}
+`
 
 type OSUpdatePolicy struct {
 	Name            string   `yaml:"name"`
@@ -96,10 +120,6 @@ func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy)
 // Helper function to verify that the input file exists and is of right format
 func verifyUpdateProfileInput(path string) error {
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("file does not exist: %s", path)
-	}
-
 	ext := strings.ToLower(filepath.Ext(path))
 	if ext != ".yaml" && ext != ".yml" {
 		return errors.New("update profile input must be a yaml file")
@@ -110,16 +130,52 @@ func verifyUpdateProfileInput(path string) error {
 
 // Helper function to unmarshal yaml file
 func readUpdateProfileFromYaml(path string) (*UpdateNestedSpec, error) {
-
 	var input UpdateNestedSpec
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
+	if len(data) > 1<<20 { // 1MB limit
+		return nil, fmt.Errorf("YAML file too large")
+	}
 
-	err = yaml.Unmarshal(data, &input)
+	// Unmarshal YAML to map[interface{}]interface{}
+	var raw interface{}
+	if err := yaml.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("error unmarshalling YAML: %v", err)
+	}
+
+	// Convert to map[string]interface{}
+	converted := toStringKeyMap(raw)
+
+	// Marshal to JSON for schema validation
+	jsonData, err := json.Marshal(converted)
 	if err != nil {
-		log.Fatalf("error unmarshalling YAML: %v", err)
+		return nil, fmt.Errorf("error converting YAML to JSON: %v", err)
+	}
+	documentLoader := gojsonschema.NewBytesLoader(jsonData)
+	schemaLoader := gojsonschema.NewStringLoader(osUpdatePolicySchema)
+
+	// Validate
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	if err != nil {
+		return nil, fmt.Errorf("schema validation error: %v", err)
+	}
+	if !result.Valid() {
+		var sb strings.Builder
+		for _, desc := range result.Errors() {
+			sb.WriteString(fmt.Sprintf("- %s\n", desc))
+		}
+		return nil, fmt.Errorf("YAML does not conform to schema:\n%s", sb.String())
+	}
+
+	// Unmarshal YAML to struct after validation
+	if err := yaml.Unmarshal(data, &input); err != nil {
+		return nil, fmt.Errorf("error unmarshalling YAML to struct: %v", err)
 	}
 
 	return &input, nil

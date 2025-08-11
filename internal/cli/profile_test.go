@@ -171,6 +171,7 @@ func FuzzProfile(f *testing.F) {
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "required flag \"project\" not set") ||
+			strings.Contains(err.Error(), "invalid values.yaml") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -188,7 +189,8 @@ func FuzzProfile(f *testing.F) {
 			strings.Contains(err.Error(), "unknown shorthand flag:") ||
 			strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+			strings.Contains(err.Error(), "no such file or directory") ||
+			strings.Contains(err.Error(), "invalid values.yaml")) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
 			t.Errorf("Unexpected error for valid profile %s, application %s update: %v", profileName, applicationName, err)

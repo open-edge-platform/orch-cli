@@ -9,11 +9,13 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
 const listCustomConfigExamples = `# List all custom config (Cloud Init) resources
@@ -59,16 +61,6 @@ func printCustomConfig(writer io.Writer, CustomConfig *infra.CustomConfigResourc
 }
 
 // Helper function to verify that the input file exists and is of right format
-func verifyCustomConfigInput(path string) error {
-
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("file does not exist: %s", path)
-	}
-
-	return nil
-}
-
-// Helper function to verify that the input file exists and is of right format
 func verifyName(n string) error {
 
 	pattern := `^[a-zA-Z0-9_\-]`
@@ -85,13 +77,24 @@ func verifyName(n string) error {
 
 // readCustomConfigFromYaml reads the contents of a YAML file and returns it as a string.
 func readCustomConfigFromYaml(path string) (string, error) {
-	// Read the file contents
+
+	if err := isSafePath(path); err != nil {
+		return "", err
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
-
-	// Convert the byte slice to a string
+	if len(data) > 1<<20 { // 1MB limit
+		return "", fmt.Errorf("YAML file too large")
+	}
+	if !strings.HasPrefix(strings.TrimSpace(string(data)), "#cloud-config") {
+		return "", fmt.Errorf("file does not start with #cloud-config")
+	}
+	var out interface{}
+	if err := yaml.Unmarshal(data, &out); err != nil {
+		return "", fmt.Errorf("invalid YAML: %w", err)
+	}
 	return string(data), nil
 }
 
@@ -235,11 +238,6 @@ func runCreateCustomConfigCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	err := verifyName(name)
-	if err != nil {
-		return err
-	}
-
-	err = verifyCustomConfigInput(path)
 	if err != nil {
 		return err
 	}

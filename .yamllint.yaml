@@ -5,6 +5,7 @@ ignore: |
   examples/templates/values/stuttgart-sra-evam-helm-values.yaml
   examples/testapp/*
   pkg/rest/*/*.yaml
+  internal/cli/testdata/cloudinit.yaml
   vendor/
   .github/
 rules:
