@@ -233,6 +233,7 @@ func FuzzOSProfile(f *testing.F) {
 			if err == nil || !strings.Contains(err.Error(), "no such file or director") &&
 				!strings.Contains(err.Error(), "unknown flag") &&
 				!strings.Contains(err.Error(), "os Profile input must be a yaml file") &&
+				!strings.Contains(err.Error(), "null byte") &&
 				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
 				t.Errorf("Expected error for missing file path, got: %v", err)
 			}
@@ -241,6 +242,7 @@ func FuzzOSProfile(f *testing.F) {
 				!strings.Contains(err.Error(), "unknown flag") &&
 				!strings.Contains(err.Error(), "no such file or director") &&
 				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "null byte") &&
 				!strings.Contains(err.Error(), "accepts 1 arg(s), received 3") {
 				t.Errorf("Expected error for invalid file format, got: %v", err)
 			}
@@ -256,6 +258,7 @@ func FuzzOSProfile(f *testing.F) {
 			if err == nil || !strings.Contains(err.Error(), "already exists") &&
 				!strings.Contains(err.Error(), "no such file or directory") &&
 				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "null byte") &&
 				!strings.Contains(err.Error(), "not exist") {
 				t.Errorf("Expected error for duplicate OS Profile name, got: %v", err)
 			}
@@ -264,6 +267,7 @@ func FuzzOSProfile(f *testing.F) {
 				!strings.Contains(err.Error(), "unknown flag") &&
 				!strings.Contains(err.Error(), "os Profile input must be a yaml file") &&
 				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "null byte") &&
 				!strings.Contains(err.Error(), "not exist") {
 				t.Errorf("Expected error for missing or invalid file, got: %v", err)
 			}
