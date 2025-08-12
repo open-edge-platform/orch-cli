@@ -497,11 +497,11 @@ func isExpectedError(err error) bool {
 		"no such", "missing", "no", "must", "in form", "incorrect",
 		"unexpected", "expected", "failed", "is a", "bad", "exists",
 		"cannot", "nonexistent", "deleting", "getting", "listing",
-		"creating", "Internal Server Error", "accepts", "error",
+		"creating", "Internal Server Error", "null", "accepts", "error", "failed",
 	}
-	errStr := err.Error()
+	errStr := strings.ToLower(err.Error())
 	for _, substr := range expectedSubstrings {
-		if strings.Contains(errStr, substr) {
+		if strings.Contains(errStr, strings.ToLower(substr)) {
 			return true
 		}
 	}
