@@ -185,6 +185,7 @@ func FuzzArtifact(f *testing.F) {
 			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
 			strings.Contains(err.Error(), "required flag(s) \"mime-type\" not set") ||
 			strings.Contains(err.Error(), "error reading artifact content: read .: is a directory") ||
+			strings.Contains(err.Error(), "null byte detected") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

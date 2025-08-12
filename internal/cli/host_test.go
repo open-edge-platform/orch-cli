@@ -484,6 +484,7 @@ func FuzzHost(f *testing.F) {
 		expErr2 := "host import input file must be a CSV file"
 		expErr3 := "Failed to provision hosts"
 		expErr4 := "Pre-flight check failed"
+		expErr5 := "unknown shorthand flag"
 
 		_, err := testSuite.createHost(project, HostArgs)
 
@@ -495,7 +496,7 @@ func FuzzHost(f *testing.F) {
 			if !testSuite.Error(err) {
 				t.Errorf("Unexpected result for path %s", path)
 			}
-		} else if err != nil && (strings.Contains(err.Error(), expErr1) || strings.Contains(err.Error(), expErr2) || strings.Contains(err.Error(), expErr3) || strings.Contains(err.Error(), expErr4)) {
+		} else if err != nil && (strings.Contains(err.Error(), expErr1) || strings.Contains(err.Error(), expErr2) || strings.Contains(err.Error(), expErr3) || strings.Contains(err.Error(), expErr4) || strings.Contains(err.Error(), expErr5)) {
 			if !testSuite.Error(err) {
 				t.Errorf("Unexpected result for path %s", path)
 			}

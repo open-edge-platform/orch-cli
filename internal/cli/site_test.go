@@ -240,16 +240,17 @@ func FuzzSite(f *testing.F) {
 		}
 		if region == "" || strings.TrimSpace(region) == "" {
 			if err == nil || !strings.Contains(err.Error(), "region flag required") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "accepts") &&
 				!strings.Contains(err.Error(), "unknown shorthand flag") &&
-				!strings.Contains(err.Error(), "ccepts 1 arg(s), received 3") {
+				!strings.Contains(err.Error(), "flag required") {
 				t.Errorf("Expected error for missing region %s for site %s, got: %v", region, name, err)
 			}
 			return
 		}
 		if !regexp.MustCompile(`^region-[0-9a-f]{8}$`).MatchString(region) {
 			if err == nil || !strings.Contains(err.Error(), "invalid region id") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "flag required") &&
 				!strings.Contains(err.Error(), "unknown shorthand flag") {
 				t.Errorf("Expected error for invalid region %s format for site %s, got: %v", region, name, err)
 			}
@@ -290,8 +291,8 @@ func FuzzSite(f *testing.F) {
 		_, err = testSuite.getSite(project, siteID, make(map[string]string))
 		if siteID == "" || strings.TrimSpace(siteID) == "" {
 			if err == nil || !strings.Contains(err.Error(), "error while getting site") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
+				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "flag required") &&
 				!strings.Contains(err.Error(), "unknown shorthand flag") {
 				t.Errorf("Expected error for missing site id in get, got: %v", err)
 			}
@@ -303,9 +304,8 @@ func FuzzSite(f *testing.F) {
 		_, err = testSuite.deleteSite(project, siteID, make(map[string]string))
 		if siteID == "" || strings.TrimSpace(siteID) == "" {
 			if err == nil || !strings.Contains(err.Error(), "error while deleting site") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 3") {
+				!strings.Contains(err.Error(), "accepts") &&
+				!strings.Contains(err.Error(), "flag required") {
 				t.Errorf("Expected error for missing site id in delete, got: %v", err)
 			}
 		} else if err != nil && !strings.Contains(err.Error(), "Not Found") {

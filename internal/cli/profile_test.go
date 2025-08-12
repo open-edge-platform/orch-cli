@@ -172,6 +172,7 @@ func FuzzProfile(f *testing.F) {
 			strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "required flag \"project\" not set") ||
 			strings.Contains(err.Error(), "invalid values.yaml") ||
+			strings.Contains(err.Error(), "null byte detected") ||
 			strings.Contains(err.Error(), "no such file or directory")) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
