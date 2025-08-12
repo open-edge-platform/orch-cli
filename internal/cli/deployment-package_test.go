@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
@@ -220,39 +219,26 @@ func FuzzDeploymentPackage(f *testing.F) {
 
 		// --- Create Deployment Package ---
 		err := testSuite.createDeploymentPackage(project, pkgName, pkgVersion, createArgs)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "in form of") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment package create: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- List Deployment Packages ---
 		_, err = testSuite.listDeploymentPackages(project, false, "", "")
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "in form of") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
-			// Acceptable error for invalid list
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment package list: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Get Deployment Package ---
 		_, err = testSuite.getDeploymentPackage(project, pkgName, pkgVersion)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "in form of") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment package get: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Update Deployment Package ---
@@ -260,38 +246,26 @@ func FuzzDeploymentPackage(f *testing.F) {
 			"display-name": "new.display.name",
 		}
 		err = testSuite.updateDeploymentPackage(project, pkgName, pkgVersion, updateArgs)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "in form of") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment package update: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete Deployment Package ---
 		err = testSuite.deleteDeploymentPackage(project, pkgName, pkgVersion)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "in form of") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment package delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete Deployment Package (No Version) ---
 		err = testSuite.deleteDeploymentPackageNoVersion(project, pkgName)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "in form of") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment package delete no version: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

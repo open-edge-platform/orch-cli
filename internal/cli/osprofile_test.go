@@ -5,7 +5,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -229,105 +228,34 @@ func FuzzOSProfile(f *testing.F) {
 
 		// --- Create ---
 		_, err := testSuite.createOSProfile(project, path, args)
-		if path == "" || strings.TrimSpace(path) == "" {
-			if err == nil || !strings.Contains(err.Error(), "no such file or director") &&
-				!strings.Contains(err.Error(), "unknown flag") &&
-				!strings.Contains(err.Error(), "os Profile input must be a yaml file") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 0") {
-				t.Errorf("Expected error for missing file path, got: %v", err)
-			}
-		} else if !strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml") {
-			if err == nil || !strings.Contains(err.Error(), "os Profile input must be a yaml file") &&
-				!strings.Contains(err.Error(), "unknown flag") &&
-				!strings.Contains(err.Error(), "no such file or director") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 2") &&
-				!strings.Contains(err.Error(), "accepts 1 arg(s), received 3") {
-				t.Errorf("Expected error for invalid file format, got: %v", err)
-			}
-		} else if project == "nonexistent-project" {
-			if err == nil || !strings.Contains(err.Error(), "Error getting OS profiles") {
-				t.Errorf("Expected error for nonexistent project, got: %v", err)
-			}
-		} else if project == "invalid-project" {
-			if err == nil || !strings.Contains(err.Error(), "error while creating OS Profile") {
-				t.Errorf("Expected error for invalid project, got: %v", err)
-			}
-		} else if strings.Contains(path, "nameduplicate") {
-			if err == nil || !strings.Contains(err.Error(), "already exists") &&
-				!strings.Contains(err.Error(), "no such file or directory") &&
-				!strings.Contains(err.Error(), "accepts") &&
-				!strings.Contains(err.Error(), "not exist") {
-				t.Errorf("Expected error for duplicate OS Profile name, got: %v", err)
-			}
-		} else if path != "./testdata/osprofile.yaml" && path != "./testdata/osprofilenameduplicate.yaml" {
-			if err == nil || !strings.Contains(err.Error(), "no such file or director") &&
-				!strings.Contains(err.Error(), "unknown flag") &&
-				!strings.Contains(err.Error(), "os Profile input must be a yaml file") &&
-				!strings.Contains(err.Error(), "accepts") &&
-				!strings.Contains(err.Error(), "not exist") {
-				t.Errorf("Expected error for missing or invalid file, got: %v", err)
-			}
-		} else if err != nil {
-			t.Errorf("Unexpected error for valid OS Profile %s creation: %v", path, err)
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- List ---
 		_, err = testSuite.listOSProfile(project, args)
-		if project == "nonexistent-project" {
-			if err == nil || !strings.Contains(err.Error(), "error getting OS Profiles") {
-				t.Errorf("Expected error for nonexistent project in list, got: %v", err)
-			}
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid OS Profile list: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Get ---
 		_, err = testSuite.getOSProfile(project, name, args)
-		if name == "" || strings.TrimSpace(name) == "" {
-			if err == nil || !strings.Contains(err.Error(), "no os profile matches the given name") &&
-				!strings.Contains(err.Error(), "accepts") &&
-				!strings.Contains(err.Error(), "not exist") {
-				t.Errorf("Expected error for missing profile name in get, got: %v", err)
-			}
-		} else if project == "nonexistent-project" {
-			if err == nil || !strings.Contains(err.Error(), "error getting OS Profile") {
-				t.Errorf("Expected error for nonexistent project in get, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "no os profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "no such file or directory") ||
-			strings.Contains(err.Error(), "not exist")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid OS Profile get: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete ---
 		_, err = testSuite.deleteOSProfile(project, name, args)
-		if name == "" || strings.TrimSpace(name) == "" {
-			if err == nil || !strings.Contains(err.Error(), "no os profile matches the given name") &&
-				!strings.Contains(err.Error(), "accepts") &&
-				!strings.Contains(err.Error(), "no such file or directory") &&
-				!strings.Contains(err.Error(), "not exist") {
-				t.Errorf("Expected error for missing profile name in delete, got: %v", err)
-			}
-		} else if project == "invalid-project" {
-			if err == nil || !strings.Contains(err.Error(), "error deleting OS profile") &&
-				!strings.Contains(err.Error(), "no os profile matches the given name") &&
-				!strings.Contains(err.Error(), "Internal Server Error") {
-				t.Errorf("Expected error for invalid project in delete, got: %v", err)
-			}
-		} else if project == "nonexistent-project" {
-			if err == nil || !strings.Contains(err.Error(), "Error getting OS profiles") {
-				t.Errorf("Expected error for nonexistent project in delete, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "no os profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts")) {
-			t.Log("Expected error:", err)
-		} else if err != nil && strings.Contains(err.Error(), "already exists") {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid OS Profile delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

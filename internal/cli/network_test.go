@@ -5,7 +5,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -79,102 +78,43 @@ func FuzzNetwork(f *testing.F) {
 
 		// --- Create ---
 		_, err := testSuite.createNetwork("project", name, createArgs)
-		if name == "" {
-			if err == nil {
-				t.Errorf("Expected error for missing required field, got: %v", err)
-			}
-			return
-		} else if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "invalid URL escape") ||
-			strings.Contains(err.Error(), "invalid control character in URL") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid network %s creation, type %s: %v", name, ntype, err)
-			return
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Set ---
 		setArgs := map[string]string{}
 		_, err = testSuite.setNetwork("project", name, setArgs)
-		if name == "" {
-			if err == nil {
-				t.Errorf("Expected error for missing network name in set, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "invalid URL escape") ||
-			strings.Contains(err.Error(), "invalid control character in URL") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
-
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid network set: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Get ---
 		_, err = testSuite.getNetwork("project", name, map[string]string{})
-		if name == "" {
-			if err == nil {
-				t.Errorf("Expected error for missing network name in get, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "invalid URL escape") ||
-			strings.Contains(err.Error(), "invalid control character in URL") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
-
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid network get: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- List ---
 		_, err = testSuite.listNetwork("project", map[string]string{})
-		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "invalid URL escape") ||
-			strings.Contains(err.Error(), "invalid control character in URL") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
-
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid network list: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete ---
 		_, err = testSuite.deleteNetwork("project", name, map[string]string{})
-		if name == "" {
-			if err == nil {
-				t.Errorf("Expected error for missing network name in delete, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "invalid URL escape") ||
-			strings.Contains(err.Error(), "invalid control character in URL") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
-
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid network delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

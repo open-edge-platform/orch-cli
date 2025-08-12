@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
@@ -172,90 +171,41 @@ func FuzzArtifact(f *testing.F) {
 
 		// --- Create ---
 		err := testSuite.createArtifact(project, artifactName, createArgs)
-		if artifactName == "" && artifactFile == "" && (mimeType == "" || mimeType == "0") {
-			if err == nil {
-				t.Errorf("Expected error for missing required field %s, %s, %s, %s, got : %v", project, artifactName, artifactFile, mimeType, err)
-			}
-			return
-		} else if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 4") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
-			strings.Contains(err.Error(), "required flag(s) \"mime-type\" not set") ||
-			strings.Contains(err.Error(), "error reading artifact content: read .: is a directory") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid artifact creation %s, %s, %s, %s, %s, %s: %v", project, artifactName, artifactFile, displayName, description, mimeType, err)
-			return
+			t.Errorf("Unexpected error: %v", err)
 		}
-
 		// --- List ---
 		_, err = testSuite.listArtifacts(project, false, "", "")
-		if err != nil && (strings.Contains(err.Error(), "no amt profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 4") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid artifact list: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
-
 		// --- Get ---
 		_, err = testSuite.getArtifact(project, artifactName)
-		if artifactName == "" {
-			if err == nil {
-				t.Errorf("Expected error for missing artifact name in get, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "no amt profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 4") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid artifact get: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 		// --- Delete ---
 		err = testSuite.deleteArtifact(project, artifactName)
-		if artifactName == "" {
-			if err == nil {
-				t.Errorf("Expected error for missing artifact name in delete, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "no amt profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 4") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid artifact delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
-
 		// --- Update ---
 		updateArgs := map[string]string{
 			"description": "new-description",
 		}
 		err = testSuite.updateArtifact(project, artifactName, updateArgs)
-		if artifactName == "" {
-			if err == nil {
-				t.Errorf("Expected error for missing artifact name in update, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "no amt profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 3") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 4") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid artifact update: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 	})

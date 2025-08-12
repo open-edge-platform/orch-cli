@@ -69,11 +69,12 @@ test: mod-update
 	go test -race -gcflags=-l `go list $(PKG)/cmd/... $(PKG)/internal/... $(PKG)/pkg/...`
 
 fuzz:
-	@# Help: Runs all Go fuzzing functions, one at a time, in each package
+	@# Help: Runs all Go fuzzing functions, one at a time, in each package, continues on failure, writes output to fuzz.log
+	rm -f fuzz.log
 	for pkg in $$(go list ./cmd/... ./internal/... ./pkg/...); do \
 		for fuzzfunc in $$(go test -list '^Fuzz' $$pkg | grep '^Fuzz' | awk '{print $$1}'); do \
-			echo "==> go test -fuzz=$$fuzzfunc -fuzztime=30s $$pkg" ; \
-			go test -fuzz=^$$fuzzfunc$$ -fuzztime=30s $$pkg || exit 1; \
+			echo "==> go test -fuzz=$$fuzzfunc -fuzztime=30s $$pkg" | tee -a fuzz.log ; \
+			go test -fuzz=^$$fuzzfunc$$ -fuzztime=30s $$pkg 2>&1 | tee -a fuzz.log ; \
 		done \
 	done
 

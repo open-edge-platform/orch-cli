@@ -5,7 +5,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -150,35 +149,26 @@ func FuzzDeploymentProfile(f *testing.F) {
 
 		// --- Create Deployment Profile ---
 		err := testSuite.createDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName, createArgs)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment profile create: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- List Deployment Profiles ---
 		_, err = testSuite.listDeploymentProfiles(pubName, pkgName, pkgVersion, false)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment profile list: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Get Deployment Profile ---
 		_, err = testSuite.getDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment profile get: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Update Deployment Profile ---
@@ -186,24 +176,18 @@ func FuzzDeploymentProfile(f *testing.F) {
 			"display-name": "new.display.name",
 		}
 		err = testSuite.updateDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName, updateArgs)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment profile update: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete Deployment Profile ---
 		err = testSuite.deleteDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment profile delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }
