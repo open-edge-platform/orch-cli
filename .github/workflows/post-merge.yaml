@@ -16,6 +16,10 @@ permissions:
 
 jobs:
   post-merge-pipeline:
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
     uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@251aa50fb5878404cbe4e2834bfc5885c6af3568  # v0.1.15
     with:
       run_version_check: true
