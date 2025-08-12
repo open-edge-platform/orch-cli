@@ -5,11 +5,7 @@
 name: Post-Merge CI Pipeline
 
 on:
-  # push:
-  #   branches:
-  #     - main
-  #     - release-*
-  pull_request:
+  push:
     branches:
       - main
       - release-*
