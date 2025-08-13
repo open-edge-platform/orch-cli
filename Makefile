@@ -73,8 +73,10 @@ fuzz:
 	rm -f fuzz.log
 	for pkg in $$(go list ./cmd/... ./internal/... ./pkg/...); do \
 		for fuzzfunc in $$(go test -list '^Fuzz' $$pkg | grep '^Fuzz' | awk '{print $$1}'); do \
-			echo "==> go test -fuzz=$$fuzzfunc -fuzztime=30s $$pkg" | tee -a fuzz.log ; \
-			go test -fuzz=^$$fuzzfunc$$ -fuzztime=30s $$pkg 2>&1 | tee -a fuzz.log ; \
+			echo "==> GOMEMLIMIT=2GiB GOMAXPROCS=2 go test -fuzz=$$fuzzfunc -fuzztime=30m -parallel=1 $$pkg" | tee -a fuzz.log ; \
+			sleep 2 ; \
+			GOMEMLIMIT=2GiB GOMAXPROCS=2 go test -fuzz=^$$fuzzfunc$$ -fuzztime=30m -parallel=1 $$pkg 2>&1 | tee -a fuzz.log ; \
+			rm -rf internal/cli/preflight_error* internal/cli/import_error*; \
 		done \
 	done
 

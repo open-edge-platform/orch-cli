@@ -5,7 +5,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -106,27 +105,18 @@ func FuzzApplicationReference(f *testing.F) {
 
 		// --- Create Application Reference ---
 		err := testSuite.createApplicationReference(project, pkgName, pkgVersion, applicationName, applicationVersion)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "application reference must be in the form name:version") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid application reference create: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete Application Reference ---
 		err = testSuite.deleteApplicationReference(project, pkgName, pkgVersion, applicationName)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid application reference delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

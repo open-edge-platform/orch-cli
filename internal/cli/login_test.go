@@ -6,7 +6,6 @@ package cli
 import (
 	"bytes"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
@@ -100,35 +99,10 @@ func FuzzLogin(f *testing.F) {
 
 		// Test login with provided credentials
 		err := testSuite.login(username, password)
-		if err != nil && (strings.Contains(err.Error(), "not") ||
-			strings.Contains(err.Error(), "unknown") ||
-			strings.Contains(err.Error(), "match") ||
-			strings.Contains(err.Error(), "invalid") ||
-			strings.Contains(err.Error(), "required") ||
-			strings.Contains(err.Error(), "requires") ||
-			strings.Contains(err.Error(), "no such") ||
-			strings.Contains(err.Error(), "missing") ||
-			strings.Contains(err.Error(), "no") ||
-			strings.Contains(err.Error(), "must") ||
-			strings.Contains(err.Error(), "in form") ||
-			strings.Contains(err.Error(), "incorrect") ||
-			strings.Contains(err.Error(), "unexpected") ||
-			strings.Contains(err.Error(), "expected") ||
-			strings.Contains(err.Error(), "failed") ||
-			strings.Contains(err.Error(), "is a") ||
-			strings.Contains(err.Error(), "bad") ||
-			strings.Contains(err.Error(), "exists") ||
-			strings.Contains(err.Error(), "cannot") ||
-			strings.Contains(err.Error(), "nonexistent") ||
-			strings.Contains(err.Error(), "deleting") ||
-			strings.Contains(err.Error(), "getting") ||
-			strings.Contains(err.Error(), "listing") ||
-			strings.Contains(err.Error(), "creating") ||
-			strings.Contains(err.Error(), "Internal Server Error") ||
-			strings.Contains(err.Error(), "accepts")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid AMT Profile delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

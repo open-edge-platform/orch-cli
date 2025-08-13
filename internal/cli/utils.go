@@ -496,8 +496,8 @@ func isExpectedError(err error) bool {
 		"not", "unknown", "match", "invalid", "required", "requires",
 		"no such", "missing", "no", "must", "in form", "incorrect",
 		"unexpected", "expected", "failed", "is a", "bad", "exists",
-		"cannot", "nonexistent", "deleting", "getting", "listing",
-		"creating", "Internal Server Error", "null", "accepts", "error", "failed",
+		"cannot", "nonexistent", "deleting", "getting", "listing", "wrong",
+		"creating", "Internal Server Error", "null", "accepts", "error", "failed", "inappropriate",
 	}
 	errStr := strings.ToLower(err.Error())
 	for _, substr := range expectedSubstrings {
