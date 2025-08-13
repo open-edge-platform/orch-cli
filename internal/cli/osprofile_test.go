@@ -228,6 +228,7 @@ func FuzzOSProfile(f *testing.F) {
 
 		// --- Create ---
 		_, err := testSuite.createOSProfile(project, path, args)
+
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

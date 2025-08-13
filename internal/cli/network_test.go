@@ -78,6 +78,7 @@ func FuzzNetwork(f *testing.F) {
 
 		// --- Create ---
 		_, err := testSuite.createNetwork("project", name, createArgs)
+
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -87,6 +88,7 @@ func FuzzNetwork(f *testing.F) {
 		// --- Set ---
 		setArgs := map[string]string{}
 		_, err = testSuite.setNetwork("project", name, setArgs)
+
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -95,6 +97,7 @@ func FuzzNetwork(f *testing.F) {
 
 		// --- Get ---
 		_, err = testSuite.getNetwork("project", name, map[string]string{})
+
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -103,6 +106,7 @@ func FuzzNetwork(f *testing.F) {
 
 		// --- List ---
 		_, err = testSuite.listNetwork("project", map[string]string{})
+
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -111,6 +115,7 @@ func FuzzNetwork(f *testing.F) {
 
 		// --- Delete ---
 		_, err = testSuite.deleteNetwork("project", name, map[string]string{})
+
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

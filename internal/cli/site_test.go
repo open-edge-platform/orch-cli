@@ -228,6 +228,7 @@ func FuzzSite(f *testing.F) {
 		// Call your site creation logic (replace with your actual function if needed)
 		_, err := testSuite.createSite(project, name, args)
 
+
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -236,6 +237,7 @@ func FuzzSite(f *testing.F) {
 
 		// --- List ---
 		_, err = testSuite.listSite(project, make(map[string]string))
+
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
@@ -244,6 +246,7 @@ func FuzzSite(f *testing.F) {
 
 		// --- Delete ---
 		_, err = testSuite.deleteSite(project, siteID, make(map[string]string))
+
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

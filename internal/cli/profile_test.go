@@ -165,6 +165,7 @@ func FuzzProfile(f *testing.F) {
 
 		// Create profile
 		err := testSuite.createProfile(pubName, applicationName, applicationVersion, profileName, createArgs)
+
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
