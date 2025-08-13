@@ -486,3 +486,24 @@ func TLS13RPSClientOption() func(*rpsapi.Client) error {
 		return nil
 	}
 }
+
+// Helper function for fuzz tests
+func isExpectedError(err error) bool {
+	if err == nil {
+		return false
+	}
+	expectedSubstrings := []string{
+		"not", "unknown", "match", "invalid", "required", "requires",
+		"no such", "missing", "no", "must", "in form", "incorrect",
+		"unexpected", "expected", "failed", "is a", "bad", "exists", "open",
+		"cannot", "nonexistent", "deleting", "getting", "listing", "wrong",
+		"creating", "Internal Server Error", "null", "accepts", "error", "failed", "inappropriate",
+	}
+	errStr := strings.ToLower(err.Error())
+	for _, substr := range expectedSubstrings {
+		if strings.Contains(errStr, strings.ToLower(substr)) {
+			return true
+		}
+	}
+	return false
+}

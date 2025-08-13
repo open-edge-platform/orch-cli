@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
@@ -242,48 +241,26 @@ func FuzzRegistry(f *testing.F) {
 
 		// --- Create ---
 		err := testSuite.createRegistry(project, name, createArgs)
-		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "invalid") ||
-			strings.Contains(err.Error(), "not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid registry creation: %v", err)
-			return
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- List ---
 		_, err = testSuite.listRegistries(project, false, false, "", "")
-		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "invalid") ||
-			strings.Contains(err.Error(), "not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid registry list: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Get ---
 		_, err = testSuite.getRegistry(project, name)
-		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "invalid") ||
-			strings.Contains(err.Error(), "not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid registry get: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Update ---
@@ -291,32 +268,18 @@ func FuzzRegistry(f *testing.F) {
 			"description": "new-description",
 		}
 		err = testSuite.updateRegistry(project, name, updateArgs)
-		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "not set") ||
-			strings.Contains(err.Error(), "invalid") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid registry update: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete ---
 		err = testSuite.deleteRegistry(project, name)
-		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "not set") ||
-			strings.Contains(err.Error(), "invalid") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid registry delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

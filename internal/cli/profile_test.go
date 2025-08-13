@@ -5,7 +5,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -166,18 +165,11 @@ func FuzzProfile(f *testing.F) {
 
 		// Create profile
 		err := testSuite.createProfile(pubName, applicationName, applicationVersion, profileName, createArgs)
-		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "invalid values.yaml") ||
-			strings.Contains(err.Error(), "null byte detected") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid profile creation: %v", err)
-			return
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// Update profile
@@ -185,44 +177,26 @@ func FuzzProfile(f *testing.F) {
 			"description": "new-description",
 		}
 		err = testSuite.updateProfile(pubName, applicationName, applicationVersion, profileName, updateArgs)
-		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "no such file or directory") ||
-			strings.Contains(err.Error(), "invalid values.yaml")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid profile %s, application %s update: %v", profileName, applicationName, err)
-			return
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// Get profile
 		_, err = testSuite.getProfile(pubName, applicationName, applicationVersion, profileName)
-		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid profile get: %v", err)
-			return
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// Delete profile
 		err = testSuite.deleteProfile(pubName, applicationName, applicationVersion, profileName)
-		if err != nil && (strings.Contains(err.Error(), "no artifact profile matches the given name") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "no such file or directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid profile deletion: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

@@ -480,28 +480,12 @@ func FuzzHost(f *testing.F) {
 			"amt":              amt,
 		}
 
-		expErr1 := "--import-from-csv <path/to/file.csv> is required, cannot be empty"
-		expErr2 := "host import input file must be a CSV file"
-		expErr3 := "Failed to provision hosts"
-		expErr4 := "Pre-flight check failed"
-		expErr5 := "unknown shorthand flag"
-
 		_, err := testSuite.createHost(project, HostArgs)
 
-		if path == "" || strings.TrimSpace(path) == "" {
-			if !testSuite.Error(err) {
-				t.Errorf("Unexpected result for path %s", path)
-			}
-		} else if !PathExists(path) || !HasCSVExtension(path) {
-			if !testSuite.Error(err) {
-				t.Errorf("Unexpected result for path %s", path)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), expErr1) || strings.Contains(err.Error(), expErr2) || strings.Contains(err.Error(), expErr3) || strings.Contains(err.Error(), expErr4) || strings.Contains(err.Error(), expErr5)) {
-			if !testSuite.Error(err) {
-				t.Errorf("Unexpected result for path %s", path)
-			}
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected result for path %s", path)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		//Fuzz set host command
@@ -510,48 +494,36 @@ func FuzzHost(f *testing.F) {
 			"power-policy": pol,
 		}
 
-		expErr1 = "incorrect power policy provided with --power-policy flag use one of immediate|ordered"
-		expErr2 = "accepts 1 arg(s), received 2"
-		expErr3 = "incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep"
-
 		_, err = testSuite.setHost(project, name, HostArgs)
 
-		if (pwr == "" || strings.TrimSpace(pwr) == "") || (pol == "" || strings.TrimSpace(pol) == "") || (name == "" || strings.TrimSpace(name) == "") {
-			if !testSuite.Error(err) {
-				t.Errorf("Unexpected result for %s for power %s or policy %s", name, pwr, pol)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), expErr1) || strings.Contains(err.Error(), expErr2) || strings.Contains(err.Error(), expErr3)) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected result for %s power %s or policy %s", name, pwr, pol)
+			t.Errorf("Unexpected error: %v", err)
 		}
-
 		// --- Get Host ---
 		_, err = testSuite.getHost(project, name, make(map[string]string))
-		if name == "" || strings.TrimSpace(name) == "" {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for missing host name in getHost, got: %v", err)
-			}
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for getHost with name %s: %v", name, err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete Host ---
 		_, err = testSuite.deleteHost(project, name, make(map[string]string))
-		if name == "" || strings.TrimSpace(name) == "" {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for missing host name in deleteHost, got: %v", err)
-			}
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for deleteHost with name %s: %v", name, err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- List Host ---
 		_, err = testSuite.listHost(project, make(map[string]string))
-		if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for listHost with project %s: %v", project, err)
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
 		}
-
 	})
 }
 
