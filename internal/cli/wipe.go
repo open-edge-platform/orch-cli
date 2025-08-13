@@ -127,13 +127,18 @@ func (w *wiper) prepareApplicationsForDeletion(ctx context.Context, projectName 
 		if err != nil {
 			return append(errors, err)
 		}
+		appCount := int32(len(resp.JSON200.Applications))
+		// Check for overflow before addition
+		if offset > (int32(^uint32(0)>>1) - appCount) {
+			return append(errors, fmt.Errorf("offset integer overflow"))
+		}
 		for _, app := range resp.JSON200.Applications {
 			if err = w.prepareApplicationForDeletion(ctx, projectName, app.Name, app.Version); err != nil {
 				errors = append(errors, err)
 			}
 		}
-		hasMorePages = resp.JSON200.TotalElements > offset+int32(len(resp.JSON200.Applications))
-		offset = offset + int32(len(resp.JSON200.Applications))
+		hasMorePages = resp.JSON200.TotalElements > offset+appCount
+		offset = offset + appCount
 	}
 	return errors
 }

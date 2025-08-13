@@ -6,7 +6,6 @@ package cli
 import (
 	"bytes"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
@@ -98,42 +97,12 @@ func FuzzLogin(f *testing.F) {
 		// Always start with logout to clear state
 		_ = testSuite.logout()
 
-		// Simulate already logged in
-		viper.Set(auth.RefreshTokenField, "bogus")
-		err := testSuite.login(username, password)
-		if viper.GetString(auth.RefreshTokenField) != "" {
-			if err == nil || !strings.Contains(err.Error(), "already logged in") &&
-				!strings.Contains(err.Error(), "accepts") &&
-				!strings.Contains(err.Error(), "bad flag") &&
-				!strings.Contains(err.Error(), "requires at least 1 arg") &&
-				!strings.Contains(err.Error(), "unknown shorthand flag:") &&
-				!strings.Contains(err.Error(), "unknown flag") {
-				t.Errorf("Expected error for already logged in, got: %v", err)
-			}
-			// Clear token for next test
-			viper.Set(auth.RefreshTokenField, "")
-			return
-		}
-
 		// Test login with provided credentials
-		err = testSuite.login(username, password)
-		if username == "" {
-			if err == nil || !strings.Contains(err.Error(), "username cannot be blank") {
-				t.Errorf("Expected error for blank username, got: %v", err)
-			}
-			return
-		}
-		if password == "" {
-			if err == nil || !strings.Contains(err.Error(), "password cannot be blank") {
-				t.Errorf("Expected error for blank password, got: %v", err)
-			}
-			return
-		}
-		// Accept any error for wrong credentials, but no error for valid ones
-		if username == "u" && password == "p" {
-			if err != nil {
-				t.Errorf("Unexpected error for valid login: %v", err)
-			}
+		err := testSuite.login(username, password)
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

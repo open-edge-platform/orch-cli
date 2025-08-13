@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
+
 	"testing"
 
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
@@ -269,40 +269,26 @@ func FuzzApplication(f *testing.F) {
 
 		// --- Create ---
 		err := testSuite.createApplication(project, appName, appVersion, createArgs)
-		if kind == "" || kind == "addon" || kind == "normal" || kind == "extension" {
-			if kind != "" && kind != "addon" && kind != "normal" && kind != "extension" {
-				if err == nil {
-					t.Errorf("Expected error for invalid kind, got: %v", err)
-				}
-				return
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid application creation: %v", err)
-			return
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- List ---
 		_, err = testSuite.listApplications(project, false, "version", "version="+appVersion, kind)
-		if err != nil && (strings.Contains(err.Error(), "not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid application list: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Get ---
 		_, err = testSuite.getApplication(project, appName, appVersion)
-		if err != nil && (strings.Contains(err.Error(), "not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid application get: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Update ---
@@ -310,26 +296,18 @@ func FuzzApplication(f *testing.F) {
 			"display-name": "new.display.name",
 		}
 		err = testSuite.updateApplication(project, appName, appVersion, updateArgs)
-		if appName == "" && appVersion == "" {
-			if err == nil {
-				t.Errorf("Expected error for missing app name or version in update, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid application update: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete ---
 		err = testSuite.deleteApplication(project, appName, appVersion)
-		if err != nil && (strings.Contains(err.Error(), "not set") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid application delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

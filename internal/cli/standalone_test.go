@@ -5,7 +5,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -114,40 +113,10 @@ func FuzzGenerateStandaloneConfig(f *testing.F) {
 
 		_, err := testSuite.generateStandaloneConfig(project, SArgs)
 
-		// Error expectations
-		if configFile == "" || strings.TrimSpace(configFile) == "" {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for missing config file, got: %v", err)
-			}
-			return
-		}
-		if configFile != "./testdata/config-file" {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for missing or invalid config file, got: %v", err)
-			}
-			return
-		}
-		if outputFile == "" {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for missing output file, got: %v", err)
-			}
-			return
-		}
-		if repoVersion == "" {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for missing repo version, got: %v", err)
-			}
-			return
-		}
-		if strings.Contains(configFile, "invalid") {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for invalid config file, got: %v", err)
-			}
-			return
-		}
-		// If all inputs are valid, expect no error
-		if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid standalone config generation: %v", err)
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

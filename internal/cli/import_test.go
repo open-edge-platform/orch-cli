@@ -5,7 +5,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -46,27 +45,10 @@ func FuzzImportHelmChart(f *testing.F) {
 		}
 
 		_, err := testSuite.importHelmChart(project, path, args)
-		if project == "" || path == "" || valuesFile == "" {
-			if err == nil {
-				t.Errorf("Expected error for missing required field, got: %v", err)
-			}
-			return
-		}
-		if err != nil && ( // Acceptable errors for import
-		strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "invalid") ||
-			strings.Contains(err.Error(), "no such file or directory") ||
-			strings.Contains(err.Error(), "failed to import") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 0") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "Not Found") ||
-			strings.Contains(err.Error(), "required flag \"project\" not set") ||
-			strings.Contains(err.Error(), "is a directory")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid import: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

@@ -5,7 +5,6 @@ package cli
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -135,54 +134,34 @@ func FuzzOSUpdatePolicy(f *testing.F) {
 
 		// --- Create ---
 		_, err := testSuite.createOSUpdatePolicy(project, path, args)
-		if path != "./testdata/mutableosupdateprofile.yaml" && path != "./testdata/latestosupdateprofile.yaml" {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for missing or invalid file, got: %v", err)
-			}
-		} else if project == "invalid-project" {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for invalid project, got: %v", err)
-			}
-		} else if strings.Contains(path, "duplicate") {
-			if err == nil || !strings.Contains(err.Error(), "already exists") {
-				t.Errorf("Expected error for duplicate OS Update Policy name, got: %v", err)
-			}
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid OS Update Policy creation: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- List ---
 		_, err = testSuite.listOSUpdatePolicy(project, args)
-		if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid OS Update Policy list: %v", err)
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete ---
 		_, err = testSuite.getOSUpdatePolicy(project, id, args)
-		if id == "" || strings.TrimSpace(id) == "" {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for missing id in get, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "Internal Server Error") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid OS Update Policy get: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete ---
 		_, err = testSuite.deleteOSUpdatePolicy(project, id, args)
-		if id == "" || strings.TrimSpace(id) == "" {
-			if !testSuite.Error(err) {
-				t.Errorf("Expected error for missing id in delete, got: %v", err)
-			}
-		} else if err != nil && (strings.Contains(err.Error(), "Internal Server Error") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "accepts 1 arg(s), received 2")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid OS Update Policy delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }

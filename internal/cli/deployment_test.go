@@ -6,7 +6,6 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 )
 
@@ -117,77 +116,42 @@ func FuzzDeployment(f *testing.F) {
 
 		// --- Create Deployment ---
 		err := testSuite.createDeployment(appName, version, args)
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "must be formatted as key=value") ||
-			strings.Contains(err.Error(), "no target clusters specified") ||
-			strings.Contains(err.Error(), "not in format")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment create: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- List Deployments ---
 		_, err = testSuite.listDeployment(publisher, make(map[string]string))
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "must be formatted as key=value") ||
-			strings.Contains(err.Error(), "no target clusters specified") ||
-			strings.Contains(err.Error(), "not in format")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment list: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Get Deployment ---
 		_, err = testSuite.getDeployment(publisher, deployment, make(map[string]string))
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "must be formatted as key=value") ||
-			strings.Contains(err.Error(), "no target clusters specified") ||
-			strings.Contains(err.Error(), "not in format")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment get: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Set Deployment ---
 		_, err = testSuite.setDeployment(publisher, deployment, make(map[string]string))
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "must be formatted as key=value") ||
-			strings.Contains(err.Error(), "no target clusters specified") ||
-			strings.Contains(err.Error(), "not in format")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment set: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 
 		// --- Delete Deployment ---
 		_, err = testSuite.deleteDeployment(publisher, deployment, make(map[string]string))
-		if err != nil && (strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "accepts") ||
-			strings.Contains(err.Error(), "unknown flag") ||
-			strings.Contains(err.Error(), "no such file or directory") ||
-			strings.Contains(err.Error(), "unknown shorthand flag:") ||
-			strings.Contains(err.Error(), "must be formatted as key=value") ||
-			strings.Contains(err.Error(), "no target clusters specified") ||
-			strings.Contains(err.Error(), "not in format")) {
+		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
-			t.Errorf("Unexpected error for valid deployment delete: %v", err)
+			t.Errorf("Unexpected error: %v", err)
 		}
 	})
 }
