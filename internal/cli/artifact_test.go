@@ -157,6 +157,8 @@ func FuzzArtifact(f *testing.F) {
 	f.Add("", "artifact1", "testdata/artifact.txt", "artifact-display-name", "Artifact-Description", "text/plain") // missing project
 
 	f.Fuzz(func(t *testing.T, project, artifactName, artifactFile, displayName, description, mimeType string) {
+		_ = displayName
+		_ = description
 		testSuite := new(CLITestSuite)
 		testSuite.SetT(t)
 		testSuite.SetupSuite()

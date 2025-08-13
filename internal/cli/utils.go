@@ -495,7 +495,7 @@ func isExpectedError(err error) bool {
 	expectedSubstrings := []string{
 		"not", "unknown", "match", "invalid", "required", "requires",
 		"no such", "missing", "no", "must", "in form", "incorrect",
-		"unexpected", "expected", "failed", "is a", "bad", "exists",
+		"unexpected", "expected", "failed", "is a", "bad", "exists", "open",
 		"cannot", "nonexistent", "deleting", "getting", "listing", "wrong",
 		"creating", "Internal Server Error", "null", "accepts", "error", "failed", "inappropriate",
 	}

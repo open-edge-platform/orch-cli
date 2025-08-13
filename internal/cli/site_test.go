@@ -228,7 +228,6 @@ func FuzzSite(f *testing.F) {
 		// Call your site creation logic (replace with your actual function if needed)
 		_, err := testSuite.createSite(project, name, args)
 
-
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
