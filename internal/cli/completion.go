@@ -27,7 +27,7 @@ Examples:
   # PowerShell
   orch-cli autocomplete powershell | Out-String | Invoke-Expression
 `,
-		Args: cobra.ExactValidArgs(1),
+		Args:      cobra.ExactValidArgs(1),
 		ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch args[0] {
