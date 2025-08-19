@@ -79,23 +79,24 @@ func getRootCmd() *cobra.Command {
 	var NoAuth bool
 	rootCmd.PersistentFlags().BoolVarP(&NoAuth, "noauth", "n", viper.GetBool("noauth"), "use without authentication checks")
 
-	rootCmd.AddCommand(
-		clilib.GetConfigCommand(),
-		getCreateCommand(),
-		getListCommand(),
-		getGetCommand(),
-		getSetCommand(),
-		getDeleteCommand(),
-		getUploadCommand(),
-		getLoginCommand(),
-		getLogoutCommand(),
-		getExportCommand(),
-		getDeauthorizeCommand(),
-		getWipeProjectCommand(),
-		versionCommand(),
-		getImportCommand(),
-		getGenerateCommand(),
-	)
+       rootCmd.AddCommand(
+	       clilib.GetConfigCommand(),
+	       getCreateCommand(),
+	       getListCommand(),
+	       getGetCommand(),
+	       getSetCommand(),
+	       getDeleteCommand(),
+	       getUploadCommand(),
+	       getLoginCommand(),
+	       getLogoutCommand(),
+	       getExportCommand(),
+	       getDeauthorizeCommand(),
+	       getWipeProjectCommand(),
+	       versionCommand(),
+	       getImportCommand(),
+	       getGenerateCommand(),
+	       NewCompletionCommand(rootCmd),
+       )
 	return rootCmd
 }
 
