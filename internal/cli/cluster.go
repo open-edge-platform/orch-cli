@@ -146,7 +146,7 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 		if resp.JSON201 != nil {
 			fmt.Printf("Cluster created successfully: %+v\n", *resp.JSON201)
 		} else if resp.Body != nil {
-			fmt.Printf("Response body: %s\n", string(resp.Body))
+			fmt.Printf("Test Response body: %s\n", string(resp.Body))
 		}
 	}
 
