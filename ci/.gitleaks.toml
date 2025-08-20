@@ -1,0 +1,5 @@
+# Gitleaks config to allowlist test PKCS12 file
+[allowlist]
+files = [
+  "internal/cli/testdata/sample.pfx"
+]
