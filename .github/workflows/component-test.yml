@@ -66,9 +66,11 @@ jobs:
       - name: Get current git hash of the app-orch-catalog PR
         id: get-git-hash-catalog
         working-directory: app-orch-catalog
+        env:
+          GIT_HASH_CHARTS: "${{ github.event.pull_request.head.sha }}"
         run: |
-          if [[ "${{ github.event.pull_request.head.sha }}" =~ ^[0-9a-fA-F]{40}$ ]]; then
-            echo "GIT_HASH_CHARTS=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+          if [[ "${GIT_HASH_CHARTS}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "GIT_HASH_CHARTS=${GIT_HASH_CHARTS}" >> "$GITHUB_ENV"
           else
             echo "Invalid SHA" >&2
             exit 1
