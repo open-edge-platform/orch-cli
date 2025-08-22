@@ -95,6 +95,7 @@ func getRootCmd() *cobra.Command {
 		versionCommand(),
 		getImportCommand(),
 		getGenerateCommand(),
+		NewCompletionCommand(rootCmd),
 	)
 	return rootCmd
 }
