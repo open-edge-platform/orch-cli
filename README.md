@@ -2,6 +2,9 @@
   SPDX-FileCopyrightText: (C) 2025 Intel Corporation
   SPDX-License-Identifier: Apache-2.0
 -->
+<!-- 
+  SPDX-License-Identifier: LicenseRef-third-party-software 
+-->
 
 # Edge Manageability Framework Command Line Interface
 
@@ -13,7 +16,7 @@ The Orchestrator CLI is a standalone utility which offers command line commands
 to interact and manage various Orchestrator resources using the
 REST API endpoints.
 
-Currently the `edge-cli` is supported for [Infrastructure Management] operations and
+Currently the `orch-cli` is supported for [Infrastructure Management] operations and
 in `beta` for [Application Orchestration] and [Cluster Orchestration].
 
 Currently allows user to `create`, `get`, `list`, `set` and `delete` the following
@@ -21,6 +24,9 @@ Orchestrator entities:
 
 - Hosts
 - Operating System Profiles (OsProfiles)
+- Sites
+- Regions
+- Custom Configs
 - Clusters
 - Application images registries
 - Application artifacts
@@ -49,7 +55,12 @@ Instructions on how to install and set up the CLI on your development machine.
 
 ### Download pre-built artefacts
 
-[//]: # (TODO)
+Pull the orch-cli compressed artifact from the registry-rs.edgeorchestration.intel.com and unpack the archive. The archive contains the orch-cli binary.
+
+```shell
+oras pull registry-rs.edgeorchestration.intel.com/edge-orch/files/orch-cli:3.1
+tar xf orch-cli-package.tar.gz
+```
 
 ### Build From Source
 

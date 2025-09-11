@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 # Gitleaks config to allowlist test PKCS12 file
 ###############################
 # Robust gitleaks allowlist for test PKCS12 file
