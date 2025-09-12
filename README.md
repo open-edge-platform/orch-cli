@@ -55,7 +55,8 @@ Instructions on how to install and set up the CLI on your development machine.
 
 ### Download pre-built artefacts
 
-Pull the orch-cli compressed artifact from the registry-rs.edgeorchestration.intel.com and unpack the archive. The archive contains the orch-cli binary.
+Pull the orch-cli compressed artifact from the registry-rs.edgeorchestration.intel.com and unpack the archive.
+The archive contains the orch-cli binary.
 
 ```shell
 oras pull registry-rs.edgeorchestration.intel.com/edge-orch/files/orch-cli:3.1
