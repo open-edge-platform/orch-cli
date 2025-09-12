@@ -154,7 +154,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = checkName(name)
+	err = checkName(name, SITE)
 	if err != nil {
 		return err
 	}
