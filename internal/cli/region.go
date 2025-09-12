@@ -342,9 +342,8 @@ func checkName(name string, resource int) error {
 		return errors.New("invalid region name")
 	} else if resource == SITE {
 		return errors.New("invalid site name")
-	} else {
-		return errors.New("invalid resource name")
 	}
+	return errors.New("invalid resource name")
 }
 
 func checkID(id string) error {
