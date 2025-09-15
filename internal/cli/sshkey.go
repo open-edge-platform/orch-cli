@@ -43,7 +43,7 @@ func printSSHKeys(writer io.Writer, SSHKeys []infra.LocalAccountResource, instan
 			fmt.Fprintf(writer, "%s\t%s\n", sshKey.Username, *sshKey.ResourceId)
 		} else {
 			for _, instance := range instances {
-				if instance.LocalAccountID != nil && *instance.LocalAccountID == *sshKey.ResourceId {
+				if instance.Localaccount != nil && *instance.Localaccount.ResourceId == *sshKey.ResourceId {
 					inUse = "Yes"
 					break
 				}
@@ -58,7 +58,7 @@ func printSSHKey(writer io.Writer, SSHKey *infra.LocalAccountResource, instances
 
 	useHosts := ""
 	for _, instance := range instances {
-		if instance.LocalAccountID != nil && *instance.LocalAccountID == *SSHKey.ResourceId {
+		if instance.Localaccount != nil && *instance.Localaccount.ResourceId == *SSHKey.ResourceId {
 			useHosts = useHosts + *instance.HostID + " "
 		}
 	}
