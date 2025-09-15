@@ -203,7 +203,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		mockInfraClient.EXPECT().LocalAccountServiceDeleteLocalAccountWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, accountID string, _ ...infra.RequestEditorFn) (*infra.LocalAccountServiceDeleteLocalAccountResponse, error) {
+			func(_ context.Context, _ string, _ string, _ ...infra.RequestEditorFn) (*infra.LocalAccountServiceDeleteLocalAccountResponse, error) {
 				return &infra.LocalAccountServiceDeleteLocalAccountResponse{
 					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
 				}, nil
