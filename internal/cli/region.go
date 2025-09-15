@@ -127,7 +127,7 @@ func runCreateRegionCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = checkName(name)
+	err = checkName(name, REGION)
 	if err != nil {
 		return err
 	}
@@ -326,15 +326,24 @@ func printRegion(writer io.Writer, region *infra.RegionResource) {
 
 }
 
-func checkName(name string) error {
-	pattern := `^[a-zA-Z0-9]+$`
+func checkName(name string, resource int) error {
+	pattern := `^[a-zA-Z-_0-9./: ]+$`
 	re := regexp.MustCompile(pattern)
+
+	//The REGION API regex accepts space, but a name with space is not accepted when metadata is derived from it
+	if resource == REGION && strings.Contains(name, " ") {
+		return errors.New("invalid region name")
+	}
 
 	if re.MatchString(name) {
 		return nil
 	}
-
-	return errors.New("invalid region name")
+	if resource == REGION {
+		return errors.New("invalid region name")
+	} else if resource == SITE {
+		return errors.New("invalid site name")
+	}
+	return errors.New("invalid resource name")
 }
 
 func checkID(id string) error {
