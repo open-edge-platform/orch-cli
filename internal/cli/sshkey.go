@@ -32,33 +32,41 @@ orch-cli delete sshkey mysshkey --project some-project`
 var SSHKeyHeader = fmt.Sprintf("\n%s\t%s", "Remote User", "Resource ID")
 
 // Prints SSH keys in tabular format
-func printSSHKeys(writer io.Writer, SSHKeys []infra.LocalAccountResource, verbose bool) {
+func printSSHKeys(writer io.Writer, SSHKeys []infra.LocalAccountResource, instances []infra.InstanceResource, verbose bool) {
 	if verbose {
 		fmt.Fprintf(writer, "\n%s\t%s\t%s\n", "Remote User", "Resource ID", "In use")
 	}
+
 	for _, sshKey := range SSHKeys {
+		inUse := "No"
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\n", sshKey.Username, *sshKey.ResourceId)
 		} else {
-
-			//TODO determine if key is in use by any host
-			inUse := "Unknown"
-
+			for _, instance := range instances {
+				if instance.LocalAccountID != nil && *instance.LocalAccountID == *sshKey.ResourceId {
+					inUse = "Yes"
+					break
+				}
+			}
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", sshKey.Username, *sshKey.ResourceId, inUse)
 		}
 	}
 }
 
 // Prints output details of SSH key
-func printSSHKey(writer io.Writer, SSHKey *infra.LocalAccountResource) {
+func printSSHKey(writer io.Writer, SSHKey *infra.LocalAccountResource, instances []infra.InstanceResource) {
 
-	//TODO determine if key is in use by any host and which ones
-	useHosts := "None, Non, No"
+	useHosts := ""
+	for _, instance := range instances {
+		if instance.LocalAccountID != nil && *instance.LocalAccountID == *SSHKey.ResourceId {
+			useHosts = useHosts + *instance.HostID + " "
+		}
+	}
 
 	_, _ = fmt.Fprintf(writer, "Remote User Name: \t%s\n", SSHKey.Username)
 	_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *SSHKey.ResourceId)
 	_, _ = fmt.Fprintf(writer, "Key: \t%s\n", SSHKey.SshKey)
-	_, _ = fmt.Fprintf(writer, "In use by:\n%s\n\n", useHosts)
+	_, _ = fmt.Fprintf(writer, "In use by: \t%s\n\n", useHosts)
 }
 
 // Filters list of SSH keys to find one with specific name
@@ -187,18 +195,37 @@ func runGetSSHKeyCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		"", "error getting Cloud Init configuration"); !proceed {
+	if err := checkResponse(resp.HTTPResponse, "error while retrieving ssh key"); err != nil {
 		return err
 	}
 
-	printSSHKey(writer, sshKey)
+	pageSize := 20
+	instances := make([]infra.InstanceResource, 0)
+	for offset := 0; ; offset += pageSize {
+		iresp, err := sshKeyClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
+			&infra.InstanceServiceListInstancesParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(iresp.HTTPResponse, "error while retrieving instances"); err != nil {
+			return err
+		}
+
+		instances = append(instances, iresp.JSON200.Instances...)
+		if !iresp.JSON200.HasNext {
+			break // No more instances to process
+		}
+	}
+
+	printSSHKey(writer, sshKey, instances)
 	return writer.Flush()
 }
 
 // Lists all SSH keys - retrieves all keys and displays selected information in tabular format
 func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
+
 	writer, verbose := getOutputContext(cmd)
+	pageSize := 20
 
 	ctx, sshKeyClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
@@ -216,7 +243,27 @@ func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	printSSHKeys(writer, resp.JSON200.LocalAccounts, verbose)
+	instances := make([]infra.InstanceResource, 0)
+	if verbose {
+		for offset := 0; ; offset += pageSize {
+			iresp, err := sshKeyClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
+				&infra.InstanceServiceListInstancesParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if proceed, err := processResponse(resp.HTTPResponse, iresp.Body, writer, verbose,
+				SSHKeyHeader, "error getting instances"); !proceed {
+				return err
+			}
+
+			instances = append(instances, iresp.JSON200.Instances...)
+			if !iresp.JSON200.HasNext {
+				break // No more instances to process
+			}
+		}
+	}
+
+	printSSHKeys(writer, resp.JSON200.LocalAccounts, instances, verbose)
 
 	return writer.Flush()
 }
