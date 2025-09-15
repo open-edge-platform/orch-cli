@@ -29,6 +29,11 @@ import (
 const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
+const (
+	REGION = 0
+	SITE   = 1
+)
+
 // Use the interface type instead of the concrete function type
 var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
 	return getInfraServiceContext(cmd)
