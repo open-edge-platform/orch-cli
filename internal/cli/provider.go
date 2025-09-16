@@ -233,7 +233,7 @@ func printProviders(writer io.Writer, providers []infra.ProviderResource, verbos
 			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\n", prov.Name, *prov.ResourceId, prov.ProviderKind, *prov.ProviderVendor)
 		} else {
 
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%s\t%s\n", prov.Name, *prov.ResourceId, prov.ProviderKind, *prov.ProviderVendor, prov.Timestamps.CreatedAt, prov.Timestamps.UpdatedAt)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%s\t%s\t%s\n", prov.Name, *prov.ResourceId, prov.ProviderKind, *prov.ProviderVendor, prov.ApiEndpoint, prov.Timestamps.CreatedAt, prov.Timestamps.UpdatedAt)
 		}
 	}
 }

@@ -2066,6 +2066,173 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			},
 		).AnyTimes()
 
+		// Mock ProviderServiceCreateProviderWithResponse (used by create provider command)
+		mockInfraClient.EXPECT().ProviderServiceCreateProviderWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, body infra.ProviderServiceCreateProviderJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ProviderServiceCreateProviderResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ProviderServiceCreateProviderResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.ProviderServiceCreateProviderResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.ProviderResource{
+							Name:           body.Name,
+							ApiEndpoint:    body.ApiEndpoint,
+							ProviderKind:   body.ProviderKind,
+							ProviderVendor: body.ProviderVendor,
+							ResourceId:     func(s string) *string { return &s }("provider-abc12345"),
+							Timestamps: &infra.Timestamps{
+								CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+								UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock ProviderServiceDeleteProviderWithResponse (used by delete provider command)
+		mockInfraClient.EXPECT().ProviderServiceDeleteProviderWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, providerId string, _ ...infra.RequestEditorFn) (*infra.ProviderServiceDeleteProviderResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ProviderServiceDeleteProviderResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch providerId {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ProviderServiceDeleteProviderResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Provider not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ProviderServiceDeleteProviderResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ProviderServiceGetProviderWithResponse (used by get provider command)
+		mockInfraClient.EXPECT().ProviderServiceGetProviderWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, providerId string, _ ...infra.RequestEditorFn) (*infra.ProviderServiceGetProviderResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ProviderServiceGetProviderResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch providerId {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ProviderServiceGetProviderResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Provider not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ProviderServiceGetProviderResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ProviderResource{
+								Name:           "provider",
+								ApiEndpoint:    "hello.com",
+								ProviderKind:   "PROVIDER_KIND_BAREMETAL",
+								ProviderVendor: (*infra.ProviderVendor)(stringPtr("PROVIDER_VENDOR_UNSPECIFIED")),
+								ResourceId:     &providerId,
+								Timestamps: &infra.Timestamps{
+									CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+								},
+							},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ProviderServiceListProvidersWithResponse (used by list provider command)
+		mockInfraClient.EXPECT().ProviderServiceListProvidersWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, params *infra.ProviderServiceListProvidersParams, _ ...infra.RequestEditorFn) (*infra.ProviderServiceListProvidersResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ProviderServiceListProvidersResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.ProviderServiceListProvidersResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListProvidersResponse{
+							Providers: []infra.ProviderResource{
+								{
+									Name:           "provider",
+									ApiEndpoint:    "hello.com",
+									ProviderKind:   "PROVIDER_KIND_BAREMETAL",
+									ProviderVendor: (*infra.ProviderVendor)(stringPtr("PROVIDER_VENDOR_UNSPECIFIED")),
+									ResourceId:     func(s string) *string { return &s }("provider-7ceae560"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+							},
+							TotalElements: 1,
+							HasNext:       false,
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
 		ctx := context.Background()
 		return ctx, mockInfraClient, projectName, nil
 	}
