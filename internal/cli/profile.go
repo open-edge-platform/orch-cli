@@ -82,13 +82,13 @@ var profileHeader = fmt.Sprintf("%s\t%s\t%s", "Name", "Display Name", "Descripti
 // parseParameterTemplates parses parameter template flags from CLI
 func parseParameterTemplates(cmd *cobra.Command) (*[]catapi.ParameterTemplate, error) {
 	templateSpecs, _ := cmd.Flags().GetStringSlice("parameter-template")
-	
+
 	if len(templateSpecs) == 0 {
 		return &[]catapi.ParameterTemplate{}, nil
 	}
-	
+
 	var templates []catapi.ParameterTemplate
-	
+
 	for _, spec := range templateSpecs {
 		template, err := parseParameterTemplate(spec)
 		if err != nil {
@@ -96,7 +96,7 @@ func parseParameterTemplates(cmd *cobra.Command) (*[]catapi.ParameterTemplate, e
 		}
 		templates = append(templates, *template)
 	}
-	
+
 	return &templates, nil
 }
 
@@ -107,36 +107,36 @@ func parseParameterTemplate(spec string) (*catapi.ParameterTemplate, error) {
 	if len(parts) != 2 {
 		return nil, fmt.Errorf("format should be 'name=type:display:default'")
 	}
-	
+
 	name := strings.TrimSpace(parts[0])
 	if name == "" {
 		return nil, fmt.Errorf("parameter name cannot be empty")
 	}
-	
+
 	// Split the rest on : to get type, display, default
 	valueParts := strings.SplitN(parts[1], ":", 3)
 	if len(valueParts) != 3 {
 		return nil, fmt.Errorf("value format should be 'type:display:default'")
 	}
-	
+
 	paramType := strings.TrimSpace(valueParts[0])
 	displayName := strings.TrimSpace(valueParts[1])
 	defaultValue := strings.TrimSpace(valueParts[2])
-	
+
 	// Validate parameter type
 	validTypes := map[string]bool{
-		"string":   true,
-		"integer":  true,
+		"string":  true,
+		"integer": true,
 	}
-	
+
 	if !validTypes[paramType] {
 		return nil, fmt.Errorf("invalid parameter type '%s', must be one of: string, integer", paramType)
 	}
-	
+
 	// Remove quotes from display name and default if present
 	displayName = strings.Trim(displayName, "\"'")
 	defaultValue = strings.Trim(defaultValue, "\"'")
-	
+
 	template := &catapi.ParameterTemplate{
 		Name:            name,
 		Type:            paramType,
@@ -144,7 +144,7 @@ func parseParameterTemplate(spec string) (*catapi.ParameterTemplate, error) {
 		Default:         &defaultValue,
 		SuggestedValues: &[]string{},
 	}
-	
+
 	return template, nil
 }
 
@@ -179,7 +179,7 @@ func printProfiles(writer io.Writer, profileList *[]catapi.Profile, verbose bool
 				_, _ = fmt.Fprintf(writer, "Chart Values:\n")
 				decodedValues, err := b64.StdEncoding.DecodeString(*p.ChartValues)
 				var chartContent string
-				
+
 				if err == nil {
 					// Successfully decoded, use decoded content
 					chartContent = string(decodedValues)
@@ -187,7 +187,7 @@ func printProfiles(writer io.Writer, profileList *[]catapi.Profile, verbose bool
 					// Not base64 encoded, use as-is
 					chartContent = *p.ChartValues
 				}
-				
+
 				lines := strings.Split(chartContent, "\n")
 				for _, line := range lines {
 					_, _ = fmt.Fprintf(writer, "  %s\n", line)
@@ -221,7 +221,7 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	chartValues := string(chartBytes)
-	
+
 	// Parse parameter templates from CLI flags
 	parameterTemplates, err := parseParameterTemplates(cmd)
 	if err != nil {

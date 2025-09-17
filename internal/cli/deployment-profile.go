@@ -154,7 +154,7 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return err
 	}
-	
+
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating deployment profile %s", profileName))
 }
 
