@@ -51,7 +51,7 @@ build: mod-update
 
 install: build
 	@# Help: Installs client tool
-	cp build/_output/$(RELEASE_NAME) ${INSTALL_PATH}
+	sudo cp build/_output/$(RELEASE_NAME) ${INSTALL_PATH}
 
 lint:
 	@# Help: Runs lint stage
