@@ -241,12 +241,17 @@ func printProviders(writer io.Writer, providers []infra.ProviderResource, verbos
 // Prints output details of site
 func printProvider(writer io.Writer, provider *infra.ProviderResource) {
 
+	var config string
+	if provider.Config != nil {
+		config = *provider.Config
+	}
+
 	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", provider.Name)
 	_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *provider.ResourceId)
 	_, _ = fmt.Fprintf(writer, "Kind: \t%s\n", provider.ProviderKind)
 	_, _ = fmt.Fprintf(writer, "Vendor: \t%v\n", *provider.ProviderVendor)
 	_, _ = fmt.Fprintf(writer, "API Endpoint: \t%s\n", provider.ApiEndpoint)
-	_, _ = fmt.Fprintf(writer, "Config: \t%s\n", *provider.Config)
+	_, _ = fmt.Fprintf(writer, "Config: \t%s\n", config)
 	_, _ = fmt.Fprintf(writer, "Created At: \t%s\n", provider.Timestamps.CreatedAt)
 	_, _ = fmt.Fprintf(writer, "Updated At: \t%s\n", provider.Timestamps.UpdatedAt)
 

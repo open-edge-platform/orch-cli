@@ -5,11 +5,13 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
 func (s *CLITestSuite) createProvider(project string, name string, kind string, api string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`create provider %s %s %s --project %s`, name, kind, api, project))
+	fmt.Println("Create command:", commandString)
 	return s.runCommand(commandString)
 }
 
@@ -46,20 +48,26 @@ func (s *CLITestSuite) TestProvider() {
 	s.NoError(err)
 
 	SArgs = map[string]string{
-		"config":         "{\"defaultOs\":\"\",\"autoProvision\":false,\"defaultLocalAccount\":\"\",\"osSecurityFeatureEnable\":false}",
-		"vendor":         vendor,
-		"apicredentials": "false",
+		"config": "\"\"defaultOs\":\"os-0921fdc0\",\"autoProvision\":false,\"defaultLocalAccount\":\"\",\"osSecurityFeatureEnable\":false\"",
+		"vendor": vendor,
 	}
 	//create provider with flags
 	_, err = s.createProvider(project, name, kind, api, SArgs)
 	s.NoError(err)
 
-	//create with invalid kind
+	//create with invalid vendor
 	SArgs = map[string]string{
-		"kind": "invalid",
+		"vendor": "invalid",
 	}
 	_, err = s.createProvider(project, name, kind, api, SArgs)
-	s.EqualError(err, "invalid provider kind invalid --kind expects PROVIDER_KIND_BAREMETAL format")
+	s.EqualError(err, "invalid vendor. Accepted values: \"PROVIDER_VENDOR_UNSPECIFIED\", \"PROVIDER_VENDOR_LENOVO_LXCA\", \"PROVIDER_VENDOR_LENOVO_LOCA\"")
+
+	//create with apircreds - improve in future to read from terminal
+	SArgs = map[string]string{
+		"apicredentials": "",
+	}
+	_, err = s.createProvider(project, name, kind, api, SArgs)
+	s.EqualError(err, "inappropriate ioctl for device")
 
 	/////////////////////////////
 	// Test Provider Listing
@@ -88,7 +96,7 @@ func (s *CLITestSuite) TestProvider() {
 	SArgs = map[string]string{
 		"verbose": "true",
 	}
-	listOutput, err = s.listSite(project, SArgs)
+	listOutput, err = s.listProvider(project, SArgs)
 	s.NoError(err)
 
 	parsedOutputList = mapListOutput(listOutput)
@@ -100,8 +108,8 @@ func (s *CLITestSuite) TestProvider() {
 			"Kind":         kind,
 			"Vendor":       vendor,
 			"API Endpoint": api,
-			"Created At":   "2024-01-01T00:00:00Z",
-			"Updated At":   "2024-01-01T00:00:00Z",
+			"Created At":   "2025-01-15 10:30:00 +0000 UTC",
+			"Updated At":   "2025-01-15 10:30:00 +0000 UTC",
 		},
 	}
 
@@ -116,14 +124,14 @@ func (s *CLITestSuite) TestProvider() {
 
 	parsedOutput := mapGetOutput(getOutput)
 	expectedOutput := map[string]string{
-		"Name":         name,
-		"Resource ID":  resourceID,
-		"Kind":         kind,
-		"Vendor":       vendor,
-		"API Endpoint": api,
-		"Config":       "{\"defaultOs\":\"\",\"autoProvision\":false,\"defaultLocalAccount\":\"\",\"osSecurityFeatureEnable\":false}",
-		"Created At":   "2024-01-01T00:00:00Z",
-		"Updated At":   "2024-01-01T00:00:00Z",
+		"Name:":         name,
+		"Resource ID:":  resourceID,
+		"Kind:":         kind,
+		"Vendor:":       vendor,
+		"API Endpoint:": api,
+		"Config:":       "{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}",
+		"Created At:":   "2025-01-15 10:30:00 +0000 UTC",
+		"Updated At:":   "2025-01-15 10:30:00 +0000 UTC",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
@@ -132,13 +140,36 @@ func (s *CLITestSuite) TestProvider() {
 	// Test Provider Delete
 	/////////////////////////////
 
+	// Mock user input for confirmation
+	origStdin := os.Stdin
+	defer func() { os.Stdin = origStdin }()
+	r, w, errPipe := os.Pipe()
+	if errPipe != nil {
+		s.T().Fatalf("failed to create pipe: %v", errPipe)
+	}
+	_, _ = w.Write([]byte("y"))
+	w.Close()
+
 	//delete custom config
+	os.Stdin = r
 	_, err = s.deleteProvider(project, resourceID, make(map[string]string))
 	s.NoError(err)
 
+	r, w, errPipe = os.Pipe()
+	if errPipe != nil {
+		s.T().Fatalf("failed to create pipe: %v", errPipe)
+	}
+	_, _ = w.Write([]byte("y"))
+	w.Close()
+
 	//delete invalid custom config
+	os.Stdin = r
 	_, err = s.deleteProvider(project, "nonexistent-provider", make(map[string]string))
 	s.EqualError(err, "error while deleting provider: Not Found")
+
+	//delete invalid custom config with N as response
+	_, err = s.deleteProvider(project, "nonexistent-provider", make(map[string]string))
+	s.EqualError(err, "operation cancelled by user")
 
 }
 
@@ -156,9 +187,8 @@ func FuzzProvider(f *testing.F) {
 		defer testSuite.TearDownTest()
 
 		args := map[string]string{
-			"config":         "{\"defaultOs\":\"\",\"autoProvision\":false,\"defaultLocalAccount\":\"\",\"osSecurityFeatureEnable\":false}",
-			"vendor":         vendor,
-			"apicredentials": "false",
+			"config": "\"\"defaultOs\":\"\",\"autoProvision\":false,\"defaultLocalAccount\":\"\",\"osSecurityFeatureEnable\":false\"",
+			"vendor": vendor,
 		}
 
 		// Call your provider creation logic (replace with your actual function if needed)

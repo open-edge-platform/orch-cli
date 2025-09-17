@@ -2178,6 +2178,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								Name:           "provider",
 								ApiEndpoint:    "hello.com",
 								ProviderKind:   "PROVIDER_KIND_BAREMETAL",
+								Config:         func(s string) *string { return &s }("{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}"),
 								ProviderVendor: (*infra.ProviderVendor)(stringPtr("PROVIDER_VENDOR_UNSPECIFIED")),
 								ResourceId:     &providerId,
 								Timestamps: &infra.Timestamps{
