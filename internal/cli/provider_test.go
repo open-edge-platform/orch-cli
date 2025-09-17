@@ -175,7 +175,7 @@ func (s *CLITestSuite) TestProvider() {
 
 func FuzzProvider(f *testing.F) {
 	// Initial corpus with valid and invalid input
-	f.Add("project", "provider", "PROVIDER_KIND_BAREMETAL", "hello.com", "{\"defaultOs\":\"\",\"autoProvision\":false,\"defaultLocalAccount\":\"\",\"osSecurityFeatureEnable\":false}", "PROVIDER_VENDOR_UNSPECIFIED", "provider-7ceae560")
+	f.Add("project", "provider", "PROVIDER_KIND_BAREMETAL", "hello.com", "\"\"defaultOs\":\"\",\"autoProvision\":false,\"defaultLocalAccount\":\"\",\"osSecurityFeatureEnable\":false\"", "PROVIDER_VENDOR_UNSPECIFIED", "provider-7ceae560")
 	f.Add("project", "provider", "bloblb", "hello.com", "blobl", "bloblb", "provider-7ceae560")
 
 	f.Fuzz(func(t *testing.T, project, name, kind, api, config, vendor, providerID string) {
@@ -187,7 +187,7 @@ func FuzzProvider(f *testing.F) {
 		defer testSuite.TearDownTest()
 
 		args := map[string]string{
-			"config": "\"\"defaultOs\":\"\",\"autoProvision\":false,\"defaultLocalAccount\":\"\",\"osSecurityFeatureEnable\":false\"",
+			"config": config,
 			"vendor": vendor,
 		}
 

@@ -2196,7 +2196,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		mockInfraClient.EXPECT().ProviderServiceListProvidersWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, projectName string, params *infra.ProviderServiceListProvidersParams, _ ...infra.RequestEditorFn) (*infra.ProviderServiceListProvidersResponse, error) {
+			func(_ context.Context, projectName string, _ *infra.ProviderServiceListProvidersParams, _ ...infra.RequestEditorFn) (*infra.ProviderServiceListProvidersResponse, error) {
 				switch projectName {
 				case "invalid-project":
 					return &infra.ProviderServiceListProvidersResponse{

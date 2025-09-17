@@ -113,9 +113,9 @@ func runCreateProviderCommand(cmd *cobra.Command, args []string) error {
 
 	var apiCredentials string
 	var err error
-	isApiCerds, _ := cmd.Flags().GetBool("apicredentials")
+	isAPICerds, _ := cmd.Flags().GetBool("apicredentials")
 
-	if isApiCerds {
+	if isAPICerds {
 		fmt.Print("Enter API credentials (comma-separated if multiple): ")
 		apiByteCredentials, err := term.ReadPassword(int(os.Stdin.Fd()))
 		if err != nil {
