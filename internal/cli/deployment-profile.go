@@ -133,13 +133,17 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 	}
 	profiles := *pkg.Profiles
 
-	// Insert the new profile, handling the special case of the implicit default profile
-	if len(profiles) == 1 && profiles[0].Name == "implicit-default" {
-		profiles = []catapi.DeploymentProfile{profile}
-	} else {
-		profiles = append(profiles, profile)
+	// Check if a profile with this name already exists
+	for _, existingProfile := range profiles {
+		if existingProfile.Name == profileName {
+			return fmt.Errorf("deployment profile %s already exists for deployment package %s:%s", profileName, name, version)
+		}
 	}
 
+	// Insert the new profile, keeping the implicit default profile if it exists
+	profiles = append(profiles, profile)
+
+	// Set default profile name only if there isn't one already or if it's the implicit default
 	if pkg.DefaultProfileName == nil || *pkg.DefaultProfileName == "" || *pkg.DefaultProfileName == "implicit-default" {
 		pkg.DefaultProfileName = &profileName
 	}
@@ -150,6 +154,7 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return err
 	}
+	
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating deployment profile %s", profileName))
 }
 
