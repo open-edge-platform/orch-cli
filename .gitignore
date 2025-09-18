@@ -12,3 +12,10 @@ kind.config.yaml
 /coverage.txt
 /coverage.xml
 release/
+
+# Test artifacts and temporary files
+import_error_*
+preflight_error_*
+test.csv
+my-config.yaml
+cloud-init.cfg
