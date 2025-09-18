@@ -37,6 +37,7 @@ func getCreateCommand() *cobra.Command {
 		getCreateSiteCommand(),
 		getCreateHostCommand(),
 		getCreateOSProfileCommand(),
+		getCreateProviderCommand(),
 		getCreateSSHKeyCommand(),
 	)
 	return cmd
@@ -70,6 +71,7 @@ func getListCommand() *cobra.Command {
 		getListRegionCommand(),
 		getListOSProfileCommand(),
 		getListHostCommand(),
+		getListProviderCommand(),
 		getListSSHKeyCommand(),
 	)
 	return catalogListRootCmd
@@ -115,6 +117,7 @@ func getGetCommand() *cobra.Command {
 		getGetRegionCommand(),
 		getGetSiteCommand(),
 		getGetHostCommand(),
+		getGetProviderCommand(),
 		getGetSSHKeyCommand(),
 	)
 	return catalogGetRootCmd
@@ -171,6 +174,7 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteSiteCommand(),
 		getDeleteOSProfileCommand(),
 		getDeleteHostCommand(),
+		getDeleteProviderCommand(),
 		getDeleteSSHKeyCommand(),
 	)
 	return catalogDeleteRootCmd
