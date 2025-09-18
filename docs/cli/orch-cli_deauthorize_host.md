@@ -10,7 +10,7 @@ orch-cli deauthorize host <resourceID> [flags]
 
 ```
 #Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
-orch-cli deauthorize host host-1234abcd  --project itep
+orch-cli deauthorize host host-1234abcd  --project some-project
 ```
 
 ### Options

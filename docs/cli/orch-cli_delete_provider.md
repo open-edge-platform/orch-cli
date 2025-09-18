@@ -1,22 +1,22 @@
-## orch-cli delete host
+## orch-cli delete provider
 
-Deletes a host and associated instance
+Delete a provider
 
 ```
-orch-cli delete host <resourceID> [flags]
+orch-cli delete provider <resourceid> [flags]
 ```
 
 ### Examples
 
 ```
-#Delete a host using it's host Resource ID
-orch-cli delete host host-1234abcd  --project some-project
+# Delete specific provider
+orch-cli delete provider provider-aaaa1111 --project some-project
 ```
 
 ### Options
 
 ```
-  -h, --help   help for host
+  -h, --help   help for provider
 ```
 
 ### Options inherited from parent commands
