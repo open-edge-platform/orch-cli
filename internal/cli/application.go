@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	applicationAliases       = []string{"app"}
-	deploymentPackageAliases = []string{"package", "bundle", "pkg"}
-	deploymentProfileAliases = []string{"package-profile", "deployment-profile", "bundle-profile"}
+	applicationAliases       = []string{"app", "application", "applications"}
+	deploymentPackageAliases = []string{"package", "deployment-packages", "bundle", "pkg"}
+	deploymentProfileAliases = []string{"package-profile", "deployment-package-profiles", "deployment-profile", "bundle-profile"}
 )
 
 func getCreateApplicationCommand() *cobra.Command {

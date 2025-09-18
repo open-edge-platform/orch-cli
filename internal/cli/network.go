@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	networkAliases = []string{"net"}
+	networkAliases = []string{"net", "network", "networks"}
 )
 
 var httpClient = &http.Client{Transport: &http.Transport{}}
@@ -39,7 +39,7 @@ func getCreateNetworkCommand() *cobra.Command {
 func getListNetworksCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "networks [flags]",
-		Aliases: []string{"nets", "networks"},
+		Aliases: []string{"nets", "network"},
 		Short:   "List all networks",
 		Example: "orch-cli list networks --project some-project",
 		RunE:    runListNetworksCommand,

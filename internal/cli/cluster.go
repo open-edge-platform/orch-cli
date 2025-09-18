@@ -45,6 +45,7 @@ func getGetClusterCommand() *cobra.Command {
 		Short:   "Get details of a cluster",
 		Example: "orch-cli get cluster cli-cluster",
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"cluster", "clusters"},
 		RunE:    runGetClusterCommand,
 	}
 	return cmd
@@ -55,6 +56,7 @@ func getListClusterCommand() *cobra.Command {
 		Use:     "cluster",
 		Short:   "List clusters",
 		Example: "orch-cli list cluster",
+		Aliases: []string{"cluster", "clusters"},
 		RunE:    runListClusterCommand,
 	}
 	cmd.Flags().Bool("not-ready", false, "Show only clusters that are not ready")

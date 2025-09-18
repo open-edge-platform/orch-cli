@@ -22,6 +22,7 @@ func getListChartsCommand() *cobra.Command {
 		Short:             "Get chart names or chart versions from a HELM registry",
 		PersistentPreRunE: auth.CheckAuth,
 		Example:           "orch-cli get charts my-registry --project my-project",
+		Aliases:           []string{"charts", "chart"},
 		RunE:              getCharts,
 	}
 	return cmd

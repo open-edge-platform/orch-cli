@@ -44,6 +44,7 @@ func getListSiteCommand() *cobra.Command {
 		Use:     "site [flags]",
 		Short:   "List all sites",
 		Example: listSiteExamples,
+		Aliases: []string{"site", "sites"},
 		RunE:    runListSiteCommand,
 	}
 	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of site list to filter sites by parent region")
@@ -56,6 +57,7 @@ func getGetSiteCommand() *cobra.Command {
 		Short:   "Get a site",
 		Example: getSiteExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"site", "sites"},
 		RunE:    runGetSiteCommand,
 	}
 	return cmd

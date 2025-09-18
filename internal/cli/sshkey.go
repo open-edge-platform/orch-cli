@@ -132,6 +132,7 @@ func getGetSSHKeyCommand() *cobra.Command {
 		Short:   "Get a SSH Key remote user configuration",
 		Example: getSSHKeyExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"sshkey", "sshkeys"},
 		RunE:    runGetSSHKeyCommand,
 	}
 	return cmd
@@ -142,6 +143,7 @@ func getListSSHKeyCommand() *cobra.Command {
 		Use:     "sshkey [flags]",
 		Short:   "List all SSH Key remote user configurations",
 		Example: listSSHKeyExamples,
+		Aliases: []string{"sshkey", "sshkeys"},
 		RunE:    runListSSHKeyCommand,
 	}
 	return cmd

@@ -20,7 +20,7 @@ func (s *CLITestSuite) createDeploymentPackage(project string, applicationName s
 }
 
 func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orderBy string, filter string) (string, error) {
-	args := `get deployment-packages --project ` + project
+	args := `list deployment-packages --project ` + project
 	if verbose {
 		args = args + " -v"
 	}

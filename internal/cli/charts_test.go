@@ -8,7 +8,7 @@ import (
 )
 
 func (s *CLITestSuite) listCharts(project string, registry string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`get charts %s --project %s`, registry, project))
+	commandString := addCommandArgs(args, fmt.Sprintf(`list charts %s --project %s`, registry, project))
 	return s.runCommand(commandString)
 }
 

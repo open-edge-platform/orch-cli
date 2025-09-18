@@ -47,6 +47,7 @@ func getListAmtProfileCommand() *cobra.Command {
 		Use:     "amtprofile [flags]",
 		Short:   "List all amptprofiles",
 		Example: listAmtProfileExamples,
+		Aliases: []string{"amtprofile", "amtprofiles"},
 		RunE:    runListAmtProfileCommand,
 	}
 	//cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of site list to filter sites by parent region")
@@ -59,6 +60,7 @@ func getGetAmtProfileCommand() *cobra.Command {
 		Short:   "Get an AMT profile",
 		Example: getAmtProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"amtprofile", "amtprofiles"},
 		RunE:    runGetAmtProfileCommand,
 	}
 	return cmd

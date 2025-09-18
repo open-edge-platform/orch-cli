@@ -37,6 +37,7 @@ func getListProviderCommand() *cobra.Command {
 		Use:     "provider [flags]",
 		Short:   "List all providers",
 		Example: listProviderExamples,
+		Aliases: []string{"provider", "providers"},
 		RunE:    runListProviderCommand,
 	}
 	return cmd
@@ -48,6 +49,7 @@ func getGetProviderCommand() *cobra.Command {
 		Short:   "Get a provider",
 		Example: getProviderExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"provider", "providers"},
 		RunE:    runGetProviderCommand,
 	}
 	return cmd

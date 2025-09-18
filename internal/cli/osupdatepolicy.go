@@ -187,6 +187,7 @@ func getGetOSUpdatePolicyCommand() *cobra.Command {
 		Short:   "Get an OS Update policy",
 		Example: getOSUpdatePolicyExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"osupdatepolicy", "osupdatepolicies"},
 		RunE:    runGetOSUpdatePolicyCommand,
 	}
 	return cmd
@@ -197,6 +198,7 @@ func getListOSUpdatePolicyCommand() *cobra.Command {
 		Use:     "osupdatepolicy [flags]",
 		Short:   "List all OS Update policies",
 		Example: listOSUpdatePolicyExamples,
+		Aliases: []string{"osupdatepolicy", "osupdatepolicies"},
 		RunE:    runListOSUpdatePolicyCommand,
 	}
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")

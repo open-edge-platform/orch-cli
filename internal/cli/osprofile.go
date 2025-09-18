@@ -264,6 +264,7 @@ func getGetOSProfileCommand() *cobra.Command {
 		Short:   "Get an OS profile",
 		Example: getOSProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"osprofile", "osprofiles"},
 		RunE:    runGetOSProfileCommand,
 	}
 	return cmd
@@ -274,6 +275,7 @@ func getListOSProfileCommand() *cobra.Command {
 		Use:     "osprofile [flags]",
 		Short:   "List all OS profiles",
 		Example: listOSProfileExamples,
+		Aliases: []string{"osprofile", "osprofiles"},
 		RunE:    runListOSProfileCommand,
 	}
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")

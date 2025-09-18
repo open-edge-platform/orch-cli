@@ -36,7 +36,7 @@ func getCreateRegistryCommand() *cobra.Command {
 func getListRegistriesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "registries [flags]",
-		Aliases: []string{"regs"},
+		Aliases: []string{"regs", "registry", "reg"},
 		Short:   "List all registries",
 		Example: "orch-cli list registries --project some-project --order-by name",
 		RunE:    runListRegistriesCommand,
@@ -52,7 +52,7 @@ func getGetRegistryCommand() *cobra.Command {
 		Short:   "Get a registry",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli get registry my-registry --project some-project",
-		Aliases: []string{"reg"},
+		Aliases: []string{"reg", "regs", "registries"},
 		RunE:    runGetRegistryCommand,
 	}
 	cmd.Flags().Bool("show-sensitive-info", false, "show sensitive info, e.g. auth-token, CA certs")

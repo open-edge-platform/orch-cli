@@ -35,6 +35,7 @@ func getListProfilesCommand() *cobra.Command {
 		Short:   "List all application profiles",
 		Example: "orch-cli list profiles my-app 1.0.0 --project my-project",
 		Args:    cobra.ExactArgs(2),
+		Aliases: []string{"profile", "profiles", "prof"},
 		RunE:    runListProfilesCommand,
 	}
 	return cmd
@@ -46,6 +47,7 @@ func getGetProfileCommand() *cobra.Command {
 		Short:   "Get an application profile",
 		Example: "orch-cli get profile my-app 1.0.0 my-profile --project my-project",
 		Args:    cobra.ExactArgs(3),
+		Aliases: []string{"profile", "profiles", "prof"},
 		RunE:    runGetProfileCommand,
 	}
 	return cmd

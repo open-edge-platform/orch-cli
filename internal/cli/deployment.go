@@ -48,6 +48,7 @@ func getListDeploymentsCommand() *cobra.Command {
 func getGetDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment <deployment-id> [flags]",
+		Aliases: []string{"deployments"},
 		Short:   "Get a deployment",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli get deployment 12345 --project some-project",

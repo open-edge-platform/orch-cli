@@ -58,7 +58,7 @@ func getListCommand() *cobra.Command {
 		getListDeploymentPackagesCommand(),
 		getListDeploymentProfilesCommand(),
 		getListNetworksCommand(),
-
+		getListChartsCommand(),
 		getListDeploymentsCommand(),
 		getListClusterCommand(),
 		getListClusterTemplatesCommand(),
@@ -94,20 +94,6 @@ func getGetCommand() *cobra.Command {
 
 		getGetDeploymentCommand(),
 		getGetClusterCommand(),
-
-		// Add plurals here for consistency with kubectl
-		getListRegistriesCommand(),
-		getListArtifactsCommand(),
-		getListApplicationsCommand(),
-		getListProfilesCommand(),
-		getListDeploymentPackagesCommand(),
-		getListDeploymentProfilesCommand(),
-
-		getListChartsCommand(),
-
-		getListDeploymentsCommand(),
-
-		getListNetworksCommand(),
 
 		getGetOSUpdateRunCommand(),
 		getGetOSUpdatePolicyCommand(),

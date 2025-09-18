@@ -17,7 +17,7 @@ func (s *CLITestSuite) createDeploymentProfile(pubName string, pkgName string, p
 }
 
 func (s *CLITestSuite) listDeploymentProfiles(pubName string, pkgName string, pkgVersion string, verbose bool) (string, error) {
-	args := fmt.Sprintf(`get deployment-package-profiles --project %s %s %s`,
+	args := fmt.Sprintf(`list deployment-package-profiles --project %s %s %s`,
 		pubName, pkgName, pkgVersion)
 	if verbose {
 		args = args + " -v"

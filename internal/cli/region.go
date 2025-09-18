@@ -50,6 +50,7 @@ func getListRegionCommand() *cobra.Command {
 		Use:     "region [flags]",
 		Short:   "List all regions in tree",
 		Example: listRegionExamples,
+		Aliases: []string{"region", "regions"},
 		RunE:    runListRegionCommand,
 	}
 	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of region list to filter region by parent region")
@@ -62,6 +63,7 @@ func getGetRegionCommand() *cobra.Command {
 		Short:   "Get a region",
 		Example: getRegionExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"region", "regions"},
 		RunE:    runGetRegionCommand,
 	}
 	return cmd
