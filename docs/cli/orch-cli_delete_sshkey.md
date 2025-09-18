@@ -1,22 +1,22 @@
-## orch-cli delete host
+## orch-cli delete sshkey
 
-Deletes a host and associated instance
+Delete a SSH Key remote user configuration
 
 ```
-orch-cli delete host <resourceID> [flags]
+orch-cli delete sshkey <name> [flags]
 ```
 
 ### Examples
 
 ```
-#Delete a host using it's host Resource ID
-orch-cli delete host host-1234abcd  --project some-project
+# Delete a SSH key resource using it's name
+orch-cli delete sshkey mysshkey --project some-project
 ```
 
 ### Options
 
 ```
-  -h, --help   help for host
+  -h, --help   help for sshkey
 ```
 
 ### Options inherited from parent commands

@@ -166,6 +166,50 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			},
 		).AnyTimes()
 
+		mockInfraClient.EXPECT().LocalAccountServiceCreateLocalAccountWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, _ string, body infra.LocalAccountServiceCreateLocalAccountJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.LocalAccountServiceCreateLocalAccountResponse, error) {
+				return &infra.LocalAccountServiceCreateLocalAccountResponse{
+					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+					JSON200: &infra.LocalAccountResource{
+						ResourceId: body.ResourceId,
+						Username:   body.Username,
+						SshKey:     body.SshKey,
+						Timestamps: &infra.Timestamps{ /* fill as needed */ },
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		// Mock LocalAccountServiceGetLocalAccountWithResponse (used by get local account command)
+		mockInfraClient.EXPECT().LocalAccountServiceGetLocalAccountWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, _ string, accountID string, _ ...infra.RequestEditorFn) (*infra.LocalAccountServiceGetLocalAccountResponse, error) {
+				return &infra.LocalAccountServiceGetLocalAccountResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					JSON200: &infra.LocalAccountResource{
+						ResourceId: &accountID,
+						Username:   "admin",
+						SshKey:     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEK8F2qJ5K8F2qJ5K8F2qJ5K8F2qJ5K8F2qJ5K8F2qJ5 testkey@example.com",
+						Timestamps: &infra.Timestamps{},
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		// Mock LocalAccountServiceDeleteLocalAccountWithResponse (used by delete local account command)
+		mockInfraClient.EXPECT().LocalAccountServiceDeleteLocalAccountWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, _ string, _ string, _ ...infra.RequestEditorFn) (*infra.LocalAccountServiceDeleteLocalAccountResponse, error) {
+				return &infra.LocalAccountServiceDeleteLocalAccountResponse{
+					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+				}, nil
+			},
+		).AnyTimes()
+
 		// Mock LocalAccountServiceListLocalAccountsWithResponse (used by list local accounts command)
 		mockInfraClient.EXPECT().LocalAccountServiceListLocalAccountsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -192,8 +236,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						JSON200: &infra.ListLocalAccountsResponse{
 							LocalAccounts: []infra.LocalAccountResource{
 								{
-									ResourceId:     stringPtr("account-abc12345"),
-									LocalAccountID: stringPtr("account-abc12345"), // Deprecated alias
+									ResourceId:     stringPtr("localaccount-abc12345"),
+									LocalAccountID: stringPtr("localaccount-abc12345"), // Deprecated alias
 									Username:       "admin",
 									SshKey:         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7... admin@example.com",
 									Timestamps: &infra.Timestamps{
