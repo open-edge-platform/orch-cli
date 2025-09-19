@@ -16,10 +16,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	networkAliases = []string{"net", "network", "networks"}
-)
-
 var httpClient = &http.Client{Transport: &http.Transport{}}
 
 func getCreateNetworkCommand() *cobra.Command {
@@ -39,7 +35,7 @@ func getCreateNetworkCommand() *cobra.Command {
 func getListNetworksCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "networks [flags]",
-		Aliases: []string{"nets", "network"},
+		Aliases: networkAliases,
 		Short:   "List all networks",
 		Example: "orch-cli list networks --project some-project",
 		RunE:    runListNetworksCommand,
@@ -63,7 +59,7 @@ func getGetNetworkCommand() *cobra.Command {
 func getSetNetworkCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "network <name> [flags]",
-		Aliases: applicationAliases,
+		Aliases: networkAliases,
 		Short:   "Update a network",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli set network my-updated-network --project some-project --type application-mesh",

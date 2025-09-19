@@ -58,7 +58,7 @@ func getGetOSUpdateRunCommand() *cobra.Command {
 		Short:   "Get an OS Update run",
 		Example: getOSUpdateRunExamples,
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"osupdaterun", "osupdateruns"},
+		Aliases: osUpdateRunAliases,
 		RunE:    runGetOSUpdateRunCommand,
 	}
 	return cmd
@@ -69,7 +69,7 @@ func getListOSUpdateRunCommand() *cobra.Command {
 		Use:     "osupdaterun [flags]",
 		Short:   "List all OS Update policies",
 		Example: listOSUpdateRunExamples,
-		Aliases: []string{"osupdaterun", "osupdateruns"},
+		Aliases: osUpdateRunAliases,
 		RunE:    runListOSUpdateRunCommand,
 	}
 	return cmd
@@ -81,6 +81,7 @@ func getDeleteOSUpdateRunCommand() *cobra.Command {
 		Short:   "Delete an OS Update run",
 		Example: deleteOSUpdateRunExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osUpdateRunAliases,
 		RunE:    runDeleteOSUpdateRunCommand,
 	}
 	return cmd

@@ -30,6 +30,7 @@ func getCreateClusterCommand() *cobra.Command {
 		Short:   "Create a cluster",
 		Example: createClusterExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: clusterAliases,
 		RunE:    runCreateClusterCommand,
 	}
 	cmd.Flags().String("template", "", "Cluster template to use")
@@ -45,7 +46,7 @@ func getGetClusterCommand() *cobra.Command {
 		Short:   "Get details of a cluster",
 		Example: "orch-cli get cluster cli-cluster",
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"cluster", "clusters"},
+		Aliases: clusterAliases,
 		RunE:    runGetClusterCommand,
 	}
 	return cmd
@@ -56,7 +57,7 @@ func getListClusterCommand() *cobra.Command {
 		Use:     "cluster",
 		Short:   "List clusters",
 		Example: "orch-cli list cluster",
-		Aliases: []string{"cluster", "clusters"},
+		Aliases: clusterAliases,
 		RunE:    runListClusterCommand,
 	}
 	cmd.Flags().Bool("not-ready", false, "Show only clusters that are not ready")
@@ -69,6 +70,7 @@ func getDeleteClusterCommand() *cobra.Command {
 		Short:   "Delete a cluster",
 		Example: "orch-cli delete cluster cli-cluster",
 		Args:    cobra.ExactArgs(1),
+		Aliases: clusterAliases,
 		RunE:    runDeleteClusterCommand,
 	}
 	cmd.Flags().Bool("force", false, "Force delete the cluster without waiting for the host cleanup")

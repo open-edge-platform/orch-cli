@@ -31,7 +31,7 @@ func getCreateDeploymentProfileCommand() *cobra.Command {
 func getListDeploymentProfilesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment-package-profiles <deployment-package-name> <version> [flags]",
-		Aliases: []string{"deployment-profiles", "deployment-package-profiles", "package-profiles", "bundle-profiles"},
+		Aliases: deploymentProfileAliases,
 		Short:   "List all deployment package profiles",
 		Args:    cobra.ExactArgs(2),
 		Example: "orch-cli list deployment-package-profiles my-deployment-package 1.0.0 --project my-project",

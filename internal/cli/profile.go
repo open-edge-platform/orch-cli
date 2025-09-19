@@ -22,6 +22,7 @@ func getCreateProfileCommand() *cobra.Command {
 		Short:   "Create an application profile",
 		Args:    cobra.ExactArgs(3),
 		Example: "orch-cli create profile my-app 1.0.0 my-profile --display-name 'My Profile' --description 'This is my profile' --chart-values values.yaml --project my-project",
+		Aliases: profileAliases,
 		RunE:    runCreateProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
@@ -35,7 +36,7 @@ func getListProfilesCommand() *cobra.Command {
 		Short:   "List all application profiles",
 		Example: "orch-cli list profiles my-app 1.0.0 --project my-project",
 		Args:    cobra.ExactArgs(2),
-		Aliases: []string{"profile", "profiles", "prof"},
+		Aliases: profileAliases,
 		RunE:    runListProfilesCommand,
 	}
 	return cmd
@@ -47,7 +48,7 @@ func getGetProfileCommand() *cobra.Command {
 		Short:   "Get an application profile",
 		Example: "orch-cli get profile my-app 1.0.0 my-profile --project my-project",
 		Args:    cobra.ExactArgs(3),
-		Aliases: []string{"profile", "profiles", "prof"},
+		Aliases: profileAliases,
 		RunE:    runGetProfileCommand,
 	}
 	return cmd
@@ -59,6 +60,7 @@ func getSetProfileCommand() *cobra.Command {
 		Short:   "Update an application profile",
 		Args:    cobra.ExactArgs(3),
 		Example: "orch-cli set profile my-app 1.0.0 my-profile --display-name 'Updated Profile' --description 'Updated description' --chart-values new-values.yaml --project my-project",
+		Aliases: profileAliases,
 		RunE:    runSetProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
@@ -72,6 +74,7 @@ func getDeleteProfileCommand() *cobra.Command {
 		Short:   "Delete an application profile",
 		Args:    cobra.ExactArgs(3),
 		Example: "orch-cli delete profile my-app 1.0.0 my-profile --project my-project",
+		Aliases: profileAliases,
 		RunE:    runDeleteProfileCommand,
 	}
 	return cmd

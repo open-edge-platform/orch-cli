@@ -949,7 +949,7 @@ func getListHostCommand() *cobra.Command {
 		Use:     "host [flags]",
 		Short:   "Lists all hosts",
 		Example: listHostExamples,
-		Aliases: []string{"host", "hosts"},
+		Aliases: hostAliases,
 		RunE:    runListHostCommand,
 	}
 
@@ -967,7 +967,7 @@ func getGetHostCommand() *cobra.Command {
 		Short:   "Gets a host",
 		Example: getHostExamples,
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"host", "hosts"},
+		Aliases: hostAliases,
 		RunE:    runGetHostCommand,
 	}
 	return cmd
@@ -978,7 +978,7 @@ func getCreateHostCommand() *cobra.Command {
 		Use:     "host --import-from-csv]",
 		Short:   "Provisions a host or hosts",
 		Example: createHostExamples,
-		Aliases: []string{"host", "hosts"},
+		Aliases: hostAliases,
 		RunE:    runCreateHostCommand,
 	}
 
@@ -1008,6 +1008,7 @@ func getDeleteHostCommand() *cobra.Command {
 		Short:   "Deletes a host and associated instance",
 		Example: deleteHostExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: hostAliases,
 		RunE:    runDeleteHostCommand,
 	}
 	return cmd
@@ -1019,7 +1020,7 @@ func getSetHostCommand() *cobra.Command {
 		Short:   "Sets a host attribute or action",
 		Example: setHostExamples,
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"host", "hosts"},
+		Aliases: hostAliases,
 		RunE:    runSetHostCommand,
 	}
 	cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
@@ -1035,7 +1036,7 @@ func getDeauthorizeHostCommand() *cobra.Command {
 		Short:   "Deauthorizes a host",
 		Example: deauthorizeHostExamples,
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"host", "hosts"},
+		Aliases: hostAliases,
 		RunE:    runDeauthorizeHostCommand,
 	}
 	return cmd

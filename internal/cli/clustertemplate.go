@@ -51,7 +51,7 @@ func printClusterTemplates(writer io.Writer, clusterTemplates *[]coapi.TemplateI
 func getListClusterTemplatesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "clustertemplates [flags]",
-		Aliases: []string{"clustertemplate", "template"},
+		Aliases: clusterTemplateAliases,
 		Short:   "List all cluster templates",
 		Example: "orch-cli list clustertemplates --project some-project",
 		RunE:    runListClusterTemplatesCommand,

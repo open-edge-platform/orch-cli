@@ -114,7 +114,7 @@ func getGetCustomConfigCommand() *cobra.Command {
 		Short:   "Get a Cloud Init configuration",
 		Example: getCustomConfigExamples,
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"customconfig", "customconfigs"},
+		Aliases: customConfigAliases,
 		RunE:    runGetCustomConfigCommand,
 	}
 	return cmd
@@ -125,7 +125,7 @@ func getListCustomConfigCommand() *cobra.Command {
 		Use:     "customconfig [flags]",
 		Short:   "List all Cloud Init configurations",
 		Example: listCustomConfigExamples,
-		Aliases: []string{"customconfig", "customconfigs"},
+		Aliases: customConfigAliases,
 		RunE:    runListCustomConfigCommand,
 	}
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of cloud init list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter <filter> see https://google.aip.dev/160 and API spec.")
@@ -138,6 +138,7 @@ func getCreateCustomConfigCommand() *cobra.Command {
 		Short:   "Creates Cloud Init configuration",
 		Example: createCustomConfigExamples,
 		Args:    cobra.ExactArgs(2),
+		Aliases: customConfigAliases,
 		RunE:    runCreateCustomConfigCommand,
 	}
 	cmd.PersistentFlags().StringP("description", "d", viper.GetString("description"), "Optional flag used to provide a description to a cloud init config resource")
@@ -150,6 +151,7 @@ func getDeleteCustomConfigCommand() *cobra.Command {
 		Short:   "Delete a Cloud Init config",
 		Example: deleteCustomConfigExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: customConfigAliases,
 		RunE:    runDeleteCustomConfigCommand,
 	}
 	return cmd

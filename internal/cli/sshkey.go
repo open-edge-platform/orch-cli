@@ -132,7 +132,7 @@ func getGetSSHKeyCommand() *cobra.Command {
 		Short:   "Get a SSH Key remote user configuration",
 		Example: getSSHKeyExamples,
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"sshkey", "sshkeys"},
+		Aliases: sshKeyAliases,
 		RunE:    runGetSSHKeyCommand,
 	}
 	return cmd
@@ -143,7 +143,7 @@ func getListSSHKeyCommand() *cobra.Command {
 		Use:     "sshkey [flags]",
 		Short:   "List all SSH Key remote user configurations",
 		Example: listSSHKeyExamples,
-		Aliases: []string{"sshkey", "sshkeys"},
+		Aliases: sshKeyAliases,
 		RunE:    runListSSHKeyCommand,
 	}
 	return cmd
@@ -155,6 +155,7 @@ func getCreateSSHKeyCommand() *cobra.Command {
 		Short:   "Creates SSH Key remote user configuration",
 		Example: createSSHKeyExamples,
 		Args:    cobra.ExactArgs(2),
+		Aliases: sshKeyAliases,
 		RunE:    runCreateSSHKeyCommand,
 	}
 	return cmd
@@ -166,6 +167,7 @@ func getDeleteSSHKeyCommand() *cobra.Command {
 		Short:   "Delete a SSH Key remote user configuration",
 		Example: deleteSSHKeyExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: sshKeyAliases,
 		RunE:    runDeleteSSHKeyCommand,
 	}
 	return cmd

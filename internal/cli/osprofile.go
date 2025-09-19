@@ -264,7 +264,7 @@ func getGetOSProfileCommand() *cobra.Command {
 		Short:   "Get an OS profile",
 		Example: getOSProfileExamples,
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"osprofile", "osprofiles"},
+		Aliases: osProfileAliases,
 		RunE:    runGetOSProfileCommand,
 	}
 	return cmd
@@ -275,7 +275,7 @@ func getListOSProfileCommand() *cobra.Command {
 		Use:     "osprofile [flags]",
 		Short:   "List all OS profiles",
 		Example: listOSProfileExamples,
-		Aliases: []string{"osprofile", "osprofiles"},
+		Aliases: osProfileAliases,
 		RunE:    runListOSProfileCommand,
 	}
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")
@@ -288,6 +288,7 @@ func getCreateOSProfileCommand() *cobra.Command {
 		Short:   "Creates OS profile",
 		Example: createOSProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osProfileAliases,
 		RunE:    runCreateOSProfileCommand,
 	}
 	return cmd
@@ -299,6 +300,7 @@ func getDeleteOSProfileCommand() *cobra.Command {
 		Short:   "Delete an OS profile",
 		Example: deleteOSProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osProfileAliases,
 		RunE:    runDeleteOSProfileCommand,
 	}
 	return cmd

@@ -47,7 +47,7 @@ func getListAmtProfileCommand() *cobra.Command {
 		Use:     "amtprofile [flags]",
 		Short:   "List all amptprofiles",
 		Example: listAmtProfileExamples,
-		Aliases: []string{"amtprofile", "amtprofiles"},
+		Aliases: amtAliases,
 		RunE:    runListAmtProfileCommand,
 	}
 	//cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of site list to filter sites by parent region")
@@ -60,7 +60,7 @@ func getGetAmtProfileCommand() *cobra.Command {
 		Short:   "Get an AMT profile",
 		Example: getAmtProfileExamples,
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"amtprofile", "amtprofiles"},
+		Aliases: amtAliases,
 		RunE:    runGetAmtProfileCommand,
 	}
 	return cmd
@@ -72,6 +72,7 @@ func getCreateAmtProfileCommand() *cobra.Command {
 		Short:   "Create an AMT profile",
 		Example: createAmtProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: amtAliases,
 		RunE:    runCreateAmtProfileCommand,
 	}
 	cmd.PersistentFlags().StringP("domain-suffix", "d", viper.GetString("domain-suffix"), "Mandatory domain name suffix")
@@ -88,6 +89,7 @@ func getDeleteAmtProfileCommand() *cobra.Command {
 		Short:   "Delete an AMT profile",
 		Example: deleteAmtProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: amtAliases,
 		RunE:    runDeleteAmtProfileCommand,
 	}
 	return cmd

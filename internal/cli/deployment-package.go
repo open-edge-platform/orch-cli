@@ -39,7 +39,7 @@ func getCreateDeploymentPackageCommand() *cobra.Command {
 func getListDeploymentPackagesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment-packages [flags]",
-		Aliases: []string{"packages", "deployment-package", "bundles", "pkgs"},
+		Aliases: deploymentPackageAliases,
 		Short:   "List all deployment packages",
 		Example: "orch-cli list deployment-packages --project some-project",
 		RunE:    runListDeploymentPackagesCommand,
