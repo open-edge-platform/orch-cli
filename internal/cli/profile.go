@@ -21,12 +21,13 @@ func getCreateProfileCommand() *cobra.Command {
 		Use:     "profile <application-name> <version> <name> [flags]",
 		Short:   "Create an application profile",
 		Args:    cobra.ExactArgs(3),
-		Example: "orch-cli create profile my-app 1.0.0 my-profile --display-name 'My Profile' --description 'This is my profile' --chart-values values.yaml --project my-project",
 		Aliases: profileAliases,
+		Example: "orch-cli create profile my-app 1.0.0 my-profile --display-name 'My Profile' --description 'This is my profile' --chart-values values.yaml --parameter-template env.HOST_IP=string:\"IP address of the target Edge Node\":\"\" --parameter-template env.MINIO_ACCESS_KEY=password:\"Minio access key\":\"\" --project my-project",
 		RunE:    runCreateProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
 	cmd.Flags().String("chart-values", "-", "path to the values.yaml file; - for stdin")
+	cmd.Flags().StringSlice("parameter-template", []string{}, "parameter templates in format '<name>=<type>:<display-name>:<default-value>' (types: string, integer)")
 	return cmd
 }
 
@@ -59,12 +60,13 @@ func getSetProfileCommand() *cobra.Command {
 		Use:     "profile <application-name> <version> <name> [flags]",
 		Short:   "Update an application profile",
 		Args:    cobra.ExactArgs(3),
-		Example: "orch-cli set profile my-app 1.0.0 my-profile --display-name 'Updated Profile' --description 'Updated description' --chart-values new-values.yaml --project my-project",
 		Aliases: profileAliases,
+		Example: "orch-cli set profile my-app 1.0.0 my-profile --display-name 'Updated Profile' --description 'Updated description' --chart-values new-values.yaml --parameter-template env.HOST_IP=string:\"IP address\":\"127.0.0.1\" --project my-project",
 		RunE:    runSetProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
 	cmd.Flags().String("chart-values", "", "path to the values.yaml file; - for stdin")
+	cmd.Flags().StringSlice("parameter-template", []string{}, "parameter templates in format '<name>=<type>:<display-name>:<default-value>' (types: string, integer)")
 	return cmd
 }
 
@@ -81,6 +83,75 @@ func getDeleteProfileCommand() *cobra.Command {
 }
 
 var profileHeader = fmt.Sprintf("%s\t%s\t%s", "Name", "Display Name", "Description")
+
+// parseParameterTemplates parses parameter template flags from CLI
+func parseParameterTemplates(cmd *cobra.Command) (*[]catapi.ParameterTemplate, error) {
+	templateSpecs, _ := cmd.Flags().GetStringSlice("parameter-template")
+
+	if len(templateSpecs) == 0 {
+		return &[]catapi.ParameterTemplate{}, nil
+	}
+
+	var templates []catapi.ParameterTemplate
+
+	for _, spec := range templateSpecs {
+		template, err := parseParameterTemplate(spec)
+		if err != nil {
+			return nil, fmt.Errorf("invalid parameter template '%s': %w", spec, err)
+		}
+		templates = append(templates, *template)
+	}
+
+	return &templates, nil
+}
+
+// parseParameterTemplate parses a single parameter template spec: "name=type:display:default"
+func parseParameterTemplate(spec string) (*catapi.ParameterTemplate, error) {
+	// Split on = to get name and rest
+	parts := strings.SplitN(spec, "=", 2)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("format should be 'name=type:display:default'")
+	}
+
+	name := strings.TrimSpace(parts[0])
+	if name == "" {
+		return nil, fmt.Errorf("parameter name cannot be empty")
+	}
+
+	// Split the rest on : to get type, display, default
+	valueParts := strings.SplitN(parts[1], ":", 3)
+	if len(valueParts) != 3 {
+		return nil, fmt.Errorf("value format should be 'type:display:default'")
+	}
+
+	paramType := strings.TrimSpace(valueParts[0])
+	displayName := strings.TrimSpace(valueParts[1])
+	defaultValue := strings.TrimSpace(valueParts[2])
+
+	// Validate parameter type
+	validTypes := map[string]bool{
+		"string":  true,
+		"integer": true,
+	}
+
+	if !validTypes[paramType] {
+		return nil, fmt.Errorf("invalid parameter type '%s', must be one of: string, integer", paramType)
+	}
+
+	// Remove quotes from display name and default if present
+	displayName = strings.Trim(displayName, "\"'")
+	defaultValue = strings.Trim(defaultValue, "\"'")
+
+	template := &catapi.ParameterTemplate{
+		Name:            name,
+		Type:            paramType,
+		DisplayName:     &displayName,
+		Default:         &defaultValue,
+		SuggestedValues: &[]string{},
+	}
+
+	return template, nil
+}
 
 func printProfiles(writer io.Writer, profileList *[]catapi.Profile, verbose bool) {
 	for _, p := range *profileList {
@@ -112,16 +183,19 @@ func printProfiles(writer io.Writer, profileList *[]catapi.Profile, verbose bool
 			if p.ChartValues != nil && *p.ChartValues != "" {
 				_, _ = fmt.Fprintf(writer, "Chart Values:\n")
 				decodedValues, err := b64.StdEncoding.DecodeString(*p.ChartValues)
+				var chartContent string
 
 				if err == nil {
-					lines := strings.Split(string(decodedValues), "\n")
-					for _, line := range lines {
-						_, _ = fmt.Fprintf(writer, "  %s\n", line)
-					}
+					// Successfully decoded, use decoded content
+					chartContent = string(decodedValues)
 				} else {
-					_, _ = fmt.Fprintf(writer, "  [Error decoding chart values: %v]\n", err)
-					// If decoding fails, show the raw encoded data
-					_, _ = fmt.Fprintf(writer, "  Raw encoded data: %s\n", *p.ChartValues)
+					// Not base64 encoded, use as-is
+					chartContent = *p.ChartValues
+				}
+
+				lines := strings.Split(chartContent, "\n")
+				for _, line := range lines {
+					_, _ = fmt.Fprintf(writer, "  %s\n", line)
 				}
 				_, _ = fmt.Fprintf(writer, "\n")
 			}
@@ -151,7 +225,13 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid values.yaml: %w", err)
 	}
 
-	chartValues := b64.StdEncoding.EncodeToString(chartBytes)
+	chartValues := string(chartBytes)
+
+	// Parse parameter templates from CLI flags
+	parameterTemplates, err := parseParameterTemplates(cmd)
+	if err != nil {
+		return err
+	}
 
 	gresp, err := catalogClient.CatalogServiceGetApplicationWithResponse(ctx, projectName, name, version,
 		auth.AddAuthHeader)
@@ -164,10 +244,11 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 
 	application := gresp.JSON200.Application
 	profiles := append(*application.Profiles, catapi.Profile{
-		Name:        profileName,
-		DisplayName: &displayName,
-		Description: &description,
-		ChartValues: &chartValues,
+		Name:               profileName,
+		DisplayName:        &displayName,
+		Description:        &description,
+		ChartValues:        &chartValues,
+		ParameterTemplates: parameterTemplates,
 	})
 
 	if application.DefaultProfileName == nil || *application.DefaultProfileName == "" {
@@ -290,6 +371,15 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 	profile.DisplayName = getFlagOrDefault(cmd, "display-name", profile.DisplayName)
 	profile.Description = getFlagOrDefault(cmd, "description", profile.Description)
 
+	// If parameter templates were specified, update them
+	parameterTemplates, err := parseParameterTemplates(cmd)
+	if err != nil {
+		return err
+	}
+	if len(*parameterTemplates) > 0 {
+		profile.ParameterTemplates = parameterTemplates
+	}
+
 	// If the chart-values flag was given, fetch the new content to replace the existing one
 	newChartValuesPath := *getFlag(cmd, "chart-values")
 	if len(newChartValuesPath) > 0 {
@@ -300,7 +390,7 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 		if err := validateValuesYAML(chartValueBytes); err != nil {
 			return fmt.Errorf("invalid values.yaml: %w", err)
 		}
-		newChartValues := b64.StdEncoding.EncodeToString(chartValueBytes)
+		newChartValues := string(chartValueBytes)
 		profile.ChartValues = &newChartValues
 	}
 
