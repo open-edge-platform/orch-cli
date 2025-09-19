@@ -21,6 +21,7 @@ func getCreateProfileCommand() *cobra.Command {
 		Use:     "profile <application-name> <version> <name> [flags]",
 		Short:   "Create an application profile",
 		Args:    cobra.ExactArgs(3),
+		Aliases: profileAliases,
 		Example: "orch-cli create profile my-app 1.0.0 my-profile --display-name 'My Profile' --description 'This is my profile' --chart-values values.yaml --parameter-template env.HOST_IP=string:\"IP address of the target Edge Node\":\"\" --parameter-template env.MINIO_ACCESS_KEY=password:\"Minio access key\":\"\" --project my-project",
 		RunE:    runCreateProfileCommand,
 	}
@@ -36,6 +37,7 @@ func getListProfilesCommand() *cobra.Command {
 		Short:   "List all application profiles",
 		Example: "orch-cli list profiles my-app 1.0.0 --project my-project",
 		Args:    cobra.ExactArgs(2),
+		Aliases: profileAliases,
 		RunE:    runListProfilesCommand,
 	}
 	return cmd
@@ -47,6 +49,7 @@ func getGetProfileCommand() *cobra.Command {
 		Short:   "Get an application profile",
 		Example: "orch-cli get profile my-app 1.0.0 my-profile --project my-project",
 		Args:    cobra.ExactArgs(3),
+		Aliases: profileAliases,
 		RunE:    runGetProfileCommand,
 	}
 	return cmd
@@ -57,6 +60,7 @@ func getSetProfileCommand() *cobra.Command {
 		Use:     "profile <application-name> <version> <name> [flags]",
 		Short:   "Update an application profile",
 		Args:    cobra.ExactArgs(3),
+		Aliases: profileAliases,
 		Example: "orch-cli set profile my-app 1.0.0 my-profile --display-name 'Updated Profile' --description 'Updated description' --chart-values new-values.yaml --parameter-template env.HOST_IP=string:\"IP address\":\"127.0.0.1\" --project my-project",
 		RunE:    runSetProfileCommand,
 	}
@@ -72,6 +76,7 @@ func getDeleteProfileCommand() *cobra.Command {
 		Short:   "Delete an application profile",
 		Args:    cobra.ExactArgs(3),
 		Example: "orch-cli delete profile my-app 1.0.0 my-profile --project my-project",
+		Aliases: profileAliases,
 		RunE:    runDeleteProfileCommand,
 	}
 	return cmd

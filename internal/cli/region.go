@@ -50,6 +50,7 @@ func getListRegionCommand() *cobra.Command {
 		Use:     "region [flags]",
 		Short:   "List all regions in tree",
 		Example: listRegionExamples,
+		Aliases: regionAliases,
 		RunE:    runListRegionCommand,
 	}
 	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of region list to filter region by parent region")
@@ -62,6 +63,7 @@ func getGetRegionCommand() *cobra.Command {
 		Short:   "Get a region",
 		Example: getRegionExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: regionAliases,
 		RunE:    runGetRegionCommand,
 	}
 	return cmd
@@ -73,6 +75,7 @@ func getCreateRegionCommand() *cobra.Command {
 		Short:   "Create a region",
 		Example: createRegionExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: regionAliases,
 		RunE:    runCreateRegionCommand,
 	}
 	cmd.PersistentFlags().StringP("parent", "f", viper.GetString("parent"), "Optional parent region used ot create a sub region: --parent region-aaaa1111")
@@ -86,6 +89,7 @@ func getDeleteRegionCommand() *cobra.Command {
 		Short:   "Delete a region",
 		Example: deleteRegionExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: regionAliases,
 		RunE:    runDeleteRegionCommand,
 	}
 	return cmd
