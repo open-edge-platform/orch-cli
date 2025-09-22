@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -13,7 +12,24 @@ func (s *CLITestSuite) listClusterTemplates(publisher string, args commandArgs) 
 }
 
 func (s *CLITestSuite) TestClusterTemplate() {
-	_, err := s.listClusterTemplates(project, make(map[string]string))
-	fmt.Printf("listClusterTemplates: %v\n", err)
-	s.EqualError(err, `no response from backend - check catalog-endpoint and deployment-endpoint`)
+
+	/////////////////////////////
+	// Test Cluster List
+	/////////////////////////////
+
+	//List cluster
+	CArgs := map[string]string{}
+	_, err := s.listClusterTemplates(project, CArgs)
+	s.NoError(err)
+
+	//List cluster with non existent project
+	_, err = s.listClusterTemplates("nonexistent-project", CArgs)
+	s.Error(err)
+
+	//List cluster --verbose
+	CArgs = map[string]string{
+		"verbose": "",
+	}
+	_, err = s.listClusterTemplates(project, CArgs)
+	s.NoError(err)
 }

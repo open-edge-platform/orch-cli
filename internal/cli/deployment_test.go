@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,6 +6,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"testing"
 )
 
 func (s *CLITestSuite) TestDeploymentGetOverrideValues() {
@@ -51,23 +51,23 @@ func (s *CLITestSuite) listDeployment(publisher string, args commandArgs) (strin
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) getDeployment(deployment string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`get deployment %s`, deployment))
+func (s *CLITestSuite) getDeployment(publisher string, deployment string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`get deployment %s --project %s`, deployment, publisher))
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) setDeployment(deployment string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`set deployment %s`, deployment))
+func (s *CLITestSuite) setDeployment(publisher string, deployment string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`set deployment %s --project %s`, deployment, publisher))
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) deleteDeployment(deployment string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`delete deployment %s`,
-		deployment))
+func (s *CLITestSuite) deleteDeployment(publisher string, deployment string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`delete deployment %s --project %s`, deployment, publisher))
 	return s.runCommand(commandString)
 }
 
 func (s *CLITestSuite) TestDeployment() {
+	//TODO: These test should be expanded to compare outputs for list and get
 	err := s.createDeployment("test-app", "v1.0.0", map[string]string{
 		"project":           project,
 		"display-name":      "Test",
@@ -77,14 +77,81 @@ func (s *CLITestSuite) TestDeployment() {
 	s.NoError(err)
 
 	_, err = s.listDeployment(project, make(map[string]string))
-	s.EqualError(err, `no response from backend - check catalog-endpoint and deployment-endpoint`)
-
-	_, err = s.getDeployment("test-deployment", make(map[string]string))
-	s.EqualError(err, `no response from backend - check catalog-endpoint and deployment-endpoint`)
-
-	_, err = s.setDeployment("test-deployment", make(map[string]string))
 	s.NoError(err)
 
-	_, err = s.deleteDeployment("test-deployment", make(map[string]string))
+	_, err = s.getDeployment(project, "test-deployment", make(map[string]string))
 	s.NoError(err)
+
+	_, err = s.setDeployment(project, "test-deployment", make(map[string]string))
+	s.NoError(err)
+
+	_, err = s.deleteDeployment(project, "test-deployment", make(map[string]string))
+	s.NoError(err)
+}
+
+func FuzzDeployment(f *testing.F) {
+	// Seed with valid and invalid input combinations
+	f.Add("test-app", "v1.0.0", "test-deployment", project, "test-profile", "Test", "test-app.l1=l1value,test-app.l2=l2value")
+	f.Add("", "v1.0.0", "test-deployment", project, "test-profile", "Test", "")
+	f.Add("test-app", "", "test-deployment", project, "test-profile", "Test", "")
+	f.Add("test-app", "v1.0.0", "", project, "test-profile", "Test", "")
+	f.Add("test-app", "v1.0.0", "test-deployment", "", "test-profile", "Test", "")
+	f.Add("test-app", "v1.0.0", "test-deployment", project, "", "Test", "")
+	f.Add("test-app", "v1.0.0", "test-deployment", project, "test-profile", "", "")
+
+	f.Fuzz(func(t *testing.T, appName, version, deployment, publisher, profile, displayName, appLabel string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		args := map[string]string{
+			"project":           publisher,
+			"display-name":      displayName,
+			"profile":           profile,
+			"application-label": appLabel,
+		}
+
+		// --- Create Deployment ---
+		err := testSuite.createDeployment(appName, version, args)
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- List Deployments ---
+		_, err = testSuite.listDeployment(publisher, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- Get Deployment ---
+		_, err = testSuite.getDeployment(publisher, deployment, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- Set Deployment ---
+		_, err = testSuite.setDeployment(publisher, deployment, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- Delete Deployment ---
+		_, err = testSuite.deleteDeployment(publisher, deployment, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+	})
 }

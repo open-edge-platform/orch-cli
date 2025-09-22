@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,7 @@ import (
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v2"
 )
 
@@ -54,18 +56,52 @@ orch-cli delete osprofile "Edge Microvisor Toolkit 3.0.20250504" --project some-
 var OSProfileHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Architecture", "Security Feature")
 var OSProfileHeaderGet = fmt.Sprintf("\n%s\t%s", "OS Profile Field", "Value")
 
+var osProfileSchema = `
+{
+  "type": "object",
+  "properties": {
+    "spec": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "provider": { "type": "string" },
+        "architecture": { "type": "string" },
+        "profileName": { "type": "string" },
+        "osImageUrl": { "type": "string" },
+        "osImageSha256": { "type": "string" },
+        "osImageVersion": { "type": "string" },
+        "osPackageManifestURL": { "type": "string" },
+		"existingCvesURL": { "type": ["string", "null"] },
+		"fixedCvesURL": { "type": ["string", "null"] },
+        "securityFeature": { "type": "string" },
+        "platformBundle": { "type": ["string", "null"] }
+      },
+      "required": [
+        "name", "type", "provider", "architecture", "profileName",
+        "osImageUrl", "osImageSha256", "osImageVersion",
+        "osPackageManifestURL", "securityFeature", "platformBundle"
+      ]
+    }
+  },
+  "required": ["spec"]
+}
+`
+
 type OSProfileSpec struct {
-	Name            string `yaml:"name"`
-	Type            string `yaml:"type"`
-	Provider        string `yaml:"provider"`
-	Architecture    string `yaml:"architecture"`
-	ProfileName     string `yaml:"profileName"`
-	OsImageURL      string `yaml:"osImageUrl"`
-	OsImageSha256   string `yaml:"osImageSha256"`
-	OsImageVersion  string `yaml:"osImageVersion"`
-	OSPackageURL    string `yaml:"osPackageManifestURL"`
-	SecurityFeature string `yaml:"securityFeature"`
-	PlatformBundle  string `yaml:"platformBundle"`
+	Name              string `yaml:"name"`
+	Type              string `yaml:"type"`
+	Provider          string `yaml:"provider"`
+	Architecture      string `yaml:"architecture"`
+	ProfileName       string `yaml:"profileName"`
+	OsImageURL        string `yaml:"osImageUrl"`
+	OsImageSha256     string `yaml:"osImageSha256"`
+	OsImageVersion    string `yaml:"osImageVersion"`
+	OSPackageURL      string `yaml:"osPackageManifestURL"`
+	SecurityFeature   string `yaml:"securityFeature"`
+	PlatformBundle    string `yaml:"platformBundle"`
+	OsExistingCvesURL string `yaml:"osExistingCvesURL"`
+	OsFixedCvesURL    string `yaml:"osFixedCvesURL"`
 }
 
 type NestedSpec struct {
@@ -74,8 +110,8 @@ type NestedSpec struct {
 }
 
 // Prints OS Profiles in tabular format
-func printOSProfiles(writer io.Writer, OSProfiles *[]infra.OperatingSystemResource, verbose bool) {
-	for _, osp := range *OSProfiles {
+func printOSProfiles(writer io.Writer, OSProfiles []infra.OperatingSystemResource, verbose bool) {
+	for _, osp := range OSProfiles {
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", *osp.Name, *osp.Architecture, *osp.SecurityFeature)
 		} else {
@@ -92,7 +128,8 @@ func printOSProfiles(writer io.Writer, OSProfiles *[]infra.OperatingSystemResour
 
 // Prints output details of OS Profiles
 func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) {
-
+	var cveEntries []CVEEntry
+	var fcveEntries []CVEEntry
 	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSProfile.Name)
 	_, _ = fmt.Fprintf(writer, "Profile Name: \t%s\n", *OSProfile.ProfileName)
 	_, _ = fmt.Fprintf(writer, "OS Resource ID: \t%s\n", *OSProfile.OsResourceID)
@@ -111,14 +148,41 @@ func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) 
 	_, _ = fmt.Fprintf(writer, "Created: \t%v\n", OSProfile.Timestamps.CreatedAt)
 	_, _ = fmt.Fprintf(writer, "Updated: \t%v\n", OSProfile.Timestamps.UpdatedAt)
 
+	if OSProfile.ExistingCves != nil && OSProfile.FixedCves != nil {
+
+		if *OSProfile.ExistingCves != "" {
+			err := json.Unmarshal([]byte(*OSProfile.ExistingCves), &cveEntries)
+			if err != nil {
+				fmt.Println("Error unmarshaling JSON: existing CVE entries:", err)
+				return
+			}
+		}
+		if *OSProfile.FixedCves != "" {
+			err := json.Unmarshal([]byte(*OSProfile.FixedCves), &fcveEntries)
+			if err != nil {
+				fmt.Println("Error unmarshaling JSON: fixed CVE entries:", err)
+				return
+			}
+		}
+
+		_, _ = fmt.Fprintf(writer, "\nCVE Info:\n")
+		_, _ = fmt.Fprintf(writer, "\t Existing CVEs: \n\n")
+		for _, cve := range cveEntries {
+			_, _ = fmt.Fprintf(writer, "-\t\tCVE ID:\t %v\n", cve.CVEID)
+			_, _ = fmt.Fprintf(writer, "-\t\tPriority:\t %v\n", cve.Priority)
+			_, _ = fmt.Fprintf(writer, "-\t\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
+		}
+		_, _ = fmt.Fprintf(writer, "\t Fixed CVEs: \n\n")
+		for _, fcve := range fcveEntries {
+			_, _ = fmt.Fprintf(writer, "-\t\tCVE ID:\t %v\n", fcve.CVEID)
+			_, _ = fmt.Fprintf(writer, "-\t\tPriority:\t %v\n", fcve.Priority)
+			_, _ = fmt.Fprintf(writer, "-\t\tAffected Packages:\t %v\n\n", fcve.AffectedPackages)
+		}
+	}
 }
 
 // Helper function to verify that the input file exists and is of right format
 func verifyOSProfileInput(path string) error {
-
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("file does not exist: %s", path)
-	}
 
 	ext := strings.ToLower(filepath.Ext(path))
 	if ext != ".yaml" && ext != ".yml" {
@@ -132,22 +196,61 @@ func verifyOSProfileInput(path string) error {
 func readOSProfileFromYaml(path string) (*NestedSpec, error) {
 
 	var input NestedSpec
+
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	err = yaml.Unmarshal(data, &input)
+	if len(data) > 1<<20 { // 1MB limit
+		return nil, fmt.Errorf("YAML file too large")
+	}
+
+	// Unmarshal YAML to map[interface{}]interface{}
+	var raw interface{}
+	if err := yaml.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("error unmarshalling YAML: %v", err)
+	}
+
+	// Convert to map[string]interface{}
+	converted := toStringKeyMap(raw)
+
+	// Marshal to JSON for schema validation
+	jsonData, err := json.Marshal(converted)
 	if err != nil {
-		log.Fatalf("error unmarshalling YAML: %v", err)
+		return nil, fmt.Errorf("error converting YAML to JSON: %v", err)
+	}
+	documentLoader := gojsonschema.NewBytesLoader(jsonData)
+	schemaLoader := gojsonschema.NewStringLoader(osProfileSchema)
+
+	// Validate
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	if err != nil {
+		return nil, fmt.Errorf("schema validation error: %v", err)
+	}
+	if !result.Valid() {
+		var sb strings.Builder
+		for _, desc := range result.Errors() {
+			sb.WriteString(fmt.Sprintf("- %s\n", desc))
+		}
+		return nil, fmt.Errorf("YAML does not conform to schema:\n%s", sb.String())
+	}
+
+	// Unmarshal YAML to struct after validation
+	if err := yaml.Unmarshal(data, &input); err != nil {
+		return nil, fmt.Errorf("error unmarshalling YAML to struct: %v", err)
 	}
 
 	return &input, nil
 }
 
 // Filters list of profiles to find one with specific name
-func filterProfilesByName(OSProfiles *[]infra.OperatingSystemResource, name string) (*infra.OperatingSystemResource, error) {
-	for _, profile := range *OSProfiles {
+func filterProfilesByName(OSProfiles []infra.OperatingSystemResource, name string) (*infra.OperatingSystemResource, error) {
+	for _, profile := range OSProfiles {
 		if *profile.Name == name {
 			return &profile, nil
 		}
@@ -161,6 +264,7 @@ func getGetOSProfileCommand() *cobra.Command {
 		Short:   "Get an OS profile",
 		Example: getOSProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osProfileAliases,
 		RunE:    runGetOSProfileCommand,
 	}
 	return cmd
@@ -171,6 +275,7 @@ func getListOSProfileCommand() *cobra.Command {
 		Use:     "osprofile [flags]",
 		Short:   "List all OS profiles",
 		Example: listOSProfileExamples,
+		Aliases: osProfileAliases,
 		RunE:    runListOSProfileCommand,
 	}
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")
@@ -183,6 +288,7 @@ func getCreateOSProfileCommand() *cobra.Command {
 		Short:   "Creates OS profile",
 		Example: createOSProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osProfileAliases,
 		RunE:    runCreateOSProfileCommand,
 	}
 	return cmd
@@ -194,6 +300,7 @@ func getDeleteOSProfileCommand() *cobra.Command {
 		Short:   "Delete an OS profile",
 		Example: deleteOSProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osProfileAliases,
 		RunE:    runDeleteOSProfileCommand,
 	}
 	return cmd
@@ -203,13 +310,13 @@ func getDeleteOSProfileCommand() *cobra.Command {
 // specifc profile by name
 func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+	resp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+		&infra.OperatingSystemServiceListOperatingSystemsParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -236,13 +343,13 @@ func runListOSProfileCommand(cmd *cobra.Command, _ []string) error {
 	filtflag, _ := cmd.Flags().GetString("filter")
 	filter := filterHelper(filtflag)
 
-	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeOsParams{
+	resp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+		&infra.OperatingSystemServiceListOperatingSystemsParams{
 			Filter: filter,
 		}, auth.AddAuthHeader)
 	if err != nil {
@@ -273,14 +380,14 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
 	//TODO Delete name check once API accepts only unique names
-	gresp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+	gresp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+		&infra.OperatingSystemServiceListOperatingSystemsParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -295,19 +402,20 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 	// End TODO
 
-	resp, err := OSProfileClient.PostV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		infra.PostV1ProjectsProjectNameComputeOsJSONRequestBody{
+	resp, err := OSProfileClient.OperatingSystemServiceCreateOperatingSystemWithResponse(ctx, projectName,
+		infra.OperatingSystemServiceCreateOperatingSystemJSONRequestBody{
 			Name:            &spec.Spec.Name,
 			Architecture:    &spec.Spec.Architecture,
 			ImageUrl:        &spec.Spec.OsImageURL,
 			ImageId:         &spec.Spec.OsImageVersion,
-			OsType:          (*infra.OperatingSystemType)(&spec.Spec.Type),
-			OsProvider:      (*infra.OperatingSystemProvider)(&spec.Spec.Provider),
+			OsType:          (*infra.OsType)(&spec.Spec.Type),
+			OsProvider:      (*infra.OsProviderKind)(&spec.Spec.Provider),
 			ProfileName:     &spec.Spec.ProfileName,
 			RepoUrl:         &spec.Spec.OsImageURL,
 			SecurityFeature: (*infra.SecurityFeature)(&spec.Spec.SecurityFeature),
 			Sha256:          spec.Spec.OsImageSha256,
-			UpdateSources:   []string{""},
+			FixedCvesUrl:    &spec.Spec.OsFixedCvesURL,
+			ExistingCvesUrl: &spec.Spec.OsExistingCvesURL,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -317,13 +425,13 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 
 // Deletes OS Profile - checks if a profile already exists and then deletes it if it does
 func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
-	ctx, OSProfileClient, projectName, err := getInfraServiceContext(cmd)
+	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	gresp, err := OSProfileClient.GetV1ProjectsProjectNameComputeOsWithResponse(ctx, projectName,
-		&infra.GetV1ProjectsProjectNameComputeOsParams{}, auth.AddAuthHeader)
+	gresp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+		&infra.OperatingSystemServiceListOperatingSystemsParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -338,12 +446,28 @@ func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := OSProfileClient.DeleteV1ProjectsProjectNameComputeOsOSResourceIDWithResponse(ctx, projectName,
+	resp, err := OSProfileClient.OperatingSystemServiceDeleteOperatingSystemWithResponse(ctx, projectName,
 		*profile.OsResourceID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS profile %s", name))
+}
 
+// Converts map[interface{}]interface{} to map[string]interface{} recursively
+func toStringKeyMap(m interface{}) interface{} {
+	switch x := m.(type) {
+	case map[interface{}]interface{}:
+		n := make(map[string]interface{})
+		for k, v := range x {
+			n[fmt.Sprintf("%v", k)] = toStringKeyMap(v)
+		}
+		return n
+	case []interface{}:
+		for i, v := range x {
+			x[i] = toStringKeyMap(v)
+		}
+	}
+	return m
 }

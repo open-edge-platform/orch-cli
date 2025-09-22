@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -52,8 +51,9 @@ func printClusterTemplates(writer io.Writer, clusterTemplates *[]coapi.TemplateI
 func getListClusterTemplatesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "clustertemplates [flags]",
-		Aliases: []string{"clustertemplate", "template"},
+		Aliases: clusterTemplateAliases,
 		Short:   "List all cluster templates",
+		Example: "orch-cli list clustertemplates --project some-project",
 		RunE:    runListClusterTemplatesCommand,
 	}
 	return cmd
@@ -62,7 +62,7 @@ func getListClusterTemplatesCommand() *cobra.Command {
 func runListClusterTemplatesCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
-	ctx, clusterTemplateClient, projectName, err := getClusterServiceContext(cmd)
+	ctx, clusterTemplateClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}

@@ -7,15 +7,16 @@ package auth
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"net/http"
-	"testing"
-	"time"
 )
 
 const kcTest = "http://unit-test-keycloak/realms/master"
@@ -77,7 +78,6 @@ func TestAddAuthHeader(t *testing.T) {
 	viper.Set(RefreshTokenField, "")
 	viper.Set(ClientIDField, "")
 	viper.Set(KeycloakEndpointField, "")
-	viper.Set(TrustCertField, "")
 	err = AddAuthHeader(context.Background(), req2)
 	assert.NoError(t, err)
 	assert.Equal(t, "", req2.Header.Get("Authorization"))
@@ -88,7 +88,6 @@ func TestCheckAuth(t *testing.T) {
 	viper.Set(RefreshTokenField, nil)
 	viper.Set(ClientIDField, nil)
 	viper.Set(KeycloakEndpointField, nil)
-	viper.Set(TrustCertField, nil)
 
 	testCmd := &cobra.Command{
 		Use: "test",

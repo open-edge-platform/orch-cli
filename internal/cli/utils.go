@@ -1,32 +1,59 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
-	"os/signal"
+	"path/filepath"
 	"strings"
 	"text/tabwriter"
 
-	"github.com/gorilla/websocket"
-	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/internal/cli/interfaces"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
+	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/metadata"
 )
 
 const timeLayout = "2006-01-02T15:04:05"
+const maxValuesYAMLSize = 1 << 20 // 1 MiB
+
+const (
+	REGION = 0
+	SITE   = 1
+)
+
+// Use the interface type instead of the concrete function type
+var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
+	return getInfraServiceContext(cmd)
+}
+
+var ClusterFactory interfaces.ClusterFactoryFunc = func(cmd *cobra.Command) (context.Context, cluster.ClientWithResponsesInterface, string, error) {
+	return getClusterServiceContext(cmd)
+}
+
+var CatalogFactory interfaces.CatalogFactoryFunc = func(cmd *cobra.Command) (context.Context, catapi.ClientWithResponsesInterface, string, error) {
+	return getCatalogServiceContext(cmd)
+}
+
+var RpsFactory interfaces.RpsFactoryFunc = func(cmd *cobra.Command) (context.Context, rpsapi.ClientWithResponsesInterface, string, error) {
+	return getRpsServiceContext(cmd)
+}
+
+var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command) (context.Context, depapi.ClientWithResponsesInterface, string, error) {
+	return getDeploymentServiceContext(cmd)
+}
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
 	verbose, _ := cmd.Flags().GetBool("verbose")
@@ -42,7 +69,7 @@ func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
 
 // Get the new background context, REST client, and project name given the specified command.
 func getCatalogServiceContext(cmd *cobra.Command) (context.Context, *catapi.ClientWithResponses, string, error) {
-	serverAddress, err := cmd.Flags().GetString(catalogEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -50,7 +77,7 @@ func getCatalogServiceContext(cmd *cobra.Command) (context.Context, *catapi.Clie
 	if err != nil {
 		return nil, nil, "", err
 	}
-	catalogClient, err := catapi.NewClientWithResponses(serverAddress)
+	catalogClient, err := catapi.NewClientWithResponses(serverAddress, TLS13CatalogClientOption())
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -59,7 +86,7 @@ func getCatalogServiceContext(cmd *cobra.Command) (context.Context, *catapi.Clie
 
 // Get the new background context, REST client, and project name given the specified command.
 func getDeploymentServiceContext(cmd *cobra.Command) (context.Context, *depapi.ClientWithResponses, string, error) {
-	serverAddress, err := cmd.Flags().GetString(deploymentEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -67,7 +94,7 @@ func getDeploymentServiceContext(cmd *cobra.Command) (context.Context, *depapi.C
 	if err != nil {
 		return nil, nil, "", err
 	}
-	deploymentClient, err := depapi.NewClientWithResponses(serverAddress)
+	deploymentClient, err := depapi.NewClientWithResponses(serverAddress, TLS13DeploymentClientOption())
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -76,7 +103,7 @@ func getDeploymentServiceContext(cmd *cobra.Command) (context.Context, *depapi.C
 
 // Get the new background context, REST client, and project name given the specified command.
 func getClusterServiceContext(cmd *cobra.Command) (context.Context, *coapi.ClientWithResponses, string, error) {
-	serverAddress, err := cmd.Flags().GetString(deploymentEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -84,7 +111,7 @@ func getClusterServiceContext(cmd *cobra.Command) (context.Context, *coapi.Clien
 	if err != nil {
 		return nil, nil, "", err
 	}
-	coClient, err := coapi.NewClientWithResponses(serverAddress)
+	coClient, err := coapi.NewClientWithResponses(serverAddress, TLS13ClusterClientOption())
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -93,7 +120,7 @@ func getClusterServiceContext(cmd *cobra.Command) (context.Context, *coapi.Clien
 
 // Get the new background context, REST client, and project name given the specified command.
 func getInfraServiceContext(cmd *cobra.Command) (context.Context, *infraapi.ClientWithResponses, string, error) {
-	serverAddress, err := cmd.Flags().GetString(deploymentEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -101,47 +128,28 @@ func getInfraServiceContext(cmd *cobra.Command) (context.Context, *infraapi.Clie
 	if err != nil {
 		return nil, nil, "", err
 	}
-	infraClient, err := infraapi.NewClientWithResponses(serverAddress)
+	infraClient, err := infraapi.NewClientWithResponses(serverAddress, TLS13InfraClientOption())
 	if err != nil {
 		return nil, nil, "", err
 	}
 	return context.Background(), infraClient, projectName, nil
 }
 
-// Get the web socket for receiving event notifications.
-func getCatalogWebSocket(cmd *cobra.Command) (*websocket.Conn, error) {
-	serverAddress, err := cmd.Flags().GetString(catalogEndpoint)
+// Get the new background context, REST client, and project name given the specified command.
+func getRpsServiceContext(cmd *cobra.Command) (context.Context, *rpsapi.ClientWithResponses, string, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
-		return nil, err
+		return nil, nil, "", err
 	}
-	serverAddress = strings.Replace(serverAddress, "https", "wss", 1)
-	serverAddress = strings.Replace(serverAddress, "http", "ws", 1)
-
-	u, err := url.JoinPath(serverAddress, "/catalog.orchestrator.apis/events")
+	projectName, err := getProjectName(cmd)
 	if err != nil {
-		return nil, err
+		return nil, nil, "", err
 	}
-
-	projectUUID, err := getProjectName(cmd)
+	rpsClient, err := rpsapi.NewClientWithResponses(serverAddress, TLS13RPSClientOption())
 	if err != nil {
-		return nil, err
+		return nil, nil, "", err
 	}
-
-	// Create an auxiliary request so that we can inject required auth headers into it
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Inject the headers
-	ctx := metadata.NewOutgoingContext(context.Background(), map[string][]string{auth.ActiveProjectID: {projectUUID}})
-	if err := auth.AddAuthHeader(ctx, req); err != nil {
-		return nil, err
-	}
-
-	// Dial to the web-socket using the annotated headers
-	ws, _, err := websocket.DefaultDialer.Dial(u, req.Header)
-	return ws, err
+	return context.Background(), rpsClient, projectName, nil
 }
 
 // Adds the mandatory project UUID, and the standard display-name, and description
@@ -225,10 +233,39 @@ func getPageSizeOffset(cmd *cobra.Command) (int32, int32, error) {
 
 // Reads input from the specified file path; from stdin if the path is "-"
 func readInput(path string) ([]byte, error) {
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
 	if path == "-" {
 		return io.ReadAll(os.Stdin)
 	}
 	return os.ReadFile(path)
+}
+
+func readInputWithLimit(path string) ([]byte, error) {
+	var reader io.Reader
+	if err := isSafePath(path); err != nil {
+		return nil, err
+	}
+	if path == "-" {
+		reader = os.Stdin
+	} else {
+		file, err := os.Open(path)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		reader = file
+	}
+	limited := io.LimitReader(reader, maxValuesYAMLSize+1)
+	data, err := io.ReadAll(limited)
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > maxValuesYAMLSize {
+		return nil, fmt.Errorf("input exceeds maximum allowed size of %d bytes", maxValuesYAMLSize)
+	}
+	return data, nil
 }
 
 // Checks the specified REST status and if it signals an anomaly, return an error formatted using the specified message
@@ -254,6 +291,39 @@ func checkResponseCode(responseCode int, message string, responseMessage string)
 	return nil
 }
 
+// grpcStatus is a structure that represents the gRPC status message returned in the response body.
+// Defining this here because the one in the official grpc package does not handle Details well.
+
+type grpcStatus struct {
+	Message string              `json:"message"`
+	Code    int                 `json:"code"`
+	Details []map[string]string `json:"details"`
+}
+
+// checkResponseGRPC is For apis that are using grpc-gateway and return a grpc Status in the response body for an error.
+func checkResponseGRPC(response *http.Response, message string) error {
+	if response == nil {
+		return nil
+	}
+	if response.StatusCode >= http.StatusBadRequest { // handle 4xx and 5xx errors
+		var status grpcStatus
+		if err := json.NewDecoder(response.Body).Decode(&status); err == nil {
+			// if there are details associated with the error, then print them
+			for _, detail := range status.Details {
+				if detailMessage, ok := detail["value"]; ok {
+					fmt.Fprintln(os.Stderr, detailMessage)
+				}
+			}
+			// if the grpc Status included a message then use it and return.
+			// Otherwise, fall back to the standard response message.
+			if status.Message != "" {
+				return checkResponseCode(response.StatusCode, message, status.Message)
+			}
+		}
+	}
+	return checkResponseCode(response.StatusCode, message, response.Status)
+}
+
 // Checks the status code and returns the appropriate error
 func checkStatus(statusCode int, message string, statusMessage string) (proceed bool, err error) {
 	if statusCode == http.StatusOK {
@@ -261,7 +331,7 @@ func checkStatus(statusCode int, message string, statusMessage string) (proceed 
 	} else if statusCode == 403 {
 		return false, fmt.Errorf("%s: %s. Unauthenticated. Please login", message, statusMessage)
 	}
-	return false, fmt.Errorf("no response from backend - check catalog-endpoint and deployment-endpoint")
+	return false, fmt.Errorf("no response from backend - check api-endpoint and deployment-endpoint")
 }
 
 // Returns an error if the status is abnormal, i.e. status code is not OK and not merely NOT_FOUND
@@ -343,76 +413,102 @@ func obscureValue(s *string) string {
 	return "<none>"
 }
 
-// Message represents subscription control messages
-type Message struct {
-	Op      string `json:"op"`
-	Kind    string `json:"kind"`
-	Project string `json:"project"`
-	Payload []byte `json:"payload"`
-}
-
-// Subscribe for updates of a particular kind of entity
-func subscribe(ws *websocket.Conn, kind string, projectUUID string) error {
-	return ws.WriteJSON(Message{Op: "subscribe", Kind: kind, Project: projectUUID})
-}
-
-// Unsubscribe from updates of aparticular kind of entity
-func unsubscribe(ws *websocket.Conn, kind string) {
-	_ = ws.WriteJSON(Message{Op: "unsubscribe", Kind: kind})
-}
-
-// Unsubscribe from updates of a particular kind of entity when keyboard interrupt is detected.
-func unsubscribeOnInterrupt(ws *websocket.Conn, kinds ...string) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		for range c {
-			for _, kind := range kinds {
-				unsubscribe(ws, kind)
-			}
-			os.Exit(0)
-		}
-	}()
-}
-
-func isEvent(op string) bool {
-	return op == "created" || op == "updated" || op == "deleted"
-}
-
-// Runs the main body of the watch command
-func runWatchCommand(cmd *cobra.Command, printer func(io.Writer, string, []byte, bool) error, kinds ...string) error {
-	ws, err := getCatalogWebSocket(cmd)
-	if err != nil {
-		return err
+// isSafePath checks for path traversal and null byte injection.
+func isSafePath(path string) error {
+	clean := filepath.Clean(path)
+	if strings.Contains(clean, ".."+string(os.PathSeparator)) || strings.HasPrefix(clean, "..") {
+		return errors.New("path traversal detected: '..' not allowed in file paths")
 	}
-
-	projectUUID, err := getProjectName(cmd)
-	if err != nil {
-		return err
+	if strings.ContainsRune(path, '\x00') {
+		return errors.New("null byte detected in file path")
 	}
+	return nil
+}
 
-	// subscribe and on interrupt unsubscribe and exit
-	for _, kind := range kinds {
-		if err := subscribe(ws, kind, projectUUID); err != nil {
-			return err
+func TLS13CatalogClientOption() func(*catapi.Client) error {
+	return func(c *catapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
 		}
-		defer unsubscribe(ws, kind)
+		return nil
 	}
-	unsubscribeOnInterrupt(ws, kinds...)
+}
+func TLS13DeploymentClientOption() func(*depapi.Client) error {
+	return func(c *depapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+func TLS13InfraClientOption() func(*infraapi.Client) error {
+	return func(c *infraapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+func TLS13ClusterClientOption() func(*coapi.Client) error {
+	return func(c *coapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
 
-	// consume acknowledgement and any events and print them
-	msg := &Message{}
-	writer, verbose := getOutputContext(cmd)
-	for {
-		if err = ws.ReadJSON(msg); err != nil {
-			return err
+func TLS13RPSClientOption() func(*rpsapi.Client) error {
+	return func(c *rpsapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
 		}
-		if isEvent(msg.Op) {
-			_, _ = fmt.Fprintf(writer, "%s: %s %s\t", shortenUUID(msg.Project), msg.Kind, msg.Op)
-			if err := printer(writer, msg.Kind, msg.Payload, verbose); err != nil {
-				return err
-			}
-			_ = writer.Flush()
+		return nil
+	}
+}
+
+// Helper function for fuzz tests
+func isExpectedError(err error) bool {
+	if err == nil {
+		return false
+	}
+	expectedSubstrings := []string{
+		"not", "unknown", "match", "invalid", "required", "requires",
+		"no such", "missing", "no", "must", "in form", "incorrect",
+		"unexpected", "expected", "failed", "is a", "bad", "exists", "open",
+		"cannot", "nonexistent", "deleting", "getting", "listing", "wrong",
+		"creating", "Internal Server Error", "null", "accepts", "error", "failed", "inappropriate",
+	}
+	errStr := strings.ToLower(err.Error())
+	for _, substr := range expectedSubstrings {
+		if strings.Contains(errStr, strings.ToLower(substr)) {
+			return true
 		}
 	}
+	return false
 }

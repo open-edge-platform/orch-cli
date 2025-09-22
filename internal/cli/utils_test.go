@@ -1,15 +1,17 @@
-// SPDX-FileCopyrightText: 2023-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
+	"io"
 	"net/http"
 	"testing"
 	"text/tabwriter"
+
+	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCheckStatus(t *testing.T) {
@@ -127,5 +129,85 @@ func TestProcessResponse(t *testing.T) {
 		if test.expectedError != "" {
 			assert.EqualError(t, err, test.expectedError, test.name)
 		}
+	}
+}
+
+func TestGetServiceContexts(t *testing.T) {
+	cmd := &cobra.Command{}
+	cmd.Flags().String("api-endpoint", "http://localhost:12345", "API endpoint")
+	cmd.Flags().String("project", "test-project", "Project name")
+	// Catalog
+	//nolint:dogsled
+	_, _, _, err := getCatalogServiceContext(cmd)
+	assert.NoError(t, err)
+
+	// Infra
+	//nolint:dogsled
+	_, _, _, err = getInfraServiceContext(cmd)
+	assert.NoError(t, err)
+
+	// Cluster
+	//nolint:dogsled
+	_, _, _, err = getClusterServiceContext(cmd)
+	assert.NoError(t, err)
+
+	// Rps
+	//nolint:dogsled
+	_, _, _, err = getRpsServiceContext(cmd)
+	assert.NoError(t, err)
+
+	// Deployment
+	//nolint:dogsled
+	_, _, _, err = getDeploymentServiceContext(cmd)
+	assert.NoError(t, err)
+}
+
+func TestCheckResponseGRPC(t *testing.T) {
+	tests := []struct {
+		name           string
+		statusCode     int
+		body           string
+		expectedErrMsg string
+	}{
+		{
+			name:           "gRPC error with message and details",
+			statusCode:     500,
+			body:           `{"message":"grpc error occurred","code":13,"details":[{"value":"detail1"},{"value":"detail2"}]}`,
+			expectedErrMsg: "test-message: grpc error occurred",
+		},
+		{
+			name:           "gRPC error with only message",
+			statusCode:     400,
+			body:           `{"message":"bad request","code":3}`,
+			expectedErrMsg: "test-message: bad request",
+		},
+		{
+			name:           "gRPC error with invalid JSON",
+			statusCode:     400,
+			body:           `invalid json`,
+			expectedErrMsg: "test-message: Bad Request",
+		},
+		{
+			name:           "non-error response",
+			statusCode:     200,
+			body:           `{}`,
+			expectedErrMsg: "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := &http.Response{
+				StatusCode: tc.statusCode,
+				Status:     http.StatusText(tc.statusCode),
+				Body:       io.NopCloser(bytes.NewBufferString(tc.body)),
+			}
+			err := checkResponseGRPC(resp, "test-message")
+			if tc.expectedErrMsg == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.expectedErrMsg)
+			}
+		})
 	}
 }

@@ -1,5 +1,4 @@
-// SPDX-FileCopyrightText: 2022-present Intel Corporation
-//
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -7,27 +6,30 @@ package cli
 import (
 	"context"
 	"fmt"
-	"github.com/open-edge-platform/cli/pkg/auth"
-	"github.com/open-edge-platform/orch-library/go/pkg/errors"
-	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/orch-library/go/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
 func getListChartsCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "charts <registry-name> [<chart-name>} [flags]",
+		Use:               "charts <registry-name> [<chart-name>] [flags]",
 		Args:              cobra.MinimumNArgs(1),
 		Short:             "Get chart names or chart versions from a HELM registry",
 		PersistentPreRunE: auth.CheckAuth,
+		Example:           "orch-cli get charts my-registry --project my-project",
+		Aliases:           chartAliases,
 		RunE:              getCharts,
 	}
 	return cmd
 }
 
 func getCharts(cmd *cobra.Command, args []string) error {
-	serverAddress, err := cmd.Flags().GetString(catalogEndpoint)
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return err
 	}
@@ -58,6 +60,7 @@ func getRegistryContent(url string) ([]byte, error) {
 	ctx := context.Background()
 	r, _ := http.NewRequest("GET", url, nil)
 	r.Header.Add("Content-Type", "application/json")
+	r.Header.Add("CORS", "true")
 	if err := auth.AddAuthHeader(ctx, r); err != nil {
 		return nil, err
 	}

@@ -1,11 +1,11 @@
-# SPDX-FileCopyrightText: 2022-present Intel Corporation
-#
+# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 ---
 ignore: |
   examples/templates/values/stuttgart-sra-evam-helm-values.yaml
   examples/testapp/*
   pkg/rest/*/*.yaml
+  internal/cli/testdata/cloudinit.yaml
   vendor/
   .github/
 rules:

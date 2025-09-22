@@ -4,9 +4,10 @@
 package infra
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
-	"github.com/go-openapi/strfmt"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -14,28 +15,26 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
-// Defines values for HostBmcKind.
+// Defines values for AmtState.
 const (
-	BAREMETALCONTROLLERKINDIPMI        HostBmcKind = "BAREMETAL_CONTROLLER_KIND_IPMI"
-	BAREMETALCONTROLLERKINDNONE        HostBmcKind = "BAREMETAL_CONTROLLER_KIND_NONE"
-	BAREMETALCONTROLLERKINDPDU         HostBmcKind = "BAREMETAL_CONTROLLER_KIND_PDU"
-	BAREMETALCONTROLLERKINDUNSPECIFIED HostBmcKind = "BAREMETAL_CONTROLLER_KIND_UNSPECIFIED"
-	BAREMETALCONTROLLERKINDVPRO        HostBmcKind = "BAREMETAL_CONTROLLER_KIND_VPRO"
+	AMTSTATEDISCONNECTED  AmtState = "AMT_STATE_DISCONNECTED"
+	AMTSTATEPROVISIONED   AmtState = "AMT_STATE_PROVISIONED"
+	AMTSTATEUNPROVISIONED AmtState = "AMT_STATE_UNPROVISIONED"
+	AMTSTATEUNSPECIFIED   AmtState = "AMT_STATE_UNSPECIFIED"
 )
 
-// Defines values for HostPowerState.
+// Defines values for BaremetalControllerKind.
 const (
-	POWERSTATEERROR       HostPowerState = "POWER_STATE_ERROR"
-	POWERSTATEOFF         HostPowerState = "POWER_STATE_OFF"
-	POWERSTATEON          HostPowerState = "POWER_STATE_ON"
-	POWERSTATEUNSPECIFIED HostPowerState = "POWER_STATE_UNSPECIFIED"
+	BAREMETALCONTROLLERKINDIPMI        BaremetalControllerKind = "BAREMETAL_CONTROLLER_KIND_IPMI"
+	BAREMETALCONTROLLERKINDNONE        BaremetalControllerKind = "BAREMETAL_CONTROLLER_KIND_NONE"
+	BAREMETALCONTROLLERKINDPDU         BaremetalControllerKind = "BAREMETAL_CONTROLLER_KIND_PDU"
+	BAREMETALCONTROLLERKINDUNSPECIFIED BaremetalControllerKind = "BAREMETAL_CONTROLLER_KIND_UNSPECIFIED"
+	BAREMETALCONTROLLERKINDVPRO        BaremetalControllerKind = "BAREMETAL_CONTROLLER_KIND_VPRO"
 )
 
 // Defines values for HostState.
 const (
 	HOSTSTATEDELETED     HostState = "HOST_STATE_DELETED"
-	HOSTSTATEDELETING    HostState = "HOST_STATE_DELETING"
-	HOSTSTATEERROR       HostState = "HOST_STATE_ERROR"
 	HOSTSTATEONBOARDED   HostState = "HOST_STATE_ONBOARDED"
 	HOSTSTATEREGISTERED  HostState = "HOST_STATE_REGISTERED"
 	HOSTSTATEUNSPECIFIED HostState = "HOST_STATE_UNSPECIFIED"
@@ -44,9 +43,9 @@ const (
 
 // Defines values for IPAddressConfigMethod.
 const (
-	IPADDRESSCONFIGMODEDYNAMIC     IPAddressConfigMethod = "IP_ADDRESS_CONFIG_MODE_DYNAMIC"
-	IPADDRESSCONFIGMODESTATIC      IPAddressConfigMethod = "IP_ADDRESS_CONFIG_MODE_STATIC"
-	IPADDRESSCONFIGMODEUNSPECIFIED IPAddressConfigMethod = "IP_ADDRESS_CONFIG_MODE_UNSPECIFIED"
+	IPADDRESSCONFIGMETHODDYNAMIC     IPAddressConfigMethod = "IP_ADDRESS_CONFIG_METHOD_DYNAMIC"
+	IPADDRESSCONFIGMETHODSTATIC      IPAddressConfigMethod = "IP_ADDRESS_CONFIG_METHOD_STATIC"
+	IPADDRESSCONFIGMETHODUNSPECIFIED IPAddressConfigMethod = "IP_ADDRESS_CONFIG_METHOD_UNSPECIFIED"
 )
 
 // Defines values for IPAddressStatus.
@@ -69,37 +68,55 @@ const (
 // Defines values for InstanceState.
 const (
 	INSTANCESTATEDELETED     InstanceState = "INSTANCE_STATE_DELETED"
-	INSTANCESTATEERROR       InstanceState = "INSTANCE_STATE_ERROR"
 	INSTANCESTATERUNNING     InstanceState = "INSTANCE_STATE_RUNNING"
 	INSTANCESTATEUNSPECIFIED InstanceState = "INSTANCE_STATE_UNSPECIFIED"
 	INSTANCESTATEUNTRUSTED   InstanceState = "INSTANCE_STATE_UNTRUSTED"
 )
 
-// Defines values for LinkStateType.
+// Defines values for LinkState.
 const (
-	LINKSTATEDOWN        LinkStateType = "LINK_STATE_DOWN"
-	LINKSTATEUNSPECIFIED LinkStateType = "LINK_STATE_UNSPECIFIED"
-	LINKSTATEUP          LinkStateType = "LINK_STATE_UP"
+	NETWORKINTERFACELINKSTATEDOWN        LinkState = "NETWORK_INTERFACE_LINK_STATE_DOWN"
+	NETWORKINTERFACELINKSTATEUNSPECIFIED LinkState = "NETWORK_INTERFACE_LINK_STATE_UNSPECIFIED"
+	NETWORKINTERFACELINKSTATEUP          LinkState = "NETWORK_INTERFACE_LINK_STATE_UP"
 )
 
-// Defines values for LocationType.
+// Defines values for ListLocationsResponseResourceKind.
 const (
-	RESOURCEKINDREGION LocationType = "RESOURCE_KIND_REGION"
-	RESOURCEKINDSITE   LocationType = "RESOURCE_KIND_SITE"
+	RESOURCEKINDREGION      ListLocationsResponseResourceKind = "RESOURCE_KIND_REGION"
+	RESOURCEKINDSITE        ListLocationsResponseResourceKind = "RESOURCE_KIND_SITE"
+	RESOURCEKINDUNSPECIFIED ListLocationsResponseResourceKind = "RESOURCE_KIND_UNSPECIFIED"
 )
 
-// Defines values for OperatingSystemProvider.
+// Defines values for OsProviderKind.
 const (
-	OPERATINGSYSTEMPROVIDERINFRA       OperatingSystemProvider = "OPERATING_SYSTEM_PROVIDER_INFRA"
-	OPERATINGSYSTEMPROVIDERLENOVO      OperatingSystemProvider = "OPERATING_SYSTEM_PROVIDER_LENOVO"
-	OPERATINGSYSTEMPROVIDERUNSPECIFIED OperatingSystemProvider = "OPERATING_SYSTEM_PROVIDER_UNSPECIFIED"
+	OSPROVIDERKINDINFRA       OsProviderKind = "OS_PROVIDER_KIND_INFRA"
+	OSPROVIDERKINDLENOVO      OsProviderKind = "OS_PROVIDER_KIND_LENOVO"
+	OSPROVIDERKINDUNSPECIFIED OsProviderKind = "OS_PROVIDER_KIND_UNSPECIFIED"
 )
 
-// Defines values for OperatingSystemType.
+// Defines values for OsType.
 const (
-	OPERATINGSYSTEMTYPEIMMUTABLE   OperatingSystemType = "OPERATING_SYSTEM_TYPE_IMMUTABLE"
-	OPERATINGSYSTEMTYPEMUTABLE     OperatingSystemType = "OPERATING_SYSTEM_TYPE_MUTABLE"
-	OPERATINGSYSTEMTYPEUNSPECIFIED OperatingSystemType = "OPERATING_SYSTEM_TYPE_UNSPECIFIED"
+	OSTYPEIMMUTABLE   OsType = "OS_TYPE_IMMUTABLE"
+	OSTYPEMUTABLE     OsType = "OS_TYPE_MUTABLE"
+	OSTYPEUNSPECIFIED OsType = "OS_TYPE_UNSPECIFIED"
+)
+
+// Defines values for PowerCommandPolicy.
+const (
+	POWERCOMMANDPOLICYIMMEDIATE   PowerCommandPolicy = "POWER_COMMAND_POLICY_IMMEDIATE"
+	POWERCOMMANDPOLICYORDERED     PowerCommandPolicy = "POWER_COMMAND_POLICY_ORDERED"
+	POWERCOMMANDPOLICYUNSPECIFIED PowerCommandPolicy = "POWER_COMMAND_POLICY_UNSPECIFIED"
+)
+
+// Defines values for PowerState.
+const (
+	POWERSTATEHIBERNATE   PowerState = "POWER_STATE_HIBERNATE"
+	POWERSTATEOFF         PowerState = "POWER_STATE_OFF"
+	POWERSTATEON          PowerState = "POWER_STATE_ON"
+	POWERSTATEPOWERCYCLE  PowerState = "POWER_STATE_POWER_CYCLE"
+	POWERSTATERESET       PowerState = "POWER_STATE_RESET"
+	POWERSTATESLEEP       PowerState = "POWER_STATE_SLEEP"
+	POWERSTATEUNSPECIFIED PowerState = "POWER_STATE_UNSPECIFIED"
 )
 
 // Defines values for ProviderKind.
@@ -129,12 +146,22 @@ const (
 	SECURITYFEATUREUNSPECIFIED                     SecurityFeature = "SECURITY_FEATURE_UNSPECIFIED"
 )
 
-// Defines values for StatusIndicator.
+// Defines values for SeverityLevel.
 const (
-	STATUSINDICATIONERROR       StatusIndicator = "STATUS_INDICATION_ERROR"
-	STATUSINDICATIONIDLE        StatusIndicator = "STATUS_INDICATION_IDLE"
-	STATUSINDICATIONINPROGRESS  StatusIndicator = "STATUS_INDICATION_IN_PROGRESS"
-	STATUSINDICATIONUNSPECIFIED StatusIndicator = "STATUS_INDICATION_UNSPECIFIED"
+	SEVERITYLEVELCRITICAL    SeverityLevel = "SEVERITY_LEVEL_CRITICAL"
+	SEVERITYLEVELDEBUG       SeverityLevel = "SEVERITY_LEVEL_DEBUG"
+	SEVERITYLEVELERROR       SeverityLevel = "SEVERITY_LEVEL_ERROR"
+	SEVERITYLEVELINFO        SeverityLevel = "SEVERITY_LEVEL_INFO"
+	SEVERITYLEVELUNSPECIFIED SeverityLevel = "SEVERITY_LEVEL_UNSPECIFIED"
+	SEVERITYLEVELWARN        SeverityLevel = "SEVERITY_LEVEL_WARN"
+)
+
+// Defines values for StatusIndication.
+const (
+	STATUSINDICATIONERROR       StatusIndication = "STATUS_INDICATION_ERROR"
+	STATUSINDICATIONIDLE        StatusIndication = "STATUS_INDICATION_IDLE"
+	STATUSINDICATIONINPROGRESS  StatusIndication = "STATUS_INDICATION_IN_PROGRESS"
+	STATUSINDICATIONUNSPECIFIED StatusIndication = "STATUS_INDICATION_UNSPECIFIED"
 )
 
 // Defines values for TelemetryCollectorKind.
@@ -144,14 +171,11 @@ const (
 	TELEMETRYCOLLECTORKINDUNSPECIFIED TelemetryCollectorKind = "TELEMETRY_COLLECTOR_KIND_UNSPECIFIED"
 )
 
-// Defines values for TelemetrySeverityLevel.
+// Defines values for UpdatePolicy.
 const (
-	TELEMETRYSEVERITYLEVELCRITICAL    TelemetrySeverityLevel = "TELEMETRY_SEVERITY_LEVEL_CRITICAL"
-	TELEMETRYSEVERITYLEVELDEBUG       TelemetrySeverityLevel = "TELEMETRY_SEVERITY_LEVEL_DEBUG"
-	TELEMETRYSEVERITYLEVELERROR       TelemetrySeverityLevel = "TELEMETRY_SEVERITY_LEVEL_ERROR"
-	TELEMETRYSEVERITYLEVELINFO        TelemetrySeverityLevel = "TELEMETRY_SEVERITY_LEVEL_INFO"
-	TELEMETRYSEVERITYLEVELUNSPECIFIED TelemetrySeverityLevel = "TELEMETRY_SEVERITY_LEVEL_UNSPECIFIED"
-	TELEMETRYSEVERITYLEVELWARN        TelemetrySeverityLevel = "TELEMETRY_SEVERITY_LEVEL_WARN"
+	UPDATEPOLICYLATEST      UpdatePolicy = "UPDATE_POLICY_LATEST"
+	UPDATEPOLICYTARGET      UpdatePolicy = "UPDATE_POLICY_TARGET"
+	UPDATEPOLICYUNSPECIFIED UpdatePolicy = "UPDATE_POLICY_UNSPECIFIED"
 )
 
 // Defines values for WorkloadKind.
@@ -166,25 +190,163 @@ const (
 	WORKLOADMEMBERKINDUNSPECIFIED WorkloadMemberKind = "WORKLOAD_MEMBER_KIND_UNSPECIFIED"
 )
 
-// Amount Defines an amount of resources related to memory and disk by default, specified in bytes.
-type Amount = string
+// Defines values for ConnectErrorCode.
+const (
+	Aborted            ConnectErrorCode = "aborted"
+	AlreadyExists      ConnectErrorCode = "already_exists"
+	Canceled           ConnectErrorCode = "canceled"
+	DataLoss           ConnectErrorCode = "data_loss"
+	DeadlineExceeded   ConnectErrorCode = "deadline_exceeded"
+	FailedPrecondition ConnectErrorCode = "failed_precondition"
+	Internal           ConnectErrorCode = "internal"
+	InvalidArgument    ConnectErrorCode = "invalid_argument"
+	NotFound           ConnectErrorCode = "not_found"
+	OutOfRange         ConnectErrorCode = "out_of_range"
+	PermissionDenied   ConnectErrorCode = "permission_denied"
+	ResourceExhausted  ConnectErrorCode = "resource_exhausted"
+	Unauthenticated    ConnectErrorCode = "unauthenticated"
+	Unavailable        ConnectErrorCode = "unavailable"
+	Unimplemented      ConnectErrorCode = "unimplemented"
+	Unknown            ConnectErrorCode = "unknown"
+)
 
-// Host A host resource.
-type Host struct {
-	// BiosReleaseDate The release date of the host BIOS.
+// AmtState The state of the AMT (Active Management Technology) component.
+type AmtState string
+
+// BaremetalControllerKind The type of BMC.
+type BaremetalControllerKind string
+
+// CustomConfigResource defines model for CustomConfigResource.
+type CustomConfigResource struct {
+	// Config Config content
+	Config string `json:"config"`
+
+	// Description (OPTIONAL) Config description
+	Description *string `json:"description,omitempty"`
+
+	// Name Config provided by admin
+	Name string `json:"name"`
+
+	// ResourceId resource identifier
+	ResourceId *string     `json:"resourceId,omitempty"`
+	Timestamps *Timestamps `json:"timestamps,omitempty"`
+}
+
+// DeleteCustomConfigResponse Response message for DeleteCustomConfig.
+type DeleteCustomConfigResponse = map[string]interface{}
+
+// DeleteHostResponse Reponse message for DeleteHost.
+type DeleteHostResponse = map[string]interface{}
+
+// DeleteInstanceResponse Response message for DeleteInstance.
+type DeleteInstanceResponse = map[string]interface{}
+
+// DeleteLocalAccountResponse Response message for DeleteLocalAccount.
+type DeleteLocalAccountResponse = map[string]interface{}
+
+// DeleteOSUpdatePolicyResponse Response message for DeleteOperatingSystem.
+type DeleteOSUpdatePolicyResponse = map[string]interface{}
+
+// DeleteOSUpdateRunResponse Response message for DeleteOperatingSystem.
+type DeleteOSUpdateRunResponse = map[string]interface{}
+
+// DeleteOperatingSystemResponse Response message for DeleteOperatingSystem.
+type DeleteOperatingSystemResponse = map[string]interface{}
+
+// DeleteProviderResponse Response message for DeleteProvider.
+type DeleteProviderResponse = map[string]interface{}
+
+// DeleteRegionResponse Response message for DeleteRegion.
+type DeleteRegionResponse = map[string]interface{}
+
+// DeleteRepeatedScheduleResponse Response message for DeleteRepeatedSchedule.
+type DeleteRepeatedScheduleResponse = map[string]interface{}
+
+// DeleteSingleScheduleResponse Response message for DeleteSingleSchedule.
+type DeleteSingleScheduleResponse = map[string]interface{}
+
+// DeleteSiteResponse Response message for DeleteSite.
+type DeleteSiteResponse = map[string]interface{}
+
+// DeleteTelemetryLogsGroupResponse Response message for DeleteTelemetryLogsGroup.
+type DeleteTelemetryLogsGroupResponse = map[string]interface{}
+
+// DeleteTelemetryLogsProfileResponse Response message for DeleteTelemetryLogsProfile.
+type DeleteTelemetryLogsProfileResponse = map[string]interface{}
+
+// DeleteTelemetryMetricsGroupResponse Response message for DeleteTelemetryMetricsGroup.
+type DeleteTelemetryMetricsGroupResponse = map[string]interface{}
+
+// DeleteTelemetryMetricsProfileResponse Response message for DeleteTelemetryMetricsProfile.
+type DeleteTelemetryMetricsProfileResponse = map[string]interface{}
+
+// DeleteWorkloadMemberResponse Response message for DeleteWorkloadMember.
+type DeleteWorkloadMemberResponse = map[string]interface{}
+
+// DeleteWorkloadResponse Response message for DeleteWorkload.
+type DeleteWorkloadResponse = map[string]interface{}
+
+// GetHostSummaryResponse Summary of the hosts status.
+type GetHostSummaryResponse struct {
+	// Error The total number of hosts presenting an Error.
+	Error *int `json:"error,omitempty"`
+
+	// Running The total number of hosts in Running state.
+	Running *int `json:"running,omitempty"`
+
+	// Total The total number of hosts.
+	Total *int `json:"total,omitempty"`
+
+	// Unallocated The total number of hosts without a site.
+	Unallocated *int `json:"unallocated,omitempty"`
+}
+
+// HostRegister Message to register a Host.
+type HostRegister struct {
+	// AutoOnboard Flag to signal to automatically onboard the host.
+	AutoOnboard *bool `json:"autoOnboard,omitempty"`
+
+	// EnableVpro Flag to signal to enable vPRO on the host.
+	EnableVpro *bool `json:"enableVpro,omitempty"`
+
+	// Name The host name.
+	Name *string `json:"name,omitempty"`
+
+	// SerialNumber The host serial number.
+	SerialNumber *string `json:"serialNumber,omitempty"`
+
+	// Uuid The host UUID.
+	Uuid *string `json:"uuid,omitempty"`
+}
+
+// HostResource A Host resource.
+type HostResource struct {
+	// AmtSku coming from device introspection
+	AmtSku *string `json:"amtSku,omitempty"`
+
+	// AmtStatus coming from device introspection. Set only by the DM RM.
+	AmtStatus *string `json:"amtStatus,omitempty"`
+
+	// AmtStatusIndicator The status indicator.
+	AmtStatusIndicator *StatusIndication `json:"amtStatusIndicator,omitempty"`
+
+	// AmtStatusTimestamp UTC timestamp when amt_status was last changed. Set by DM and OM RM only.
+	AmtStatusTimestamp *int `json:"amtStatusTimestamp,omitempty"`
+
+	// BiosReleaseDate BIOS Release Date.
 	BiosReleaseDate *string `json:"biosReleaseDate,omitempty"`
 
-	// BiosVendor The vendor of the host BIOS.
+	// BiosVendor BIOS Vendor.
 	BiosVendor *string `json:"biosVendor,omitempty"`
 
-	// BiosVersion The version of the host BIOS.
+	// BiosVersion BIOS Version.
 	BiosVersion *string `json:"biosVersion,omitempty"`
 
 	// BmcIp BMC IP address, such as "192.0.0.1".
 	BmcIp *string `json:"bmcIp,omitempty"`
 
 	// BmcKind The type of BMC.
-	BmcKind *HostBmcKind `json:"bmcKind,omitempty"`
+	BmcKind *BaremetalControllerKind `json:"bmcKind,omitempty"`
 
 	// CpuArchitecture Architecture of the CPU model, e.g. x86_64.
 	CpuArchitecture *string `json:"cpuArchitecture,omitempty"`
@@ -193,67 +355,74 @@ type Host struct {
 	CpuCapabilities *string `json:"cpuCapabilities,omitempty"`
 
 	// CpuCores Number of CPU cores.
-	CpuCores *uint32 `json:"cpuCores,omitempty"`
+	CpuCores *int `json:"cpuCores,omitempty"`
 
-	// CpuModel CPU model of the host.
+	// CpuModel CPU model of the Host.
 	CpuModel *string `json:"cpuModel,omitempty"`
 
 	// CpuSockets Number of physical CPU sockets.
-	CpuSockets *uint32 `json:"cpuSockets,omitempty"`
+	CpuSockets *int `json:"cpuSockets,omitempty"`
 
-	// CpuThreads Total number of threads supported by the CPU.
-	CpuThreads *uint32 `json:"cpuThreads,omitempty"`
+	// CpuThreads Total Number of threads supported by the CPU.
+	CpuThreads *int `json:"cpuThreads,omitempty"`
 
-	// CpuTopology A JSON field describing the CPU topology. The CPU topology may contain, among others, information about CPU core types, their layout, and mapping to CPU sockets.
+	// CpuTopology JSON field storing the CPU topology, refer to HDA/HRM docs for the JSON schema.
 	CpuTopology *string `json:"cpuTopology,omitempty"`
 
-	// CurrentPowerState The representation of a host power state.
-	CurrentPowerState *HostPowerState `json:"currentPowerState,omitempty"`
+	// CurrentAmtState The state of the AMT (Active Management Technology) component.
+	CurrentAmtState *AmtState `json:"currentAmtState,omitempty"`
 
-	// CurrentState State of the host.
+	// CurrentPowerState The host power state.
+	CurrentPowerState *PowerState `json:"currentPowerState,omitempty"`
+
+	// CurrentState States of the host.
 	CurrentState *HostState `json:"currentState,omitempty"`
 
-	// DesiredPowerState The representation of a host power state.
-	DesiredPowerState *HostPowerState `json:"desiredPowerState,omitempty"`
+	// DesiredAmtState The state of the AMT (Active Management Technology) component.
+	DesiredAmtState *AmtState `json:"desiredAmtState,omitempty"`
 
-	// DesiredState State of the host.
+	// DesiredPowerState The host power state.
+	DesiredPowerState *PowerState `json:"desiredPowerState,omitempty"`
+
+	// DesiredState States of the host.
 	DesiredState *HostState `json:"desiredState,omitempty"`
 
-	// HostGpus The list of GPU capabilities.
-	HostGpus *[]HostResourcesGPU `json:"hostGpus,omitempty"`
+	// HostGpus Back-reference to attached host GPU resources.
+	HostGpus *[]HostgpuResource `json:"hostGpus,omitempty"`
 
-	// HostNics The list of interface capabilities.
-	HostNics *[]HostResourcesInterface `json:"hostNics,omitempty"`
+	// HostNics Back-reference to attached host NIC resources.
+	HostNics *[]HostnicResource `json:"hostNics,omitempty"`
 
-	// HostStatus The host's lifecycle status message.
+	// HostStatus textual message that describes the runtime status of Host. Set by RMs only.
 	HostStatus *string `json:"hostStatus,omitempty"`
 
 	// HostStatusIndicator The status indicator.
-	HostStatusIndicator *StatusIndicator `json:"hostStatusIndicator,omitempty"`
+	HostStatusIndicator *StatusIndication `json:"hostStatusIndicator,omitempty"`
 
-	// HostStatusTimestamp A Unix, UTC timestamp when the host's lifecycle status was last updated.
-	HostStatusTimestamp *uint64 `json:"hostStatusTimestamp,omitempty"`
+	// HostStatusTimestamp UTC timestamp when host_status was last changed. Set by RMs only.
+	HostStatusTimestamp *int `json:"hostStatusTimestamp,omitempty"`
 
-	// HostStorages The list of storage capabilities.
-	HostStorages *[]HostResourcesStorage `json:"hostStorages,omitempty"`
+	// HostStorages Back-reference to attached host storage resources.
+	HostStorages *[]HoststorageResource `json:"hostStorages,omitempty"`
 
-	// HostUsbs The list of USB capabilities.
-	HostUsbs *[]HostResourcesUSB `json:"hostUsbs,omitempty"`
+	// HostUsbs Back-reference to attached host USB resources.
+	HostUsbs *[]HostusbResource `json:"hostUsbs,omitempty"`
 
-	// Hostname The host name.
+	// Hostname Hostname.
 	Hostname *string `json:"hostname,omitempty"`
 
-	// InheritedMetadata The joint set of location's and host's logical metadata.
-	InheritedMetadata *MetadataJoin `json:"inheritedMetadata,omitempty"`
+	// InheritedMetadata The metadata inherited by the host, represented by a list of key:value pairs, rendered by location and logical structures.
+	InheritedMetadata *[]MetadataItem `json:"inheritedMetadata,omitempty"`
 
-	// Instance An instance resource.
-	Instance *Instance `json:"instance,omitempty"`
+	// Instance InstanceResource describes an instantiated OS install, running on either a
+	//  host or hypervisor.
+	Instance *InstanceResource `json:"instance,omitempty"`
 
-	// MemoryBytes Quantity of the RAM in the system, in bytes.
+	// MemoryBytes Quantity of memory (RAM) in the system in bytes.
 	MemoryBytes *string `json:"memoryBytes,omitempty"`
 
-	// Metadata A metadata list, represented by a list of key:value pairs.
-	Metadata *Metadata `json:"metadata,omitempty"`
+	// Metadata (OPTIONAL) The metadata associated with the host, represented by a list of key:value pairs.
+	Metadata *[]MetadataItem `json:"metadata,omitempty"`
 
 	// Name The host name.
 	Name string `json:"name"`
@@ -261,29 +430,44 @@ type Host struct {
 	// Note The note associated with the host.
 	Note *string `json:"note,omitempty"`
 
-	// OnboardingStatus The host's onboarding status message.
+	// OnboardingStatus textual message that describes the onboarding status of Host. Set by RMs only.
 	OnboardingStatus *string `json:"onboardingStatus,omitempty"`
 
 	// OnboardingStatusIndicator The status indicator.
-	OnboardingStatusIndicator *StatusIndicator `json:"onboardingStatusIndicator,omitempty"`
+	OnboardingStatusIndicator *StatusIndication `json:"onboardingStatusIndicator,omitempty"`
 
-	// OnboardingStatusTimestamp A Unix, UTC timestamp when the host's onboarding status was last updated.
-	OnboardingStatusTimestamp *uint64 `json:"onboardingStatusTimestamp,omitempty"`
+	// OnboardingStatusTimestamp UTC timestamp when onboarding_status was last changed. Set by RMs only.
+	OnboardingStatusTimestamp *int `json:"onboardingStatusTimestamp,omitempty"`
 
-	// ProductName The host's product name.
+	// PowerCommandPolicy The policy for handling power commands.
+	PowerCommandPolicy *PowerCommandPolicy `json:"powerCommandPolicy,omitempty"`
+
+	// PowerOnTime UTC timestamp when the host was powered on. Set by DM RM only.
+	PowerOnTime *int `json:"powerOnTime,omitempty"`
+
+	// PowerStatus textual message that describes the runtime status of Host power. Set by DM RM only.
+	PowerStatus *string `json:"powerStatus,omitempty"`
+
+	// PowerStatusIndicator The status indicator.
+	PowerStatusIndicator *StatusIndication `json:"powerStatusIndicator,omitempty"`
+
+	// PowerStatusTimestamp UTC timestamp when power_status was last changed. Set by DM RM only.
+	PowerStatusTimestamp *int `json:"powerStatusTimestamp,omitempty"`
+
+	// ProductName System Product Name.
 	ProductName *string `json:"productName,omitempty"`
 
 	// Provider A provider resource.
-	Provider *Provider `json:"provider,omitempty"`
+	Provider *ProviderResource `json:"provider,omitempty"`
 
-	// RegistrationStatus The host's registration status message.
+	// RegistrationStatus textual message that describes the onboarding status of Host. Set by RMs only.
 	RegistrationStatus *string `json:"registrationStatus,omitempty"`
 
 	// RegistrationStatusIndicator The status indicator.
-	RegistrationStatusIndicator *StatusIndicator `json:"registrationStatusIndicator,omitempty"`
+	RegistrationStatusIndicator *StatusIndication `json:"registrationStatusIndicator,omitempty"`
 
-	// RegistrationStatusTimestamp A Unix, UTC timestamp when the host's registration status was last updated.
-	RegistrationStatusTimestamp *uint64 `json:"registrationStatusTimestamp,omitempty"`
+	// RegistrationStatusTimestamp UTC timestamp when registration_status was last changed. Set by RMs only.
+	RegistrationStatusTimestamp *int `json:"registrationStatusTimestamp,omitempty"`
 
 	// ResourceId Resource ID, generated on Create.
 	ResourceId *string `json:"resourceId,omitempty"`
@@ -292,246 +476,196 @@ type Host struct {
 	SerialNumber *string `json:"serialNumber,omitempty"`
 
 	// Site A site resource.
-	Site *Site `json:"site,omitempty"`
+	Site *SiteResource `json:"site,omitempty"`
 
 	// SiteId The site where the host is located.
-	SiteId *string `json:"siteId,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	SiteId     *string     `json:"siteId,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
-	// Uuid The host UUID identifier; UUID is unique and immutable.
-	Uuid *openapi_types.UUID `json:"uuid,omitempty"`
+	// Uuid (OPTIONAL) The host UUID identifier; UUID is unique and immutable.
+	Uuid *string `json:"uuid,omitempty"`
 }
 
-// HostBmcKind The type of BMC.
-type HostBmcKind string
+// HostState States of the host.
+type HostState string
 
-// HostOperationWithNote A freeform field associated with the host invalidate or delete operations to store the reason for change.
-type HostOperationWithNote struct {
-	Note string `json:"note"`
-}
-
-// HostPowerState The representation of a host power state.
-type HostPowerState string
-
-// HostRegisterInfo Host registration information.
-type HostRegisterInfo struct {
-	// AutoOnboard Set to enforce auto-onboarding of the host, which means that no confirmation will be required when the host connects for the first time, to Edge Orchestrator.
-	AutoOnboard *bool `json:"autoOnboard,omitempty"`
-
-	// Name The host name.
-	Name *string `json:"name,omitempty"`
-
-	// SerialNumber The host's SMBIOS serial number.
-	SerialNumber *string `json:"serialNumber,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
-
-	// Uuid The host's UUID identifier.
-	Uuid *openapi_types.UUID `json:"uuid,omitempty"`
-}
-
-// HostResourcesGPU The set of available host GPU cards.
-type HostResourcesGPU struct {
-	// Capabilities The specific GPU device capabilities [e.g., PCI Express*, MSI*, power management (PM)].
+// HostgpuResource The set of available host GPU cards.
+type HostgpuResource struct {
+	// Capabilities The features of this GPU device, comma separated.
 	Capabilities *[]string `json:"capabilities,omitempty"`
 
 	// Description The human-readable GPU device description.
 	Description *string `json:"description,omitempty"`
 
-	// DeviceName The GPU device name.
+	// DeviceName GPU name as reported by OS.
 	DeviceName *string `json:"deviceName,omitempty"`
 
-	// PciId The GPU device's PCI identifier.
+	// PciId The GPU device PCI identifier.
 	PciId *string `json:"pciId,omitempty"`
 
 	// Product The GPU device model.
-	Product *string `json:"product,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	Product    *string     `json:"product,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
 	// Vendor The GPU device vendor.
 	Vendor *string `json:"vendor,omitempty"`
 }
 
-// HostResourcesInterface The set of available host interfaces.
-type HostResourcesInterface struct {
-	// BmcInterface Defines if the card is the Baseboard Management Controller (BMC) interface.
+// HostnicResource The set of available host interfaces.
+type HostnicResource struct {
+	// BmcInterface Whether this is a bmc interface or not.
 	BmcInterface *bool `json:"bmcInterface,omitempty"`
 
-	// DeviceName The interface name.
+	// DeviceName The device name (OS provided, like eth0, enp1s0, etc.).
 	DeviceName *string `json:"deviceName,omitempty"`
 
 	// Ipaddresses The interface's IP address list.
-	Ipaddresses *[]IPAddress `json:"ipaddresses,omitempty"`
+	Ipaddresses *[]IPAddressResource       `json:"ipaddresses,omitempty"`
+	LinkState   *NetworkInterfaceLinkState `json:"linkState,omitempty"`
 
-	// LinkState A generic structure to define the state of a link.
-	LinkState *LinkState `json:"linkState,omitempty"`
-
-	// MacAddr The interface's MAC address.
+	// MacAddr The interface MAC address.
 	MacAddr *string `json:"macAddr,omitempty"`
 
-	// Mtu Defines an amount of resources related to memory and disk by default, specified in bytes.
-	Mtu *Amount `json:"mtu,omitempty"`
+	// Mtu Maximum transmission unit of the interface.
+	Mtu *int `json:"mtu,omitempty"`
 
-	// PciIdentifier The interface's PCI identifier.
+	// PciIdentifier PCI identifier string for this network interface.
 	PciIdentifier *string `json:"pciIdentifier,omitempty"`
 
-	// SriovEnabled Flag that represents if the interface has SR-IOV support.
+	// SriovEnabled If the interface has SRIOV enabled.
 	SriovEnabled *bool `json:"sriovEnabled,omitempty"`
 
-	// SriovVfsNum The number of virtual functions (VFs) currently provisioned on the interface, if SR-IOV is supported.
+	// SriovVfsNum The number of VFs currently provisioned on the interface, if SR-IOV is supported.
 	SriovVfsNum *int `json:"sriovVfsNum,omitempty"`
 
 	// SriovVfsTotal The maximum number of VFs the interface supports, if SR-IOV is supported.
-	SriovVfsTotal *int `json:"sriovVfsTotal,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
+	SriovVfsTotal *int        `json:"sriovVfsTotal,omitempty"`
+	Timestamps    *Timestamps `json:"timestamps,omitempty"`
 }
 
-// HostResourcesStorage The set of available host storage capabilities.
-type HostResourcesStorage struct {
-	// CapacityBytes Defines an amount of resources related to memory and disk by default, specified in bytes.
-	CapacityBytes *Amount `json:"capacityBytes,omitempty"`
+// HoststorageResource The set of available host storage capabilities.
+type HoststorageResource struct {
+	// CapacityBytes The storage device Capacity (size) in bytes.
+	CapacityBytes *string `json:"capacityBytes,omitempty"`
 
-	// DeviceName The storage device name.
+	// DeviceName The storage device device name (OS provided, like sda, sdb, etc.)
 	DeviceName *string `json:"deviceName,omitempty"`
 
-	// Model The storage model.
+	// Model The storage device model.
 	Model *string `json:"model,omitempty"`
 
-	// Serial The storage device's unique serial number.
-	Serial *string `json:"serial,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	// Serial The storage device unique serial number.
+	Serial     *string     `json:"serial,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
-	// Vendor The storage vendor.
+	// Vendor The Storage device vendor.
 	Vendor *string `json:"vendor,omitempty"`
 
-	// Wwid The storage device's unique identifier.
+	// Wwid The storage device unique identifier.
 	Wwid *string `json:"wwid,omitempty"`
 }
 
-// HostResourcesUSB The set of host USB resources.
-type HostResourcesUSB struct {
-	// Addr USB device number assigned by the OS.
-	Addr *string `json:"addr,omitempty"`
+// HostusbResource The set of host USB resources.
+type HostusbResource struct {
+	// Addr USB Device number assigned by OS.
+	Addr *int `json:"addr,omitempty"`
 
-	// Bus Bus number that the device connects to.
-	Bus *string `json:"bus,omitempty"`
+	// Bus Bus number of device connected with.
+	Bus *int `json:"bus,omitempty"`
 
-	// Class Class defined by USB Implementers Forum, Inc (USB-IF).
+	// Class class defined by USB-IF.
 	Class *string `json:"class,omitempty"`
 
-	// DeviceName The USB device name.
+	// DeviceName the OS-provided device name.
 	DeviceName *string `json:"deviceName,omitempty"`
 
-	// IdProduct Hexadecimal number representing the ID of the USB device product.
+	// IdProduct Hexadecimal number representing ID of the USB device product.
 	IdProduct *string `json:"idProduct,omitempty"`
 
-	// IdVendor Hexadecimal number representing the ID of the USB device vendor.
+	// IdVendor Hexadecimal number representing ID of the USB device vendor.
 	IdVendor *string `json:"idVendor,omitempty"`
 
-	// Serial Serial number of the USB device.
-	Serial *string `json:"serial,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	// Serial Serial number of device.
+	Serial     *string     `json:"serial,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 }
 
-// HostState State of the host.
-type HostState string
-
-// HostsList A list of host objects.
-type HostsList struct {
-	// HasNext Indicates if there are more hosts available to be retrieved.
-	HasNext *bool   `json:"hasNext,omitempty"`
-	Hosts   *[]Host `json:"hosts,omitempty"`
-
-	// TotalElements Total number of items the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// HostsSummary A summary of host object status.
-type HostsSummary struct {
-	Error       *int `json:"error,omitempty"`
-	Running     *int `json:"running,omitempty"`
-	Total       *int `json:"total,omitempty"`
-	Unallocated *int `json:"unallocated,omitempty"`
-}
-
-// IPAddress An IP address represented using the CIDR notation, and additional information identifying the configuration mode of the address.
-type IPAddress struct {
-	// Address CIDR representation of the IP address.
-	Address *strfmt.CIDR `json:"address,omitempty"`
-
-	// ConfigMethod Specifies how the IP address is configured.
-	ConfigMethod *IPAddressConfigMethod `json:"configMethod,omitempty"`
-
-	// Status The status of the IP address.
-	Status *IPAddressStatus `json:"status,omitempty"`
-
-	// StatusDetail The details of the status of the IP address.
-	StatusDetail *string `json:"statusDetail,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
-}
-
-// IPAddressConfigMethod Specifies how the IP address is configured.
+// IPAddressConfigMethod defines model for IPAddressConfigMethod.
 type IPAddressConfigMethod string
 
-// IPAddressStatus The status of the IP address.
+// IPAddressResource defines model for IPAddressResource.
+type IPAddressResource struct {
+	// Address CIDR representation of the IP address.
+	Address      *string                `json:"address,omitempty"`
+	ConfigMethod *IPAddressConfigMethod `json:"configMethod,omitempty"`
+
+	// ResourceId Resource ID, generated by Inventory on Create
+	ResourceId *string          `json:"resourceId,omitempty"`
+	Status     *IPAddressStatus `json:"status,omitempty"`
+
+	// StatusDetail User-friendly status to provide details about the resource state
+	StatusDetail *string     `json:"statusDetail,omitempty"`
+	Timestamps   *Timestamps `json:"timestamps,omitempty"`
+}
+
+// IPAddressStatus defines model for IPAddressStatus.
 type IPAddressStatus string
 
-// Instance An instance resource.
-type Instance struct {
+// InstanceKind The Instance kind.
+type InstanceKind string
+
+// InstanceResource InstanceResource describes an instantiated OS install, running on either a
+//
+//	host or hypervisor.
+type InstanceResource struct {
 	// CurrentOs An OS resource.
 	CurrentOs *OperatingSystemResource `json:"currentOs,omitempty"`
 
-	// CurrentState State of the instance.
+	// CurrentState The Instance States.
 	CurrentState *InstanceState `json:"currentState,omitempty"`
+
+	// CustomConfig The list of custom config associated with the instance.
+	CustomConfig *[]CustomConfigResource `json:"customConfig,omitempty"`
+
+	// CustomConfigID The list of custom config associated with the instance.
+	CustomConfigID *[]string `json:"customConfigID,omitempty"`
 
 	// DesiredOs An OS resource.
 	DesiredOs *OperatingSystemResource `json:"desiredOs,omitempty"`
 
-	// DesiredState State of the instance.
+	// DesiredState The Instance States.
 	DesiredState *InstanceState `json:"desiredState,omitempty"`
 
-	// Host A host resource.
-	Host *Host `json:"host,omitempty"`
+	// ExistingCves The CVEs that are currently present on the Instance, encoded as a JSON list.
+	ExistingCves *string `json:"existingCves,omitempty"`
+
+	// Host A Host resource.
+	Host *HostResource `json:"host,omitempty"`
 
 	// HostID The host's unique identifier associated with the instance.
 	HostID *string `json:"hostID,omitempty"`
 
-	// InstanceID The instance's unique identifier. Alias of resourceID.
+	// InstanceID Deprecated, The instance's unique identifier. Alias of resourceID.
 	InstanceID *string `json:"instanceID,omitempty"`
 
-	// InstanceStatus The instance's lifecycle status message.
+	// InstanceStatus textual message that describes the current instance status. Set by RMs only.
 	InstanceStatus *string `json:"instanceStatus,omitempty"`
 
-	// InstanceStatusDetail The detailed status of the instance's software components.
+	// InstanceStatusDetail Textual message that gives detailed status of the instance's software components.
 	InstanceStatusDetail *string `json:"instanceStatusDetail,omitempty"`
 
 	// InstanceStatusIndicator The status indicator.
-	InstanceStatusIndicator *StatusIndicator `json:"instanceStatusIndicator,omitempty"`
+	InstanceStatusIndicator *StatusIndication `json:"instanceStatusIndicator,omitempty"`
 
-	// InstanceStatusTimestamp A Unix, UTC timestamp when the instance's lifecycle status was last updated.
-	InstanceStatusTimestamp *uint64 `json:"instanceStatusTimestamp,omitempty"`
+	// InstanceStatusTimestamp UTC timestamp when instance_status was last changed. Set by RMs only.
+	InstanceStatusTimestamp *int `json:"instanceStatusTimestamp,omitempty"`
 
-	// Kind Type of the instance.
+	// Kind The Instance kind.
 	Kind *InstanceKind `json:"kind,omitempty"`
 
-	// LocalAccount A local account resource.
-	LocalAccount *LocalAccount `json:"localAccount,omitempty"`
-
 	// LocalAccountID The unique identifier of local account will be associated with the instance.
-	LocalAccountID *string `json:"localAccountID,omitempty"`
+	LocalAccountID *string               `json:"localAccountID,omitempty"`
+	Localaccount   *LocalAccountResource `json:"localaccount,omitempty"`
 
 	// Name The instance's human-readable name.
 	Name *string `json:"name,omitempty"`
@@ -539,269 +673,798 @@ type Instance struct {
 	// Os An OS resource.
 	Os *OperatingSystemResource `json:"os,omitempty"`
 
-	// OsID The unique identifier of OS resource that must be installed on the instance.
-	// Deprecated:
+	// OsID The unique identifier of OS resource that must be installed on the instance. The field is used to drive the day0 operations, and immutable once set the first time.
 	OsID *string `json:"osID,omitempty"`
 
-	// ProvisioningStatus The instance's provisioning status message.
+	// OsUpdateAvailable Details about OS Updates available for this Instance. If empty, there are no updates available.
+	OsUpdateAvailable *string `json:"osUpdateAvailable,omitempty"`
+	OsUpdatePolicyID  *string `json:"osUpdatePolicyID,omitempty"`
+
+	// ProvisioningStatus textual message that describes the provisioning status of Instance. Set by RMs only.
 	ProvisioningStatus *string `json:"provisioningStatus,omitempty"`
 
 	// ProvisioningStatusIndicator The status indicator.
-	ProvisioningStatusIndicator *StatusIndicator `json:"provisioningStatusIndicator,omitempty"`
+	ProvisioningStatusIndicator *StatusIndication `json:"provisioningStatusIndicator,omitempty"`
 
-	// ProvisioningStatusTimestamp A Unix, UTC timestamp when the instance's provisioning status was last updated.
-	ProvisioningStatusTimestamp *uint64 `json:"provisioningStatusTimestamp,omitempty"`
+	// ProvisioningStatusTimestamp UTC timestamp when provisioning_status was last changed. Set by RMs only.
+	ProvisioningStatusTimestamp *int `json:"provisioningStatusTimestamp,omitempty"`
 
-	// ResourceId Resource ID, generated by the inventory on Create.
+	// ResourceId Resource ID, generated on Create.
 	ResourceId *string `json:"resourceId,omitempty"`
 
-	// SecurityFeature Security capabilities of a resource.
+	// RuntimePackages The packages available on the Instance at runtime, represented as a JSON list.
+	RuntimePackages *string `json:"runtimePackages,omitempty"`
+
+	// SecurityFeature SecurityFeature describes the security capabilities of a resource.
 	SecurityFeature *SecurityFeature `json:"securityFeature,omitempty"`
+	Timestamps      *Timestamps      `json:"timestamps,omitempty"`
 
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
-
-	// TrustedAttestationStatus The instance's software trusted attestation status message.
+	// TrustedAttestationStatus textual message that describes the trusted_attestation status of Instance. Set by RMs only.
 	TrustedAttestationStatus *string `json:"trustedAttestationStatus,omitempty"`
 
 	// TrustedAttestationStatusIndicator The status indicator.
-	TrustedAttestationStatusIndicator *StatusIndicator `json:"trustedAttestationStatusIndicator,omitempty"`
+	TrustedAttestationStatusIndicator *StatusIndication `json:"trustedAttestationStatusIndicator,omitempty"`
 
-	// TrustedAttestationStatusTimestamp A Unix, UTC timestamp when the instance's software trusted attestation status was last updated.
-	TrustedAttestationStatusTimestamp *uint64 `json:"trustedAttestationStatusTimestamp,omitempty"`
+	// TrustedAttestationStatusTimestamp UTC timestamp when trusted_attestation_status was last changed. Set by RMs only.
+	TrustedAttestationStatusTimestamp *int            `json:"trustedAttestationStatusTimestamp,omitempty"`
+	UpdatePolicy                      *OSUpdatePolicy `json:"updatePolicy,omitempty"`
 
-	// UpdateStatus The instance's software update status message.
+	// UpdateStatus textual message that describes the update status of Instance. Set by RMs only.
 	UpdateStatus *string `json:"updateStatus,omitempty"`
 
-	// UpdateStatusDetail Beta: The detailed description of the instance's last software update.
+	// UpdateStatusDetail Deprecated, will be removed in EMF v3.2.0, use OSUpdateRun instead. JSON field storing details of Instance update status. Set by RMs only. Beta, subject to change.
 	UpdateStatusDetail *string `json:"updateStatusDetail,omitempty"`
 
 	// UpdateStatusIndicator The status indicator.
-	UpdateStatusIndicator *StatusIndicator `json:"updateStatusIndicator,omitempty"`
+	UpdateStatusIndicator *StatusIndication `json:"updateStatusIndicator,omitempty"`
 
-	// UpdateStatusTimestamp A Unix, UTC timestamp when the instance's software update status was last updated.
-	UpdateStatusTimestamp *uint64 `json:"updateStatusTimestamp,omitempty"`
+	// UpdateStatusTimestamp UTC timestamp when update_status was last changed. Set by RMs only.
+	UpdateStatusTimestamp *int `json:"updateStatusTimestamp,omitempty"`
 
-	// WorkloadMembers The workload members associated with the instance.
+	// WorkloadMembers The workload members associated with the instance. back-reference to the Workload Members associated to this Instance
 	WorkloadMembers *[]WorkloadMember `json:"workloadMembers,omitempty"`
 }
 
-// InstanceKind Type of the instance.
-type InstanceKind string
-
-// InstanceList A list of instance objects.
-type InstanceList struct {
-	// HasNext Indicates if there are more instance objects available to be retrieved.
-	HasNext   *bool       `json:"hasNext,omitempty"`
-	Instances *[]Instance `json:"instances,omitempty"`
-
-	// TotalElements Total number of items the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// InstanceState State of the instance.
+// InstanceState The Instance States.
 type InstanceState string
 
-// LinkState A generic structure to define the state of a link.
-type LinkState struct {
-	// Timestamp The timestamp when the link state was last updated.
-	Timestamp *time.Time `json:"timestamp,omitempty"`
+// InvalidateHostResponse Response message for InvalidateHost.
+type InvalidateHostResponse = map[string]interface{}
 
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
+// InvalidateInstanceResponse Response message for Invalidate Instance.
+type InvalidateInstanceResponse = map[string]interface{}
 
-	// Type the type of the state.
-	Type *LinkStateType `json:"type,omitempty"`
+// LinkState The state of the network interface.
+type LinkState string
+
+// ListCustomConfigsResponse Response message for the ListCustomConfigs method.
+type ListCustomConfigsResponse struct {
+	// CustomConfigs Sorted and filtered list of customconfigs.
+	CustomConfigs []CustomConfigResource `json:"customConfigs"`
+
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
 }
 
-// LinkStateType the type of the state.
-type LinkStateType string
+// ListHostsResponse Response message for the ListHosts method.
+type ListHostsResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
 
-// LocalAccount A local account resource.
-type LocalAccount struct {
-	// LocalAccountID The local account resource's unique identifier. Alias of resourceId.
+	// Hosts Sorted and filtered list of hosts.
+	Hosts []HostResource `json:"hosts"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListInstancesResponse Response message for the ListInstances method.
+type ListInstancesResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// Instances Sorted and filtered list of instances.
+	Instances []InstanceResource `json:"instances"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListLocalAccountsResponse Response message for the ListLocalAccounts method.
+type ListLocalAccountsResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// LocalAccounts Sorted and filtered list of localaccounts.
+	LocalAccounts []LocalAccountResource `json:"localAccounts"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListLocationsResponse Response message for the ListLocations method.
+type ListLocationsResponse struct {
+	// Nodes Sorted and filtered list of regions.
+	Nodes []ListLocationsResponseLocationNode `json:"nodes"`
+
+	// OutputElements (OPTIONAL) Amount of items in the returned list.
+	OutputElements *int32 `json:"outputElements,omitempty"`
+
+	// TotalElements (OPTIONAL) Count of items in the entire list, regardless of pagination.
+	TotalElements *int32 `json:"totalElements,omitempty"`
+}
+
+// ListLocationsResponseLocationNode A node in the location tree.
+type ListLocationsResponseLocationNode struct {
+	// Name The node human readable name.
+	Name string `json:"name"`
+
+	// ParentId The associated resource ID, of the parent resource of this Location node.
+	//  In the case of a region, it could be empty or a regionId.
+	//  In the case of a site, it could be empty or a regionId.
+	ParentId string `json:"parentId"`
+
+	// ResourceId The associated node resource ID, generated by inventory on Create.
+	ResourceId string                            `json:"resourceId"`
+	Type       ListLocationsResponseResourceKind `json:"type"`
+}
+
+// ListLocationsResponseResourceKind defines model for ListLocationsResponse.ResourceKind.
+type ListLocationsResponseResourceKind string
+
+// ListOSUpdatePolicyResponse Response message for the ListOSUpdatePolicy method.
+type ListOSUpdatePolicyResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// OsUpdatePolicies Sorted and filtered list of OS Update Policies.
+	OsUpdatePolicies []OSUpdatePolicy `json:"osUpdatePolicies"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListOSUpdateRunResponse Response message for the ListOSUpdateRun method.
+type ListOSUpdateRunResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// OsUpdateRuns Sorted and filtered list of os update runs.
+	OsUpdateRuns []OSUpdateRun `json:"osUpdateRuns"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListOperatingSystemsResponse Response message for the ListOperatingSystems method.
+type ListOperatingSystemsResponse struct {
+	// OperatingSystemResources Sorted and filtered list of oss.
+	OperatingSystemResources []OperatingSystemResource `json:"OperatingSystemResources"`
+
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListProvidersResponse Response message for the ListProviders method.
+type ListProvidersResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// Providers Sorted and filtered list of providers.
+	Providers []ProviderResource `json:"providers"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListRegionsResponse Response message for the ListRegions method.
+type ListRegionsResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// Regions Sorted and filtered list of regions.
+	Regions []RegionResource `json:"regions"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListRepeatedSchedulesResponse Response message for the ListRepeatedSchedules method.
+type ListRepeatedSchedulesResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// RepeatedSchedules Sorted and filtered list of repeated_schedules.
+	RepeatedSchedules []RepeatedScheduleResource `json:"repeatedSchedules"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListSchedulesResponse Response message for the ListSchedulesResponse method.
+type ListSchedulesResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// RepeatedSchedules Sorted and filtered list of repeated_schedules.
+	RepeatedSchedules []RepeatedScheduleResource `json:"repeatedSchedules"`
+
+	// SingleSchedules Sorted and filtered list of single_schedules.
+	SingleSchedules []SingleScheduleResource `json:"singleSchedules"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListSingleSchedulesResponse Response message for the ListSingleSchedules method.
+type ListSingleSchedulesResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// SingleSchedules Sorted and filtered list of single_schedules.
+	SingleSchedules []SingleScheduleResource `json:"singleSchedules"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListSitesResponse Response message for the ListSites method.
+type ListSitesResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// Sites Sorted and filtered list of sites.
+	Sites []SiteResource `json:"sites"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListTelemetryLogsGroupsResponse Response message for the ListTelemetryLogsGroups method.
+type ListTelemetryLogsGroupsResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// TelemetryLogsGroups Sorted and filtered list of telemetry_logs_groups.
+	TelemetryLogsGroups []TelemetryLogsGroupResource `json:"telemetryLogsGroups"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListTelemetryLogsProfilesResponse Response message for the ListTelemetryLogsProfiles method.
+type ListTelemetryLogsProfilesResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// TelemetryLogsProfiles Sorted and filtered list of telemetry_logs_profiles.
+	TelemetryLogsProfiles []TelemetryLogsProfileResource `json:"telemetryLogsProfiles"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListTelemetryMetricsGroupsResponse Response message for the ListTelemetryMetricsGroups method.
+type ListTelemetryMetricsGroupsResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// TelemetryMetricsGroups Sorted and filtered list of telemetry_metrics_groups.
+	TelemetryMetricsGroups []TelemetryMetricsGroupResource `json:"telemetryMetricsGroups"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListTelemetryMetricsProfilesResponse Response message for the ListTelemetryMetricsProfiles method.
+type ListTelemetryMetricsProfilesResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// TelemetryMetricsProfiles Sorted and filtered list of telemetry_metrics_profiles.
+	TelemetryMetricsProfiles []TelemetryMetricsProfileResource `json:"telemetryMetricsProfiles"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+}
+
+// ListWorkloadMembersResponse Response message for the ListWorkloadMembers method.
+type ListWorkloadMembersResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+
+	// WorkloadMembers Sorted and filtered list of workload_members.
+	WorkloadMembers []WorkloadMember `json:"workloadMembers"`
+}
+
+// ListWorkloadsResponse Response message for the ListWorkloads method.
+type ListWorkloadsResponse struct {
+	// HasNext Inform if there are more elements
+	HasNext bool `json:"hasNext"`
+
+	// TotalElements Count of items in the entire list, regardless of pagination.
+	TotalElements int32 `json:"totalElements"`
+
+	// Workloads Sorted and filtered list of workloads.
+	Workloads []WorkloadResource `json:"workloads"`
+}
+
+// LocalAccountResource defines model for LocalAccountResource.
+type LocalAccountResource struct {
+	// LocalAccountID Deprecated, The local account resource's unique identifier. Alias of resourceId.
 	LocalAccountID *string `json:"localAccountID,omitempty"`
 
-	// ResourceId resource ID, generated by the inventory on Create.
+	// ResourceId resource identifier
 	ResourceId *string `json:"resourceId,omitempty"`
 
-	// SshKey The local account's sshkey.
-	SshKey string `json:"sshKey"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	// SshKey SSH Public Key of EN
+	SshKey     string      `json:"sshKey"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
-	// Username The local account's username.
+	// Username Username provided by admin
 	Username string `json:"username"`
 }
 
-// LocalAccountList A list of local account objects.
-type LocalAccountList struct {
-	// HasNext Indicates if there are more objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
+// MetadataItem A metadata item, represented by a key:value pair.
+type MetadataItem struct {
+	// Key The metadata key.
+	Key string `json:"key"`
 
-	// LocalAccounts Array of local account objects.
-	LocalAccounts *[]LocalAccount `json:"localAccounts,omitempty"`
-
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// LocationNode A location node's resource, region, or site.
-type LocationNode struct {
-	// Name The node's human-readable name.
-	Name *string `json:"name,omitempty"`
-
-	// ParentId The associated resource ID of the parent resource of this location node. For a region, it could be empty or a regionId. For a site, it could be empty or a regionId.
-	ParentId *string `json:"parentId,omitempty"`
-
-	// ResourceId The associated node's resource ID, generated by the inventory on Create.
-	ResourceId *string `json:"resourceId,omitempty"`
-
-	// Type The type of the location node.
-	Type *LocationType `json:"type,omitempty"`
-}
-
-// LocationNodeList A LocationNodeList object. Contains all the required information to build a tree of regions and sites, given their associations.
-type LocationNodeList struct {
-	// Nodes The ordered list of nodes (root to leaf) of the location's hierarchy tree of regions and sites. The relationship of the root to leaf is limited by the maximum depth of seven items.
-	Nodes *[]LocationNode `json:"nodes,omitempty"`
-
-	// OutputElements The number of items returned in the nodes's array that match the query parameters of the request.
-	OutputElements *int `json:"outputElements,omitempty"`
-
-	// TotalElements The total number of items that match the query parameters of the request.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// LocationType The type of the location node.
-type LocationType string
-
-// Metadata A metadata list, represented by a list of key:value pairs.
-type Metadata = []struct {
-	Key   string `json:"key"`
+	// Value The metadata value.
 	Value string `json:"value"`
 }
 
-// MetadataJoin The joint set of location's and host's logical metadata.
-type MetadataJoin struct {
-	// Location A metadata list, represented by a list of key:value pairs.
-	Location *Metadata `json:"location,omitempty"`
+// NetworkInterfaceLinkState defines model for NetworkInterfaceLinkState.
+type NetworkInterfaceLinkState struct {
+	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
-	// Ou A metadata list, represented by a list of key:value pairs.
-	Ou *Metadata `json:"ou,omitempty"`
+	// Type The state of the network interface.
+	Type *LinkState `json:"type,omitempty"`
 }
 
-// OU An OU resource.
-type OU struct {
-	// InheritedMetadata A metadata list, represented by a list of key:value pairs.
-	InheritedMetadata *Metadata `json:"inheritedMetadata,omitempty"`
+// OSUpdatePolicy defines model for OSUpdatePolicy.
+type OSUpdatePolicy struct {
+	// Description User-provided, human-readable description.
+	Description *string `json:"description,omitempty"`
 
-	// Metadata A metadata list, represented by a list of key:value pairs.
-	Metadata *Metadata `json:"metadata,omitempty"`
+	// InstallPackages Freeform text, OS-dependent. A list of package names, one per line (newline separated). Must not contain version information.
+	//  Applies only to Mutable OSes.
+	InstallPackages *string `json:"installPackages,omitempty"`
 
-	// Name The OU's name.
+	// KernelCommand The OS resource's kernel Command Line Options.
+	//  Applies only to Mutable OSes.
+	KernelCommand *string `json:"kernelCommand,omitempty"`
+
+	// Name User-provided, human-readable name.
 	Name string `json:"name"`
-
-	// OuID The OU resource's unique identifier. Alias of resourceId.
-	OuID *string `json:"ouID,omitempty"`
-
-	// OuKind The kind of OU resource, e.g. BU and client.
-	OuKind *string `json:"ouKind,omitempty"`
-
-	// ParentOu The parent OU's unique identifier that the OU is associated to, when it exists.
-	ParentOu *string `json:"parentOu,omitempty"`
 
 	// ResourceId resource ID, generated by the inventory on Create.
 	ResourceId *string `json:"resourceId,omitempty"`
 
-	// Timestamps A structure to hold Update and Create timestamps.
+	// TargetOs An OS resource.
+	TargetOs *OperatingSystemResource `json:"targetOs,omitempty"`
+
+	// TargetOsId The unique identifier of target OS will be associated with the OS Update policy.
+	TargetOsId *string     `json:"targetOsId,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
+
+	// UpdatePolicy States of the host.
+	UpdatePolicy *UpdatePolicy `json:"updatePolicy,omitempty"`
+
+	// UpdateSources The list of OS resource update sources.
+	//  Should be in 'DEB822 Source Format' for Debian style OSs.
+	//  Applies only to Mutable OSes.
+	UpdateSources *[]string `json:"updateSources,omitempty"`
 }
 
-// OperatingSystemProvider Describes the OS owner that drives the OS provisioning.
-type OperatingSystemProvider string
+// OSUpdateRun defines model for OSUpdateRun.
+type OSUpdateRun struct {
+	AppliedPolicy *OSUpdatePolicy `json:"appliedPolicy,omitempty"`
+
+	// Description Human-readable description.
+	Description *string `json:"description,omitempty"`
+
+	// EndTime A Timestamp represents a point in time independent of any time zone or local
+	//  calendar, encoded as a count of seconds and fractions of seconds at
+	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
+	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
+	//  Gregorian calendar backwards to year one.
+	//
+	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+	//  second table is needed for interpretation, using a [24-hour linear
+	//  smear](https://developers.google.com/time/smear).
+	//
+	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+	//  restricting to that range, we ensure that we can convert to and from [RFC
+	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
+	//
+	//  # Examples
+	//
+	//  Example 1: Compute Timestamp from POSIX `time()`.
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(time(NULL));
+	//      timestamp.set_nanos(0);
+	//
+	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
+	//
+	//      struct timeval tv;
+	//      gettimeofday(&tv, NULL);
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(tv.tv_sec);
+	//      timestamp.set_nanos(tv.tv_usec * 1000);
+	//
+	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
+	//
+	//      FILETIME ft;
+	//      GetSystemTimeAsFileTime(&ft);
+	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+	//
+	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
+	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
+	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
+	//
+	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
+	//
+	//      long millis = System.currentTimeMillis();
+	//
+	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
+	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
+	//
+	//  Example 5: Compute Timestamp from Java `Instant.now()`.
+	//
+	//      Instant now = Instant.now();
+	//
+	//      Timestamp timestamp =
+	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
+	//              .setNanos(now.getNano()).build();
+	//
+	//  Example 6: Compute Timestamp from current time in Python.
+	//
+	//      timestamp = Timestamp()
+	//      timestamp.GetCurrentTime()
+	//
+	//  # JSON Mapping
+	//
+	//  In JSON format, the Timestamp type is encoded as a string in the
+	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
+	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
+	//  where {year} is always expressed using four digits while {month}, {day},
+	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
+	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
+	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
+	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
+	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
+	//  able to accept both UTC and other timezones (as indicated by an offset).
+	//
+	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
+	//  01:30 UTC on January 15, 2017.
+	//
+	//  In JavaScript, one can convert a Date object to this format using the
+	//  standard
+	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
+	//  method. In Python, a standard `datetime.datetime` object can be converted
+	//  to this format using
+	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
+	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
+	//  ) to obtain a formatter capable of generating timestamps in this format.
+	EndTime *GoogleProtobufTimestamp `json:"endTime,omitempty"`
+
+	// Instance InstanceResource describes an instantiated OS install, running on either a
+	//  host or hypervisor.
+	Instance *InstanceResource `json:"instance,omitempty"`
+
+	// Name Human-readable name.
+	Name *string `json:"name,omitempty"`
+
+	// ResourceId resource ID, generated by the inventory on Create.
+	ResourceId *string `json:"resourceId,omitempty"`
+
+	// StartTime A Timestamp represents a point in time independent of any time zone or local
+	//  calendar, encoded as a count of seconds and fractions of seconds at
+	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
+	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
+	//  Gregorian calendar backwards to year one.
+	//
+	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+	//  second table is needed for interpretation, using a [24-hour linear
+	//  smear](https://developers.google.com/time/smear).
+	//
+	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+	//  restricting to that range, we ensure that we can convert to and from [RFC
+	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
+	//
+	//  # Examples
+	//
+	//  Example 1: Compute Timestamp from POSIX `time()`.
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(time(NULL));
+	//      timestamp.set_nanos(0);
+	//
+	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
+	//
+	//      struct timeval tv;
+	//      gettimeofday(&tv, NULL);
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(tv.tv_sec);
+	//      timestamp.set_nanos(tv.tv_usec * 1000);
+	//
+	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
+	//
+	//      FILETIME ft;
+	//      GetSystemTimeAsFileTime(&ft);
+	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+	//
+	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
+	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
+	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
+	//
+	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
+	//
+	//      long millis = System.currentTimeMillis();
+	//
+	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
+	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
+	//
+	//  Example 5: Compute Timestamp from Java `Instant.now()`.
+	//
+	//      Instant now = Instant.now();
+	//
+	//      Timestamp timestamp =
+	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
+	//              .setNanos(now.getNano()).build();
+	//
+	//  Example 6: Compute Timestamp from current time in Python.
+	//
+	//      timestamp = Timestamp()
+	//      timestamp.GetCurrentTime()
+	//
+	//  # JSON Mapping
+	//
+	//  In JSON format, the Timestamp type is encoded as a string in the
+	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
+	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
+	//  where {year} is always expressed using four digits while {month}, {day},
+	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
+	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
+	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
+	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
+	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
+	//  able to accept both UTC and other timezones (as indicated by an offset).
+	//
+	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
+	//  01:30 UTC on January 15, 2017.
+	//
+	//  In JavaScript, one can convert a Date object to this format using the
+	//  standard
+	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
+	//  method. In Python, a standard `datetime.datetime` object can be converted
+	//  to this format using
+	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
+	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
+	//  ) to obtain a formatter capable of generating timestamps in this format.
+	StartTime *GoogleProtobufTimestamp `json:"startTime,omitempty"`
+
+	// Status Short message that describes what happened during the OS Update.
+	Status *string `json:"status,omitempty"`
+
+	// StatusDetails Details about what happened during the OS Update.
+	StatusDetails *string `json:"statusDetails,omitempty"`
+
+	// StatusIndicator The status indicator.
+	StatusIndicator *StatusIndication `json:"statusIndicator,omitempty"`
+
+	// StatusTimestamp A Timestamp represents a point in time independent of any time zone or local
+	//  calendar, encoded as a count of seconds and fractions of seconds at
+	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
+	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
+	//  Gregorian calendar backwards to year one.
+	//
+	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+	//  second table is needed for interpretation, using a [24-hour linear
+	//  smear](https://developers.google.com/time/smear).
+	//
+	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+	//  restricting to that range, we ensure that we can convert to and from [RFC
+	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
+	//
+	//  # Examples
+	//
+	//  Example 1: Compute Timestamp from POSIX `time()`.
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(time(NULL));
+	//      timestamp.set_nanos(0);
+	//
+	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
+	//
+	//      struct timeval tv;
+	//      gettimeofday(&tv, NULL);
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(tv.tv_sec);
+	//      timestamp.set_nanos(tv.tv_usec * 1000);
+	//
+	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
+	//
+	//      FILETIME ft;
+	//      GetSystemTimeAsFileTime(&ft);
+	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+	//
+	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
+	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
+	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
+	//
+	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
+	//
+	//      long millis = System.currentTimeMillis();
+	//
+	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
+	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
+	//
+	//  Example 5: Compute Timestamp from Java `Instant.now()`.
+	//
+	//      Instant now = Instant.now();
+	//
+	//      Timestamp timestamp =
+	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
+	//              .setNanos(now.getNano()).build();
+	//
+	//  Example 6: Compute Timestamp from current time in Python.
+	//
+	//      timestamp = Timestamp()
+	//      timestamp.GetCurrentTime()
+	//
+	//  # JSON Mapping
+	//
+	//  In JSON format, the Timestamp type is encoded as a string in the
+	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
+	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
+	//  where {year} is always expressed using four digits while {month}, {day},
+	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
+	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
+	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
+	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
+	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
+	//  able to accept both UTC and other timezones (as indicated by an offset).
+	//
+	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
+	//  01:30 UTC on January 15, 2017.
+	//
+	//  In JavaScript, one can convert a Date object to this format using the
+	//  standard
+	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
+	//  method. In Python, a standard `datetime.datetime` object can be converted
+	//  to this format using
+	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
+	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
+	//  ) to obtain a formatter capable of generating timestamps in this format.
+	StatusTimestamp *GoogleProtobufTimestamp `json:"statusTimestamp,omitempty"`
+	Timestamps      *Timestamps              `json:"timestamps,omitempty"`
+}
+
+// OnboardHostResponse Response of a Host Register request.
+type OnboardHostResponse = map[string]interface{}
 
 // OperatingSystemResource An OS resource.
 type OperatingSystemResource struct {
-	// Architecture The OS resource's architecture.
+	// Architecture The OS resource's CPU architecture.
 	Architecture *string `json:"architecture,omitempty"`
+	Description  *string `json:"description,omitempty"`
+
+	// ExistingCves The CVEs that are currently present on the Operating System, encoded as a JSON list.
+	ExistingCves *string `json:"existingCves,omitempty"`
+
+	// ExistingCvesUrl (IMMUTABLE) URL of the file containing information about the existing CVEs on the Operating System.
+	ExistingCvesUrl *string `json:"existingCvesUrl,omitempty"`
+
+	// FixedCves The CVEs that have been fixed by this OS Resource version, encoded as a JSON list.
+	FixedCves *string `json:"fixedCves,omitempty"`
+
+	// FixedCvesUrl (IMMUTABLE) URL of the file containing information about the CVEs that have been fixed by this OS Resource version.
+	FixedCvesUrl *string `json:"fixedCvesUrl,omitempty"`
 
 	// ImageId A unique identifier of the OS image that can be retrieved from the running OS.
 	ImageId *string `json:"imageId,omitempty"`
 
-	// ImageUrl The URL repository of the OS image. If set, overwrites repoUrl.
+	// ImageUrl The URL repository of the OS image.
 	ImageUrl *string `json:"imageUrl,omitempty"`
 
-	// InstalledPackages Freeform text, OS-dependent. A list of package names, one per line (newline separated). Must not contain version information.
+	// InstalledPackages List of installed packages, encoded as a JSON list.
 	InstalledPackages *string `json:"installedPackages,omitempty"`
 
-	// KernelCommand The OS resource's kernel command.
+	// InstalledPackagesUrl (IMMUTABLE) The URL of the OS manifest which contains install packages details. This will be used to fill the installed_packages field
+	//  for the advance use case to allow manual creation of OSProfiles when supported from backend.
+	InstalledPackagesUrl *string `json:"installedPackagesUrl,omitempty"`
+
+	// KernelCommand Deprecated, will be removed in EMF v3.2.0, this has been moved to new resource OSUpdatePolicy. The OS resource's kernel Command Line Options.
 	KernelCommand *string `json:"kernelCommand,omitempty"`
+
+	// Metadata Opaque JSON field storing metadata associated to this OS resource. Expected to be a JSON object with string keys and values, or an empty string.
+	Metadata *string `json:"metadata,omitempty"`
 
 	// Name The OS resource's name.
 	Name *string `json:"name,omitempty"`
 
-	// OsProvider Describes the OS owner that drives the OS provisioning.
-	OsProvider *OperatingSystemProvider `json:"osProvider,omitempty"`
+	// OsProvider OsProviderKind describes "owner" of the OS, that will drive OS provisioning.
+	OsProvider *OsProviderKind `json:"osProvider,omitempty"`
 
-	// OsResourceID The OS resource's unique identifier. Alias of resourceId.
+	// OsResourceID Deprecated, The OS resource's unique identifier. Alias of resourceId.
 	OsResourceID *string `json:"osResourceID,omitempty"`
 
-	// OsType OsType describes the immutability of the OS. This field is immutable after creation.
-	OsType *OperatingSystemType `json:"osType,omitempty"`
+	// OsType OsType describes type of operating system.
+	OsType *OsType `json:"osType,omitempty"`
 
-	// PlatformBundle Opaque JSON field storing references to custom installation script(s) that supplements the base OS with additional OS-level dependencies/configurations. If empty, the default OS installation will be used.
+	// PlatformBundle Opaque JSON field storing references to custom installation script(s) that
+	//  supplements the base OS with additional OS-level dependencies/configurations.
+	//  If empty, the default OS installation will be used.
 	PlatformBundle *string `json:"platformBundle,omitempty"`
 
-	// ProfileName Name of the OS profile that the OS resource belongs to.
+	// ProfileName Name of an OS profile that the OS resource belongs to. Uniquely identifies a family of OS resources.
 	ProfileName *string `json:"profileName,omitempty"`
 
 	// ProfileVersion Version of OS profile that the OS resource belongs to.
 	ProfileVersion *string `json:"profileVersion,omitempty"`
 
-	// RepoUrl The URL repository of the OS update sources. Deprecated. Use imageUrl to filter repoUrl.
-	// Deprecated:
+	// RepoUrl Deprecated. OS image URL. URL of the original installation source.
 	RepoUrl *string `json:"repoUrl,omitempty"`
 
-	// ResourceId Resource ID, generated by inventory on Create
+	// ResourceId Resource ID, generated by inventory on Create.
 	ResourceId *string `json:"resourceId,omitempty"`
 
-	// SecurityFeature Security capabilities of a resource.
+	// SecurityFeature SecurityFeature describes the security capabilities of a resource.
 	SecurityFeature *SecurityFeature `json:"securityFeature,omitempty"`
 
 	// Sha256 SHA256 checksum of the OS resource in hexadecimal representation.
-	Sha256 string `json:"sha256"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	Sha256     string      `json:"sha256"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
-	// UpdateSources The list of OS resource update sources.
-	UpdateSources []string `json:"updateSources"`
+	// UpdateSources Deprecated, will be removed in EMF v3.2.0, this has been moved to new resource OSUpdatePolicy. The list of OS resource update sources.
+	//  Should be in 'DEB822 Source Format' for Debian style OSs
+	UpdateSources *[]string `json:"updateSources,omitempty"`
 }
 
-// OperatingSystemResourceList A list of OS resource objects.
-type OperatingSystemResourceList struct {
-	OperatingSystemResources *[]OperatingSystemResource `json:"OperatingSystemResources,omitempty"`
+// OsProviderKind OsProviderKind describes "owner" of the OS, that will drive OS provisioning.
+type OsProviderKind string
 
-	// HasNext Indicates if there are more OS objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
+// OsType OsType describes type of operating system.
+type OsType string
 
-	// TotalElements Total number of items the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
+// PowerCommandPolicy The policy for handling power commands.
+type PowerCommandPolicy string
 
-// OperatingSystemType OsType describes the immutability of the OS. This field is immutable after creation.
-type OperatingSystemType string
+// PowerState The host power state.
+type PowerState string
 
-// ProblemDetails Carries a message in an HTTP error response.
-type ProblemDetails struct {
-	// Message Contains detailed information about the problem, such as its source data that can be used for debugging purposes.
-	Message *string `json:"message,omitempty"`
-}
+// ProviderKind Kind of provider.
+type ProviderKind string
 
-// Provider A provider resource.
-type Provider struct {
+// ProviderResource A provider resource.
+type ProviderResource struct {
 	// ApiCredentials The provider resource's list of credentials.
 	ApiCredentials *[]string `json:"apiCredentials,omitempty"`
 
@@ -814,7 +1477,7 @@ type Provider struct {
 	// Name The provider resource's name.
 	Name string `json:"name"`
 
-	// ProviderID The provider resource's unique identifier. Alias of resourceId.
+	// ProviderID Deprecated, The provider resource's unique identifier. Alias of resourceId.
 	ProviderID *string `json:"providerID,omitempty"`
 
 	// ProviderKind Kind of provider.
@@ -823,1067 +1486,1415 @@ type Provider struct {
 	// ProviderVendor Vendor of the provider.
 	ProviderVendor *ProviderVendor `json:"providerVendor,omitempty"`
 
-	// ResourceId resource ID, generated by the inventory on Create.
-	ResourceId *string `json:"resourceId,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	// ResourceId Resource ID, generated by the inventory on Create.
+	ResourceId *string     `json:"resourceId,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
-}
-
-// ProviderKind Kind of provider.
-type ProviderKind string
-
-// ProviderList A list of provider objects.
-type ProviderList struct {
-	// HasNext Indicates if there are more objects available to be retrieved.
-	HasNext   *bool       `json:"hasNext,omitempty"`
-	Providers *[]Provider `json:"providers,omitempty"`
-
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
 }
 
 // ProviderVendor Vendor of the provider.
 type ProviderVendor string
 
-// Proxy The proxy information.
-type Proxy struct {
-	// FtpProxy The FTP proxy.
-	FtpProxy *string `json:"ftpProxy,omitempty"`
+// RegionResource A region resource.
+type RegionResource struct {
+	// InheritedMetadata The rendered metadata from the Region parent(s)
+	//  that can be inherited by the Region, represented by a list of key:value pairs.
+	//  This field can not be used in filter.
+	InheritedMetadata *[]MetadataItem `json:"inheritedMetadata,omitempty"`
 
-	// HttpProxy The HTTP proxy.
-	HttpProxy *string `json:"httpProxy,omitempty"`
+	// Metadata (OPTIONAL) The metadata associated to the Region,
+	//  represented by a list of key:value pairs.
+	Metadata *[]MetadataItem `json:"metadata,omitempty"`
 
-	// HttpsProxy The HTTPS proxy.
-	HttpsProxy *string `json:"httpsProxy,omitempty"`
-
-	// NoProxy The no-proxy info.
-	NoProxy *string `json:"noProxy,omitempty"`
-}
-
-// Region A region resource
-type Region struct {
-	// InheritedMetadata A metadata list, represented by a list of key:value pairs.
-	InheritedMetadata *Metadata `json:"inheritedMetadata,omitempty"`
-
-	// Metadata A metadata list, represented by a list of key:value pairs.
-	Metadata *Metadata `json:"metadata,omitempty"`
-
-	// Name The region's name.
+	// Name The user-provided, human-readable name of region
 	Name *string `json:"name,omitempty"`
 
-	// ParentId The parent region's unique identifier that the region is associated to, if it exists. This field cannot be used in filter.
+	// ParentId The parent Region unique identifier
+	//  that the region is associated to, when existent.
+	//  This field can not be used in filter.
 	ParentId *string `json:"parentId,omitempty"`
 
-	// ParentRegion A region resource
-	ParentRegion *Region `json:"parentRegion,omitempty"`
+	// ParentRegion A region resource.
+	ParentRegion *RegionResource `json:"parentRegion,omitempty"`
 
-	// RegionID The region's unique identifier. Alias of resourceId.
+	// RegionID Deprecated, The Region unique identifier. Alias of resourceId.
 	RegionID *string `json:"regionID,omitempty"`
 
-	// ResourceId resource ID, generated by the inventory on Create
-	ResourceId *string `json:"resourceId,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	// ResourceId resource ID, generated by the inventory on Create.
+	ResourceId *string     `json:"resourceId,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
-	// TotalSites Total number of sites associated to this region, directly or by child regions.
-	TotalSites *int `json:"totalSites,omitempty"`
+	// TotalSites The total number of sites in the region.
+	TotalSites *int32 `json:"totalSites,omitempty"`
 }
 
-// RegionsList A list of region objects.
-type RegionsList struct {
-	// HasNext Indicates if there are more location objects available to be retrieved.
-	HasNext *bool     `json:"hasNext,omitempty"`
-	Regions *[]Region `json:"regions,omitempty"`
-
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// RepeatedSchedule A repeated-schedule resource.
-type RepeatedSchedule struct {
+// RepeatedScheduleResource A repeated-schedule resource.
+type RepeatedScheduleResource struct {
+	// CronDayMonth cron style day of month (1-31), it can be empty only when used in a Filter
 	CronDayMonth string `json:"cronDayMonth"`
-	CronDayWeek  string `json:"cronDayWeek"`
-	CronHours    string `json:"cronHours"`
-	CronMinutes  string `json:"cronMinutes"`
-	CronMonth    string `json:"cronMonth"`
+
+	// CronDayWeek cron style day of week (0-6), it can be empty only when used in a Filter
+	CronDayWeek string `json:"cronDayWeek"`
+
+	// CronHours cron style hours (0-23), it can be empty only when used in a Filter
+	CronHours string `json:"cronHours"`
+
+	// CronMinutes cron style minutes (0-59), it can be empty only when used in a Filter.
+	CronMinutes string `json:"cronMinutes"`
+
+	// CronMonth cron style month (1-12), it can be empty only when used in a Filter
+	CronMonth string `json:"cronMonth"`
 
 	// DurationSeconds The duration in seconds of the repeated schedule, per schedule.
-	DurationSeconds int `json:"durationSeconds"`
+	DurationSeconds int32 `json:"durationSeconds"`
 
 	// Name The schedule's name.
 	Name *string `json:"name,omitempty"`
 
-	// RepeatedScheduleID The repeated schedule's unique identifier. Alias of resourceId.
+	// RepeatedScheduleID Deprecated, The repeated schedule's unique identifier. Alias of resourceId.
 	RepeatedScheduleID *string `json:"repeatedScheduleID,omitempty"`
 
-	// ResourceId resource ID, generated by the inventory on Create.
+	// ResourceId Resource ID, generated by the inventory on Create.
 	ResourceId *string `json:"resourceId,omitempty"`
 
 	// ScheduleStatus The representation of a schedule's status.
 	ScheduleStatus ScheduleStatus `json:"scheduleStatus"`
 
-	// TargetHost A host resource.
-	TargetHost *Host `json:"targetHost,omitempty"`
+	// TargetHost A Host resource.
+	TargetHost *HostResource `json:"targetHost,omitempty"`
 
-	// TargetHostId The target host ID of the schedule. Only one target can be provided per schedule. This field cannot be used as filter.
+	// TargetHostId The target region ID of the schedule.
+	//  Only one target can be provided per schedule.
+	//  This field cannot be used as filter.
 	TargetHostId *string `json:"targetHostId,omitempty"`
 
-	// TargetRegion A region resource
-	TargetRegion *Region `json:"targetRegion,omitempty"`
+	// TargetRegion A region resource.
+	TargetRegion *RegionResource `json:"targetRegion,omitempty"`
 
-	// TargetRegionId The target region ID of the schedule. Only one target can be provided per schedule. This field cannot be used as filter.
+	// TargetRegionId The target region ID of the schedule.
+	//  Only one target can be provided per schedule.
+	//  This field cannot be used as filter.
 	TargetRegionId *string `json:"targetRegionId,omitempty"`
 
 	// TargetSite A site resource.
-	TargetSite *Site `json:"targetSite,omitempty"`
+	TargetSite *SiteResource `json:"targetSite,omitempty"`
 
-	// TargetSiteId The target site ID of the schedule. Only one target can be provided per schedule. This field cannot be used as filter.
-	TargetSiteId *string `json:"targetSiteId,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
-}
-
-// RepeatedSchedulesList A list of repeated schedule objects.
-type RepeatedSchedulesList struct {
-	RepeatedSchedules *[]RepeatedSchedule `json:"RepeatedSchedules,omitempty"`
-
-	// HasNext Indicates if there are more repeated schedule objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
-
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
+	// TargetSiteId The target site ID of the schedule.
+	//  Only one target can be provided per schedule.
+	//  This field cannot be used as filter.
+	TargetSiteId *string     `json:"targetSiteId,omitempty"`
+	Timestamps   *Timestamps `json:"timestamps,omitempty"`
 }
 
 // ScheduleStatus The representation of a schedule's status.
 type ScheduleStatus string
 
-// SchedulesListJoin List of all schedule objects, repeated and single.
-type SchedulesListJoin struct {
-	// RepeatedSchedules Contains a flat list of repeated schedules, possibly including all inherited ones.
-	RepeatedSchedules *[]RepeatedSchedule `json:"RepeatedSchedules,omitempty"`
-
-	// SingleSchedules Contains a flat list of single schedules, possibly including all inherited ones.
-	SingleSchedules *[]SingleSchedule `json:"SingleSchedules,omitempty"`
-
-	// HasNext Indicates if there are more schedule objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
-
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// SecurityFeature Security capabilities of a resource.
+// SecurityFeature SecurityFeature describes the security capabilities of a resource.
 type SecurityFeature string
 
-// SingleSchedule A single schedule resource.
-type SingleSchedule struct {
-	// EndSeconds The end time in seconds, of the single schedule. The value of endSeconds must be equal to or bigger than the value of startSeconds.
+// SeverityLevel Log level used for the telemetry config.
+//
+//	This field must only be defined if kind equals to TELEMETRY_CONFIG_KIND_LOGS.
+type SeverityLevel string
+
+// SingleScheduleResource A single schedule resource.
+type SingleScheduleResource struct {
+	// EndSeconds The end time in seconds, of the single schedule.
+	//  The value of endSeconds must be equal to or bigger than the value of startSeconds.
 	EndSeconds *int `json:"endSeconds,omitempty"`
 
 	// Name The schedule's name.
 	Name *string `json:"name,omitempty"`
 
-	// ResourceId resource ID, generated by the inventory on Create.
+	// ResourceId Resource ID, generated by the inventory on Create.
 	ResourceId *string `json:"resourceId,omitempty"`
 
 	// ScheduleStatus The representation of a schedule's status.
 	ScheduleStatus ScheduleStatus `json:"scheduleStatus"`
 
-	// SingleScheduleID The single schedule resource's unique identifier. Alias of resourceId.
+	// SingleScheduleID Deprecated, The single schedule resource's unique identifier. Alias of resourceId.
 	SingleScheduleID *string `json:"singleScheduleID,omitempty"`
 
 	// StartSeconds The start time in seconds, of the single schedule.
 	StartSeconds int `json:"startSeconds"`
 
-	// TargetHost A host resource.
-	TargetHost *Host `json:"targetHost,omitempty"`
+	// TargetHost A Host resource.
+	TargetHost *HostResource `json:"targetHost,omitempty"`
 
-	// TargetHostId The target host ID of the schedule. Only one target can be provided per schedule. This field cannot be used as filter.
+	// TargetHostId The target host ID of the schedule.
+	//  Only one target can be provided per schedule.
+	//  This field cannot be used as filter.
 	TargetHostId *string `json:"targetHostId,omitempty"`
 
-	// TargetRegion A region resource
-	TargetRegion *Region `json:"targetRegion,omitempty"`
+	// TargetRegion A region resource.
+	TargetRegion *RegionResource `json:"targetRegion,omitempty"`
 
-	// TargetRegionId The target region ID of the schedule. Only one target can be provided per schedule. This field cannot be used as filter.
+	// TargetRegionId The target region ID of the schedule.
+	//  Only one target can be provided per schedule.
+	//  This field cannot be used as filter.
 	TargetRegionId *string `json:"targetRegionId,omitempty"`
 
 	// TargetSite A site resource.
-	TargetSite *Site `json:"targetSite,omitempty"`
+	TargetSite *SiteResource `json:"targetSite,omitempty"`
 
-	// TargetSiteId The target site ID of the schedule. Only one target can be provided per schedule. This field cannot be used as filter.
-	TargetSiteId *string `json:"targetSiteId,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
+	// TargetSiteId The target site ID of the schedule.
+	//  Only one target can be provided per schedule.
+	//  This field cannot be used as filter.
+	TargetSiteId *string     `json:"targetSiteId,omitempty"`
+	Timestamps   *Timestamps `json:"timestamps,omitempty"`
 }
 
-// SingleSchedulesList A list of single schedule objects.
-type SingleSchedulesList struct {
-	SingleSchedules *[]SingleSchedule `json:"SingleSchedules,omitempty"`
+// SiteResource A site resource.
+type SiteResource struct {
+	// InheritedMetadata The rendered metadata from the Region parent(s)
+	//  that can be inherited by the Region, represented by a list of key:value pairs.
+	//  This field can not be used in filter.
+	InheritedMetadata *[]MetadataItem `json:"inheritedMetadata,omitempty"`
 
-	// HasNext Indicates if there are more objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
-
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// Site A site resource.
-type Site struct {
-	// DnsServers The list of DNS servers that the site has available.
-	DnsServers *[]string `json:"dnsServers,omitempty"`
-
-	// DockerRegistries The set of Docker* registries that the site has available.
-	DockerRegistries *[]string `json:"dockerRegistries,omitempty"`
-
-	// InheritedMetadata The joint set of location's and host's logical metadata.
-	InheritedMetadata *MetadataJoin `json:"inheritedMetadata,omitempty"`
-
-	// Metadata A metadata list, represented by a list of key:value pairs.
-	Metadata *Metadata `json:"metadata,omitempty"`
-
-	// MetricsEndpoint The set of site-available metrics, specified in a single JSON object.
-	MetricsEndpoint *string `json:"metricsEndpoint,omitempty"`
+	// Metadata (OPTIONAL) The metadata associated to the Region,
+	//  represented by a list of key:value pairs.
+	Metadata *[]MetadataItem `json:"metadata,omitempty"`
 
 	// Name The site's human-readable name.
 	Name *string `json:"name,omitempty"`
 
-	// Ou An OU resource.
-	Ou *OU `json:"ou,omitempty"`
-
-	// OuId The OU unique identifier that the site is associated to, if it exists. This field cannot be used in filter.
-	OuId *string `json:"ouId,omitempty"`
-
 	// Provider A provider resource.
-	Provider *Provider `json:"provider,omitempty"`
+	Provider *ProviderResource `json:"provider,omitempty"`
 
-	// Proxy The proxy information.
-	Proxy *Proxy `json:"proxy,omitempty"`
+	// Region A region resource.
+	Region *RegionResource `json:"region,omitempty"`
 
-	// Region A region resource
-	Region *Region `json:"region,omitempty"`
-
-	// RegionId The region's unique identifier that the site is associated to. This field cannot be used in filter.
+	// RegionId The region's unique identifier
+	//  that the site is associated to. This field cannot be used in filter.
 	RegionId *string `json:"regionId,omitempty"`
 
 	// ResourceId resource ID, generated by the inventory on Create.
 	ResourceId *string `json:"resourceId,omitempty"`
 
-	// SiteID The site's unique identifier. Alias of resourceId.
+	// SiteID Deprecated, The site unique identifier. Alias of resourceId.
 	SiteID *string `json:"siteID,omitempty"`
 
-	// SiteLat The geolocation latitude of the site. Points are represented as latitude-longitude pairs in the E7 representation (degrees are multiplied by 10**7 and rounded to the nearest integer). siteLat must be in the range of +/- 90 degrees.
-	SiteLat *int `json:"siteLat,omitempty"`
+	// SiteLat The geolocation latitude of the site.
+	//  Points are represented as latitude-longitude pairs in the E7 representation
+	//  (degrees are multiplied by 10**7 and rounded to the nearest integer).
+	//  siteLat must be in the range of +/- 90 degrees.
+	SiteLat *int32 `json:"siteLat,omitempty"`
 
-	// SiteLng The geolocation longitude of the site. Points are represented as latitude-longitude pairs in the E7 representation (degrees are multiplied by 10**7 and rounded to the nearest integer). siteLng must be in the range of +/- 180 degrees (inclusive).
-	SiteLng *int `json:"siteLng,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	// SiteLng The geolocation longitude of the site.
+	//  Points are represented as latitude-longitude pairs in the E7 representation
+	//  (degrees are multiplied by 10**7 and rounded to the nearest integer).
+	//  siteLng must be in the range of +/- 180 degrees (inclusive).
+	SiteLng    *int32      `json:"siteLng,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 }
 
-// SitesList A list of site objects.
-type SitesList struct {
-	// HasNext Indicates if there are more objects available to be retrieved.
-	HasNext *bool   `json:"hasNext,omitempty"`
-	Sites   *[]Site `json:"sites,omitempty"`
+// StatusIndication The status indicator.
+type StatusIndication string
 
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// StatusIndicator The status indicator.
-type StatusIndicator string
-
-// TelemetryCollectorKind Kind of telemetry collector.
+// TelemetryCollectorKind The collector kind.
 type TelemetryCollectorKind string
 
-// TelemetryLogsGroup Telemetry group that defines a set of log types to collect.
-type TelemetryLogsGroup struct {
-	// CollectorKind Kind of telemetry collector.
+// TelemetryLogsGroupResource TelemetryLogsGroupResource.
+type TelemetryLogsGroupResource struct {
+	// CollectorKind The collector kind.
 	CollectorKind TelemetryCollectorKind `json:"collectorKind"`
 
 	// Groups A list of log groups to collect.
 	Groups []string `json:"groups"`
 
-	// Name Human-readable name for the log group
+	// Name Human-readable name for the log group.
 	Name string `json:"name"`
 
-	// TelemetryLogsGroupId Unique ID of the telemetry group.
-	TelemetryLogsGroupId *string `json:"telemetryLogsGroupId,omitempty"`
+	// ResourceId Unique ID of the telemetry group.
+	ResourceId *string `json:"resourceId,omitempty"`
 
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
+	// TelemetryLogsGroupId Deprecated, Unique ID of the telemetry group. Alias of resource_id.
+	TelemetryLogsGroupId *string     `json:"telemetryLogsGroupId,omitempty"`
+	Timestamps           *Timestamps `json:"timestamps,omitempty"`
 }
 
-// TelemetryLogsGroupList A list of log group objects.
-type TelemetryLogsGroupList struct {
-	TelemetryLogsGroups *[]TelemetryLogsGroup `json:"TelemetryLogsGroups,omitempty"`
+// TelemetryLogsProfileResource A telemetry log profile for a hierarchy object.
+type TelemetryLogsProfileResource struct {
+	// LogLevel Log level used for the telemetry config.
+	//  This field must only be defined if kind equals to TELEMETRY_CONFIG_KIND_LOGS.
+	LogLevel SeverityLevel `json:"logLevel"`
 
-	// HasNext Indicates if there are more log group objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
-
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// TelemetryLogsProfile A telemetry log profile for a hierarchy object.
-type TelemetryLogsProfile struct {
-	// LogLevel Log level used for the telemetry config. This field must only be defined if kind equals to TELEMETRY_CONFIG_KIND_LOGS.
-	LogLevel TelemetrySeverityLevel `json:"logLevel"`
-
-	// LogsGroup Telemetry group that defines a set of log types to collect.
-	LogsGroup *TelemetryLogsGroup `json:"logsGroup,omitempty"`
+	// LogsGroup TelemetryLogsGroupResource.
+	LogsGroup *TelemetryLogsGroupResource `json:"logsGroup,omitempty"`
 
 	// LogsGroupId The unique identifier of the telemetry log group.
 	LogsGroupId string `json:"logsGroupId"`
 
-	// ProfileId The ID of the telemetry profile.
+	// ProfileId Deprecated, The ID of the telemetry profile.
 	ProfileId *string `json:"profileId,omitempty"`
 
-	// TargetInstance The ID of the instance that the telemetry profile is assigned to. Can only be one of targetInstance, targetSite, or targetRegion.
+	// ResourceId The ID of the telemetry profile.
+	ResourceId *string `json:"resourceId,omitempty"`
+
+	// TargetInstance The ID of the instance that the telemetry profile is assigned to.
+	//  Can only be one of targetInstance, targetSite, or targetRegion.
 	TargetInstance *string `json:"targetInstance,omitempty"`
 
-	// TargetRegion The ID of the region where the telemetry profile is assigned to. Can only be one of targetInstance, targetSite, or targetRegion.
+	// TargetRegion The ID of the region where the telemetry profile is assigned to.
+	//  Can only be one of targetInstance, targetSite, or targetRegion.
 	TargetRegion *string `json:"targetRegion,omitempty"`
 
-	// TargetSite The ID of the site where the telemetry profile is assigned to. Can only be one of targetInstance, targetSite, or targetRegion.
-	TargetSite *string `json:"targetSite,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	// TargetSite The ID of the site where the telemetry profile is assigned to.
+	//  Can only be one of targetInstance, targetSite, or targetRegion.
+	TargetSite *string     `json:"targetSite,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 }
 
-// TelemetryLogsProfileList A list of telemetry log profiles.
-type TelemetryLogsProfileList struct {
-	TelemetryLogsProfiles *[]TelemetryLogsProfile `json:"TelemetryLogsProfiles,omitempty"`
-
-	// HasNext Indicates if there are more telemetry log profile objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
-
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// TelemetryMetricsGroup A definition of metric groups to monitor.
-type TelemetryMetricsGroup struct {
-	// CollectorKind Kind of telemetry collector.
+// TelemetryMetricsGroupResource TelemetryMetricsGroupResource.
+type TelemetryMetricsGroupResource struct {
+	// CollectorKind The collector kind.
 	CollectorKind TelemetryCollectorKind `json:"collectorKind"`
 
-	// Groups A list of metric groups to collect.
+	// Groups A list of log groups to collect.
 	Groups []string `json:"groups"`
 
-	// Name Human-readable name for the metric group.
+	// Name Human-readable name for the log group.
 	Name string `json:"name"`
 
-	// TelemetryMetricsGroupId Unique ID of the telemetry group.
-	TelemetryMetricsGroupId *string `json:"telemetryMetricsGroupId,omitempty"`
+	// ResourceId Unique ID of the telemetry group.
+	ResourceId *string `json:"resourceId,omitempty"`
 
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
+	// TelemetryMetricsGroupId Deprecated, Unique ID of the telemetry group. Alias of resource_id.
+	TelemetryMetricsGroupId *string     `json:"telemetryMetricsGroupId,omitempty"`
+	Timestamps              *Timestamps `json:"timestamps,omitempty"`
 }
 
-// TelemetryMetricsGroupList A list of telemetry groups, which defines a set of metrics to collect.
-type TelemetryMetricsGroupList struct {
-	TelemetryMetricsGroups *[]TelemetryMetricsGroup `json:"TelemetryMetricsGroups,omitempty"`
-
-	// HasNext Indicates if there are more telemetry metric group objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
-
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// TelemetryMetricsProfile A telemetry metric profile for a hierarchy object.
-type TelemetryMetricsProfile struct {
-	// MetricsGroup A definition of metric groups to monitor.
-	MetricsGroup *TelemetryMetricsGroup `json:"metricsGroup,omitempty"`
+// TelemetryMetricsProfileResource A telemetry metric profile for a hierarchy object.
+type TelemetryMetricsProfileResource struct {
+	// MetricsGroup TelemetryMetricsGroupResource.
+	MetricsGroup *TelemetryMetricsGroupResource `json:"metricsGroup,omitempty"`
 
 	// MetricsGroupId The unique identifier of the telemetry metric group.
 	MetricsGroupId string `json:"metricsGroupId"`
 
-	// MetricsInterval Metric interval (in seconds) for the telemetry profile. This field must only be defined if the type equals to TELEMETRY_CONFIG_KIND_METRICS.
-	MetricsInterval int `json:"metricsInterval"`
+	// MetricsInterval Metric interval (in seconds) for the telemetry profile.
+	//  This field must only be defined if the type equals to TELEMETRY_CONFIG_KIND_METRICS.
+	MetricsInterval int32 `json:"metricsInterval"`
 
-	// ProfileId The ID of the telemetry profile.
+	// ProfileId Deprecated, The ID of the telemetry profile.
 	ProfileId *string `json:"profileId,omitempty"`
 
-	// TargetInstance The ID of the instance that the telemetry profile is assigned to. Can only be one of targetInstance, targetSite, or targetRegion.
+	// ResourceId The ID of the telemetry profile.
+	ResourceId *string `json:"resourceId,omitempty"`
+
+	// TargetInstance The ID of the instance that the telemetry profile is assigned to.
+	//  Can only be one of targetInstance, targetSite, or targetRegion.
 	TargetInstance *string `json:"targetInstance,omitempty"`
 
-	// TargetRegion The ID of the region where the telemetry profile is assigned to. Can only be one of targetInstance, targetSite, or targetRegion.
+	// TargetRegion The ID of the region where the telemetry profile is assigned to.
+	//  Can only be one of targetInstance, targetSite, or targetRegion.
 	TargetRegion *string `json:"targetRegion,omitempty"`
 
-	// TargetSite The ID of the site where the telemetry profile is assigned to. Can only be one of targetInstance, targetSite, or targetRegion.
-	TargetSite *string `json:"targetSite,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	// TargetSite The ID of the site where the telemetry profile is assigned to.
+	//  Can only be one of targetInstance, targetSite, or targetRegion.
+	TargetSite *string     `json:"targetSite,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 }
 
-// TelemetryMetricsProfileList A list of telemetry metric profiles.
-type TelemetryMetricsProfileList struct {
-	TelemetryMetricsProfiles *[]TelemetryMetricsProfile `json:"TelemetryMetricsProfiles,omitempty"`
-
-	// HasNext Indicates if there are more telemetry metric profile objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
-
-	// TotalElements Total number of items that the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// TelemetrySeverityLevel Log level used for the telemetry config. This field must only be defined if kind equals to TELEMETRY_CONFIG_KIND_LOGS.
-type TelemetrySeverityLevel string
-
-// Timestamps A structure to hold Update and Create timestamps.
+// Timestamps defines model for Timestamps.
 type Timestamps struct {
-	// CreatedAt Timestamp for the creation of the resource.
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	// CreatedAt A Timestamp represents a point in time independent of any time zone or local
+	//  calendar, encoded as a count of seconds and fractions of seconds at
+	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
+	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
+	//  Gregorian calendar backwards to year one.
+	//
+	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+	//  second table is needed for interpretation, using a [24-hour linear
+	//  smear](https://developers.google.com/time/smear).
+	//
+	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+	//  restricting to that range, we ensure that we can convert to and from [RFC
+	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
+	//
+	//  # Examples
+	//
+	//  Example 1: Compute Timestamp from POSIX `time()`.
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(time(NULL));
+	//      timestamp.set_nanos(0);
+	//
+	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
+	//
+	//      struct timeval tv;
+	//      gettimeofday(&tv, NULL);
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(tv.tv_sec);
+	//      timestamp.set_nanos(tv.tv_usec * 1000);
+	//
+	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
+	//
+	//      FILETIME ft;
+	//      GetSystemTimeAsFileTime(&ft);
+	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+	//
+	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
+	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
+	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
+	//
+	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
+	//
+	//      long millis = System.currentTimeMillis();
+	//
+	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
+	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
+	//
+	//  Example 5: Compute Timestamp from Java `Instant.now()`.
+	//
+	//      Instant now = Instant.now();
+	//
+	//      Timestamp timestamp =
+	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
+	//              .setNanos(now.getNano()).build();
+	//
+	//  Example 6: Compute Timestamp from current time in Python.
+	//
+	//      timestamp = Timestamp()
+	//      timestamp.GetCurrentTime()
+	//
+	//  # JSON Mapping
+	//
+	//  In JSON format, the Timestamp type is encoded as a string in the
+	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
+	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
+	//  where {year} is always expressed using four digits while {month}, {day},
+	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
+	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
+	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
+	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
+	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
+	//  able to accept both UTC and other timezones (as indicated by an offset).
+	//
+	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
+	//  01:30 UTC on January 15, 2017.
+	//
+	//  In JavaScript, one can convert a Date object to this format using the
+	//  standard
+	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
+	//  method. In Python, a standard `datetime.datetime` object can be converted
+	//  to this format using
+	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
+	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
+	//  ) to obtain a formatter capable of generating timestamps in this format.
+	CreatedAt *GoogleProtobufTimestamp `json:"createdAt,omitempty"`
 
-	// UpdatedAt Timestamp for the last update of the resource.
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	// UpdatedAt A Timestamp represents a point in time independent of any time zone or local
+	//  calendar, encoded as a count of seconds and fractions of seconds at
+	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
+	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
+	//  Gregorian calendar backwards to year one.
+	//
+	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+	//  second table is needed for interpretation, using a [24-hour linear
+	//  smear](https://developers.google.com/time/smear).
+	//
+	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+	//  restricting to that range, we ensure that we can convert to and from [RFC
+	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
+	//
+	//  # Examples
+	//
+	//  Example 1: Compute Timestamp from POSIX `time()`.
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(time(NULL));
+	//      timestamp.set_nanos(0);
+	//
+	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
+	//
+	//      struct timeval tv;
+	//      gettimeofday(&tv, NULL);
+	//
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds(tv.tv_sec);
+	//      timestamp.set_nanos(tv.tv_usec * 1000);
+	//
+	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
+	//
+	//      FILETIME ft;
+	//      GetSystemTimeAsFileTime(&ft);
+	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+	//
+	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
+	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
+	//      Timestamp timestamp;
+	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
+	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
+	//
+	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
+	//
+	//      long millis = System.currentTimeMillis();
+	//
+	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
+	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
+	//
+	//  Example 5: Compute Timestamp from Java `Instant.now()`.
+	//
+	//      Instant now = Instant.now();
+	//
+	//      Timestamp timestamp =
+	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
+	//              .setNanos(now.getNano()).build();
+	//
+	//  Example 6: Compute Timestamp from current time in Python.
+	//
+	//      timestamp = Timestamp()
+	//      timestamp.GetCurrentTime()
+	//
+	//  # JSON Mapping
+	//
+	//  In JSON format, the Timestamp type is encoded as a string in the
+	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
+	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
+	//  where {year} is always expressed using four digits while {month}, {day},
+	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
+	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
+	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
+	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
+	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
+	//  able to accept both UTC and other timezones (as indicated by an offset).
+	//
+	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
+	//  01:30 UTC on January 15, 2017.
+	//
+	//  In JavaScript, one can convert a Date object to this format using the
+	//  standard
+	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
+	//  method. In Python, a standard `datetime.datetime` object can be converted
+	//  to this format using
+	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
+	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
+	//  ) to obtain a formatter capable of generating timestamps in this format.
+	UpdatedAt *GoogleProtobufTimestamp `json:"updatedAt,omitempty"`
 }
 
-// Workload A generic way to group compute resources to obtain a workload.
-type Workload struct {
+// UpdatePolicy States of the host.
+type UpdatePolicy string
+
+// WorkloadKind Represents the type of workload.
+type WorkloadKind string
+
+// WorkloadMember Intermediate resource to represent a relation between a workload and a compute resource (i.e., instance).
+type WorkloadMember struct {
+	// Instance InstanceResource describes an instantiated OS install, running on either a
+	//  host or hypervisor.
+	Instance *InstanceResource `json:"instance,omitempty"`
+
+	// InstanceId The unique identifier of the instance.
+	InstanceId *string `json:"instanceId,omitempty"`
+
+	// Kind Represents the type of the workload member.
+	Kind WorkloadMemberKind `json:"kind"`
+
+	// Member InstanceResource describes an instantiated OS install, running on either a
+	//  host or hypervisor.
+	Member *InstanceResource `json:"member,omitempty"`
+
+	// ResourceId Resource ID, generated by the inventory on Create.
+	ResourceId *string     `json:"resourceId,omitempty"`
+	Timestamps *Timestamps `json:"timestamps,omitempty"`
+
+	// Workload A generic way to group compute resources to obtain a workload.
+	Workload *WorkloadResource `json:"workload,omitempty"`
+
+	// WorkloadId The workload unique identifier.
+	WorkloadId *string `json:"workloadId,omitempty"`
+
+	// WorkloadMemberId Deprecated, The workload unique identifier. Alias of resourceId.
+	WorkloadMemberId *string `json:"workloadMemberId,omitempty"`
+}
+
+// WorkloadMemberKind Represents the type of the workload member.
+type WorkloadMemberKind string
+
+// WorkloadResource A generic way to group compute resources to obtain a workload.
+type WorkloadResource struct {
 	// ExternalId The ID of the external resource, used to link to resources outside the realm of Edge Infrastructure Manager.
 	ExternalId *string `json:"externalId,omitempty"`
 
-	// Kind Type of workload.
-	Kind    WorkloadKind      `json:"kind"`
+	// Kind Represents the type of workload.
+	Kind WorkloadKind `json:"kind"`
+
+	// Members The members of the workload.
 	Members *[]WorkloadMember `json:"members,omitempty"`
 
 	// Name Human-readable name for the workload.
 	Name *string `json:"name,omitempty"`
 
-	// ResourceId resource ID, generated by the inventory on Create
+	// ResourceId resource ID, generated by the inventory on Create.
 	ResourceId *string `json:"resourceId,omitempty"`
 
 	// Status Human-readable status of the workload.
-	Status *string `json:"status,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
+	Status     *string     `json:"status,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
-	// WorkloadId The workload's unique identifier. Alias of resourceId.
+	// WorkloadId Deprecated, The workload unique identifier. Alias of resourceId.
 	WorkloadId *string `json:"workloadId,omitempty"`
 }
 
-// WorkloadKind Type of workload.
-type WorkloadKind string
+// ConnectError Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation
+type ConnectError struct {
+	// Code The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+	Code *ConnectErrorCode `json:"code,omitempty"`
 
-// WorkloadList A list of workload objects.
-type WorkloadList struct {
-	Workloads *[]Workload `json:"Workloads,omitempty"`
+	// Detail Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+	Detail *GoogleProtobufAny `json:"detail,omitempty"`
 
-	// HasNext Indicates if there are more workload objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
-
-	// TotalElements Total number of items the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
+	// Message A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+	Message              *string                `json:"message,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// WorkloadMember A member of a workload.
-type WorkloadMember struct {
-	// Instance An instance resource.
-	Instance *Instance `json:"instance,omitempty"`
+// ConnectErrorCode The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+type ConnectErrorCode string
 
-	// InstanceId The unique identifier of the instance.
-	InstanceId *string `json:"instanceId,omitempty"`
-
-	// Kind Type of workload member.
-	Kind WorkloadMemberKind `json:"kind"`
-
-	// Member An instance resource.
-	Member *Instance `json:"member,omitempty"`
-
-	// ResourceId resource ID, generated by the inventory on Create
-	ResourceId *string `json:"resourceId,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps `json:"timestamps,omitempty"`
-
-	// Workload A generic way to group compute resources to obtain a workload.
-	Workload *Workload `json:"workload,omitempty"`
-
-	// WorkloadId The unique identifier of the workload.
-	WorkloadId *string `json:"workloadId,omitempty"`
-
-	// WorkloadMemberId The workload member's unique identifier. Alias of resourceId.
-	WorkloadMemberId *string `json:"workloadMemberId,omitempty"`
+// GoogleProtobufAny Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+type GoogleProtobufAny struct {
+	Debug                *map[string]interface{} `json:"debug,omitempty"`
+	Type                 *string                 `json:"type,omitempty"`
+	Value                *openapi_types.File     `json:"value,omitempty"`
+	AdditionalProperties map[string]interface{}  `json:"-"`
 }
 
-// WorkloadMemberKind Type of workload member.
-type WorkloadMemberKind string
+// GoogleProtobufTimestamp A Timestamp represents a point in time independent of any time zone or local
+//
+//	calendar, encoded as a count of seconds and fractions of seconds at
+//	nanosecond resolution. The count is relative to an epoch at UTC midnight on
+//	January 1, 1970, in the proleptic Gregorian calendar which extends the
+//	Gregorian calendar backwards to year one.
+//
+//	All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
+//	second table is needed for interpretation, using a [24-hour linear
+//	smear](https://developers.google.com/time/smear).
+//
+//	The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
+//	restricting to that range, we ensure that we can convert to and from [RFC
+//	3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
+//
+//	# Examples
+//
+//	Example 1: Compute Timestamp from POSIX `time()`.
+//
+//	    Timestamp timestamp;
+//	    timestamp.set_seconds(time(NULL));
+//	    timestamp.set_nanos(0);
+//
+//	Example 2: Compute Timestamp from POSIX `gettimeofday()`.
+//
+//	    struct timeval tv;
+//	    gettimeofday(&tv, NULL);
+//
+//	    Timestamp timestamp;
+//	    timestamp.set_seconds(tv.tv_sec);
+//	    timestamp.set_nanos(tv.tv_usec * 1000);
+//
+//	Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
+//
+//	    FILETIME ft;
+//	    GetSystemTimeAsFileTime(&ft);
+//	    UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+//
+//	    // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
+//	    // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
+//	    Timestamp timestamp;
+//	    timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
+//	    timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
+//
+//	Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
+//
+//	    long millis = System.currentTimeMillis();
+//
+//	    Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
+//	        .setNanos((int) ((millis % 1000) * 1000000)).build();
+//
+//	Example 5: Compute Timestamp from Java `Instant.now()`.
+//
+//	    Instant now = Instant.now();
+//
+//	    Timestamp timestamp =
+//	        Timestamp.newBuilder().setSeconds(now.getEpochSecond())
+//	            .setNanos(now.getNano()).build();
+//
+//	Example 6: Compute Timestamp from current time in Python.
+//
+//	    timestamp = Timestamp()
+//	    timestamp.GetCurrentTime()
+//
+//	# JSON Mapping
+//
+//	In JSON format, the Timestamp type is encoded as a string in the
+//	[RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
+//	format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
+//	where {year} is always expressed using four digits while {month}, {day},
+//	{hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
+//	seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
+//	are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
+//	is required. A proto3 JSON serializer should always use UTC (as indicated by
+//	"Z") when printing the Timestamp type and a proto3 JSON parser should be
+//	able to accept both UTC and other timezones (as indicated by an offset).
+//
+//	For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
+//	01:30 UTC on January 15, 2017.
+//
+//	In JavaScript, one can convert a Date object to this format using the
+//	standard
+//	[toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
+//	method. In Python, a standard `datetime.datetime` object can be converted
+//	to this format using
+//	[`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
+//	the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
+//	the Joda Time's [`ISODateTimeFormat.dateTime()`](
+//	http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
+//	) to obtain a formatter capable of generating timestamps in this format.
+type GoogleProtobufTimestamp = time.Time
 
-// WorkloadMemberList A list of workload member objects.
-type WorkloadMemberList struct {
-	WorkloadMembers *[]WorkloadMember `json:"WorkloadMembers,omitempty"`
-
-	// HasNext Indicates if there are more workload members objects available to be retrieved.
-	HasNext *bool `json:"hasNext,omitempty"`
-
-	// TotalElements Total number of items the request would return, if not limited by pagination.
-	TotalElements *int `json:"totalElements,omitempty"`
-}
-
-// N400BadRequest Carries a message in an HTTP error response.
-type N400BadRequest = ProblemDetails
-
-// N401Unauthorized Carries a message in an HTTP error response.
-type N401Unauthorized = ProblemDetails
-
-// N403Forbidden Carries a message in an HTTP error response.
-type N403Forbidden = ProblemDetails
-
-// N404NotFound Carries a message in an HTTP error response.
-type N404NotFound = ProblemDetails
-
-// N406NotAcceptable Carries a message in an HTTP error response.
-type N406NotAcceptable = ProblemDetails
-
-// N408Timeout Carries a message in an HTTP error response.
-type N408Timeout = ProblemDetails
-
-// N409Conflict Carries a message in an HTTP error response.
-type N409Conflict = ProblemDetails
-
-// N412PreconditionFailed Carries a message in an HTTP error response.
-type N412PreconditionFailed = ProblemDetails
-
-// N422UnprocessableEntity Carries a message in an HTTP error response.
-type N422UnprocessableEntity = ProblemDetails
-
-// N429TooManyRequests Carries a message in an HTTP error response.
-type N429TooManyRequests = ProblemDetails
-
-// N500InternalServerError Carries a message in an HTTP error response.
-type N500InternalServerError = ProblemDetails
-
-// N501Unimplemented Carries a message in an HTTP error response.
-type N501Unimplemented = ProblemDetails
-
-// N503ServiceUnavailable Carries a message in an HTTP error response.
-type N503ServiceUnavailable = ProblemDetails
-
-// GetV1ProjectsProjectNameComputeParams defines parameters for GetV1ProjectsProjectNameCompute.
-type GetV1ProjectsProjectNameComputeParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details. Takes precedence over other filter parameters, if set.
-	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
-
-	// OrderBy Optional comma separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
+// HostServiceListHostsParams defines parameters for HostServiceListHosts.
+type HostServiceListHostsParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
 
-	// SiteID Returns only the compute elements that are assigned with the given site ID. If equals to 'null', then it returns all the hosts not associated with any site.
-	SiteID *string `form:"siteID,omitempty" json:"siteID,omitempty"`
-
-	// InstanceID Returns only the compute elements that are assigned to the given instanceID. If equals to 'null', then it returns all the hosts not associated with any instance.
-	InstanceID *string `form:"instanceID,omitempty" json:"instanceID,omitempty"`
-
-	// Uuid Returns the compute elements associated with the given UUID. UUID field cannot be null, if specified needs to be filled.
-	Uuid *string `form:"uuid,omitempty" json:"uuid,omitempty"`
-
-	// Metadata Filters the metadata associated with the compute element. Values are expected to be in the form of 'key=value'.
-	Metadata *[]string `form:"metadata,omitempty" json:"metadata,omitempty"`
-
-	// Detail Indicates if compute elements identified by the filter need to be returned with all their respective child resources, e.g., USBs, Interfaces, Storages.
-	Detail *bool `form:"detail,omitempty" json:"detail,omitempty"`
-}
-
-// GetV1ProjectsProjectNameComputeHostsParams defines parameters for GetV1ProjectsProjectNameComputeHosts.
-type GetV1ProjectsProjectNameComputeHostsParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details. Takes precedence over other filter parameters, if set.
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// OrderBy Optional comma separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// HostServiceGetHostsSummaryParams defines parameters for HostServiceGetHostsSummary.
+type HostServiceGetHostsSummaryParams struct {
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
+// HostServiceInvalidateHostParams defines parameters for HostServiceInvalidateHost.
+type HostServiceInvalidateHostParams struct {
+	// Note user-provided reason for change or a freeform field
+	Note *string `form:"note,omitempty" json:"note,omitempty"`
+}
+
+// InstanceServiceListInstancesParams defines parameters for InstanceServiceListInstances.
+type InstanceServiceListInstancesParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
 
-	// SiteID Returns only the hosts that are assigned with the given site ID. If equals to 'null', then it returns all the hosts not associated with any site.
-	SiteID *string `form:"siteID,omitempty" json:"siteID,omitempty"`
-
-	// InstanceID Returns only the hosts that are assigned to the given instanceID. If equals to 'null', then it returns all the hosts not associated with any instance.
-	InstanceID *string `form:"instanceID,omitempty" json:"instanceID,omitempty"`
-
-	// Uuid Returns the host associated with the given UUID. UUID field cannot be null, if specified needs to be filled.
-	Uuid *string `form:"uuid,omitempty" json:"uuid,omitempty"`
-
-	// Metadata Filters the metadata associated with the Host. Values are expected to be in the form 'key=value'.
-	Metadata *[]string `form:"metadata,omitempty" json:"metadata,omitempty"`
-
-	// Detail Indicates if the host identified by the filter needs to be returned with all their respective child resources, e.g., USBs, interfaces, and storages.
-	Detail *bool `form:"detail,omitempty" json:"detail,omitempty"`
-}
-
-// PostV1ProjectsProjectNameComputeHostsJSONBody defines parameters for PostV1ProjectsProjectNameComputeHosts.
-type PostV1ProjectsProjectNameComputeHostsJSONBody = Host
-
-// GetV1ProjectsProjectNameComputeHostsSummaryParams defines parameters for GetV1ProjectsProjectNameComputeHostsSummary.
-type GetV1ProjectsProjectNameComputeHostsSummaryParams struct {
-	// SiteID The site ID the hosts belong to. If not specified, returns the summary of all hosts. If specified, returns the summary of hosts that have the given site ID applied to them.
-	SiteID *string `form:"siteID,omitempty" json:"siteID,omitempty"`
-
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details. Takes precedence over other filter parameters, if set.
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
-}
 
-// PatchV1ProjectsProjectNameComputeHostsHostIDJSONBody defines parameters for PatchV1ProjectsProjectNameComputeHostsHostID.
-type PatchV1ProjectsProjectNameComputeHostsHostIDJSONBody = Host
-
-// PutV1ProjectsProjectNameComputeHostsHostIDJSONBody defines parameters for PutV1ProjectsProjectNameComputeHostsHostID.
-type PutV1ProjectsProjectNameComputeHostsHostIDJSONBody = Host
-
-// PatchV1ProjectsProjectNameComputeHostsHostIDRegisterJSONBody defines parameters for PatchV1ProjectsProjectNameComputeHostsHostIDRegister.
-type PatchV1ProjectsProjectNameComputeHostsHostIDRegisterJSONBody struct {
-	// AutoOnboard Set to enforce auto-onboarding of the host, which means that no confirmation will be required when the host connects for the first time, to Edge Orchestrator.
-	AutoOnboard *bool `json:"autoOnboard,omitempty"`
-
-	// Name The host name.
-	Name         *string      `json:"name,omitempty"`
-	SerialNumber *interface{} `json:"serialNumber,omitempty"`
-
-	// Timestamps A structure to hold Update and Create timestamps.
-	Timestamps *Timestamps  `json:"timestamps,omitempty"`
-	Uuid       *interface{} `json:"uuid,omitempty"`
-}
-
-// GetV1ProjectsProjectNameComputeInstancesParams defines parameters for GetV1ProjectsProjectNameComputeInstances.
-type GetV1ProjectsProjectNameComputeInstancesParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details.
-	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
 
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
+// OperatingSystemServiceListOperatingSystemsParams defines parameters for OperatingSystemServiceListOperatingSystems.
+type OperatingSystemServiceListOperatingSystemsParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
 
-	// WorkloadMemberID Returns only the instances that are assigned to the given workload member. If equals to 'null', returns all instances not associated with any workload member. If equal to '' (empty string), returns all instances that have a workload member associated.
-	WorkloadMemberID *string `form:"workloadMemberID,omitempty" json:"workloadMemberID,omitempty"`
-
-	// HostID Returns the instances associated with the host with the given host ID.
-	HostID *string `form:"hostID,omitempty" json:"hostID,omitempty"`
-
-	// SiteID Returns the instances associated with the hosts in the site identified. by the given siteID
-	SiteID *string `form:"siteID,omitempty" json:"siteID,omitempty"`
-}
-
-// PostV1ProjectsProjectNameComputeInstancesJSONBody defines parameters for PostV1ProjectsProjectNameComputeInstances.
-type PostV1ProjectsProjectNameComputeInstancesJSONBody = Instance
-
-// PatchV1ProjectsProjectNameComputeInstancesInstanceIDJSONBody defines parameters for PatchV1ProjectsProjectNameComputeInstancesInstanceID.
-type PatchV1ProjectsProjectNameComputeInstancesInstanceIDJSONBody = Instance
-
-// GetV1ProjectsProjectNameComputeOsParams defines parameters for GetV1ProjectsProjectNameComputeOs.
-type GetV1ProjectsProjectNameComputeOsParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details. Takes precedence over other filter parameters, if set.
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
-}
-
-// PatchV1ProjectsProjectNameComputeOsOSResourceIDJSONBody defines parameters for PatchV1ProjectsProjectNameComputeOsOSResourceID.
-type PatchV1ProjectsProjectNameComputeOsOSResourceIDJSONBody = OperatingSystemResource
-
-// PutV1ProjectsProjectNameComputeOsOSResourceIDJSONBody defines parameters for PutV1ProjectsProjectNameComputeOsOSResourceID.
-type PutV1ProjectsProjectNameComputeOsOSResourceIDJSONBody = OperatingSystemResource
-
-// GetV1ProjectsProjectNameComputeSchedulesParams defines parameters for GetV1ProjectsProjectNameComputeSchedules.
-type GetV1ProjectsProjectNameComputeSchedulesParams struct {
-	// Offset Identifies the paging unique identifier for a single page, starts index at 1.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
-	// RegionID The region ID target of the schedules. If not specified, returns all schedules (given the other query parameters). If specified, returns the schedules that have the specified region ID applied to them, i.e., target including the inherited ones (parent region if not null). If null, returns all schedules without a region ID as target.
-	RegionID *string `form:"regionID,omitempty" json:"regionID,omitempty"`
-
-	// SiteID The site ID target of the schedules. If not specified, returns all schedules (given the other query parameters). If specified, returns the schedules that have the specified site ID applied to them, i.e., target including the inherited ones. If null, returns all schedules without a site ID as target.
-	SiteID *string `form:"siteID,omitempty" json:"siteID,omitempty"`
-
-	// HostID The host ID target of the schedules. If not specified, returns all schedules (given the other query parameters). If specified, returns the schedules that have the specified host ID applied to them, i.e., target including the inherited ones (parent site if not null). If null, returns all schedules without a host ID as target.
-	HostID *string `form:"hostID,omitempty" json:"hostID,omitempty"`
-
-	// UnixEpoch Filters based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds
-	UnixEpoch *string `form:"unix_epoch,omitempty" json:"unix_epoch,omitempty"`
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// GetV1ProjectsProjectNameComputeWorkloadsParams defines parameters for GetV1ProjectsProjectNameComputeWorkloads.
-type GetV1ProjectsProjectNameComputeWorkloadsParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
+// ScheduleServiceListSchedulesParams defines parameters for ScheduleServiceListSchedules.
+type ScheduleServiceListSchedulesParams struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details. Takes precedence over other filter parameters, if set.
-	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
-	OrderBy *string       `form:"orderBy,omitempty" json:"orderBy,omitempty"`
-	Kind    *WorkloadKind `form:"kind,omitempty" json:"kind,omitempty"`
+	// HostId The host ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified host ID applied to them, i.e., target including the inherited ones
+	//  (parent site if not null). If null, returns all the schedules without a host ID as target.
+	HostId *string `form:"hostId,omitempty" json:"hostId,omitempty"`
+
+	// SiteId The site ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified site ID applied to them, i.e., target including the inherited ones.
+	//  If null, returns all the schedules without a site ID as target
+	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
+
+	// RegionId The region ID target of the schedules. If not specified,
+	//  returns all schedules (given the other query params).
+	//  If specified, returns the schedules that have the specified region ID applied to them,
+	//  i.e., target including the inherited ones (parent region if not null).
+	//  If null, returns all the schedules without a region ID as target.
+	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
+
+	// UnixEpoch Filter based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds.
+	UnixEpoch *string `form:"unixEpoch,omitempty" json:"unixEpoch,omitempty"`
 }
 
-// GetV1ProjectsProjectNameComputeWorkloadsWorkloadIDMembersParams defines parameters for GetV1ProjectsProjectNameComputeWorkloadsWorkloadIDMembers.
-type GetV1ProjectsProjectNameComputeWorkloadsWorkloadIDMembersParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details. Takes precedence over other filter parameters, if set.
-	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
-
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
+// WorkloadServiceListWorkloadsParams defines parameters for WorkloadServiceListWorkloads.
+type WorkloadServiceListWorkloadsParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
 
-	// WorkloadId The unique workload identifier.
-	WorkloadId *string `form:"workload_id,omitempty" json:"workload_id,omitempty"`
-}
-
-// GetV1ProjectsProjectNameLocalAccountsParams defines parameters for GetV1ProjectsProjectNameLocalAccounts.
-type GetV1ProjectsProjectNameLocalAccountsParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details.
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// GetV1ProjectsProjectNameLocationsParams defines parameters for GetV1ProjectsProjectNameLocations.
-type GetV1ProjectsProjectNameLocationsParams struct {
-	// Name The name of the resource to be queried; it can be a region and/or site name, if the query parameters below are stated.
+// WorkloadMemberServiceListWorkloadMembersParams defines parameters for WorkloadMemberServiceListWorkloadMembers.
+type WorkloadMemberServiceListWorkloadMembersParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// CustomConfigServiceListCustomConfigsParams defines parameters for CustomConfigServiceListCustomConfigs.
+type CustomConfigServiceListCustomConfigsParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// LocalAccountServiceListLocalAccountsParams defines parameters for LocalAccountServiceListLocalAccounts.
+type LocalAccountServiceListLocalAccountsParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// LocationServiceListLocationsParams defines parameters for LocationServiceListLocations.
+type LocationServiceListLocationsParams struct {
+	// Name Filter locations by name
 	Name *string `form:"name,omitempty" json:"name,omitempty"`
 
-	// ShowSites Indicates if the filter will be applied on the site resources.
+	// ShowSites Return site locations
 	ShowSites *bool `form:"showSites,omitempty" json:"showSites,omitempty"`
 
-	// ShowRegions Indicates if the filter will be applied on the region resources.
+	// ShowRegions Return region locations
 	ShowRegions *bool `form:"showRegions,omitempty" json:"showRegions,omitempty"`
 }
 
-// GetV1ProjectsProjectNameProvidersParams defines parameters for GetV1ProjectsProjectNameProviders.
-type GetV1ProjectsProjectNameProvidersParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+// OSUpdatePolicyListOSUpdatePolicyParams defines parameters for OSUpdatePolicyListOSUpdatePolicy.
+type OSUpdatePolicyListOSUpdatePolicyParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
 
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details. Takes precedence over other filter parameters, if set.
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// GetV1ProjectsProjectNameRegionsParams defines parameters for GetV1ProjectsProjectNameRegions.
-type GetV1ProjectsProjectNameRegionsParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details.
-	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
-
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
+// OSUpdateRunListOSUpdateRunParams defines parameters for OSUpdateRunListOSUpdateRun.
+type OSUpdateRunListOSUpdateRunParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
 
-	// Parent The parent region ID that the region belongs to. If not specified, returns all regions. If specified, returns the regions that have the specified parent applied to them. If null, returns all the regions without a parent.
-	Parent *string `form:"parent,omitempty" json:"parent,omitempty"`
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// ShowTotalSites Indicates if the region identified by the filter needs to be returned with the field totalSites filled.
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ProviderServiceListProvidersParams defines parameters for ProviderServiceListProviders.
+type ProviderServiceListProvidersParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// RegionServiceListRegionsParams defines parameters for RegionServiceListRegions.
+type RegionServiceListRegionsParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// ShowTotalSites Flag to signal if the total amount of site in a region should be returned.
 	ShowTotalSites *bool `form:"showTotalSites,omitempty" json:"showTotalSites,omitempty"`
 }
 
-// GetV1ProjectsProjectNameRegionsRegionIDSitesParams defines parameters for GetV1ProjectsProjectNameRegionsRegionIDSites.
-type GetV1ProjectsProjectNameRegionsRegionIDSitesParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+// SiteServiceListSitesParams defines parameters for SiteServiceListSites.
+type SiteServiceListSitesParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
 
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Filter Optional filter to return only items of interest. See https://google.aip.dev/160 for details.
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
 
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
-
-	// OuID The OUID that the sites belong to. If not specified, returns all sites (given the other query parameters). If specified, returns the sites that have the specified OUID applied to them. If null, returns all sites without an OUID.
-	OuID *string `form:"ouID,omitempty" json:"ouID,omitempty"`
-}
-
-// GetV1ProjectsProjectNameSchedulesRepeatedParams defines parameters for GetV1ProjectsProjectNameSchedulesRepeated.
-type GetV1ProjectsProjectNameSchedulesRepeatedParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
-	// RegionID The region ID target of the schedules. If not specified, returns all repeated schedules (given the other query parameters). If specified, returns the schedules that have the specified region ID applied to them, i.e., target. If null, returns all repeated schedules without a region ID as target.
-	RegionID *string `form:"regionID,omitempty" json:"regionID,omitempty"`
-
-	// SiteID The site ID target of the schedules. If not specified, returns all repeated schedules (given the other query parameters). If specified, returns the schedules that have the specified site ID applied to them, i.e., target. If null, returns all repeated schedules without a site ID as target.
-	SiteID *string `form:"siteID,omitempty" json:"siteID,omitempty"`
-
-	// HostID The host ID target of the repeated schedules. If not specified, returns all repeated schedules (given the other query parameters). If specified, returns the schedules that have the specified host ID applied to them, i.e., target. If null, returns all repeated schedules without a host ID as target.
-	HostID *string `form:"hostID,omitempty" json:"hostID,omitempty"`
-
-	// UnixEpoch Filters based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds.
-	UnixEpoch *string `form:"unix_epoch,omitempty" json:"unix_epoch,omitempty"`
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// GetV1ProjectsProjectNameSchedulesSingleParams defines parameters for GetV1ProjectsProjectNameSchedulesSingle.
-type GetV1ProjectsProjectNameSchedulesSingleParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
+// ScheduleServiceListRepeatedSchedulesParams defines parameters for ScheduleServiceListRepeatedSchedules.
+type ScheduleServiceListRepeatedSchedulesParams struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 
-	// RegionID The region ID target of the schedules. If not specified, returns all single schedules (given the other query parameters). If specified, returns the schedules that have the specified region ID applied to them, i.e., target. If null, returns all single schedules without a region ID as target.
-	RegionID *string `form:"regionID,omitempty" json:"regionID,omitempty"`
-
-	// SiteID The site ID target of the schedules. If not specified, returns all single schedules (given the other query parameters). If specified, returns the schedules that have the specified site ID applied to them, i.e., target. If null, returns all single schedules without a site ID as target.
-	SiteID *string `form:"siteID,omitempty" json:"siteID,omitempty"`
-
-	// HostID The host ID target of the single schedules. If not specified, returns all single schedules (given the other query parameters). If specified, returns the schedules that have the specified host ID applied to them, i.e., target. If null, returns all single schedules without a host ID as target.
-	HostID *string `form:"hostID,omitempty" json:"hostID,omitempty"`
-
-	// UnixEpoch Filters based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds
-	UnixEpoch *string `form:"unix_epoch,omitempty" json:"unix_epoch,omitempty"`
-}
-
-// GetV1ProjectsProjectNameTelemetryLoggroupsParams defines parameters for GetV1ProjectsProjectNameTelemetryLoggroups.
-type GetV1ProjectsProjectNameTelemetryLoggroupsParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
+	// Offset Index of the first item to return. This allows skipping items.
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	// HostId The host ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified host ID applied to them, i.e., target including the inherited ones
+	//  (parent site if not null). If null, returns all the schedules without a host ID as target.
+	HostId *string `form:"hostId,omitempty" json:"hostId,omitempty"`
 
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
-}
-
-// GetV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofilesParams defines parameters for GetV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofiles.
-type GetV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofilesParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// SiteId Returns only the telemetry profiles that are assigned with the given site ID.
+	// SiteId The site ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified site ID applied to them, i.e., target including the inherited ones.
+	//  If null, returns all the schedules without a site ID as target
 	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
 
-	// RegionId Returns only the telemetry profiles that are assigned with the given region ID.
+	// RegionId The region ID target of the schedules. If not specified,
+	//  returns all schedules (given the other query params).
+	//  If specified, returns the schedules that have the specified region ID applied to them,
+	//  i.e., target including the inherited ones (parent region if not null).
+	//  If null, returns all the schedules without a region ID as target.
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
+
+	// UnixEpoch Filter based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds.
+	UnixEpoch *string `form:"unixEpoch,omitempty" json:"unixEpoch,omitempty"`
+}
+
+// ScheduleServiceListSingleSchedulesParams defines parameters for ScheduleServiceListSingleSchedules.
+type ScheduleServiceListSingleSchedulesParams struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// HostId The host ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified host ID applied to them, i.e., target including the inherited ones
+	//  (parent site if not null). If null, returns all the schedules without a host ID as target.
+	HostId *string `form:"hostId,omitempty" json:"hostId,omitempty"`
+
+	// SiteId The site ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified site ID applied to them, i.e., target including the inherited ones.
+	//  If null, returns all the schedules without a site ID as target
+	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
+
+	// RegionId The region ID target of the schedules. If not specified,
+	//  returns all schedules (given the other query params).
+	//  If specified, returns the schedules that have the specified region ID applied to them,
+	//  i.e., target including the inherited ones (parent region if not null).
+	//  If null, returns all the schedules without a region ID as target.
+	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
+
+	// UnixEpoch Filter based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds.
+	UnixEpoch *string `form:"unixEpoch,omitempty" json:"unixEpoch,omitempty"`
+}
+
+// TelemetryLogsGroupServiceListTelemetryLogsGroupsParams defines parameters for TelemetryLogsGroupServiceListTelemetryLogsGroups.
+type TelemetryLogsGroupServiceListTelemetryLogsGroupsParams struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+}
+
+// TelemetryLogsProfileServiceListTelemetryLogsProfilesParams defines parameters for TelemetryLogsProfileServiceListTelemetryLogsProfiles.
+type TelemetryLogsProfileServiceListTelemetryLogsProfilesParams struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
 
 	// InstanceId Returns only the telemetry profiles that are assigned with the given instance identifier.
 	InstanceId *string `form:"instanceId,omitempty" json:"instanceId,omitempty"`
 
-	// ShowInherited Indicates if the listed telemetry profiles will be extended with telemetry profiles rendered from the hierarchy. This flag is used along with one of site ID, region ID or instance ID. If site ID, region ID, or instance ID are not set, this flag is ignored.
-	ShowInherited *bool `form:"showInherited,omitempty" json:"showInherited,omitempty"`
-
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
-}
-
-// GetV1ProjectsProjectNameTelemetryMetricgroupsParams defines parameters for GetV1ProjectsProjectNameTelemetryMetricgroups.
-type GetV1ProjectsProjectNameTelemetryMetricgroupsParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
-}
-
-// GetV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofilesParams defines parameters for GetV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofiles.
-type GetV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofilesParams struct {
-	// Offset Index of the first item to return. This allows skipping of items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page, min of 1 and max of 100, default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// SiteId Returns only the telemetry profiles that are assigned with the given site ID.
+	// SiteId Returns only the telemetry profiles that are assigned with the given siteID.
 	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
 
-	// RegionId Returns only the telemetry profiles that are assigned with the given region ID.
+	// RegionId Returns only the telemetry profiles that are assigned with the given regionID.
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
+
+	// ShowInherited Indicates if listed telemetry profiles should be extended with telemetry
+	//  profiles rendered from hierarchy. This flag is only used along with one
+	//  of siteId, regionId or instanceId. If siteId, regionId or instanceId are
+	//  not set, this flag is ignored.
+	ShowInherited *bool `form:"showInherited,omitempty" json:"showInherited,omitempty"`
+}
+
+// TelemetryMetricsGroupServiceListTelemetryMetricsGroupsParams defines parameters for TelemetryMetricsGroupServiceListTelemetryMetricsGroups.
+type TelemetryMetricsGroupServiceListTelemetryMetricsGroupsParams struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+}
+
+// TelemetryMetricsProfileServiceListTelemetryMetricsProfilesParams defines parameters for TelemetryMetricsProfileServiceListTelemetryMetricsProfiles.
+type TelemetryMetricsProfileServiceListTelemetryMetricsProfilesParams struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
 
 	// InstanceId Returns only the telemetry profiles that are assigned with the given instance identifier.
 	InstanceId *string `form:"instanceId,omitempty" json:"instanceId,omitempty"`
 
-	// ShowInherited Indicates if the listed telemetry profiles will be extended with telemetry profiles rendered from the hierarchy. This flag is only used along with one of site ID, region ID or instance ID. If site ID, region ID, or instance ID are not set, this flag is ignored.
-	ShowInherited *bool `form:"showInherited,omitempty" json:"showInherited,omitempty"`
+	// SiteId Returns only the telemetry profiles that are assigned with the given siteID.
+	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
 
-	// OrderBy Optional comma-separated list of fields to specify a sorting order. See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+	// RegionId Returns only the telemetry profiles that are assigned with the given regionID.
+	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
+
+	// ShowInherited Indicates if listed telemetry profiles should be extended with telemetry
+	//  profiles rendered from hierarchy. This flag is only used along with one
+	//  of siteId, regionId or instanceId. If siteId, regionId or instanceId are
+	//  not set, this flag is ignored.
+	ShowInherited *bool `form:"showInherited,omitempty" json:"showInherited,omitempty"`
 }
 
-// PostV1ProjectsProjectNameComputeHostsJSONRequestBody defines body for PostV1ProjectsProjectNameComputeHosts for application/json ContentType.
-type PostV1ProjectsProjectNameComputeHostsJSONRequestBody = PostV1ProjectsProjectNameComputeHostsJSONBody
+// HostServiceCreateHostJSONRequestBody defines body for HostServiceCreateHost for application/json ContentType.
+type HostServiceCreateHostJSONRequestBody = HostResource
 
-// PostV1ProjectsProjectNameComputeHostsRegisterJSONRequestBody defines body for PostV1ProjectsProjectNameComputeHostsRegister for application/json ContentType.
-type PostV1ProjectsProjectNameComputeHostsRegisterJSONRequestBody = HostRegisterInfo
+// HostServiceRegisterHostJSONRequestBody defines body for HostServiceRegisterHost for application/json ContentType.
+type HostServiceRegisterHostJSONRequestBody = HostRegister
 
-// DeleteV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody defines body for DeleteV1ProjectsProjectNameComputeHostsHostID for application/json ContentType.
-type DeleteV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody = HostOperationWithNote
+// HostServicePatchHostJSONRequestBody defines body for HostServicePatchHost for application/json ContentType.
+type HostServicePatchHostJSONRequestBody = HostResource
 
-// PatchV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody defines body for PatchV1ProjectsProjectNameComputeHostsHostID for application/json ContentType.
-type PatchV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody = PatchV1ProjectsProjectNameComputeHostsHostIDJSONBody
+// HostServiceUpdateHostJSONRequestBody defines body for HostServiceUpdateHost for application/json ContentType.
+type HostServiceUpdateHostJSONRequestBody = HostResource
 
-// PutV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody defines body for PutV1ProjectsProjectNameComputeHostsHostID for application/json ContentType.
-type PutV1ProjectsProjectNameComputeHostsHostIDJSONRequestBody = PutV1ProjectsProjectNameComputeHostsHostIDJSONBody
+// HostServicePatchRegisterHostJSONRequestBody defines body for HostServicePatchRegisterHost for application/json ContentType.
+type HostServicePatchRegisterHostJSONRequestBody = HostRegister
 
-// PutV1ProjectsProjectNameComputeHostsHostIDInvalidateJSONRequestBody defines body for PutV1ProjectsProjectNameComputeHostsHostIDInvalidate for application/json ContentType.
-type PutV1ProjectsProjectNameComputeHostsHostIDInvalidateJSONRequestBody = HostOperationWithNote
+// InstanceServiceCreateInstanceJSONRequestBody defines body for InstanceServiceCreateInstance for application/json ContentType.
+type InstanceServiceCreateInstanceJSONRequestBody = InstanceResource
 
-// PatchV1ProjectsProjectNameComputeHostsHostIDRegisterJSONRequestBody defines body for PatchV1ProjectsProjectNameComputeHostsHostIDRegister for application/json ContentType.
-type PatchV1ProjectsProjectNameComputeHostsHostIDRegisterJSONRequestBody PatchV1ProjectsProjectNameComputeHostsHostIDRegisterJSONBody
+// InstanceServicePatchInstanceJSONRequestBody defines body for InstanceServicePatchInstance for application/json ContentType.
+type InstanceServicePatchInstanceJSONRequestBody = InstanceResource
 
-// PostV1ProjectsProjectNameComputeInstancesJSONRequestBody defines body for PostV1ProjectsProjectNameComputeInstances for application/json ContentType.
-type PostV1ProjectsProjectNameComputeInstancesJSONRequestBody = PostV1ProjectsProjectNameComputeInstancesJSONBody
+// InstanceServiceUpdateInstanceJSONRequestBody defines body for InstanceServiceUpdateInstance for application/json ContentType.
+type InstanceServiceUpdateInstanceJSONRequestBody = InstanceResource
 
-// PatchV1ProjectsProjectNameComputeInstancesInstanceIDJSONRequestBody defines body for PatchV1ProjectsProjectNameComputeInstancesInstanceID for application/json ContentType.
-type PatchV1ProjectsProjectNameComputeInstancesInstanceIDJSONRequestBody = PatchV1ProjectsProjectNameComputeInstancesInstanceIDJSONBody
+// OperatingSystemServiceCreateOperatingSystemJSONRequestBody defines body for OperatingSystemServiceCreateOperatingSystem for application/json ContentType.
+type OperatingSystemServiceCreateOperatingSystemJSONRequestBody = OperatingSystemResource
 
-// PostV1ProjectsProjectNameComputeOsJSONRequestBody defines body for PostV1ProjectsProjectNameComputeOs for application/json ContentType.
-type PostV1ProjectsProjectNameComputeOsJSONRequestBody = OperatingSystemResource
+// OperatingSystemServicePatchOperatingSystemJSONRequestBody defines body for OperatingSystemServicePatchOperatingSystem for application/json ContentType.
+type OperatingSystemServicePatchOperatingSystemJSONRequestBody = OperatingSystemResource
 
-// PatchV1ProjectsProjectNameComputeOsOSResourceIDJSONRequestBody defines body for PatchV1ProjectsProjectNameComputeOsOSResourceID for application/json ContentType.
-type PatchV1ProjectsProjectNameComputeOsOSResourceIDJSONRequestBody = PatchV1ProjectsProjectNameComputeOsOSResourceIDJSONBody
+// OperatingSystemServiceUpdateOperatingSystemJSONRequestBody defines body for OperatingSystemServiceUpdateOperatingSystem for application/json ContentType.
+type OperatingSystemServiceUpdateOperatingSystemJSONRequestBody = OperatingSystemResource
 
-// PutV1ProjectsProjectNameComputeOsOSResourceIDJSONRequestBody defines body for PutV1ProjectsProjectNameComputeOsOSResourceID for application/json ContentType.
-type PutV1ProjectsProjectNameComputeOsOSResourceIDJSONRequestBody = PutV1ProjectsProjectNameComputeOsOSResourceIDJSONBody
+// WorkloadServiceCreateWorkloadJSONRequestBody defines body for WorkloadServiceCreateWorkload for application/json ContentType.
+type WorkloadServiceCreateWorkloadJSONRequestBody = WorkloadResource
 
-// PostV1ProjectsProjectNameComputeWorkloadsJSONRequestBody defines body for PostV1ProjectsProjectNameComputeWorkloads for application/json ContentType.
-type PostV1ProjectsProjectNameComputeWorkloadsJSONRequestBody = Workload
+// WorkloadServicePatchWorkloadJSONRequestBody defines body for WorkloadServicePatchWorkload for application/json ContentType.
+type WorkloadServicePatchWorkloadJSONRequestBody = WorkloadResource
 
-// PatchV1ProjectsProjectNameComputeWorkloadsWorkloadIDJSONRequestBody defines body for PatchV1ProjectsProjectNameComputeWorkloadsWorkloadID for application/json ContentType.
-type PatchV1ProjectsProjectNameComputeWorkloadsWorkloadIDJSONRequestBody = Workload
+// WorkloadServiceUpdateWorkloadJSONRequestBody defines body for WorkloadServiceUpdateWorkload for application/json ContentType.
+type WorkloadServiceUpdateWorkloadJSONRequestBody = WorkloadResource
 
-// PutV1ProjectsProjectNameComputeWorkloadsWorkloadIDJSONRequestBody defines body for PutV1ProjectsProjectNameComputeWorkloadsWorkloadID for application/json ContentType.
-type PutV1ProjectsProjectNameComputeWorkloadsWorkloadIDJSONRequestBody = Workload
+// WorkloadMemberServiceCreateWorkloadMemberJSONRequestBody defines body for WorkloadMemberServiceCreateWorkloadMember for application/json ContentType.
+type WorkloadMemberServiceCreateWorkloadMemberJSONRequestBody = WorkloadMember
 
-// PostV1ProjectsProjectNameComputeWorkloadsWorkloadIDMembersJSONRequestBody defines body for PostV1ProjectsProjectNameComputeWorkloadsWorkloadIDMembers for application/json ContentType.
-type PostV1ProjectsProjectNameComputeWorkloadsWorkloadIDMembersJSONRequestBody = WorkloadMember
+// CustomConfigServiceCreateCustomConfigJSONRequestBody defines body for CustomConfigServiceCreateCustomConfig for application/json ContentType.
+type CustomConfigServiceCreateCustomConfigJSONRequestBody = CustomConfigResource
 
-// PostV1ProjectsProjectNameLocalAccountsJSONRequestBody defines body for PostV1ProjectsProjectNameLocalAccounts for application/json ContentType.
-type PostV1ProjectsProjectNameLocalAccountsJSONRequestBody = LocalAccount
+// LocalAccountServiceCreateLocalAccountJSONRequestBody defines body for LocalAccountServiceCreateLocalAccount for application/json ContentType.
+type LocalAccountServiceCreateLocalAccountJSONRequestBody = LocalAccountResource
 
-// PostV1ProjectsProjectNameProvidersJSONRequestBody defines body for PostV1ProjectsProjectNameProviders for application/json ContentType.
-type PostV1ProjectsProjectNameProvidersJSONRequestBody = Provider
+// OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody defines body for OSUpdatePolicyCreateOSUpdatePolicy for application/json ContentType.
+type OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody = OSUpdatePolicy
 
-// PostV1ProjectsProjectNameRegionsJSONRequestBody defines body for PostV1ProjectsProjectNameRegions for application/json ContentType.
-type PostV1ProjectsProjectNameRegionsJSONRequestBody = Region
+// ProviderServiceCreateProviderJSONRequestBody defines body for ProviderServiceCreateProvider for application/json ContentType.
+type ProviderServiceCreateProviderJSONRequestBody = ProviderResource
 
-// PatchV1ProjectsProjectNameRegionsRegionIDJSONRequestBody defines body for PatchV1ProjectsProjectNameRegionsRegionID for application/json ContentType.
-type PatchV1ProjectsProjectNameRegionsRegionIDJSONRequestBody = Region
+// RegionServiceCreateRegionJSONRequestBody defines body for RegionServiceCreateRegion for application/json ContentType.
+type RegionServiceCreateRegionJSONRequestBody = RegionResource
 
-// PutV1ProjectsProjectNameRegionsRegionIDJSONRequestBody defines body for PutV1ProjectsProjectNameRegionsRegionID for application/json ContentType.
-type PutV1ProjectsProjectNameRegionsRegionIDJSONRequestBody = Region
+// SiteServicePatchSiteJSONRequestBody defines body for SiteServicePatchSite for application/json ContentType.
+type SiteServicePatchSiteJSONRequestBody = SiteResource
 
-// PostV1ProjectsProjectNameRegionsRegionIDSitesJSONRequestBody defines body for PostV1ProjectsProjectNameRegionsRegionIDSites for application/json ContentType.
-type PostV1ProjectsProjectNameRegionsRegionIDSitesJSONRequestBody = Site
+// SiteServiceUpdateSiteJSONRequestBody defines body for SiteServiceUpdateSite for application/json ContentType.
+type SiteServiceUpdateSiteJSONRequestBody = SiteResource
 
-// PatchV1ProjectsProjectNameRegionsRegionIDSitesSiteIDJSONRequestBody defines body for PatchV1ProjectsProjectNameRegionsRegionIDSitesSiteID for application/json ContentType.
-type PatchV1ProjectsProjectNameRegionsRegionIDSitesSiteIDJSONRequestBody = Site
+// RegionServicePatchRegionJSONRequestBody defines body for RegionServicePatchRegion for application/json ContentType.
+type RegionServicePatchRegionJSONRequestBody = RegionResource
 
-// PutV1ProjectsProjectNameRegionsRegionIDSitesSiteIDJSONRequestBody defines body for PutV1ProjectsProjectNameRegionsRegionIDSitesSiteID for application/json ContentType.
-type PutV1ProjectsProjectNameRegionsRegionIDSitesSiteIDJSONRequestBody = Site
+// RegionServiceUpdateRegionJSONRequestBody defines body for RegionServiceUpdateRegion for application/json ContentType.
+type RegionServiceUpdateRegionJSONRequestBody = RegionResource
 
-// PostV1ProjectsProjectNameSchedulesRepeatedJSONRequestBody defines body for PostV1ProjectsProjectNameSchedulesRepeated for application/json ContentType.
-type PostV1ProjectsProjectNameSchedulesRepeatedJSONRequestBody = RepeatedSchedule
+// SiteServiceCreateSiteJSONRequestBody defines body for SiteServiceCreateSite for application/json ContentType.
+type SiteServiceCreateSiteJSONRequestBody = SiteResource
 
-// PatchV1ProjectsProjectNameSchedulesRepeatedRepeatedScheduleIDJSONRequestBody defines body for PatchV1ProjectsProjectNameSchedulesRepeatedRepeatedScheduleID for application/json ContentType.
-type PatchV1ProjectsProjectNameSchedulesRepeatedRepeatedScheduleIDJSONRequestBody = RepeatedSchedule
+// ScheduleServiceCreateRepeatedScheduleJSONRequestBody defines body for ScheduleServiceCreateRepeatedSchedule for application/json ContentType.
+type ScheduleServiceCreateRepeatedScheduleJSONRequestBody = RepeatedScheduleResource
 
-// PutV1ProjectsProjectNameSchedulesRepeatedRepeatedScheduleIDJSONRequestBody defines body for PutV1ProjectsProjectNameSchedulesRepeatedRepeatedScheduleID for application/json ContentType.
-type PutV1ProjectsProjectNameSchedulesRepeatedRepeatedScheduleIDJSONRequestBody = RepeatedSchedule
+// ScheduleServicePatchRepeatedScheduleJSONRequestBody defines body for ScheduleServicePatchRepeatedSchedule for application/json ContentType.
+type ScheduleServicePatchRepeatedScheduleJSONRequestBody = RepeatedScheduleResource
 
-// PostV1ProjectsProjectNameSchedulesSingleJSONRequestBody defines body for PostV1ProjectsProjectNameSchedulesSingle for application/json ContentType.
-type PostV1ProjectsProjectNameSchedulesSingleJSONRequestBody = SingleSchedule
+// ScheduleServiceUpdateRepeatedScheduleJSONRequestBody defines body for ScheduleServiceUpdateRepeatedSchedule for application/json ContentType.
+type ScheduleServiceUpdateRepeatedScheduleJSONRequestBody = RepeatedScheduleResource
 
-// PatchV1ProjectsProjectNameSchedulesSingleSingleScheduleIDJSONRequestBody defines body for PatchV1ProjectsProjectNameSchedulesSingleSingleScheduleID for application/json ContentType.
-type PatchV1ProjectsProjectNameSchedulesSingleSingleScheduleIDJSONRequestBody = SingleSchedule
+// ScheduleServiceCreateSingleScheduleJSONRequestBody defines body for ScheduleServiceCreateSingleSchedule for application/json ContentType.
+type ScheduleServiceCreateSingleScheduleJSONRequestBody = SingleScheduleResource
 
-// PutV1ProjectsProjectNameSchedulesSingleSingleScheduleIDJSONRequestBody defines body for PutV1ProjectsProjectNameSchedulesSingleSingleScheduleID for application/json ContentType.
-type PutV1ProjectsProjectNameSchedulesSingleSingleScheduleIDJSONRequestBody = SingleSchedule
+// ScheduleServicePatchSingleScheduleJSONRequestBody defines body for ScheduleServicePatchSingleSchedule for application/json ContentType.
+type ScheduleServicePatchSingleScheduleJSONRequestBody = SingleScheduleResource
 
-// PostV1ProjectsProjectNameTelemetryLoggroupsJSONRequestBody defines body for PostV1ProjectsProjectNameTelemetryLoggroups for application/json ContentType.
-type PostV1ProjectsProjectNameTelemetryLoggroupsJSONRequestBody = TelemetryLogsGroup
+// ScheduleServiceUpdateSingleScheduleJSONRequestBody defines body for ScheduleServiceUpdateSingleSchedule for application/json ContentType.
+type ScheduleServiceUpdateSingleScheduleJSONRequestBody = SingleScheduleResource
 
-// PostV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofilesJSONRequestBody defines body for PostV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofiles for application/json ContentType.
-type PostV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofilesJSONRequestBody = TelemetryLogsProfile
+// TelemetryLogsGroupServiceCreateTelemetryLogsGroupJSONRequestBody defines body for TelemetryLogsGroupServiceCreateTelemetryLogsGroup for application/json ContentType.
+type TelemetryLogsGroupServiceCreateTelemetryLogsGroupJSONRequestBody = TelemetryLogsGroupResource
 
-// PatchV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofilesTelemetryLogsProfileIdJSONRequestBody defines body for PatchV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofilesTelemetryLogsProfileId for application/json ContentType.
-type PatchV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofilesTelemetryLogsProfileIdJSONRequestBody = TelemetryLogsProfile
+// TelemetryLogsProfileServicePatchTelemetryLogsProfileJSONRequestBody defines body for TelemetryLogsProfileServicePatchTelemetryLogsProfile for application/json ContentType.
+type TelemetryLogsProfileServicePatchTelemetryLogsProfileJSONRequestBody = TelemetryLogsProfileResource
 
-// PutV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofilesTelemetryLogsProfileIdJSONRequestBody defines body for PutV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofilesTelemetryLogsProfileId for application/json ContentType.
-type PutV1ProjectsProjectNameTelemetryLoggroupsTelemetryLogsGroupIdLogprofilesTelemetryLogsProfileIdJSONRequestBody = TelemetryLogsProfile
+// TelemetryLogsProfileServiceUpdateTelemetryLogsProfileJSONRequestBody defines body for TelemetryLogsProfileServiceUpdateTelemetryLogsProfile for application/json ContentType.
+type TelemetryLogsProfileServiceUpdateTelemetryLogsProfileJSONRequestBody = TelemetryLogsProfileResource
 
-// PostV1ProjectsProjectNameTelemetryMetricgroupsJSONRequestBody defines body for PostV1ProjectsProjectNameTelemetryMetricgroups for application/json ContentType.
-type PostV1ProjectsProjectNameTelemetryMetricgroupsJSONRequestBody = TelemetryMetricsGroup
+// TelemetryLogsProfileServiceCreateTelemetryLogsProfileJSONRequestBody defines body for TelemetryLogsProfileServiceCreateTelemetryLogsProfile for application/json ContentType.
+type TelemetryLogsProfileServiceCreateTelemetryLogsProfileJSONRequestBody = TelemetryLogsProfileResource
 
-// PostV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofilesJSONRequestBody defines body for PostV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofiles for application/json ContentType.
-type PostV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofilesJSONRequestBody = TelemetryMetricsProfile
+// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroupJSONRequestBody defines body for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup for application/json ContentType.
+type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroupJSONRequestBody = TelemetryMetricsGroupResource
 
-// PatchV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofilesTelemetryMetricsProfileIdJSONRequestBody defines body for PatchV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofilesTelemetryMetricsProfileId for application/json ContentType.
-type PatchV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofilesTelemetryMetricsProfileIdJSONRequestBody = TelemetryMetricsProfile
+// TelemetryMetricsProfileServicePatchTelemetryMetricsProfileJSONRequestBody defines body for TelemetryMetricsProfileServicePatchTelemetryMetricsProfile for application/json ContentType.
+type TelemetryMetricsProfileServicePatchTelemetryMetricsProfileJSONRequestBody = TelemetryMetricsProfileResource
 
-// PutV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofilesTelemetryMetricsProfileIdJSONRequestBody defines body for PutV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofilesTelemetryMetricsProfileId for application/json ContentType.
-type PutV1ProjectsProjectNameTelemetryMetricgroupsTelemetryMetricsGroupIdMetricprofilesTelemetryMetricsProfileIdJSONRequestBody = TelemetryMetricsProfile
+// TelemetryMetricsProfileServiceUpdateTelemetryMetricsProfileJSONRequestBody defines body for TelemetryMetricsProfileServiceUpdateTelemetryMetricsProfile for application/json ContentType.
+type TelemetryMetricsProfileServiceUpdateTelemetryMetricsProfileJSONRequestBody = TelemetryMetricsProfileResource
+
+// TelemetryMetricsProfileServiceCreateTelemetryMetricsProfileJSONRequestBody defines body for TelemetryMetricsProfileServiceCreateTelemetryMetricsProfile for application/json ContentType.
+type TelemetryMetricsProfileServiceCreateTelemetryMetricsProfileJSONRequestBody = TelemetryMetricsProfileResource
+
+// Getter for additional properties for ConnectError. Returns the specified
+// element and whether it was found
+func (a ConnectError) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ConnectError
+func (a *ConnectError) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ConnectError to handle AdditionalProperties
+func (a *ConnectError) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["code"]; found {
+		err = json.Unmarshal(raw, &a.Code)
+		if err != nil {
+			return fmt.Errorf("error reading 'code': %w", err)
+		}
+		delete(object, "code")
+	}
+
+	if raw, found := object["detail"]; found {
+		err = json.Unmarshal(raw, &a.Detail)
+		if err != nil {
+			return fmt.Errorf("error reading 'detail': %w", err)
+		}
+		delete(object, "detail")
+	}
+
+	if raw, found := object["message"]; found {
+		err = json.Unmarshal(raw, &a.Message)
+		if err != nil {
+			return fmt.Errorf("error reading 'message': %w", err)
+		}
+		delete(object, "message")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ConnectError to handle AdditionalProperties
+func (a ConnectError) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Code != nil {
+		object["code"], err = json.Marshal(a.Code)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'code': %w", err)
+		}
+	}
+
+	if a.Detail != nil {
+		object["detail"], err = json.Marshal(a.Detail)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'detail': %w", err)
+		}
+	}
+
+	if a.Message != nil {
+		object["message"], err = json.Marshal(a.Message)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'message': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for GoogleProtobufAny. Returns the specified
+// element and whether it was found
+func (a GoogleProtobufAny) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for GoogleProtobufAny
+func (a *GoogleProtobufAny) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for GoogleProtobufAny to handle AdditionalProperties
+func (a *GoogleProtobufAny) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["debug"]; found {
+		err = json.Unmarshal(raw, &a.Debug)
+		if err != nil {
+			return fmt.Errorf("error reading 'debug': %w", err)
+		}
+		delete(object, "debug")
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &a.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+		delete(object, "type")
+	}
+
+	if raw, found := object["value"]; found {
+		err = json.Unmarshal(raw, &a.Value)
+		if err != nil {
+			return fmt.Errorf("error reading 'value': %w", err)
+		}
+		delete(object, "value")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for GoogleProtobufAny to handle AdditionalProperties
+func (a GoogleProtobufAny) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Debug != nil {
+		object["debug"], err = json.Marshal(a.Debug)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'debug': %w", err)
+		}
+	}
+
+	if a.Type != nil {
+		object["type"], err = json.Marshal(a.Type)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'type': %w", err)
+		}
+	}
+
+	if a.Value != nil {
+		object["value"], err = json.Marshal(a.Value)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'value': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
