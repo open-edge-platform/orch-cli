@@ -21,7 +21,7 @@ func (s *CLITestSuite) createApplication(project string, applicationName string,
 }
 
 func (s *CLITestSuite) listApplications(project string, verbose bool, orderBy string, filter string, kind string) (string, error) {
-	args := `get applications --project ` + project
+	args := `list applications --project ` + project
 	if verbose {
 		args = args + " -v"
 	}
