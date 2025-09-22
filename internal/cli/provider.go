@@ -37,6 +37,7 @@ func getListProviderCommand() *cobra.Command {
 		Use:     "provider [flags]",
 		Short:   "List all providers",
 		Example: listProviderExamples,
+		Aliases: providerAliases,
 		RunE:    runListProviderCommand,
 	}
 	return cmd
@@ -48,6 +49,7 @@ func getGetProviderCommand() *cobra.Command {
 		Short:   "Get a provider",
 		Example: getProviderExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: providerAliases,
 		RunE:    runGetProviderCommand,
 	}
 	return cmd
@@ -59,6 +61,7 @@ func getCreateProviderCommand() *cobra.Command {
 		Short:   "Create a provider",
 		Example: createProviderExamples,
 		Args:    cobra.ExactArgs(3),
+		Aliases: providerAliases,
 		RunE:    runCreateProviderCommand,
 	}
 	cmd.PersistentFlags().BoolP("apicredentials", "a", viper.GetBool("apicredentials"), "Flag to accept API credentials for the provider: --apicredentials")
@@ -73,6 +76,7 @@ func getDeleteProviderCommand() *cobra.Command {
 		Short:   "Delete a provider",
 		Example: deleteProviderExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: providerAliases,
 		RunE:    runDeleteProviderCommand,
 	}
 	return cmd

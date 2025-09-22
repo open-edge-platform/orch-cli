@@ -19,6 +19,7 @@ func getCreateArtifactCommand() *cobra.Command {
 		Short:   "Create an artifact",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli create artifact my-artifact --mime-type application/octet-stream --artifact /path/to/artifact --project some-project",
+		Aliases: artifactAliases,
 		RunE:    runCreateArtifactCommand,
 	}
 	addEntityFlags(cmd, "artifact")
@@ -33,6 +34,7 @@ func getListArtifactsCommand() *cobra.Command {
 		Use:     "artifacts [flags]",
 		Short:   "List all artifacts",
 		Example: "orch-cli list artifacts --project some-project --order-by name",
+		Aliases: artifactAliases,
 		RunE:    runListArtifactsCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "artifact")
@@ -45,6 +47,7 @@ func getGetArtifactCommand() *cobra.Command {
 		Short:   "Get an artifact",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli get artifact my-artifact --project some-project",
+		Aliases: artifactAliases,
 		RunE:    runGetArtifactCommand,
 	}
 	return cmd
@@ -56,6 +59,7 @@ func getSetArtifactCommand() *cobra.Command {
 		Short:   "Update an artifact",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli set artifact my-artifact --mime-type application/octet-stream --artifact /path/to/artifact --project some-project",
+		Aliases: artifactAliases,
 		RunE:    runSetArtifactCommand,
 	}
 	addEntityFlags(cmd, "artifact")
@@ -70,6 +74,7 @@ func getDeleteArtifactCommand() *cobra.Command {
 		Short:   "Delete an artifact",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli delete artifact my-artifact --project some-project",
+		Aliases: artifactAliases,
 		RunE:    runDeleteArtifactCommand,
 	}
 	return cmd
