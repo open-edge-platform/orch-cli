@@ -19,6 +19,7 @@ func getCreateRegistryCommand() *cobra.Command {
 		Short:   "Create a registry",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli create registry my-registry --root-url https://my-registry.example.com --username my-user --auth-token my-token --project some-project",
+		Aliases: registryAliases,
 		RunE:    runCreateRegistryCommand,
 	}
 	addEntityFlags(cmd, "registry")
@@ -36,7 +37,7 @@ func getCreateRegistryCommand() *cobra.Command {
 func getListRegistriesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "registries [flags]",
-		Aliases: []string{"regs"},
+		Aliases: registryAliases,
 		Short:   "List all registries",
 		Example: "orch-cli list registries --project some-project --order-by name",
 		RunE:    runListRegistriesCommand,
@@ -52,7 +53,7 @@ func getGetRegistryCommand() *cobra.Command {
 		Short:   "Get a registry",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli get registry my-registry --project some-project",
-		Aliases: []string{"reg"},
+		Aliases: registryAliases,
 		RunE:    runGetRegistryCommand,
 	}
 	cmd.Flags().Bool("show-sensitive-info", false, "show sensitive info, e.g. auth-token, CA certs")
@@ -65,6 +66,7 @@ func getSetRegistryCommand() *cobra.Command {
 		Short:   "Update a registry",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli set registry my-registry --root-url https://my-registry.example.com --username my-user --auth-token my-token --project some-project",
+		Aliases: registryAliases,
 		RunE:    runSetRegistryCommand,
 	}
 	addEntityFlags(cmd, "registry")
@@ -84,7 +86,7 @@ func getDeleteRegistryCommand() *cobra.Command {
 		Short:   "Delete a registry",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli delete registry my-registry --project some-project",
-		Aliases: []string{"del-reg", "rm-reg"},
+		Aliases: registryAliases,
 		RunE:    runDeleteRegistryCommand,
 	}
 	return cmd

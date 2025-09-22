@@ -22,8 +22,8 @@ func getCreateDeploymentCommand() *cobra.Command {
 		Short:   "Create a deployment",
 		Example: "orch-cli create deployment my-package 1.0.0 --project sample-project --display-name my-deployment --profile sample-profile --application-label <app>.<label>=<label-value>",
 		Args:    cobra.ExactArgs(2),
-
-		RunE: runCreateDeploymentCommand,
+		Aliases: deploymentAliases,
+		RunE:    runCreateDeploymentCommand,
 	}
 	cmd.Flags().String("display-name", "", "deployment display name")
 	cmd.Flags().String("profile", "", "deployment profile to use")
@@ -37,7 +37,7 @@ func getCreateDeploymentCommand() *cobra.Command {
 func getListDeploymentsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployments [flags]",
-		Aliases: []string{"deployment"},
+		Aliases: deploymentAliases,
 		Short:   "List all deployments",
 		Example: "orch-cli list deployments --project some-project",
 		RunE:    runListDeploymentsCommand,
@@ -48,6 +48,7 @@ func getListDeploymentsCommand() *cobra.Command {
 func getGetDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment <deployment-id> [flags]",
+		Aliases: deploymentAliases,
 		Short:   "Get a deployment",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli get deployment 12345 --project some-project",
@@ -62,6 +63,7 @@ func getSetDeploymentCommand() *cobra.Command {
 		Short:   "Update a deployment",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli set deployment 12345 --project some-project --name my-deployment --package-name my-package --package-version 1.0.0 --profile sample-profile --application-namespace <app>=<namespace> --application-set <app>.<prop>=<prop-value> --application-label <app>.<label>=<label-value>",
+		Aliases: deploymentAliases,
 		RunE:    runSetDeploymentCommand,
 	}
 	cmd.Flags().String("name", "", "deployment name")
@@ -81,6 +83,7 @@ func getDeleteDeploymentCommand() *cobra.Command {
 		Short:   "Delete a deployment",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli delete deployment 12345 --project some-project",
+		Aliases: deploymentAliases,
 		RunE:    runDeleteDeploymentCommand,
 	}
 	return cmd

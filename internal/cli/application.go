@@ -13,12 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	applicationAliases       = []string{"app"}
-	deploymentPackageAliases = []string{"package", "bundle", "pkg"}
-	deploymentProfileAliases = []string{"package-profile", "deployment-profile", "bundle-profile"}
-)
-
 func getCreateApplicationCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "application <name> <version> [flags]",
@@ -43,7 +37,7 @@ func getCreateApplicationCommand() *cobra.Command {
 func getListApplicationsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "applications [flags]",
-		Aliases: []string{"apps", "applications"},
+		Aliases: applicationAliases,
 		Short:   "List all applications",
 		Example: "orch-cli list applications --project some-project",
 		RunE:    runListApplicationsCommand,
