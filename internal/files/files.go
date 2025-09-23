@@ -16,7 +16,7 @@ import (
 	"github.com/open-edge-platform/cli/internal/types"
 )
 
-const HEADER = "Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill"
+const HEADER = "Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSize,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill"
 
 func CreateFile(filePath string) error {
 	// Check if the file already exists
@@ -114,7 +114,7 @@ func ReadHostRecords(filePath string) ([]types.HostRecord, error) {
 			Secure:             types.StringToRecordSecure(getField(record, 4)),
 			RemoteUser:         getField(record, 5),
 			Metadata:           getField(record, 6),
-			AMTEnable:          getField(record, 7),
+			LVMSize:            getField(record, 7),
 			CloudInitMeta:      getField(record, 8),
 			K8sEnable:          getField(record, 9),
 			K8sClusterTemplate: getField(record, 10),
@@ -167,7 +167,7 @@ func WriteHostRecords(filePath string, records []types.HostRecord) error {
 			sanitizeCSVField(string(record.Secure)),
 			sanitizeCSVField(record.RemoteUser),
 			sanitizeCSVField(record.Metadata),
-			sanitizeCSVField(record.AMTEnable),
+			sanitizeCSVField(record.LVMSize),
 			sanitizeCSVField(record.CloudInitMeta),
 			sanitizeCSVField(record.K8sEnable),
 			sanitizeCSVField(record.K8sClusterTemplate),
