@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 package catalog
 
 import (
@@ -5,12 +8,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time" // Make sure this import is present
 
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
 	"go.uber.org/mock/gomock"
+)
+
+// State tracking for mock behavior
+var (
+	createdProfiles = make(map[string][]catapi.DeploymentProfile)
+	mockStateMutex  sync.RWMutex
 )
 
 func applicationKindPtr(k catapi.ApplicationKind) *catapi.ApplicationKind { return &k }
@@ -383,25 +393,43 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(_ context.Context, _ string, deploymentPackageName string, version string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetDeploymentPackageResponse, error) {
+				// Get the tracked profiles for this package
+				mockStateMutex.RLock()
+				key := deploymentPackageName + ":" + version
+				profiles, exists := createdProfiles[key]
+				mockStateMutex.RUnlock()
+
+				// If no tracked profiles, use default profiles
+				if !exists {
+					profiles = []catapi.DeploymentProfile{
+						{
+							Name:                "deployment-package-profile",
+							DisplayName:         stringPtr("deployment.profile.display.name"),
+							Description:         stringPtr("Profile.for.testing"),
+							CreateTime:          timePtr(testTime),
+							UpdateTime:          timePtr(testTime),
+							ApplicationProfiles: map[string]string{},
+						},
+						{
+							Name:                "test-deployment-profile",
+							DisplayName:         stringPtr("test.deployment.profile.display.name"),
+							Description:         stringPtr("Test.Profile.for.testing"),
+							CreateTime:          timePtr(testTime),
+							UpdateTime:          timePtr(testTime),
+							ApplicationProfiles: map[string]string{},
+						},
+					}
+				}
 
 				return &catapi.CatalogServiceGetDeploymentPackageResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.GetDeploymentPackageResponse{
 						DeploymentPackage: catapi.DeploymentPackage{
-							Name:        deploymentPackageName,
-							Version:     version,
-							DisplayName: stringPtr("displayName"),
-							Description: stringPtr("description"),
-							Profiles: &[]catapi.DeploymentProfile{
-								{
-									Name:                "deployment-package-profile",
-									DisplayName:         stringPtr("deployment.profile.display.name"),
-									Description:         stringPtr("Profile.for.testing"),
-									CreateTime:          timePtr(testTime),
-									UpdateTime:          timePtr(testTime),
-									ApplicationProfiles: map[string]string{},
-								},
-							},
+							Name:                    deploymentPackageName,
+							Version:                 version,
+							DisplayName:             stringPtr("displayName"),
+							Description:             stringPtr("description"),
+							Profiles:                &profiles,
 							DefaultProfileName:      stringPtr("default-profile"),
 							ApplicationDependencies: &[]catapi.ApplicationDependency{},
 							ApplicationReferences: []catapi.ApplicationReference{
@@ -418,7 +446,31 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceUpdateDeploymentPackageWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ string, _ string, _ catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
+			func(_ context.Context, _ string, pkgName string, version string, body catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
+				// Track the profiles from the update request
+				mockStateMutex.Lock()
+				key := pkgName + ":" + version
+				if body.Profiles != nil {
+					// Ensure all profiles have required fields set
+					profiles := make([]catapi.DeploymentProfile, len(*body.Profiles))
+					for i, profile := range *body.Profiles {
+						profiles[i] = profile
+						// Ensure time fields are set if they're nil
+						if profiles[i].CreateTime == nil {
+							profiles[i].CreateTime = timePtr(testTime)
+						}
+						if profiles[i].UpdateTime == nil {
+							profiles[i].UpdateTime = timePtr(testTime)
+						}
+						// Ensure ApplicationProfiles is not nil
+						if profiles[i].ApplicationProfiles == nil {
+							profiles[i].ApplicationProfiles = map[string]string{}
+						}
+					}
+					createdProfiles[key] = profiles
+				}
+				mockStateMutex.Unlock()
+
 				respBody, err := json.Marshal(struct {
 					Success bool   `json:"success"`
 					Message string `json:"message"`
@@ -440,25 +492,44 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(_ context.Context, _ string, _ *catapi.CatalogServiceListDeploymentPackagesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListDeploymentPackagesResponse, error) {
+				// Get the tracked profiles for deployment-pkg:1.0
+				mockStateMutex.RLock()
+				key := "deployment-pkg:1.0"
+				profiles, exists := createdProfiles[key]
+				mockStateMutex.RUnlock()
+
+				// If no tracked profiles, use default profiles
+				if !exists {
+					profiles = []catapi.DeploymentProfile{
+						{
+							Name:                "deployment-package-profile",
+							DisplayName:         stringPtr("deployment.profile.display.name"),
+							Description:         stringPtr("Profile.for.testing"),
+							CreateTime:          timePtr(testTime),
+							UpdateTime:          timePtr(testTime),
+							ApplicationProfiles: map[string]string{},
+						},
+						{
+							Name:                "test-deployment-profile",
+							DisplayName:         stringPtr("test.deployment.profile.display.name"),
+							Description:         stringPtr("Test.Profile.for.testing"),
+							CreateTime:          timePtr(testTime),
+							UpdateTime:          timePtr(testTime),
+							ApplicationProfiles: map[string]string{},
+						},
+					}
+				}
+
 				return &catapi.CatalogServiceListDeploymentPackagesResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.ListDeploymentPackagesResponse{
 						DeploymentPackages: []catapi.DeploymentPackage{
 							{
-								Name:        "deployment-pkg",
-								Version:     "1.0",
-								DisplayName: stringPtr("deployment.package.display.name"),
-								Description: stringPtr("Publisher.for.testing"),
-								Profiles: &[]catapi.DeploymentProfile{
-									{
-										Name:                "deployment-package-profile",
-										DisplayName:         stringPtr("deployment.profile.display.name"),
-										Description:         stringPtr("Profile.for.testing"),
-										CreateTime:          timePtr(testTime),
-										UpdateTime:          timePtr(testTime),
-										ApplicationProfiles: map[string]string{},
-									},
-								},
+								Name:                    "deployment-pkg",
+								Version:                 "1.0",
+								DisplayName:             stringPtr("deployment.package.display.name"),
+								Description:             stringPtr("Publisher.for.testing"),
+								Profiles:                &profiles,
 								ApplicationDependencies: &[]catapi.ApplicationDependency{},
 								ApplicationReferences: []catapi.ApplicationReference{
 									{Name: "app1", Version: "1.0"},
