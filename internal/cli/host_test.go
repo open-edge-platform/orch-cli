@@ -453,9 +453,9 @@ func (s *CLITestSuite) TestHost() {
 func FuzzHost(f *testing.F) {
 	// Initial corpus with basic input
 	f.Add("project", "./testdata/mock.csv", "", "", "", "", "", "", "", "", "", "", "host-abcd1234", "on", "immediate")
-	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "host-abcd1234", "", "")
+	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "61", "host-abcd1234", "", "")
 	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "", "on", "immediate")
-	f.Fuzz(func(t *testing.T, project string, path string, remoteUser string, site string, secure string, osProfile string, metadata string, clusterDeploy string, clusterTemplate string, clusterConfig string, cloudInit string, amt string, name string, pwr string, pol string) {
+	f.Fuzz(func(t *testing.T, project string, path string, remoteUser string, site string, secure string, osProfile string, metadata string, clusterDeploy string, clusterTemplate string, clusterConfig string, cloudInit string, lvm string, name string, pwr string, pol string) {
 		testSuite := new(CLITestSuite)
 		testSuite.SetT(t) // Set the testing.T instance
 		testSuite.SetupSuite()
@@ -477,7 +477,7 @@ func FuzzHost(f *testing.F) {
 			"cluster-template": clusterTemplate,
 			"cluster-config":   clusterConfig,
 			"cloud-init":       cloudInit,
-			"amt":              amt,
+			"lvm-size":         lvm,
 		}
 
 		_, err := testSuite.createHost(project, HostArgs)

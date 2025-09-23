@@ -114,7 +114,7 @@ func TestReadHostRecords(t *testing.T) {
 			setup: func() {
 				// Create and write to the test file
 				// [{"key":"cluster-name","value":"cl1"},{"key":"app-id","value":""}]
-				content := []byte("Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill\n" +
+				content := []byte("Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSize,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill\n" +
 					"1234,uuid-1234,profile1,site1,true,user1,cluster-name=test&app-id=testApp,,,true,baseline:v2.0.2,role:all;name:cluster;labels:key1=val1&key2=val2,\n" +
 					"5678,uuid-5678,profile2,site2,,user2,meta2,,,true,baseline:v2.0.2,role:all;name:cluster2;labels:key1=val1&key2=val2,")
 				err := os.WriteFile(testFilePath, content, 0o600)
@@ -235,7 +235,7 @@ func TestWriteHostRecords(t *testing.T) {
 					Secure:             types.SecureTrue,
 					RemoteUser:         "user1",
 					Metadata:           "meta1",
-					AMTEnable:          "",
+					LVMSize:            "",
 					CloudInitMeta:      "",
 					K8sEnable:          "true",
 					K8sClusterTemplate: "baseline:v2.0.2",
@@ -250,7 +250,7 @@ func TestWriteHostRecords(t *testing.T) {
 					Secure:             types.SecureFalse,
 					RemoteUser:         "user2",
 					Metadata:           "meta2",
-					AMTEnable:          "",
+					LVMSize:            "",
 					CloudInitMeta:      "",
 					K8sEnable:          "true",
 					K8sClusterTemplate: "baseline:v2.0.2",
@@ -259,7 +259,7 @@ func TestWriteHostRecords(t *testing.T) {
 				},
 			},
 			expectErr: false,
-			expectStr: "Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill\n" +
+			expectStr: "Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSize,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill\n" +
 				"1234,uuid-1234,profile1,site1,true,user1,meta1,,,true,baseline:v2.0.2,role:all;name:cluster;labels:key1=val1&key2=val2,error1\n" +
 				"5678,uuid-5678,profile2,site2,false,user2,meta2,,,true,baseline:v2.0.2,role:all;name:cluster2;labels:key1=val1&key2=val2,error2\n",
 			setup: func() {

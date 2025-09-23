@@ -16,7 +16,7 @@ type HostRecord struct {
 	// The data is decoded to a JSON string before being sent to the server.
 	// Example: [{"key":"cluster-name","value":"test"},{"key":"app-id","value":"testApp"}]
 	Metadata           string
-	AMTEnable          string
+	LVMSize            string
 	CloudInitMeta      string
 	K8sEnable          string
 	K8sClusterTemplate string
