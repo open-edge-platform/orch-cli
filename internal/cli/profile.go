@@ -238,7 +238,7 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
 		return err
 	}
 
@@ -271,7 +271,7 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating profile %s of application %s:%s",
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating profile %s of application %s:%s",
 		profileName, name, version))
 }
 
@@ -343,7 +343,7 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
 		return err
 	}
 
@@ -410,7 +410,7 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error updating profile %s of application %s:%s",
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error updating profile %s of application %s:%s",
 		profileName, name, version))
 }
 
@@ -429,7 +429,7 @@ func runDeleteProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
 		return err
 	}
 
@@ -467,7 +467,7 @@ func runDeleteProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting profile %s of application %s:%s",
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting profile %s of application %s:%s",
 		profileName, name, version))
 }
 

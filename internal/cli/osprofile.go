@@ -392,7 +392,7 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if err = checkResponse(gresp.HTTPResponse, "Error getting OS profiles"); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, "Error getting OS profiles"); err != nil {
 		return err
 	}
 
@@ -420,7 +420,7 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating OS Profile from %s", path))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating OS Profile from %s", path))
 }
 
 // Deletes OS Profile - checks if a profile already exists and then deletes it if it does
@@ -436,7 +436,7 @@ func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if err = checkResponse(gresp.HTTPResponse, "Error getting OS profiles"); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, "Error getting OS profiles"); err != nil {
 		return err
 	}
 
@@ -452,7 +452,7 @@ func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS profile %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting OS profile %s", name))
 }
 
 // Converts map[interface{}]interface{} to map[string]interface{} recursively

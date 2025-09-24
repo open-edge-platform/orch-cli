@@ -59,7 +59,7 @@ func runCreateApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("deployment package %s:%s not found", pkgName, pkgVersion)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("deployment package %s:%s not found", pkgName, pkgVersion)); err != nil {
 		return err
 	}
 
@@ -73,7 +73,7 @@ func runCreateApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	if err != nil {
 		return err
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating application reference %s", args[2]))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating application reference %s", args[2]))
 }
 
 func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) error {
@@ -93,7 +93,7 @@ func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("deployment package %s:%s not found", pkgName, pkgVersion)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("deployment package %s:%s not found", pkgName, pkgVersion)); err != nil {
 		return err
 	}
 
@@ -109,7 +109,7 @@ func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	if err != nil {
 		return err
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting application reference %s for deployment package %s:%s",
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting application reference %s for deployment package %s:%s",
 		applicationName, pkgName, pkgVersion))
 }
 

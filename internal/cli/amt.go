@@ -111,7 +111,7 @@ func runListAmtProfileCommand(cmd *cobra.Command, _ []string) error {
 		return processError(err)
 	}
 
-	if err := checkResponse(resp.HTTPResponse, "error while retrieving AMT profiles"); err != nil {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving AMT profiles"); err != nil {
 		return err
 	}
 
@@ -177,7 +177,7 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, "error while creating AMT")
+	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating AMT")
 }
 
 func runGetAmtProfileCommand(cmd *cobra.Command, args []string) error {
@@ -219,7 +219,7 @@ func runDeleteAmtProfileCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	err = checkResponse(resp.HTTPResponse, "error while deleting AMT profile")
+	err = checkResponse(resp.HTTPResponse, resp.Body, "error while deleting AMT profile")
 	if err != nil {
 		if strings.Contains(string(resp.Body), `"Not Found"`) {
 			return errors.New("AMT profile does not exist")

@@ -197,7 +197,7 @@ func (s *CLITestSuite) TestSite() {
 
 	//delete invalid custom config
 	_, err = s.deleteSite(project, "nonexistent-site", make(map[string]string))
-	s.EqualError(err, "error while deleting site: Not Found")
+	s.EqualError(err, "error while deleting site: Not Found\n")
 
 }
 

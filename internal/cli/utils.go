@@ -270,23 +270,23 @@ func readInputWithLimit(path string) ([]byte, error) {
 
 // Checks the specified REST status and if it signals an anomaly, return an error formatted using the specified message
 // and status details.
-func checkResponse(response *http.Response, message string) error {
+func checkResponse(response *http.Response, body []byte, message string) error {
 	if response != nil {
-		return checkResponseCode(response.StatusCode, message, response.Status)
+		return checkResponseCode(response.StatusCode, message, response.Status, body)
 	}
 	return nil
 }
 
 // Checks the specified REST status and if it signals an anomaly, return an error formatted using the specified message
 // and status details.
-func checkResponseCode(responseCode int, message string, responseMessage string) error {
+func checkResponseCode(responseCode int, message string, responseMessage string, body []byte) error {
 	if responseCode == 401 {
 		return fmt.Errorf("%s. Unauthorized. Please Login. %s", message, responseMessage)
 	} else if responseCode != 200 && responseCode != 201 && responseCode != 204 {
 		if len(message) > 0 {
-			return fmt.Errorf("%s: %s", message, responseMessage)
+			return fmt.Errorf("%s: %s\n%s", message, responseMessage, body)
 		}
-		return fmt.Errorf("%s", responseMessage)
+		return fmt.Errorf("%s\n%s", responseMessage, body)
 	}
 	return nil
 }
@@ -317,11 +317,11 @@ func checkResponseGRPC(response *http.Response, message string) error {
 			// if the grpc Status included a message then use it and return.
 			// Otherwise, fall back to the standard response message.
 			if status.Message != "" {
-				return checkResponseCode(response.StatusCode, message, status.Message)
+				return checkResponseCode(response.StatusCode, message, status.Message, []byte{})
 			}
 		}
 	}
-	return checkResponseCode(response.StatusCode, message, response.Status)
+	return checkResponseCode(response.StatusCode, message, response.Status, []byte{})
 }
 
 // Checks the status code and returns the appropriate error

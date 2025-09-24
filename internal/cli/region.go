@@ -151,7 +151,7 @@ func runCreateRegionCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		err = checkResponse(presp.HTTPResponse, "error while creating region - parent region not found")
+		err = checkResponse(presp.HTTPResponse, presp.Body, "error while creating region - parent region not found")
 		if err != nil {
 			return processError(err)
 		}
@@ -167,7 +167,7 @@ func runCreateRegionCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, "error while creating region")
+	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating region")
 }
 
 func runDeleteRegionCommand(cmd *cobra.Command, args []string) error {
@@ -189,7 +189,7 @@ func runDeleteRegionCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	err = checkResponse(resp.HTTPResponse, "error while deleting region")
+	err = checkResponse(resp.HTTPResponse, resp.Body, "error while deleting region")
 	if err != nil {
 		if strings.Contains(string(resp.Body), `"message":"region_resource not found"`) {
 			return errors.New("region does not exist")
