@@ -171,7 +171,7 @@ func runCreateProviderCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, "error while creating provider")
+	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating provider")
 
 }
 
@@ -218,7 +218,7 @@ func runDeleteProviderCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	err = checkResponse(resp.HTTPResponse, "error while deleting provider")
+	err = checkResponse(resp.HTTPResponse, resp.Body, "error while deleting provider")
 	if err != nil {
 		if strings.Contains(string(resp.Body), `"message":"provider_resource not found"`) {
 			return errors.New("provider does not exist")

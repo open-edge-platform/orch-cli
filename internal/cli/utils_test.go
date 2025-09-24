@@ -173,19 +173,19 @@ func TestCheckResponseGRPC(t *testing.T) {
 			name:           "gRPC error with message and details",
 			statusCode:     500,
 			body:           `{"message":"grpc error occurred","code":13,"details":[{"value":"detail1"},{"value":"detail2"}]}`,
-			expectedErrMsg: "test-message: grpc error occurred",
+			expectedErrMsg: "test-message: grpc error occurred\n",
 		},
 		{
 			name:           "gRPC error with only message",
 			statusCode:     400,
 			body:           `{"message":"bad request","code":3}`,
-			expectedErrMsg: "test-message: bad request",
+			expectedErrMsg: "test-message: bad request\n",
 		},
 		{
 			name:           "gRPC error with invalid JSON",
 			statusCode:     400,
 			body:           `invalid json`,
-			expectedErrMsg: "test-message: Bad Request",
+			expectedErrMsg: "test-message: Bad Request\n",
 		},
 		{
 			name:           "non-error response",

@@ -199,7 +199,7 @@ func runGetSSHKeyCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := checkResponse(resp.HTTPResponse, "error while retrieving ssh key"); err != nil {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving ssh key"); err != nil {
 		return err
 	}
 
@@ -211,7 +211,7 @@ func runGetSSHKeyCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if err := checkResponse(iresp.HTTPResponse, "error while retrieving instances"); err != nil {
+		if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving instances"); err != nil {
 			return err
 		}
 
@@ -300,7 +300,7 @@ func runCreateSSHKeyCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating SSH key from %s", path))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating SSH key from %s", path))
 }
 
 // Deletes SSH Key - checks if a key already exists and then deletes it if it does
@@ -318,7 +318,7 @@ func runDeleteSSHKeyCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if err = checkResponse(gresp.HTTPResponse, "Error getting SSH keys"); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, "Error getting SSH keys"); err != nil {
 		return err
 	}
 
@@ -333,5 +333,5 @@ func runDeleteSSHKeyCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting SSH key %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting SSH key %s", name))
 }

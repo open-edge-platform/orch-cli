@@ -120,7 +120,7 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("deployment package %s:%s not found", name, version)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("deployment package %s:%s not found", name, version)); err != nil {
 		return err
 	}
 
@@ -155,7 +155,7 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating deployment profile %s", profileName))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating deployment profile %s", profileName))
 }
 
 func runListDeploymentProfilesCommand(cmd *cobra.Command, args []string) error {
@@ -228,7 +228,7 @@ func runSetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("deployment package %s:%s not found", name, version)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("deployment package %s:%s not found", name, version)); err != nil {
 		return err
 	}
 
@@ -260,7 +260,7 @@ func runSetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while updating deployment profile %s for deployment package %s:%s",
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating deployment profile %s for deployment package %s:%s",
 		profileName, name, version))
 }
 
@@ -279,7 +279,7 @@ func runDeleteDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("deployment package %s:%s not found", name, version)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("deployment package %s:%s not found", name, version)); err != nil {
 		return err
 	}
 
@@ -309,6 +309,6 @@ func runDeleteDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return err
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting deployment profile %s for deployment package %s:%s",
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting deployment profile %s for deployment package %s:%s",
 		profileName, name, version))
 }

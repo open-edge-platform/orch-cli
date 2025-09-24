@@ -159,5 +159,5 @@ func runDeleteOSUpdateRunCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS Update run %s", osrun))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting OS Update run %s", osrun))
 }
