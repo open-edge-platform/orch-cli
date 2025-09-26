@@ -64,6 +64,7 @@ func getCreateCommand() *cobra.Command {
 		getCreateOSProfileCommand(),
 		getCreateProviderCommand(),
 		getCreateSSHKeyCommand(),
+		getCreateScheduleCommand(),
 	)
 	return cmd
 }
@@ -189,6 +190,7 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteHostCommand(),
 		getDeleteProviderCommand(),
 		getDeleteSSHKeyCommand(),
+		getDeleteScheduleCommand(),
 	)
 	return catalogDeleteRootCmd
 }
