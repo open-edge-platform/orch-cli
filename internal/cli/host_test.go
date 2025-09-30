@@ -353,6 +353,7 @@ func (s *CLITestSuite) TestHost() {
 		"-   Host Status:":             "Running",
 		"-   Update Status:":           "",
 		"-   NIC Name and IP Address:": "eth0 192.168.1.102;",
+		"-   LVM Size:":                "10 GB",
 		"Specification:":               "",
 		"-   Serial Number:":           "1234567890",
 		"-   UUID:":                    "550e8400-e29b-41d4-a716-446655440000",

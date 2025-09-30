@@ -264,6 +264,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	var cveEntries []CVEEntry
 	provstatus := "Not Provisioned"
 	hostdetails := ""
+	lvmsize := ""
 
 	//TODO Build out the host information
 	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
@@ -315,11 +316,16 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		}
 	}
 
+	if host.UserLvmSize != nil {
+		lvmsize = strconv.FormatInt(int64(*host.UserLvmSize), 10) + " GB"
+	}
+
 	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Resurce ID:\t %s\n", *host.ResourceId)
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
 	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
-	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n\n", ip)
+	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n", ip)
+	_, _ = fmt.Fprintf(writer, "-\tLVM Size:\t %v\n\n", lvmsize)
 
 	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
@@ -403,7 +409,7 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 	// get the required fields from the record
 	sNo := rIn.Serial
 	uuid := rIn.UUID
-	lvmSize := ""
+	var lvmSize *int
 	// predefine other fields
 	hostName := ""
 	hostID := ""
@@ -414,9 +420,10 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 		return
 	}
 
-	//check if LVM size is set
 	if rOut.LVMSize != "" {
-		lvmSize = rOut.LVMSize
+		if lvmInt, err := strconv.Atoi(rOut.LVMSize); err == nil {
+			lvmSize = &lvmInt
+		}
 	}
 
 	hostID, err = registerHost(ctx, hClient, respCache, projectName, hostName, sNo, uuid, autonboard, lvmSize)
@@ -598,7 +605,7 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 		return nil, err
 	}
 
-	lvmsize := resolveLVMSize(record.LVMSize, globalAttr.LVMSize)
+	lvmSize := resolveLVMSize(record.LVMSize, globalAttr.LVMSize)
 
 	isK8s := resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
 	k8sConfig := record.K8sConfig
@@ -627,7 +634,7 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 		UUID:               record.UUID,
 		Serial:             record.Serial,
 		Metadata:           metadataToUse,
-		LVMSize:            lvmsize,
+		LVMSize:            lvmSize,
 		CloudInitMeta:      cloudInitIDs,
 		K8sEnable:          isK8s,
 		K8sClusterTemplate: k8sTmplID,
@@ -745,17 +752,17 @@ func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface
 
 // Checks if LVM size is valid
 func resolveLVMSize(recordLVMSize string, globalLVMSize string) string {
-	var lvmSize int64
+	lvmSize := ""
 
 	if recordLVMSize != "" {
-		lvmSize, _ = strconv.ParseInt(recordLVMSize, 10, 64)
+		lvmSize = recordLVMSize
 	}
 
 	if globalLVMSize != "" {
-		lvmSize, _ = strconv.ParseInt(globalLVMSize, 10, 64)
+		lvmSize = globalLVMSize
 	}
 
-	return strconv.FormatInt(lvmSize, 10)
+	return lvmSize
 }
 
 // Checks if cluster deployment is enabled
@@ -1504,11 +1511,8 @@ func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 }
 
 // Function containing the logic to register the host and retrieve the host ID
-func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterface, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool, lvmsize string) (string, error) {
+func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterface, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool, lvmsize *int) (string, error) {
 	// Register host
-
-	//TODO remove debug message
-	fmt.Printf("LVM Size is: %s", lvmsize)
 
 	resp, err := hClient.HostServiceRegisterHostWithResponse(ctx, projectName,
 		infra.HostServiceRegisterHostJSONRequestBody{
@@ -1516,7 +1520,7 @@ func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterfac
 			SerialNumber: &sNo,
 			Uuid:         &uuid,
 			AutoOnboard:  &autonboard,
-			//LVMSize:      &lvmsize,
+			UserLvmSize:  lvmsize,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return "", processError(err)
