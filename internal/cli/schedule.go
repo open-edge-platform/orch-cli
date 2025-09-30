@@ -30,7 +30,7 @@ orch-cli create schedule myschedule --project some-project`
 const deleteScheduleExamples = `# Delete a schedule resource using it's name
 orch-cli delete schedule myschedule --project some-project`
 
-var ScheduleHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Host", "Type")
+var ScheduleHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Target", "Type")
 
 // Prints SSH keys in tabular format
 func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleResource, repeatedSchedules []infra.RepeatedScheduleResource, verbose bool) {
@@ -38,12 +38,21 @@ func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleReso
 	status := "Unspecified"
 	maintenanceType := "Unspecified"
 
+	target := "Unspecified"
+
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\n", "Name", "Host", "Resource ID", "Type")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\n", "Name", "Target", "Resource ID", "Type")
 	}
 
 	for _, schedule := range singleSchedules {
 
+		if schedule.TargetHostId != nil && *schedule.TargetHostId != "" {
+			target = *schedule.TargetHostId
+		} else if schedule.TargetRegionId != nil && *schedule.TargetRegionId != "" {
+			target = *schedule.TargetRegionId
+		} else if schedule.TargetSiteId != nil && *schedule.TargetSiteId != "" {
+			target = *schedule.TargetSiteId
+		}
 		if schedule.ScheduleStatus == infra.SCHEDULESTATUSMAINTENANCE {
 			status = "Maintenance"
 		} else if schedule.ScheduleStatus == infra.SCHEDULESTATUSOSUPDATE {
@@ -52,13 +61,19 @@ func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleReso
 		maintenanceType = "single"
 
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, *schedule.TargetHostId, status)
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, target, status)
 		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", *schedule.Name, *schedule.TargetHostId, *schedule.ResourceId, maintenanceType)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId, maintenanceType)
 		}
 	}
 	for _, schedule := range repeatedSchedules {
-
+		if schedule.TargetHostId != nil && *schedule.TargetHostId != "" {
+			target = *schedule.TargetHostId
+		} else if schedule.TargetRegionId != nil && *schedule.TargetRegionId != "" {
+			target = *schedule.TargetRegionId
+		} else if schedule.TargetSiteId != nil && *schedule.TargetSiteId != "" {
+			target = *schedule.TargetSiteId
+		}
 		if schedule.ScheduleStatus == infra.SCHEDULESTATUSMAINTENANCE {
 			status = "Maintenance"
 		} else if schedule.ScheduleStatus == infra.SCHEDULESTATUSOSUPDATE {
@@ -67,9 +82,9 @@ func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleReso
 		maintenanceType = "repeated"
 
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, *schedule.TargetHostId, status)
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, target, status)
 		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", *schedule.Name, *schedule.TargetHostId, *schedule.ResourceId, maintenanceType)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId, maintenanceType)
 		}
 	}
 }
