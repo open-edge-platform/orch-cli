@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -57,7 +58,7 @@ func SanitizeEntries(entries []types.HostRecord) ([]types.HostRecord, error) {
 		errMsg := ""
 		sanitizedRecord := record
 
-		// if line has anything other than Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sClusterTemplate terminate
+		// if line has anything other than Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSIZE,CloudInitMeta,K8sClusterTemplate terminate
 		if record.Error != "" {
 			return nil, e.NewCustomError(e.ErrNoComment)
 		}
@@ -99,6 +100,16 @@ func SanitizeEntries(entries []types.HostRecord) ([]types.HostRecord, error) {
 			sanitizedRecord.Site = siteID
 		} else {
 			errMsg = fmt.Sprintf("%s %s;", errMsg, e.NewCustomError(e.ErrSiteRequired).Error())
+		}
+
+		// Check if LVM Size is an integer and non-negative
+		if record.LVMSize != "" {
+			lvmSize := strings.Trim(record.LVMSize, TRIMSET)
+			if _, err := strconv.Atoi(lvmSize); err != nil {
+				errMsg = fmt.Sprintf("%s%s;", errMsg, e.NewCustomError(e.ErrInvalidLVMSize).Error())
+			} else {
+				sanitizedRecord.LVMSize = lvmSize
+			}
 		}
 
 		//Check if Cluster Template is valid

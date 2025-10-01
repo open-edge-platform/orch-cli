@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   pre-checks:
-    runs-on: ${{ github.repository_owner == 'intel' && 'intel-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: 'ubuntu-latest'
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -36,7 +36,6 @@ jobs:
       run_validate_clean_folder: false
       run_docker_build: false
       run_artifact: false
-      project_folder: ${{ matrix.project_folder }}
   final-check:
     runs-on: ubuntu-latest
     if: ${{ always() }}

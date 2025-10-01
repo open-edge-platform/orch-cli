@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,18 +69,18 @@ Site - The resource ID of the site to which the host will be provisioned - manda
 Secure - Optional security feature to configure for the host - must be supported by OS Profile if enabled
 Remote User - Optional remote user name or resource ID to configure for the host
 Metadata - Optional metadata to configure for the host
-AMTEnable - Optional AMT feature to be configured for the host
+LVMSize - Optional LVM size to be configured for the host
 CloudInitMeta - Optional Cloud Init Metadata to be configured for the host
 K8sEnable - Optional command to enable cluster deployment
 K8sClusterTemplate - Optional Cluster template to be used for K8s deployment on the host, must be provided if K8sEnable is true
 K8sClusterConfig - Optional Cluster config to be used to specify role and cluster name and/or cluster labels
 
-Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
+Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSize,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
 2500JF3,4c4c4544-2046-5310-8052-cac04f515233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,,localaccount-4c2c5f5a
 1500JF3,1c4c4544-2046-5310-8052-cac04f515233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,,key1=value1&key2=value2
 15002F3,114c4544-2046-5310-8052-cac04f512233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,,key1=value2&key3=value4
 11002F3,2c4c4544-2046-5310-8052-cac04f512233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,,key1=value2&key3=value4,,cloudinitname&customconfig-1234abcd
-25002F3,214c4544-2046-5310-8052-cac04f512233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,user,key1=value2&key3=value4,,,true,baseline:v2.0.2,,role:all;name:mycluster;labels:key1=val1&key2=val2
+25002F3,214c4544-2046-5310-8052-cac04f512233,"Edge Microvisor Toolkit 3.0.20250617",site-c69a3c81,false,user,key1=value2&key3=value4,60,,true,baseline:v2.0.2,,role:all;name:mycluster;labels:key1=val1&key2=val2
 
 # --dry-run allows for verification of the validity of the input csv file without creating hosts
 orch-cli create host --project some-project --import-from-csv test.csv --dry-run
@@ -98,7 +99,7 @@ orch-cli create host --project some-project --import-from-csv test.csv
 --cluster-template - name and version of the cluster template to be used for cluster cration (separated by :)
 --cluster-config - extra configuration for cluster creation empty defaults to "role:all", if not empty role must be defined, name and labels are optional (labels separated by &)
 --cloud-init - name or resource ID of custom config - multiple configs must be separated by &
---amt - flag to enable AMT activation on Edge Node - accepted value true|false
+--lvm-size - size of the LVM to be configured for the host
 
 # Create hosts from CSV and override provided values
 /orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
@@ -263,6 +264,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	var cveEntries []CVEEntry
 	provstatus := "Not Provisioned"
 	hostdetails := ""
+	lvmsize := ""
 
 	//TODO Build out the host information
 	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
@@ -314,11 +316,16 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		}
 	}
 
+	if host.UserLvmSize != nil {
+		lvmsize = strconv.FormatInt(int64(*host.UserLvmSize), 10) + " GB"
+	}
+
 	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Resurce ID:\t %s\n", *host.ResourceId)
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
 	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
-	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n\n", ip)
+	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n", ip)
+	_, _ = fmt.Fprintf(writer, "-\tLVM Size:\t %v\n\n", lvmsize)
 
 	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
@@ -402,23 +409,24 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 	// get the required fields from the record
 	sNo := rIn.Serial
 	uuid := rIn.UUID
+	var lvmSize *int
 	// predefine other fields
 	hostName := ""
 	hostID := ""
 	autonboard := true
-	amt := false
 
 	rOut, err := sanitizeProvisioningFields(ctx, ctx2, hClient, projectName, rIn, respCache, globalAttr, erringRecords, cClient)
 	if err != nil {
 		return
 	}
 
-	//check if vPRO is enabled
-	if rOut.AMTEnable == "true" {
-		amt = true
+	if rOut.LVMSize != "" {
+		if lvmInt, err := strconv.Atoi(rOut.LVMSize); err == nil {
+			lvmSize = &lvmInt
+		}
 	}
 
-	hostID, err = registerHost(ctx, hClient, respCache, projectName, hostName, sNo, uuid, autonboard, amt)
+	hostID, err = registerHost(ctx, hClient, respCache, projectName, hostName, sNo, uuid, autonboard, lvmSize)
 	if err != nil {
 		rIn.Error = err.Error()
 		*erringRecords = append(*erringRecords, rIn)
@@ -597,7 +605,7 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 		return nil, err
 	}
 
-	isAMT := resolveAMT(record.AMTEnable, globalAttr.AMTEnable)
+	lvmSize := resolveLVMSize(record.LVMSize, globalAttr.LVMSize)
 
 	isK8s := resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
 	k8sConfig := record.K8sConfig
@@ -626,7 +634,7 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 		UUID:               record.UUID,
 		Serial:             record.Serial,
 		Metadata:           metadataToUse,
-		AMTEnable:          isAMT,
+		LVMSize:            lvmSize,
 		CloudInitMeta:      cloudInitIDs,
 		K8sEnable:          isK8s,
 		K8sClusterTemplate: k8sTmplID,
@@ -742,21 +750,19 @@ func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface
 	return *resp.JSON200.ResourceId, nil
 }
 
-// Checks if AMT is enabled
-func resolveAMT(recordAMTEnable string,
-	globalAMTEnable string) string {
+// Checks if LVM size is valid
+func resolveLVMSize(recordLVMSize string, globalLVMSize string) string {
+	lvmSize := ""
 
-	isEnabled := recordAMTEnable
-
-	if globalAMTEnable != "" {
-		isEnabled = globalAMTEnable
+	if recordLVMSize != "" {
+		lvmSize = recordLVMSize
 	}
 
-	if isEnabled != "true" {
-		return ""
+	if globalLVMSize != "" {
+		lvmSize = globalLVMSize
 	}
 
-	return isEnabled
+	return lvmSize
 }
 
 // Checks if cluster deployment is enabled
@@ -997,7 +1003,7 @@ func getCreateHostCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("cluster-config", "f", viper.GetString("cluster-config"), "Override the cluster configuration provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("cloud-init", "j", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
 	cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
-	cmd.PersistentFlags().BoolP("amt", "a", viper.GetBool("amt"), "Override the AMT feature configuration provided in CSV file for all hosts")
+	cmd.PersistentFlags().StringP("lvm-size", "l", viper.GetString("lvm-size"), "Override the LVM size configuration provided in CSV file for all hosts")
 
 	return cmd
 }
@@ -1263,7 +1269,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	k8sIn, _ := cmd.Flags().GetString("cluster-deploy")
 	k8sTmplIn, _ := cmd.Flags().GetString("cluster-template")
 	k8sConfigIn, _ := cmd.Flags().GetString("cluster-config")
-	amtIn, _ := cmd.Flags().GetString("amt")
+	lvmIn, _ := cmd.Flags().GetString("lvm-size")
 
 	globalAttr := &types.HostRecord{
 		OSProfile:          osProfileIn,
@@ -1271,7 +1277,7 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		Secure:             types.StringToRecordSecure(secureIn),
 		RemoteUser:         remoteUserIn,
 		Metadata:           metadataIn,
-		AMTEnable:          amtIn,
+		LVMSize:            lvmIn,
 		K8sEnable:          k8sIn,
 		K8sClusterTemplate: k8sTmplIn,
 		K8sConfig:          k8sConfigIn,
@@ -1505,15 +1511,16 @@ func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 }
 
 // Function containing the logic to register the host and retrieve the host ID
-func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterface, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool, amt bool) (string, error) {
+func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterface, respCache ResponseCache, projectName, hostName, sNo, uuid string, autonboard bool, lvmsize *int) (string, error) {
 	// Register host
+
 	resp, err := hClient.HostServiceRegisterHostWithResponse(ctx, projectName,
 		infra.HostServiceRegisterHostJSONRequestBody{
 			Name:         &hostName,
 			SerialNumber: &sNo,
 			Uuid:         &uuid,
 			AutoOnboard:  &autonboard,
-			EnableVpro:   &amt,
+			UserLvmSize:  lvmsize,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return "", processError(err)
