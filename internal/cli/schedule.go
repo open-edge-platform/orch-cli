@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 	"time" // Add this import
@@ -24,13 +25,23 @@ orch-cli list schedule --project some-project
 const getScheduleExamples = `# Get detailed information about specific schedule resource using it's name
 orch-cli get schedule myschedule --project some-project`
 
-const createScheduleExamples = `# Create a new schedule resource 
-orch-cli create schedule myschedule --project some-project`
+const createScheduleExamples = `# Create a new repeated schedule, an osupdate , using days of week
+orch-cli create  schedules my-schedule --timezone GMT --frequency-type repeated --maintenance-type osupdate --target site-532d1d07 --frequency weekly --start-time "10:10" --day-of-week "1-3,5" --months "2,4,7-8" --duration 3600
+
+# Create a new repeated schedule, a maintenance , using days of month
+orch-cli create  schedules rcli2 --timezone GMT  --frequency-type repeated  --maintenance-type osupdate --target site-532d1d07 --frequency monthly --start-time "10:10" --day-of-month "1,6,31" --months "2,4,7-12" --duration 3600
+
+# Create a new single schedule, an osupdate
+orch-cli create  schedules my-schedule --timezone GMT --frequency-type single --maintenance-type osupdate --target region-65c0d433 --start-time "2026-12-01 20:20"
+`
 
 const deleteScheduleExamples = `# Delete a schedule resource using it's name
 orch-cli delete schedule myschedule --project some-project`
 
 var ScheduleHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Target", "Type")
+
+const SINGLE = 0
+const REPEATED = 1
 
 // Prints SSH keys in tabular format
 func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleResource, repeatedSchedules []infra.RepeatedScheduleResource, verbose bool) {
@@ -121,8 +132,8 @@ func printSchedule(writer io.Writer, singleSchedule infra.SingleScheduleResource
 		_, _ = fmt.Fprintf(writer, "Target Region ID: \t%s\n", *repeatedSchedule.TargetRegionId)
 		_, _ = fmt.Fprintf(writer, "Target Site ID: \t%s\n", *repeatedSchedule.TargetSiteId)
 		_, _ = fmt.Fprintf(writer, "Schedule Status: \t%s\n", repeatedSchedule.ScheduleStatus)
-		_, _ = fmt.Fprintf(writer, "Month: \t%s\n", repeatedSchedule.CronDayMonth)
-		_, _ = fmt.Fprintf(writer, "Day: \t%s\n", repeatedSchedule.CronDayMonth)
+		_, _ = fmt.Fprintf(writer, "Month: \t%s\n", repeatedSchedule.CronMonth)
+		_, _ = fmt.Fprintf(writer, "Month day: \t%s\n", repeatedSchedule.CronDayMonth)
 		_, _ = fmt.Fprintf(writer, "Weekday: \t%s\n", repeatedSchedule.CronDayWeek)
 		// Show both UTC and converted times
 		_, _ = fmt.Fprintf(writer, "Hour (UTC): \t%s\n", repeatedSchedule.CronHours)
@@ -205,12 +216,21 @@ func parseTargetResource(target string) (hostname, region, site *string, err err
 }
 
 // validateStartTimeFormat validates that the start time is in the correct format "YYYY-MM-DD HH:MM"
-func validateStartTimeFormat(startTime string) bool {
-	// Expected format: "YYYY-MM-DD HH:MM"
-	const timeFormat = "2006-01-02 15:04"
+func validateStartTimeFormat(startTime string, m int) bool {
+	const sTimeFormat = "2006-01-02 15:04"
+	const rTimeFormat = "15:04"
 
-	_, err := time.Parse(timeFormat, startTime)
-	return err == nil
+	if m == 0 {
+		_, err := time.Parse(sTimeFormat, startTime)
+		return err == nil
+	}
+	if m == 1 {
+		_, err := time.Parse(rTimeFormat, startTime)
+		return err == nil
+	}
+
+	return false
+
 }
 
 // getTimeInSeconds converts a time string and timezone to Unix timestamp
@@ -231,6 +251,287 @@ func getTimeInSeconds(timeStr, timezone string) int64 {
 	}
 
 	return t.Unix()
+}
+
+// getTimeInCron converts a time string in "HH:MM" format and timezone to cron hour and minute strings
+func getTimeInCron(timeStr, timezone string) (string, string) {
+	const timeFormat = "15:04" // HH:MM format
+
+	// Load the specified timezone
+	loc, err := time.LoadLocation(timezone)
+	if err != nil {
+		// Fallback to UTC if timezone is invalid
+		loc = time.UTC
+	}
+
+	// Parse the time in HH:MM format
+	t, err := time.Parse(timeFormat, timeStr)
+	if err != nil {
+		// Return default values if parsing fails
+		return "0", "0"
+	}
+
+	// Create a time in the specified timezone for today with the parsed hour/minute
+	now := time.Now().In(loc)
+	localTime := time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), 0, 0, loc)
+
+	// Convert to UTC for cron (since cron times are stored in UTC)
+	utcTime := localTime.UTC()
+
+	return fmt.Sprintf("%d", utcTime.Hour()), fmt.Sprintf("%d", utcTime.Minute())
+}
+
+// convertDayOfWeekToCron converts user-friendly day names to cron format (0-6)
+// Supports individual days (mon,tue) and ranges (1-3,5)
+func convertDayOfWeekToCron(dayOfWeek string) (string, error) {
+	if dayOfWeek == "" {
+		return "", nil // Empty is allowed for filters
+	}
+
+	// Map of day names to cron numbers (0=Sunday, 1=Monday, ..., 6=Saturday)
+	dayMap := map[string]string{
+		"sun": "0", "sunday": "0",
+		"mon": "1", "monday": "1",
+		"tue": "2", "tuesday": "2",
+		"wed": "3", "wednesday": "3",
+		"thu": "4", "thursday": "4",
+		"fri": "5", "friday": "5",
+		"sat": "6", "saturday": "6",
+	}
+
+	// Split comma-separated days/ranges
+	parts := strings.Split(dayOfWeek, ",")
+	daySet := make(map[int]bool) // To avoid duplicates
+
+	for _, part := range parts {
+		part = strings.ToLower(strings.TrimSpace(part))
+
+		// Check if it's a range (contains hyphen)
+		if strings.Contains(part, "-") {
+			rangeParts := strings.Split(part, "-")
+			if len(rangeParts) != 2 {
+				return "", fmt.Errorf("invalid range format '%s', expected format like '1-3'", part)
+			}
+
+			start, err := strconv.Atoi(strings.TrimSpace(rangeParts[0]))
+			if err != nil {
+				return "", fmt.Errorf("invalid start day '%s' in range '%s'", rangeParts[0], part)
+			}
+
+			end, err := strconv.Atoi(strings.TrimSpace(rangeParts[1]))
+			if err != nil {
+				return "", fmt.Errorf("invalid end day '%s' in range '%s'", rangeParts[1], part)
+			}
+
+			// Validate range
+			if start < 0 || start > 6 {
+				return "", fmt.Errorf("invalid start day %d in range '%s', must be between 0-6", start, part)
+			}
+			if end < 0 || end > 6 {
+				return "", fmt.Errorf("invalid end day %d in range '%s', must be between 0-6", end, part)
+			}
+			if start > end {
+				return "", fmt.Errorf("invalid range '%s', start day must be less than or equal to end day", part)
+			}
+
+			// Add all days in range
+			for day := start; day <= end; day++ {
+				daySet[day] = true
+			}
+		} else {
+			// Single day - check if it's already a cron number (0-6)
+			if len(part) == 1 && part >= "0" && part <= "6" {
+				dayNum, _ := strconv.Atoi(part)
+				daySet[dayNum] = true
+				continue
+			}
+
+			// Convert from day name to cron number
+			if cronNum, exists := dayMap[part]; exists {
+				dayNum, _ := strconv.Atoi(cronNum)
+				daySet[dayNum] = true
+			} else {
+				return "", fmt.Errorf("invalid day '%s', must be one of: sun,mon,tue,wed,thu,fri,sat or 0-6", part)
+			}
+		}
+	}
+
+	// Convert set to sorted slice
+	var dayList []int
+	for day := range daySet {
+		dayList = append(dayList, day)
+	}
+
+	// Sort the days
+	sort.Ints(dayList)
+
+	// Convert to strings
+	var cronDays []string
+	for _, day := range dayList {
+		cronDays = append(cronDays, strconv.Itoa(day))
+	}
+
+	return strings.Join(cronDays, ","), nil
+}
+
+// convertDayOfMonthToCron converts day of month values to cron format (1-31)
+// Supports individual days (1,15,31) and ranges (1-5,20-25)
+func convertDayOfMonthToCron(dayOfMonth string) (string, error) {
+	if dayOfMonth == "" {
+		return "", nil // Empty is allowed for filters
+	}
+
+	// Split comma-separated days/ranges
+	parts := strings.Split(dayOfMonth, ",")
+	daySet := make(map[int]bool) // To avoid duplicates
+
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+
+		// Check if it's a range (contains hyphen)
+		if strings.Contains(part, "-") {
+			rangeParts := strings.Split(part, "-")
+			if len(rangeParts) != 2 {
+				return "", fmt.Errorf("invalid range format '%s', expected format like '1-5'", part)
+			}
+
+			start, err := strconv.Atoi(strings.TrimSpace(rangeParts[0]))
+			if err != nil {
+				return "", fmt.Errorf("invalid start day '%s' in range '%s'", rangeParts[0], part)
+			}
+
+			end, err := strconv.Atoi(strings.TrimSpace(rangeParts[1]))
+			if err != nil {
+				return "", fmt.Errorf("invalid end day '%s' in range '%s'", rangeParts[1], part)
+			}
+
+			// Validate range
+			if start < 1 || start > 31 {
+				return "", fmt.Errorf("invalid start day %d in range '%s', must be between 1-31", start, part)
+			}
+			if end < 1 || end > 31 {
+				return "", fmt.Errorf("invalid end day %d in range '%s', must be between 1-31", end, part)
+			}
+			if start > end {
+				return "", fmt.Errorf("invalid range '%s', start day must be less than or equal to end day", part)
+			}
+
+			// Add all days in range
+			for day := start; day <= end; day++ {
+				daySet[day] = true
+			}
+		} else {
+			// Single day
+			dayNum, err := strconv.Atoi(part)
+			if err != nil {
+				return "", fmt.Errorf("invalid day of month '%s', must be a number between 1-31", part)
+			}
+
+			// Validate range (1-31)
+			if dayNum < 1 || dayNum > 31 {
+				return "", fmt.Errorf("invalid day of month %d, must be between 1-31", dayNum)
+			}
+
+			daySet[dayNum] = true
+		}
+	}
+
+	// Convert set to sorted slice
+	var dayList []int
+	for day := range daySet {
+		dayList = append(dayList, day)
+	}
+
+	// Sort the days
+	sort.Ints(dayList)
+
+	// Convert to strings
+	var cronDays []string
+	for _, day := range dayList {
+		cronDays = append(cronDays, strconv.Itoa(day))
+	}
+
+	return strings.Join(cronDays, ","), nil
+}
+
+// convertMonthToCron converts month values to cron format (1-12)
+// Supports individual months (1,2,12) and ranges (1-3,5-8)
+func convertMonthToCron(months string) (string, error) {
+	if months == "" {
+		return "", nil // Empty is allowed for filters
+	}
+
+	// Split comma-separated months/ranges
+	parts := strings.Split(months, ",")
+	var cronMonths []string
+	monthSet := make(map[int]bool) // To avoid duplicates
+
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+
+		// Check if it's a range (contains hyphen)
+		if strings.Contains(part, "-") {
+			rangeParts := strings.Split(part, "-")
+			if len(rangeParts) != 2 {
+				return "", fmt.Errorf("invalid range format '%s', expected format like '1-3'", part)
+			}
+
+			start, err := strconv.Atoi(strings.TrimSpace(rangeParts[0]))
+			if err != nil {
+				return "", fmt.Errorf("invalid start month '%s' in range '%s'", rangeParts[0], part)
+			}
+
+			end, err := strconv.Atoi(strings.TrimSpace(rangeParts[1]))
+			if err != nil {
+				return "", fmt.Errorf("invalid end month '%s' in range '%s'", rangeParts[1], part)
+			}
+
+			// Validate range
+			if start < 1 || start > 12 {
+				return "", fmt.Errorf("invalid start month %d in range '%s', must be between 1-12", start, part)
+			}
+			if end < 1 || end > 12 {
+				return "", fmt.Errorf("invalid end month %d in range '%s', must be between 1-12", end, part)
+			}
+			if start > end {
+				return "", fmt.Errorf("invalid range '%s', start month must be less than or equal to end month", part)
+			}
+
+			// Add all months in range
+			for month := start; month <= end; month++ {
+				monthSet[month] = true
+			}
+		} else {
+			// Single month
+			month, err := strconv.Atoi(part)
+			if err != nil {
+				return "", fmt.Errorf("invalid month '%s', must be a number between 1-12", part)
+			}
+
+			// Validate range (1-12)
+			if month < 1 || month > 12 {
+				return "", fmt.Errorf("invalid month %d, must be between 1-12", month)
+			}
+
+			monthSet[month] = true
+		}
+	}
+
+	// Convert set to sorted slice
+	var monthList []int
+	for month := range monthSet {
+		monthList = append(monthList, month)
+	}
+
+	// Sort the months
+	sort.Ints(monthList)
+
+	// Convert to strings
+	for _, month := range monthList {
+		cronMonths = append(cronMonths, strconv.Itoa(month))
+	}
+
+	return strings.Join(cronMonths, ","), nil
 }
 
 func getGetScheduleCommand() *cobra.Command {
@@ -274,7 +575,8 @@ func getCreateScheduleCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("end-time", "e", viper.GetString("end-time"), "End time of the schedule: --end-time \"2025-12-15 14:00\"")
 	cmd.PersistentFlags().StringP("frequency", "f", viper.GetString("frequency"), "Frequency of the schedule: --frequency daily|weekly|monthly")
 	cmd.PersistentFlags().StringP("day-of-week", "d", viper.GetString("day-of-week"), "Day of the week for repeated schedule: --day-of-week \"mon,tue,wed,thu,fri,sat,sun\"")
-	cmd.PersistentFlags().StringP("day-of-month", "D", viper.GetString("day-of-month"), "Day of the month for repeated schedule: --day-of-month 1-31")
+	cmd.PersistentFlags().StringP("day-of-month", "D", viper.GetString("day-of-month"), "Day of the month for repeated schedule: --day-of-month \"1-4,31\"")
+	cmd.PersistentFlags().StringP("months", "x", viper.GetString("months"), "The months in which the schedule should run --months \"1-2,12\"")
 	cmd.PersistentFlags().StringP("hour", "H", viper.GetString("hour"), "Hour of the day for repeated schedule (0-23): --hour 2")
 	cmd.PersistentFlags().StringP("minute", "M", viper.GetString("minute"), "Minute of the hour for repeated schedule (0-59): --minute 30")
 	cmd.PersistentFlags().IntP("duration", "u", viper.GetInt("duration"), "Duration of the maintenance window in seconds: --duration 3600")
@@ -377,13 +679,12 @@ func runCreateScheduleCommand(cmd *cobra.Command, args []string) error {
 	startTime, _ := cmd.Flags().GetString("start-time")
 	endTime, _ := cmd.Flags().GetString("end-time")
 
-	// Parameters for repeated schedule
-	// frequency, _ := cmd.Flags().GetString("frequency")
-	// dayOfWeek, _ := cmd.Flags().GetString("day-of-week")
-	// dayOfMonth, _ := cmd.Flags().GetString("day-of-month")
-	// hour, _ := cmd.Flags().GetString("hour")
-	// minute, _ := cmd.Flags().GetString("minute")
-	// duration, _ := cmd.Flags().GetInt("duration")
+	//Parameters for repeated schedule
+	frequency, _ := cmd.Flags().GetString("frequency")
+	dayOfWeek, _ := cmd.Flags().GetString("day-of-week")
+	dayOfMonth, _ := cmd.Flags().GetString("day-of-month")
+	months, _ := cmd.Flags().GetString("months")
+	duration, _ := cmd.Flags().GetInt("duration")
 
 	// Validate timezone
 	if timezone == "" {
@@ -420,11 +721,78 @@ func runCreateScheduleCommand(cmd *cobra.Command, args []string) error {
 
 	// Repeated schedule logic
 	if scheduleType == "repeated" {
+		if startTime == "" || !validateStartTimeFormat(startTime, REPEATED) {
+			return errors.New("repeated schedule --start-time must be specified in format \"HH:MM\"")
+		}
+		hour, minute := getTimeInCron(startTime, timezone)
+
+		if frequency != "weekly" && frequency != "monthly" {
+			return errors.New("invalid --frequency, must be 'weekly' or 'monthly'")
+		}
+
+		var cronDayOfMonth string
+		var cronDayOfWeek string
+		var cronMonth string
+		if frequency == "weekly" && dayOfWeek == "" {
+			return errors.New("--day-of-week must be specified for weekly frequency")
+		} else if frequency == "weekly" {
+			// Validate dayOfWeek values
+			cronDayOfWeek, err = convertDayOfWeekToCron(dayOfWeek)
+			if err != nil {
+				return err
+			}
+
+			if dayOfMonth != "" {
+				fmt.Println("--day-of-month should not be specified for weekly frequency - ignoring")
+			}
+			cronDayOfMonth = "*"
+		}
+
+		if frequency == "monthly" && dayOfMonth == "" {
+			return errors.New("--day-of-month must be specified for monthly frequency")
+		} else if frequency == "monthly" {
+			// Validate dayOfMonth values
+			cronDayOfMonth, err = convertDayOfMonthToCron(dayOfMonth)
+			if err != nil {
+				return err
+			}
+
+			if dayOfWeek != "" {
+				fmt.Println("--day-of-week should not be specified for monthly frequency - ignoring")
+			}
+			cronDayOfWeek = "*"
+		}
+
+		if months == "" {
+			return errors.New("months must be specified in format --months \"1,2,5-8\" ")
+		} else {
+			cronMonth, err = convertMonthToCron(months)
+			if err != nil {
+				return err
+			}
+		}
+
+		if duration <= 0 {
+			return errors.New("duration must be a positive integer representing seconds")
+		}
+
+		// Set appropriate values based on frequency
+		fmt.Printf("Day of Months is %s\n", cronDayOfMonth)
+
+		fmt.Printf("Day of week is %s\n", cronDayOfWeek)
 		resp, err := scheduleClient.ScheduleServiceCreateRepeatedScheduleWithResponse(ctx, projectName,
 			infra.ScheduleServiceCreateRepeatedScheduleJSONRequestBody{
-				Name: &name,
-				// TargetHost: name,
-
+				Name:            &name,
+				ScheduleStatus:  infra.ScheduleStatus(maintenanceType),
+				CronDayWeek:     cronDayOfWeek,
+				CronDayMonth:    cronDayOfMonth,
+				CronMonth:       cronMonth,
+				CronHours:       hour,
+				CronMinutes:     minute,
+				DurationSeconds: int32(duration),
+				TargetHostId:    hostname,
+				TargetRegionId:  region,
+				TargetSiteId:    site,
 			}, auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
@@ -436,14 +804,14 @@ func runCreateScheduleCommand(cmd *cobra.Command, args []string) error {
 
 	if scheduleType == "single" {
 
-		if startTime == "" || !validateStartTimeFormat(startTime) {
-			return errors.New("start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
+		if startTime == "" || !validateStartTimeFormat(startTime, SINGLE) {
+			return errors.New("single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
 		}
 		startSeconds := getTimeInSeconds(startTime, timezone)
 
 		var endSeconds *int
 		if endTime != "" {
-			if !validateStartTimeFormat(endTime) {
+			if !validateStartTimeFormat(endTime, SINGLE) {
 				return errors.New("end-time must be in format \"YYYY-MM-DD HH:MM\"")
 			}
 			endSec := int(getTimeInSeconds(endTime, timezone))
