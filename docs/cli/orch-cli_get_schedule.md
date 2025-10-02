@@ -9,8 +9,8 @@ orch-cli get schedule <name> [flags]
 ### Examples
 
 ```
-# Get detailed information about specific schedule resource using it's name
-orch-cli get schedule myschedule --project some-project
+# Get detailed information about specific schedule resource using it's resource ID
+orch-cli get schedule repeatedsche-abcd1234 --project some-project
 ```
 
 ### Options

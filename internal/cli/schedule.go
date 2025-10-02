@@ -22,8 +22,8 @@ const listScheduleExamples = `# List all schedule resources
 orch-cli list schedule --project some-project
 `
 
-const getScheduleExamples = `# Get detailed information about specific schedule resource using it's name
-orch-cli get schedule myschedule --project some-project`
+const getScheduleExamples = `# Get detailed information about specific schedule resource using it's resource ID
+orch-cli get schedule repeatedsche-abcd1234 --project some-project`
 
 const createScheduleExamples = `# Create a new repeated schedule, an osupdate , using days of week
 orch-cli create schedules my-schedule --timezone GMT --frequency-type repeated --maintenance-type osupdate --target site-532d1d07 --frequency weekly --start-time "10:10" --day-of-week "1-3,5" --months "2,4,7-8" --duration 3600
@@ -35,8 +35,8 @@ orch-cli create schedules my-schedule --timezone GMT  --frequency-type repeated 
 orch-cli create schedules my-schedule --timezone GMT --frequency-type single --maintenance-type osupdate --target region-65c0d433 --start-time "2026-12-01 20:20" --end-time "2027-12-01 20:20"
 `
 
-const deleteScheduleExamples = `# Delete a schedule resource using it's name
-orch-cli delete schedule myschedule --project some-project`
+const deleteScheduleExamples = `# Delete a schedule resource using it's resource ID
+orch-cli delete schedule repeatedsche-abcd1234 --project some-project`
 
 var ScheduleHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Target", "Type")
 

@@ -9,8 +9,8 @@ orch-cli delete schedule <name> [flags]
 ### Examples
 
 ```
-# Delete a schedule resource using it's name
-orch-cli delete schedule myschedule --project some-project
+# Delete a schedule resource using it's resource ID
+orch-cli delete schedule repeatedsche-abcd1234 --project some-project
 ```
 
 ### Options
