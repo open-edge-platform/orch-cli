@@ -123,7 +123,7 @@ func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 			return processError(err)
 		}
 
-		if err := checkResponse(resp.HTTPResponse, "error while retrieving sites"); err != nil {
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving sites"); err != nil {
 			return err
 		}
 
@@ -193,7 +193,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, "error while creating region")
+	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating region")
 }
 
 func runGetSiteCommand(cmd *cobra.Command, args []string) error {
@@ -234,7 +234,7 @@ func runDeleteSiteCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	err = checkResponse(resp.HTTPResponse, "error while deleting site")
+	err = checkResponse(resp.HTTPResponse, resp.Body, "error while deleting site")
 	if err != nil {
 		if strings.Contains(string(resp.Body), `"message":"site_resource not found"`) {
 			return errors.New("site does not exist")

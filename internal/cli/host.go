@@ -739,7 +739,7 @@ func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface
 		return "", err
 	}
 
-	err = checkResponse(resp.HTTPResponse, "Error Site not found")
+	err = checkResponse(resp.HTTPResponse, resp.Body, "error Site not found")
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
@@ -1135,7 +1135,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 			return processError(err)
 		}
 
-		if err := checkResponse(resp.HTTPResponse, "error while retrieving hosts"); err != nil {
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
 			return err
 		}
 		hosts = append(hosts, resp.JSON200.Hosts...)
@@ -1155,7 +1155,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if err := checkResponse(iresp.HTTPResponse, "error while retrieving instance"); err != nil {
+		if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving instance"); err != nil {
 			return err
 		}
 		instances = append(instances, iresp.JSON200.Instances...)
@@ -1380,7 +1380,7 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err := checkResponse(resp1.HTTPResponse, "error while retrieving host"); err != nil {
+	if err := checkResponse(resp1.HTTPResponse, resp1.Body, "error while retrieving host"); err != nil {
 		return err
 	}
 	host := *resp1.JSON200
@@ -1394,7 +1394,7 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return processError(err)
 			}
-			if err := checkResponse(resp2.HTTPResponse, "error while deleting instance"); err != nil {
+			if err := checkResponse(resp2.HTTPResponse, resp2.Body, "error while deleting instance"); err != nil {
 				return err
 			}
 		}
@@ -1406,7 +1406,7 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err := checkResponse(resp3.HTTPResponse, "error while deleting host"); err != nil {
+	if err := checkResponse(resp3.HTTPResponse, resp3.Body, "error while deleting host"); err != nil {
 		return err
 	}
 	fmt.Printf("Host %s deleted successfully\n", hostID)
@@ -1459,7 +1459,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err := checkResponse(iresp.HTTPResponse, "error while retrieving host"); err != nil {
+	if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving host"); err != nil {
 		return err
 	}
 	host := *iresp.JSON200
@@ -1473,7 +1473,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if err := checkResponse(resp.HTTPResponse, "error while executing host set for AMT"); err != nil {
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set for AMT"); err != nil {
 			return err
 		}
 	}
@@ -1485,7 +1485,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if err := checkResponse(resp.HTTPResponse, "error while executing host set OS update policy"); err != nil {
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set OS update policy"); err != nil {
 			return err
 		}
 	}
@@ -1507,7 +1507,7 @@ func runDeauthorizeHostCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, "error while invalidating host")
+	return checkResponse(resp.HTTPResponse, resp.Body, "error while invalidating host")
 }
 
 // Function containing the logic to register the host and retrieve the host ID
@@ -1526,7 +1526,7 @@ func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterfac
 		return "", processError(err)
 	}
 	//Check that valid response was received
-	err = checkResponse(resp.HTTPResponse, "error while registering host")
+	err = checkResponse(resp.HTTPResponse, resp.Body, "error while registering host")
 	if err != nil {
 
 		// Check if a host was already registred
@@ -1543,7 +1543,7 @@ func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterfac
 				return "", processError(err)
 			}
 
-			err = checkResponse(gresp.HTTPResponse, "error while getting host which failed registration")
+			err = checkResponse(gresp.HTTPResponse, gresp.Body, "error while getting host which failed registration")
 			if err != nil {
 				return "", err
 			}
@@ -1622,7 +1622,7 @@ func createInstance(ctx context.Context, hClient infra.ClientWithResponsesInterf
 			return err
 		}
 
-		err = checkResponse(iresp.HTTPResponse, "error while creating instance\n\n")
+		err = checkResponse(iresp.HTTPResponse, iresp.Body, "error while creating instance\n\n")
 		if err != nil {
 			return err
 		}
@@ -1680,7 +1680,7 @@ func createCluster(ctx context.Context, cClient cluster.ClientWithResponsesInter
 			return nil
 		}
 
-		err = checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating cluster %s", clusterName))
+		err = checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating cluster %s", clusterName))
 		if err != nil {
 			if strings.Contains(string(resp.Body), `already exists`) {
 				return errors.New("cluster already exists")
@@ -1696,7 +1696,7 @@ func createCluster(ctx context.Context, cClient cluster.ClientWithResponsesInter
 	// 	if err != nil {
 	// 		return processError(err)
 	// 	}
-	// 	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error adding host to a cluster cluster %s", clusterName))
+	// 	return checkResponse(resp.HTTPResponse,  resp.Body, fmt.Sprintf("error adding host to a cluster cluster %s", clusterName))
 	// }
 	if len(nodes) > 1 {
 		return errors.New("only single node clusters currently supported - two clusters with same name requested")
@@ -1730,7 +1730,7 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientW
 		return err
 	}
 
-	err = checkResponse(sresp.HTTPResponse, "error while linking site and metadata\n\n")
+	err = checkResponse(sresp.HTTPResponse, sresp.Body, "error while linking site and metadata\n\n")
 	if err != nil {
 		return err
 	}

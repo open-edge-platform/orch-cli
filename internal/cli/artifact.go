@@ -122,7 +122,7 @@ func runCreateArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating artifact %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating artifact %s", name))
 }
 
 func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
@@ -186,7 +186,7 @@ func runSetArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("artifact %s not found", name)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("artifact %s not found", name)); err != nil {
 		return err
 	}
 
@@ -213,7 +213,7 @@ func runSetArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while updating artifact %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating artifact %s", name))
 }
 
 func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
@@ -227,7 +227,7 @@ func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("artifact %s not found", name)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("artifact %s not found", name)); err != nil {
 		return err
 	}
 
@@ -235,7 +235,7 @@ func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting artifact %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting artifact %s", name))
 }
 
 func printArtifactEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {

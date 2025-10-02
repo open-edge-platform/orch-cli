@@ -150,7 +150,7 @@ func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating application %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating application %s", name))
 }
 
 func applicationKind2String(kind *catapi.ApplicationKind) string {
@@ -283,7 +283,7 @@ func runSetApplicationCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
 		return err
 	}
 
@@ -306,7 +306,7 @@ func runSetApplicationCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while updating application %s:%s", name, version))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating application %s:%s", name, version))
 }
 
 func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
@@ -325,7 +325,7 @@ func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if err = checkResponse(resp.HTTPResponse, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
+		if err = checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
 			return err
 		}
 		deleteResp, err := catalogClient.CatalogServiceDeleteApplicationWithResponse(ctx, projectName, name, version,
@@ -333,7 +333,7 @@ func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		return checkResponse(deleteResp.HTTPResponse, fmt.Sprintf("error deleting application %s:%s", name, version))
+		return checkResponse(deleteResp.HTTPResponse, deleteResp.Body, fmt.Sprintf("error deleting application %s:%s", name, version))
 	}
 
 	// Otherwise delete all versions
@@ -342,7 +342,7 @@ func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(resp.HTTPResponse, fmt.Sprintf("error getting application versions %s", name)); err != nil {
+	if err = checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error getting application versions %s", name)); err != nil {
 		return err
 	}
 	if len(resp.JSON200.Application) == 0 {
@@ -355,7 +355,7 @@ func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if err := checkResponse(deleteResp.HTTPResponse, fmt.Sprintf("error deleting application %s:%s", app.Name, app.Version)); err != nil {
+		if err := checkResponse(deleteResp.HTTPResponse, deleteResp.Body, fmt.Sprintf("error deleting application %s:%s", app.Name, app.Version)); err != nil {
 			return err
 		}
 	}

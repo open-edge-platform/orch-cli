@@ -265,7 +265,7 @@ func runCreateCustomConfigCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating Cloud Init config from %s", path))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating Cloud Init config from %s", path))
 }
 
 // Deletes Cloud Init config - checks if a config already exists and then deletes it if it does
@@ -283,7 +283,7 @@ func runDeleteCustomConfigCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if err = checkResponse(gresp.HTTPResponse, "Error getting custom configs"); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, "Error getting custom configs"); err != nil {
 		return err
 	}
 
@@ -298,5 +298,5 @@ func runDeleteCustomConfigCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting Cloud Init config %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting Cloud Init config %s", name))
 }

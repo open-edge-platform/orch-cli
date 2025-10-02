@@ -270,21 +270,43 @@ func readInputWithLimit(path string) ([]byte, error) {
 
 // Checks the specified REST status and if it signals an anomaly, return an error formatted using the specified message
 // and status details.
-func checkResponse(response *http.Response, message string) error {
+func checkResponse(response *http.Response, body []byte, message string) error {
 	if response != nil {
-		return checkResponseCode(response.StatusCode, message, response.Status)
+		return checkResponseCode(response.StatusCode, message, response.Status, body)
 	}
 	return nil
 }
 
 // Checks the specified REST status and if it signals an anomaly, return an error formatted using the specified message
 // and status details.
-func checkResponseCode(responseCode int, message string, responseMessage string) error {
+func checkResponseCode(responseCode int, message string, responseMessage string, body []byte) error {
 	if responseCode == 401 {
 		return fmt.Errorf("%s. Unauthorized. Please Login. %s", message, responseMessage)
 	} else if responseCode != 200 && responseCode != 201 && responseCode != 204 {
+		// Try to parse the JSON body to extract just the message
+		var errorResponse struct {
+			Message string `json:"message"`
+		}
+
+		var bodyMessage string
+		if len(body) > 0 {
+			if err := json.Unmarshal(body, &errorResponse); err == nil && errorResponse.Message != "" {
+				bodyMessage = fmt.Sprintf("\"%s\"", errorResponse.Message)
+			} else {
+				// Fallback to raw body if JSON parsing fails
+				bodyMessage = string(body)
+			}
+		}
+
 		if len(message) > 0 {
+			if bodyMessage != "" {
+				return fmt.Errorf("%s: %s\n%s", message, responseMessage, bodyMessage)
+			}
 			return fmt.Errorf("%s: %s", message, responseMessage)
+		}
+
+		if bodyMessage != "" {
+			return fmt.Errorf("%s\n%s", responseMessage, bodyMessage)
 		}
 		return fmt.Errorf("%s", responseMessage)
 	}
@@ -317,11 +339,11 @@ func checkResponseGRPC(response *http.Response, message string) error {
 			// if the grpc Status included a message then use it and return.
 			// Otherwise, fall back to the standard response message.
 			if status.Message != "" {
-				return checkResponseCode(response.StatusCode, message, status.Message)
+				return checkResponseCode(response.StatusCode, message, status.Message, []byte{})
 			}
 		}
 	}
-	return checkResponseCode(response.StatusCode, message, response.Status)
+	return checkResponseCode(response.StatusCode, message, response.Status, []byte{})
 }
 
 // Checks the status code and returns the appropriate error

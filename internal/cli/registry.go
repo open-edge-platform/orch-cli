@@ -173,7 +173,7 @@ func runCreateRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating registry %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating registry %s", name))
 }
 
 func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
@@ -244,7 +244,7 @@ func runSetRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("registry %s not found", name)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("registry %s not found", name)); err != nil {
 		return err
 	}
 
@@ -266,7 +266,7 @@ func runSetRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while updating registry %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating registry %s", name))
 }
 
 func runDeleteRegistryCommand(cmd *cobra.Command, args []string) error {
@@ -281,7 +281,7 @@ func runDeleteRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("registry %s not found", name)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("registry %s not found", name)); err != nil {
 		return err
 	}
 
@@ -289,7 +289,7 @@ func runDeleteRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting registry %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting registry %s", name))
 }
 
 func printRegistryEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {

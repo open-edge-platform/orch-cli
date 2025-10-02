@@ -158,7 +158,7 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Cluster '%s' created successfully.\n", clusterName)
 		return nil
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating cluster %s", clusterName))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating cluster %s", clusterName))
 }
 
 func runGetClusterCommand(cmd *cobra.Command, args []string) error {
