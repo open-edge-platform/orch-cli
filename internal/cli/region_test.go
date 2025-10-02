@@ -51,7 +51,7 @@ func (s *CLITestSuite) TestRegion() {
 		"type": rtype,
 	}
 	_, err = s.createRegion("invalid-project", name, SArgs)
-	s.EqualError(err, "error while creating region: Internal Server Error\n")
+	s.EqualError(err, "error while creating region: Internal Server Error")
 
 	//create with invalid type
 	SArgs = map[string]string{

@@ -165,7 +165,7 @@ func (s *CLITestSuite) TestProvider() {
 	//delete invalid custom config
 	os.Stdin = r
 	_, err = s.deleteProvider(project, "nonexistent-provider", make(map[string]string))
-	s.EqualError(err, "error while deleting provider: Not Found\n")
+	s.EqualError(err, "error while deleting provider: Not Found")
 
 	//delete invalid custom config with N as response
 	_, err = s.deleteProvider(project, "nonexistent-provider", make(map[string]string))

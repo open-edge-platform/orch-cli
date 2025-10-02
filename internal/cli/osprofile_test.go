@@ -66,12 +66,12 @@ func (s *CLITestSuite) TestOSProfile() {
 	//Invalid endpoint (fail at list)
 	path = "./testdata/osprofile.yaml"
 	_, err = s.createOSProfile("nonexistent-project", path, OSPArgs)
-	s.EqualError(err, "Error getting OS profiles: Internal Server Error\n")
+	s.EqualError(err, "Error getting OS profiles: Internal Server Error")
 
 	//Invalid endpoint (fail at get)
 	path = "./testdata/osprofile.yaml"
 	_, err = s.createOSProfile("invalid-project", path, OSPArgs)
-	s.EqualError(err, "error while creating OS Profile from ./testdata/osprofile.yaml: Internal Server Error\n")
+	s.EqualError(err, "error while creating OS Profile from ./testdata/osprofile.yaml: Internal Server Error")
 
 	//Duplicate name
 	path = "./testdata/osprofilenameduplicate.yaml"
@@ -198,11 +198,11 @@ func (s *CLITestSuite) TestOSProfile() {
 
 	//Server error sim
 	_, err = s.deleteOSProfile("invalid-project", name, OSPArgs)
-	s.EqualError(err, "error deleting OS profile Edge Microvisor Toolkit 3.0.20250504: Internal Server Error\n")
+	s.EqualError(err, "error deleting OS profile Edge Microvisor Toolkit 3.0.20250504: Internal Server Error")
 
 	//Server error sim list
 	_, err = s.deleteOSProfile("nonexistent-project", name, OSPArgs)
-	s.EqualError(err, "Error getting OS profiles: Internal Server Error\n")
+	s.EqualError(err, "Error getting OS profiles: Internal Server Error")
 }
 
 func FuzzOSProfile(f *testing.F) {
