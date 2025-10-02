@@ -283,10 +283,32 @@ func checkResponseCode(responseCode int, message string, responseMessage string,
 	if responseCode == 401 {
 		return fmt.Errorf("%s. Unauthorized. Please Login. %s", message, responseMessage)
 	} else if responseCode != 200 && responseCode != 201 && responseCode != 204 {
-		if len(message) > 0 {
-			return fmt.Errorf("%s: %s\n%s", message, responseMessage, body)
+		// Try to parse the JSON body to extract just the message
+		var errorResponse struct {
+			Message string `json:"message"`
 		}
-		return fmt.Errorf("%s\n%s", responseMessage, body)
+
+		var bodyMessage string
+		if len(body) > 0 {
+			if err := json.Unmarshal(body, &errorResponse); err == nil && errorResponse.Message != "" {
+				bodyMessage = fmt.Sprintf("\"%s\"", errorResponse.Message)
+			} else {
+				// Fallback to raw body if JSON parsing fails
+				bodyMessage = string(body)
+			}
+		}
+
+		if len(message) > 0 {
+			if bodyMessage != "" {
+				return fmt.Errorf("%s: %s\n%s", message, responseMessage, bodyMessage)
+			}
+			return fmt.Errorf("%s: %s", message, responseMessage)
+		}
+
+		if bodyMessage != "" {
+			return fmt.Errorf("%s\n%s", responseMessage, bodyMessage)
+		}
+		return fmt.Errorf("%s", responseMessage)
 	}
 	return nil
 }
