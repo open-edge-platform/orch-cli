@@ -31,7 +31,8 @@ func (s *CLITestSuite) deleteSchedule(project string, name string, args commandA
 func (s *CLITestSuite) TestSchedule() {
 
 	name := "schedule"
-	resourceID := "schedule-7ceae560"
+	sresourceID := "singlesche-abcd1234"
+	rresourceID := "repeatedsche-abcd1234"
 	regionID := "region-abcd1234"
 	hostID := "host-abcd1234"
 	siteID := "site-abcd1234"
@@ -45,7 +46,7 @@ func (s *CLITestSuite) TestSchedule() {
 		"timezone":         "GMT",
 		"frequency-type":   "repeated",
 		"maintenance-type": "osupdate",
-		"target-site":      siteID,
+		"target":           siteID,
 		"frequency":        "monthly",
 		"start-time":       "10:10",
 		"day-of-month":     "1,2,15-18",
@@ -55,16 +56,46 @@ func (s *CLITestSuite) TestSchedule() {
 	_, err := s.createSchedule(project, name, SArgs)
 	s.NoError(err)
 
+	//create repeated schedule - monthly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "repeated",
+		"maintenance-type": "osupdate",
+		"target":           siteID,
+		"frequency":        "monthly",
+		"start-time":       "10:10",
+		"day-of-month":     "1",
+		"months":           "2",
+		"duration":         "3600",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
 	//create repeated schedule - weekly
 	SArgs = map[string]string{
 		"timezone":         "GMT",
 		"frequency-type":   "repeated",
 		"maintenance-type": "maintenance",
-		"target-region":    regionID,
+		"target":           regionID,
 		"frequency":        "weekly",
 		"start-time":       "10:10",
 		"day-of-week":      "1,2,2-6",
 		"months":           "2,4,3-7",
+		"duration":         "3600",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
+	//create repeated schedule - weekly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "repeated",
+		"maintenance-type": "maintenance",
+		"target":           regionID,
+		"frequency":        "weekly",
+		"start-time":       "10:10",
+		"day-of-week":      "wed",
+		"months":           "2",
 		"duration":         "3600",
 	}
 	_, err = s.createSchedule(project, name, SArgs)
@@ -75,20 +106,39 @@ func (s *CLITestSuite) TestSchedule() {
 		"timezone":         "GMT",
 		"frequency-type":   "single",
 		"maintenance-type": "maintenance",
-		"target-host":      hostID,
-		"start-time":       "2026-12-01 10:10",
+		"target":           hostID,
+		"start-time":       "\"2026-12-01 10:10\"",
+		"end-time":         "\"2027-12-01 10:10\"",
 	}
 	_, err = s.createSchedule(project, name, SArgs)
 	s.NoError(err)
 
-	// //create sitein nonexisting region
-	// SArgs = map[string]string{
-	// 	"region":    "region-11111111",
-	// 	"longitude": "5",
-	// 	"latitude":  "5",
-	// }
-	// _, err = s.createSite(project, name, SArgs)
-	// s.EqualError(err, "the region for site creation does not exist")
+	//create invalid repeated schedule - weekly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "repeated",
+		"maintenance-type": "maintenance",
+		"target":           regionID,
+		"frequency":        "weekly",
+		"start-time":       "\"10 10\"",
+		"day-of-week":      "wed",
+		"months":           "2",
+		"duration":         "3600",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.EqualError(err, "repeated schedule --start-time must be specified in format \"HH:MM\"")
+
+	//create single schedule
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "single",
+		"maintenance-type": "maintenance",
+		"target":           hostID,
+		"start-time":       "\"2026-1201 1010\"",
+		"end-time":         "\"2027-1201 1010\"",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.EqualError(err, "single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
 
 	// //create with invalid region
 	// SArgs = map[string]string{
@@ -133,7 +183,12 @@ func (s *CLITestSuite) TestSchedule() {
 		{
 			"Name":   name,
 			"Target": siteID,
-			"Type":   "repeated",
+			"Type":   "Maintenance",
+		},
+		{
+			"Name":   name,
+			"Target": siteID,
+			"Type":   "Maintenance",
 		},
 	}
 
@@ -152,7 +207,13 @@ func (s *CLITestSuite) TestSchedule() {
 		{
 			"Name":        name,
 			"Target":      siteID,
-			"Resource ID": resourceID,
+			"Resource ID": sresourceID,
+			"Type":        "single",
+		},
+		{
+			"Name":        name,
+			"Target":      siteID,
+			"Resource ID": rresourceID,
 			"Type":        "repeated",
 		},
 	}
@@ -162,24 +223,49 @@ func (s *CLITestSuite) TestSchedule() {
 	/////////////////////////////
 	// Test Schedule Get
 	/////////////////////////////
-
-	getOutput, err := s.getSchedule(project, resourceID, make(map[string]string))
+	SArgs = map[string]string{
+		"timezone": "GMT",
+	}
+	getOutput, err := s.getSchedule(project, rresourceID, SArgs)
 	s.NoError(err)
 
 	parsedOutput := mapGetOutput(getOutput)
 	expectedOutput := map[string]string{
-		"Name":             name,
-		"Resource ID":      resourceID,
-		"Target Host ID":   "",
-		"Target Region ID": "",
-		"Target Site ID":   siteID,
-		"Schedule Status":  "SCHEDULE_STATUS_OS_UPDATE",
-		"Month":            "2,4,7,8,9,10,11,12",
-		"Month day":        "1,6,31",
-		"Weekday":          "*",
-		"Hour (UTC)":       "10",
-		"Minute (UTC)":     "10",
-		"Duration":         "3600 seconds",
+		"Name:":             name,
+		"Resource ID:":      rresourceID,
+		"Target Host ID:":   "Unspecified",
+		"Target Region ID:": "Unspecified",
+		"Target Site ID:":   siteID,
+		"Schedule Status:":  "SCHEDULE_STATUS_MAINTENANCE",
+		"Month:":            "1",
+		"Month day:":        "1",
+		"Weekday:":          "1",
+		"Hour (UTC):":       "1",
+		"Minute (UTC):":     "1",
+		"Hour (GMT):":       "1",
+		"Minute (GMT):":     "1",
+		"Local Time:":       "1:1 GMT",
+		"Duration:":         "1 seconds",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	SArgs = map[string]string{
+		"timezone": "GMT",
+	}
+	getOutput, err = s.getSchedule(project, sresourceID, SArgs)
+	s.NoError(err)
+
+	parsedOutput = mapGetOutput(getOutput)
+	expectedOutput = map[string]string{
+		"Name:":             name,
+		"Resource ID:":      sresourceID,
+		"Target Host ID:":   "Unspecified",
+		"Target Region ID:": "Unspecified",
+		"Target Site ID:":   siteID,
+		"Schedule Status:":  "SCHEDULE_STATUS_MAINTENANCE",
+		"Start Time:":       "1970-01-01 02:46:40 GMT",
+		"End Time:":         "",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
@@ -189,12 +275,15 @@ func (s *CLITestSuite) TestSchedule() {
 	/////////////////////////////
 
 	//delete schedule
-	_, err = s.deleteSchedule(project, resourceID, make(map[string]string))
+	_, err = s.deleteSchedule(project, rresourceID, make(map[string]string))
+	s.NoError(err)
+
+	_, err = s.deleteSchedule(project, sresourceID, make(map[string]string))
 	s.NoError(err)
 
 	//delete invalid schedule
 	_, err = s.deleteSchedule(project, "nonexistent-site", make(map[string]string))
-	s.EqualError(err, "error while deleting site: Not Found")
+	s.EqualError(err, "no schedule matches the given id")
 
 }
 

@@ -2279,6 +2279,239 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			},
 		).AnyTimes()
 
+		// Mock ScheduleServiceListWithResponse (used by list provider command)
+		mockInfraClient.EXPECT().ScheduleServiceListSchedulesWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, _ *infra.ScheduleServiceListSchedulesParams, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceListSchedulesResponse, error) {
+
+				name := "schedule"
+				rid := "repeatedsche-abcd1234"
+				sid := "singlesche-abcd1234"
+				site := "site-abcd1234"
+
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceListSchedulesResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.ScheduleServiceListSchedulesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListSchedulesResponse{
+							RepeatedSchedules: []infra.RepeatedScheduleResource{
+								{
+									CronDayMonth:    "1",
+									CronDayWeek:     "1",
+									CronHours:       "1",
+									CronMinutes:     "1",
+									CronMonth:       "1",
+									DurationSeconds: 1,
+									Name:            &name,
+									ResourceId:      &rid,
+									ScheduleStatus:  infra.SCHEDULESTATUSMAINTENANCE,
+									TargetHostId:    nil,
+									TargetRegionId:  nil,
+									TargetSiteId:    &site,
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+							},
+							SingleSchedules: []infra.SingleScheduleResource{
+								{
+									Name:           &name,
+									ResourceId:     &sid,
+									ScheduleStatus: infra.SCHEDULESTATUSMAINTENANCE,
+									TargetHostId:   nil,
+									TargetRegionId: nil,
+									TargetSiteId:   &site,
+									StartSeconds:   10000,
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+							},
+							TotalElements: 1,
+							HasNext:       false,
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceCreateRepeatedScheduleWithResponse
+		mockInfraClient.EXPECT().ScheduleServiceCreateRepeatedScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, body infra.ScheduleServiceCreateRepeatedScheduleJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceCreateRepeatedScheduleResponse, error) {
+
+				rid := "repeatedsche-abcd1234"
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceCreateRepeatedScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.ScheduleServiceCreateRepeatedScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.RepeatedScheduleResource{
+							CronDayMonth:    "1",
+							CronDayWeek:     "1",
+							CronHours:       "1",
+							CronMinutes:     "1",
+							CronMonth:       "1",
+							DurationSeconds: 1,
+							Name:            body.Name,
+							ResourceId:      &rid,
+							ScheduleStatus:  infra.SCHEDULESTATUSMAINTENANCE,
+							TargetHostId:    nil,
+							TargetRegionId:  nil,
+							TargetSiteId:    body.TargetSiteId,
+							Timestamps: &infra.Timestamps{
+								CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+								UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceCreateSingleScheduleWithResponse
+		mockInfraClient.EXPECT().ScheduleServiceCreateSingleScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, body infra.ScheduleServiceCreateSingleScheduleJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceCreateSingleScheduleResponse, error) {
+
+				rid := "repeatedsche-abcd1234"
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceCreateSingleScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.ScheduleServiceCreateSingleScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.SingleScheduleResource{
+							StartSeconds:   body.StartSeconds,
+							Name:           body.Name,
+							ResourceId:     &rid,
+							ScheduleStatus: infra.SCHEDULESTATUSMAINTENANCE,
+							TargetHostId:   nil,
+							TargetRegionId: nil,
+							TargetSiteId:   body.TargetSiteId,
+							Timestamps: &infra.Timestamps{
+								CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+								UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceDeleteRepeatedScheduleWithResponse (used by delete provider command)
+		mockInfraClient.EXPECT().ScheduleServiceDeleteRepeatedScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, scheduleId string, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceDeleteRepeatedScheduleResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceDeleteRepeatedScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch scheduleId {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ScheduleServiceDeleteRepeatedScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Schedule not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ScheduleServiceDeleteRepeatedScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceDeleteSingleScheduleWithResponse (used by delete provider command)
+		mockInfraClient.EXPECT().ScheduleServiceDeleteSingleScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, scheduleId string, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceDeleteSingleScheduleResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceDeleteSingleScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch scheduleId {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ScheduleServiceDeleteSingleScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Schedule not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ScheduleServiceDeleteSingleScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
 		ctx := context.Background()
 		return ctx, mockInfraClient, projectName, nil
 	}

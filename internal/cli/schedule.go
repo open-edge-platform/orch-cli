@@ -115,22 +115,44 @@ func printSchedule(writer io.Writer, singleSchedule infra.SingleScheduleResource
 			endTime = time.Unix(int64(*singleSchedule.EndSeconds), 0).In(loc).Format("2006-01-02 15:04:05 MST")
 		}
 
+		tHost := "Unspecified"
+		tSite := "Unspecified"
+		tRegion := "Unspecified"
+		if singleSchedule.TargetHostId != nil && *singleSchedule.TargetHostId != "" {
+			tHost = *singleSchedule.TargetHostId
+		} else if singleSchedule.TargetRegionId != nil && *singleSchedule.TargetRegionId != "" {
+			tRegion = *singleSchedule.TargetRegionId
+		} else if singleSchedule.TargetSiteId != nil && *singleSchedule.TargetSiteId != "" {
+			tSite = *singleSchedule.TargetSiteId
+		}
+
 		_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *singleSchedule.Name)
 		_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *singleSchedule.ResourceId)
-		_, _ = fmt.Fprintf(writer, "Target Host ID: \t%s\n", *singleSchedule.TargetHostId)
-		_, _ = fmt.Fprintf(writer, "Target Region ID: \t%s\n", *singleSchedule.TargetRegionId)
-		_, _ = fmt.Fprintf(writer, "Target Site ID: \t%s\n", *singleSchedule.TargetSiteId)
+		_, _ = fmt.Fprintf(writer, "Target Host ID: \t%s\n", tHost)
+		_, _ = fmt.Fprintf(writer, "Target Region ID: \t%s\n", tRegion)
+		_, _ = fmt.Fprintf(writer, "Target Site ID: \t%s\n", tSite)
 		_, _ = fmt.Fprintf(writer, "Schedule Status: \t%s\n", singleSchedule.ScheduleStatus)
 		_, _ = fmt.Fprintf(writer, "Start Time: \t%s\n", startTime)
 		_, _ = fmt.Fprintf(writer, "End Time: \t%s\n", endTime)
 	}
 
 	if repeatedSchedule.ResourceId != nil {
+
+		tHost := "Unspecified"
+		tSite := "Unspecified"
+		tRegion := "Unspecified"
+		if repeatedSchedule.TargetHostId != nil && *repeatedSchedule.TargetHostId != "" {
+			tHost = *repeatedSchedule.TargetHostId
+		} else if repeatedSchedule.TargetRegionId != nil && *repeatedSchedule.TargetRegionId != "" {
+			tRegion = *repeatedSchedule.TargetRegionId
+		} else if repeatedSchedule.TargetSiteId != nil && *repeatedSchedule.TargetSiteId != "" {
+			tSite = *repeatedSchedule.TargetSiteId
+		}
 		_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *repeatedSchedule.Name)
 		_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *repeatedSchedule.ResourceId)
-		_, _ = fmt.Fprintf(writer, "Target Host ID: \t%s\n", *repeatedSchedule.TargetHostId)
-		_, _ = fmt.Fprintf(writer, "Target Region ID: \t%s\n", *repeatedSchedule.TargetRegionId)
-		_, _ = fmt.Fprintf(writer, "Target Site ID: \t%s\n", *repeatedSchedule.TargetSiteId)
+		_, _ = fmt.Fprintf(writer, "Target Host ID: \t%s\n", tHost)
+		_, _ = fmt.Fprintf(writer, "Target Region ID: \t%s\n", tRegion)
+		_, _ = fmt.Fprintf(writer, "Target Site ID: \t%s\n", tSite)
 		_, _ = fmt.Fprintf(writer, "Schedule Status: \t%s\n", repeatedSchedule.ScheduleStatus)
 		_, _ = fmt.Fprintf(writer, "Month: \t%s\n", repeatedSchedule.CronMonth)
 		_, _ = fmt.Fprintf(writer, "Month day: \t%s\n", repeatedSchedule.CronDayMonth)
@@ -627,7 +649,7 @@ func runGetScheduleCommand(cmd *cobra.Command, args []string) error {
 
 	id := args[0]
 
-	if err := checkResponse(resp.HTTPResponse, "error while retrieving schedule"); err != nil {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving schedule"); err != nil {
 		return err
 	}
 
@@ -797,7 +819,7 @@ func runCreateScheduleCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating schedule %s", name))
+		return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating schedule %s", name))
 	}
 
 	//Single schedule logic
@@ -833,7 +855,7 @@ func runCreateScheduleCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating schedule %s", name))
+		return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating schedule %s", name))
 	}
 	return errors.New("cannot create schedule")
 }
@@ -853,7 +875,7 @@ func runDeleteScheduleCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if err = checkResponse(gresp.HTTPResponse, "Error getting schedules"); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, "Error getting schedules"); err != nil {
 		return err
 	}
 
@@ -868,7 +890,7 @@ func runDeleteScheduleCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting schedule %s", name))
+		return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting schedule %s", name))
 	}
 
 	if repeatedSchedule.ResourceId != nil {
@@ -877,7 +899,7 @@ func runDeleteScheduleCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting schedule %s", name))
+		return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting schedule %s", name))
 	}
 	return errors.New("no schedule matches the given id")
 }
