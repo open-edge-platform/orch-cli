@@ -47,7 +47,7 @@ const REPEATED = 1
 func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleResource, repeatedSchedules []infra.RepeatedScheduleResource, verbose bool) {
 
 	status := "Unspecified"
-	maintenanceType := "Unspecified"
+	var maintenanceType string
 
 	target := "Unspecified"
 
@@ -232,9 +232,9 @@ func parseTargetResource(target string) (hostname, region, site *string, err err
 		return nil, &target, nil, nil
 	} else if targetType == "site" {
 		return nil, nil, &target, nil
-	} else {
-		return nil, nil, nil, fmt.Errorf("invalid target type '%s', must be one of: host, region, site", targetType)
 	}
+	return nil, nil, nil, fmt.Errorf("invalid target type '%s', must be one of: host, region, site", targetType)
+
 }
 
 // validateStartTimeFormat validates that the start time is in the correct format "YYYY-MM-DD HH:MM"
@@ -787,11 +787,10 @@ func runCreateScheduleCommand(cmd *cobra.Command, args []string) error {
 
 		if months == "" {
 			return errors.New("months must be specified in format --months \"1,2,5-8\" ")
-		} else {
-			cronMonth, err = convertMonthToCron(months)
-			if err != nil {
-				return err
-			}
+		}
+		cronMonth, err = convertMonthToCron(months)
+		if err != nil {
+			return err
 		}
 
 		if duration <= 0 {
