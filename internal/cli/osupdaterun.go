@@ -34,7 +34,7 @@ func printOSUpdateRuns(writer io.Writer, OSUpdateRuns []infra.OSUpdateRun, verbo
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status)
 		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status, run.AppliedPolicy.Name, *run.StartTime, *run.EndTime)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%d\t%d\n", *run.Name, *run.ResourceId, *run.Status, run.AppliedPolicy.Name, *run.StartTime, *run.EndTime)
 		}
 	}
 }
@@ -48,8 +48,8 @@ func printOSUpdateRun(writer io.Writer, OSUpdateRun *infra.OSUpdateRun) {
 	_, _ = fmt.Fprintf(writer, "Status Detail: \t%s\n", *OSUpdateRun.StatusDetails)
 	_, _ = fmt.Fprintf(writer, "Applied Policy: \t%v\n", OSUpdateRun.AppliedPolicy.Name)
 	_, _ = fmt.Fprintf(writer, "Description: \t%v\n", *OSUpdateRun.Description)
-	_, _ = fmt.Fprintf(writer, "Start Time: \t%s\n", *OSUpdateRun.StartTime)
-	_, _ = fmt.Fprintf(writer, "End Time: \t%s\n", *OSUpdateRun.StartTime)
+	_, _ = fmt.Fprintf(writer, "Start Time: \t%d\n", *OSUpdateRun.StartTime)
+	_, _ = fmt.Fprintf(writer, "End Time: \t%d\n", *OSUpdateRun.EndTime)
 }
 
 func getGetOSUpdateRunCommand() *cobra.Command {

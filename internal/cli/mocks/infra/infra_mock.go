@@ -689,6 +689,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								RegistrationStatus:          stringPtr("Registered"),
 								RegistrationStatusIndicator: (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
 								SiteId:                      stringPtr("site-abc123"),
+								UserLvmSize:                 func() *int { i := 10; return &i }(), // 10GB in bytes
 								Instance: &infra.InstanceResource{
 									ResourceId: stringPtr("instance-abcd1234"),
 									InstanceID: stringPtr("instance-abcd1234"),
@@ -1812,8 +1813,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 										// Add other fields as needed based on the actual struct
 									},
 									Description: stringPtr("Monthly security updates for edge devices"),
-									StartTime:   timestampPtr(timestamp),
-									EndTime:     timestampPtr(timestamp),
+									StartTime:   func() *int { t := int(timestamp.Unix()); return &t }(),
+									EndTime:     func() *int { t := int(timestamp.Unix()); return &t }(),
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
@@ -1874,9 +1875,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									// Remove Version field if it doesn't exist in OSUpdatePolicy
 								},
 								Description:     stringPtr("Monthly security updates for edge devices"),
-								StartTime:       timestampPtr(timestamp),
-								EndTime:         timestampPtr(timestamp),
-								StatusTimestamp: timestampPtr(timestamp), // This field exists
+								StartTime:       func() *int { t := int(timestamp.Unix()); return &t }(),
+								EndTime:         func() *int { t := int(timestamp.Unix()); return &t }(),
+								StatusTimestamp: func() *int { t := int(timestamp.Unix()); return &t }(),
 								Timestamps: &infra.Timestamps{
 									CreatedAt: timestampPtr(timestamp),
 									UpdatedAt: timestampPtr(timestamp),
