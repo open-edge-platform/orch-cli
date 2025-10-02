@@ -29,10 +29,10 @@ const createScheduleExamples = `# Create a new repeated schedule, an osupdate , 
 orch-cli create  schedules my-schedule --timezone GMT --frequency-type repeated --maintenance-type osupdate --target site-532d1d07 --frequency weekly --start-time "10:10" --day-of-week "1-3,5" --months "2,4,7-8" --duration 3600
 
 # Create a new repeated schedule, a maintenance , using days of month
-orch-cli create  schedules rcli2 --timezone GMT  --frequency-type repeated  --maintenance-type osupdate --target site-532d1d07 --frequency monthly --start-time "10:10" --day-of-month "1,6,31" --months "2,4,7-12" --duration 3600
+orch-cli create  schedules rcli2 --timezone GMT  --frequency-type repeated  --maintenance-type maintenance --target site-532d1d07 --frequency monthly --start-time "10:10" --day-of-month "1,6,31" --months "2,4,7-12" --duration 3600
 
 # Create a new single schedule, an osupdate
-orch-cli create  schedules my-schedule --timezone GMT --frequency-type single --maintenance-type osupdate --target region-65c0d433 --start-time "2026-12-01 20:20"
+orch-cli create  schedules my-schedule --timezone GMT --frequency-type single --maintenance-type osupdate --target region-65c0d433 --start-time "2026-12-01 20:20" --end-time "2027-12-01 20:20"
 `
 
 const deleteScheduleExamples = `# Delete a schedule resource using it's name
