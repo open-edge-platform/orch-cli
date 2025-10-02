@@ -20,7 +20,7 @@ jobs:
       contents: read
       security-events: write
       id-token: write
-    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@a389c296f4a6dd2ff9d976007fd386950ab99605  # v0.1.49
+    uses: open-edge-platform/orch-ci/.github/workflows/post-merge.yml@66d088403f0e7afeaacefc44e8547be4d53d8323  # v0.1.50
     with:
       run_version_check: true
       run_dep_version_check: false
@@ -30,8 +30,6 @@ jobs:
       run_helm_build: false
       run_helm_push: false
       run_version_tag: true
-      run_artifact: false
-      project_folder: ""
     secrets:
       SYS_ORCH_GITHUB: ${{ secrets.SYS_ORCH_GITHUB }}
       COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}

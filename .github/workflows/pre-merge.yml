@@ -16,16 +16,16 @@ permissions:
 
 jobs:
   pre-checks:
-    runs-on: ${{ github.repository_owner == 'intel' && 'intel-ubuntu-latest' || 'ubuntu-latest' }}
+    runs-on: 'ubuntu-latest'
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
       - name: "Verify Branch Name"
-        uses: open-edge-platform/orch-ci/verify-branch-name@a389c296f4a6dd2ff9d976007fd386950ab99605 # v0.1.49
+        uses: open-edge-platform/orch-ci/verify-branch-name@66d088403f0e7afeaacefc44e8547be4d53d8323 # v0.1.50
   pre-merge-pipeline:
     needs: pre-checks
-    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@a389c296f4a6dd2ff9d976007fd386950ab99605  # v0.1.49
+    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@66d088403f0e7afeaacefc44e8547be4d53d8323  # v0.1.50
     with:
       bootstrap_tools: "go,gotools,golang-lint,nodejs,buf,hadolint,opa"
       run_version_check: true
@@ -36,7 +36,6 @@ jobs:
       run_validate_clean_folder: false
       run_docker_build: false
       run_artifact: false
-      project_folder: ${{ matrix.project_folder }}
   final-check:
     runs-on: ubuntu-latest
     if: ${{ always() }}
