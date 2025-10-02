@@ -141,7 +141,7 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating deployment for application %s:%s", appName, appVersion))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating deployment for application %s:%s", appName, appVersion))
 }
 
 func getOverrideValues(cmd *cobra.Command) ([]depapi.OverrideValues, error) {
@@ -359,7 +359,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if gresp.HTTPResponse.StatusCode != http.StatusOK {
-		return checkResponse(gresp.HTTPResponse, fmt.Sprintf("error getting for application %s", deploymentID))
+		return checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("error getting for application %s", deploymentID))
 	}
 
 	dep := gresp.JSON200.Deployment
@@ -386,7 +386,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error updating deployment %s", deploymentID))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error updating deployment %s", deploymentID))
 }
 
 func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
@@ -402,5 +402,5 @@ func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting deployment %s", deploymentID))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting deployment %s", deploymentID))
 }

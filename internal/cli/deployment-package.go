@@ -225,7 +225,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating deployment package %s", applicationName))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating deployment package %s", applicationName))
 }
 
 func deploymentPackageKind2String(kind *catapi.DeploymentPackageKind) string {
@@ -358,7 +358,7 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("deployment package %s:%s not found", name, version)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("deployment package %s:%s not found", name, version)); err != nil {
 		return err
 	}
 
@@ -409,7 +409,7 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while updating deployment package %s:%s", name, version))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating deployment package %s:%s", name, version))
 }
 
 func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
@@ -427,7 +427,7 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		if err != nil {
 			return processError(err)
 		}
-		if err = checkResponse(resp.HTTPResponse, fmt.Sprintf("deployment package %s:%s not found", name, version)); err != nil {
+		if err = checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("deployment package %s:%s not found", name, version)); err != nil {
 			return err
 		}
 		deleteResp, err := catalogClient.CatalogServiceDeleteDeploymentPackageWithResponse(ctx, projectName, name, version,
@@ -435,7 +435,7 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		if err != nil {
 			return processError(err)
 		}
-		return checkResponse(deleteResp.HTTPResponse, fmt.Sprintf("error deleting deployment package %s:%s", name, version))
+		return checkResponse(deleteResp.HTTPResponse, deleteResp.Body, fmt.Sprintf("error deleting deployment package %s:%s", name, version))
 	}
 
 	// Otherwise delete all versions
@@ -444,7 +444,7 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(resp.HTTPResponse, fmt.Sprintf("error getting deployment package versions %s", name)); err != nil {
+	if err = checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error getting deployment package versions %s", name)); err != nil {
 		return err
 	}
 	if len(resp.JSON200.DeploymentPackages) == 0 {
@@ -457,7 +457,7 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		if err != nil {
 			return processError(err)
 		}
-		if err := checkResponse(deleteResp.HTTPResponse, fmt.Sprintf("error deleting deployment package %s:%s",
+		if err := checkResponse(deleteResp.HTTPResponse, deleteResp.Body, fmt.Sprintf("error deleting deployment package %s:%s",
 			pkg.Name, pkg.Version)); err != nil {
 			return err
 		}
@@ -489,7 +489,7 @@ func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		return processError(err)
 	}
 
-	if err := checkResponse(resp.HTTPResponse, fmt.Sprintf("error downloading deployment package %s:%s",
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error downloading deployment package %s:%s",
 		name, version)); err != nil {
 		return err
 	}
