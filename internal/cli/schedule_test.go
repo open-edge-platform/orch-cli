@@ -140,33 +140,6 @@ func (s *CLITestSuite) TestSchedule() {
 	_, err = s.createSchedule(project, name, SArgs)
 	s.EqualError(err, "single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
 
-	// //create with invalid region
-	// SArgs = map[string]string{
-	// 	"region":    "nope",
-	// 	"longitude": "5",
-	// 	"latitude":  "5",
-	// }
-	// _, err = s.createSite(project, name, SArgs)
-	// s.EqualError(err, "invalid region id nope --region expects region-abcd1234 format")
-
-	// //create with wrong longitude
-	// SArgs = map[string]string{
-	// 	"region":    "region-abcd1111",
-	// 	"longitude": "nope",
-	// 	"latitude":  "5",
-	// }
-	// _, err = s.createSite(project, name, SArgs)
-	// s.EqualError(err, "invalid longitude value")
-
-	// //create with wrong latitude
-	// SArgs = map[string]string{
-	// 	"region":    "region-abcd1111",
-	// 	"longitude": "5",
-	// 	"latitude":  "nope",
-	// }
-	// _, err = s.createSite(project, name, SArgs)
-	// s.EqualError(err, "invalid latitude value")
-
 	/////////////////////////////
 	// Test Schedule Listing
 	/////////////////////////////
@@ -289,15 +262,14 @@ func (s *CLITestSuite) TestSchedule() {
 
 func FuzzSchedule(f *testing.F) {
 	// Initial corpus with valid and invalid input
-	f.Add("project", "site1", "region-abcd1234", "5", "5", "site-7ceae560")
-	f.Add("project", "site1", "", "5", "5", "site-7ceae560")                      // missing region
-	f.Add("project", "", "region-abcd1234", "5", "5", "site-7ceae560")            // missing name
-	f.Add("project", "site1", "invalid-region", "5", "5", "site-7ceae560")        // invalid region format
-	f.Add("project", "site1", "region-abcd1234", "invalid", "5", "site-7ceae560") // invalid latitude
-	f.Add("project", "site1", "region-abcd1234", "5", "invalid", "site-7ceae560") // invalid longitude
-	f.Add("project", "site1", "region-abcd1234", "5", "5", "")
+	f.Add("project", "rschedule", "GMT", "repeated", "osupdate", "site-7ceae560", "weekly", "10:10", "", "2-5,6", "1-2,5-6", "1", "repeatedsche-abcd123")
+	f.Add("project", "rschedule", "Europe/Zurich", "repeated", "maintenance", "host-7ceae560", "monthly", "10:10", "", "2-5,6", "1-2,5-6", "1", "repeatedsche-1234")
+	f.Add("project", "rschedule", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x")
+	f.Add("project", "sschedule", "GMT", "single", "osupdate", "region-7ceae560", "", "2026-12-01 10:10", "2027-12-01 10:10", "", "", "", "singlesche-abcd1234")
+	f.Add("project", "sschedule", "Europe/Zurich", "single", "maintenance", "site-7ceae560", "", "2026-12-01 10:10", "2027-12-01 10:10", "", "", "", "singlesche-abcd1234")
+	f.Add("project", "sschedule", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x")
 
-	f.Fuzz(func(t *testing.T, project, name, region, latitude, longitude string, siteID string) {
+	f.Fuzz(func(t *testing.T, project, name, timezone, ftype, mtype, target, freq, stime, etime, days, months, duration, id string) {
 		testSuite := new(CLITestSuite)
 		testSuite.SetT(t)
 		testSuite.SetupSuite()
@@ -305,14 +277,32 @@ func FuzzSchedule(f *testing.F) {
 		testSuite.SetupTest()
 		defer testSuite.TearDownTest()
 
+		//create repeated
 		args := map[string]string{
-			"region":    region,
-			"latitude":  latitude,
-			"longitude": longitude,
+			"timezone":         timezone,
+			"frequency-type":   ftype,
+			"maintenance-type": mtype,
+			"target":           target,
+			"frequency":        freq,
+			"start-time":       stime,
+			"day-of-month":     days,
+			"months":           months,
+			"duration":         duration,
 		}
 
-		// Call your site creation logic (replace with your actual function if needed)
 		_, err := testSuite.createSchedule(project, name, args)
+
+		//create single
+		args = map[string]string{
+			"timezone":         timezone,
+			"frequency-type":   ftype,
+			"maintenance-type": mtype,
+			"target":           target,
+			"start-time":       stime,
+			"end-time":         etime,
+		}
+
+		_, err = testSuite.createSchedule(project, name, args)
 
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
@@ -330,7 +320,7 @@ func FuzzSchedule(f *testing.F) {
 		}
 
 		// --- Delete ---
-		_, err = testSuite.deleteSchedule(project, siteID, make(map[string]string))
+		_, err = testSuite.deleteSchedule(project, id, make(map[string]string))
 
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
