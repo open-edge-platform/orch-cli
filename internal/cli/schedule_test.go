@@ -1,0 +1,438 @@
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+package cli
+
+import (
+	"fmt"
+	"testing"
+)
+
+func (s *CLITestSuite) createSchedule(project string, name string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`create schedule %s --project %s`, name, project))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) listSchedule(project string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`list schedule --project %s`, project))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) getSchedule(project string, id string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`get schedule "%s" --project %s`, id, project))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) deleteSchedule(project string, id string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`delete schedule "%s" --project %s`, id, project))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) setSchedule(project string, id string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`set schedule "%s" --project %s`, id, project))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) TestSchedule() {
+
+	name := "schedule"
+	sresourceID := "singlesche-abcd1234"
+	rresourceID := "repeatedsche-abcd1234"
+	regionID := "region-abcd1234"
+	hostID := "host-abcd1234"
+	siteID := "site-abcd1234"
+
+	/////////////////////////////
+	// Test Schedule Creation
+	/////////////////////////////
+
+	//create repeated schedule - monthly
+	SArgs := map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "repeated",
+		"maintenance-type": "osupdate",
+		"target":           siteID,
+		"frequency":        "monthly",
+		"start-time":       "10:10",
+		"day-of-month":     "1,2,15-18",
+		"months":           "2,4,3-7",
+		"duration":         "3600",
+	}
+	_, err := s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
+	//create repeated schedule - monthly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "repeated",
+		"maintenance-type": "osupdate",
+		"target":           siteID,
+		"frequency":        "monthly",
+		"start-time":       "10:10",
+		"day-of-month":     "1",
+		"months":           "2",
+		"duration":         "3600",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
+	//create repeated schedule - weekly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "repeated",
+		"maintenance-type": "maintenance",
+		"target":           regionID,
+		"frequency":        "weekly",
+		"start-time":       "10:10",
+		"day-of-week":      "1,2,2-6",
+		"months":           "2,4,3-7",
+		"duration":         "3600",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
+	//create repeated schedule - weekly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "repeated",
+		"maintenance-type": "maintenance",
+		"target":           regionID,
+		"frequency":        "weekly",
+		"start-time":       "10:10",
+		"day-of-week":      "wed",
+		"months":           "2",
+		"duration":         "3600",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
+	//create single schedule
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "single",
+		"maintenance-type": "maintenance",
+		"target":           hostID,
+		"start-time":       "\"2026-12-01 10:10\"",
+		"end-time":         "\"2027-12-01 10:10\"",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
+	//create invalid repeated schedule - weekly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "repeated",
+		"maintenance-type": "maintenance",
+		"target":           regionID,
+		"frequency":        "weekly",
+		"start-time":       "\"10 10\"",
+		"day-of-week":      "wed",
+		"months":           "2",
+		"duration":         "3600",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.EqualError(err, "repeated schedule --start-time must be specified in format \"HH:MM\"")
+
+	//create single schedule
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "single",
+		"maintenance-type": "maintenance",
+		"target":           hostID,
+		"start-time":       "\"2026-1201 1010\"",
+		"end-time":         "\"2027-1201 1010\"",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.EqualError(err, "single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
+
+	/////////////////////////////
+	// Test Schedule Listing
+	/////////////////////////////
+
+	//List Schedule
+
+	SArgs = map[string]string{}
+	listOutput, err := s.listSchedule(project, SArgs)
+	s.NoError(err)
+
+	parsedOutputList := mapListOutput(listOutput)
+
+	expectedOutputList := listCommandOutput{
+		{
+			"Name":   name,
+			"Target": siteID,
+			"Type":   "Maintenance",
+		},
+		{
+			"Name":   name,
+			"Target": siteID,
+			"Type":   "Maintenance",
+		},
+	}
+
+	s.compareListOutput(expectedOutputList, parsedOutputList)
+
+	//List schedule --verbose
+	SArgs = map[string]string{
+		"verbose": "true",
+	}
+	listOutput, err = s.listSchedule(project, SArgs)
+	s.NoError(err)
+
+	parsedOutputList = mapListOutput(listOutput)
+
+	expectedOutputList = listCommandOutput{
+		{
+			"Name":        name,
+			"Target":      siteID,
+			"Resource ID": sresourceID,
+			"Type":        "single",
+		},
+		{
+			"Name":        name,
+			"Target":      siteID,
+			"Resource ID": rresourceID,
+			"Type":        "repeated",
+		},
+	}
+
+	s.compareListOutput(expectedOutputList, parsedOutputList)
+
+	/////////////////////////////
+	// Test Schedule Get
+	/////////////////////////////
+	SArgs = map[string]string{
+		"timezone": "GMT",
+	}
+	getOutput, err := s.getSchedule(project, rresourceID, SArgs)
+	s.NoError(err)
+
+	parsedOutput := mapGetOutput(getOutput)
+	expectedOutput := map[string]string{
+		"Name:":             name,
+		"Resource ID:":      rresourceID,
+		"Target Host ID:":   "Unspecified",
+		"Target Region ID:": "Unspecified",
+		"Target Site ID:":   siteID,
+		"Schedule Status:":  "SCHEDULE_STATUS_MAINTENANCE",
+		"Month:":            "1",
+		"Month day:":        "1",
+		"Weekday:":          "1",
+		"Hour (UTC):":       "1",
+		"Minute (UTC):":     "1",
+		"Hour (GMT):":       "1",
+		"Minute (GMT):":     "1",
+		"Local Time:":       "1:1 GMT",
+		"Duration:":         "1 seconds",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	SArgs = map[string]string{
+		"timezone": "GMT",
+	}
+	getOutput, err = s.getSchedule(project, sresourceID, SArgs)
+	s.NoError(err)
+
+	parsedOutput = mapGetOutput(getOutput)
+	expectedOutput = map[string]string{
+		"Name:":             name,
+		"Resource ID:":      sresourceID,
+		"Target Host ID:":   "Unspecified",
+		"Target Region ID:": "Unspecified",
+		"Target Site ID:":   siteID,
+		"Schedule Status:":  "SCHEDULE_STATUS_MAINTENANCE",
+		"Start Time:":       "1970-01-01 02:46:40 GMT",
+		"End Time:":         "",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	/////////////////////////////
+	// Test Schedule Delete
+	/////////////////////////////
+
+	//delete schedule
+	_, err = s.deleteSchedule(project, rresourceID, make(map[string]string))
+	s.NoError(err)
+
+	_, err = s.deleteSchedule(project, sresourceID, make(map[string]string))
+	s.NoError(err)
+
+	//delete invalid schedule
+	_, err = s.deleteSchedule(project, "nonexistent-site", make(map[string]string))
+	s.EqualError(err, "no schedule matches the given id")
+
+	/////////////////////////////
+	// Test Schedule Set
+	/////////////////////////////
+
+	//create repeated schedule - monthly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"maintenance-type": "osupdate",
+		"frequency":        "monthly",
+		"start-time":       "10:10",
+		"day-of-month":     "1,2,15-18",
+		"months":           "2,4,3-7",
+		"duration":         "3600",
+	}
+	_, err = s.setSchedule(project, rresourceID, SArgs)
+	s.NoError(err)
+
+	//set repeated schedule - weekly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"maintenance-type": "maintenance",
+		"frequency":        "weekly",
+		"start-time":       "10:10",
+		"day-of-week":      "1,2,2-6",
+		"months":           "2,4,3-7",
+		"duration":         "3600",
+	}
+	_, err = s.setSchedule(project, rresourceID, SArgs)
+	s.NoError(err)
+
+	//set single schedule
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"maintenance-type": "maintenance",
+		"start-time":       "\"2026-12-01 10:10\"",
+		"end-time":         "\"2027-12-01 10:10\"",
+	}
+	_, err = s.setSchedule(project, sresourceID, SArgs)
+	s.NoError(err)
+
+	//set invalid repeated schedule - weekly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"maintenance-type": "maintenance",
+		"start-time":       "\"10 10\"",
+		"day-of-week":      "wed",
+		"months":           "2",
+		"duration":         "3600",
+	}
+	_, err = s.setSchedule(project, rresourceID, SArgs)
+	s.EqualError(err, "repeated schedule --start-time must be specified in format \"HH:MM\"")
+
+	//set invalid single schedule
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"maintenance-type": "maintenance",
+		"start-time":       "\"2026-1201 1010\"",
+		"end-time":         "\"2027-1201 1010\"",
+	}
+	_, err = s.setSchedule(project, sresourceID, SArgs)
+	s.EqualError(err, "single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
+}
+
+func FuzzSchedule(f *testing.F) {
+	// Initial corpus with valid and invalid input
+	f.Add("project", "rschedule", "GMT", "repeated", "osupdate", "site-7ceae560", "weekly", "10:10", "", "2-5,6", "1-2,5-6", "1", "repeatedsche-abcd123")
+	f.Add("project", "rschedule", "Europe/Zurich", "repeated", "maintenance", "host-7ceae560", "monthly", "10:10", "", "2-5,6", "1-2,5-6", "1", "repeatedsche-1234")
+	f.Add("project", "rschedule", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x")
+	f.Add("project", "sschedule", "GMT", "single", "osupdate", "region-7ceae560", "", "2026-12-01 10:10", "2027-12-01 10:10", "", "", "", "singlesche-abcd1234")
+	f.Add("project", "sschedule", "Europe/Zurich", "single", "maintenance", "site-7ceae560", "", "2026-12-01 10:10", "2027-12-01 10:10", "", "", "", "singlesche-abcd1234")
+	f.Add("project", "sschedule", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x", "x")
+
+	f.Fuzz(func(t *testing.T, project, name, timezone, ftype, mtype, target, freq, stime, etime, days, months, duration, id string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		//create repeated
+		args := map[string]string{
+			"timezone":         timezone,
+			"frequency-type":   ftype,
+			"maintenance-type": mtype,
+			"target":           target,
+			"frequency":        freq,
+			"start-time":       stime,
+			"day-of-month":     days,
+			"months":           months,
+			"duration":         duration,
+		}
+
+		_, err := testSuite.createSchedule(project, name, args)
+
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		//create single
+		args = map[string]string{
+			"timezone":         timezone,
+			"frequency-type":   ftype,
+			"maintenance-type": mtype,
+			"target":           target,
+			"start-time":       stime,
+			"end-time":         etime,
+		}
+
+		_, err = testSuite.createSchedule(project, name, args)
+
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		//set repeated
+		args = map[string]string{
+			"timezone":         timezone,
+			"maintenance-type": mtype,
+			"frequency":        freq,
+			"start-time":       stime,
+			"day-of-month":     days,
+			"months":           months,
+			"duration":         duration,
+		}
+
+		_, err = testSuite.setSchedule(project, id, args)
+
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		//set single
+		args = map[string]string{
+			"timezone":         timezone,
+			"maintenance-type": mtype,
+			"start-time":       stime,
+			"end-time":         etime,
+		}
+
+		_, err = testSuite.setSchedule(project, id, args)
+
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- List ---
+		_, err = testSuite.listSchedule(project, make(map[string]string))
+
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- Delete ---
+		_, err = testSuite.deleteSchedule(project, id, make(map[string]string))
+
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+	})
+}
