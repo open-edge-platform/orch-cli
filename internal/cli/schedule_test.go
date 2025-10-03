@@ -18,13 +18,18 @@ func (s *CLITestSuite) listSchedule(project string, args commandArgs) (string, e
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) getSchedule(project string, name string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`get schedule "%s" --project %s`, name, project))
+func (s *CLITestSuite) getSchedule(project string, id string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`get schedule "%s" --project %s`, id, project))
 	return s.runCommand(commandString)
 }
 
-func (s *CLITestSuite) deleteSchedule(project string, name string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`delete schedule "%s" --project %s`, name, project))
+func (s *CLITestSuite) deleteSchedule(project string, id string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`delete schedule "%s" --project %s`, id, project))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) setSchedule(project string, id string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`set schedule "%s" --project %s`, id, project))
 	return s.runCommand(commandString)
 }
 
@@ -258,6 +263,67 @@ func (s *CLITestSuite) TestSchedule() {
 	_, err = s.deleteSchedule(project, "nonexistent-site", make(map[string]string))
 	s.EqualError(err, "no schedule matches the given id")
 
+	/////////////////////////////
+	// Test Schedule Set
+	/////////////////////////////
+
+	//create repeated schedule - monthly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"maintenance-type": "osupdate",
+		"frequency":        "monthly",
+		"start-time":       "10:10",
+		"day-of-month":     "1,2,15-18",
+		"months":           "2,4,3-7",
+		"duration":         "3600",
+	}
+	_, err = s.setSchedule(project, rresourceID, SArgs)
+	s.NoError(err)
+
+	//set repeated schedule - weekly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"maintenance-type": "maintenance",
+		"frequency":        "weekly",
+		"start-time":       "10:10",
+		"day-of-week":      "1,2,2-6",
+		"months":           "2,4,3-7",
+		"duration":         "3600",
+	}
+	_, err = s.setSchedule(project, rresourceID, SArgs)
+	s.NoError(err)
+
+	//set single schedule
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"maintenance-type": "maintenance",
+		"start-time":       "\"2026-12-01 10:10\"",
+		"end-time":         "\"2027-12-01 10:10\"",
+	}
+	_, err = s.setSchedule(project, sresourceID, SArgs)
+	s.NoError(err)
+
+	//set invalid repeated schedule - weekly
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"maintenance-type": "maintenance",
+		"start-time":       "\"10 10\"",
+		"day-of-week":      "wed",
+		"months":           "2",
+		"duration":         "3600",
+	}
+	_, err = s.setSchedule(project, rresourceID, SArgs)
+	s.EqualError(err, "repeated schedule --start-time must be specified in format \"HH:MM\"")
+
+	//set invalid single schedule
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"maintenance-type": "maintenance",
+		"start-time":       "\"2026-1201 1010\"",
+		"end-time":         "\"2027-1201 1010\"",
+	}
+	_, err = s.setSchedule(project, sresourceID, SArgs)
+	s.EqualError(err, "single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
 }
 
 func FuzzSchedule(f *testing.F) {
@@ -292,6 +358,12 @@ func FuzzSchedule(f *testing.F) {
 
 		_, err := testSuite.createSchedule(project, name, args)
 
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
 		//create single
 		args = map[string]string{
 			"timezone":         timezone,
@@ -303,6 +375,41 @@ func FuzzSchedule(f *testing.F) {
 		}
 
 		_, err = testSuite.createSchedule(project, name, args)
+
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		//set repeated
+		args = map[string]string{
+			"timezone":         timezone,
+			"maintenance-type": mtype,
+			"frequency":        freq,
+			"start-time":       stime,
+			"day-of-month":     days,
+			"months":           months,
+			"duration":         duration,
+		}
+
+		_, err = testSuite.setSchedule(project, id, args)
+
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		//set single
+		args = map[string]string{
+			"timezone":         timezone,
+			"maintenance-type": mtype,
+			"start-time":       stime,
+			"end-time":         etime,
+		}
+
+		_, err = testSuite.setSchedule(project, id, args)
 
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)

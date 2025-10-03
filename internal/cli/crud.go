@@ -157,6 +157,7 @@ func getSetCommand() *cobra.Command {
 		getSetNetworkCommand(),
 
 		getSetHostCommand(),
+		getSetScheduleCommand(),
 	)
 	return cmd
 }

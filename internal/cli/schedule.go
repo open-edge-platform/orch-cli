@@ -38,6 +38,16 @@ orch-cli create schedules my-schedule --timezone GMT --frequency-type single --m
 const deleteScheduleExamples = `# Delete a schedule resource using it's resource ID
 orch-cli delete schedule repeatedsche-abcd1234 --project some-project`
 
+const setScheduleExamples = `# Update a repeated schedule resource (by month day) using it's resource ID (not all parameters need to be updated at same time --timezone is mandatory)
+orch-cli set schedules repeatedsche-abcd1234 --timezone GMT --maintenance-type osupdate --frequency weekly --start-time "10:10" --day-of-week "1-3,5" --months "2,4,7-8" --duration 3600
+
+# Update a repeated schedule resource (by weekday) using it's resource ID (not all parameters need to be updated at same time --timezone is mandatory)
+orch-cli set schedules repeatedsche-abcd1234 --timezone GMT --maintenance-type osupdate --frequency monthly --start-time "10:10" --day-of-month "1-3,5" --months "2,4,7-8" --duration 3600
+
+# Update a single schedule resource using it's resource ID (not all parameters need to be updated at same time, --timezone is mandatory)
+orch-cli set schedules repeatedsche-abcd1234 --timezone GMT --maintenance-type osupdate --start-time "2026-02-02 10:10" --end-time "2026-02-02 10:10" 
+`
+
 var ScheduleHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Target", "Type")
 
 const SINGLE = 0
@@ -569,6 +579,33 @@ func getGetScheduleCommand() *cobra.Command {
 	return cmd
 }
 
+func getSetScheduleCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "schedule <name> [flags]",
+		Short:   "Update a schedule configuration",
+		Example: setScheduleExamples,
+		Args:    cobra.ExactArgs(1),
+		Aliases: scheduleAliases,
+		RunE:    runSetScheduleCommand,
+	}
+	//cmd.PersistentFlags().StringP("frequency-type", "F", viper.GetString("frequency-type"), "Frequency of the schedule: --frequency-type single|repeated")
+	cmd.PersistentFlags().StringP("maintenance-type", "m", viper.GetString("maintenance-type"), "Type of maintenance: --maintenance-type maintenance|osupdate")
+	cmd.PersistentFlags().StringP("timezone", "t", viper.GetString("timezone"), "Set time in particular timezone: --timezone Europe/Berlin")
+	//cmd.PersistentFlags().StringP("target", "T", viper.GetString("target"), "Target maintenance on a host|region|site using it's resource ID: --target host-abcd1234|region-abcd1234|site-abcd1234")
+	cmd.PersistentFlags().StringP("start-time", "s", viper.GetString("start-time"), "Start time of the schedule: --start-time \"2025-12-15 12:00\"")
+	cmd.PersistentFlags().StringP("end-time", "e", viper.GetString("end-time"), "End time of the schedule: --end-time \"2025-12-15 14:00\"")
+	cmd.PersistentFlags().StringP("frequency", "f", viper.GetString("frequency"), "Frequency of the schedule: --frequency daily|weekly|monthly")
+	cmd.PersistentFlags().StringP("day-of-week", "d", viper.GetString("day-of-week"), "Day of the week for repeated schedule: --day-of-week \"mon,tue,wed,thu,fri,sat,sun\"")
+	cmd.PersistentFlags().StringP("day-of-month", "D", viper.GetString("day-of-month"), "Day of the month for repeated schedule: --day-of-month \"1-4,31\"")
+	cmd.PersistentFlags().StringP("months", "x", viper.GetString("months"), "The months in which the schedule should run --months \"1-2,12\"")
+	cmd.PersistentFlags().StringP("hour", "H", viper.GetString("hour"), "Hour of the day for repeated schedule (0-23): --hour 2")
+	cmd.PersistentFlags().StringP("minute", "M", viper.GetString("minute"), "Minute of the hour for repeated schedule (0-59): --minute 30")
+	cmd.PersistentFlags().StringP("name", "N", viper.GetString("name"), "Schedule name")
+	cmd.PersistentFlags().IntP("duration", "u", viper.GetInt("duration"), "Duration of the maintenance window in seconds: --duration 3600")
+
+	return cmd
+}
+
 func getListScheduleCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "schedule [flags]",
@@ -855,16 +892,216 @@ func runCreateScheduleCommand(cmd *cobra.Command, args []string) error {
 	return errors.New("cannot create schedule")
 }
 
-// Deletes SSH Key - checks if a key already exists and then deletes it if it does
-func runDeleteScheduleCommand(cmd *cobra.Command, args []string) error {
+// set schedule
+func runSetScheduleCommand(cmd *cobra.Command, args []string) error {
+	id := args[0]
 
-	name := args[0]
-	ctx, sshKeyClient, projectName, err := InfraFactory(cmd)
+	name, _ := cmd.Flags().GetString("name")
+	timezone, _ := cmd.Flags().GetString("timezone")
+	maintenanceType, _ := cmd.Flags().GetString("maintenance-type")
+
+	// Parameters for single schedule
+	startTime, _ := cmd.Flags().GetString("start-time")
+	endTime, _ := cmd.Flags().GetString("end-time")
+
+	//Parameters for repeated schedule
+	frequency, _ := cmd.Flags().GetString("frequency")
+	dayOfWeek, _ := cmd.Flags().GetString("day-of-week")
+	dayOfMonth, _ := cmd.Flags().GetString("day-of-month")
+	months, _ := cmd.Flags().GetString("months")
+	duration, _ := cmd.Flags().GetInt("duration")
+
+	// Validate timezone
+	if timezone == "" {
+		return errors.New("timezone must be specified")
+	}
+
+	_, err := time.LoadLocation(timezone)
+	if err != nil {
+		return fmt.Errorf("invalid timezone '%s': %w", timezone, err)
+	}
+	if maintenanceType != "" {
+		if maintenanceType != "maintenance" && maintenanceType != "osupdate" {
+			return errors.New("invalid maintenance type, must be 'maintenance' or 'osupdate'")
+		} else if maintenanceType == "osupdate" {
+			maintenanceType = string(infra.SCHEDULESTATUSOSUPDATE)
+		} else if maintenanceType == "maintenance" {
+			maintenanceType = string(infra.SCHEDULESTATUSMAINTENANCE)
+		}
+	}
+
+	ctx, scheduleClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	gresp, err := sshKeyClient.ScheduleServiceListSchedulesWithResponse(ctx, projectName,
+	//Repeated schedule logic
+
+	if strings.Contains(strings.ToLower(id), "repeated") {
+		gresp, err := scheduleClient.ScheduleServiceGetRepeatedScheduleWithResponse(ctx, projectName,
+			id, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("error getting schedule %s", id))
+		if err != nil {
+			return err
+		}
+
+		hour := gresp.JSON200.CronHours
+		minute := gresp.JSON200.CronMinutes
+		if startTime != "" {
+			if !validateStartTimeFormat(startTime, REPEATED) {
+				return errors.New("repeated schedule --start-time must be specified in format \"HH:MM\"")
+			}
+			hour, minute = getTimeInCron(startTime, timezone)
+		}
+
+		if frequency != "" {
+			if frequency != "weekly" && frequency != "monthly" {
+				return errors.New("invalid --frequency, must be 'weekly' or 'monthly'")
+			}
+		}
+
+		cronDayOfMonth := gresp.JSON200.CronDayMonth
+		cronDayOfWeek := gresp.JSON200.CronDayWeek
+		cronMonth := gresp.JSON200.CronMonth
+		if frequency == "weekly" && dayOfWeek == "" {
+			return errors.New("--day-of-week must be specified for weekly frequency")
+		} else if frequency == "weekly" {
+			// Validate dayOfWeek values
+			cronDayOfWeek, err = convertDayOfWeekToCron(dayOfWeek)
+			if err != nil {
+				return err
+			}
+
+			if dayOfMonth != "" {
+				fmt.Println("--day-of-month should not be specified for weekly frequency - ignoring")
+			}
+			cronDayOfMonth = "*"
+		}
+
+		if frequency == "monthly" && dayOfMonth == "" {
+			return errors.New("--day-of-month must be specified for monthly frequency")
+		} else if frequency == "monthly" {
+			// Validate dayOfMonth values
+			cronDayOfMonth, err = convertDayOfMonthToCron(dayOfMonth)
+			if err != nil {
+				return err
+			}
+
+			if dayOfWeek != "" {
+				fmt.Println("--day-of-week should not be specified for monthly frequency - ignoring")
+			}
+			cronDayOfWeek = "*"
+		}
+
+		if months != "" {
+			cronMonth, err = convertMonthToCron(months)
+			if err != nil {
+				return err
+			}
+		}
+
+		if duration != 0 {
+			if duration <= 0 {
+				return errors.New("duration must be a positive integer representing seconds")
+			}
+		} else {
+			duration = int(gresp.JSON200.DurationSeconds)
+		}
+
+		if name == "" {
+			name = *gresp.JSON200.Name
+		}
+
+		if maintenanceType == "" {
+			maintenanceType = string(gresp.JSON200.ScheduleStatus)
+		}
+
+		resp, err := scheduleClient.ScheduleServicePatchRepeatedScheduleWithResponse(ctx, projectName, id,
+			infra.ScheduleServicePatchRepeatedScheduleJSONRequestBody{
+				Name:            &name,
+				ScheduleStatus:  infra.ScheduleStatus(maintenanceType),
+				CronDayWeek:     cronDayOfWeek,
+				CronDayMonth:    cronDayOfMonth,
+				CronMonth:       cronMonth,
+				CronHours:       hour,
+				CronMinutes:     minute,
+				DurationSeconds: int32(duration),
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating schedule %s", name))
+	}
+
+	// //Single schedule logic
+
+	if strings.Contains(strings.ToLower(id), "single") {
+		gresp, err := scheduleClient.ScheduleServiceGetSingleScheduleWithResponse(ctx, projectName,
+			id, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("error getting schedule %s", id))
+		if err != nil {
+			return err
+		}
+
+		startSeconds := int64(gresp.JSON200.StartSeconds)
+		if startTime != "" {
+			if !validateStartTimeFormat(startTime, SINGLE) {
+				return errors.New("single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
+			}
+			startSeconds = getTimeInSeconds(startTime, timezone)
+		}
+
+		var endSeconds *int
+		if gresp.JSON200.EndSeconds != nil && *gresp.JSON200.EndSeconds != 0 {
+			endSeconds = gresp.JSON200.EndSeconds
+		}
+		if endTime != "" {
+			if !validateStartTimeFormat(endTime, SINGLE) {
+				return errors.New("end-time must be in format \"YYYY-MM-DD HH:MM\"")
+			}
+			endSec := int(getTimeInSeconds(endTime, timezone))
+			endSeconds = &endSec
+		}
+
+		if name == "" {
+			name = *gresp.JSON200.Name
+		}
+
+		if maintenanceType == "" {
+			maintenanceType = string(gresp.JSON200.ScheduleStatus)
+		}
+
+		resp, err := scheduleClient.ScheduleServicePatchSingleScheduleWithResponse(ctx, projectName, id,
+			infra.ScheduleServicePatchSingleScheduleJSONRequestBody{
+				Name:           &name,
+				ScheduleStatus: infra.ScheduleStatus(maintenanceType),
+				StartSeconds:   int(startSeconds),
+				EndSeconds:     endSeconds,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating schedule %s", name))
+	}
+	return errors.New("cannot update schedule")
+}
+
+// Deletes SSH Key - checks if a key already exists and then deletes it if it does
+func runDeleteScheduleCommand(cmd *cobra.Command, args []string) error {
+
+	name := args[0]
+	ctx, scheduleClient, projectName, err := InfraFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	gresp, err := scheduleClient.ScheduleServiceListSchedulesWithResponse(ctx, projectName,
 		&infra.ScheduleServiceListSchedulesParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -880,7 +1117,7 @@ func runDeleteScheduleCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if singleSchedule.ResourceId != nil {
-		resp, err := sshKeyClient.ScheduleServiceDeleteSingleScheduleWithResponse(ctx, projectName,
+		resp, err := scheduleClient.ScheduleServiceDeleteSingleScheduleWithResponse(ctx, projectName,
 			*singleSchedule.ResourceId, auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
@@ -889,7 +1126,7 @@ func runDeleteScheduleCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if repeatedSchedule.ResourceId != nil {
-		resp, err := sshKeyClient.ScheduleServiceDeleteRepeatedScheduleWithResponse(ctx, projectName,
+		resp, err := scheduleClient.ScheduleServiceDeleteRepeatedScheduleWithResponse(ctx, projectName,
 			*repeatedSchedule.ResourceId, auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
