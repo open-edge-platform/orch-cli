@@ -122,6 +122,11 @@ orch-cli set host host-1234abcd  --project itep --power-policy ordered
 --power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
 --power-policy - Set the desired power command policy to ordered|immediate
 
+#Set host AMT state to provisioned
+orch-cli set host host-1234abcd --project itep --amt-state provisioned
+
+--amt-state - Set desired AMT state of host to provisioned|unprovisioned
+
 #Set host OS Update policy
 orch-cli set host host-1234abcd  --project itep --osupdatepolicy <resourceID>
 
@@ -374,6 +379,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", *host.DesiredPowerState)
 		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", *host.PowerCommandPolicy)
 		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", *host.PowerOnTime)
+		_, _ = fmt.Fprintf(writer, "-\tDesired AMT State :\t %v\n", *host.DesiredAmtState)
 	}
 
 	if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
@@ -1031,6 +1037,7 @@ func getSetHostCommand() *cobra.Command {
 	}
 	cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
 	cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
+	cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
 	cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
 
 	return cmd
@@ -1420,14 +1427,16 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	policyFlag, _ := cmd.Flags().GetString("power-policy")
 	powerFlag, _ := cmd.Flags().GetString("power")
 	updFlag, _ := cmd.Flags().GetString("osupdatepolicy")
+	amtFlag, _ := cmd.Flags().GetString("amt-state")
 
-	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" {
+	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" && (amtFlag == "" || strings.HasPrefix(amtFlag, "--")) {
 		return errors.New("a flag must be provided with the set host command and value cannot be \"\"")
 	}
 
 	var power *infra.PowerState
 	var policy *infra.PowerCommandPolicy
 	var updatePolicy *string
+	var amtState *infra.AmtState
 
 	if policyFlag != "" {
 		pol, err := resolvePowerPolicy(policyFlag)
@@ -1447,6 +1456,14 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 
 	if updFlag != "" {
 		updatePolicy = &updFlag
+	}
+
+	if amtFlag != "" {
+		amt, err := resolveAmtState(amtFlag)
+		if err != nil {
+			return err
+		}
+		amtState = &amt
 	}
 
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
@@ -1489,6 +1506,21 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+
+	if amtState != nil && host.Instance != nil {
+		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
+			DesiredAmtState: amtState,
+			Name:            host.Name,
+		}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set for AMT"); err != nil {
+			return err
+		}
+	}
+
+	fmt.Printf("Host %s updated successfully\n", hostID)
 
 	return nil
 }
@@ -1765,5 +1797,16 @@ func resolvePower(power string) (infra.PowerState, error) {
 		return infra.POWERSTATESLEEP, nil
 	default:
 		return "", errors.New("incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep")
+	}
+}
+
+func resolveAmtState(amt string) (infra.AmtState, error) {
+	switch amt {
+	case "provisioned":
+		return infra.AMTSTATEPROVISIONED, nil
+	case "unprovisioned":
+		return infra.AMTSTATEUNPROVISIONED, nil
+	default:
+		return "", errors.New("incorrect AMT state provided with --amt-state flag use one of provisioned|unprovisioned")
 	}
 }
