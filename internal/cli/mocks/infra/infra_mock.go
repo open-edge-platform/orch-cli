@@ -558,6 +558,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							CurrentState:                (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDING")),
 							CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_OFF")),
 							CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
+							DesiredAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
 							HostStatus:                  stringPtr("Provisioning"),
 							HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_WORKING")),
 							OnboardingStatus:            stringPtr("Onboarding in progress"),
@@ -763,6 +764,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							RegistrationStatusIndicator: (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
 							CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_UNKNOWN")),
 							CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
+							DesiredAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
 							Timestamps: &infra.Timestamps{
 								CreatedAt: timestampPtr(timestamp),
 								UpdatedAt: timestampPtr(timestamp),
