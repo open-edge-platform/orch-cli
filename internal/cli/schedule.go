@@ -797,10 +797,6 @@ func runCreateScheduleCommand(cmd *cobra.Command, args []string) error {
 			return errors.New("duration must be a positive integer representing seconds")
 		}
 
-		// Set appropriate values based on frequency
-		fmt.Printf("Day of Months is %s\n", cronDayOfMonth)
-
-		fmt.Printf("Day of week is %s\n", cronDayOfWeek)
 		resp, err := scheduleClient.ScheduleServiceCreateRepeatedScheduleWithResponse(ctx, projectName,
 			infra.ScheduleServiceCreateRepeatedScheduleJSONRequestBody{
 				Name:            &name,
