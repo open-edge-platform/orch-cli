@@ -493,6 +493,36 @@ func (s *CLITestSuite) TestHost() {
 	// Test delete host with non-existent host
 	_, err = s.deleteHost(project, "host-11111111", make(map[string]string))
 	s.Error(err)
+
+	// --- CSV Generation Test ---
+	os.Remove("test_output.csv")
+	HostArgs = map[string]string{
+		"generate-csv": "test_output.csv",
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	files, _ := os.ReadDir(".")
+	for _, f := range files {
+		fmt.Println("File:", f.Name())
+	}
+	s.NoError(err)
+	s.True(PathExists("test_output.csv"), "CSV file was not generated")
+	defer os.Remove("test_output.csv")
+
+	// --- CSV Import Test ---
+	csvContent := `Name,ResourceID,DesiredAmtState
+host-153,host-0a6e769d,provisioned
+host-65,host-0f523c97,unprovisioned
+`
+	csvPath := "test_import.csv"
+	err = os.WriteFile(csvPath, []byte(csvContent), 0644)
+	s.NoError(err)
+	defer os.Remove(csvPath)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPath,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
 }
 
 func FuzzHost(f *testing.F) {
