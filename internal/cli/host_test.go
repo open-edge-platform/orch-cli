@@ -514,7 +514,7 @@ host-153,host-0a6e769d,provisioned
 host-65,host-0f523c97,unprovisioned
 `
 	csvPath := "test_import.csv"
-	err = os.WriteFile(csvPath, []byte(csvContent), 0644)
+	err = os.WriteFile(csvPath, []byte(csvContent), 0600)
 	s.NoError(err)
 	defer os.Remove(csvPath)
 
