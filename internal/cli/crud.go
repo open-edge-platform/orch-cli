@@ -29,6 +29,7 @@ var (
 	registryAliases          = []string{"registry", "registries", "reg", "regs"}
 	regionAliases            = []string{"region", "regions", "regn", "regns"}
 	siteAliases              = []string{"site", "sites", "st", "sts"}
+	scheduleAliases          = []string{"schedule", "schedules", "sch", "schs"}
 	sshKeyAliases            = []string{"sshkey", "sshkeys", "ssh", "sshs"}
 )
 
@@ -63,6 +64,7 @@ func getCreateCommand() *cobra.Command {
 		getCreateOSProfileCommand(),
 		getCreateProviderCommand(),
 		getCreateSSHKeyCommand(),
+		getCreateScheduleCommand(),
 	)
 	return cmd
 }
@@ -97,6 +99,7 @@ func getListCommand() *cobra.Command {
 		getListHostCommand(),
 		getListProviderCommand(),
 		getListSSHKeyCommand(),
+		getListScheduleCommand(),
 	)
 	return catalogListRootCmd
 }
@@ -129,6 +132,7 @@ func getGetCommand() *cobra.Command {
 		getGetHostCommand(),
 		getGetProviderCommand(),
 		getGetSSHKeyCommand(),
+		getGetScheduleCommand(),
 	)
 	return catalogGetRootCmd
 }
@@ -153,6 +157,7 @@ func getSetCommand() *cobra.Command {
 		getSetNetworkCommand(),
 
 		getSetHostCommand(),
+		getSetScheduleCommand(),
 	)
 	return cmd
 }
@@ -186,6 +191,7 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteHostCommand(),
 		getDeleteProviderCommand(),
 		getDeleteSSHKeyCommand(),
+		getDeleteScheduleCommand(),
 	)
 	return catalogDeleteRootCmd
 }
