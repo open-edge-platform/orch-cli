@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -121,6 +122,32 @@ orch-cli set host host-1234abcd  --project itep --power-policy ordered
 
 --power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
 --power-policy - Set the desired power command policy to ordered|immediate
+
+#Set host AMT state to provisioned
+orch-cli set host host-1234abcd --project some-project --amt-state provisioned
+
+--amt-state - Set desired AMT state of host to provisioned|unprovisioned
+
+# Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
+orch-cli set host --project some-project --generate-csv
+
+# Generate CSV input file using the --generate-csv flag - the defined output will be a base myhosts.csv file.
+orch-cli set host --project some-project --generate-csv=myhosts.csv
+
+# Sample input csv file hosts.csv
+
+Name - Name of the machine - mandatory field
+ResourceID - Unique Identifier of host - mandatory field
+DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field
+
+Name,ResourceID,DesiredAmtState
+host-1,host-1234abcd,provisioned
+
+# --dry-run allows for verification of the validity of the input csv file without updating hosts
+orch-cli set host --project some-project --import-from-csv test.csv --dry-run
+
+# Set hosts - --import-from-csv is a mandatory flag pointing to the input file. Successfully provisioned host indicated by output - errors provided in output file
+orch-cli set host --project some-project --import-from-csv test.csv
 
 #Set host OS Update policy
 orch-cli set host host-1234abcd  --project itep --osupdatepolicy <resourceID>
@@ -374,6 +401,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", *host.DesiredPowerState)
 		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", *host.PowerCommandPolicy)
 		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", *host.PowerOnTime)
+		_, _ = fmt.Fprintf(writer, "-\tDesired AMT State :\t %v\n", *host.DesiredAmtState)
 	}
 
 	if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
@@ -1025,12 +1053,31 @@ func getSetHostCommand() *cobra.Command {
 		Use:     "host <resourceID> [flags]",
 		Short:   "Sets a host attribute or action",
 		Example: setHostExamples,
-		Args:    cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			generateCSV, _ := cmd.Flags().GetString("generate-csv")
+			if generateCSV == "" {
+				generateCSV = "test.csv"
+			}
+			importCSV, _ := cmd.Flags().GetString("import-from-csv")
+			if generateCSV != "" || importCSV != "" {
+				// No positional arg required for bulk operations
+				return nil
+			}
+			if len(args) != 1 {
+				return fmt.Errorf("accepts 1 arg(s), received %d", len(args))
+			}
+			return nil
+		},
 		Aliases: hostAliases,
 		RunE:    runSetHostCommand,
 	}
+	cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
+	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
+	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host import")
+	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
 	cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
 	cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
+	cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
 	cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
 
 	return cmd
@@ -1415,19 +1462,141 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 
 // Set attributes for specific Host - finds a host using resource ID
 func runSetHostCommand(cmd *cobra.Command, args []string) error {
-	hostID := args[0]
 
+	generateCSV, _ := cmd.Flags().GetString("generate-csv")
+	importCSV, _ := cmd.Flags().GetString("import-from-csv")
 	policyFlag, _ := cmd.Flags().GetString("power-policy")
 	powerFlag, _ := cmd.Flags().GetString("power")
 	updFlag, _ := cmd.Flags().GetString("osupdatepolicy")
+	amtFlag, _ := cmd.Flags().GetString("amt-state")
 
-	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" {
+	// Bulk CSV generation
+	if generateCSV != "" {
+		// Fetch all hosts (reuse your list logic)
+		ctx, hostClient, projectName, err := InfraFactory(cmd)
+		if err != nil {
+			return err
+		}
+		pageSize := 100
+		hosts := make([]infra.HostResource, 0)
+		for offset := 0; ; offset += pageSize {
+			resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+				&infra.HostServiceListHostsParams{
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			hosts = append(hosts, resp.JSON200.Hosts...)
+			if !resp.JSON200.HasNext {
+				break
+			}
+		}
+		// Write CSV
+		// Use absolute path for CSV file if not already absolute
+		csvPath := generateCSV
+		if !filepath.IsAbs(csvPath) {
+			wd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			csvPath = filepath.Join(wd, csvPath)
+		}
+		// Check if file already exists
+		if _, err := os.Stat(csvPath); err == nil {
+			fmt.Printf("File %s already exists not generating\n", csvPath)
+			return nil
+		}
+		f, err := os.Create(csvPath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState")
+		for _, h := range hosts {
+			name := h.Name
+			resourceID := ""
+			desiredAmtState := ""
+			if h.ResourceId != nil {
+				resourceID = *h.ResourceId
+			}
+			if h.DesiredAmtState != nil {
+				desiredAmtState = string(*h.DesiredAmtState)
+			}
+			fmt.Fprintf(f, "%s,%s,%s\n", name, resourceID, desiredAmtState)
+		}
+		fmt.Printf("CSV template generated: %s\n", generateCSV)
+		return nil
+	}
+
+	// Bulk CSV import
+	if importCSV != "" {
+		file, err := os.Open(importCSV)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		lineNum := 0
+		for scanner.Scan() {
+			line := scanner.Text()
+			lineNum++
+			if lineNum == 1 {
+				continue // skip header
+			}
+			fields := strings.Split(line, ",")
+			if len(fields) < 3 {
+				fmt.Printf("Skipping invalid line %d: %s\n", lineNum, line)
+				continue
+			}
+			name := strings.TrimSpace(fields[0])
+			resourceID := strings.TrimSpace(fields[1])
+			desiredAmtState := strings.TrimSpace(fields[2])
+			// Validate desiredAmtState
+			amtState, err := resolveAmtState(desiredAmtState)
+			if err != nil {
+				fmt.Printf("Invalid AMT state for host %s: %s\n", name, desiredAmtState)
+				continue
+			}
+			// Patch host
+			ctx, hostClient, projectName, err := InfraFactory(cmd)
+			if err != nil {
+				fmt.Printf("InfraFactory error for host %s: %v\n", name, err)
+				continue
+			}
+			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, infra.HostServicePatchHostJSONRequestBody{
+				DesiredAmtState: &amtState,
+			}, auth.AddAuthHeader)
+			if err != nil {
+				fmt.Printf("Failed to patch host %s: %v\n", name, err)
+				continue
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set for AMT"); err != nil {
+				fmt.Printf("Failed to patch host %s: %v\n", name, err)
+				continue
+			}
+			fmt.Printf("Host %s (%s) AMT state updated to %s\n", name, resourceID, desiredAmtState)
+		}
+		if err := scanner.Err(); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if len(args) == 0 {
+		return fmt.Errorf("no host ID provided")
+	}
+	hostID := args[0]
+
+	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" && (amtFlag == "" || strings.HasPrefix(amtFlag, "--")) {
 		return errors.New("a flag must be provided with the set host command and value cannot be \"\"")
 	}
 
 	var power *infra.PowerState
 	var policy *infra.PowerCommandPolicy
 	var updatePolicy *string
+	var amtState *infra.AmtState
 
 	if policyFlag != "" {
 		pol, err := resolvePowerPolicy(policyFlag)
@@ -1447,6 +1616,14 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 
 	if updFlag != "" {
 		updatePolicy = &updFlag
+	}
+
+	if amtFlag != "" {
+		amt, err := resolveAmtState(amtFlag)
+		if err != nil {
+			return err
+		}
+		amtState = &amt
 	}
 
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
@@ -1489,6 +1666,21 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+
+	if amtState != nil && host.Instance != nil {
+		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
+			DesiredAmtState: amtState,
+			Name:            host.Name,
+		}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set for AMT"); err != nil {
+			return err
+		}
+	}
+
+	fmt.Printf("Host %s updated successfully\n", hostID)
 
 	return nil
 }
@@ -1765,5 +1957,16 @@ func resolvePower(power string) (infra.PowerState, error) {
 		return infra.POWERSTATESLEEP, nil
 	default:
 		return "", errors.New("incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep")
+	}
+}
+
+func resolveAmtState(amt string) (infra.AmtState, error) {
+	switch amt {
+	case "provisioned", "AMT_STATE_PROVISIONED":
+		return infra.AMTSTATEPROVISIONED, nil
+	case "unprovisioned", "AMT_STATE_UNPROVISIONED":
+		return infra.AMTSTATEUNPROVISIONED, nil
+	default:
+		return "", errors.New("incorrect AMT state provided with --amt-state flag use one of provisioned|unprovisioned")
 	}
 }

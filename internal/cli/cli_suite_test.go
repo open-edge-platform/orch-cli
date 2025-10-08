@@ -254,7 +254,11 @@ func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
 
 func addCommandArgs(args commandArgs, commandString string) string {
 	for argName, argValue := range args {
-		commandString = commandString + fmt.Sprintf(` --%s %s `, argName, argValue)
+		if argValue == "" {
+			commandString += fmt.Sprintf(" --%s", argName)
+		} else {
+			commandString += fmt.Sprintf(" --%s=%s", argName, argValue)
+		}
 	}
 	return commandString
 }

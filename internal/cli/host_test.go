@@ -93,6 +93,29 @@ func (s *CLITestSuite) testResolvePower() {
 	}
 }
 
+func (s *CLITestSuite) testResolveAmtState() {
+	tests := []struct {
+		input    string
+		expected infra.AmtState
+		wantErr  bool
+	}{
+		{"provisioned", infra.AMTSTATEPROVISIONED, false},
+		{"unprovisioned", infra.AMTSTATEUNPROVISIONED, false},
+		{"invalid", "", true},
+		{"", "", true},
+	}
+
+	for _, tc := range tests {
+		result, err := resolveAmtState(tc.input)
+		if tc.wantErr {
+			s.Error(err, "expected error for input %q", tc.input)
+		} else {
+			s.NoError(err, "unexpected error for input %q", tc.input)
+			s.Equal(tc.expected, result, "unexpected result for input %q", tc.input)
+		}
+	}
+}
+
 // Helper function to create string pointers
 func stringPtr(s string) *string {
 	return &s
@@ -250,6 +273,8 @@ func (s *CLITestSuite) TestHost() {
 
 	s.testResolvePower()
 
+	s.testResolveAmtState()
+
 	// Test list hosts with no filters
 	listOutput, err := s.listHost(project, make(map[string]string))
 	s.NoError(err)
@@ -374,6 +399,7 @@ func (s *CLITestSuite) TestHost() {
 		"-   Desired Power Status:":    "POWER_STATE_ON",
 		"-   Power Command Policy :":   "POWER_COMMAND_POLICY_ALWAYS_ON",
 		"-   PowerOn Time :":           "1",
+		"-   Desired AMT State :":      "AMT_STATE_PROVISIONED",
 		"-   Affected Packages:":       "[fluent-bit-3.1.9-11.emt3.x86_64]",
 		"-   CVE ID:":                  "CVE-2021-1234",
 		"-   Priority:":                "HIGH",
@@ -416,6 +442,24 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.setHost(project, hostID, HostArgs)
 	s.NoError(err)
 
+	// Test AMT State set
+	HostArgs = map[string]string{
+		"amt-state": "provisioned",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	// Test AMT State set
+	HostArgs = map[string]string{
+		"amt-state": "unprovisioned",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
 	// Test OSupdate policy set
 
 	HostArgs = map[string]string{
@@ -449,14 +493,44 @@ func (s *CLITestSuite) TestHost() {
 	// Test delete host with non-existent host
 	_, err = s.deleteHost(project, "host-11111111", make(map[string]string))
 	s.Error(err)
+
+	// --- CSV Generation Test ---
+	os.Remove("test_output.csv")
+	HostArgs = map[string]string{
+		"generate-csv": "test_output.csv",
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	files, _ := os.ReadDir(".")
+	for _, f := range files {
+		fmt.Println("File:", f.Name())
+	}
+	s.NoError(err)
+	s.True(PathExists("test_output.csv"), "CSV file was not generated")
+	defer os.Remove("test_output.csv")
+
+	// --- CSV Import Test ---
+	csvContent := `Name,ResourceID,DesiredAmtState
+host-153,host-0a6e769d,provisioned
+host-65,host-0f523c97,unprovisioned
+`
+	csvPath := "test_import.csv"
+	err = os.WriteFile(csvPath, []byte(csvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPath)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPath,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
 }
 
 func FuzzHost(f *testing.F) {
 	// Initial corpus with basic input
-	f.Add("project", "./testdata/mock.csv", "", "", "", "", "", "", "", "", "", "", "host-abcd1234", "on", "immediate")
-	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "61", "host-abcd1234", "", "")
-	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "", "on", "immediate")
-	f.Fuzz(func(t *testing.T, project string, path string, remoteUser string, site string, secure string, osProfile string, metadata string, clusterDeploy string, clusterTemplate string, clusterConfig string, cloudInit string, lvm string, name string, pwr string, pol string) {
+	f.Add("project", "./testdata/mock.csv", "", "", "", "", "", "", "", "", "", "", "host-abcd1234", "on", "immediate", "provisioned")
+	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "61", "host-abcd1234", "", "", "")
+	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "", "on", "immediate", "provisioned")
+	f.Fuzz(func(t *testing.T, project string, path string, remoteUser string, site string, secure string, osProfile string, metadata string, clusterDeploy string, clusterTemplate string, clusterConfig string, cloudInit string, lvm string, name string, pwr string, pol string, amt string) {
 		testSuite := new(CLITestSuite)
 		testSuite.SetT(t) // Set the testing.T instance
 		testSuite.SetupSuite()
@@ -493,6 +567,7 @@ func FuzzHost(f *testing.F) {
 		HostArgs = map[string]string{
 			"power":        pwr,
 			"power-policy": pol,
+			"amt-state":    amt,
 		}
 
 		_, err = testSuite.setHost(project, name, HostArgs)
