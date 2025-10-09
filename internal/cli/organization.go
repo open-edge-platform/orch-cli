@@ -10,62 +10,54 @@ import (
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-const listOrganizationExamples = `# List all ogranizations in the organization
-orch-cli list ogranizations
+const listOrganizationExamples = `# List all organizations in the organization
+orch-cli list organizations
 `
 
-const getOrganizationExamples = `# Get detailed information about specific ogranization
-orch-cli get ogranization myogranization
+const getOrganizationExamples = `# Get detailed information about specific organization
+orch-cli get organization myorganization
 `
 
-const createOrganizationExamples = `# Create a ogranization with a given name using cloud init file as input
-orch-cli create ogranization myogranization`
+const createOrganizationExamples = `# Create a organization with a given name using cloud init file as input
+orch-cli create organization myorganization`
 
-const deleteOrganizationExamples = `#Delete a ogranization using it's name
-orch-cli delete ogranization myogranization`
+const deleteOrganizationExamples = `#Delete a organization using it's name
+orch-cli delete organization myorganization`
 
-var OrganizationHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Description")
+var OrganizationHeader = fmt.Sprintf("\n%s\t%s", "Name", "Status")
 
 // Prints OS Profiles in tabular format
 func printOrganizations(writer io.Writer, organizations *tenancy.OrgOrgList, verbose bool) {
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\n", "Name", "Resource ID", "Description", "Creation Timestamp", "Updated Timestamp")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\n", "Name", "Status", "Description")
 	}
-	// for _, ogranization := range ogranizations {
-	// 	if !verbose {
-	// 		fmt.Fprintf(writer, "%s\t%s\t%s\n", ogranization, *ogranization.ResourceId, *ogranization.Description)
-	// 	} else {
+	for _, organization := range *organizations {
+		if !verbose {
+			fmt.Fprintf(writer, "%s\t%s\n", *organization.Name, *organization.Status.OrgStatus.StatusIndicator)
+		} else {
 
-	// 		fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", ogranization.Name, *ogranization.ResourceId, *ogranization.Description, ogranization.Timestamps.CreatedAt, ogranization.Timestamps.UpdatedAt)
-	// 	}
-	// }
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", *organization.Name, *organization.Status.OrgStatus.StatusIndicator, *organization.Spec.Description)
+		}
+	}
 }
 
 // Prints output details of OS Profiles
-func printOrganization(writer io.Writer, ogranization *tenancy.GetorgOrg) {
+func printOrganization(writer io.Writer, name string, organization *tenancy.GetorgOrg) {
 
-	// _, _ = fmt.Fprintf(writer, "Name: \t%s\n", ogranization.Name)
-	// _, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *ogranization.ResourceId)
-	// _, _ = fmt.Fprintf(writer, "Description: \t%s\n\n", *ogranization.Description)
-	// _, _ = fmt.Fprintf(writer, "Cloud Init:\n%s\n", ogranization.Config)
+	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", name)
+	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", *organization.Spec.Description)
+	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", *organization.Status.OrgStatus.StatusIndicator)
+	_, _ = fmt.Fprintf(writer, "Status message: \t%s\n", *organization.Status.OrgStatus.Message)
+	_, _ = fmt.Fprintf(writer, "UID: \t%s\n\n", *organization.Status.OrgStatus.UID)
 }
-
-// // Filters list of pcustom configs to find one with specific name
-// func filterCustomConfigsByName(CustomConfigs []infra.CustomConfigResource, name string) (*infra.CustomConfigResource, error) {
-// 	for _, config := range CustomConfigs {
-// 		if config.Name == name {
-// 			return &config, nil
-// 		}
-// 	}
-// 	return nil, errors.New("no custom config matches the given name")
-// }
 
 func getGetOrganizationCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "ogranization <name> [flags]",
-		Short:   "Get a ogranization",
+		Use:     "organization <name> [flags]",
+		Short:   "Get a organization",
 		Example: getOrganizationExamples,
 		Args:    cobra.ExactArgs(1),
 		Aliases: organizationAliases,
@@ -82,7 +74,6 @@ func getListOrganizationCommand() *cobra.Command {
 		Aliases: organizationAliases,
 		RunE:    runListOrganizationCommand,
 	}
-	//cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of cloud init list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter <filter> see https://google.aip.dev/160 and API spec.")
 	return cmd
 }
 
@@ -95,7 +86,7 @@ func getCreateOrganizationCommand() *cobra.Command {
 		Aliases: organizationAliases,
 		RunE:    runCreateOrganizationCommand,
 	}
-	//cmd.PersistentFlags().StringP("description", "d", viper.GetString("description"), "Optional flag used to provide a description to a cloud init config resource")
+	cmd.PersistentFlags().StringP("description", "d", viper.GetString("description"), "Optional flag used to provide a description to a cloud init config resource")
 	return cmd
 }
 
@@ -116,30 +107,22 @@ func runGetOrganizationCommand(cmd *cobra.Command, args []string) error {
 
 	name := args[0]
 	writer, verbose := getOutputContext(cmd)
-	ctx, ogranizationClient, _, err := TenancyFactory(cmd)
+	ctx, organizationClient, _, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	//Leaving this as an example to get by resource ID instead of name
-	//CIID := args[0]
-	// resp, err := customConfigClient.CustomConfigServiceGetCustomConfigWithResponse(ctx, ogranizationName,
-	// 	CIID, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
-
-	resp, err := ogranizationClient.GETV1OrgsOrgOrgWithResponse(ctx, name, auth.AddAuthHeader)
+	resp, err := organizationClient.GETV1OrgsOrgOrgWithResponse(ctx, name, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		"", "error getting ogranizations"); !proceed {
+		"", "error getting organizations"); !proceed {
 		return err
 	}
 
-	printOrganization(writer, resp.JSON200)
+	printOrganization(writer, name, resp.JSON200)
 	return writer.Flush()
 }
 
@@ -147,18 +130,18 @@ func runGetOrganizationCommand(cmd *cobra.Command, args []string) error {
 func runListOrganizationCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
-	ctx, ogranizationClient, _, err := TenancyFactory(cmd)
+	ctx, organizationClient, _, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := ogranizationClient.LISTV1OrgsWithResponse(ctx, auth.AddAuthHeader)
+	resp, err := organizationClient.LISTV1OrgsWithResponse(ctx, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		OrganizationHeader, "error getting ogranizations"); !proceed {
+		OrganizationHeader, "error getting organizations"); !proceed {
 		return err
 	}
 
@@ -171,20 +154,20 @@ func runListOrganizationCommand(cmd *cobra.Command, _ []string) error {
 func runCreateOrganizationCommand(cmd *cobra.Command, args []string) error {
 	name := args[0]
 
-	var desc *string
+	desc := name
 	descFlag, _ := cmd.Flags().GetString("description")
 	if descFlag != "" {
-		desc = &descFlag
+		desc = descFlag
 	}
 
-	ctx, ogranizationClient, _, err := TenancyFactory(cmd)
+	ctx, organizationClient, _, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := ogranizationClient.PUTV1OrgsOrgOrgWithResponse(ctx, name, &tenancy.PUTV1OrgsOrgOrgParams{},
+	resp, err := organizationClient.PUTV1OrgsOrgOrgWithResponse(ctx, name, &tenancy.PUTV1OrgsOrgOrgParams{},
 		tenancy.PUTV1OrgsOrgOrgJSONRequestBody{
-			Description: desc,
+			Description: &desc,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -192,16 +175,16 @@ func runCreateOrganizationCommand(cmd *cobra.Command, args []string) error {
 	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating projet"))
 }
 
-// Deletes Organization - checks if a ogranization already exists and then deletes it if it does
+// Deletes Organization - checks if a organization already exists and then deletes it if it does
 func runDeleteOrganizationCommand(cmd *cobra.Command, args []string) error {
 
 	name := args[0]
-	ctx, ogranizationClient, _, err := TenancyFactory(cmd)
+	ctx, organizationClient, _, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := ogranizationClient.DELETEV1OrgsOrgOrgWithResponse(ctx, name, auth.AddAuthHeader)
+	resp, err := organizationClient.DELETEV1OrgsOrgOrgWithResponse(ctx, name, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}

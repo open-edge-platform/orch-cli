@@ -10,6 +10,7 @@ import (
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const listProjectExamples = `# List all projects in the organization
@@ -26,41 +27,34 @@ orch-cli create project myproject`
 const deleteProjectExamples = `#Delete a project using it's name
 orch-cli delete project myproject`
 
-var ProjectHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Description")
+var ProjectHeader = fmt.Sprintf("\n%s\t%s", "Name", "Status")
 
 // Prints OS Profiles in tabular format
 func printProjects(writer io.Writer, projects *tenancy.ProjectProjectList, verbose bool) {
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\n", "Name", "Resource ID", "Description", "Creation Timestamp", "Updated Timestamp")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\n", "Name", "Status", "Description")
 	}
-	// for _, project := range projects {
-	// 	if !verbose {
-	// 		fmt.Fprintf(writer, "%s\t%s\t%s\n", project, *project.ResourceId, *project.Description)
-	// 	} else {
 
-	// 		fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", project.Name, *project.ResourceId, *project.Description, project.Timestamps.CreatedAt, project.Timestamps.UpdatedAt)
-	// 	}
-	// }
+	for _, project := range *projects {
+		if !verbose {
+			fmt.Fprintf(writer, "%s\t%s\n", *project.Name, *project.Status.ProjectStatus.StatusIndicator)
+		} else {
+
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", *project.Name, *project.Status.ProjectStatus.StatusIndicator, *project.Spec.Description)
+		}
+	}
 }
 
 // Prints output details of OS Profiles
-func printProject(writer io.Writer, project *tenancy.GetprojectProject) {
+func printProject(writer io.Writer, name string, project *tenancy.GetprojectProject) {
 
-	// _, _ = fmt.Fprintf(writer, "Name: \t%s\n", project.Name)
-	// _, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *project.ResourceId)
-	// _, _ = fmt.Fprintf(writer, "Description: \t%s\n\n", *project.Description)
-	// _, _ = fmt.Fprintf(writer, "Cloud Init:\n%s\n", project.Config)
+	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", name)
+	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", *project.Spec.Description)
+	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", *project.Status.ProjectStatus.StatusIndicator)
+	_, _ = fmt.Fprintf(writer, "Status message: \t%s\n", *project.Status.ProjectStatus.Message)
+	_, _ = fmt.Fprintf(writer, "UID: \t%s\n\n", *project.Status.ProjectStatus.UID)
+
 }
-
-// // Filters list of pcustom configs to find one with specific name
-// func filterCustomConfigsByName(CustomConfigs []infra.CustomConfigResource, name string) (*infra.CustomConfigResource, error) {
-// 	for _, config := range CustomConfigs {
-// 		if config.Name == name {
-// 			return &config, nil
-// 		}
-// 	}
-// 	return nil, errors.New("no custom config matches the given name")
-// }
 
 func getGetProjectCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -82,7 +76,6 @@ func getListProjectCommand() *cobra.Command {
 		Aliases: projectAliases,
 		RunE:    runListProjectCommand,
 	}
-	//cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of cloud init list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter <filter> see https://google.aip.dev/160 and API spec.")
 	return cmd
 }
 
@@ -95,7 +88,7 @@ func getCreateProjectCommand() *cobra.Command {
 		Aliases: projectAliases,
 		RunE:    runCreateProjectCommand,
 	}
-	//cmd.PersistentFlags().StringP("description", "d", viper.GetString("description"), "Optional flag used to provide a description to a cloud init config resource")
+	cmd.PersistentFlags().StringP("description", "d", viper.GetString("description"), "Optional flag used to provide a description to a cloud init config resource")
 	return cmd
 }
 
@@ -121,14 +114,6 @@ func runGetProjectCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	//Leaving this as an example to get by resource ID instead of name
-	//CIID := args[0]
-	// resp, err := customConfigClient.CustomConfigServiceGetCustomConfigWithResponse(ctx, projectName,
-	// 	CIID, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
-
 	resp, err := projectClient.GETV1ProjectsProjectProjectWithResponse(ctx, name, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -139,7 +124,7 @@ func runGetProjectCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printProject(writer, resp.JSON200)
+	printProject(writer, name, resp.JSON200)
 	return writer.Flush()
 }
 
@@ -171,10 +156,10 @@ func runListProjectCommand(cmd *cobra.Command, _ []string) error {
 func runCreateProjectCommand(cmd *cobra.Command, args []string) error {
 	name := args[0]
 
-	var desc *string
+	desc := name
 	descFlag, _ := cmd.Flags().GetString("description")
 	if descFlag != "" {
-		desc = &descFlag
+		desc = descFlag
 	}
 
 	ctx, projectClient, _, err := TenancyFactory(cmd)
@@ -184,7 +169,7 @@ func runCreateProjectCommand(cmd *cobra.Command, args []string) error {
 
 	resp, err := projectClient.PUTV1ProjectsProjectProjectWithResponse(ctx, name, &tenancy.PUTV1ProjectsProjectProjectParams{},
 		tenancy.PUTV1ProjectsProjectProjectJSONRequestBody{
-			Description: desc,
+			Description: &desc,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
