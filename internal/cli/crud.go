@@ -22,10 +22,12 @@ var (
 	hostAliases              = []string{"host", "hosts", "hs"}
 	networkAliases           = []string{"network", "networks", "net", "nets"}
 	osProfileAliases         = []string{"osprofile", "osprofiles", "osp", "osps"}
+	organizationAliases      = []string{"organization", "organizations", "org", "orgs"}
 	osUpdatePolicyAliases    = []string{"osupdatepolicy", "osupdatepolicies", "oup", "oups"}
 	osUpdateRunAliases       = []string{"osupdaterun", "osupdateruns", "our", "ours"}
 	providerAliases          = []string{"provider", "providers", "prov", "provs"}
 	profileAliases           = []string{"profile", "profiles", "prof", "profs"}
+	projectAliases           = []string{"project", "projects", "proj", "projs"}
 	registryAliases          = []string{"registry", "registries", "reg", "regs"}
 	regionAliases            = []string{"region", "regions", "regn", "regns"}
 	siteAliases              = []string{"site", "sites", "st", "sts"}
