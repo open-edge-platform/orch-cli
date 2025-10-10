@@ -109,6 +109,54 @@ func AddAuthHeader(ctx context.Context, req *http.Request) error {
 	return nil
 }
 
+func GetAccessToken(ctx context.Context) (string, error) {
+	authToken := os.Getenv(AccessTokenEnv)
+	if authToken != "" {
+		return authToken, nil
+	}
+
+	refreshTokenStr := viper.GetString(RefreshTokenField)
+	if refreshTokenStr == "" {
+		return "", fmt.Errorf("no refresh token found")
+	}
+	clientID := viper.GetString(ClientIDField)
+	keycloakEp := viper.GetString(KeycloakEndpointField)
+
+	urlString := strings.Builder{}
+	urlString.WriteString(keycloakEp)
+
+	gt := openidconnect.TokenGrantType("refresh_token")
+
+	// Use refresh_token to get an access_token
+	kcClient, err := KeycloakFactory(ctx, urlString.String())
+	if err != nil {
+		return "", err
+	}
+	response, err := kcClient.PostProtocolOpenidConnectTokenWithFormdataBodyWithResponse(ctx, openidconnect.PostProtocolOpenidConnectTokenFormdataRequestBody{
+		ClientId:     &clientID,
+		GrantType:    &gt,
+		RefreshToken: &refreshTokenStr,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if response.StatusCode() == 401 {
+		log.Warnf("Unauthorized")
+		return "", fmt.Errorf("unauthorized %d", response.StatusCode())
+	} else if response.StatusCode() != 200 {
+		log.Warnf("unexpected response %d", response.StatusCode())
+		return "", fmt.Errorf("response %s", string(response.Body))
+	}
+	accessToken := response.JSON200.AccessToken
+
+	if accessToken != nil && *accessToken != "" {
+		return *accessToken, nil
+	}
+	return "", nil
+
+}
+
 func CheckAuth(cmd *cobra.Command, _ []string) error {
 	noAuth, err := cmd.Flags().GetBool("noauth")
 	if err != nil {

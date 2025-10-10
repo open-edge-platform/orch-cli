@@ -33,6 +33,7 @@ var (
 	siteAliases              = []string{"site", "sites", "st", "sts"}
 	scheduleAliases          = []string{"schedule", "schedules", "sch", "schs"}
 	sshKeyAliases            = []string{"sshkey", "sshkeys", "ssh", "sshs"}
+	userAliases              = []string{"user", "users", "usr", "usrs"}
 )
 
 func getCreateCommand() *cobra.Command {
@@ -69,6 +70,7 @@ func getCreateCommand() *cobra.Command {
 		getCreateScheduleCommand(),
 		getCreateProjectCommand(),
 		getCreateOrganizationCommand(),
+		getCreateUserCommand(),
 	)
 	return cmd
 }
@@ -106,6 +108,7 @@ func getListCommand() *cobra.Command {
 		getListScheduleCommand(),
 		getListProjectCommand(),
 		getListOrganizationCommand(),
+		getListUserCommand(),
 	)
 	return catalogListRootCmd
 }
@@ -141,6 +144,7 @@ func getGetCommand() *cobra.Command {
 		getGetScheduleCommand(),
 		getGetProjectCommand(),
 		getGetOrganizationCommand(),
+		getGetUserCommand(),
 	)
 	return catalogGetRootCmd
 }
@@ -202,6 +206,7 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteScheduleCommand(),
 		getDeleteProjectCommand(),
 		getDeleteOrganizationCommand(),
+		getDeleteUserCommand(),
 	)
 	return catalogDeleteRootCmd
 }

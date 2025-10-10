@@ -11,11 +11,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/tabwriter"
 
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/open-edge-platform/cli/pkg/rest/cluster"
@@ -25,6 +27,7 @@ import (
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const timeLayout = "2006-01-02T15:04:05"
@@ -172,6 +175,41 @@ func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.C
 		return nil, nil, "", err
 	}
 	return context.Background(), tenancyClient, projectName, nil
+}
+
+// Get the new background context, REST client, and project name given the specified command.
+func getKCServiceContext(cmd *cobra.Command) (context.Context, *gocloak.GoCloak, string, error) {
+
+	var keycloakEp string
+
+	catEp := viper.GetString(apiEndpoint)
+	u, err := url.Parse(catEp)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	parts := strings.SplitN(u.Host, ".", 2)
+	if len(parts) != 2 {
+		return nil, nil, "", fmt.Errorf("Failed to determine keycloak enpoint from api endpoint. Consider using --keycloak flag")
+	}
+	keycloakEp = fmt.Sprintf("https://keycloak.%s/", parts[1])
+	fmt.Printf("Determined keycloak endpoint from api endpoint: %s\n", keycloakEp)
+
+	serverAddress := keycloakEp
+
+	projectName, err := getProjectName(cmd)
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	kcClient := gocloak.NewClient(serverAddress)
+	restyClient := kcClient.RestyClient()
+	restyClient.SetDebug(true)
+	restyClient.SetTLSClientConfig(&tls.Config{
+		MinVersion: tls.VersionTLS13,
+		MaxVersion: tls.VersionTLS13,
+	})
+
+	return context.Background(), kcClient, projectName, nil
 }
 
 // Adds the mandatory project UUID, and the standard display-name, and description
