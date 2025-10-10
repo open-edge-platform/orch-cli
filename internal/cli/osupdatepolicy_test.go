@@ -90,14 +90,14 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 	parsedGetOutput := mapGetOutput(getOutput)
 
 	expectedOutput := map[string]string{
-		"Name:":             "security-policy-v1.2",
-		"Resource ID:":      id, // "osupdatepolicy-abc12345"
-		"Target OS ID:":     "os-1234abcd",
-		"Description:":      "Monthly security update policy",
-		"Install Packages:": "curl wget vim",
-		"Update Policy:":    "UPDATE_POLICY_LATEST",
-		"Create at:":        "2025-01-15 10:30:00 +0000 UTC",
-		"Updated at:":       "2025-01-15 10:30:00 +0000 UTC",
+		"Name:":            "security-policy-v1.2",
+		"Resource ID:":     id, // "osupdatepolicy-abc12345"
+		"Target OS ID:":    "os-1234abcd",
+		"Description:":     "Monthly security update policy",
+		"Update Packages:": "curl wget vim",
+		"Update Policy:":   "UPDATE_POLICY_LATEST",
+		"Create at:":       "2025-01-15 10:30:00 +0000 UTC",
+		"Updated at:":      "2025-01-15 10:30:00 +0000 UTC",
 	}
 	s.compareGetOutput(expectedOutput, parsedGetOutput)
 
