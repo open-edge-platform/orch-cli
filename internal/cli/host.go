@@ -687,6 +687,7 @@ func resolveOSProfile(ctx context.Context, hClient infra.ClientWithResponsesInte
 		return "", e.NewCustomError(e.ErrInvalidOSProfile)
 	}
 
+	// Check cache first
 	if osResource, ok := respCache.OSProfileCache[osProfile]; ok {
 		return *osResource.ResourceId, nil
 	}
@@ -696,21 +697,41 @@ func resolveOSProfile(ctx context.Context, hClient infra.ClientWithResponsesInte
 		&infra.OperatingSystemServiceListOperatingSystemsParams{
 			Filter: &ospfilter,
 		}, auth.AddAuthHeader)
+
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
 		return "", err
 	}
-	if resp.JSON200.OperatingSystemResources != nil {
-		osResources := resp.JSON200.OperatingSystemResources
-		if len(osResources) > 0 {
-			respCache.OSProfileCache[osProfile] = osResources[len(osResources)-1]
-			return *osResources[len(osResources)-1].ResourceId, nil
+
+	if resp.JSON200 == nil || len(resp.JSON200.OperatingSystemResources) == 0 {
+		record.Error = "OS Profile not found"
+		*erringRecords = append(*erringRecords, record)
+		return "", errors.New(record.Error)
+	}
+
+	// The API may return multiple OS profiles matching the filter
+	// Filter results for exact matches
+	var exactMatch *infra.OperatingSystemResource
+	for _, ospResource := range resp.JSON200.OperatingSystemResources {
+		// Check for exact name match or resource ID match and take the first exact match
+		if (ospResource.Name != nil && *ospResource.Name == osProfile) ||
+			(ospResource.ResourceId != nil && *ospResource.ResourceId == osProfile) {
+			exactMatch = &ospResource
+			break
 		}
 	}
-	record.Error = "OS Profile not found"
-	*erringRecords = append(*erringRecords, record)
-	return "", errors.New(record.Error)
+
+	if exactMatch == nil {
+		record.Error = "OS Profile not found"
+		*erringRecords = append(*erringRecords, record)
+		return "", errors.New(record.Error)
+
+	}
+
+	// Cache the exact match
+	respCache.OSProfileCache[osProfile] = *exactMatch
+	return *exactMatch.ResourceId, nil
 }
 
 // Checks input security feature vs what is capable by host
