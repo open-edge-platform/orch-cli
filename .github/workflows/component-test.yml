@@ -7,7 +7,7 @@ on:
   pull_request:
     types: [labeled]
   schedule:
-    - cron: "0 0 * * *" # Run every day at midnight
+    - cron: "0 0 * * *"  # Run every day at midnight
   workflow_dispatch:  # Run on manual trigger
     inputs:
       run-component-tests:
@@ -28,7 +28,7 @@ jobs:
     name: Deploy Kind Orchestrator and Run Component Tests
     if: |
       ${{ inputs.run-component-tests || github.event_name == 'schedule' || github.event.label.name == 'run-component-tests' }}
-    runs-on: ubuntu-24.04-16core-64GB # ubuntu-24.04-4core-16GB ubuntu-22.04-32core-128GB & ubuntu-24.04-16core-64GB
+    runs-on: ubuntu-24.04-16core-64GB  # ubuntu-24.04-4core-16GB ubuntu-22.04-32core-128GB & ubuntu-24.04-16core-64GB
     timeout-minutes: 60
     env:
       ORCH_DEFAULT_PASSWORD: ${{ secrets.ORCH_DEFAULT_PASSWORD }}
@@ -126,7 +126,7 @@ jobs:
         working-directory: app-orch-catalog
         run: |
           make coder-redeploy
-          make coder-rebuild 
+          make coder-rebuild
 
       - name: Describe app-orch-catalog
         run: kubectl describe deployments.app -n orch-app app-orch-catalog
@@ -144,13 +144,13 @@ jobs:
               echo "Waiting for 10 seconds before checking again..."
               sleep 10
             fi
-          done  
+          done
 
       - name: Run Catalog Component Tests
         working-directory: app-orch-catalog/test
         run: |
           make component-tests
-          echo "Component tests done!"  
+          echo "Component tests done!"
 
       - name: Get diagnostic information
         if: always()
@@ -169,4 +169,4 @@ jobs:
             argo-diag.txt
             pods-describe.txt
             pods-list.txt
-            argocd-applications.yaml    
+            argocd-applications.yaml
