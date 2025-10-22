@@ -172,7 +172,7 @@ func (s *CLITestSuite) TestHost() {
 		"site":             "site-abcd1111",
 		"secure":           "true",
 		"remote-user":      "user",
-		"os-profile":       "microvisor-nonrt",
+		"os-profile":       "Edge Microvisor Toolkit 3.0.20250504",
 		"metadata":         "key1=value1",
 		"cloud-init":       "custom",
 		"cluster-deploy":   "true",

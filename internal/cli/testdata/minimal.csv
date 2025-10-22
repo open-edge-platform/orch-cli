@@ -1,5 +1,5 @@
 Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSize,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
-SN123456789,,microvisor-nonrt,site-7ceae560,
+SN123456789,,Edge Microvisor Toolkit 3.0.20250504,site-7ceae560,
 
 
 
