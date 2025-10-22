@@ -708,18 +708,17 @@ func resolveOSProfile(ctx context.Context, hClient infra.ClientWithResponsesInte
 		record.Error = "OS Profile not found"
 		*erringRecords = append(*erringRecords, record)
 		return "", errors.New(record.Error)
-
 	}
 
 	// The API may return multiple OS profiles matching the filter
 	// Filter results for exact matches
 	var exactMatch *infra.OperatingSystemResource
 	for _, ospResource := range resp.JSON200.OperatingSystemResources {
-		// Check for exact name match or resource ID match
+		// Check for exact name match or resource ID match and take the first exact match
 		if (ospResource.Name != nil && *ospResource.Name == osProfile) ||
 			(ospResource.ResourceId != nil && *ospResource.ResourceId == osProfile) {
 			exactMatch = &ospResource
-			break // Take the first exact match, not the last
+			break
 		}
 	}
 
