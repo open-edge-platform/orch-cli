@@ -18,6 +18,7 @@ orch-cli set host host-1234abcd  --project some-project --power on
 orch-cli set host host-1234abcd  --project some-project --power-policy ordered
 
 --power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
+  Note: Reset operations automatically escalate to more forceful attempts when consecutive resets are needed.
 --power-policy - Set the desired power command policy to ordered|immediate
 
 #Set host OS Update policy

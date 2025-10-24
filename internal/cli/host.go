@@ -121,6 +121,7 @@ orch-cli set host host-1234abcd  --project itep --power on
 orch-cli set host host-1234abcd  --project itep --power-policy ordered
 
 --power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
+  Note: Reset operations automatically escalate to more forceful attempts when consecutive resets are needed.
 --power-policy - Set the desired power command policy to ordered|immediate
 
 #Set host AMT state to provisioned
