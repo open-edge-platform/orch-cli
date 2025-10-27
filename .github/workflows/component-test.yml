@@ -53,7 +53,7 @@ jobs:
           git config --global url."https://${{ secrets.SYS_ORCH_GITHUB }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
       - name: Setup asdf and install dependencies
-        uses: open-edge-platform/orch-utils/.github/actions/setup-asdf@ea4b2c29728e9f313a82f8e95eda4a1a15b372e4
+        uses: open-edge-platform/orch-utils/.github/actions/setup-asdf@f25eea50f18519182e1d196032ea1bf7333f05f5
 
       - name: Checkout app-orch-catalog repository
         uses: actions/checkout@v5
