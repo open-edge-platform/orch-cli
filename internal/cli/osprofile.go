@@ -75,7 +75,8 @@ var osProfileSchema = `
 		"existingCvesURL": { "type": ["string", "null"] },
 		"fixedCvesURL": { "type": ["string", "null"] },
         "securityFeature": { "type": "string" },
-        "platformBundle": { "type": ["string", "null"] }
+        "platformBundle": { "type": ["string", "null"] },
+		"tlsCaCert": { "type": ["string", "null"] }
       },
       "required": [
         "name", "type", "provider", "architecture", "profileName",
@@ -102,6 +103,7 @@ type OSProfileSpec struct {
 	PlatformBundle    string `yaml:"platformBundle"`
 	OsExistingCvesURL string `yaml:"osExistingCvesURL"`
 	OsFixedCvesURL    string `yaml:"osFixedCvesURL"`
+	TLSCaCert         string `yaml:"tlsCaCert"`
 }
 
 type NestedSpec struct {
@@ -147,6 +149,10 @@ func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) 
 	_, _ = fmt.Fprintf(writer, "Installed Packages: \t%v\n", toJSON(OSProfile.InstalledPackages))
 	_, _ = fmt.Fprintf(writer, "Created: \t%v\n", OSProfile.Timestamps.CreatedAt)
 	_, _ = fmt.Fprintf(writer, "Updated: \t%v\n", OSProfile.Timestamps.UpdatedAt)
+
+	if OSProfile.TlsCaCert != nil {
+		_, _ = fmt.Fprintf(writer, "TLS CA Cert: \t%v\n", *OSProfile.TlsCaCert)
+	}
 
 	if OSProfile.ExistingCves != nil && OSProfile.FixedCves != nil {
 
@@ -416,6 +422,7 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 			Sha256:          spec.Spec.OsImageSha256,
 			FixedCvesUrl:    &spec.Spec.OsFixedCvesURL,
 			ExistingCvesUrl: &spec.Spec.OsExistingCvesURL,
+			TlsCaCert:       &spec.Spec.TLSCaCert,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
