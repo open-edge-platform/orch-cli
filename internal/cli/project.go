@@ -21,8 +21,12 @@ const getProjectExamples = `# Get detailed information about specific project
 orch-cli get project myproject
 `
 
-const createProjectExamples = `# Create a project with a given name using cloud init file as input
-orch-cli create project myproject`
+const createProjectExamples = `# Create a project with a given name
+orch-cli create project myproject
+
+# Create a project with a given name and description
+orch-cli create project myproject --description "my description"
+`
 
 const deleteProjectExamples = `#Delete a project using it's name
 orch-cli delete project myproject`

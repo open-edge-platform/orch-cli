@@ -21,8 +21,12 @@ const getOrganizationExamples = `# Get detailed information about specific organ
 orch-cli get organization myorganization
 `
 
-const createOrganizationExamples = `# Create a organization with a given name using cloud init file as input
-orch-cli create organization myorganization`
+const createOrganizationExamples = `# Create a organization with a given name 
+orch-cli create organization myorganization
+
+# Create a organization with a given name and description
+orch-cli create organization myorganization --description "my description"
+`
 
 const deleteOrganizationExamples = `#Delete a organization using it's name
 orch-cli delete organization myorganization`
