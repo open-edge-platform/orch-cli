@@ -29,31 +29,74 @@ orch-cli delete project myproject`
 
 var ProjectHeader = fmt.Sprintf("\n%s\t%s", "Name", "Status")
 
-// Prints OS Profiles in tabular format
+// Prints projects in tabular format
 func printProjects(writer io.Writer, projects *tenancy.ProjectProjectList, verbose bool) {
+	if projects == nil {
+		fmt.Fprintf(writer, "No projects found\n")
+		return
+	}
+
 	if verbose {
 		fmt.Fprintf(writer, "\n%s\t%s\t%s\n", "Name", "Status", "Description")
 	}
 
 	for _, project := range *projects {
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\n", *project.Name, *project.Status.ProjectStatus.StatusIndicator)
-		} else {
+		name := "N/A"
+		if project.Name != nil {
+			name = *project.Name
+		}
 
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", *project.Name, *project.Status.ProjectStatus.StatusIndicator, *project.Spec.Description)
+		status := "Unknown"
+		if project.Status != nil && project.Status.ProjectStatus != nil && project.Status.ProjectStatus.StatusIndicator != nil {
+			status = *project.Status.ProjectStatus.StatusIndicator
+		}
+
+		if !verbose {
+			fmt.Fprintf(writer, "%s\t%s\n", name, status)
+		} else {
+			description := "N/A"
+			if project.Spec != nil && project.Spec.Description != nil {
+				description = *project.Spec.Description
+			}
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", name, status, description)
 		}
 	}
 }
 
-// Prints output details of OS Profiles
+// Prints output details of projects
 func printProject(writer io.Writer, name string, project *tenancy.GetprojectProject) {
+	if project == nil {
+		fmt.Fprintf(writer, "Project %s not found\n", name)
+		return
+	}
 
 	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", name)
-	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", *project.Spec.Description)
-	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", *project.Status.ProjectStatus.StatusIndicator)
-	_, _ = fmt.Fprintf(writer, "Status message: \t%s\n", *project.Status.ProjectStatus.Message)
-	_, _ = fmt.Fprintf(writer, "UID: \t%s\n\n", *project.Status.ProjectStatus.UID)
 
+	description := "N/A"
+	if project.Spec != nil && project.Spec.Description != nil {
+		description = *project.Spec.Description
+	}
+	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", description)
+
+	status := "Unknown"
+	message := "N/A"
+	uid := "N/A"
+
+	if project.Status != nil && project.Status.ProjectStatus != nil {
+		if project.Status.ProjectStatus.StatusIndicator != nil {
+			status = *project.Status.ProjectStatus.StatusIndicator
+		}
+		if project.Status.ProjectStatus.Message != nil {
+			message = *project.Status.ProjectStatus.Message
+		}
+		if project.Status.ProjectStatus.UID != nil {
+			uid = *project.Status.ProjectStatus.UID
+		}
+	}
+
+	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", status)
+	_, _ = fmt.Fprintf(writer, "Status message: \t%s\n", message)
+	_, _ = fmt.Fprintf(writer, "UID: \t%s\n\n", uid)
 }
 
 func getGetProjectCommand() *cobra.Command {
@@ -174,7 +217,7 @@ func runCreateProjectCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating projet"))
+	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating project")
 }
 
 // Deletes Project - checks if a project already exists and then deletes it if it does

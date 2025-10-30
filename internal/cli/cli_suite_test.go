@@ -22,6 +22,7 @@ import (
 	deploymentmock "github.com/open-edge-platform/cli/internal/cli/mocks/deployment"
 	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
 	rpsmock "github.com/open-edge-platform/cli/internal/cli/mocks/rps"
+	tenancymock "github.com/open-edge-platform/cli/internal/cli/mocks/tenancy"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/spf13/viper"
@@ -67,6 +68,7 @@ func (s *CLITestSuite) SetupSuite() {
 	ClusterFactory = clustermock.CreateClusterMock(mctrl)
 	RpsFactory = rpsmock.CreateRpsMock(mctrl)
 	DeploymentFactory = deploymentmock.CreateDeploymentMock(mctrl)
+	TenancyFactory = tenancymock.CreateTenancyMock(mctrl)
 
 	//Mock server for network tests - TODO rework network
 	s.testServer = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -98,6 +100,9 @@ func (s *CLITestSuite) TearDownSuite() {
 	InfraFactory = nil
 	ClusterFactory = nil
 	RpsFactory = nil
+	DeploymentFactory = nil
+	TenancyFactory = nil
+
 	viper.Set(auth.UserName, "")
 	viper.Set(auth.RefreshTokenField, "")
 	viper.Set(auth.ClientIDField, "")

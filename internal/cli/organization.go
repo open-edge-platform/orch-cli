@@ -31,27 +31,72 @@ var OrganizationHeader = fmt.Sprintf("\n%s\t%s", "Name", "Status")
 
 // Prints OS Profiles in tabular format
 func printOrganizations(writer io.Writer, organizations *tenancy.OrgOrgList, verbose bool) {
+	if organizations == nil {
+		fmt.Fprintf(writer, "No organizations found\n")
+		return
+	}
+
 	if verbose {
 		fmt.Fprintf(writer, "\n%s\t%s\t%s\n", "Name", "Status", "Description")
 	}
-	for _, organization := range *organizations {
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\n", *organization.Name, *organization.Status.OrgStatus.StatusIndicator)
-		} else {
 
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", *organization.Name, *organization.Status.OrgStatus.StatusIndicator, *organization.Spec.Description)
+	for _, organization := range *organizations {
+		name := "N/A"
+		if organization.Name != nil {
+			name = *organization.Name
+		}
+
+		status := "Unknown"
+		if organization.Status != nil && organization.Status.OrgStatus != nil && organization.Status.OrgStatus.StatusIndicator != nil {
+			status = *organization.Status.OrgStatus.StatusIndicator
+		}
+
+		if !verbose {
+			fmt.Fprintf(writer, "%s\t%s\n", name, status)
+		} else {
+			description := "N/A"
+			if organization.Spec != nil && organization.Spec.Description != nil {
+				description = *organization.Spec.Description
+			}
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", name, status, description)
 		}
 	}
 }
 
 // Prints output details of OS Profiles
 func printOrganization(writer io.Writer, name string, organization *tenancy.GetorgOrg) {
+	if organization == nil {
+		fmt.Fprintf(writer, "Organization %s not found\n", name)
+		return
+	}
 
 	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", name)
-	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", *organization.Spec.Description)
-	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", *organization.Status.OrgStatus.StatusIndicator)
-	_, _ = fmt.Fprintf(writer, "Status message: \t%s\n", *organization.Status.OrgStatus.Message)
-	_, _ = fmt.Fprintf(writer, "UID: \t%s\n\n", *organization.Status.OrgStatus.UID)
+
+	description := "N/A"
+	if organization.Spec != nil && organization.Spec.Description != nil {
+		description = *organization.Spec.Description
+	}
+	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", description)
+
+	status := "Unknown"
+	message := "N/A"
+	uid := "N/A"
+
+	if organization.Status != nil && organization.Status.OrgStatus != nil {
+		if organization.Status.OrgStatus.StatusIndicator != nil {
+			status = *organization.Status.OrgStatus.StatusIndicator
+		}
+		if organization.Status.OrgStatus.Message != nil {
+			message = *organization.Status.OrgStatus.Message
+		}
+		if organization.Status.OrgStatus.UID != nil {
+			uid = *organization.Status.OrgStatus.UID
+		}
+	}
+
+	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", status)
+	_, _ = fmt.Fprintf(writer, "Status message: \t%s\n", message)
+	_, _ = fmt.Fprintf(writer, "UID: \t%s\n\n", uid)
 }
 
 func getGetOrganizationCommand() *cobra.Command {
@@ -172,7 +217,7 @@ func runCreateOrganizationCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating projet"))
+	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating organization")
 }
 
 // Deletes Organization - checks if a organization already exists and then deletes it if it does
