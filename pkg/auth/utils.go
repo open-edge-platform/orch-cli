@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/atomix/dazl"
 	"github.com/golang-jwt/jwt/v5"
@@ -40,13 +41,16 @@ var KeycloakFactory = newKeycloakClient
 
 func TLS13ClientOption() openidconnect.ClientOption {
 	return func(c *openidconnect.Client) error {
+		// Create transport based on default transport to preserve proxy settings
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = &tls.Config{
+			MinVersion: tls.VersionTLS13,
+			MaxVersion: tls.VersionTLS13,
+		}
+
 		c.Client = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					MinVersion: tls.VersionTLS13,
-					MaxVersion: tls.VersionTLS13,
-				},
-			},
+			Transport: transport,
+			Timeout:   30 * time.Second,
 		}
 		return nil
 	}

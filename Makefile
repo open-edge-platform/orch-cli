@@ -122,6 +122,8 @@ rest-client-gen:
 	oapi-codegen -generate client -old-config-style -package tenancy -o pkg/rest/tenancy/client.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
 	oapi-codegen -generate types -old-config-style -package tenancy -o pkg/rest/tenancy/types.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
 
+# Supported mockgen version v0.5.2
+# install command: go install go.uber.org/mock/mockgen@v0.5.2
 mock-client-gen:
 	@# Help: Generate mock clients for testing
 	mockgen -source=pkg/rest/catalog/client.go -destination=pkg/rest/catalog/mock_client.go -package=catalog

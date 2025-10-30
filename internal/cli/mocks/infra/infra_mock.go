@@ -2016,14 +2016,14 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
 							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 							JSON200: &infra.OSUpdatePolicy{
-								Name:            "security-policy-v1.2",
-								ResourceId:      stringPtr(policyId),
-								Description:     stringPtr("Monthly security update policy"),
-								TargetOsId:      stringPtr("os-1234abcd"),
-								InstallPackages: stringPtr("curl wget vim"),
-								UpdatePolicy:    (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
-								UpdateSources:   &[]string{"https://updates.example.com"},
-								KernelCommand:   stringPtr("console=ttyS0"),
+								Name:                "security-policy-v1.2",
+								ResourceId:          stringPtr(policyId),
+								Description:         stringPtr("Monthly security update policy"),
+								TargetOsId:          stringPtr("os-1234abcd"),
+								UpdatePackages:      stringPtr("curl wget vim"),
+								UpdatePolicy:        (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
+								UpdateSources:       &[]string{"https://updates.example.com"},
+								UpdateKernelCommand: stringPtr("console=ttyS0"),
 								Timestamps: &infra.Timestamps{
 									CreatedAt: timestampPtr(timestamp),
 									UpdatedAt: timestampPtr(timestamp),

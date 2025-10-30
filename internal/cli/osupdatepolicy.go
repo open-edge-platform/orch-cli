@@ -50,13 +50,13 @@ var osUpdatePolicySchema = `
     "spec": {
       "type": "object",
       "properties": {
-        "name":            { "type": "string" },
-        "description":     { "type": "string" },
-        "installPackages": { "type": "string" },
-        "kernelCommand":   { "type": "string" },
-        "targetOs":        { "type": "string" },
-        "updateSources":   { "type": ["array", "null"], "items": { "type": "string" } },
-        "updatePolicy":    { "type": "string" }
+        "name":                  { "type": "string" },
+        "description":           { "type": "string" },
+        "updatePackages":        { "type": "string" },
+        "updateKernelCommand":   { "type": "string" },
+        "targetOs":              { "type": "string" },
+        "updateSources":         { "type": ["array", "null"], "items": { "type": "string" } },
+        "updatePolicy":          { "type": "string" }
       },
       "required": ["name", "description", "updatePolicy"]
     }
@@ -66,13 +66,13 @@ var osUpdatePolicySchema = `
 `
 
 type OSUpdatePolicy struct {
-	Name            string   `yaml:"name"`
-	Description     string   `yaml:"description"`
-	InstallPackages string   `yaml:"installPackages"`
-	KernelCommand   string   `yaml:"kernelCommand"`
-	TargetOS        string   `yaml:"targetOs"`
-	UpdateSources   []string `yaml:"updateSources"`
-	UpdatePolicy    string   `yaml:"updatePolicy"`
+	Name                string   `yaml:"name"`
+	Description         string   `yaml:"description"`
+	UpdatePackages      string   `yaml:"updatePackages"`
+	UpdateKernelCommand string   `yaml:"updateKernelCommand"`
+	TargetOS            string   `yaml:"targetOs"`
+	UpdateSources       []string `yaml:"updateSources"`
+	UpdatePolicy        string   `yaml:"updatePolicy"`
 }
 
 type UpdateNestedSpec struct {
@@ -110,7 +110,7 @@ func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy)
 	_, _ = fmt.Fprintf(writer, "Resource ID:\t %s\n", *OSUpdatePolicy.ResourceId)
 	_, _ = fmt.Fprintf(writer, "Target OS ID:\t %s\n", *OSUpdatePolicy.TargetOsId)
 	_, _ = fmt.Fprintf(writer, "Description:\t %v\n", *OSUpdatePolicy.Description)
-	_, _ = fmt.Fprintf(writer, "Install Packages:\t %s\n", *OSUpdatePolicy.InstallPackages)
+	_, _ = fmt.Fprintf(writer, "Update Packages:\t %s\n", *OSUpdatePolicy.UpdatePackages)
 	_, _ = fmt.Fprintf(writer, "Update Policy:\t %s\n", *OSUpdatePolicy.UpdatePolicy)
 	_, _ = fmt.Fprintf(writer, "Create at:\t %v\n", *OSUpdatePolicy.Timestamps.CreatedAt)
 	_, _ = fmt.Fprintf(writer, "Updated at:\t %v\n", *OSUpdatePolicy.Timestamps.CreatedAt)
@@ -355,12 +355,12 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 		updpol = infra.UpdatePolicy(spec.Spec.UpdatePolicy)
 	}
 
-	if spec.Spec.InstallPackages != "" {
-		packages = &spec.Spec.InstallPackages
+	if spec.Spec.UpdatePackages != "" {
+		packages = &spec.Spec.UpdatePackages
 	}
 
-	if spec.Spec.KernelCommand != "" {
-		kernel = &spec.Spec.KernelCommand
+	if spec.Spec.UpdateKernelCommand != "" {
+		kernel = &spec.Spec.UpdateKernelCommand
 	}
 
 	if spec.Spec.UpdateSources != nil {
@@ -374,14 +374,13 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	//Create policy
 	resp, err := OSUPolicyClient.OSUpdatePolicyCreateOSUpdatePolicyWithResponse(ctx, projectName,
 		infra.OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody{
-			Name:            spec.Spec.Name,
-			Description:     &spec.Spec.Description,
-			InstallPackages: packages,
-			KernelCommand:   kernel,
-			//TargetOs:        profile,
-			TargetOsId:    profileID,
-			UpdateSources: sources,
-			UpdatePolicy:  &updpol,
+			Name:                spec.Spec.Name,
+			Description:         &spec.Spec.Description,
+			UpdatePackages:      packages,
+			UpdateKernelCommand: kernel,
+			TargetOsId:          profileID,
+			UpdateSources:       sources,
+			UpdatePolicy:        &updpol,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
