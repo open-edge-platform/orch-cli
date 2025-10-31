@@ -98,7 +98,11 @@ fetch-rps-openapi:
 	@# Help: Fetch the OpenDMT RPS OpenAPI spec
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-opendmt-rps-openapi.yaml -o pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 
-fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi fetch-infra-openapi
+fetch-utils-openapi:
+	@# Help: Fetch the Utils API OpenAPI spec
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/orch-utils.tenancy-datamodel.openapi.yaml -o pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
+
+fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi fetch-infra-openapi fetch-rps-openapi fetch-utils-openapi
 	@# Help: Fetch OpenAPI specs for all components
 
 rest-client-gen:
@@ -115,6 +119,8 @@ rest-client-gen:
 	oapi-codegen -generate types -old-config-style -package infra -o pkg/rest/infra/types.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 	oapi-codegen -generate client -old-config-style -package rps -o pkg/rest/rps/client.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 	oapi-codegen -generate types -old-config-style -package rps -o pkg/rest/rps/types.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
+	oapi-codegen -generate client -old-config-style -package tenancy -o pkg/rest/tenancy/client.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
+	oapi-codegen -generate types -old-config-style -package tenancy -o pkg/rest/tenancy/types.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
 
 # Supported mockgen version v0.5.2
 # install command: go install go.uber.org/mock/mockgen@v0.5.2
@@ -126,6 +132,7 @@ mock-client-gen:
 	mockgen -source=pkg/rest/cluster/client.go -destination=pkg/rest/cluster/mock_client.go -package=cluster
 	mockgen -source=pkg/rest/infra/client.go -destination=pkg/rest/infra/mock_client.go -package=infra
 	mockgen -source=pkg/rest/rps/client.go -destination=pkg/rest/rps/mock_client.go -package=rps
+	mockgen -source=pkg/rest/tenancy/client.go -destination=pkg/rest/tenancy/mock_client.go -package=tenancy
 
 cli-docs:
 	@# Help: Generates markdowns for the orchestrator cli
