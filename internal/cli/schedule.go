@@ -45,7 +45,7 @@ orch-cli set schedules repeatedsche-abcd1234 --timezone GMT --maintenance-type o
 orch-cli set schedules repeatedsche-abcd1234 --timezone GMT --maintenance-type osupdate --frequency monthly --start-time "10:10" --day-of-month "1-3,5" --months "2,4,7-8" --duration 3600
 
 # Update a single schedule resource using it's resource ID (not all parameters need to be updated at same time, --timezone is mandatory)
-orch-cli set schedules repeatedsche-abcd1234 --timezone GMT --maintenance-type osupdate --start-time "2026-02-02 10:10" --end-time "2026-02-02 10:10" 
+orch-cli set schedules singlesche-abcd1234 --timezone GMT --maintenance-type osupdate --start-time "2026-02-02 10:10" --end-time "2026-02-02 10:10" 
 `
 
 var ScheduleHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Target", "Type")

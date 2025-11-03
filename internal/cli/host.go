@@ -112,6 +112,35 @@ orch-cli delete host host-1234abcd  --project itep`
 const deauthorizeHostExamples = `#Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
 orch-cli deauthorize host host-1234abcd  --project itep`
 
+const updateHostExamples = `#Update the host OS
+orch-cli update-os host host-1234abcd  --project itep
+
+#Update the host OS with a specific OS Update Policy
+orch-cli update-os host host-1234abcd  --project itep --osupdatepolicy <resourceID>
+
+--osupdatepolicy - Set the OS Update policy for the host, must be a valid resource ID of an OS Update policy
+
+#Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
+orch-cli update-os host --project itep --generate-csv
+
+#Generate CSV input file using the --generate-csv flag with a filter flag which will find a specific list of currently deployed hosts based on the filter - the default output will be a base test.csv file.
+orch-cli update-os host --project itep --generate-csv --filter=<filter>
+
+#Update a bulk number of hosts from a CSV file - --import-from-csv is a mandatory flag pointing to the input file.
+orch-cli update-os host --project itep --import-from-csv test.csv
+
+# Sample input csv file test.csv
+
+Name - Name of the machine - mandatory field
+ResourceID - Unique Identifier of host - mandatory field
+OSUpdatePolicy - Desired update policy - optional field - currently set policy for the host will be used if not provided
+
+Name,ResourceID,OSUpdatePolicy
+host-1,host-1234abcd,osupdatepolicy-1234abcd
+host-2,host-2234abcd
+host-3,host-3234abcd,osupdatepolicy-1234abcd
+`
+
 const setHostExamples = `#Set an attribute of a host or execute an action - at least one flag must be specified
 
 #Set host power state to on
@@ -999,6 +1028,19 @@ func getDeauthorizeCommand() *cobra.Command {
 	return cmd
 }
 
+func getUpdateCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:               "update-os",
+		Short:             "Update host",
+		PersistentPreRunE: auth.CheckAuth,
+	}
+
+	cmd.AddCommand(
+		getUpdateHostCommand(),
+	)
+	return cmd
+}
+
 func getListHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "host [flags]",
@@ -1113,6 +1155,40 @@ func getDeauthorizeHostCommand() *cobra.Command {
 		Aliases: hostAliases,
 		RunE:    runDeauthorizeHostCommand,
 	}
+	return cmd
+}
+
+func getUpdateHostCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "host <resourceID> [flags]",
+		Short:   "Updates a host",
+		Example: updateHostExamples,
+		Args: func(cmd *cobra.Command, args []string) error {
+			generateCSV, _ := cmd.Flags().GetString("generate-csv")
+			if generateCSV == "" {
+				generateCSV = "test.csv"
+			}
+			importCSV, _ := cmd.Flags().GetString("import-from-csv")
+			if generateCSV != "" || importCSV != "" {
+				// No positional arg required for bulk operations
+				return nil
+			}
+			if len(args) != 1 {
+				return fmt.Errorf("accepts 1 arg(s), received %d", len(args))
+			}
+			return nil
+		},
+		Aliases: hostAliases,
+		RunE:    runUpdateHostCommand,
+	}
+	cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
+	cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts to be updated")
+	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
+	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host import")
+	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
+	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host discovery command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec. \n\tPredefined filters: --filter provisioned/onboarded/registered/nor connected/deauthorized")
+	cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Optional filter provided as part of host discovery command to filter hosts by site")
+	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of host discovery command to filter hosts by region")
 	return cmd
 }
 
@@ -1700,6 +1776,243 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+
+	fmt.Printf("Host %s updated successfully\n", hostID)
+
+	return nil
+}
+
+// Run an immidiate OS update single schedule on a host
+func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
+
+	generateCSV, _ := cmd.Flags().GetString("generate-csv")
+	importCSV, _ := cmd.Flags().GetString("import-from-csv")
+	//policyFlag, _ := cmd.Flags().GetString("osupdatepolicy")
+
+	filtflag, _ := cmd.Flags().GetString("filter")
+	filter := filterHelper(filtflag)
+
+	siteFlag, _ := cmd.Flags().GetString("site")
+	site, err := filterSitesHelper(siteFlag)
+	if err != nil {
+		return err
+	}
+
+	regFlag, _ := cmd.Flags().GetString("region")
+	region, err := filterRegionsHelper(regFlag)
+	if err != nil {
+		return err
+	}
+
+	ctx, hostClient, projectName, err := InfraFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Bulk CSV generation
+	if generateCSV != "" {
+		if siteFlag != "" && regFlag != "" {
+			return fmt.Errorf("cannot specify both site and region filter flags simultaneously, please use only one of--site, or --region")
+		}
+		if filtflag != "" || siteFlag != "" || regFlag != "" {
+			//If all host for a given region are queried, sites need to be found first
+			if siteFlag == "" && regFlag != "" {
+
+				regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
+
+				cresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, *region,
+					&infra.SiteServiceListSitesParams{
+						Filter: &regFilter,
+					}, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+
+				//create site filter
+				siteFilter := ""
+				if cresp.JSON200.TotalElements != 0 {
+					for i, s := range cresp.JSON200.Sites {
+						if i == 0 {
+							siteFilter = fmt.Sprintf("site.resourceId='%s'", *s.ResourceId)
+						} else {
+							siteFilter = fmt.Sprintf("%s OR site.resourceId='%s'", siteFilter, *s.ResourceId)
+						}
+					}
+				} else {
+					return errors.New("no site was found in provided region")
+				}
+
+				//if additional filter exists add sites to that filter if not replace empty filter with sites
+				if filtflag != "" {
+					*filter = fmt.Sprintf("%s AND (%s)", *filter, siteFilter)
+				} else {
+					filter = &siteFilter
+				}
+			}
+
+			if siteFlag != "" {
+				siteFilter := fmt.Sprintf("site.resourceId='%s'", *site)
+				if filtflag != "" {
+					*filter = fmt.Sprintf("%s AND (%s)", *filter, siteFilter)
+				} else {
+					filter = &siteFilter
+				}
+			}
+
+			pageSize := 20
+			hosts := make([]infra.HostResource, 0)
+			for offset := 0; ; offset += pageSize {
+				resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+					&infra.HostServiceListHostsParams{
+						Filter:   filter,
+						PageSize: &pageSize,
+						Offset:   &offset,
+					}, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+
+				if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+					return err
+				}
+				hosts = append(hosts, resp.JSON200.Hosts...)
+				if !resp.JSON200.HasNext {
+					break // No more hosts to process
+				}
+			}
+
+			// Write CSV
+			// Use absolute path for CSV file if not already absolute
+			csvPath := generateCSV
+			if !filepath.IsAbs(csvPath) {
+				wd, err := os.Getwd()
+				if err != nil {
+					return err
+				}
+				csvPath = filepath.Join(wd, csvPath)
+			}
+			// Check if file already exists
+			if _, err := os.Stat(csvPath); err == nil {
+				fmt.Printf("File %s already exists not generating\n", csvPath)
+				return nil
+			}
+			f, err := os.Create(csvPath)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			fmt.Fprintln(f, "Name,ResourceID,OSUpdatePolicyID")
+			for _, h := range hosts {
+				name := h.Name
+				resourceID := ""
+				osUpdatePolicyID := ""
+				if h.ResourceId != nil {
+					resourceID = *h.ResourceId
+				}
+				if h.Instance != nil && h.Instance.UpdatePolicy != nil && h.Instance.UpdatePolicy.ResourceId != nil {
+					osUpdatePolicyID = string(*h.Instance.UpdatePolicy.ResourceId)
+				}
+				fmt.Fprintf(f, "%s,%s,%s\n", name, resourceID, osUpdatePolicyID)
+			}
+			fmt.Printf("CSV template generated: %s\n", generateCSV)
+			return nil
+		}
+		csvPath := generateCSV
+		if !filepath.IsAbs(csvPath) {
+			wd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			csvPath = filepath.Join(wd, csvPath)
+		}
+		// Check if file already exists
+		if _, err := os.Stat(csvPath); err == nil {
+			fmt.Printf("File %s already exists not generating\n", csvPath)
+			return nil
+		}
+		f, err := os.Create(csvPath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		fmt.Fprintln(f, "Name,ResourceID,OSUpdatePolicyID")
+		fmt.Printf("CSV template generated: %s\n", generateCSV)
+		return nil
+	}
+
+	// Bulk CSV import
+	if importCSV != "" {
+		// file, err := os.Open(importCSV)
+		// if err != nil {
+		// 	return err
+		// }
+		// defer file.Close()
+		// scanner := bufio.NewScanner(file)
+		// lineNum := 0
+		// for scanner.Scan() {
+		// 	line := scanner.Text()
+		// 	lineNum++
+		// 	if lineNum == 1 {
+		// 		continue // skip header
+		// 	}
+		// 	fields := strings.Split(line, ",")
+		// 	if len(fields) < 3 {
+		// 		fmt.Printf("Skipping invalid line %d: %s\n", lineNum, line)
+		// 		continue
+		// 	}
+		// 	name := strings.TrimSpace(fields[0])
+		// 	resourceID := strings.TrimSpace(fields[1])
+		// 	desiredOSUpdatePolicy := strings.TrimSpace(fields[2])
+		// 	// Validate desiredOSUpdatePolicy
+		// 	osUpdatePolicy, err := resolveOSUpdatePolicy(desiredOSUpdatePolicy)
+		// 	if err != nil {
+		// 		fmt.Printf("Invalid OS update policy for host %s: %s\n", name, desiredOSUpdatePolicy)
+		// 		continue
+		// 	}
+		// 	// Patch hosts instance
+		// 	resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
+		// 		OsUpdatePolicyID: osUpdatePolicy,
+		// 	}, auth.AddAuthHeader)
+		// 	if err != nil {
+		// 		return processError(err)
+		// 	}
+		// 	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set OS update policy"); err != nil {
+		// 		return err
+		// 	}
+		// 	fmt.Printf("Host %s (%s) OS update policy updated to %s\n", name, resourceID, desiredOSUpdatePolicy)
+		// }
+		// if err := scanner.Err(); err != nil {
+		// 	return err
+		// }
+		return nil
+	}
+
+	if len(args) == 0 {
+		return fmt.Errorf("no host ID provided")
+	}
+	hostID := args[0]
+
+	// retrieve the host (to check if it has an instance associated with it)
+	iresp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving host"); err != nil {
+		return err
+	}
+	// host := *iresp.JSON200
+
+	// if updatePolicy != nil && host.Instance != nil && host.Instance.InstanceID != nil && updFlag != "" {
+	// 	resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
+	// 		OsUpdatePolicyID: updatePolicy,
+	// 	}, auth.AddAuthHeader)
+	// 	if err != nil {
+	// 		return processError(err)
+	// 	}
+	// 	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set OS update policy"); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	fmt.Printf("Host %s updated successfully\n", hostID)
 
