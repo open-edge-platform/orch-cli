@@ -10,6 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/open-edge-platform/cli/internal/types"
+	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
@@ -22,7 +24,16 @@ orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010
 orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue --template sometemplate-v1.0.0
 
 # Create a cluster with the name "my-cluster" on the given nodes using the default template and with the provided multiple labels
-orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue,another-label=another-value`
+orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue,another-label=another-value
+
+# Create clusters from CSV file - one cluster per host with iterating cluster names
+# Single node clusters with the default template will be created
+# Example CSV:
+# UUID,<unused fields>
+y2fel,6d91fff4-4d4e-4420-41fb-9ec279cb03ca,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,
+krxl5,a7b0229d-ccfc-7944-fcc2-b844d6f2d6d5,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,
+vhwnt,3b0594d4-c5e7-eb1c-feb1-77d0db615368,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,
+orch-cli create cluster my-cluster --project some-project --create-from-csv hosts.csv`
 
 func getCreateClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -34,9 +45,9 @@ func getCreateClusterCommand() *cobra.Command {
 		RunE:    runCreateClusterCommand,
 	}
 	cmd.Flags().String("template", "", "Cluster template to use")
-	cmd.Flags().StringSlice("nodes", []string{}, "Mandatory list of nodes in the format <id>:<role>")
+	cmd.Flags().StringSlice("nodes", []string{}, "List of nodes in the format <id>:<role> (required unless using --create-from-csv)")
 	cmd.Flags().StringToString("labels", map[string]string{}, "Labels in the format key=value")
-	_ = cmd.MarkFlagRequired("nodes")
+	cmd.Flags().String("create-from-csv", "", "CSV file containing host UUIDs to create clusters for (one cluster per host)")
 	return cmd
 }
 
@@ -82,6 +93,18 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
+	
+	csvFile, err := cmd.Flags().GetString("create-from-csv")
+	if err != nil {
+		return processError(err)
+	}
+
+	// Check if CSV mode is enabled
+	if csvFile != "" {
+		return runCreateClustersFromCSV(cmd, args[0], csvFile, verbose)
+	}
+
+	// Original single cluster creation logic
 	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
@@ -89,13 +112,17 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 
 	clusterName := args[0]
 
-	request := coapi.PostV2ProjectsProjectNameClustersJSONRequestBody{
-		Name: &clusterName,
-	}
-
 	nodesFlag, err := cmd.Flags().GetStringSlice("nodes")
 	if err != nil {
 		return processError(err)
+	}
+
+	if len(nodesFlag) == 0 {
+		return fmt.Errorf("--nodes flag is required when not using --create-from-csv")
+	}
+
+	request := coapi.PostV2ProjectsProjectNameClustersJSONRequestBody{
+		Name: &clusterName,
 	}
 
 	nodes := []coapi.NodeSpec{}
@@ -160,6 +187,52 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 	}
 	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating cluster %s", clusterName))
 }
+
+func runCreateClustersFromCSV(cmd *cobra.Command, baseClusterName, csvFile string, verbose bool) error {
+	// Original single cluster creation logic
+	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	template, err := cmd.Flags().GetString("template")
+	if err != nil {
+		return processError(err)
+	}
+
+	hostRec := &types.HostRecord{}
+	validated, err := validator.CheckCSV(csvFile, *hostRec)
+	if err != nil {
+		return err
+	}
+	for i, record := range validated {
+		// Create a unique cluster name for each record
+		clusterName := fmt.Sprintf("%s-%d", baseClusterName, i)
+		request := coapi.PostV2ProjectsProjectNameClustersJSONRequestBody{
+			Name: &clusterName,
+			Nodes: []coapi.NodeSpec{
+				{Id: record.UUID,Role: "all"},
+			},
+		}
+		if template != "" {
+			request.Template = &template
+		}
+		resp, err := clusterClient.PostV2ProjectsProjectNameClustersWithResponse(ctx, projectName, request, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if resp.JSON201 != nil {
+			fmt.Printf("Cluster '%s' created successfully.\n", clusterName)
+			continue
+		}
+		err = checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating cluster %s", clusterName))
+		if err != nil {
+			fmt.Printf("Failed to create cluster '%s': %v\n", clusterName, err)
+		}
+	}
+	return nil
+}
+
 
 func runGetClusterCommand(cmd *cobra.Command, args []string) error {
 	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
