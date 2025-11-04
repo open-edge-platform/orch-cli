@@ -189,6 +189,13 @@ var filename = "test.csv"
 
 const kVSize = 2
 
+type UpdateHostRecord struct {
+	Name           string
+	ResourceID     string
+	OsUpdatePolicy string
+	Error          string
+}
+
 type ResponseCache struct {
 	OSProfileCache          map[string]infra.OperatingSystemResource
 	SiteCache               map[string]infra.SiteResource
@@ -785,6 +792,15 @@ func validateOSProfile(osProfileID string) error {
 	osRe := regexp.MustCompile(validator.OSPIDPATTERN)
 	if !osRe.MatchString(osProfileID) {
 		return e.NewCustomError(e.ErrInvalidOSProfile)
+	}
+	return nil
+}
+
+// Validates the format of OS Update Policy
+func validateOSUpdatePolicy(osUpdatePolicy string) error {
+	osupRe := regexp.MustCompile(`^osupdatepolicy-[0-9a-f]{8}$`)
+	if !osupRe.MatchString(osUpdatePolicy) {
+		return e.NewCustomError(e.ErrInvalidOSUpdatePolicy)
 	}
 	return nil
 }
@@ -1782,12 +1798,12 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// Run an immidiate OS update single schedule on a host
+// Run an immediate OS update single schedule on a host
 func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 
 	generateCSV, _ := cmd.Flags().GetString("generate-csv")
 	importCSV, _ := cmd.Flags().GetString("import-from-csv")
-	//policyFlag, _ := cmd.Flags().GetString("osupdatepolicy")
+	policyFlag, _ := cmd.Flags().GetString("osupdatepolicy")
 
 	filtflag, _ := cmd.Flags().GetString("filter")
 	filter := filterHelper(filtflag)
@@ -1910,7 +1926,7 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 					resourceID = *h.ResourceId
 				}
 				if h.Instance != nil && h.Instance.UpdatePolicy != nil && h.Instance.UpdatePolicy.ResourceId != nil {
-					osUpdatePolicyID = string(*h.Instance.UpdatePolicy.ResourceId)
+					osUpdatePolicyID = *h.Instance.UpdatePolicy.ResourceId
 				}
 				fmt.Fprintf(f, "%s,%s,%s\n", name, resourceID, osUpdatePolicyID)
 			}
@@ -1940,82 +1956,241 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	updateRecords := make([]UpdateHostRecord, 0)
+
 	// Bulk CSV import
 	if importCSV != "" {
-		// file, err := os.Open(importCSV)
-		// if err != nil {
-		// 	return err
-		// }
-		// defer file.Close()
-		// scanner := bufio.NewScanner(file)
-		// lineNum := 0
-		// for scanner.Scan() {
-		// 	line := scanner.Text()
-		// 	lineNum++
-		// 	if lineNum == 1 {
-		// 		continue // skip header
-		// 	}
-		// 	fields := strings.Split(line, ",")
-		// 	if len(fields) < 3 {
-		// 		fmt.Printf("Skipping invalid line %d: %s\n", lineNum, line)
-		// 		continue
-		// 	}
-		// 	name := strings.TrimSpace(fields[0])
-		// 	resourceID := strings.TrimSpace(fields[1])
-		// 	desiredOSUpdatePolicy := strings.TrimSpace(fields[2])
-		// 	// Validate desiredOSUpdatePolicy
-		// 	osUpdatePolicy, err := resolveOSUpdatePolicy(desiredOSUpdatePolicy)
-		// 	if err != nil {
-		// 		fmt.Printf("Invalid OS update policy for host %s: %s\n", name, desiredOSUpdatePolicy)
-		// 		continue
-		// 	}
-		// 	// Patch hosts instance
-		// 	resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
-		// 		OsUpdatePolicyID: osUpdatePolicy,
-		// 	}, auth.AddAuthHeader)
-		// 	if err != nil {
-		// 		return processError(err)
-		// 	}
-		// 	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set OS update policy"); err != nil {
-		// 		return err
-		// 	}
-		// 	fmt.Printf("Host %s (%s) OS update policy updated to %s\n", name, resourceID, desiredOSUpdatePolicy)
-		// }
-		// if err := scanner.Err(); err != nil {
-		// 	return err
-		// }
-		return nil
+		file, err := os.Open(importCSV)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		lineNum := 0
+		for scanner.Scan() {
+			line := scanner.Text()
+			lineNum++
+			if lineNum == 1 {
+				continue // skip header
+			}
+			fields := strings.Split(line, ",")
+			if len(fields) < 2 {
+				updateRecords = append(updateRecords, UpdateHostRecord{
+					Name:           "unknown",
+					ResourceID:     "unknown",
+					OsUpdatePolicy: "",
+					Error:          ": invalid entry \"" + line + "\" at line " + fmt.Sprint(lineNum),
+				})
+				continue
+			}
+			name := strings.TrimSpace(fields[0])
+			resourceID := strings.TrimSpace(fields[1])
+
+			desiredOSUpdatePolicy := ""
+			if len(fields) > 2 {
+				desiredOSUpdatePolicy = strings.TrimSpace(fields[2])
+			}
+			// Validate desiredOSUpdatePolicy
+
+			if desiredOSUpdatePolicy != "" {
+				err := validateOSUpdatePolicy(desiredOSUpdatePolicy)
+				if err != nil {
+					updateRecords = append(updateRecords, UpdateHostRecord{
+						Name:           name,
+						ResourceID:     resourceID,
+						OsUpdatePolicy: desiredOSUpdatePolicy,
+						Error:          ":invalid OS update policy " + desiredOSUpdatePolicy,
+					})
+					continue
+				}
+			}
+			updateRecords = append(updateRecords, UpdateHostRecord{
+				Name:           name,
+				ResourceID:     resourceID,
+				OsUpdatePolicy: desiredOSUpdatePolicy,
+				Error:          "",
+			})
+		}
+
+		if err := scanner.Err(); err != nil {
+			return err
+		}
+		counter := 0
+		for _, record := range updateRecords {
+			if record.Error != "" {
+				counter++
+				fmt.Printf("Error in host %s (%s) %s\n", record.Name, record.ResourceID, record.Error)
+			}
+		}
+		if counter != 0 {
+			fmt.Printf("Total records with errors: %d\n", counter)
+			return errors.New("\nerrors found in CSV import, please correct and re-import")
+		}
+	} else {
+		if len(args) == 0 {
+			return fmt.Errorf("no host ID provided")
+		}
+		if policyFlag != "" {
+			err := validateOSUpdatePolicy(policyFlag)
+			if err != nil {
+				return err
+			}
+			updateRecords = append(updateRecords, UpdateHostRecord{
+				Name:           "",
+				ResourceID:     args[0],
+				OsUpdatePolicy: policyFlag,
+				Error:          "",
+			})
+		} else {
+			updateRecords = append(updateRecords, UpdateHostRecord{
+				Name:           "",
+				ResourceID:     args[0],
+				OsUpdatePolicy: "",
+				Error:          "",
+			})
+		}
 	}
 
-	if len(args) == 0 {
-		return fmt.Errorf("no host ID provided")
+	//Check if all os update policies exist
+	policyCache := make(map[string]bool)
+	for i, record := range updateRecords {
+		if record.OsUpdatePolicy != "" && record.Error == "" {
+			//check cache
+			if exists, found := policyCache[record.OsUpdatePolicy]; found {
+				if exists {
+					// Policy exists in cache and remote - do nothing
+					continue
+				}
+				// Policy exists in cache but not in remote - append error
+				errorMsg := fmt.Sprintf("OS update policy %s not found", record.OsUpdatePolicy)
+				updateRecords[i].Error = errorMsg
+				continue
+			}
+			resp, err := hostClient.OSUpdatePolicyGetOSUpdatePolicyWithResponse(ctx, projectName,
+				record.OsUpdatePolicy, auth.AddAuthHeader)
+			if err != nil {
+				policyCache[record.OsUpdatePolicy] = false
+				errorMsg := fmt.Sprintf("OS update policy %s not found due to: %s", record.OsUpdatePolicy, err)
+				updateRecords[i].Error = errorMsg
+				continue
+			}
+
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error getting OS Update Policies"); err != nil {
+				policyCache[record.OsUpdatePolicy] = false
+				errorMsg := fmt.Sprintf("OS update policy %s not found due to: %s", record.OsUpdatePolicy, err)
+				updateRecords[i].Error = errorMsg
+			} else {
+				policyCache[record.OsUpdatePolicy] = true
+			}
+		}
 	}
-	hostID := args[0]
-
-	// retrieve the host (to check if it has an instance associated with it)
-	iresp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
-	if err != nil {
-		return processError(err)
+	errorCount := 0
+	for _, record := range updateRecords {
+		if record.Error != "" {
+			errorCount++
+			fmt.Printf("Error in host %s (%s) %s\n", record.Name, record.ResourceID, record.Error)
+		}
 	}
-	if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving host"); err != nil {
-		return err
+
+	if errorCount > 0 {
+		return fmt.Errorf("\nfound %d references to non-existing OS update policies - fix them and re-apply", errorCount)
 	}
-	// host := *iresp.JSON200
 
-	// if updatePolicy != nil && host.Instance != nil && host.Instance.InstanceID != nil && updFlag != "" {
-	// 	resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
-	// 		OsUpdatePolicyID: updatePolicy,
-	// 	}, auth.AddAuthHeader)
-	// 	if err != nil {
-	// 		return processError(err)
-	// 	}
-	// 	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set OS update policy"); err != nil {
-	// 		return err
-	// 	}
-	// }
+	// Check if OS update policies can be applied to hosts and apply them
+	for i, record := range updateRecords {
 
-	fmt.Printf("Host %s updated successfully\n", hostID)
+		policyID := record.OsUpdatePolicy
+		hostID := record.ResourceID
+		name := record.Name
+		// retrieve the host
+		hresp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(hresp.HTTPResponse, hresp.Body, "error while retrieving host"); err != nil {
+			errorMsg := fmt.Sprintf("Host not found due to: %s", err)
+			updateRecords[i].Error = errorMsg
+			continue
+		}
 
+		host := *hresp.JSON200
+
+		// check if host has an instance associated with it
+		if host.Instance == nil || host.Instance.InstanceID == nil {
+			errorMsg := fmt.Sprintf("Host does not have an instance associated with it, fully onboard the host")
+			updateRecords[i].Error = errorMsg
+			continue
+		}
+
+		// If new policy is not defined check if host has an existing os update policy associated with it
+		if policyID == "" {
+			if host.Instance == nil || host.Instance.UpdatePolicy == nil || host.Instance.UpdatePolicy.ResourceId == nil {
+				errorMsg := fmt.Sprintf("No OS update policy associated with host - set an OS Update Policy for host %s", hostID)
+				updateRecords[i].Error = errorMsg
+				continue
+			}
+			if host.Instance != nil && host.Instance.UpdatePolicy != nil && host.Instance.UpdatePolicy.ResourceId != nil {
+				fmt.Printf("Host %s %s already has an OS Update Policy %s associated with it - unsetting policy not supported - will continue with existing policy\n", name, hostID, *host.Instance.UpdatePolicy.ResourceId)
+				continue
+			}
+		}
+		if host.Instance != nil && host.Instance.UpdatePolicy != nil && host.Instance.UpdatePolicy.ResourceId != nil && policyID == *host.Instance.UpdatePolicy.ResourceId {
+			continue
+		} else if host.Instance != nil {
+			iresp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
+				OsUpdatePolicyID: &policyID,
+			}, auth.AddAuthHeader)
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to update the OS update policy for host %s %s - %s", name, hostID, err)
+				updateRecords[i].Error = errorMsg
+				continue
+			}
+			if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while executing host set OS update policy"); err != nil {
+				errorMsg := fmt.Sprintf("Failed to update the OS update policy for host %s %s - %s", name, hostID, err)
+				updateRecords[i].Error = errorMsg
+				continue
+			}
+			fmt.Printf("Host %s %s has new OS Update Policy %s set successfully\n", name, hostID, policyID)
+		}
+	}
+
+	errorCount = 0
+	for _, record := range updateRecords {
+		if record.Error != "" {
+			errorCount++
+			fmt.Printf("Error in host %s (%s) %s\n", record.Name, record.ResourceID, record.Error)
+		}
+	}
+
+	if errorCount > 0 {
+		return fmt.Errorf("\nfound %d issues related to non-existing hosts and/or no set OS update policies - fix them and re-apply", errorCount)
+	}
+
+	// Schedule an immediate OS update on all hosts in the updateRecords
+	for _, record := range updateRecords {
+
+		name := record.ResourceID + "_immediate_os_update"
+		maintenanceType := infra.SCHEDULESTATUSOSUPDATE
+		hostID := record.ResourceID
+		startSeconds := time.Now().Unix() + 30
+
+		resp, err := hostClient.ScheduleServiceCreateSingleScheduleWithResponse(ctx, projectName,
+			infra.ScheduleServiceCreateSingleScheduleJSONRequestBody{
+				Name:           &name,
+				ScheduleStatus: maintenanceType,
+				StartSeconds:   int(startSeconds),
+				TargetHostId:   &hostID,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating schedule %s", name)); err != nil {
+			fmt.Printf("Host %s %s update schedule failed - %s\n", name, hostID, err)
+			continue
+		}
+		fmt.Printf("Host %s %s update scheduled successfully\n", record.Name, hostID)
+	}
+	fmt.Printf("\nRun \"list schedules\" to see all schedules for hosts\n")
 	return nil
 }
 
