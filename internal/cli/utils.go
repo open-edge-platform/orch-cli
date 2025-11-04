@@ -23,6 +23,7 @@ import (
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
+	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
 )
 
@@ -53,6 +54,10 @@ var RpsFactory interfaces.RpsFactoryFunc = func(cmd *cobra.Command) (context.Con
 
 var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command) (context.Context, depapi.ClientWithResponsesInterface, string, error) {
 	return getDeploymentServiceContext(cmd)
+}
+
+var TenancyFactory interfaces.TenancyFactoryFunc = func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, string, error) {
+	return getTenancyServiceContext(cmd)
 }
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
@@ -150,6 +155,23 @@ func getRpsServiceContext(cmd *cobra.Command) (context.Context, *rpsapi.ClientWi
 		return nil, nil, "", err
 	}
 	return context.Background(), rpsClient, projectName, nil
+}
+
+// Get the new background context, REST client, and project name given the specified command.
+func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.ClientWithResponses, string, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	projectName, err := getProjectName(cmd)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	tenancyClient, err := tenantapi.NewClientWithResponses(serverAddress, TLS13TenancyClientOption())
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return context.Background(), tenancyClient, projectName, nil
 }
 
 // Adds the mandatory project UUID, and the standard display-name, and description
@@ -502,6 +524,20 @@ func TLS13ClusterClientOption() func(*coapi.Client) error {
 
 func TLS13RPSClientOption() func(*rpsapi.Client) error {
 	return func(c *rpsapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+
+func TLS13TenancyClientOption() func(*tenantapi.Client) error {
+	return func(c *tenantapi.Client) error {
 		c.Client = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
