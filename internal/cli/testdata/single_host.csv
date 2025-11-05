@@ -1,0 +1,2 @@
+Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSize,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
+testhost1,d7911144-3010-11f0-a1c2-370d26b04195,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,,,,,,,
