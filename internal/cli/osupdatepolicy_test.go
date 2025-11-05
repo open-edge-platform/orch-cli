@@ -93,6 +93,7 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 		"Name:":            "security-policy-v1.2",
 		"Resource ID:":     id, // "osupdatepolicy-abc12345"
 		"Target OS ID:":    "os-1234abcd",
+		"Kernel Command:":  "console=ttyS0",
 		"Description:":     "Monthly security update policy",
 		"Update Packages:": "curl wget vim",
 		"Update Policy:":   "UPDATE_POLICY_LATEST",

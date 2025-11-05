@@ -2117,7 +2117,7 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 
 		// check if host has an instance associated with it
 		if host.Instance == nil || host.Instance.InstanceID == nil {
-			errorMsg := fmt.Sprintf("Host does not have an instance associated with it, fully onboard the host")
+			errorMsg := "Host does not have an instance associated with it, fully onboard the host"
 			updateRecords[i].Error = errorMsg
 			continue
 		}
@@ -2185,7 +2185,7 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 			return processError(err)
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating schedule %s", name)); err != nil {
-			fmt.Printf("Host %s %s update schedule failed - %s\n", name, hostID, err)
+			fmt.Printf("Host %s %s update schedule failed - %s\n", record.Name, hostID, err)
 			continue
 		}
 		fmt.Printf("Host %s %s update scheduled successfully\n", record.Name, hostID)
