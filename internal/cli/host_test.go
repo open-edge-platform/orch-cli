@@ -42,6 +42,11 @@ func (s *CLITestSuite) setHost(publisher string, hostID string, args commandArgs
 	return s.runCommand(commandString)
 }
 
+func (s *CLITestSuite) updateOsHost(publisher string, hostID string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`update-os host %s --project %s`, hostID, publisher))
+	return s.runCommand(commandString)
+}
+
 func (s *CLITestSuite) filterTest() {
 	testCases := []struct {
 		input    string
@@ -523,6 +528,148 @@ host-65,host-0f523c97,unprovisioned
 	}
 	_, err = s.setHost(project, "", HostArgs)
 	s.NoError(err)
+
+	///////////////////////////////////
+	// Host Update Tests
+	///////////////////////////////////
+	hostID = "host-abcd1000"
+
+	//Test updating host OS with non-existent osupdate policy
+	HostArgs = map[string]string{}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.EqualError(err, "\nfound 1 issues related to non-existing hosts and/or no set OS update policies - fix them and re-apply")
+
+	hostID = "host-abc12345"
+
+	//Test updating host OS with no policy set
+	HostArgs = map[string]string{}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	//Test updating host OS with invalid policy
+	HostArgs = map[string]string{
+		"osupdatepolicy": "updatepolicy-abc12345",
+	}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.EqualError(err, "Invalid OS Update Policy")
+
+	//Test updating host OS with new policy
+	HostArgs = map[string]string{
+		"osupdatepolicy": "osupdatepolicy-aaaabbbb",
+	}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	//Test generating CSV for OS update
+	HostArgs = map[string]string{
+		"generate-csv": "os_update_hosts.csv",
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+	s.True(PathExists("os_update_hosts.csv"), "OS update CSV file was not generated")
+	defer os.Remove("os_update_hosts.csv")
+
+	//Test generating CSV for OS update with region filter
+	HostArgs = map[string]string{
+		"generate-csv": "os_update_hosts.csv",
+		"region":       "region-abcd1234",
+		"filter":       "serialNumber='62NS6R3'",
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+	s.True(PathExists("os_update_hosts.csv"), "OS update CSV file was not generated")
+	defer os.Remove("os_update_hosts.csv")
+
+	//Test generating CSV for OS update with site filter
+	HostArgs = map[string]string{
+		"generate-csv": "os_update_hosts.csv",
+		"site":         "site-abcd1234",
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+	s.True(PathExists("os_update_hosts.csv"), "OS update CSV file was not generated")
+	defer os.Remove("os_update_hosts.csv")
+
+	//Test generating CSV for OS update but file already exists
+	HostArgs = map[string]string{
+		"generate-csv": "os_update_hosts.csv",
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+	s.True(PathExists("os_update_hosts.csv"), "OS update CSV file was not generated")
+	defer os.Remove("os_update_hosts.csv")
+
+	//Test generating CSV for OS update with site filter but file does not exist
+	HostArgs = map[string]string{
+		"generate-csv": "os_update_hosts2.csv",
+		"site":         "site-abcd1234",
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+	s.True(PathExists("os_update_hosts2.csv"), "OS update CSV file was not generated")
+	defer os.Remove("os_update_hosts2.csv")
+
+	// Test updating host OS from CSV
+	updateCsvContent := `Name,ResourceID,OSUpdatePolicyID
+host-153,host-abc12345
+host-65,host-abcd2001,osupdatepolicy-aaaabbbb
+host-66,host-abcd2002,osupdatepolicy-aaaabbbb
+`
+	updateCsvPath := "test_update_import.csv"
+	err = os.WriteFile(updateCsvPath, []byte(updateCsvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(updateCsvPath)
+	HostArgs = map[string]string{
+		"import-from-csv": updateCsvPath,
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+
+	// Test updating host OS from CSV - invalid entry
+	updateCsvContent = `Name,ResourceID,OSUpdatePolicyID
+host-153host-abc12345
+host-65,host-abcd1001,osupdatepolicy-blobabbbb
+host-66,host-abcd1002,osupdatepolicy-aaaabbbb
+`
+	updateCsvPath = "test_update_import.csv"
+	err = os.WriteFile(updateCsvPath, []byte(updateCsvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(updateCsvPath)
+	HostArgs = map[string]string{
+		"import-from-csv": updateCsvPath,
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.EqualError(err, "\nerrors found in CSV import, please correct and re-import")
+
+	// Test updating host OS from CSV - nonexisting policies
+	updateCsvContent = `Name,ResourceID,OSUpdatePolicyID
+host-65,host-abcd1001,osupdatepolicy-ccccaaaa
+host-66,host-abcd1002,osupdatepolicy-ccccaaaa
+`
+	updateCsvPath = "test_update_import.csv"
+	err = os.WriteFile(updateCsvPath, []byte(updateCsvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(updateCsvPath)
+	HostArgs = map[string]string{
+		"import-from-csv": updateCsvPath,
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.EqualError(err, "\nfound 2 references to non-existing OS update policies - fix them and re-apply")
+
+	// Test updating host OS from CSV - no instance
+	updateCsvContent = `Name,ResourceID,OSUpdatePolicyID
+host-65,host-abcd1001
+host-66,host-abcd1002,osupdatepolicy-abcd1234
+`
+	updateCsvPath = "test_update_import.csv"
+	err = os.WriteFile(updateCsvPath, []byte(updateCsvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(updateCsvPath)
+	HostArgs = map[string]string{
+		"import-from-csv": updateCsvPath,
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.EqualError(err, "\nfound 2 issues related to non-existing hosts and/or no set OS update policies - fix them and re-apply")
 }
 
 func FuzzHost(f *testing.F) {
