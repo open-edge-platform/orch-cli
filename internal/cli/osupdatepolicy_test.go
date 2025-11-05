@@ -47,6 +47,11 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 	_, err = s.createOSUpdatePolicy(project, "./testdata/mutableosupdateprofile.yaml", OArgs)
 	s.NoError(err)
 
+	//Create OS Update Policy mutable
+	OArgs = map[string]string{}
+	_, err = s.createOSUpdatePolicy(project, "./testdata/immutableosupdateprofile.yaml", OArgs)
+	s.NoError(err)
+
 	/////////////////////////////
 	// Test OS Update Policy List
 	/////////////////////////////
