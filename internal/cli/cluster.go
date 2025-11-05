@@ -93,7 +93,7 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	
+
 	csvFile, err := cmd.Flags().GetString("create-from-csv")
 	if err != nil {
 		return processError(err)
@@ -188,7 +188,7 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating cluster %s", clusterName))
 }
 
-func runCreateClustersFromCSV(cmd *cobra.Command, baseClusterName, csvFile string, verbose bool) error {
+func runCreateClustersFromCSV(cmd *cobra.Command, baseClusterName, csvFile string, _ bool) error {
 	// Original single cluster creation logic
 	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
@@ -211,7 +211,7 @@ func runCreateClustersFromCSV(cmd *cobra.Command, baseClusterName, csvFile strin
 		request := coapi.PostV2ProjectsProjectNameClustersJSONRequestBody{
 			Name: &clusterName,
 			Nodes: []coapi.NodeSpec{
-				{Id: record.UUID,Role: "all"},
+				{Id: record.UUID, Role: "all"},
 			},
 		}
 		if template != "" {
@@ -232,7 +232,6 @@ func runCreateClustersFromCSV(cmd *cobra.Command, baseClusterName, csvFile strin
 	}
 	return nil
 }
-
 
 func runGetClusterCommand(cmd *cobra.Command, args []string) error {
 	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
