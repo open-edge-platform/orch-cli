@@ -1,0 +1,3 @@
+Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSize,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
+y2fel,invalid-uuid,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,,,,,,,
+krxl5,a7b0229d-ccfc-7944-fcc2-b844d6f2d6d5,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,,,,,,,

@@ -1,0 +1,4 @@
+Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSize,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
+y2fel,6d91fff4-4d4e-4420-41fb-9ec279cb03ca,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,,,,,,,
+krxl5,a7b0229d-ccfc-7944-fcc2-b844d6f2d6d5,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,,,,,,,
+vhwnt,3b0594d4-c5e7-eb1c-feb1-77d0db615368,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,,,,,,,
