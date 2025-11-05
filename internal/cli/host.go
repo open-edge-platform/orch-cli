@@ -123,8 +123,14 @@ orch-cli update-os host host-1234abcd  --project itep --osupdatepolicy <resource
 #Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
 orch-cli update-os host --project itep --generate-csv
 
-#Generate CSV input file using the --generate-csv flag with a filter flag which will find a specific list of currently deployed hosts based on the filter - the default output will be a base test.csv file.
-orch-cli update-os host --project itep --generate-csv --filter=<filter>
+#Generate CSV input file using the --generate-csv flag with a filter flag which will find a specific list of currently deployed hosts based on the filter - the output will contain filtered hosts.
+orch-cli update-os host --project itep --generate-csv --filter=<filter> --site <siteID>
+orch-cli update-os host --project itep --generate-csv --filter=<filter> --region <regionID>
+
+
+--filter - Predefined filters: provisioned, onboarded, registered, "not connected", deauthorized or custom filter (see: https://google.aip.dev/160 and API spec @
+--region - Region ID to filter hosts by region, cannot be used with --site flag, can be used with --filter flag
+--site - Site ID to filter hosts by site, cannot be used with --region flag, can be used with --filter flag
 
 #Update a bulk number of hosts from a CSV file - --import-from-csv is a mandatory flag pointing to the input file.
 orch-cli update-os host --project itep --import-from-csv test.csv
