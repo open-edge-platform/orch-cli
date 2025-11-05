@@ -641,6 +641,44 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								}(),
 							},
 						}, nil
+					case "host-abcd1000":
+						return &infra.HostServiceGetHostResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSON200: &infra.HostResource{
+								ResourceId: stringPtr(hostId),
+								Name:       "edge-host-002",
+								Hostname:   stringPtr("edge-host-002.example.com"),
+								Instance: &infra.InstanceResource{
+									ResourceId: stringPtr("instance-abcd1234"),
+									InstanceID: stringPtr("instance-abcd1234"),
+									UpdatePolicy: &infra.OSUpdatePolicy{
+										ResourceId: stringPtr("updatepolicy-abc12345"),
+									},
+								},
+							},
+						}, nil
+					case "host-abcd1001":
+						return &infra.HostServiceGetHostResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.HostResource{
+								ResourceId: stringPtr(hostId),
+								Name:       "edge-host-002",
+								Hostname:   stringPtr("edge-host-002.example.com"),
+								Instance: &infra.InstanceResource{
+									ResourceId: stringPtr("instance-abcd1234"),
+									InstanceID: stringPtr("instance-abcd1234"),
+								},
+							},
+						}, nil
+					case "host-abcd1002":
+						return &infra.HostServiceGetHostResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.HostResource{
+								ResourceId: stringPtr(hostId),
+								Name:       "edge-host-002",
+								Hostname:   stringPtr("edge-host-002.example.com"),
+							},
+						}, nil
 					default:
 						return &infra.HostServiceGetHostResponse{
 							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
@@ -694,6 +732,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								Instance: &infra.InstanceResource{
 									ResourceId: stringPtr("instance-abcd1234"),
 									InstanceID: stringPtr("instance-abcd1234"),
+									UpdatePolicy: &infra.OSUpdatePolicy{
+										ResourceId: stringPtr("updatepolicy-abc12345"),
+									},
 								},
 								Timestamps: &infra.Timestamps{
 									CreatedAt: timestampPtr(timestamp),
@@ -2002,6 +2043,17 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				default:
 					switch policyId {
 					case "nonexistent-policy", "invalid-policy-id":
+						return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("OS Update Policy not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					case "osupdatepolicy-ccccaaaa":
 						return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
 							JSONDefault: &infra.ConnectError{
