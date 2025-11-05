@@ -1207,6 +1207,9 @@ type OperatingSystemResource struct {
 	// UpdateSources Deprecated, will be removed in EMF v3.2.0, this has been moved to new resource OSUpdatePolicy. The list of OS resource update sources.
 	//  Should be in 'DEB822 Source Format' for Debian style OSs
 	UpdateSources *[]string `json:"updateSources,omitempty"`
+
+	// TlsCaCert TLS CA certificate for the OS resource.
+	TlsCaCert *string `json:"tlsCaCert,omitempty"`
 }
 
 // OsProviderKind OsProviderKind describes "owner" of the OS, that will drive OS provisioning.
