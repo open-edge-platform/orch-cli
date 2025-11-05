@@ -46,6 +46,8 @@ spec:
   osPackageManifestURL: files-edge-orch/repository/microvisor/non_rt/<manifest.json>
   securityFeature: SECURITY_FEATURE_NONE
   platformBundle:
+  metadata: {}
+  tlsCaCert: <PEM encoded certificate string>
 
 See 
 https://github.com/open-edge-platform/infra-core/tree/main/os-profiles`
@@ -76,7 +78,13 @@ var osProfileSchema = `
 		"fixedCvesURL": { "type": ["string", "null"] },
         "securityFeature": { "type": "string" },
         "platformBundle": { "type": ["string", "null"] },
-		"tlsCaCert": { "type": ["string", "null"] }
+		"tlsCaCert": { "type": ["string", "null"] },
+		"metadata": {
+		  "type": ["object", "null"],
+		  "additionalProperties": {
+		    "type": "string"
+		  }
+		}
       },
       "required": [
         "name", "type", "provider", "architecture", "profileName",
@@ -90,20 +98,21 @@ var osProfileSchema = `
 `
 
 type OSProfileSpec struct {
-	Name              string `yaml:"name"`
-	Type              string `yaml:"type"`
-	Provider          string `yaml:"provider"`
-	Architecture      string `yaml:"architecture"`
-	ProfileName       string `yaml:"profileName"`
-	OsImageURL        string `yaml:"osImageUrl"`
-	OsImageSha256     string `yaml:"osImageSha256"`
-	OsImageVersion    string `yaml:"osImageVersion"`
-	OSPackageURL      string `yaml:"osPackageManifestURL"`
-	SecurityFeature   string `yaml:"securityFeature"`
-	PlatformBundle    string `yaml:"platformBundle"`
-	OsExistingCvesURL string `yaml:"osExistingCvesURL"`
-	OsFixedCvesURL    string `yaml:"osFixedCvesURL"`
-	TLSCaCert         string `yaml:"tlsCaCert"`
+	Name              string            `yaml:"name"`
+	Type              string            `yaml:"type"`
+	Provider          string            `yaml:"provider"`
+	Architecture      string            `yaml:"architecture"`
+	ProfileName       string            `yaml:"profileName"`
+	OsImageURL        string            `yaml:"osImageUrl"`
+	OsImageSha256     string            `yaml:"osImageSha256"`
+	OsImageVersion    string            `yaml:"osImageVersion"`
+	OSPackageURL      string            `yaml:"osPackageManifestURL"`
+	SecurityFeature   string            `yaml:"securityFeature"`
+	PlatformBundle    string            `yaml:"platformBundle"`
+	OsExistingCvesURL string            `yaml:"osExistingCvesURL"`
+	OsFixedCvesURL    string            `yaml:"osFixedCvesURL"`
+	TLSCaCert         string            `yaml:"tlsCaCert"`
+	Metadata          map[string]string `yaml:"metadata"`
 }
 
 type NestedSpec struct {
