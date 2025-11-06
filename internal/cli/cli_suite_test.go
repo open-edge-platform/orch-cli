@@ -471,12 +471,17 @@ func mapGetOutput(output string) map[string]string {
 			continue
 		}
 
+		// Ignore lines that start with more than 2 dashes
+		if strings.HasPrefix(line, "---") {
+			continue
+		}
+
 		// Handle lines that contain pipe separators
 		if strings.Contains(line, "|") {
 			parts := strings.Split(line, "|")
 			if len(parts) >= 2 {
 				key := strings.TrimSpace(parts[0])
-				value := strings.TrimSpace(parts[1])
+				value := strings.TrimSpace(strings.Join(parts[1:], "|")) // Join all remaining parts
 
 				// Remove quotes from value if present
 				value = strings.Trim(value, `"`)
@@ -489,7 +494,7 @@ func mapGetOutput(output string) map[string]string {
 					contentParts := strings.Split(content, "|")
 					if len(contentParts) >= 2 {
 						hostKey := strings.TrimSpace(contentParts[0])
-						hostValue := strings.TrimSpace(contentParts[1])
+						hostValue := strings.TrimSpace(strings.Join(contentParts[1:], "|")) // Join all remaining parts
 						hostValue = strings.Trim(hostValue, `"`)
 						result["-   "+hostKey] = hostValue
 					}
@@ -503,6 +508,13 @@ func mapGetOutput(output string) map[string]string {
 			// Handle section headers (lines ending with ":")
 			if strings.HasSuffix(line, ":") && !strings.Contains(line, "|") {
 				result[line] = ""
+			} else {
+				// Handle standalone values (like memory values or table data)
+				// Check if this looks like a numeric value or table data
+				if strings.TrimSpace(line) != "" {
+					// For cases like "Total (GB)" or "16" - treat as key with empty value
+					result[line] = ""
+				}
 			}
 		}
 	}
