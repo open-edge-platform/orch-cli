@@ -312,9 +312,9 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 			avupdt := "No update"
 			tcomp := "Not compatible"
 
-			//TODO
-			//if h.CurrentOs != h.desiredOS avupdt is available
-			//if tcomp is set then reflect
+			if h.Instance != nil && h.Instance.OsUpdateAvailable != nil && *h.Instance.OsUpdateAvailable != "" {
+				avupdt = "Available"
+			}
 
 			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber,
 				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp)
@@ -334,6 +334,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	provstatus := "Not Provisioned"
 	hostdetails := ""
 	lvmsize := ""
+	osupdatepolicy := ""
 
 	//TODO Build out the host information
 	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
@@ -375,6 +376,10 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		}
 	}
 
+	if host.Instance != nil && host.Instance.UpdatePolicy != nil {
+		osupdatepolicy = *host.Instance.UpdatePolicy.ResourceId
+	}
+
 	if host.HostNics != nil && len(*host.HostNics) > 0 {
 		for _, nic := range *host.HostNics {
 			if nic.Ipaddresses != nil && len(*nic.Ipaddresses) > 0 && nic.DeviceName != nil && (*nic.Ipaddresses)[0].Address != nil {
@@ -400,7 +405,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
 	_, _ = fmt.Fprintf(writer, "-\tHost Status Details:\t %s\n", hostdetails)
 	_, _ = fmt.Fprintf(writer, "-\tProvisioning Status:\t %s\n", provstatus)
-	_, _ = fmt.Fprintf(writer, "-\tUpdate Status:\t %s\n\n", updatestatus)
+	_, _ = fmt.Fprintf(writer, "-\tUpdate Status:\t %s\n", updatestatus)
+	_, _ = fmt.Fprintf(writer, "-\tOS Update Policy:\t %s\n\n", osupdatepolicy)
 
 	_, _ = fmt.Fprintf(writer, "Specification: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", *host.SerialNumber)
@@ -413,11 +419,179 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tCustom configs:\t %s\n\n", customcfg)
 
 	_, _ = fmt.Fprintf(writer, "CPU Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tCPU Model:\t %v\n", *host.CpuModel)
-	_, _ = fmt.Fprintf(writer, "-\tCPU Cores:\t %v\n", *host.CpuCores)
-	_, _ = fmt.Fprintf(writer, "-\tCPU Architecture:\t %v\n", *host.CpuArchitecture)
-	_, _ = fmt.Fprintf(writer, "-\tCPU Threads:\t %v\n", *host.CpuThreads)
-	_, _ = fmt.Fprintf(writer, "-\tCPU Sockets:\t %v\n\n", *host.CpuSockets)
+	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "Model", "Cores", "Architecture", "Threads", "Sockets")
+	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "-----", "-----", "------------", "-------", "-------")
+	_, _ = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n\n", *host.CpuModel, *host.CpuCores, *host.CpuArchitecture, *host.CpuThreads, *host.CpuSockets)
+
+	_, _ = fmt.Fprintf(writer, "Memory Info: \n\n")
+	_, _ = fmt.Fprintf(writer, "%s\n", "Total (GB)")
+	_, _ = fmt.Fprintf(writer, "%s\n", "-------------")
+	if host.MemoryBytes != nil {
+		memoryBytes, err := strconv.ParseInt(*host.MemoryBytes, 10, 64)
+		if err != nil {
+			_, _ = fmt.Fprintf(writer, "%v\n\n", "Error parsing memory")
+		} else {
+			memoryGB := float64(memoryBytes) / (1024 * 1024 * 1024)
+			memoryGBRounded := int(memoryGB + 0.5) // Round up to nearest integer
+			_, _ = fmt.Fprintf(writer, "%d\n\n", memoryGBRounded)
+		}
+	}
+
+	_, _ = fmt.Fprintf(writer, "Storage Info: \n\n")
+	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "WWID", "Capacity", "Model", "Serial", "Vendor")
+	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "----", "--------", "-----", "------", "------")
+	if host.HostStorages != nil {
+		for _, storage := range *host.HostStorages {
+			wwid := "N/A"
+			capacity := "N/A"
+			model := "N/A"
+			serial := "N/A"
+			vendor := "N/A"
+
+			if storage.Wwid != nil {
+				wwid = *storage.Wwid
+			}
+			if storage.CapacityBytes != nil {
+				capacityBytes, err := strconv.ParseInt(*storage.CapacityBytes, 10, 64)
+				if err != nil {
+					capacity = "Parse Error"
+				} else {
+					capacityGB := capacityBytes / (1024 * 1024 * 1024)
+					capacity = fmt.Sprintf("%d GB", capacityGB)
+				}
+			}
+			if storage.Model != nil {
+				model = *storage.Model
+			}
+			if storage.Serial != nil {
+				serial = *storage.Serial
+			}
+			if storage.Vendor != nil {
+				vendor = *storage.Vendor
+			}
+
+			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", wwid, capacity, model, serial, vendor)
+		}
+		_, _ = fmt.Fprintf(writer, "\n")
+	}
+
+	_, _ = fmt.Fprintf(writer, "GPU Info: \n\n")
+	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", "Device", "Vendor", "Capabilities", "PCI Address")
+	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", "------", "------", "------------", "-----------")
+
+	if host.HostGpus != nil {
+		for _, gpu := range *host.HostGpus {
+			model := "N/A"
+			vendor := "N/A"
+			capabilities := "N/A"
+			pciAddress := "N/A"
+
+			if gpu.DeviceName != nil {
+				model = *gpu.DeviceName
+			}
+			if gpu.Vendor != nil {
+				vendor = *gpu.Vendor
+			}
+			if gpu.Capabilities != nil {
+				capabilities = strings.Join(*gpu.Capabilities, ",")
+			}
+			if gpu.PciId != nil {
+				pciAddress = *gpu.PciId
+			}
+			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", model, vendor, capabilities, pciAddress)
+		}
+		_, _ = fmt.Fprintf(writer, "\n")
+	}
+	_, _ = fmt.Fprintf(writer, "USB Info: \n\n")
+	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", "Class", "Serial", "Vendor ID", "Product ID", "Bus", "Address")
+	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", "-----", "------", "---------", "----------", "---", "-------")
+	if host.HostUsbs != nil {
+		for _, usb := range *host.HostUsbs {
+			class := "N/A"
+			serial := "N/A"
+			vendorID := "N/A"
+			productID := "N/A"
+			bus := "N/A"
+			address := "N/A"
+
+			if usb.Class != nil && *usb.Class != "" {
+				class = *usb.Class
+			}
+			if usb.Serial != nil {
+				serial = *usb.Serial
+			}
+			if usb.IdVendor != nil {
+				vendorID = *usb.IdVendor
+			}
+			if usb.IdProduct != nil {
+				productID = *usb.IdProduct
+			}
+			if usb.Bus != nil {
+				bus = strconv.Itoa(*usb.Bus)
+			}
+			if usb.Addr != nil {
+				address = strconv.Itoa(*usb.Addr)
+			}
+			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", class, serial, vendorID, productID, bus, address)
+		}
+		_, _ = fmt.Fprintf(writer, "\n")
+	}
+
+	_, _ = fmt.Fprintf(writer, "Interfaces Info: \n\n")
+	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Name", "Links State", "MTU", "MAC Address", "PCI Identifier", "SRIOV", "SRIOV VF Total", "SRIOV VF Number", "BMC Interface ")
+	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "----", "-----", "------", "---------", "----------", "---", "-------", "------------", "--------------")
+
+	if host.HostNics != nil {
+		for _, nic := range *host.HostNics {
+			name := "N/A"
+			linksStatus := "N/A"
+			mtu := "N/A"
+			macAddress := "N/A"
+			pciID := "N/A"
+			sriov := "N/A"
+			sriovVFTotal := "N/A"
+			sriovVFNum := "N/A"
+			bmcInterface := "N/A"
+
+			if nic.DeviceName != nil {
+				name = *nic.DeviceName
+			}
+			if nic.LinkState != nil {
+				if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_DOWN" {
+					linksStatus = "DOWN"
+				}
+				if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_UP" {
+					linksStatus = "UP"
+				}
+				if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_UNSPECIFIED" {
+					linksStatus = "UNSPECIFIED"
+				}
+			}
+			if nic.Mtu != nil {
+				mtu = strconv.Itoa(*nic.Mtu)
+			}
+			if nic.MacAddr != nil {
+				macAddress = *nic.MacAddr
+			}
+			if nic.PciIdentifier != nil {
+				pciID = *nic.PciIdentifier
+			}
+			if nic.SriovEnabled != nil {
+				sriov = strconv.FormatBool(*nic.SriovEnabled)
+			}
+			if nic.SriovVfsTotal != nil && nic.SriovEnabled != nil && *nic.SriovEnabled {
+				sriovVFTotal = strconv.Itoa(*nic.SriovVfsTotal)
+			}
+			if nic.SriovVfsNum != nil && nic.SriovEnabled != nil && *nic.SriovEnabled {
+				sriovVFNum = strconv.Itoa(*nic.SriovVfsNum)
+			}
+			if nic.BmcInterface != nil {
+				bmcInterface = strconv.FormatBool(*nic.BmcInterface)
+			}
+			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", name, linksStatus, mtu, macAddress, pciID, sriov, sriovVFTotal, sriovVFNum, bmcInterface)
+		}
+		_, _ = fmt.Fprintf(writer, "\n")
+	}
 
 	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.CurrentOs != nil && host.Instance.CurrentOs.FixedCves != nil {
 

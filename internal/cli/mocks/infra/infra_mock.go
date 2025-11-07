@@ -714,9 +714,48 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 										Ipaddresses: &[]infra.IPAddressResource{
 											{
 												Address: stringPtr("192.168.1.102"),
-												// Fill other fields as needed, e.g. Type, Version, etc.
 											},
 										},
+										Mtu:           func() *int { i := 1500; return &i }(),
+										MacAddr:       stringPtr("30:d0:42:d9:02:7c"),
+										PciIdentifier: stringPtr("0000:19:00.0"),
+										SriovEnabled:  func() *bool { i := true; return &i }(),
+										SriovVfsNum:   func() *int { i := 4; return &i }(),
+										SriovVfsTotal: func() *int { i := 8; return &i }(),
+										BmcInterface:  func() *bool { i := true; return &i }(),
+										LinkState: &infra.NetworkInterfaceLinkState{
+											Type: func() *infra.LinkState { t := infra.NETWORKINTERFACELINKSTATEUNSPECIFIED; return &t }(),
+										},
+									},
+								},
+								HostGpus: &[]infra.HostgpuResource{
+									{
+										DeviceName: stringPtr("TestGPU"),
+										Vendor:     stringPtr("TestVendor"),
+										Capabilities: &[]string{
+											"cap1",
+											"cap2",
+										},
+										PciId: stringPtr("03:00.0"),
+									},
+								},
+								HostStorages: &[]infra.HoststorageResource{
+									{
+										Wwid:          stringPtr("abcd"),
+										CapacityBytes: stringPtr("200000"),
+										Model:         stringPtr("Model1"),
+										Serial:        stringPtr("123456"),
+										Vendor:        stringPtr("Vendor1"),
+									},
+								},
+								HostUsbs: &[]infra.HostusbResource{
+									{
+										Class:     stringPtr("Hub"),
+										Serial:    stringPtr("123456"),
+										IdVendor:  stringPtr("abcd"),
+										IdProduct: stringPtr("1234"),
+										Bus:       func() *int { i := 8; return &i }(),
+										Addr:      func() *int { i := 1; return &i }(),
 									},
 								},
 								HostStatus:                  stringPtr("Running"),
