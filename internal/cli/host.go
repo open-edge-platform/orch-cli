@@ -435,8 +435,6 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 			memoryGBRounded := int(memoryGB + 0.5) // Round up to nearest integer
 			_, _ = fmt.Fprintf(writer, "%d\n\n", memoryGBRounded)
 		}
-	} else {
-		_, _ = fmt.Fprintf(writer, "%v\n\n", "N/A")
 	}
 
 	_, _ = fmt.Fprintf(writer, "Storage Info: \n\n")
@@ -475,8 +473,6 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", wwid, capacity, model, serial, vendor)
 		}
 		_, _ = fmt.Fprintf(writer, "\n")
-	} else {
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n\n", "N/A", "N/A", "N/A", "N/A", "N/A")
 	}
 
 	_, _ = fmt.Fprintf(writer, "GPU Info: \n\n")
@@ -505,10 +501,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", model, vendor, capabilities, pciAddress)
 		}
 		_, _ = fmt.Fprintf(writer, "\n")
-	} else {
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n\n", "N/A", "N/A", "N/A", "N/A")
 	}
-
 	_, _ = fmt.Fprintf(writer, "USB Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", "Class", "Serial", "Vendor ID", "Product ID", "Bus", "Address")
 	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", "-----", "------", "---------", "----------", "---", "-------")
@@ -542,8 +535,6 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", class, serial, vendorID, productID, bus, address)
 		}
 		_, _ = fmt.Fprintf(writer, "\n")
-	} else {
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n\n", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A")
 	}
 
 	_, _ = fmt.Fprintf(writer, "Interfaces Info: \n\n")
@@ -600,8 +591,6 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", name, linksStatus, mtu, macAddress, pciID, sriov, sriovVFTotal, sriovVFNum, bmcInterface)
 		}
 		_, _ = fmt.Fprintf(writer, "\n")
-	} else {
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n\n", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A")
 	}
 
 	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.CurrentOs != nil && host.Instance.CurrentOs.FixedCves != nil {
