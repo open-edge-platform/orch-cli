@@ -123,7 +123,6 @@ func printOSProfiles(writer io.Writer, OSProfiles []infra.OperatingSystemResourc
 			_, _ = fmt.Fprintf(writer, "Architecture:\t %s\n", *osp.Architecture)
 			_, _ = fmt.Fprintf(writer, "Repository URL:\t %s\n", *osp.RepoUrl)
 			_, _ = fmt.Fprintf(writer, "sha256:\t %v\n", osp.Sha256)
-			_, _ = fmt.Fprintf(writer, "Kernel Command:\t %v\n", toJSON(osp.KernelCommand))
 		}
 	}
 }
@@ -145,7 +144,6 @@ func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) 
 	_, _ = fmt.Fprintf(writer, "OS type: \t%s\n", *OSProfile.OsType)
 	_, _ = fmt.Fprintf(writer, "OS provider: \t%s\n", *OSProfile.OsProvider)
 	_, _ = fmt.Fprintf(writer, "Platform Bundle: \t%s\n", *OSProfile.PlatformBundle)
-	_, _ = fmt.Fprintf(writer, "Update Sources: \t%v\n", OSProfile.UpdateSources)
 	_, _ = fmt.Fprintf(writer, "Installed Packages: \t%v\n", toJSON(OSProfile.InstalledPackages))
 	_, _ = fmt.Fprintf(writer, "Created: \t%v\n", OSProfile.Timestamps.CreatedAt)
 	_, _ = fmt.Fprintf(writer, "Updated: \t%v\n", OSProfile.Timestamps.UpdatedAt)
