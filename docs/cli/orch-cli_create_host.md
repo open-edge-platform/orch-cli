@@ -85,10 +85,10 @@ orch-cli create host --project some-project --import-from-csv test.csv
 ### Options inherited from parent commands
 
 ```
-      --api-endpoint string   API Service Endpoint (default "https://api.orch-10-114-181-120.espdqa.infra-host.com")
+      --api-endpoint string   API Service Endpoint (default "https://api.kind.internal/")
       --debug-headers         emit debug-style headers separating columns via '|' character
   -n, --noauth                use without authentication checks
-  -p, --project string        Active project name (default "itep")
+  -p, --project string        Active project name
   -v, --verbose               produce verbose output
 ```
 
