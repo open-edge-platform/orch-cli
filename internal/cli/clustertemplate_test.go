@@ -3,7 +3,10 @@
 
 package cli
 
-import "fmt"
+import (
+	"fmt"
+	"testing"
+)
 
 func (s *CLITestSuite) listClusterTemplates(publisher string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`list clustertemplates --project %s`,
@@ -32,4 +35,33 @@ func (s *CLITestSuite) TestClusterTemplate() {
 	}
 	_, err = s.listClusterTemplates(project, CArgs)
 	s.NoError(err)
+}
+
+func FuzzClusterTemplate(f *testing.F) {
+	// Seed with valid and invalid input combinations
+	f.Add("true", project)
+	f.Add("false", project)
+	f.Add("", project)
+	f.Add("", "")
+
+	f.Fuzz(func(t *testing.T, flag, publisher string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		args := map[string]string{
+			"verbose": flag,
+		}
+
+		// --- List Cluster ---
+		_, err := testSuite.listClusterTemplates(publisher, args)
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+	})
 }
