@@ -297,6 +297,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									KernelCommand:     stringPtr("console=ttyS0, root=/dev/sda1"),
 									UpdateSources:     &[]string{"https://updates.example.com"},
 									InstalledPackages: stringPtr("wget\ncurl\nvim"),
+									Description:       stringPtr(""),
+									Metadata:          stringPtr(""),
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
