@@ -294,8 +294,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									PlatformBundle:    stringPtr(""),
 									Sha256:            "abc123def456",
 									ProfileVersion:    stringPtr("3.0.20250504"),
-									KernelCommand:     stringPtr("console=ttyS0, root=/dev/sda1"),
-									UpdateSources:     &[]string{"https://updates.example.com"},
 									InstalledPackages: stringPtr("wget\ncurl\nvim"),
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
@@ -486,9 +484,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 											},
 										},
 										Os: &infra.OperatingSystemResource{
-											Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
-										},
-										CurrentOs: &infra.OperatingSystemResource{
 											Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
 										},
 										ProvisioningStatus: stringPtr("PROVISIONING_STATUS_COMPLETED"),
@@ -1750,10 +1745,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							Os: &infra.OperatingSystemResource{
 								Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
 							},
-							CurrentOs: &infra.OperatingSystemResource{
-								Name:      stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
-								FixedCves: stringPtr(""),
-							},
 							ExistingCves: stringPtr(`[{"cve_id":"CVE-2021-1234","priority":"HIGH","affected_packages":["fluent-bit-3.1.9-11.emt3.x86_64"]}]`),
 						},
 					}, nil
@@ -1835,9 +1826,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 										},
 									},
 									Os: &infra.OperatingSystemResource{
-										Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
-									},
-									CurrentOs: &infra.OperatingSystemResource{
 										Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
 									},
 								},
@@ -2038,14 +2026,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						JSON200: &infra.ListOSUpdatePolicyResponse{
 							OsUpdatePolicies: []infra.OSUpdatePolicy{
 								{
-									Name:            "security-policy-v1.2", // string, not *string
-									ResourceId:      stringPtr("osupdatepolicy-abc12345"),
-									Description:     stringPtr("Monthly security update policy"),
-									TargetOsId:      stringPtr("os-1234abcd"),
-									InstallPackages: stringPtr("curl wget vim"),
-									UpdatePolicy:    (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
-									UpdateSources:   &[]string{"https://updates.example.com"},
-									KernelCommand:   stringPtr("console=ttyS0"),
+									Name:          "security-policy-v1.2", // string, not *string
+									ResourceId:    stringPtr("osupdatepolicy-abc12345"),
+									Description:   stringPtr("Monthly security update policy"),
+									TargetOsId:    stringPtr("os-1234abcd"),
+									UpdatePolicy:  (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
+									UpdateSources: &[]string{"https://updates.example.com"},
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),

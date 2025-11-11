@@ -278,8 +278,8 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		host := "Not connected"
 
 		if h.Instance != nil {
-			if h.Instance.CurrentOs != nil && h.Instance.CurrentOs.Name != nil {
-				os = toJSON(h.Instance.CurrentOs.Name)
+			if h.Instance.Os != nil && h.Instance.Os.Name != nil {
+				os = toJSON(h.Instance.Os.Name)
 			}
 			if h.Instance.WorkloadMembers != nil && len(*h.Instance.WorkloadMembers) > 0 {
 				workload = toJSON((*h.Instance.WorkloadMembers)[0].Workload.Name)
@@ -341,8 +341,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		updatestatus = toJSON(host.Instance.UpdateStatus)
 	}
 
-	if host != nil && host.Instance != nil && host.Instance.CurrentOs != nil && host.Instance.CurrentOs.Name != nil {
-		currentOS = toJSON(host.Instance.CurrentOs.Name)
+	if host != nil && host.Instance != nil && host.Instance.Os != nil && host.Instance.Os.Name != nil {
+		currentOS = toJSON(host.Instance.Os.Name)
 	}
 
 	if host != nil && host.Instance != nil && host.Instance.Os != nil && host.Instance.Os.Name != nil {
@@ -593,7 +593,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		_, _ = fmt.Fprintf(writer, "\n")
 	}
 
-	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.CurrentOs != nil && host.Instance.CurrentOs.FixedCves != nil {
+	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.Os != nil && host.Instance.Os.FixedCves != nil {
 
 		if *host.Instance.ExistingCves != "" {
 			err := json.Unmarshal([]byte(*host.Instance.ExistingCves), &cveEntries)

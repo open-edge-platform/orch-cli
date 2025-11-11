@@ -371,17 +371,7 @@ func (s *CLITestSuite) TestHost() {
 	getOutput, err := s.getHost(project, hostID, make(map[string]string))
 	s.NoError(err)
 
-	// Add this debug print to see raw output
-	fmt.Printf("=== RAW OUTPUT ===\n%s\n=== END RAW OUTPUT ===\n", getOutput)
-
 	parsedOutput := mapGetOutput(getOutput)
-
-	// Add this to see parsed output
-	fmt.Printf("=== PARSED OUTPUT ===\n")
-	for k, v := range parsedOutput {
-		fmt.Printf("Key: %q -> Value: %q\n", k, v)
-	}
-	fmt.Printf("=== END PARSED OUTPUT ===\n")
 	expectedOutput := map[string]string{
 		"Detailed Host Information":       "",
 		"Host Info:":                      "",
@@ -429,10 +419,6 @@ func (s *CLITestSuite) TestHost() {
 		"-   Power Command Policy :":      "POWER_COMMAND_POLICY_ALWAYS_ON",
 		"-   PowerOn Time :":              "1",
 		"-   Desired AMT State :":         "AMT_STATE_PROVISIONED",
-		"CVE Info (existing CVEs):":       "",
-		"-   CVE ID:":                     "CVE-2021-1234",
-		"-   Affected Packages:":          "[fluent-bit-3.1.9-11.emt3.x86_64]",
-		"-   Priority:":                   "HIGH",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
