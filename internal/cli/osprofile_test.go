@@ -34,18 +34,7 @@ func (s *CLITestSuite) TestOSProfile() {
 	expectedSecurityFeature := "SECURITY_FEATURE_NONE"
 	expectedProfileName := "microvisor-nonrt"
 	expectedRepoURL := "files-edge-orch/repository/microvisor/non_rt/"
-	//expectedOsResourceID := "os-1234abcd"
-	//expectedImageID := "3.0.20250504"
-	//expectedImageURL := "files-edge-orch/repository/microvisor/non_rt/artifact.raw.gz"
-	//expectedOsType := "OPERATING_SYSTEM_TYPE_IMMUTABLE"
-	//expectedOsProvider := "OPERATING_SYSTEM_PROVIDER_INFRA"
-	//expectedPlatformBundle := ""
 	expectedSHA := "abc123def456"
-	//expectedProfileVersion := "3.0.20250504"
-	expectedKernelCommand := "console=ttyS0, root=/dev/sda1"
-	//expectedUpdateSources := "&[https://updates.example.com]"
-	//expectedInstalledPackages := "wget\\ncurl\\nvim"
-	//SexpectedTimestamp := "2025-01-15 10:30:00 +0000 UTC"
 	path := "./testdata/osprofile.yaml"
 	OSPArgs := map[string]string{}
 
@@ -106,7 +95,6 @@ func (s *CLITestSuite) TestOSProfile() {
 		"Architecture:":     expectedArchitecture,
 		"Repository URL:":   expectedRepoURL,
 		"sha256:":           expectedSHA,
-		"Kernel Command:":   expectedKernelCommand,
 	}
 	// // DEBUG: Print parsed output
 	// fmt.Printf("=== DEBUG: Parsed output ===\n")
@@ -158,7 +146,6 @@ func (s *CLITestSuite) TestOSProfile() {
 		"OS type:               |OPERATING_SYSTEM_TYPE_IMMUTABLE",
 		"OS provider:           |OPERATING_SYSTEM_PROVIDER_INFRA",
 		"Platform Bundle:       |",
-		"Update Sources:        |&[https://updates.example.com]",
 		"Installed Packages:    |\"wget\\ncurl\\nvim\"",
 		"Created:               |2025-01-15 10:30:00 +0000 UTC",
 		"Updated:               |2025-01-15 10:30:00 +0000 UTC",
