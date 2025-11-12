@@ -295,6 +295,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									Sha256:            "abc123def456",
 									ProfileVersion:    stringPtr("3.0.20250504"),
 									InstalledPackages: stringPtr("wget\ncurl\nvim"),
+									Description:       stringPtr(""),
+									Metadata:          stringPtr(""),
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
