@@ -1,14 +1,51 @@
 This file contains the list of third-party software included in or with the Intel software and their required license, copyright statement, permission notice, disclaimers, or other terms. This third-party software is governed by the separate license terms listed in this file.
 ==============================
-1.  github.com/atomix/dazl
+1.  buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go
+    Copyright 2023-2025 Buf Technologies, Inc.
+
+    buf.build/go/protovalidate
+    Copyright 2023-2025 Buf Technologies, Inc.
+
+    cel.dev/expr
+    
+    github.com/bytedance/sonic/loader
+
+    github.com/cloudwego/base64x
+
+    github.com/google/cel-go (Note common/types/pb/equal.go in BSD 3-Clause section)
+    Copyright (c) 2018 The Go Authors. All rights reserved.
+    Copyright 2018 Google LLC
+    Copyright 2019 Google LLC
+    Copyright 2019 Google LLC
+    Copyright 2021 Google LLC
+    Copyright 2022 Google LLC
+    Copyright 2023 Google LLC
+    Copyright 2024 Google LLC
+    Copyright 2025 Google LLC
+
+    github.com/opencontainers/go-digest
+    Copyright 2019, 2020 OCI Contributors
+    Copyright 2016 Docker, Inc.
+
+    github.com/opencontainers/image-spec
+    Copyright 2016 The Linux Foundation.
+
+    github.com/zclconf/go-cty-yaml
+    Copyright {yyyy} {name of copyright owner}
+
+    oras.land/oras-go/v2
+    Copyright 2021 ORAS Authors.
+
+    sigs.k8s.io/randfill
+    Copyright 2014 The gofuzz Authors
+    Copyright 2025 The Kubernetes Authors
+
+    github.com/atomix/dazl
     CopyrightText: 2023-present Intel Corporation
     CopyrightText: 2022-present Open Networking Foundation <info@opennetworking.org>
 
     github.com/google/gnostic-models
     Copyright 2017-2025, Google LLC.
-
-    github.com/google/gofuzz 
-    Copyright 2014 Google Inc. All rights reserved.
 
     github.com/grpc-ecosystem/go-grpc-middleware
     Copyright (c) Improbable Worlds Ltd, All Rights Reserved
@@ -71,9 +108,6 @@ This file contains the list of third-party software included in or with the Inte
 
     gopkg.in/inf.v0
     Copyright (c) 2012 Péter Surányi. Portions Copyright (c) 2009 The Go Authors. All rights reserved.
-
-    gopkg.in/ini.v1
-    Copyright 2019 Unknwon
 
     gopkg.in/yaml.v2
     Copyright (c) 2006 Kirill Simonov
@@ -144,7 +178,7 @@ This file contains the list of third-party software included in or with the Inte
     sigs.k8s.io/json
     Copyright 2021 The Go Authors. All rights reserved.
 
-    sigs.k8s.io/structured-merge-diff/v4
+    sigs.k8s.io/structured-merge-diff/v6
     Copyright 2023 The Kubernetes Authors.
 
     sigs.k8s.io/yaml
@@ -167,17 +201,11 @@ This file contains the list of third-party software included in or with the Inte
     │ (http://www.alrux.com/).
     ────────────────────────────────────────
 
-    github.com/apparentlymart/go-textseg/v13
+    github.com/apparentlymart/go-textseg/v15
     Copyright (c) 2017 Martin Atkins
 
     github.com/bytedance/sonic
     Copyright 2021 ByteDance Inc.
-
-    github.com/chenzhuoyu/base64x
-
-    github.com/chenzhuoyu/iasm
-
-    github.com/envoyproxy/protoc-gen-validate
 
     github.com/go-jose/go-jose/v3
     Copyright 2014 Square Inc.
@@ -389,14 +417,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ==============================
-2.  github.com/magiconair/properties
-    Copyright 2013-2022 Frank Schroeder. All rights reserved.
-
-    github.com/gorilla/websocket
-    Copyright (c) 2013 The Gorilla WebSocket Authors. All rights reserved.
-
-    github.com/russross/blackfriday/v2
+2.  github.com/russross/blackfriday/v2
     Copyright © 2011 Russ Ross All rights reserved.
+
+    github.com/pkg/errors
+    Copyright (c) 2015, Dave Cheney <dave@cheney.net>
+    All rights reserved.
 
 2-Clause BSD License
 
@@ -422,10 +448,19 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ==============================
-3.  github.com/sagikazarmark/slog-shim
-    Copyright (c) 2009 The Go Authors. All rights reserved.
+3.  github.com/antlr4-go/antlr/v4
+    Copyright (c) 2012-2023 The ANTLR Project. All rights reserved.
+
+    github.com/imdario/mergo
+    Copyright (c) 2013 Dario Castañé. All rights reserved.
+    Copyright (c) 2012 The Go Authors. All rights reserved.
+
+    gopkg.in/evanphx/json-patch.v4
+    Copyright (c) 2013 Dario Castañé. All rights reserved.
+    Copyright (c) 2012 The Go Authors. All rights reserved.
     
     github.com/twitchyliquid64/golang-asm
+    Copyright (c) 2009 The Go Authors. All rights reserved.
 
     github.com/fsnotify/fsnotify
     Copyright © 2012 The Go Authors. All rights reserved.
@@ -440,9 +475,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     |
     | Copyright 2010 The Go Authors.  All rights reserved.
     | https://github.com/golang/protobuf
-
-    github.com/golang/protobuf
-    Copyright 2010 The Go Authors.  All rights reserved.
 
     github.com/google/go-cmp
     Copyright (c) 2017 The Go Authors. All rights reserved.
@@ -468,6 +500,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     golang.org/x/crypto
     Copyright 2009 The Go Authors.
 
+    golang.org/x/sync
+    Copyright 2009 The Go Authors
+
     golang.org/x/exp
     Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -492,7 +527,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     golang.org/x/time
     Copyright (c) 2009 The Go Authors. All rights reserved.
 
+    golang.org/x/tools
+    Copyright 2009 The Go Authors.
+
     google.golang.org/protobuf
+    Copyright (c) 2018 The Go Authors. All rights reserved.
+
+    github.com/google/cel-go common/types/pb/equal.go portion
+    ===========================================================================
+    The common/types/pb/equal.go modification of proto.Equal logic
+    ===========================================================================
     Copyright (c) 2018 The Go Authors. All rights reserved.
 
 3-Clause BSD License
@@ -522,11 +566,54 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ==============================
-4.  github.com/apapsch/go-jsonmerge/v2
-    Copyright (c) 2016-2019 Artur Kraev
+4.  github.com/goccy/go-yaml
+    Copyright (c) 2019 Masaaki Goshima
 
-    github.com/cenkalti/backoff/v3
-    Copyright (c) 2014 Cenk Altı
+    github.com/blang/semver/v4
+    Copyright (c) 2014 Benedikt Lang <github at benediktlang.de>
+
+    github.com/bmatcuk/doublestar
+    Copyright (c) 2014 Bob Matcuk
+
+    github.com/cenkalti/backoff/v4
+    Copyright (c) 2014 Bob Matcuk
+
+    github.com/fxamacker/cbor/v2
+    Copyright (c) 2019-present Faye Amacker
+    
+    github.com/goccy/go-json
+    Copyright (c) 2020 Masaaki Goshima
+
+    github.com/huandu/xstrings
+    Copyright (c) 2015 Huan Du
+
+    github.com/pelletier/go-toml/v2
+    go-toml v2
+    Copyright (c) 2021 - 2023 Thomas Pelletier
+
+    github.com/quic-go/qpack
+    Copyright 2019 Marten Seemann
+
+    github.com/quic-go/quic-go
+    Copyright (c) 2016 the quic-go authors & Google, Inc.
+
+    github.com/sagikazarmark/locafero
+    Copyright (c) 2023 Márk Sági-Kazár <mark.sagikazar@gmail.com>
+
+    github.com/sourcegraph/conc
+    Copyright (c) 2023 Sourcegrap
+
+    github.com/stoewer/go-strcase
+    Copyright (c) 2017, Adrian Stoewer <adrian.stoewer@rz.ifi.lmu.de>
+
+    github.com/subosito/gotenv
+    Copyright (c) 2013 Alif Rachmawadi
+
+    github.com/x448/float16
+    Copyright (c) 2019 Montgomery Edwards⁴⁴⁸ and Faye Amacker
+
+    github.com/apapsch/go-jsonmerge/v2
+    Copyright (c) 2016-2019 Artur Kraev
 
     github.com/cpuguy83/go-md2man/v2
     Copyright (c) 2014 Brian Goff
@@ -628,9 +715,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
     github.com/zclconf/go-cty
     Copyright (c) 2017-2018 Martin Atkins
-
-    go.uber.org/multierr
-    Copyright (c) 2017-2021 Uber Technologies, Inc.
 
 The MIT License (MIT)
 
