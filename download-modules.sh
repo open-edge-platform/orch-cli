@@ -14,6 +14,9 @@ TOTAL=0
 SUCCESS=0
 FAILED=0
 
+# Create temporary file to store module list
+TEMP_MODULES=$(mktemp)
+
 # Parse go.mod directly to extract only modules listed in require blocks
 awk '
     /^require \(/ { in_block=1; next }
@@ -30,7 +33,10 @@ awk '
         gsub(/[[:space:]]*\/\/.*$/, "")
         print $1, $2
     }
-' go.mod | while read -r path version; do
+' go.mod > "$TEMP_MODULES"
+
+# Process each module
+while read -r path version; do
     # Skip empty lines or our own module
     if [ -z "$path" ] || [ "$path" = "$OWN_MODULE" ]; then
         continue
@@ -66,7 +72,10 @@ awk '
         FAILED=$((FAILED + 1))
         echo "  ✗ Download failed"
     fi
-done
+done < "$TEMP_MODULES"
+
+# Clean up temp file
+rm -f "$TEMP_MODULES"
 
 echo ""
 echo "================================"
