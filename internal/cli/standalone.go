@@ -254,7 +254,7 @@ func extractYamlBlock(path string) (CloudInitSection, error) {
 }
 
 func getPasswordFromUserInput(username string) (string, error) {
-	fmt.Printf("Please Set the Password for %q\n", username)
+	fmt.Printf("Please Set the Password for the user")
 	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", fmt.Errorf("failed to read password")
