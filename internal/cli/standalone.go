@@ -261,7 +261,14 @@ func getPasswordFromUserInput(username string) (string, error) {
 	}
 	fmt.Println()
 
-	return string(bytePassword), nil
+	password := string(bytePassword)
+
+	// Clear the byte slice containing the password
+	for i := range bytePassword {
+		bytePassword[i] = 0
+	}
+
+	return password, nil
 }
 
 func loadConfig(path string, nginxFQDN, emtsRepoID string) (map[string]interface{}, error) {
