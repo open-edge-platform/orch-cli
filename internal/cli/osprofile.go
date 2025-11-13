@@ -46,6 +46,9 @@ spec:
   osPackageManifestURL: files-edge-orch/repository/microvisor/non_rt/<manifest.json>
   securityFeature: SECURITY_FEATURE_NONE
   platformBundle:
+  metadata:
+	key1: value1
+	key2: value2
 
 See 
 https://github.com/open-edge-platform/infra-core/tree/main/os-profiles`
@@ -76,7 +79,12 @@ var osProfileSchema = `
 		"fixedCvesURL": { "type": ["string", "null"] },
         "securityFeature": { "type": "string" },
         "platformBundle": { "type": ["string", "null"] },
-		"tlsCaCert": { "type": ["string", "null"] }
+		"tlsCaCert": { "type": ["string", "null"] },
+		"description": { "type": ["string", "null"] },
+		"metadata": { 
+          "type": ["object", "null"],
+          "additionalProperties": true
+        }
       },
       "required": [
         "name", "type", "provider", "architecture", "profileName",
@@ -90,20 +98,22 @@ var osProfileSchema = `
 `
 
 type OSProfileSpec struct {
-	Name              string `yaml:"name"`
-	Type              string `yaml:"type"`
-	Provider          string `yaml:"provider"`
-	Architecture      string `yaml:"architecture"`
-	ProfileName       string `yaml:"profileName"`
-	OsImageURL        string `yaml:"osImageUrl"`
-	OsImageSha256     string `yaml:"osImageSha256"`
-	OsImageVersion    string `yaml:"osImageVersion"`
-	OSPackageURL      string `yaml:"osPackageManifestURL"`
-	SecurityFeature   string `yaml:"securityFeature"`
-	PlatformBundle    string `yaml:"platformBundle"`
-	OsExistingCvesURL string `yaml:"osExistingCvesURL"`
-	OsFixedCvesURL    string `yaml:"osFixedCvesURL"`
-	TLSCaCert         string `yaml:"tlsCaCert"`
+	Name              string                 `yaml:"name"`
+	Type              string                 `yaml:"type"`
+	Provider          string                 `yaml:"provider"`
+	Architecture      string                 `yaml:"architecture"`
+	ProfileName       string                 `yaml:"profileName"`
+	OsImageURL        string                 `yaml:"osImageUrl"`
+	OsImageSha256     string                 `yaml:"osImageSha256"`
+	OsImageVersion    string                 `yaml:"osImageVersion"`
+	OSPackageURL      string                 `yaml:"osPackageManifestURL"`
+	SecurityFeature   string                 `yaml:"securityFeature"`
+	PlatformBundle    string                 `yaml:"platformBundle"`
+	OsExistingCvesURL string                 `yaml:"osExistingCvesURL"`
+	OsFixedCvesURL    string                 `yaml:"osFixedCvesURL"`
+	TLSCaCert         string                 `yaml:"tlsCaCert"`
+	Description       string                 `yaml:"description"`
+	Metadata          map[string]interface{} `yaml:"metadata"`
 }
 
 type NestedSpec struct {
@@ -139,6 +149,8 @@ func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) 
 	_, _ = fmt.Fprintf(writer, "Image ID: \t%s\n", *OSProfile.ImageId)
 	_, _ = fmt.Fprintf(writer, "Image URL: \t%s\n", *OSProfile.ImageUrl)
 	_, _ = fmt.Fprintf(writer, "Repository URL: \t%s\n", *OSProfile.RepoUrl)
+	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", *OSProfile.Description)
+	_, _ = fmt.Fprintf(writer, "Metadata: \t%s\n", *OSProfile.Metadata)
 	_, _ = fmt.Fprintf(writer, "Security Feature: \t%v\n", toJSON(OSProfile.SecurityFeature))
 	_, _ = fmt.Fprintf(writer, "Architecture: \t%s\n", *OSProfile.Architecture)
 	_, _ = fmt.Fprintf(writer, "OS type: \t%s\n", *OSProfile.OsType)
@@ -406,6 +418,11 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 	// End TODO
 
+	metadataJSON, err := convertMetadataToAPIString(spec.Spec.Metadata)
+	if err != nil {
+		return fmt.Errorf("metadata validation failed: %v", err)
+	}
+
 	resp, err := OSProfileClient.OperatingSystemServiceCreateOperatingSystemWithResponse(ctx, projectName,
 		infra.OperatingSystemServiceCreateOperatingSystemJSONRequestBody{
 			Name:            &spec.Spec.Name,
@@ -421,6 +438,8 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 			FixedCvesUrl:    &spec.Spec.OsFixedCvesURL,
 			ExistingCvesUrl: &spec.Spec.OsExistingCvesURL,
 			TlsCaCert:       &spec.Spec.TLSCaCert,
+			Description:     &spec.Spec.Description,
+			Metadata:        metadataJSON,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -475,4 +494,46 @@ func toStringKeyMap(m interface{}) interface{} {
 		}
 	}
 	return m
+}
+
+func convertMetadataToAPIString(metadata map[string]interface{}) (*string, error) {
+	if len(metadata) == 0 {
+		return nil, nil
+	}
+
+	// Convert metadata map to JSON string
+	jsonBytes, err := json.Marshal(metadata)
+	if err != nil {
+		return nil, fmt.Errorf("error converting metadata to JSON: %v", err)
+	}
+
+	jsonStr := string(jsonBytes)
+
+	// Check length constraint (500 characters)
+	if len(jsonStr) > 500 {
+		return nil, fmt.Errorf("metadata JSON exceeds maximum length of 500 characters (got %d): %s", len(jsonStr), jsonStr)
+	}
+
+	// Validate against API regex pattern: ^$|^[a-z0-9,.\-_:/"\\ \\n{}\[\]]+$
+	// This will fail if the input contains invalid characters - no sanitization
+	for i, char := range jsonStr {
+		valid := false
+		switch {
+		case char >= 'a' && char <= 'z':
+			valid = true
+		case char >= '0' && char <= '9':
+			valid = true
+		case char == ',' || char == '.' || char == '-' || char == '_' ||
+			char == ':' || char == '/' || char == '"' || char == '\\' ||
+			char == ' ' || char == '\n' || char == '{' || char == '}' ||
+			char == '[' || char == ']':
+			valid = true
+		}
+
+		if !valid {
+			return nil, fmt.Errorf("metadata contains invalid character '%c' at position %d. API only allows: a-z, 0-9, comma, period, dash, underscore, colon, forward slash, quotes, backslash, space, newline, curly braces, square brackets", char, i)
+		}
+	}
+
+	return &jsonStr, nil
 }

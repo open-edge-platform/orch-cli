@@ -139,6 +139,8 @@ func (s *CLITestSuite) TestOSProfile() {
 		"Image ID:              |3.0.20250504",
 		"Image URL:             |files-edge-orch/repository/microvisor/non_rt/artifact.raw.gz",
 		"Repository URL:        |files-edge-orch/repository/microvisor/non_rt/",
+		"Description:           |",
+		"Metadata:              |",
 		"Security Feature:      |\"SECURITY_FEATURE_NONE\"",
 		"Architecture:          |x86_64",
 		"OS type:               |OPERATING_SYSTEM_TYPE_IMMUTABLE",
