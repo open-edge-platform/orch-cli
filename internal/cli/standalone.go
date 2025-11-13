@@ -253,15 +253,22 @@ func extractYamlBlock(path string) (CloudInitSection, error) {
 	return parsed, err
 }
 
-func getPasswordFromUserInput(username string) (string, error) {
-	fmt.Printf("Please Set the Password for %q\n", username)
+func getPasswordFromUserInput() (string, error) {
+	fmt.Printf("Please Set the Password")
 	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
 	}
 	fmt.Println()
 
-	return string(bytePassword), nil
+	password := string(bytePassword)
+
+	// Clear the byte slice containing the password
+	for i := range bytePassword {
+		bytePassword[i] = 0
+	}
+
+	return password, nil
 }
 
 func loadConfig(path string, nginxFQDN, emtsRepoID string) (map[string]interface{}, error) {
@@ -319,7 +326,7 @@ func loadConfig(path string, nginxFQDN, emtsRepoID string) (map[string]interface
 	config["CloudInitServicesDisable"] = cloudInit.Services.Disable
 	config["CloudInitRuncmd"] = cloudInit.RunCmd
 
-	if config["passwd"], err = getPasswordFromUser(config["user_name"].(string)); err != nil {
+	if config["passwd"], err = getPasswordFromUser(); err != nil {
 		return nil, err
 	}
 
