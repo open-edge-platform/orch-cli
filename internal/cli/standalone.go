@@ -257,7 +257,7 @@ func getPasswordFromUserInput(username string) (string, error) {
 	fmt.Printf("Please Set the Password for %q\n", username)
 	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to read password")
 	}
 	fmt.Println()
 
