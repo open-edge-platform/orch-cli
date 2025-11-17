@@ -4,14 +4,16 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
-
+	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	"github.com/spf13/cobra"
 )
@@ -118,13 +120,35 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 	appName := args[0]
 	appVersion := args[1]
 
+	// Get catalog client for fetching deployment package
+	_, catalogClient, _, err := CatalogFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Get valid application names from the deployment package for validation
+	validAppNames, err := getValidApplicationNames(ctx, catalogClient, projectName, appName, appVersion)
+	if err != nil {
+		return err
+	}
+
 	overrideValues, err := getOverrideValues(cmd)
 	if err != nil {
 		return err
 	}
 
+	// Validate that application names in overrides exist in the deployment package
+	if err := validateApplicationNames(overrideValues, validAppNames, "application-set"); err != nil {
+		return err
+	}
+
 	targetClusters, deploymentType, err := getTargetClusters(cmd, false) // do not allow empty target clusters
 	if err != nil {
+		return err
+	}
+
+	// Validate that application names in target clusters exist in the deployment package
+	if err := validateTargetClustersApplicationNames(targetClusters, validAppNames); err != nil {
 		return err
 	}
 
@@ -403,4 +427,87 @@ func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting deployment %s", deploymentID))
+}
+
+// getValidApplicationNames fetches the deployment package and returns the list of valid application names
+func getValidApplicationNames(ctx context.Context, catalogClient catapi.ClientWithResponsesInterface, projectName, packageName, packageVersion string) (map[string]bool, error) {
+	resp, err := catalogClient.CatalogServiceGetDeploymentPackageWithResponse(ctx, projectName, packageName, packageVersion, auth.AddAuthHeader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch deployment package: %w", err)
+	}
+
+	if resp.StatusCode() != 200 {
+		return nil, fmt.Errorf("failed to fetch deployment package %s:%s (status %d)", packageName, packageVersion, resp.StatusCode())
+	}
+
+	if resp.JSON200 == nil || len(resp.JSON200.DeploymentPackage.ApplicationReferences) == 0 {
+		return nil, fmt.Errorf("deployment package %s:%s has no applications", packageName, packageVersion)
+	}
+
+	// Build a map of valid application names
+	validNames := make(map[string]bool)
+	for _, appRef := range resp.JSON200.DeploymentPackage.ApplicationReferences {
+		validNames[appRef.Name] = true
+	}
+
+	if len(validNames) == 0 {
+		return nil, fmt.Errorf("deployment package %s:%s has no valid application names", packageName, packageVersion)
+	}
+
+	return validNames, nil
+}
+
+// validateApplicationNames checks that all application names in overrides exist in validNames
+func validateApplicationNames(overrides []depapi.OverrideValues, validNames map[string]bool, flagName string) error {
+	var invalidNames []string
+	for _, override := range overrides {
+		appName := override.AppName
+		if !validNames[appName] {
+			invalidNames = append(invalidNames, appName)
+		}
+	}
+
+	if len(invalidNames) > 0 {
+		validList := make([]string, 0, len(validNames))
+		for name := range validNames {
+			validList = append(validList, name)
+		}
+		sort.Strings(validList)
+		return fmt.Errorf("invalid application name(s) in --%s: %v. Valid names: %v",
+			flagName, invalidNames, validList)
+	}
+
+	return nil
+}
+
+// validateTargetClustersApplicationNames checks that all application names in target clusters exist in validNames
+func validateTargetClustersApplicationNames(targetClusters *[]depapi.TargetClusters, validNames map[string]bool) error {
+	if targetClusters == nil {
+		return nil
+	}
+
+	var invalidNames []string
+	seenInvalid := make(map[string]bool)
+
+	for _, tc := range *targetClusters {
+		if tc.AppName != nil {
+			appName := *tc.AppName
+			if !validNames[appName] && !seenInvalid[appName] {
+				invalidNames = append(invalidNames, appName)
+				seenInvalid[appName] = true
+			}
+		}
+	}
+
+	if len(invalidNames) > 0 {
+		validList := make([]string, 0, len(validNames))
+		for name := range validNames {
+			validList = append(validList, name)
+		}
+		sort.Strings(validList)
+		return fmt.Errorf("invalid application name(s) in --application-cluster-id or --application-label: %v. Valid names: %v",
+			invalidNames, validList)
+	}
+
+	return nil
 }
