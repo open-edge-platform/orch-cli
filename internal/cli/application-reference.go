@@ -64,7 +64,7 @@ func runCreateApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	}
 
 	pkg := gresp.JSON200.DeploymentPackage
-	pkg.ApplicationReferences = append(pkg.ApplicationReferences, catapi.ApplicationReference{
+	pkg.ApplicationReferences = append(pkg.ApplicationReferences, catapi.CatalogV3ApplicationReference{
 		Name:    applicationFields[0],
 		Version: applicationFields[1],
 	})
@@ -113,7 +113,7 @@ func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 		applicationName, pkgName, pkgVersion))
 }
 
-func updateDeploymentPackage(ctx context.Context, projectName string, client catapi.ClientWithResponsesInterface, pkg catapi.DeploymentPackage) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
+func updateDeploymentPackage(ctx context.Context, projectName string, client catapi.ClientWithResponsesInterface, pkg catapi.CatalogV3DeploymentPackage) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
 	return client.CatalogServiceUpdateDeploymentPackageWithResponse(ctx, projectName, pkg.Name, pkg.Version,
 		catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody{
 			Name:                       pkg.Name,

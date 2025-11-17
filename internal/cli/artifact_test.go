@@ -128,7 +128,7 @@ func (s *CLITestSuite) TestArtifact() {
 }
 
 func TestPrintArtifactEvent(t *testing.T) {
-	artifact := catapi.Artifact{
+	artifact := catapi.CatalogV3Artifact{
 		Name:        "test-artifact",
 		DisplayName: strPtr("Test Artifact"),
 		Description: strPtr("A test artifact"),

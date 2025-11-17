@@ -110,7 +110,7 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 var deploymentPackageHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
 	"Name", "Display Name", "Version", "Kind", "Default Profile", "Is Deployed", "Is Visible", "Application Count")
 
-func printDeploymentPackages(writer io.Writer, caList *[]catapi.DeploymentPackage, verbose bool) {
+func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, verbose bool) {
 	for _, ca := range *caList {
 		if !verbose {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%t\t%t\t%d\n", ca.Name,
@@ -164,12 +164,12 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.DeploymentPackag
 }
 
 // Produces an application reference from the specified <name>:<version> string
-func parseApplicationReference(refSpec string) (*catapi.ApplicationReference, error) {
+func parseApplicationReference(refSpec string) (*catapi.CatalogV3ApplicationReference, error) {
 	refFields := strings.SplitN(refSpec, ":", 2)
 	if len(refFields) != 2 {
 		return nil, fmt.Errorf("application reference must be in form of <name>:<version>")
 	}
-	return &catapi.ApplicationReference{Name: refFields[0], Version: refFields[1]}, nil
+	return &catapi.CatalogV3ApplicationReference{Name: refFields[0], Version: refFields[1]}, nil
 }
 
 func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
@@ -185,7 +185,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	applicationVersion := args[1]
 
 	// Collect application references
-	applicationReferences := make([]catapi.ApplicationReference, 0)
+	applicationReferences := make([]catapi.CatalogV3ApplicationReference, 0)
 	appRefs, _ := cmd.Flags().GetStringSlice("application-reference")
 	if len(appRefs) > 0 {
 		for _, refSpec := range appRefs {
@@ -198,17 +198,17 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	}
 
 	// Collect application dependencies
-	applicationDependencies := make([]catapi.ApplicationDependency, 0)
+	applicationDependencies := make([]catapi.CatalogV3ApplicationDependency, 0)
 	appDeps, _ := cmd.Flags().GetStringToString("application-dependency")
 	if len(appDeps) > 0 {
 		for app, deps := range appDeps {
 			for _, name := range strings.Split(deps, ",") {
-				applicationDependencies = append(applicationDependencies, catapi.ApplicationDependency{Name: app, Requires: name})
+				applicationDependencies = append(applicationDependencies, catapi.CatalogV3ApplicationDependency{Name: app, Requires: name})
 			}
 		}
 	}
 
-	defaultKind := catapi.DeploymentPackageKindKINDNORMAL
+	defaultKind := catapi.CatalogV3Kind("KIND_NORMAL")
 	defaultVisible := true
 
 	resp, err := catalogClient.CatalogServiceCreateDeploymentPackageWithResponse(ctx, projectName,
@@ -228,47 +228,47 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating deployment package %s", applicationName))
 }
 
-func deploymentPackageKind2String(kind *catapi.DeploymentPackageKind) string {
+func deploymentPackageKind2String(kind *catapi.CatalogV3Kind) string {
 	if kind == nil {
 		return "normal"
 	}
 	switch *kind {
-	case catapi.DeploymentPackageKindKINDNORMAL:
+	case "KIND_NORMAL":
 		return "normal"
-	case catapi.DeploymentPackageKindKINDADDON:
+	case "KIND_ADDON":
 		return "addon"
-	case catapi.DeploymentPackageKindKINDEXTENSION:
+	case "KIND_EXTENSION":
 		return "extension"
 	}
 	return "normal"
 }
 
-func string2DeploymentPackageKind(kind string) catapi.DeploymentPackageKind {
+func string2DeploymentPackageKind(kind string) catapi.CatalogV3Kind {
 	switch kind {
 	case "normal":
-		return catapi.DeploymentPackageKindKINDNORMAL
+		return catapi.CatalogV3Kind("KIND_NORMAL")
 	case "addon":
-		return catapi.DeploymentPackageKindKINDADDON
+		return catapi.CatalogV3Kind("KIND_ADDON")
 	case "extension":
-		return catapi.DeploymentPackageKindKINDEXTENSION
+		return catapi.CatalogV3Kind("KIND_EXTENSION")
 	}
-	return catapi.DeploymentPackageKindKINDNORMAL
+	return catapi.CatalogV3Kind("KIND_NORMAL")
 }
 
-func getDeploymentPackageKind(cmd *cobra.Command, def *catapi.DeploymentPackageKind) *catapi.DeploymentPackageKind {
+func getDeploymentPackageKind(cmd *cobra.Command, def *catapi.CatalogV3Kind) *catapi.CatalogV3Kind {
 	dv := deploymentPackageKind2String(def)
 	kind := string2DeploymentPackageKind(*getFlagOrDefault(cmd, "kind", &dv))
 	return &kind
 }
 
-func getDeploymentPackageKinds(cmd *cobra.Command) *[]catapi.CatalogServiceListDeploymentPackagesParamsKinds {
+func getDeploymentPackageKinds(cmd *cobra.Command) *[]catapi.CatalogV3Kind {
 	kinds, _ := cmd.Flags().GetStringSlice("kind")
 	if len(kinds) == 0 {
 		return nil
 	}
-	list := make([]catapi.CatalogServiceListDeploymentPackagesParamsKinds, 0, len(kinds))
+	list := make([]catapi.CatalogV3Kind, 0, len(kinds))
 	for _, k := range kinds {
-		list = append(list, catapi.CatalogServiceListDeploymentPackagesParamsKinds(string2DeploymentPackageKind(k)))
+		list = append(list, string2DeploymentPackageKind(k))
 	}
 	return &list
 }
@@ -313,7 +313,7 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 
 	name := args[0]
 
-	var deploymentPkgs []catapi.DeploymentPackage
+	var deploymentPkgs []catapi.CatalogV3DeploymentPackage
 	if len(args) == 2 {
 		version := args[1]
 		resp, err := catalogClient.CatalogServiceGetDeploymentPackageWithResponse(ctx, projectName, name, version,
@@ -369,7 +369,7 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 	// Collect new application references; if any were specified all must be specified
 	newApplicationReferences, _ := cmd.Flags().GetStringSlice("application-reference")
 	if len(newApplicationReferences) > 0 {
-		applicationReferences = make([]catapi.ApplicationReference, 0)
+		applicationReferences = make([]catapi.CatalogV3ApplicationReference, 0)
 		for _, refSpec := range newApplicationReferences {
 			ref, err := parseApplicationReference(refSpec)
 			if err != nil {
@@ -382,11 +382,11 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 	// Collect new application dependencies; if any were specified all must be specified
 	newApplicationDependencies, _ := cmd.Flags().GetStringToString("application-dependency")
 	if len(newApplicationDependencies) > 0 {
-		applicationDependencies = make([]catapi.ApplicationDependency, 0)
+		applicationDependencies = make([]catapi.CatalogV3ApplicationDependency, 0)
 		for app, deps := range newApplicationDependencies {
 			if len(deps) > 0 {
 				for _, name := range strings.Split(deps, ",") {
-					applicationDependencies = append(applicationDependencies, catapi.ApplicationDependency{Name: app, Requires: name})
+					applicationDependencies = append(applicationDependencies, catapi.CatalogV3ApplicationDependency{Name: app, Requires: name})
 				}
 			}
 		}
@@ -540,10 +540,10 @@ func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 }
 
 func printDeploymentPackageEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {
-	var item catapi.DeploymentPackage
+	var item catapi.CatalogV3DeploymentPackage
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printDeploymentPackages(writer, &[]catapi.DeploymentPackage{item}, verbose)
+	printDeploymentPackages(writer, &[]catapi.CatalogV3DeploymentPackage{item}, verbose)
 	return nil
 }

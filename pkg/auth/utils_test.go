@@ -79,7 +79,9 @@ func TestAddAuthHeader(t *testing.T) {
 	viper.Set(ClientIDField, "")
 	viper.Set(KeycloakEndpointField, "")
 	err = AddAuthHeader(context.Background(), req2)
-	assert.NoError(t, err)
+	// Should return error when no refresh token is present
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get access token")
 	assert.Equal(t, "", req2.Header.Get("Authorization"))
 }
 
