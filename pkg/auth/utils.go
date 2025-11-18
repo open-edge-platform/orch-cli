@@ -64,17 +64,17 @@ func newKeycloakClient(_ context.Context, endpoint string) (openidconnect.Client
 	return openidconnect.ClientWithResponsesInterface(client), err
 }
 
-func AddAuthHeader(ctx context.Context, req *http.Request) error {
+// GetAccessToken retrieves the access token from environment variable or by exchanging refresh token
+func GetAccessToken(ctx context.Context) (string, error) {
 	// Short-cut to use an actual access token from an environment variable, rather than refresh token from configuration.
 	authToken := os.Getenv(AccessTokenEnv)
 	if authToken != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", authToken))
-		return nil
+		return authToken, nil
 	}
 
 	refreshTokenStr := viper.GetString(RefreshTokenField)
 	if refreshTokenStr == "" {
-		return nil
+		return "", fmt.Errorf("no refresh token found. Please login")
 	}
 	clientID := viper.GetString(ClientIDField)
 	keycloakEp := viper.GetString(KeycloakEndpointField)
@@ -87,7 +87,7 @@ func AddAuthHeader(ctx context.Context, req *http.Request) error {
 	// Use refresh_token to get an access_token
 	kcClient, err := KeycloakFactory(ctx, urlString.String())
 	if err != nil {
-		return err
+		return "", err
 	}
 	response, err := kcClient.PostProtocolOpenidConnectTokenWithFormdataBodyWithResponse(ctx, openidconnect.PostProtocolOpenidConnectTokenFormdataRequestBody{
 		ClientId:     &clientID,
@@ -95,20 +95,33 @@ func AddAuthHeader(ctx context.Context, req *http.Request) error {
 		RefreshToken: &refreshTokenStr,
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if response.StatusCode() == 401 {
 		log.Warnf("Unauthorized")
-		return fmt.Errorf("unauthorized %d", response.StatusCode())
+		return "", fmt.Errorf("unauthorized %d", response.StatusCode())
 	} else if response.StatusCode() != 200 {
 		log.Warnf("unexpected response %d", response.StatusCode())
-		return fmt.Errorf("response %s", string(response.Body))
+		return "", fmt.Errorf("response %s", string(response.Body))
 	}
 	accessToken := response.JSON200.AccessToken
 
 	if accessToken != nil && *accessToken != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", *accessToken))
+		return *accessToken, nil
+	}
+	return "", fmt.Errorf("no access token received")
+}
+
+func AddAuthHeader(ctx context.Context, req *http.Request) error {
+	accessToken, err := GetAccessToken(ctx)
+	if err != nil {
+		// Return error if we can't get access token (e.g., expired refresh token, Keycloak unreachable)
+		return fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	if accessToken != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 	}
 	return nil
 }

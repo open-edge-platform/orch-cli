@@ -82,7 +82,7 @@ func getDeleteArtifactCommand() *cobra.Command {
 
 var artifactHeader = fmt.Sprintf("%s\t%s\t%s", "Name", "Display Name", "Description")
 
-func printArtifacts(writer io.Writer, artifactList *[]catapi.Artifact, verbose bool) {
+func printArtifacts(writer io.Writer, artifactList *[]catapi.CatalogV3Artifact, verbose bool) {
 	for _, a := range *artifactList {
 		if !verbose {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\n", a.Name, valueOrNone(a.DisplayName), valueOrNone(a.Description))
@@ -171,7 +171,7 @@ func runGetArtifactCommand(cmd *cobra.Command, args []string) error {
 		fmt.Sprintf("error getting artifact %s", name)); !proceed {
 		return err
 	}
-	printArtifacts(writer, &[]catapi.Artifact{resp.JSON200.Artifact}, verbose)
+	printArtifacts(writer, &[]catapi.CatalogV3Artifact{resp.JSON200.Artifact}, verbose)
 	return writer.Flush()
 }
 
@@ -239,10 +239,10 @@ func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
 }
 
 func printArtifactEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {
-	var item catapi.Artifact
+	var item catapi.CatalogV3Artifact
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printArtifacts(writer, &[]catapi.Artifact{item}, verbose)
+	printArtifacts(writer, &[]catapi.CatalogV3Artifact{item}, verbose)
 	return nil
 }

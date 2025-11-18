@@ -196,7 +196,7 @@ func (s *CLITestSuite) TestImageRegistry() {
 }
 
 func TestPrintRegistryEvent(t *testing.T) {
-	reg := catapi.Registry{
+	reg := catapi.CatalogV3Registry{
 		Name:        "test-registry",
 		DisplayName: strPtr("Test Registry"),
 		Description: strPtr("A test registry"),

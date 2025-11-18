@@ -174,8 +174,8 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 }
 
 func TestPrintDeploymentPackageEvent(t *testing.T) {
-	kind := catapi.DeploymentPackageKind("normal")
-	dp := catapi.DeploymentPackage{
+	kind := catapi.CatalogV3Kind("normal")
+	dp := catapi.CatalogV3DeploymentPackage{
 		Name:        "test-deployment-pkg",
 		Version:     "1.0.0",
 		DisplayName: strPtr("Test Deployment Package"),

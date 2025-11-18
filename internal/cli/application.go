@@ -92,7 +92,7 @@ func getDeleteApplicationCommand() *cobra.Command {
 var applicationHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
 	"Name", "Display Name", "Version", "Kind", "Chart Name", "Chart Version", "Helm Registry Name", "Default Profile")
 
-func printApplications(writer io.Writer, appList *[]catapi.Application, verbose bool) {
+func printApplications(writer io.Writer, appList *[]catapi.CatalogV3Application, verbose bool) {
 	for _, app := range *appList {
 		if !verbose {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", app.Name,
@@ -133,7 +133,7 @@ func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 
 	name := args[0]
 	version := args[1]
-	defaultKind := catapi.ApplicationKindKINDNORMAL
+	defaultKind := catapi.CatalogV3Kind("KIND_NORMAL")
 
 	resp, err := catalogClient.CatalogServiceCreateApplicationWithResponse(ctx, projectName,
 		catapi.CatalogServiceCreateApplicationJSONRequestBody{
@@ -153,47 +153,47 @@ func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating application %s", name))
 }
 
-func applicationKind2String(kind *catapi.ApplicationKind) string {
+func applicationKind2String(kind *catapi.CatalogV3Kind) string {
 	if kind == nil {
 		return "normal"
 	}
 	switch *kind {
-	case catapi.ApplicationKindKINDNORMAL:
+	case "KIND_NORMAL":
 		return "normal"
-	case catapi.ApplicationKindKINDADDON:
+	case "KIND_ADDON":
 		return "addon"
-	case catapi.ApplicationKindKINDEXTENSION:
+	case "KIND_EXTENSION":
 		return "extension"
 	}
 	return "normal"
 }
 
-func string2ApplicationKind(kind string) catapi.ApplicationKind {
+func string2ApplicationKind(kind string) catapi.CatalogV3Kind {
 	switch kind {
 	case "normal":
-		return catapi.ApplicationKindKINDNORMAL
+		return catapi.CatalogV3Kind("KIND_NORMAL")
 	case "addon":
-		return catapi.ApplicationKindKINDADDON
+		return catapi.CatalogV3Kind("KIND_ADDON")
 	case "extension":
-		return catapi.ApplicationKindKINDEXTENSION
+		return catapi.CatalogV3Kind("KIND_EXTENSION")
 	}
-	return catapi.ApplicationKindKINDNORMAL
+	return catapi.CatalogV3Kind("KIND_NORMAL")
 }
 
-func getApplicationKind(cmd *cobra.Command, def *catapi.ApplicationKind) *catapi.ApplicationKind {
+func getApplicationKind(cmd *cobra.Command, def *catapi.CatalogV3Kind) *catapi.CatalogV3Kind {
 	dv := applicationKind2String(def)
 	kind := string2ApplicationKind(*getFlagOrDefault(cmd, "kind", &dv))
 	return &kind
 }
 
-func getApplicationKinds(cmd *cobra.Command) *[]catapi.CatalogServiceListApplicationsParamsKinds {
+func getApplicationKinds(cmd *cobra.Command) *[]catapi.CatalogV3Kind {
 	kinds, _ := cmd.Flags().GetStringSlice("kind")
 	if len(kinds) == 0 {
 		return nil
 	}
-	list := make([]catapi.CatalogServiceListApplicationsParamsKinds, 0, len(kinds))
+	list := make([]catapi.CatalogV3Kind, 0, len(kinds))
 	for _, k := range kinds {
-		list = append(list, catapi.CatalogServiceListApplicationsParamsKinds(string2ApplicationKind(k)))
+		list = append(list, string2ApplicationKind(k))
 	}
 	return &list
 }
@@ -237,7 +237,7 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	name := args[0]
-	var appList []catapi.Application
+	var appList []catapi.CatalogV3Application
 	if len(args) == 2 {
 		version := args[1]
 		resp, err := catalogClient.CatalogServiceGetApplicationWithResponse(ctx, projectName, name, version,
@@ -363,10 +363,10 @@ func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
 }
 
 func printApplicationEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {
-	var item catapi.Application
+	var item catapi.CatalogV3Application
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printApplications(writer, &[]catapi.Application{item}, verbose)
+	printApplications(writer, &[]catapi.CatalogV3Application{item}, verbose)
 	return nil
 }

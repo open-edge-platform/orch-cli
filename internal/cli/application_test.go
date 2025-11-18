@@ -212,8 +212,8 @@ func (s *CLITestSuite) TestApplication() {
 }
 
 func TestPrintApplicationEvent(t *testing.T) {
-	kind := catapi.ApplicationKindKINDNORMAL
-	app := catapi.Application{
+	kind := catapi.CatalogV3Kind("KIND_NORMAL")
+	app := catapi.CatalogV3Application{
 		Name:               "test-app",
 		Version:            "1.0.0",
 		Kind:               &kind, // take address of variable, not constant
@@ -222,7 +222,7 @@ func TestPrintApplicationEvent(t *testing.T) {
 		ChartName:          "test-chart",
 		ChartVersion:       "0.1.0",
 		HelmRegistryName:   "test-registry",
-		Profiles:           &[]catapi.Profile{},
+		Profiles:           &[]catapi.CatalogV3Profile{},
 		DefaultProfileName: strPtr("default"),
 	}
 	payload, err := json.Marshal(app)

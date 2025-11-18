@@ -80,7 +80,7 @@ func getDeleteDeploymentProfileCommand() *cobra.Command {
 
 var deploymentProfileHeader = fmt.Sprintf("%s\t%s\t%s\t%s", "Name", "Display Name", "Description", "Profile Count")
 
-func printDeploymentProfiles(writer io.Writer, profileList *[]catapi.DeploymentProfile, verbose bool) {
+func printDeploymentProfiles(writer io.Writer, profileList *[]catapi.CatalogV3DeploymentProfile, verbose bool) {
 	for _, p := range *profileList {
 		if !verbose {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%d\n", p.Name,
@@ -125,7 +125,7 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 	}
 
 	pkg := gresp.JSON200.DeploymentPackage
-	profile := catapi.DeploymentProfile{
+	profile := catapi.CatalogV3DeploymentProfile{
 		Name:                profileName,
 		DisplayName:         &displayName,
 		Description:         &description,
@@ -206,7 +206,7 @@ func runGetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 	pkg := resp.JSON200.DeploymentPackage
 	for _, profile := range *pkg.Profiles {
 		if profile.Name == profileName {
-			printDeploymentProfiles(writer, &[]catapi.DeploymentProfile{profile}, verbose)
+			printDeploymentProfiles(writer, &[]catapi.CatalogV3DeploymentProfile{profile}, verbose)
 			return writer.Flush()
 		}
 	}
