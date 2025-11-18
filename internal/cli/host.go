@@ -2353,12 +2353,14 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 		maintenanceType := infra.SCHEDULESTATUSOSUPDATE
 		hostID := record.ResourceID
 		startSeconds := time.Now().Unix() + 30
+		endSeconds := int(time.Now().Unix() + 660)
 
 		resp, err := hostClient.ScheduleServiceCreateSingleScheduleWithResponse(ctx, projectName,
 			infra.ScheduleServiceCreateSingleScheduleJSONRequestBody{
 				Name:           &name,
 				ScheduleStatus: maintenanceType,
 				StartSeconds:   int(startSeconds),
+				EndSeconds:     &endSeconds,
 				TargetHostId:   &hostID,
 			}, auth.AddAuthHeader)
 		if err != nil {
