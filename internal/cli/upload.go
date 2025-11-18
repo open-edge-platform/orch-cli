@@ -35,6 +35,16 @@ func uploadResources(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	ctx := context.Background()
+
+	// Get the access token by using the auth mechanism
+	// If no token is available, proceed with empty token (for scenarios without auth)
+	accessToken, err := auth.GetAccessToken(ctx)
+	if err != nil {
+		// Log warning but continue with empty token
+		accessToken = ""
+	}
+
 	loader := loader.NewLoader(serverAddress, projectUUID)
-	return loader.LoadResources(context.Background(), "", args)
+	return loader.LoadResources(ctx, accessToken, args)
 }

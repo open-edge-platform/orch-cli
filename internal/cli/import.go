@@ -70,7 +70,7 @@ func runImportHelmChartCommand(cmd *cobra.Command, args []string) error {
 	ociURL := args[0]
 	resp, err := catalogClient.CatalogServiceImport(ctx, projectName,
 		&catapi.CatalogServiceImportParams{
-			Url:                       &ociURL,
+			Url:                       ociURL,
 			Username:                  getFlag(cmd, "username"),
 			AuthToken:                 getFlag(cmd, "password"),
 			ChartValues:               &chartValues,

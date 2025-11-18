@@ -85,14 +85,14 @@ func getDeleteProfileCommand() *cobra.Command {
 var profileHeader = fmt.Sprintf("%s\t%s\t%s", "Name", "Display Name", "Description")
 
 // parseParameterTemplates parses parameter template flags from CLI
-func parseParameterTemplates(cmd *cobra.Command) (*[]catapi.ParameterTemplate, error) {
+func parseParameterTemplates(cmd *cobra.Command) (*[]catapi.CatalogV3ParameterTemplate, error) {
 	templateSpecs, _ := cmd.Flags().GetStringSlice("parameter-template")
 
 	if len(templateSpecs) == 0 {
-		return &[]catapi.ParameterTemplate{}, nil
+		return &[]catapi.CatalogV3ParameterTemplate{}, nil
 	}
 
-	var templates []catapi.ParameterTemplate
+	var templates []catapi.CatalogV3ParameterTemplate
 
 	for _, spec := range templateSpecs {
 		template, err := parseParameterTemplate(spec)
@@ -106,7 +106,7 @@ func parseParameterTemplates(cmd *cobra.Command) (*[]catapi.ParameterTemplate, e
 }
 
 // parseParameterTemplate parses a single parameter template spec: "name=type:display:default"
-func parseParameterTemplate(spec string) (*catapi.ParameterTemplate, error) {
+func parseParameterTemplate(spec string) (*catapi.CatalogV3ParameterTemplate, error) {
 	// Split on = to get name and rest
 	parts := strings.SplitN(spec, "=", 2)
 	if len(parts) != 2 {
@@ -142,7 +142,7 @@ func parseParameterTemplate(spec string) (*catapi.ParameterTemplate, error) {
 	displayName = strings.Trim(displayName, "\"'")
 	defaultValue = strings.Trim(defaultValue, "\"'")
 
-	template := &catapi.ParameterTemplate{
+	template := &catapi.CatalogV3ParameterTemplate{
 		Name:            name,
 		Type:            paramType,
 		DisplayName:     &displayName,
@@ -153,7 +153,7 @@ func parseParameterTemplate(spec string) (*catapi.ParameterTemplate, error) {
 	return template, nil
 }
 
-func printProfiles(writer io.Writer, profileList *[]catapi.Profile, verbose bool) {
+func printProfiles(writer io.Writer, profileList *[]catapi.CatalogV3Profile, verbose bool) {
 	for _, p := range *profileList {
 		if !verbose {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\n", p.Name, valueOrNone(p.DisplayName), valueOrNone(p.Description))
@@ -243,7 +243,7 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	application := gresp.JSON200.Application
-	profiles := append(*application.Profiles, catapi.Profile{
+	profiles := append(*application.Profiles, catapi.CatalogV3Profile{
 		Name:               profileName,
 		DisplayName:        &displayName,
 		Description:        &description,
@@ -321,7 +321,7 @@ func runGetProfileCommand(cmd *cobra.Command, args []string) error {
 
 	for _, profile := range *resp.JSON200.Application.Profiles {
 		if profile.Name == profileName {
-			printProfiles(writer, &[]catapi.Profile{profile}, verbose)
+			printProfiles(writer, &[]catapi.CatalogV3Profile{profile}, verbose)
 			return writer.Flush()
 		}
 	}
@@ -351,7 +351,7 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 	application := gresp.JSON200.Application
 	profiles := *application.Profiles
 
-	var profile *catapi.Profile
+	var profile *catapi.CatalogV3Profile
 	for i, p := range profiles {
 		if p.Name == profileName {
 			profile = &profiles[i]

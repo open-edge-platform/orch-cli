@@ -95,7 +95,7 @@ func getDeleteRegistryCommand() *cobra.Command {
 var registryHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
 	"Name", "Display Name", "Description", "Type", "Root URL")
 
-func printRegistries(writer io.Writer, registryList *[]catapi.Registry, verbose bool, showSensitive bool) {
+func printRegistries(writer io.Writer, registryList *[]catapi.CatalogV3Registry, verbose bool, showSensitive bool) {
 	for _, r := range *registryList {
 		if !verbose {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", r.Name,
@@ -227,7 +227,7 @@ func runGetRegistryCommand(cmd *cobra.Command, args []string) error {
 		registryHeader, fmt.Sprintf("error getting registry %s", name)); !proceed {
 		return err
 	}
-	printRegistries(writer, &[]catapi.Registry{resp.JSON200.Registry}, verbose, showSensitive)
+	printRegistries(writer, &[]catapi.CatalogV3Registry{resp.JSON200.Registry}, verbose, showSensitive)
 	return writer.Flush()
 }
 
@@ -250,6 +250,12 @@ func runSetRegistryCommand(cmd *cobra.Command, args []string) error {
 
 	registry := gresp.JSON200.Registry
 
+	// Get registry type - use flag value if provided, otherwise keep existing
+	registryType := registry.Type
+	if cmd.Flags().Changed("registry-type") {
+		registryType = getRegistryType(cmd)
+	}
+
 	resp, _ := catalogClient.CatalogServiceUpdateRegistryWithResponse(ctx, projectName, name,
 		catapi.CatalogServiceUpdateRegistryJSONRequestBody{
 			Name:         name,
@@ -260,7 +266,7 @@ func runSetRegistryCommand(cmd *cobra.Command, args []string) error {
 			Username:     getFlagOrDefault(cmd, "username", registry.Username),
 			AuthToken:    getFlagOrDefault(cmd, "auth-token", registry.AuthToken),
 			Cacerts:      getFlagOrDefault(cmd, "ca-certs", registry.Cacerts),
-			Type:         registry.Type,
+			Type:         registryType,
 			ApiType:      getFlagOrDefault(cmd, "api-type", registry.ApiType),
 		}, auth.AddAuthHeader)
 	if err != nil {
@@ -293,10 +299,10 @@ func runDeleteRegistryCommand(cmd *cobra.Command, args []string) error {
 }
 
 func printRegistryEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {
-	var item catapi.Registry
+	var item catapi.CatalogV3Registry
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printRegistries(writer, &[]catapi.Registry{item}, verbose, false)
+	printRegistries(writer, &[]catapi.CatalogV3Registry{item}, verbose, false)
 	return nil
 }
