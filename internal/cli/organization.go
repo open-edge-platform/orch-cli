@@ -156,7 +156,7 @@ func runGetOrganizationCommand(cmd *cobra.Command, args []string) error {
 
 	name := args[0]
 	writer, verbose := getOutputContext(cmd)
-	ctx, organizationClient, _, err := TenancyFactory(cmd)
+	ctx, organizationClient, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func runGetOrganizationCommand(cmd *cobra.Command, args []string) error {
 func runListOrganizationCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
-	ctx, organizationClient, _, err := TenancyFactory(cmd)
+	ctx, organizationClient, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func runCreateOrganizationCommand(cmd *cobra.Command, args []string) error {
 		desc = descFlag
 	}
 
-	ctx, organizationClient, _, err := TenancyFactory(cmd)
+	ctx, organizationClient, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func runCreateOrganizationCommand(cmd *cobra.Command, args []string) error {
 func runDeleteOrganizationCommand(cmd *cobra.Command, args []string) error {
 
 	name := args[0]
-	ctx, organizationClient, _, err := TenancyFactory(cmd)
+	ctx, organizationClient, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}

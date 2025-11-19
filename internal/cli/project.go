@@ -156,7 +156,7 @@ func runGetProjectCommand(cmd *cobra.Command, args []string) error {
 
 	name := args[0]
 	writer, verbose := getOutputContext(cmd)
-	ctx, projectClient, _, err := TenancyFactory(cmd)
+	ctx, projectClient, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func runGetProjectCommand(cmd *cobra.Command, args []string) error {
 func runListProjectCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
-	ctx, projectClient, _, err := TenancyFactory(cmd)
+	ctx, projectClient, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func runCreateProjectCommand(cmd *cobra.Command, args []string) error {
 		desc = descFlag
 	}
 
-	ctx, projectClient, _, err := TenancyFactory(cmd)
+	ctx, projectClient, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func runCreateProjectCommand(cmd *cobra.Command, args []string) error {
 func runDeleteProjectCommand(cmd *cobra.Command, args []string) error {
 
 	name := args[0]
-	ctx, projectClient, _, err := TenancyFactory(cmd)
+	ctx, projectClient, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
 	}

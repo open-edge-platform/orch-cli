@@ -22,4 +22,4 @@ type CatalogFactoryFunc func(cmd *cobra.Command) (context.Context, catapi.Client
 type KeycloakFactoryFunc func(ctx context.Context, endpoint string) (openidconnect.ClientWithResponsesInterface, error)
 type RpsFactoryFunc func(cmd *cobra.Command) (context.Context, rpsapi.ClientWithResponsesInterface, string, error)
 type DeploymentFactoryFunc func(cmd *cobra.Command) (context.Context, depapi.ClientWithResponsesInterface, string, error)
-type TenancyFactoryFunc func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, string, error)
+type TenancyFactoryFunc func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, error)
