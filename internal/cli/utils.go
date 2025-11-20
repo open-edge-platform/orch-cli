@@ -211,7 +211,7 @@ func checkProjectExists(cmd *cobra.Command, projectName string) error {
 	// be returned.
 
 	if err == nil && (resp == nil || resp.JSON200 == nil || statusUnauthorized(resp.HTTPResponse)) {
-		return fmt.Errorf("project %s does not exist or you do not have access to it.", projectName)
+		return fmt.Errorf("project %s does not exist or you do not have access to it", projectName)
 	}
 
 	if err != nil {
