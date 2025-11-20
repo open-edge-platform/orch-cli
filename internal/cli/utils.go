@@ -215,7 +215,7 @@ func checkProjectExists(cmd *cobra.Command, projectName string) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("error checking project %s existence: %v", projectName, err)
+		return processError(err)
 	}
 
 	return nil
