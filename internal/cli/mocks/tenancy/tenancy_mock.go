@@ -15,17 +15,13 @@ import (
 
 // CreateTenancyMock creates a mock Tenancy factory function
 func CreateTenancyMock(mctrl *gomock.Controller) interfaces.TenancyFactoryFunc {
-	return func(cmd *cobra.Command) (context.Context, tenancyapi.ClientWithResponsesInterface, string, error) {
+	return func(cmd *cobra.Command) (context.Context, tenancyapi.ClientWithResponsesInterface, error) {
 		mockTenancyClient := tenancyapi.NewMockClientWithResponsesInterface(mctrl)
+
+		_ = cmd // To avoid unused variable warning
 
 		// Helper function for string pointers
 		stringPtr := func(s string) *string { return &s }
-
-		// Get the project name from the command flags
-		projectName, err := cmd.Flags().GetString("project")
-		if err != nil || projectName == "" {
-			projectName = "test-project" // Default fallback
-		}
 
 		// // Sample timestamp for testing
 		// expirationDate := time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC)
@@ -270,6 +266,6 @@ func CreateTenancyMock(mctrl *gomock.Controller) interfaces.TenancyFactoryFunc {
 		).AnyTimes()
 
 		ctx := context.Background()
-		return ctx, mockTenancyClient, projectName, nil
+		return ctx, mockTenancyClient, nil
 	}
 }

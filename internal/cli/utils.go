@@ -17,6 +17,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
+	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
@@ -56,7 +57,7 @@ var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command
 	return getDeploymentServiceContext(cmd)
 }
 
-var TenancyFactory interfaces.TenancyFactoryFunc = func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, string, error) {
+var TenancyFactory interfaces.TenancyFactoryFunc = func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, error) {
 	return getTenancyServiceContext(cmd)
 }
 
@@ -158,20 +159,16 @@ func getRpsServiceContext(cmd *cobra.Command) (context.Context, *rpsapi.ClientWi
 }
 
 // Get the new background context, REST client, and project name given the specified command.
-func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.ClientWithResponses, string, error) {
+func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.ClientWithResponses, error) {
 	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
-		return nil, nil, "", err
-	}
-	projectName, err := getProjectName(cmd)
-	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, err
 	}
 	tenancyClient, err := tenantapi.NewClientWithResponses(serverAddress, TLS13TenancyClientOption())
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, err
 	}
-	return context.Background(), tenancyClient, projectName, nil
+	return context.Background(), tenancyClient, nil
 }
 
 // Adds the mandatory project UUID, and the standard display-name, and description
@@ -201,15 +198,47 @@ func getEntityFlags(cmd *cobra.Command) (string, string, error) {
 	return displayName, description, err
 }
 
+func checkProjectExists(cmd *cobra.Command, projectName string) error {
+	ctx, projectClient, err := TenancyFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	resp, err := projectClient.GETV1ProjectsProjectProjectWithResponse(ctx, projectName, auth.AddAuthHeader)
+
+	// If the project does not exist, then resp.JSON200 and err will both be nil.
+	// If the project does exist, but the user does not have access to see it, then statusUnauthorized will
+	// be returned.
+
+	if err == nil && (resp == nil || resp.JSON200 == nil || statusUnauthorized(resp.HTTPResponse)) {
+		return fmt.Errorf("project %s does not exist or you do not have access to it", projectName)
+	}
+
+	if err != nil {
+		return processError(err)
+	}
+
+	return nil
+}
+
 // Get the project name from the flag.
 func getProjectName(cmd *cobra.Command) (string, error) {
 	projectName, err := cmd.Flags().GetString("project")
 	if err != nil {
 		return "", err
 	}
+
 	if projectName == "" {
 		return "", fmt.Errorf("required flag \"project\" not set")
 	}
+
+	// We're assuming that if getProjectName is required, then the project must exist.
+	// CLI commands that do not require projects should never call getProjectName.
+	err = checkProjectExists(cmd, projectName)
+	if err != nil {
+		return "", err
+	}
+
 	return projectName, nil
 }
 
@@ -401,7 +430,6 @@ func statusForbidden(response *http.Response) bool {
 	return response.StatusCode == 403
 }
 
-// Processes any error and any anomalous GET HTTP responses and determines whether to proceed or not
 func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer, verbose bool, header string, message string) (proceed bool, err error) {
 	if err = statusIsAbnormal(resp, message, resp.Status); err != nil {
 		return false, err
@@ -412,6 +440,7 @@ func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer,
 	} else if statusForbidden(resp) {
 		return false, getError(body, "Unauthorized (forbidden). Please login")
 	}
+
 	if !verbose {
 		_, _ = fmt.Fprintf(writer, "%s\n", header)
 	}
