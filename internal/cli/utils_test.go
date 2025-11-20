@@ -10,8 +10,10 @@ import (
 	"testing"
 	"text/tabwriter"
 
+	tenancymock "github.com/open-edge-platform/cli/internal/cli/mocks/tenancy"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestCheckStatus(t *testing.T) {
@@ -133,6 +135,10 @@ func TestProcessResponse(t *testing.T) {
 }
 
 func TestGetServiceContexts(t *testing.T) {
+	// So getProject() can call TenancyFactory to check project existence
+	mctrl := gomock.NewController(t)
+	TenancyFactory = tenancymock.CreateTenancyMock(mctrl)
+
 	cmd := &cobra.Command{}
 	cmd.Flags().String("api-endpoint", "http://localhost:12345", "API endpoint")
 	cmd.Flags().String("project", "test-project", "Project name")
