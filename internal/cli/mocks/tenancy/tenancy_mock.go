@@ -18,6 +18,8 @@ func CreateTenancyMock(mctrl *gomock.Controller) interfaces.TenancyFactoryFunc {
 	return func(cmd *cobra.Command) (context.Context, tenancyapi.ClientWithResponsesInterface, error) {
 		mockTenancyClient := tenancyapi.NewMockClientWithResponsesInterface(mctrl)
 
+		_ = cmd // To avoid unused variable warning
+
 		// Helper function for string pointers
 		stringPtr := func(s string) *string { return &s }
 
