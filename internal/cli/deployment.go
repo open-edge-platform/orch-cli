@@ -79,6 +79,20 @@ func getSetDeploymentCommand() *cobra.Command {
 	return cmd
 }
 
+func getUpgradeDeploymentCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "deployment <deployment-id> [flags]",
+		Short:   "Upgrade a deployment to a new package version",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli upgrade deployment 12345 --package-version 1.1.0",
+		Aliases: deploymentAliases,
+		RunE:    runUpgradeDeploymentCommand,
+	}
+	cmd.Flags().String("package-version", "", "new deployment package version to upgrade to")
+	_ = cmd.MarkFlagRequired("package-version")
+	return cmd
+}
+
 func getDeleteDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment <deployment-id> [flags]",
@@ -411,6 +425,48 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error updating deployment %s", deploymentID))
+}
+
+func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
+	ctx, deploymentClient, projectName, err := DeploymentFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	deploymentID := args[0]
+	newPackageVersion, _ := cmd.Flags().GetString("package-version")
+
+	// Get the current deployment to retrieve package name and other details
+	gresp, err := deploymentClient.DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
+		auth.AddAuthHeader)
+	if err != nil {
+		return err
+	}
+
+	if gresp.HTTPResponse.StatusCode != http.StatusOK {
+		return checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("error getting deployment %s", deploymentID))
+	}
+
+	dep := gresp.JSON200.Deployment
+
+	// Build the update request with the new package version
+	request := depapi.DeploymentServiceUpdateDeploymentJSONRequestBody{
+		DeployId:       &deploymentID,
+		Name:           dep.Name,
+		AppName:        dep.AppName,
+		AppVersion:     newPackageVersion, // Use the new package version
+		DisplayName:    dep.DisplayName,
+		ProfileName:    dep.ProfileName,
+		OverrideValues: dep.OverrideValues,
+		TargetClusters: dep.TargetClusters,
+		DeploymentType: dep.DeploymentType,
+	}
+
+	resp, err := deploymentClient.DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error upgrading deployment %s to version %s", deploymentID, newPackageVersion))
 }
 
 func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {

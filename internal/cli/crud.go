@@ -170,6 +170,18 @@ func getSetCommand() *cobra.Command {
 	return cmd
 }
 
+func getUpgradeCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:               "upgrade",
+		Short:             "Upgrade deployment",
+		PersistentPreRunE: auth.CheckAuth,
+	}
+	cmd.AddCommand(
+		getUpgradeDeploymentCommand(),
+	)
+	return cmd
+}
+
 func getDeleteCommand() *cobra.Command {
 	catalogDeleteRootCmd := &cobra.Command{
 		Use:               "delete",
