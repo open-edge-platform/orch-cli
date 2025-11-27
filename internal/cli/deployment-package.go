@@ -209,7 +209,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		if err != nil {
 			return err
 		}
-		
+
 		// Verify the application exists
 		appResp, err := catalogClient.CatalogServiceGetApplicationWithResponse(ctx, projectName, ref.Name, ref.Version, auth.AddAuthHeader)
 		if err != nil {
@@ -218,7 +218,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		if appResp.StatusCode() != 200 {
 			return fmt.Errorf("application %s:%s does not exist. Please create the application before referencing it in the deployment package", ref.Name, ref.Version)
 		}
-		
+
 		applicationReferences = append(applicationReferences, *ref)
 	}
 
@@ -410,7 +410,7 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return err
 			}
-			
+
 			// Verify the application exists
 			appResp, err := catalogClient.CatalogServiceGetApplicationWithResponse(ctx, projectName, ref.Name, ref.Version, auth.AddAuthHeader)
 			if err != nil {
@@ -419,7 +419,7 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			if appResp.StatusCode() != 200 {
 				return fmt.Errorf("application %s:%s does not exist. Please create the application before referencing it in the deployment package", ref.Name, ref.Version)
 			}
-			
+
 			applicationReferences = append(applicationReferences, *ref)
 		}
 	}

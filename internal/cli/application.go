@@ -134,7 +134,7 @@ func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 	chartName, _ := cmd.Flags().GetString("chart-name")
 	chartVersion, _ := cmd.Flags().GetString("chart-version")
 	chartRegistry, _ := cmd.Flags().GetString("chart-registry")
-	
+
 	if chartName == "" || chartVersion == "" || chartRegistry == "" {
 		return fmt.Errorf("--chart-name, --chart-version, and --chart-registry are required when not using a YAML file")
 	}
