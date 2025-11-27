@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
@@ -171,6 +172,12 @@ func parseApplicationReference(refSpec string) (*catapi.CatalogV3ApplicationRefe
 	if len(refFields) != 2 {
 		return nil, fmt.Errorf("application reference must be in form of <name>:<version>")
 	}
+
+	// Validate version format
+	if err := validator.ValidateVersion(refFields[1]); err != nil {
+		return nil, fmt.Errorf("invalid version in application reference '%s': %w", refSpec, err)
+	}
+
 	return &catapi.CatalogV3ApplicationReference{Name: refFields[0], Version: refFields[1]}, nil
 }
 
@@ -183,6 +190,14 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	// Validate we have name and version
 	if len(args) != 2 {
 		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
+	}
+
+	applicationName := args[0]
+	applicationVersion := args[1]
+
+	// Validate version format
+	if err := validator.ValidateVersion(applicationVersion); err != nil {
+		return err
 	}
 
 	// Validate required flags when not using YAML file
@@ -199,8 +214,6 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return err
 	}
-	applicationName := args[0]
-	applicationVersion := args[1]
 
 	// Collect application references and validate they exist
 	applicationReferences := make([]catapi.CatalogV3ApplicationReference, 0)
@@ -233,7 +246,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	defaultKind := catapi.CatalogV3Kind("KIND_NORMAL")
+	defaultKind := catapi.KINDNORMAL
 	defaultVisible := true
 
 	resp, err := catalogClient.CatalogServiceCreateDeploymentPackageWithResponse(ctx, projectName,
@@ -258,11 +271,11 @@ func deploymentPackageKind2String(kind *catapi.CatalogV3Kind) string {
 		return "normal"
 	}
 	switch *kind {
-	case "KIND_NORMAL":
+	case catapi.KINDNORMAL:
 		return "normal"
-	case "KIND_ADDON":
+	case catapi.KINDADDON:
 		return "addon"
-	case "KIND_EXTENSION":
+	case catapi.KINDEXTENSION:
 		return "extension"
 	}
 	return "normal"
@@ -271,13 +284,13 @@ func deploymentPackageKind2String(kind *catapi.CatalogV3Kind) string {
 func string2DeploymentPackageKind(kind string) catapi.CatalogV3Kind {
 	switch kind {
 	case "normal":
-		return catapi.CatalogV3Kind("KIND_NORMAL")
+		return catapi.KINDNORMAL
 	case "addon":
-		return catapi.CatalogV3Kind("KIND_ADDON")
+		return catapi.KINDADDON
 	case "extension":
-		return catapi.CatalogV3Kind("KIND_EXTENSION")
+		return catapi.KINDEXTENSION
 	}
-	return catapi.CatalogV3Kind("KIND_NORMAL")
+	return catapi.KINDNORMAL
 }
 
 func getDeploymentPackageKind(cmd *cobra.Command, def *catapi.CatalogV3Kind) *catapi.CatalogV3Kind {

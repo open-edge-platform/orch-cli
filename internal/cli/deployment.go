@@ -12,6 +12,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
@@ -133,6 +134,11 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	appName := args[0]
 	appVersion := args[1]
+
+	// Validate version format
+	if err := validator.ValidateVersion(appVersion); err != nil {
+		return err
+	}
 
 	// Get catalog client for fetching deployment package
 	_, catalogClient, _, err := CatalogFactory(cmd)

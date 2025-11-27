@@ -15,7 +15,7 @@ orch-cli create profile my-app 1.0.0 my-profile --display-name 'My Profile' --de
 ### Options
 
 ```
-      --chart-values string          path to the values.yaml file; - for stdin (default "-")
+      --chart-values string          path to the values.yaml file; - for stdin (optional)
       --description string           description of the profile
       --display-name string          profile display name
   -h, --help                         help for profile

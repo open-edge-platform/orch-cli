@@ -9,6 +9,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
@@ -130,6 +131,14 @@ func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
 	}
 
+	name := args[0]
+	version := args[1]
+
+	// Validate version format
+	if err := validator.ValidateVersion(version); err != nil {
+		return err
+	}
+
 	// Validate required flags when not using YAML file
 	chartName, _ := cmd.Flags().GetString("chart-name")
 	chartVersion, _ := cmd.Flags().GetString("chart-version")
@@ -137,6 +146,11 @@ func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 
 	if chartName == "" || chartVersion == "" || chartRegistry == "" {
 		return fmt.Errorf("--chart-name, --chart-version, and --chart-registry are required when not using a YAML file")
+	}
+
+	// Validate chart version format
+	if err := validator.ValidateVersion(chartVersion); err != nil {
+		return fmt.Errorf("invalid chart version: %w", err)
 	}
 
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
@@ -148,9 +162,7 @@ func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	name := args[0]
-	version := args[1]
-	defaultKind := catapi.CatalogV3Kind("KIND_NORMAL")
+	defaultKind := catapi.KINDNORMAL
 
 	resp, err := catalogClient.CatalogServiceCreateApplicationWithResponse(ctx, projectName,
 		catapi.CatalogServiceCreateApplicationJSONRequestBody{
@@ -175,11 +187,11 @@ func applicationKind2String(kind *catapi.CatalogV3Kind) string {
 		return "normal"
 	}
 	switch *kind {
-	case "KIND_NORMAL":
+	case catapi.KINDNORMAL:
 		return "normal"
-	case "KIND_ADDON":
+	case catapi.KINDADDON:
 		return "addon"
-	case "KIND_EXTENSION":
+	case catapi.KINDEXTENSION:
 		return "extension"
 	}
 	return "normal"
@@ -188,13 +200,13 @@ func applicationKind2String(kind *catapi.CatalogV3Kind) string {
 func string2ApplicationKind(kind string) catapi.CatalogV3Kind {
 	switch kind {
 	case "normal":
-		return catapi.CatalogV3Kind("KIND_NORMAL")
+		return catapi.KINDNORMAL
 	case "addon":
-		return catapi.CatalogV3Kind("KIND_ADDON")
+		return catapi.KINDADDON
 	case "extension":
-		return catapi.CatalogV3Kind("KIND_EXTENSION")
+		return catapi.KINDEXTENSION
 	}
-	return catapi.CatalogV3Kind("KIND_NORMAL")
+	return catapi.KINDNORMAL
 }
 
 func getApplicationKind(cmd *cobra.Command, def *catapi.CatalogV3Kind) *catapi.CatalogV3Kind {

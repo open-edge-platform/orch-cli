@@ -47,7 +47,7 @@ func (s *CLITestSuite) TestDeploymentProfile() {
 		app1                         = "app1"
 		pubName                      = "pubtest"
 		pkgName                      = "deployment-pkg"
-		pkgVersion                   = "1.0"
+		pkgVersion                   = "1.0.0"
 		pkgProfileName               = "new-test-deployment-profile"
 		deploymentProfileDisplayName = "test.deployment.profile.display.name"
 		deploymentProfileDescription = "Test.Profile.for.testing"
@@ -118,11 +118,11 @@ func (s *CLITestSuite) TestDeploymentProfile() {
 
 func FuzzDeploymentProfile(f *testing.F) {
 	// Seed with valid and invalid input combinations
-	f.Add("pubtest", "deployment-pkg", "1.0", "fuzz-test-deployment-profile", "display.name", "desc")
-	f.Add("", "deployment-pkg", "1.0", "fuzz-test-deployment-profile", "display.name", "desc")     // missing pubName
-	f.Add("pubtest", "", "1.0", "fuzz-test-deployment-profile", "display.name", "desc")            // missing pkgName
+	f.Add("pubtest", "deployment-pkg", "1.0.0", "fuzz-test-deployment-profile", "display.name", "desc")
+	f.Add("", "deployment-pkg", "1.0.0", "fuzz-test-deployment-profile", "display.name", "desc")   // missing pubName
+	f.Add("pubtest", "", "1.0.0", "fuzz-test-deployment-profile", "display.name", "desc")          // missing pkgName
 	f.Add("pubtest", "deployment-pkg", "", "fuzz-test-deployment-profile", "display.name", "desc") // missing pkgVersion
-	f.Add("pubtest", "deployment-pkg", "1.0", "", "display.name", "desc")                          // missing pkgProfileName
+	f.Add("pubtest", "deployment-pkg", "1.0.0", "", "display.name", "desc")                        // missing pkgProfileName
 
 	f.Fuzz(func(t *testing.T, pubName, pkgName, pkgVersion, pkgProfileName, displayName, description string) {
 		testSuite := new(CLITestSuite)

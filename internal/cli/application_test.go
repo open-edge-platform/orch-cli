@@ -58,9 +58,9 @@ func (s *CLITestSuite) createTestApplication(pubName string, applicationName str
 	createArgs := map[string]string{
 		"chart-name":     "chart",
 		"chart-registry": "reg",
-		"chart-version":  "1.0",
+		"chart-version":  "1.0.0",
 	}
-	return s.createApplication(pubName, applicationName, "1.0", createArgs)
+	return s.createApplication(pubName, applicationName, "1.0.0", createArgs)
 }
 
 func (s *CLITestSuite) TestApplication() {
@@ -212,7 +212,7 @@ func (s *CLITestSuite) TestApplication() {
 }
 
 func TestPrintApplicationEvent(t *testing.T) {
-	kind := catapi.CatalogV3Kind("KIND_NORMAL")
+	kind := catapi.KINDNORMAL
 	app := catapi.CatalogV3Application{
 		Name:               "test-app",
 		Version:            "1.0.0",
