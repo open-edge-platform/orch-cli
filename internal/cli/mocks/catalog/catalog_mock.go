@@ -285,7 +285,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							{
 								Name:               "new-application",
 								Version:            "1.2.3",
-								Kind:               applicationKindPtr(catapi.CatalogV3Kind("KIND_NORMAL")),
+								Kind:               applicationKindPtr(catapi.KINDNORMAL),
 								DisplayName:        stringPtr("application.display.name"),
 								Description:        stringPtr("Application.Description"),
 								ChartName:          "chart-name",
@@ -300,7 +300,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							{
 								Name:               "addon-app",
 								Version:            "1.0.0",
-								Kind:               applicationKindPtr(catapi.CatalogV3Kind("KIND_ADDON")),
+								Kind:               applicationKindPtr(catapi.KINDADDON),
 								DisplayName:        stringPtr("addon.display.name"),
 								Description:        stringPtr("Addon Description"),
 								ChartName:          "addon-chart",
@@ -315,7 +315,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							{
 								Name:               "extension-app",
 								Version:            "2.0.0",
-								Kind:               applicationKindPtr(catapi.CatalogV3Kind("KIND_EXTENSION")),
+								Kind:               applicationKindPtr(catapi.KINDEXTENSION),
 								DisplayName:        stringPtr("extension.display.name"),
 								Description:        stringPtr("Extension Description"),
 								ChartName:          "extension-chart",
@@ -345,7 +345,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							{
 								Name:               "new-application",
 								Version:            "1.2.3",
-								Kind:               applicationKindPtr(catapi.CatalogV3Kind("KIND_NORMAL")),
+								Kind:               applicationKindPtr(catapi.KINDNORMAL),
 								DisplayName:        stringPtr("application.display.name"),
 								Description:        stringPtr("Application.Description"),
 								ChartName:          "chart-name",
@@ -492,9 +492,9 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(_ context.Context, _ string, _ *catapi.CatalogServiceListDeploymentPackagesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListDeploymentPackagesResponse, error) {
-				// Get the tracked profiles for deployment-pkg:1.0
+				// Get the tracked profiles for deployment-pkg:1.0.0
 				mockStateMutex.RLock()
-				key := "deployment-pkg:1.0"
+				key := "deployment-pkg:1.0.0"
 				profiles, exists := createdProfiles[key]
 				mockStateMutex.RUnlock()
 
@@ -526,14 +526,14 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 						DeploymentPackages: []catapi.CatalogV3DeploymentPackage{
 							{
 								Name:                    "deployment-pkg",
-								Version:                 "1.0",
+								Version:                 "1.0.0",
 								DisplayName:             stringPtr("deployment.package.display.name"),
 								Description:             stringPtr("Publisher.for.testing"),
 								Profiles:                &profiles,
 								ApplicationDependencies: &[]catapi.CatalogV3ApplicationDependency{},
 								ApplicationReferences: []catapi.CatalogV3ApplicationReference{
-									{Name: "app1", Version: "1.0"},
-									{Name: "app2", Version: "1.0"},
+									{Name: "app1", Version: "1.0.0"},
+									{Name: "app2", Version: "1.0.0"},
 								},
 								Artifacts:          []catapi.CatalogV3ArtifactReference{},
 								Extensions:         []catapi.CatalogV3APIExtension{},

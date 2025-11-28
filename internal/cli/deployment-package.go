@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,19 +13,21 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
+	"github.com/open-edge-platform/orch-library/go/pkg/loader"
 	"github.com/spf13/cobra"
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment-package <name> <version> [flags]",
+		Use:     "deployment-package {<name> <version>|<file-path>} [flags]",
 		Aliases: deploymentPackageAliases,
 		Short:   "Create a deployment package",
-		Args:    cobra.ExactArgs(2),
-		Example: "orch-cli create deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1",
+		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli create deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1\norch-cli create deployment-package my-package.yaml --project sample-project",
 		RunE:    runCreateDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
@@ -63,11 +66,11 @@ func getGetDeploymentPackageCommand() *cobra.Command {
 
 func getSetDeploymentPackageCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment-package <name> <version> [flags]",
+		Use:     "deployment-package {<name> <version>|<file-path>} [flags]",
 		Aliases: deploymentPackageAliases,
 		Short:   "Update a deployment package",
-		Args:    cobra.ExactArgs(2),
-		Example: "orch-cli set deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --application-reference app3:1.1.1",
+		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli set deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --application-reference app3:1.1.1\norch-cli set deployment-package my-package.yaml --project sample-project",
 		RunE:    runSetDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
@@ -169,10 +172,40 @@ func parseApplicationReference(refSpec string) (*catapi.CatalogV3ApplicationRefe
 	if len(refFields) != 2 {
 		return nil, fmt.Errorf("application reference must be in form of <name>:<version>")
 	}
+
+	// Validate version format
+	if err := validator.ValidateVersion(refFields[1]); err != nil {
+		return nil, fmt.Errorf("invalid version in application reference '%s': %w", refSpec, err)
+	}
+
 	return &catapi.CatalogV3ApplicationReference{Name: refFields[0], Version: refFields[1]}, nil
 }
 
 func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
+	// Check if a file path was provided (single argument ending with .yaml or .yml)
+	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
+		return uploadResourceFile(cmd, args[0])
+	}
+
+	// Validate we have name and version
+	if len(args) != 2 {
+		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
+	}
+
+	applicationName := args[0]
+	applicationVersion := args[1]
+
+	// Validate version format
+	if err := validator.ValidateVersion(applicationVersion); err != nil {
+		return err
+	}
+
+	// Validate required flags when not using YAML file
+	appRefs, _ := cmd.Flags().GetStringSlice("application-reference")
+	if len(appRefs) == 0 {
+		return fmt.Errorf("--application-reference is required when not using a YAML file (at least one application must be referenced)")
+	}
+
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
@@ -181,20 +214,25 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return err
 	}
-	applicationName := args[0]
-	applicationVersion := args[1]
 
-	// Collect application references
+	// Collect application references and validate they exist
 	applicationReferences := make([]catapi.CatalogV3ApplicationReference, 0)
-	appRefs, _ := cmd.Flags().GetStringSlice("application-reference")
-	if len(appRefs) > 0 {
-		for _, refSpec := range appRefs {
-			ref, err := parseApplicationReference(refSpec)
-			if err != nil {
-				return err
-			}
-			applicationReferences = append(applicationReferences, *ref)
+	for _, refSpec := range appRefs {
+		ref, err := parseApplicationReference(refSpec)
+		if err != nil {
+			return err
 		}
+
+		// Verify the application exists
+		appResp, err := catalogClient.CatalogServiceGetApplicationWithResponse(ctx, projectName, ref.Name, ref.Version, auth.AddAuthHeader)
+		if err != nil {
+			return fmt.Errorf("failed to verify application %s:%s exists: %w", ref.Name, ref.Version, err)
+		}
+		if appResp.StatusCode() != 200 {
+			return fmt.Errorf("application %s:%s does not exist. Please create the application before referencing it in the deployment package", ref.Name, ref.Version)
+		}
+
+		applicationReferences = append(applicationReferences, *ref)
 	}
 
 	// Collect application dependencies
@@ -208,7 +246,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	defaultKind := catapi.CatalogV3Kind("KIND_NORMAL")
+	defaultKind := catapi.KINDNORMAL
 	defaultVisible := true
 
 	resp, err := catalogClient.CatalogServiceCreateDeploymentPackageWithResponse(ctx, projectName,
@@ -233,11 +271,11 @@ func deploymentPackageKind2String(kind *catapi.CatalogV3Kind) string {
 		return "normal"
 	}
 	switch *kind {
-	case "KIND_NORMAL":
+	case catapi.KINDNORMAL:
 		return "normal"
-	case "KIND_ADDON":
+	case catapi.KINDADDON:
 		return "addon"
-	case "KIND_EXTENSION":
+	case catapi.KINDEXTENSION:
 		return "extension"
 	}
 	return "normal"
@@ -246,13 +284,13 @@ func deploymentPackageKind2String(kind *catapi.CatalogV3Kind) string {
 func string2DeploymentPackageKind(kind string) catapi.CatalogV3Kind {
 	switch kind {
 	case "normal":
-		return catapi.CatalogV3Kind("KIND_NORMAL")
+		return catapi.KINDNORMAL
 	case "addon":
-		return catapi.CatalogV3Kind("KIND_ADDON")
+		return catapi.KINDADDON
 	case "extension":
-		return catapi.CatalogV3Kind("KIND_EXTENSION")
+		return catapi.KINDEXTENSION
 	}
-	return catapi.CatalogV3Kind("KIND_NORMAL")
+	return catapi.KINDNORMAL
 }
 
 func getDeploymentPackageKind(cmd *cobra.Command, def *catapi.CatalogV3Kind) *catapi.CatalogV3Kind {
@@ -346,6 +384,16 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
+	// Check if a file path was provided (single argument ending with .yaml or .yml)
+	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
+		return uploadResourceFile(cmd, args[0])
+	}
+
+	// Validate we have name and version
+	if len(args) != 2 {
+		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
+	}
+
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
@@ -375,6 +423,16 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return err
 			}
+
+			// Verify the application exists
+			appResp, err := catalogClient.CatalogServiceGetApplicationWithResponse(ctx, projectName, ref.Name, ref.Version, auth.AddAuthHeader)
+			if err != nil {
+				return fmt.Errorf("failed to verify application %s:%s exists: %w", ref.Name, ref.Version, err)
+			}
+			if appResp.StatusCode() != 200 {
+				return fmt.Errorf("application %s:%s does not exist. Please create the application before referencing it in the deployment package", ref.Name, ref.Version)
+			}
+
 			applicationReferences = append(applicationReferences, *ref)
 		}
 	}
@@ -546,4 +604,32 @@ func printDeploymentPackageEvent(writer io.Writer, _ string, payload []byte, ver
 	}
 	printDeploymentPackages(writer, &[]catapi.CatalogV3DeploymentPackage{item}, verbose)
 	return nil
+}
+
+// uploadResourceFile uploads a YAML file containing resource definitions
+func uploadResourceFile(cmd *cobra.Command, filePath string) error {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return err
+	}
+
+	projectUUID, err := getProjectName(cmd)
+	if err != nil {
+		return err
+	}
+
+	ctx := cmd.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	// Get the access token
+	accessToken, err := auth.GetAccessToken(ctx)
+	if err != nil {
+		// Log warning but continue with empty token
+		accessToken = ""
+	}
+
+	loader := loader.NewLoader(serverAddress, projectUUID)
+	return loader.LoadResources(ctx, accessToken, []string{filePath})
 }
