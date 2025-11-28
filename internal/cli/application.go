@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
+	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
@@ -15,20 +17,17 @@ import (
 
 func getCreateApplicationCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "application <name> <version> [flags]",
+		Use:     "application {<name> <version>|<file-path>} [flags]",
 		Aliases: applicationAliases,
 		Short:   "Create an application",
-		Args:    cobra.ExactArgs(2),
-		Example: "orch-cli create application my-app 1.0.0 --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project",
+		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli create application my-app 1.0.0 --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project\norch-cli create application my-app.yaml --project some-project",
 		RunE:    runCreateApplicationCommand,
 	}
 	addEntityFlags(cmd, "application")
-	cmd.Flags().String("chart-name", "", "Helm chart name for deploying the application (required)")
-	_ = cmd.MarkFlagRequired("chart-name")
-	cmd.Flags().String("chart-version", "", "Helm chart version (required)")
-	_ = cmd.MarkFlagRequired("chart-version")
-	cmd.Flags().String("chart-registry", "", "Helm chart registry (required)")
-	_ = cmd.MarkFlagRequired("chart-registry")
+	cmd.Flags().String("chart-name", "", "Helm chart name for deploying the application (required when not using YAML file)")
+	cmd.Flags().String("chart-version", "", "Helm chart version (required when not using YAML file)")
+	cmd.Flags().String("chart-registry", "", "Helm chart registry (required when not using YAML file)")
 	cmd.Flags().String("image-registry", "", "image registry")
 	cmd.Flags().String("kind", "normal", "application kind: normal, addon, extension")
 	return cmd
@@ -61,11 +60,11 @@ func getGetApplicationCommand() *cobra.Command {
 
 func getSetApplicationCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "application <name> <version> [flags]",
+		Use:     "application {<name> <version>|<file-path>} [flags]",
 		Aliases: applicationAliases,
 		Short:   "Update an application",
-		Args:    cobra.ExactArgs(2),
-		Example: "orch-cli set application my-app 1.0.0 --display-name 'My Application' --description 'An example application' --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project",
+		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli set application my-app 1.0.0 --display-name 'My Application' --description 'An example application' --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project\norch-cli set application my-app.yaml --project some-project",
 		RunE:    runSetApplicationCommand,
 	}
 	addEntityFlags(cmd, "application")
@@ -122,6 +121,38 @@ func printApplications(writer io.Writer, appList *[]catapi.CatalogV3Application,
 }
 
 func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
+	// Check if a file path was provided (single argument ending with .yaml or .yml)
+	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
+		return uploadResourceFile(cmd, args[0])
+	}
+
+	// Validate we have name and version
+	if len(args) != 2 {
+		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
+	}
+
+	name := args[0]
+	version := args[1]
+
+	// Validate version format
+	if err := validator.ValidateVersion(version); err != nil {
+		return err
+	}
+
+	// Validate required flags when not using YAML file
+	chartName, _ := cmd.Flags().GetString("chart-name")
+	chartVersion, _ := cmd.Flags().GetString("chart-version")
+	chartRegistry, _ := cmd.Flags().GetString("chart-registry")
+
+	if chartName == "" || chartVersion == "" || chartRegistry == "" {
+		return fmt.Errorf("--chart-name, --chart-version, and --chart-registry are required when not using a YAML file")
+	}
+
+	// Validate chart version format
+	if err := validator.ValidateVersion(chartVersion); err != nil {
+		return fmt.Errorf("invalid chart version: %w", err)
+	}
+
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
@@ -131,9 +162,7 @@ func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	name := args[0]
-	version := args[1]
-	defaultKind := catapi.CatalogV3Kind("KIND_NORMAL")
+	defaultKind := catapi.KINDNORMAL
 
 	resp, err := catalogClient.CatalogServiceCreateApplicationWithResponse(ctx, projectName,
 		catapi.CatalogServiceCreateApplicationJSONRequestBody{
@@ -158,11 +187,11 @@ func applicationKind2String(kind *catapi.CatalogV3Kind) string {
 		return "normal"
 	}
 	switch *kind {
-	case "KIND_NORMAL":
+	case catapi.KINDNORMAL:
 		return "normal"
-	case "KIND_ADDON":
+	case catapi.KINDADDON:
 		return "addon"
-	case "KIND_EXTENSION":
+	case catapi.KINDEXTENSION:
 		return "extension"
 	}
 	return "normal"
@@ -171,13 +200,13 @@ func applicationKind2String(kind *catapi.CatalogV3Kind) string {
 func string2ApplicationKind(kind string) catapi.CatalogV3Kind {
 	switch kind {
 	case "normal":
-		return catapi.CatalogV3Kind("KIND_NORMAL")
+		return catapi.KINDNORMAL
 	case "addon":
-		return catapi.CatalogV3Kind("KIND_ADDON")
+		return catapi.KINDADDON
 	case "extension":
-		return catapi.CatalogV3Kind("KIND_EXTENSION")
+		return catapi.KINDEXTENSION
 	}
-	return catapi.CatalogV3Kind("KIND_NORMAL")
+	return catapi.KINDNORMAL
 }
 
 func getApplicationKind(cmd *cobra.Command, def *catapi.CatalogV3Kind) *catapi.CatalogV3Kind {
@@ -270,6 +299,16 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetApplicationCommand(cmd *cobra.Command, args []string) error {
+	// Check if a file path was provided (single argument ending with .yaml or .yml)
+	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
+		return uploadResourceFile(cmd, args[0])
+	}
+
+	// Validate we have name and version
+	if len(args) != 2 {
+		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
+	}
+
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err

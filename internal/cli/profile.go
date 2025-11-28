@@ -26,7 +26,7 @@ func getCreateProfileCommand() *cobra.Command {
 		RunE:    runCreateProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
-	cmd.Flags().String("chart-values", "-", "path to the values.yaml file; - for stdin")
+	cmd.Flags().String("chart-values", "", "path to the values.yaml file; - for stdin (optional)")
 	cmd.Flags().StringSlice("parameter-template", []string{}, "parameter templates in format '<name>=<type>:<display-name>:<default-value>' (types: string, integer)")
 	return cmd
 }
@@ -217,15 +217,19 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 	version := args[1]
 	profileName := args[2]
 
-	chartBytes, err := readInputWithLimit(*getFlag(cmd, "chart-values"))
-	if err != nil {
-		return fmt.Errorf("error reading values.yaml content: %w", err)
+	// Read chart values only if provided
+	var chartValues string
+	chartValuesPath, _ := cmd.Flags().GetString("chart-values")
+	if chartValuesPath != "" {
+		chartBytes, err := readInputWithLimit(chartValuesPath)
+		if err != nil {
+			return fmt.Errorf("error reading values.yaml content: %w", err)
+		}
+		if err := validateValuesYAML(chartBytes); err != nil {
+			return fmt.Errorf("invalid values.yaml: %w", err)
+		}
+		chartValues = string(chartBytes)
 	}
-	if err := validateValuesYAML(chartBytes); err != nil {
-		return fmt.Errorf("invalid values.yaml: %w", err)
-	}
-
-	chartValues := string(chartBytes)
 
 	// Parse parameter templates from CLI flags
 	parameterTemplates, err := parseParameterTemplates(cmd)
@@ -243,13 +247,19 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	application := gresp.JSON200.Application
-	profiles := append(*application.Profiles, catapi.CatalogV3Profile{
+
+	// Create profile with chart values only if provided
+	newProfile := catapi.CatalogV3Profile{
 		Name:               profileName,
 		DisplayName:        &displayName,
 		Description:        &description,
-		ChartValues:        &chartValues,
 		ParameterTemplates: parameterTemplates,
-	})
+	}
+	if chartValues != "" {
+		newProfile.ChartValues = &chartValues
+	}
+
+	profiles := append(*application.Profiles, newProfile)
 
 	if application.DefaultProfileName == nil || *application.DefaultProfileName == "" {
 		application.DefaultProfileName = &profileName

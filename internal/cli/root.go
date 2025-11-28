@@ -86,6 +86,7 @@ func getRootCmd() *cobra.Command {
 		getGetCommand(),
 		getSetCommand(),
 		getDeleteCommand(),
+		getUpgradeCommand(),
 		getUploadCommand(),
 		getLoginCommand(),
 		getLogoutCommand(),

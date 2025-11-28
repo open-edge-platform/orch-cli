@@ -30,19 +30,24 @@ func (s *CLITestSuite) deleteApplicationReference(project string, pkgName string
 func (s *CLITestSuite) TestApplicationReference() {
 	const (
 		app1        = "app1"
-		app1Version = "1.0"
+		app1Version = "1.0.0"
 		pubName     = "pubtest"
 		pkgName     = "deployment-pkg"
-		pkgVersion  = "1.0"
+		pkgVersion  = "1.0.0"
 	)
 
 	// create a test application and deployment package
 	s.NoError(s.createTestRegistry(project))
 	s.NoError(s.createTestApplication(project, app1))
-	s.NoError(s.createTestDeploymentPackage(project, pkgName, pkgVersion, app1, app1Version))
 
-	// add an app reference
-	err := s.createApplicationReference(project, pkgName, pkgVersion, app1, "1.0")
+	// Create app2 as a placeholder to create the deployment package
+	// (deployment packages need at least one app reference)
+	app2 := "app2"
+	s.NoError(s.createTestApplication(project, app2))
+	s.NoError(s.createTestDeploymentPackage(project, pkgName, pkgVersion, app2, app1Version))
+
+	// add app1 reference to test the create application-reference command
+	err := s.createApplicationReference(project, pkgName, pkgVersion, app1, "1.0.0")
 	s.NoError(err)
 
 	// verbose list deployment packages to make sure it was created properly
@@ -61,7 +66,7 @@ func (s *CLITestSuite) TestApplicationReference() {
 			"Description":              "",
 			"Is Deployed":              "false",
 			"Is Visible":               "true",
-			"Applications":             `[app1:1.0 app2:1.0]`,
+			"Applications":             `[app1:1.0.0 app2:1.0.0]`,
 			"Application Dependencies": `[]`,
 			"Profiles":                 ``,
 			"Default Profile":          "",
@@ -88,12 +93,12 @@ func (s *CLITestSuite) TestApplicationReference() {
 
 func FuzzApplicationReference(f *testing.F) {
 	// Seed with valid and invalid input combinations
-	f.Add("project", "deployment-pkg", "1.0", "app1", "1.0") // valid
-	f.Add("", "deployment-pkg", "1.0", "app1", "1.0")        // missing project
-	f.Add("project", "", "1.0", "app1", "1.0")               // missing pkgName
-	f.Add("project", "deployment-pkg", "", "app1", "1.0")    // missing pkgVersion
-	f.Add("project", "deployment-pkg", "1.0", "", "1.0")     // missing applicationName
-	f.Add("project", "deployment-pkg", "1.0", "app1", "")    // missing applicationVersion
+	f.Add("project", "deployment-pkg", "1.0.0", "app1", "1.0.0") // valid
+	f.Add("", "deployment-pkg", "1.0.0", "app1", "1.0.0")        // missing project
+	f.Add("project", "", "1.0.0", "app1", "1.0.0")               // missing pkgName
+	f.Add("project", "deployment-pkg", "", "app1", "1.0.0")      // missing pkgVersion
+	f.Add("project", "deployment-pkg", "1.0.0", "", "1.0.0")     // missing applicationName
+	f.Add("project", "deployment-pkg", "1.0.0", "app1", "")      // missing applicationVersion
 
 	f.Fuzz(func(t *testing.T, project, pkgName, pkgVersion, applicationName, applicationVersion string) {
 		testSuite := new(CLITestSuite)

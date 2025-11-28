@@ -207,3 +207,17 @@ func CheckCSV(filename string, globalOverrides types.HostRecord) ([]types.HostRe
 	}
 	return validated, errVal
 }
+
+// Version pattern as defined in catalog OpenAPI spec
+// Allows: 1.0.0, v1.0.0, 2.0.0-rc1, 2.0.0-pre-rc1, 2.0.0+build.123
+const VERSIONPATTERN = `^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+(-[a-z0-9]+)*)?(\+[a-z0-9]+([.-][a-z0-9]+)*)?$`
+
+// ValidateVersion validates that a version string matches the semantic versioning pattern
+// used by the catalog service. Returns an error if the version is invalid.
+func ValidateVersion(version string) error {
+	versionRe := regexp.MustCompile(VERSIONPATTERN)
+	if !versionRe.MatchString(version) {
+		return fmt.Errorf("invalid version format '%s'. Valid formats: 1.0.0, v1.0.0, 2.0.0-rc1, 2.0.0-pre-rc1 (semantic versioning with optional 'v' prefix)", version)
+	}
+	return nil
+}
