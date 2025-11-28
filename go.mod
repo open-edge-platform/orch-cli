@@ -13,7 +13,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/oapi-codegen/runtime v1.1.2
-	github.com/open-edge-platform/app-orch-catalog v0.15.6
+	github.com/open-edge-platform/app-orch-catalog v0.15.7
 	github.com/open-edge-platform/orch-library/go v0.6.2
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
