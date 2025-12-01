@@ -19,6 +19,7 @@ import (
 	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
 	"github.com/open-edge-platform/orch-library/go/pkg/loader"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
@@ -606,7 +607,57 @@ func printDeploymentPackageEvent(writer io.Writer, _ string, payload []byte, ver
 	return nil
 }
 
+// applicationYAMLSpec represents the structure of an application YAML file
+type applicationYAMLSpec struct {
+	SpecSchema string `yaml:"specSchema"`
+	Profiles   []struct {
+		Name           string `yaml:"name"`
+		ValuesFileName string `yaml:"valuesFileName"`
+	} `yaml:"profiles"`
+}
+
+// extractReferencedFiles extracts referenced values files from an application YAML
+func extractReferencedFiles(yamlPath string) ([]string, error) {
+	// Read the YAML file
+	data, err := os.ReadFile(yamlPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read YAML file: %w", err)
+	}
+
+	// Parse the YAML to check if it's an application spec
+	var spec applicationYAMLSpec
+	if err := yaml.Unmarshal(data, &spec); err != nil {
+		// Not a valid YAML or not an application spec, return empty list
+		return nil, nil
+	}
+
+	// Check if this is an Application spec
+	if spec.SpecSchema != "Application" {
+		return nil, nil
+	}
+
+	// Extract values file names from profiles
+	var referencedFiles []string
+	baseDir := filepath.Dir(yamlPath)
+
+	for _, profile := range spec.Profiles {
+		if profile.ValuesFileName != "" {
+			valuesFilePath := filepath.Join(baseDir, profile.ValuesFileName)
+			// Check if the file exists
+			if _, err := os.Stat(valuesFilePath); err == nil {
+				referencedFiles = append(referencedFiles, valuesFilePath)
+			} else {
+				// File doesn't exist, but we should warn the user
+				fmt.Fprintf(os.Stderr, "Warning: Referenced values file not found: %s\n", valuesFilePath)
+			}
+		}
+	}
+
+	return referencedFiles, nil
+}
+
 // uploadResourceFile uploads a YAML file containing resource definitions
+// For application YAMLs, it also automatically uploads any referenced values files
 func uploadResourceFile(cmd *cobra.Command, filePath string) error {
 	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
@@ -630,6 +681,20 @@ func uploadResourceFile(cmd *cobra.Command, filePath string) error {
 		accessToken = ""
 	}
 
+	// Collect all files to upload
+	filesToUpload := []string{filePath}
+
+	// Check if this is an application YAML and extract referenced files
+	referencedFiles, err := extractReferencedFiles(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to extract referenced files: %w", err)
+	}
+
+	if len(referencedFiles) > 0 {
+		filesToUpload = append(filesToUpload, referencedFiles...)
+		fmt.Printf("Uploading application with %d referenced values file(s)\n", len(referencedFiles))
+	}
+
 	loader := loader.NewLoader(serverAddress, projectUUID)
-	return loader.LoadResources(ctx, accessToken, []string{filePath})
+	return loader.LoadResources(ctx, accessToken, filesToUpload)
 }
