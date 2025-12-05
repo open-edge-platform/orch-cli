@@ -771,3 +771,95 @@ func PathExists(path string) bool {
 func HasCSVExtension(path string) bool {
 	return strings.HasSuffix(path, ".csv")
 }
+
+func (s *CLITestSuite) TestHostDeleteCSV() {
+	/////////////////////////////
+	// Test Generate CSV for Deletion
+	/////////////////////////////
+
+	// Test generate CSV with default filename
+	HostArgs := map[string]string{
+		"generate-csv": "",
+	}
+	_, err := s.deleteHost(project, "", HostArgs)
+	s.NoError(err, "Should generate CSV with default filename")
+
+	// Test generate CSV with custom filename
+	HostArgs = map[string]string{
+		"generate-csv": "my-hosts-delete.csv",
+	}
+	_, err = s.deleteHost(project, "", HostArgs)
+	s.NoError(err, "Should generate CSV with custom filename")
+
+	// Clean up generated files
+	defer os.Remove("test.csv")
+	defer os.Remove("my-hosts-delete.csv")
+
+	/////////////////////////////
+	// Test Delete from CSV - Dry Run
+	/////////////////////////////
+
+	// Create test CSV file for deletion
+	csvContent := `Name,ResourceID
+host-abc12345,host-abc12345
+edge-host-001,host-def67890
+`
+	csvPath := "test_hosts_delete.csv"
+	err = os.WriteFile(csvPath, []byte(csvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPath)
+
+	// Test dry run with valid CSV
+	HostArgs = map[string]string{
+		"import-from-csv": csvPath,
+		"dry-run":         "",
+	}
+	_, err = s.deleteHost(project, "", HostArgs)
+	s.NoError(err, "Dry run should validate without deleting")
+
+	/////////////////////////////
+	// Test Delete from CSV - Actual Deletion
+	/////////////////////////////
+
+	// Test delete from CSV
+	HostArgs = map[string]string{
+		"import-from-csv": csvPath,
+	}
+	_, err = s.deleteHost(project, "", HostArgs)
+	s.NoError(err, "Should delete hosts from CSV")
+
+	/////////////////////////////
+	// Test Error Cases
+	/////////////////////////////
+
+	// Test with non-existent CSV file
+	HostArgs = map[string]string{
+		"import-from-csv": "./testdata/nonexistent.csv",
+	}
+	_, err = s.deleteHost(project, "", HostArgs)
+	s.Error(err, "Should fail with non-existent CSV file")
+
+	// Test with empty CSV file
+	HostArgs = map[string]string{
+		"import-from-csv": "./testdata/empty_hosts.csv",
+	}
+	_, err = s.deleteHost(project, "", HostArgs)
+	// Empty CSV should complete with 0 deletions, not error
+	s.NoError(err, "Should handle empty CSV gracefully")
+
+	// Test with invalid CSV (missing columns)
+	invalidCSV := `Name
+host-only-name
+`
+	invalidPath := "test_invalid_delete.csv"
+	err = os.WriteFile(invalidPath, []byte(invalidCSV), 0600)
+	s.NoError(err)
+	defer os.Remove(invalidPath)
+
+	HostArgs = map[string]string{
+		"import-from-csv": invalidPath,
+	}
+	_, err = s.deleteHost(project, "", HostArgs)
+	// Should handle gracefully and report errors for invalid lines
+	s.NoError(err, "Should handle CSV with invalid format gracefully")
+}

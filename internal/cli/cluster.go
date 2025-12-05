@@ -4,8 +4,11 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -79,12 +82,27 @@ func getDeleteClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cluster <name> [flags]",
 		Short:   "Delete a cluster",
-		Example: "orch-cli delete cluster cli-cluster",
-		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli delete cluster cli-cluster\norch-cli delete cluster --delete-from-csv clusters.csv\norch-cli delete cluster --delete-from-csv clusters.csv --force",
+		Args: func(cmd *cobra.Command, args []string) error {
+			csvFile, _ := cmd.Flags().GetString("delete-from-csv")
+			generateCSV, _ := cmd.Flags().GetString("generate-csv")
+			if csvFile != "" || generateCSV != "" {
+				// No positional arg required for CSV operations
+				return nil
+			}
+			if len(args) != 1 {
+				return fmt.Errorf("accepts 1 arg(s), received %d", len(args))
+			}
+			return nil
+		},
 		Aliases: clusterAliases,
 		RunE:    runDeleteClusterCommand,
 	}
 	cmd.Flags().Bool("force", false, "Force delete the cluster without waiting for the host cleanup")
+	cmd.Flags().String("delete-from-csv", "", "CSV file containing cluster names to delete")
+	cmd.Flags().String("generate-csv", "", "Generate a template CSV file with all clusters")
+	cmd.Flags().Lookup("generate-csv").NoOptDefVal = "clusters.csv"
+	cmd.Flags().Bool("dry-run", false, "Verify the validity of input CSV file without deleting clusters")
 	return cmd
 }
 
@@ -416,11 +434,29 @@ func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
+	generateCSV, _ := cmd.Flags().GetString("generate-csv")
+	deleteFromCSV, _ := cmd.Flags().GetString("delete-from-csv")
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+
 	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}
 
+	// Handle CSV generation
+	if generateCSV != "" {
+		return generateClusterCSV(ctx, clusterClient, projectName, generateCSV)
+	}
+
+	// Handle CSV-based deletion
+	if deleteFromCSV != "" {
+		return runDeleteClustersFromCSV(cmd, deleteFromCSV, force, dryRun)
+	}
+
+	// Single cluster deletion (existing logic)
+	if len(args) == 0 {
+		return fmt.Errorf("no cluster name provided")
+	}
 	clusterName := args[0]
 
 	fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
@@ -514,4 +550,180 @@ func getHostUUID(ctx context.Context, hostClient infra.ClientWithResponsesInterf
 		return "", fmt.Errorf("host %s does not have a UUID", hostID)
 	}
 	return *uuid, nil
+}
+
+// generateClusterCSV generates a CSV file with all clusters in the project
+func generateClusterCSV(ctx context.Context, clusterClient coapi.ClientWithResponsesInterface, projectName, filename string) error {
+	// Fetch all clusters
+	var clusters []coapi.ClusterInfo
+	pageSize := 100
+	offset := 0
+
+	for {
+		params := coapi.GetV2ProjectsProjectNameClustersParams{
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}
+
+		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName, &params, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if resp.JSON200 == nil {
+			return fmt.Errorf("unexpected response: %s", resp.HTTPResponse.Status)
+		}
+
+		clusters = append(clusters, *resp.JSON200.Clusters...)
+		if len(*resp.JSON200.Clusters) < pageSize {
+			break
+		}
+		offset += pageSize
+	}
+
+	// Create CSV file
+	csvPath := filename
+	if !filepath.IsAbs(csvPath) {
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		csvPath = filepath.Join(wd, csvPath)
+	}
+
+	// Check if file already exists
+	if _, err := os.Stat(csvPath); err == nil {
+		fmt.Printf("File %s already exists, not generating\n", csvPath)
+		return nil
+	}
+
+	f, err := os.Create(csvPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Write CSV header
+	fmt.Fprintln(f, "Name,KubernetesVersion,NodeCount")
+
+	// Write cluster data
+	for _, cluster := range clusters {
+		name := ""
+		if cluster.Name != nil {
+			name = *cluster.Name
+		}
+		k8sVersion := ""
+		if cluster.KubernetesVersion != nil {
+			k8sVersion = *cluster.KubernetesVersion
+		}
+		nodeCount := 0
+		if cluster.NodeQuantity != nil {
+			nodeCount = *cluster.NodeQuantity
+		}
+		fmt.Fprintf(f, "%s,%s,%d\n", name, k8sVersion, nodeCount)
+	}
+
+	fmt.Printf("CSV template generated: %s (found %d clusters)\n", filename, len(clusters))
+	return nil
+}
+
+// runDeleteClustersFromCSV deletes clusters listed in a CSV file
+func runDeleteClustersFromCSV(cmd *cobra.Command, csvFile string, force, dryRun bool) error {
+	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	if dryRun {
+		fmt.Println("--dry-run flag provided, validating input, clusters will not be deleted")
+	}
+
+	file, err := os.Open(csvFile)
+	if err != nil {
+		return fmt.Errorf("failed to open CSV file: %w", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	lineNum := 0
+	errorCount := 0
+	successCount := 0
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineNum++
+
+		// Skip header
+		if lineNum == 1 {
+			continue
+		}
+
+		// Skip empty lines
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		fields := strings.Split(line, ",")
+		if len(fields) < 1 {
+			fmt.Printf("Skipping invalid line %d: %s\n", lineNum, line)
+			errorCount++
+			continue
+		}
+
+		clusterName := strings.TrimSpace(fields[0])
+		if clusterName == "" {
+			fmt.Printf("Skipping line %d: missing cluster name\n", lineNum)
+			errorCount++
+			continue
+		}
+
+		if dryRun {
+			// Just validate that cluster exists
+			_, err := getClusterDetails(ctx, clusterClient, projectName, clusterName)
+			if err != nil {
+				fmt.Printf("Cluster '%s' not found or error accessing it: %v\n", clusterName, err)
+				errorCount++
+				continue
+			}
+			fmt.Printf("Cluster '%s' found - would be deleted\n", clusterName)
+			successCount++
+			continue
+		}
+
+		// Actual deletion
+		fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
+		if force {
+			ctx2, hostClient, projectName, err := InfraFactory(cmd)
+			if err != nil {
+				fmt.Printf("Failed to delete cluster '%s': failed to get infra service context: %v\n", clusterName, err)
+				errorCount++
+				continue
+			}
+			err = forceDeleteCluster(ctx2, hostClient, clusterClient, projectName, clusterName)
+			if err != nil {
+				fmt.Printf("Failed to force delete cluster '%s': %v\n", clusterName, err)
+				errorCount++
+				continue
+			}
+		} else {
+			err = softDeleteCluster(ctx, clusterClient, projectName, clusterName)
+			if err != nil {
+				fmt.Printf("Failed to delete cluster '%s': %v\n", clusterName, err)
+				errorCount++
+				continue
+			}
+		}
+		fmt.Printf("✔ Cluster '%s' deletion initiated successfully\n", clusterName)
+		successCount++
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error reading CSV file: %w", err)
+	}
+
+	if dryRun {
+		fmt.Printf("\nDry run completed: %d clusters would be deleted, %d errors found\n", successCount, errorCount)
+	} else {
+		fmt.Printf("\nBulk deletion completed: %d clusters deleted, %d errors\n", successCount, errorCount)
+	}
+	return nil
 }

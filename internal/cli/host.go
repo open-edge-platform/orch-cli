@@ -106,8 +106,29 @@ orch-cli create host --project some-project --import-from-csv test.csv
 /orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
 `
 
-const deleteHostExamples = `#Delete a host using it's host Resource ID
-orch-cli delete host host-1234abcd  --project itep`
+const deleteHostExamples = `# Delete a host using it's host Resource ID
+orch-cli delete host host-1234abcd --project itep
+
+# Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
+orch-cli delete host --project some-project --generate-csv
+
+# Generate CSV input file using the --generate-csv flag - the defined output will be a base myhosts.csv file.
+orch-cli delete host --project some-project --generate-csv=myhosts.csv
+
+# Sample input csv file hosts.csv
+
+Name - Name of the machine - mandatory field for identification
+ResourceID - Unique Identifier of host - mandatory field
+
+Name,ResourceID
+host-1,host-1234abcd
+host-2,host-5678efgh
+
+# --dry-run allows for verification of the validity of the input csv file without deleting hosts
+orch-cli delete host --project some-project --import-from-csv test.csv --dry-run
+
+# Delete hosts - --import-from-csv is a mandatory flag pointing to the input file. Successfully deleted hosts indicated by output - errors provided in output
+orch-cli delete host --project some-project --import-from-csv test.csv`
 
 const deauthorizeHostExamples = `#Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
 orch-cli deauthorize host host-1234abcd  --project itep`
@@ -1300,10 +1321,28 @@ func getDeleteHostCommand() *cobra.Command {
 		Use:     "host <resourceID> [flags]",
 		Short:   "Deletes a host and associated instance",
 		Example: deleteHostExamples,
-		Args:    cobra.ExactArgs(1),
+		Args: func(cmd *cobra.Command, args []string) error {
+			generateCSV, _ := cmd.Flags().GetString("generate-csv")
+			if generateCSV == "" {
+				generateCSV = "test.csv"
+			}
+			importCSV, _ := cmd.Flags().GetString("import-from-csv")
+			if generateCSV != "" || importCSV != "" {
+				// No positional arg required for bulk operations
+				return nil
+			}
+			if len(args) != 1 {
+				return fmt.Errorf("accepts 1 arg(s), received %d", len(args))
+			}
+			return nil
+		},
 		Aliases: hostAliases,
 		RunE:    runDeleteHostCommand,
 	}
+	cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about hosts to be deleted")
+	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
+	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host deletion")
+	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
 	return cmd
 }
 
@@ -1709,12 +1748,155 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 
 // Deletes specific Host - finds a host using resource ID and deletes it
 func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
-	hostID := args[0]
+	generateCSV, _ := cmd.Flags().GetString("generate-csv")
+	importCSV, _ := cmd.Flags().GetString("import-from-csv")
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
+	// Bulk CSV generation
+	if generateCSV != "" {
+		// Fetch all hosts
+		pageSize := 100
+		hosts := make([]infra.HostResource, 0)
+		for offset := 0; ; offset += pageSize {
+			resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+				&infra.HostServiceListHostsParams{
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			hosts = append(hosts, resp.JSON200.Hosts...)
+			if !resp.JSON200.HasNext {
+				break
+			}
+		}
+		// Write CSV
+		csvPath := generateCSV
+		if !filepath.IsAbs(csvPath) {
+			wd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			csvPath = filepath.Join(wd, csvPath)
+		}
+		// Check if file already exists
+		if _, err := os.Stat(csvPath); err == nil {
+			fmt.Printf("File %s already exists not generating\n", csvPath)
+			return nil
+		}
+		f, err := os.Create(csvPath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		fmt.Fprintln(f, "Name,ResourceID")
+		for _, h := range hosts {
+			name := h.Name
+			resourceID := ""
+			if h.ResourceId != nil {
+				resourceID = *h.ResourceId
+			}
+			fmt.Fprintf(f, "%s,%s\n", name, resourceID)
+		}
+		fmt.Printf("CSV template generated: %s\n", generateCSV)
+		return nil
+	}
+
+	// Bulk CSV import
+	if importCSV != "" {
+		if dryRun {
+			fmt.Println("--dry-run flag provided, validating input, hosts will not be deleted")
+		}
+
+		file, err := os.Open(importCSV)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		lineNum := 0
+		errorCount := 0
+		successCount := 0
+
+		for scanner.Scan() {
+			line := scanner.Text()
+			lineNum++
+			if lineNum == 1 {
+				continue // skip header
+			}
+			fields := strings.Split(line, ",")
+			if len(fields) < 2 {
+				fmt.Printf("Skipping invalid line %d: %s\n", lineNum, line)
+				errorCount++
+				continue
+			}
+			name := strings.TrimSpace(fields[0])
+			resourceID := strings.TrimSpace(fields[1])
+
+			if resourceID == "" {
+				fmt.Printf("Skipping line %d: missing resource ID for host %s\n", lineNum, name)
+				errorCount++
+				continue
+			}
+
+			if dryRun {
+				// Just validate that host exists
+				resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, resourceID, auth.AddAuthHeader)
+				if err != nil || resp.JSON200 == nil {
+					fmt.Printf("Host %s (%s) not found or error accessing it\n", name, resourceID)
+					errorCount++
+					continue
+				}
+				fmt.Printf("Host %s (%s) found - would be deleted\n", name, resourceID)
+				successCount++
+				continue
+			}
+
+			// Actual deletion
+			err := deleteHostByID(ctx, hostClient, projectName, resourceID)
+			if err != nil {
+				fmt.Printf("Failed to delete host %s (%s): %v\n", name, resourceID, err)
+				errorCount++
+				continue
+			}
+			fmt.Printf("✔ Host %s (%s) deleted successfully\n", name, resourceID)
+			successCount++
+		}
+
+		if err := scanner.Err(); err != nil {
+			return err
+		}
+
+		if dryRun {
+			fmt.Printf("\nDry run completed: %d hosts would be deleted, %d errors found\n", successCount, errorCount)
+		} else {
+			fmt.Printf("\nBulk deletion completed: %d hosts deleted, %d errors\n", successCount, errorCount)
+		}
+		return nil
+	}
+
+	// Single host deletion (existing logic)
+	if len(args) == 0 {
+		return fmt.Errorf("no host ID provided")
+	}
+	hostID := args[0]
+
+	err = deleteHostByID(ctx, hostClient, projectName, hostID)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Host %s deleted successfully\n", hostID)
+	return nil
+}
+
+// Helper function to delete a host by ID
+func deleteHostByID(ctx context.Context, hostClient infra.ClientWithResponsesInterface, projectName, hostID string) error {
 	// retrieve the host (to check if it has an instance associated with it)
 	resp1, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
 	if err != nil {
@@ -1749,7 +1931,6 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	if err := checkResponse(resp3.HTTPResponse, resp3.Body, "error while deleting host"); err != nil {
 		return err
 	}
-	fmt.Printf("Host %s deleted successfully\n", hostID)
 	return nil
 }
 

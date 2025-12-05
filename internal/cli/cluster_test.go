@@ -232,10 +232,9 @@ func (s *CLITestSuite) TestClusterCreateFromCSV() {
 
 	// Test with empty CSV file
 	CArgs = map[string]string{}
-	_, _ = s.createClusterFromCSV(project, baseName+"-empty", "./testdata/empty_hosts.csv", CArgs)
+	_, err = s.createClusterFromCSV(project, baseName+"-empty", "./testdata/empty_hosts.csv", CArgs)
 	// Note: This might succeed with 0 clusters created, depending on implementation
-	// If it should error, uncomment the next line:
-	// s.Error(err, "Should handle empty CSV file appropriately")
+	// Empty CSV handling is implementation-dependent, so we don't assert on error here
 
 	/////////////////////////////
 	// Test Flag Validation
@@ -299,4 +298,81 @@ func (s *CLITestSuite) TestClusterCSVValidation() {
 	_, err = s.createClusterFromCSV(project, baseName+"-verbose-detailed", "./testdata/valid_hosts.csv", CArgs)
 	s.NoError(err, "Verbose mode should work")
 	// Note: Verbose output goes to stdout directly via fmt.Printf, not captured in returned string
+}
+
+func (s *CLITestSuite) TestClusterDeleteCSV() {
+	/////////////////////////////
+	// Test Generate CSV for Deletion
+	/////////////////////////////
+
+	// Test generate CSV with default filename
+	CArgs := map[string]string{
+		"generate-csv": "",
+	}
+	commandString := addCommandArgs(CArgs, fmt.Sprintf(`delete cluster --project %s`, project))
+	_, err := s.runCommand(commandString)
+	s.NoError(err, "Should generate CSV with default filename")
+
+	// Test generate CSV with custom filename
+	CArgs = map[string]string{
+		"generate-csv": "my-clusters.csv",
+	}
+	commandString = addCommandArgs(CArgs, fmt.Sprintf(`delete cluster --project %s`, project))
+	_, err = s.runCommand(commandString)
+	s.NoError(err, "Should generate CSV with custom filename")
+
+	/////////////////////////////
+	// Test Delete from CSV - Dry Run
+	/////////////////////////////
+
+	// Test dry run with valid CSV
+	CArgs = map[string]string{
+		"delete-from-csv": "./testdata/clusters_delete.csv",
+		"dry-run":         "",
+	}
+	commandString = addCommandArgs(CArgs, fmt.Sprintf(`delete cluster --project %s`, project))
+	_, err = s.runCommand(commandString)
+	s.NoError(err, "Dry run should validate without deleting")
+
+	/////////////////////////////
+	// Test Delete from CSV - Actual Deletion
+	/////////////////////////////
+
+	// Test delete from CSV
+	CArgs = map[string]string{
+		"delete-from-csv": "./testdata/clusters_delete.csv",
+	}
+	commandString = addCommandArgs(CArgs, fmt.Sprintf(`delete cluster --project %s`, project))
+	_, err = s.runCommand(commandString)
+	s.NoError(err, "Should delete clusters from CSV")
+
+	// Test delete from CSV with force flag
+	CArgs = map[string]string{
+		"delete-from-csv": "./testdata/clusters_delete.csv",
+		"force":           "",
+	}
+	commandString = addCommandArgs(CArgs, fmt.Sprintf(`delete cluster --project %s`, project))
+	_, err = s.runCommand(commandString)
+	s.NoError(err, "Should force delete clusters from CSV")
+
+	/////////////////////////////
+	// Test Error Cases
+	/////////////////////////////
+
+	// Test with non-existent CSV file
+	CArgs = map[string]string{
+		"delete-from-csv": "./testdata/nonexistent.csv",
+	}
+	commandString = addCommandArgs(CArgs, fmt.Sprintf(`delete cluster --project %s`, project))
+	_, err = s.runCommand(commandString)
+	s.Error(err, "Should fail with non-existent CSV file")
+
+	// Test with empty CSV file
+	CArgs = map[string]string{
+		"delete-from-csv": "./testdata/empty_hosts.csv",
+	}
+	commandString = addCommandArgs(CArgs, fmt.Sprintf(`delete cluster --project %s`, project))
+	_, err = s.runCommand(commandString)
+	// Empty CSV should complete with 0 deletions, not error
+	s.NoError(err, "Should handle empty CSV gracefully")
 }
