@@ -4,15 +4,20 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+	"github.com/open-edge-platform/orch-library/go/pkg/loader"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 func getCreateApplicationCommand() *cobra.Command {
@@ -120,10 +125,101 @@ func printApplications(writer io.Writer, appList *[]catapi.CatalogV3Application,
 	}
 }
 
+// applicationYAMLSpec represents the structure of an application YAML file
+type applicationYAMLSpec struct {
+	SpecSchema string `yaml:"specSchema"`
+	Profiles   []struct {
+		Name           string `yaml:"name"`
+		ValuesFileName string `yaml:"valuesFileName"`
+	} `yaml:"profiles"`
+}
+
+// extractReferencedValuesFiles extracts referenced values files from an application YAML
+func extractReferencedValuesFiles(yamlPath string) ([]string, error) {
+	// Read the YAML file
+	data, err := os.ReadFile(yamlPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read YAML file: %w", err)
+	}
+
+	// Parse the YAML to check if it's an application spec
+	var spec applicationYAMLSpec
+	if err := yaml.Unmarshal(data, &spec); err != nil {
+		// Not a valid YAML or not an application spec, return empty list
+		return nil, nil
+	}
+
+	// Check if this is an Application spec
+	if spec.SpecSchema != "Application" {
+		return nil, nil
+	}
+
+	// Extract values file names from profiles
+	var referencedFiles []string
+	baseDir := filepath.Dir(yamlPath)
+
+	for _, profile := range spec.Profiles {
+		if profile.ValuesFileName != "" {
+			valuesFilePath := filepath.Join(baseDir, profile.ValuesFileName)
+			// Check if the file exists
+			if _, err := os.Stat(valuesFilePath); err == nil {
+				referencedFiles = append(referencedFiles, valuesFilePath)
+			} else {
+				// File doesn't exist, but we should warn the user
+				fmt.Fprintf(os.Stderr, "Warning: Referenced values file not found: %s\n", valuesFilePath)
+			}
+		}
+	}
+
+	return referencedFiles, nil
+}
+
+// uploadApplicationResourceFile uploads an application YAML file and its referenced values files
+func uploadApplicationResourceFile(cmd *cobra.Command, filePath string) error {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return err
+	}
+
+	projectUUID, err := getProjectName(cmd)
+	if err != nil {
+		return err
+	}
+
+	ctx := cmd.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	// Get the access token
+	accessToken, err := auth.GetAccessToken(ctx)
+	if err != nil {
+		// Log warning but continue with empty token
+		accessToken = ""
+	}
+
+	// Collect all files to upload
+	filesToUpload := []string{filePath}
+
+	// Check if this is an application YAML and extract referenced values files
+	referencedFiles, err := extractReferencedValuesFiles(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to extract referenced files: %w", err)
+	}
+
+	if len(referencedFiles) > 0 {
+		filesToUpload = append(filesToUpload, referencedFiles...)
+		fmt.Printf("Uploading application with %d referenced values file(s)\n", len(referencedFiles))
+	}
+
+	loader := loader.NewLoader(serverAddress, projectUUID)
+	return loader.LoadResources(ctx, accessToken, filesToUpload)
+}
+
 func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 	// Check if a file path was provided (single argument ending with .yaml or .yml)
 	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
-		return uploadResourceFile(cmd, args[0])
+		return uploadApplicationResourceFile(cmd, args[0])
 	}
 
 	// Validate we have name and version
@@ -301,7 +397,7 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 func runSetApplicationCommand(cmd *cobra.Command, args []string) error {
 	// Check if a file path was provided (single argument ending with .yaml or .yml)
 	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
-		return uploadResourceFile(cmd, args[0])
+		return uploadApplicationResourceFile(cmd, args[0])
 	}
 
 	// Validate we have name and version
