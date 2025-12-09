@@ -4,12 +4,17 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 
+	"github.com/open-edge-platform/cli/internal/types"
+	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
@@ -22,7 +27,16 @@ orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010
 orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue --template sometemplate-v1.0.0
 
 # Create a cluster with the name "my-cluster" on the given nodes using the default template and with the provided multiple labels
-orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue,another-label=another-value`
+orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue,another-label=another-value
+
+# Create clusters from CSV file - one cluster per host with iterating cluster names
+# Single node clusters with the default template will be created
+# Example CSV:
+# UUID,<unused fields>
+y2fel,6d91fff4-4d4e-4420-41fb-9ec279cb03ca,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,
+krxl5,a7b0229d-ccfc-7944-fcc2-b844d6f2d6d5,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,
+vhwnt,3b0594d4-c5e7-eb1c-feb1-77d0db615368,Edge Microvisor Toolkit 3.0.20250813,site-a7a524f2,,,
+orch-cli create cluster my-cluster --project some-project --create-from-csv hosts.csv`
 
 func getCreateClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -34,9 +48,9 @@ func getCreateClusterCommand() *cobra.Command {
 		RunE:    runCreateClusterCommand,
 	}
 	cmd.Flags().String("template", "", "Cluster template to use")
-	cmd.Flags().StringSlice("nodes", []string{}, "Mandatory list of nodes in the format <id>:<role>")
+	cmd.Flags().StringSlice("nodes", []string{}, "List of nodes in the format <id>:<role> (required unless using --create-from-csv)")
 	cmd.Flags().StringToString("labels", map[string]string{}, "Labels in the format key=value")
-	_ = cmd.MarkFlagRequired("nodes")
+	cmd.Flags().String("create-from-csv", "", "CSV file containing host UUIDs to create clusters for (one cluster per host)")
 	return cmd
 }
 
@@ -68,12 +82,27 @@ func getDeleteClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cluster <name> [flags]",
 		Short:   "Delete a cluster",
-		Example: "orch-cli delete cluster cli-cluster",
-		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli delete cluster cli-cluster\norch-cli delete cluster --delete-from-csv clusters.csv\norch-cli delete cluster --delete-from-csv clusters.csv --force",
+		Args: func(cmd *cobra.Command, args []string) error {
+			csvFile, _ := cmd.Flags().GetString("delete-from-csv")
+			generateCSV, _ := cmd.Flags().GetString("generate-csv")
+			if csvFile != "" || generateCSV != "" {
+				// No positional arg required for CSV operations
+				return nil
+			}
+			if len(args) != 1 {
+				return fmt.Errorf("accepts 1 arg(s), received %d", len(args))
+			}
+			return nil
+		},
 		Aliases: clusterAliases,
 		RunE:    runDeleteClusterCommand,
 	}
 	cmd.Flags().Bool("force", false, "Force delete the cluster without waiting for the host cleanup")
+	cmd.Flags().String("delete-from-csv", "", "CSV file containing cluster names to delete")
+	cmd.Flags().String("generate-csv", "", "Generate a template CSV file with all clusters")
+	cmd.Flags().Lookup("generate-csv").NoOptDefVal = "clusters.csv"
+	cmd.Flags().Bool("dry-run", false, "Verify the validity of input CSV file without deleting clusters")
 	return cmd
 }
 
@@ -82,6 +111,18 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
+
+	csvFile, err := cmd.Flags().GetString("create-from-csv")
+	if err != nil {
+		return processError(err)
+	}
+
+	// Check if CSV mode is enabled
+	if csvFile != "" {
+		return runCreateClustersFromCSV(cmd, args[0], csvFile, verbose)
+	}
+
+	// Original single cluster creation logic
 	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
@@ -89,13 +130,17 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 
 	clusterName := args[0]
 
-	request := coapi.PostV2ProjectsProjectNameClustersJSONRequestBody{
-		Name: &clusterName,
-	}
-
 	nodesFlag, err := cmd.Flags().GetStringSlice("nodes")
 	if err != nil {
 		return processError(err)
+	}
+
+	if len(nodesFlag) == 0 {
+		return fmt.Errorf("--nodes flag is required when not using --create-from-csv")
+	}
+
+	request := coapi.PostV2ProjectsProjectNameClustersJSONRequestBody{
+		Name: &clusterName,
 	}
 
 	nodes := []coapi.NodeSpec{}
@@ -159,6 +204,51 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating cluster %s", clusterName))
+}
+
+func runCreateClustersFromCSV(cmd *cobra.Command, baseClusterName, csvFile string, _ bool) error {
+	// Original single cluster creation logic
+	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	template, err := cmd.Flags().GetString("template")
+	if err != nil {
+		return processError(err)
+	}
+
+	hostRec := &types.HostRecord{}
+	validated, err := validator.CheckCSV(csvFile, *hostRec)
+	if err != nil {
+		return err
+	}
+	for i, record := range validated {
+		// Create a unique cluster name for each record
+		clusterName := fmt.Sprintf("%s-%d", baseClusterName, i)
+		request := coapi.PostV2ProjectsProjectNameClustersJSONRequestBody{
+			Name: &clusterName,
+			Nodes: []coapi.NodeSpec{
+				{Id: record.UUID, Role: "all"},
+			},
+		}
+		if template != "" {
+			request.Template = &template
+		}
+		resp, err := clusterClient.PostV2ProjectsProjectNameClustersWithResponse(ctx, projectName, request, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if resp.JSON201 != nil {
+			fmt.Printf("Cluster '%s' created successfully.\n", clusterName)
+			continue
+		}
+		err = checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating cluster %s", clusterName))
+		if err != nil {
+			fmt.Printf("Failed to create cluster '%s': %v\n", clusterName, err)
+		}
+	}
+	return nil
 }
 
 func runGetClusterCommand(cmd *cobra.Command, args []string) error {
@@ -344,11 +434,29 @@ func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
+	generateCSV, _ := cmd.Flags().GetString("generate-csv")
+	deleteFromCSV, _ := cmd.Flags().GetString("delete-from-csv")
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+
 	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}
 
+	// Handle CSV generation
+	if generateCSV != "" {
+		return generateClusterCSV(ctx, clusterClient, projectName, generateCSV)
+	}
+
+	// Handle CSV-based deletion
+	if deleteFromCSV != "" {
+		return runDeleteClustersFromCSV(cmd, deleteFromCSV, force, dryRun)
+	}
+
+	// Single cluster deletion (existing logic)
+	if len(args) == 0 {
+		return fmt.Errorf("no cluster name provided")
+	}
 	clusterName := args[0]
 
 	fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
@@ -442,4 +550,180 @@ func getHostUUID(ctx context.Context, hostClient infra.ClientWithResponsesInterf
 		return "", fmt.Errorf("host %s does not have a UUID", hostID)
 	}
 	return *uuid, nil
+}
+
+// generateClusterCSV generates a CSV file with all clusters in the project
+func generateClusterCSV(ctx context.Context, clusterClient coapi.ClientWithResponsesInterface, projectName, filename string) error {
+	// Fetch all clusters
+	var clusters []coapi.ClusterInfo
+	pageSize := 100
+	offset := 0
+
+	for {
+		params := coapi.GetV2ProjectsProjectNameClustersParams{
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}
+
+		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName, &params, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if resp.JSON200 == nil {
+			return fmt.Errorf("unexpected response: %s", resp.HTTPResponse.Status)
+		}
+
+		clusters = append(clusters, *resp.JSON200.Clusters...)
+		if len(*resp.JSON200.Clusters) < pageSize {
+			break
+		}
+		offset += pageSize
+	}
+
+	// Create CSV file
+	csvPath := filename
+	if !filepath.IsAbs(csvPath) {
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		csvPath = filepath.Join(wd, csvPath)
+	}
+
+	// Check if file already exists
+	if _, err := os.Stat(csvPath); err == nil {
+		fmt.Printf("File %s already exists, not generating\n", csvPath)
+		return nil
+	}
+
+	f, err := os.Create(csvPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Write CSV header
+	fmt.Fprintln(f, "Name,KubernetesVersion,NodeCount")
+
+	// Write cluster data
+	for _, cluster := range clusters {
+		name := ""
+		if cluster.Name != nil {
+			name = *cluster.Name
+		}
+		k8sVersion := ""
+		if cluster.KubernetesVersion != nil {
+			k8sVersion = *cluster.KubernetesVersion
+		}
+		nodeCount := 0
+		if cluster.NodeQuantity != nil {
+			nodeCount = *cluster.NodeQuantity
+		}
+		fmt.Fprintf(f, "%s,%s,%d\n", name, k8sVersion, nodeCount)
+	}
+
+	fmt.Printf("CSV template generated: %s (found %d clusters)\n", filename, len(clusters))
+	return nil
+}
+
+// runDeleteClustersFromCSV deletes clusters listed in a CSV file
+func runDeleteClustersFromCSV(cmd *cobra.Command, csvFile string, force, dryRun bool) error {
+	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	if dryRun {
+		fmt.Println("--dry-run flag provided, validating input, clusters will not be deleted")
+	}
+
+	file, err := os.Open(csvFile)
+	if err != nil {
+		return fmt.Errorf("failed to open CSV file: %w", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	lineNum := 0
+	errorCount := 0
+	successCount := 0
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineNum++
+
+		// Skip header
+		if lineNum == 1 {
+			continue
+		}
+
+		// Skip empty lines
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		fields := strings.Split(line, ",")
+		if len(fields) < 1 {
+			fmt.Printf("Skipping invalid line %d: %s\n", lineNum, line)
+			errorCount++
+			continue
+		}
+
+		clusterName := strings.TrimSpace(fields[0])
+		if clusterName == "" {
+			fmt.Printf("Skipping line %d: missing cluster name\n", lineNum)
+			errorCount++
+			continue
+		}
+
+		if dryRun {
+			// Just validate that cluster exists
+			_, err := getClusterDetails(ctx, clusterClient, projectName, clusterName)
+			if err != nil {
+				fmt.Printf("Cluster '%s' not found or error accessing it: %v\n", clusterName, err)
+				errorCount++
+				continue
+			}
+			fmt.Printf("Cluster '%s' found - would be deleted\n", clusterName)
+			successCount++
+			continue
+		}
+
+		// Actual deletion
+		fmt.Printf("Deleting cluster '%s' in project '%s'\n", clusterName, projectName)
+		if force {
+			ctx2, hostClient, projectName, err := InfraFactory(cmd)
+			if err != nil {
+				fmt.Printf("Failed to delete cluster '%s': failed to get infra service context: %v\n", clusterName, err)
+				errorCount++
+				continue
+			}
+			err = forceDeleteCluster(ctx2, hostClient, clusterClient, projectName, clusterName)
+			if err != nil {
+				fmt.Printf("Failed to force delete cluster '%s': %v\n", clusterName, err)
+				errorCount++
+				continue
+			}
+		} else {
+			err = softDeleteCluster(ctx, clusterClient, projectName, clusterName)
+			if err != nil {
+				fmt.Printf("Failed to delete cluster '%s': %v\n", clusterName, err)
+				errorCount++
+				continue
+			}
+		}
+		fmt.Printf("✔ Cluster '%s' deletion initiated successfully\n", clusterName)
+		successCount++
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error reading CSV file: %w", err)
+	}
+
+	if dryRun {
+		fmt.Printf("\nDry run completed: %d clusters would be deleted, %d errors found\n", successCount, errorCount)
+	} else {
+		fmt.Printf("\nBulk deletion completed: %d clusters deleted, %d errors\n", successCount, errorCount)
+	}
+	return nil
 }
