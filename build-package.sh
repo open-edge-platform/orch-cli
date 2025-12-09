@@ -2,44 +2,73 @@
 
 set -e
 
+export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
 PACKAGE_DIR="package"
 TARGET_DIR="dependencies-src"
-REPO_URL="https://github.com/open-edge-platform/orch-cli.git"
+RELEASE_VERSION="release-2025.2"
+REPO_URL="https://github.com/open-edge-platform/orch-cli/archive/refs/heads/${RELEASE_VERSION}.zip"
 REPO_NAME="orch-cli"
 CLONE_DIR="source-$REPO_NAME"
 
+sudo rm -rf "$TARGET_DIR"
 mkdir -p "$TARGET_DIR"
-
-make build
 
 sudo rm -rf "$PACKAGE_DIR"
 mkdir "$PACKAGE_DIR"
 mkdir "$PACKAGE_DIR/$CLONE_DIR"
 mkdir "$PACKAGE_DIR/$TARGET_DIR"
 
-cp build/_output/orch-cli "$PACKAGE_DIR/"
-cp go.mod go.sum "$PACKAGE_DIR/"
+make build
 
-echo "Cloning your repository from $REPO_URL..."
-git clone "$REPO_URL" "$PACKAGE_DIR/$CLONE_DIR"
+cp build/_output/orch-cli "$PACKAGE_DIR/"
+
+echo "Downloading your repository from $REPO_URL..."
+#wget "$REPO_URL" -O "$PACKAGE_DIR/${RELEASE_VERSION}.zip"
+curl -L "$REPO_URL" -o /tmp/repo.zip
+unzip /tmp/repo.zip -d "$PACKAGE_DIR/$CLONE_DIR"
+rm /tmp/repo.zip 
 
 echo "Extracting dependencies from go.mod..."
 
-cd "$PACKAGE_DIR"
-while read -r mod ver; do
-    # Skip empty lines or lines starting with #
-    [[ -z "$mod" || "$mod" =~ ^# ]] && continue
-    echo "Package: $mod"
-    echo "Version: $ver"
-    go mod download "$mod@$ver"
-    modpath=$(go list -f '{{.Dir}}' -m "$mod@$ver")
-    if [ -d "$modpath" ]; then
-        cp -r --no-preserve=mode,ownership "$modpath" "$TARGET_DIR/"
+awk '
+/^require \($/,/^\)$/ {
+    if ($1 != "require" && $1 != ")" && NF >= 2) {
+        print $1, $2
+    }
+}
+/^require [^(]/ {
+    if (NF >= 3) {
+        print $2, $3
+    }
+}
+' go.mod | while read -r mod ver; do
+    [[ -z "$mod" || -z "$ver" ]] && continue
+    
+    echo "Processing: $mod@$ver"
+    
+    # Download this specific module
+    echo "  Downloading..."
+    if ! go mod download "$mod@$ver" 2>/dev/null; then
+        echo "  Error: Failed to download $mod@$ver"
+        continue
     fi
-done < ../sbom.txt
+    
+    # Get the module path from cache
+    modpath=$(go list -f '{{.Dir}}' -m "$mod@$ver" 2>/dev/null)
+    
+    # Copy module to target directory
+    if [ -d "$modpath" ]; then
+        echo "  Copying from: $modpath"
+        cp -r --no-preserve=mode,ownership "$modpath" "$TARGET_DIR/"
+    else
+        echo "  Warning: Module directory not found for $mod@$ver"
+    fi
+done
 
 echo "All sources and repo archive are in $PACKAGE_DIR/"
+mv "$TARGET_DIR" $PACKAGE_DIR
 
+cd $PACKAGE_DIR
 echo "Creating package archive..."
 tar -czf "../orch-cli-package.tar.gz" \
     "orch-cli" \
