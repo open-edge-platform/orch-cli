@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 package infra
 
 import (
@@ -163,6 +166,50 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			},
 		).AnyTimes()
 
+		mockInfraClient.EXPECT().LocalAccountServiceCreateLocalAccountWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, _ string, body infra.LocalAccountServiceCreateLocalAccountJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.LocalAccountServiceCreateLocalAccountResponse, error) {
+				return &infra.LocalAccountServiceCreateLocalAccountResponse{
+					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+					JSON200: &infra.LocalAccountResource{
+						ResourceId: body.ResourceId,
+						Username:   body.Username,
+						SshKey:     body.SshKey,
+						Timestamps: &infra.Timestamps{ /* fill as needed */ },
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		// Mock LocalAccountServiceGetLocalAccountWithResponse (used by get local account command)
+		mockInfraClient.EXPECT().LocalAccountServiceGetLocalAccountWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, _ string, accountID string, _ ...infra.RequestEditorFn) (*infra.LocalAccountServiceGetLocalAccountResponse, error) {
+				return &infra.LocalAccountServiceGetLocalAccountResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+					JSON200: &infra.LocalAccountResource{
+						ResourceId: &accountID,
+						Username:   "admin",
+						SshKey:     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEK8F2qJ5K8F2qJ5K8F2qJ5K8F2qJ5K8F2qJ5K8F2qJ5 testkey@example.com",
+						Timestamps: &infra.Timestamps{},
+					},
+				}, nil
+			},
+		).AnyTimes()
+
+		// Mock LocalAccountServiceDeleteLocalAccountWithResponse (used by delete local account command)
+		mockInfraClient.EXPECT().LocalAccountServiceDeleteLocalAccountWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, _ string, _ string, _ ...infra.RequestEditorFn) (*infra.LocalAccountServiceDeleteLocalAccountResponse, error) {
+				return &infra.LocalAccountServiceDeleteLocalAccountResponse{
+					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+				}, nil
+			},
+		).AnyTimes()
+
 		// Mock LocalAccountServiceListLocalAccountsWithResponse (used by list local accounts command)
 		mockInfraClient.EXPECT().LocalAccountServiceListLocalAccountsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -189,8 +236,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						JSON200: &infra.ListLocalAccountsResponse{
 							LocalAccounts: []infra.LocalAccountResource{
 								{
-									ResourceId:     stringPtr("account-abc12345"),
-									LocalAccountID: stringPtr("account-abc12345"), // Deprecated alias
+									ResourceId:     stringPtr("localaccount-abc12345"),
+									LocalAccountID: stringPtr("localaccount-abc12345"), // Deprecated alias
 									Username:       "admin",
 									SshKey:         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7... admin@example.com",
 									Timestamps: &infra.Timestamps{
@@ -247,9 +294,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									PlatformBundle:    stringPtr(""),
 									Sha256:            "abc123def456",
 									ProfileVersion:    stringPtr("3.0.20250504"),
-									KernelCommand:     stringPtr("console=ttyS0, root=/dev/sda1"),
-									UpdateSources:     &[]string{"https://updates.example.com"},
 									InstalledPackages: stringPtr("wget\ncurl\nvim"),
+									Description:       stringPtr(""),
+									Metadata:          stringPtr(""),
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
@@ -441,9 +488,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 										Os: &infra.OperatingSystemResource{
 											Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
 										},
-										CurrentOs: &infra.OperatingSystemResource{
-											Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
-										},
 										ProvisioningStatus: stringPtr("PROVISIONING_STATUS_COMPLETED"),
 									},
 								},
@@ -511,6 +555,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							CurrentState:                (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDING")),
 							CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_OFF")),
 							CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
+							DesiredAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
 							HostStatus:                  stringPtr("Provisioning"),
 							HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_WORKING")),
 							OnboardingStatus:            stringPtr("Onboarding in progress"),
@@ -566,7 +611,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				_ = ctx        // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				_ = hostId     // Acknowledge we're not using it
-				stamp := 1
 
 				switch projectName {
 				case "invalid-project":
@@ -591,6 +635,44 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									code := infra.NotFound
 									return &code
 								}(),
+							},
+						}, nil
+					case "host-abcd1000":
+						return &infra.HostServiceGetHostResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSON200: &infra.HostResource{
+								ResourceId: stringPtr(hostId),
+								Name:       "edge-host-002",
+								Hostname:   stringPtr("edge-host-002.example.com"),
+								Instance: &infra.InstanceResource{
+									ResourceId: stringPtr("instance-abcd1234"),
+									InstanceID: stringPtr("instance-abcd1234"),
+									UpdatePolicy: &infra.OSUpdatePolicy{
+										ResourceId: stringPtr("updatepolicy-abc12345"),
+									},
+								},
+							},
+						}, nil
+					case "host-abcd1001":
+						return &infra.HostServiceGetHostResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.HostResource{
+								ResourceId: stringPtr(hostId),
+								Name:       "edge-host-002",
+								Hostname:   stringPtr("edge-host-002.example.com"),
+								Instance: &infra.InstanceResource{
+									ResourceId: stringPtr("instance-abcd1234"),
+									InstanceID: stringPtr("instance-abcd1234"),
+								},
+							},
+						}, nil
+					case "host-abcd1002":
+						return &infra.HostServiceGetHostResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.HostResource{
+								ResourceId: stringPtr(hostId),
+								Name:       "edge-host-002",
+								Hostname:   stringPtr("edge-host-002.example.com"),
 							},
 						}, nil
 					default:
@@ -621,16 +703,55 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								DesiredAmtState:    (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
 								DesiredPowerState:  (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
 								PowerCommandPolicy: (*infra.PowerCommandPolicy)(stringPtr("POWER_COMMAND_POLICY_ALWAYS_ON")),
-								PowerOnTime:        &stamp,
+								PowerOnTime:        func() *int { i := 1764750313; return &i }(),
 								HostNics: &[]infra.HostnicResource{
 									{
 										DeviceName: stringPtr("eth0"),
 										Ipaddresses: &[]infra.IPAddressResource{
 											{
 												Address: stringPtr("192.168.1.102"),
-												// Fill other fields as needed, e.g. Type, Version, etc.
 											},
 										},
+										Mtu:           func() *int { i := 1500; return &i }(),
+										MacAddr:       stringPtr("30:d0:42:d9:02:7c"),
+										PciIdentifier: stringPtr("0000:19:00.0"),
+										SriovEnabled:  func() *bool { i := true; return &i }(),
+										SriovVfsNum:   func() *int { i := 4; return &i }(),
+										SriovVfsTotal: func() *int { i := 8; return &i }(),
+										BmcInterface:  func() *bool { i := true; return &i }(),
+										LinkState: &infra.NetworkInterfaceLinkState{
+											Type: func() *infra.LinkState { t := infra.NETWORKINTERFACELINKSTATEUNSPECIFIED; return &t }(),
+										},
+									},
+								},
+								HostGpus: &[]infra.HostgpuResource{
+									{
+										DeviceName: stringPtr("TestGPU"),
+										Vendor:     stringPtr("TestVendor"),
+										Capabilities: &[]string{
+											"cap1",
+											"cap2",
+										},
+										PciId: stringPtr("03:00.0"),
+									},
+								},
+								HostStorages: &[]infra.HoststorageResource{
+									{
+										Wwid:          stringPtr("abcd"),
+										CapacityBytes: stringPtr("200000"),
+										Model:         stringPtr("Model1"),
+										Serial:        stringPtr("123456"),
+										Vendor:        stringPtr("Vendor1"),
+									},
+								},
+								HostUsbs: &[]infra.HostusbResource{
+									{
+										Class:     stringPtr("Hub"),
+										Serial:    stringPtr("123456"),
+										IdVendor:  stringPtr("abcd"),
+										IdProduct: stringPtr("1234"),
+										Bus:       func() *int { i := 8; return &i }(),
+										Addr:      func() *int { i := 1; return &i }(),
 									},
 								},
 								HostStatus:                  stringPtr("Running"),
@@ -642,9 +763,13 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								RegistrationStatus:          stringPtr("Registered"),
 								RegistrationStatusIndicator: (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
 								SiteId:                      stringPtr("site-abc123"),
+								UserLvmSize:                 func() *int { i := 10; return &i }(), // 10GB in bytes
 								Instance: &infra.InstanceResource{
 									ResourceId: stringPtr("instance-abcd1234"),
 									InstanceID: stringPtr("instance-abcd1234"),
+									UpdatePolicy: &infra.OSUpdatePolicy{
+										ResourceId: stringPtr("updatepolicy-abc12345"),
+									},
 								},
 								Timestamps: &infra.Timestamps{
 									CreatedAt: timestampPtr(timestamp),
@@ -715,6 +840,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							RegistrationStatusIndicator: (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_IDLE")),
 							CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_UNKNOWN")),
 							CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
+							DesiredAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
 							Timestamps: &infra.Timestamps{
 								CreatedAt: timestampPtr(timestamp),
 								UpdatedAt: timestampPtr(timestamp),
@@ -1620,10 +1746,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							Os: &infra.OperatingSystemResource{
 								Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
 							},
-							CurrentOs: &infra.OperatingSystemResource{
-								Name:      stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
-								FixedCves: stringPtr(""),
-							},
 							ExistingCves: stringPtr(`[{"cve_id":"CVE-2021-1234","priority":"HIGH","affected_packages":["fluent-bit-3.1.9-11.emt3.x86_64"]}]`),
 						},
 					}, nil
@@ -1707,9 +1829,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									Os: &infra.OperatingSystemResource{
 										Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
 									},
-									CurrentOs: &infra.OperatingSystemResource{
-										Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
-									},
 								},
 								{
 									ResourceId:   stringPtr("instance-abcd5678"),
@@ -1765,8 +1884,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 										// Add other fields as needed based on the actual struct
 									},
 									Description: stringPtr("Monthly security updates for edge devices"),
-									StartTime:   timestampPtr(timestamp),
-									EndTime:     timestampPtr(timestamp),
+									StartTime:   func() *int { t := int(timestamp.Unix()); return &t }(),
+									EndTime:     func() *int { t := int(timestamp.Unix()); return &t }(),
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
@@ -1827,9 +1946,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									// Remove Version field if it doesn't exist in OSUpdatePolicy
 								},
 								Description:     stringPtr("Monthly security updates for edge devices"),
-								StartTime:       timestampPtr(timestamp),
-								EndTime:         timestampPtr(timestamp),
-								StatusTimestamp: timestampPtr(timestamp), // This field exists
+								StartTime:       func() *int { t := int(timestamp.Unix()); return &t }(),
+								EndTime:         func() *int { t := int(timestamp.Unix()); return &t }(),
+								StatusTimestamp: func() *int { t := int(timestamp.Unix()); return &t }(),
 								Timestamps: &infra.Timestamps{
 									CreatedAt: timestampPtr(timestamp),
 									UpdatedAt: timestampPtr(timestamp),
@@ -1908,14 +2027,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						JSON200: &infra.ListOSUpdatePolicyResponse{
 							OsUpdatePolicies: []infra.OSUpdatePolicy{
 								{
-									Name:            "security-policy-v1.2", // string, not *string
-									ResourceId:      stringPtr("osupdatepolicy-abc12345"),
-									Description:     stringPtr("Monthly security update policy"),
-									TargetOsId:      stringPtr("os-1234abcd"),
-									InstallPackages: stringPtr("curl wget vim"),
-									UpdatePolicy:    (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
-									UpdateSources:   &[]string{"https://updates.example.com"},
-									KernelCommand:   stringPtr("console=ttyS0"),
+									Name:          "security-policy-v1.2", // string, not *string
+									ResourceId:    stringPtr("osupdatepolicy-abc12345"),
+									Description:   stringPtr("Monthly security update policy"),
+									TargetOsId:    stringPtr("os-1234abcd"),
+									UpdatePolicy:  (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
+									UpdateSources: &[]string{"https://updates.example.com"},
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
@@ -1962,18 +2079,29 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								}(),
 							},
 						}, nil
+					case "osupdatepolicy-ccccaaaa":
+						return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: stringPtr("OS Update Policy not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
 					default:
 						return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
 							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 							JSON200: &infra.OSUpdatePolicy{
-								Name:            "security-policy-v1.2",
-								ResourceId:      stringPtr(policyId),
-								Description:     stringPtr("Monthly security update policy"),
-								TargetOsId:      stringPtr("os-1234abcd"),
-								InstallPackages: stringPtr("curl wget vim"),
-								UpdatePolicy:    (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
-								UpdateSources:   &[]string{"https://updates.example.com"},
-								KernelCommand:   stringPtr("console=ttyS0"),
+								Name:                "security-policy-v1.2",
+								ResourceId:          stringPtr(policyId),
+								Description:         stringPtr("Monthly security update policy"),
+								TargetOsId:          stringPtr("os-1234abcd"),
+								UpdatePackages:      stringPtr("curl wget vim"),
+								UpdatePolicy:        (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
+								UpdateSources:       &[]string{"https://updates.example.com"},
+								UpdateKernelCommand: stringPtr("console=ttyS0"),
 								Timestamps: &infra.Timestamps{
 									CreatedAt: timestampPtr(timestamp),
 									UpdatedAt: timestampPtr(timestamp),
@@ -2057,6 +2185,605 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 					default:
 						return &infra.OSUpdatePolicyDeleteOSUpdatePolicyResponse{
 							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ProviderServiceCreateProviderWithResponse (used by create provider command)
+		mockInfraClient.EXPECT().ProviderServiceCreateProviderWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, body infra.ProviderServiceCreateProviderJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ProviderServiceCreateProviderResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ProviderServiceCreateProviderResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.ProviderServiceCreateProviderResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.ProviderResource{
+							Name:           body.Name,
+							ApiEndpoint:    body.ApiEndpoint,
+							ProviderKind:   body.ProviderKind,
+							ProviderVendor: body.ProviderVendor,
+							ResourceId:     func(s string) *string { return &s }("provider-abc12345"),
+							Timestamps: &infra.Timestamps{
+								CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+								UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock ProviderServiceDeleteProviderWithResponse (used by delete provider command)
+		mockInfraClient.EXPECT().ProviderServiceDeleteProviderWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, providerId string, _ ...infra.RequestEditorFn) (*infra.ProviderServiceDeleteProviderResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ProviderServiceDeleteProviderResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch providerId {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ProviderServiceDeleteProviderResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Provider not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ProviderServiceDeleteProviderResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ProviderServiceGetProviderWithResponse (used by get provider command)
+		mockInfraClient.EXPECT().ProviderServiceGetProviderWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, providerId string, _ ...infra.RequestEditorFn) (*infra.ProviderServiceGetProviderResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ProviderServiceGetProviderResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch providerId {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ProviderServiceGetProviderResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Provider not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ProviderServiceGetProviderResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ProviderResource{
+								Name:           "provider",
+								ApiEndpoint:    "hello.com",
+								ProviderKind:   "PROVIDER_KIND_BAREMETAL",
+								Config:         func(s string) *string { return &s }("{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}"),
+								ProviderVendor: (*infra.ProviderVendor)(stringPtr("PROVIDER_VENDOR_UNSPECIFIED")),
+								ResourceId:     &providerId,
+								Timestamps: &infra.Timestamps{
+									CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+								},
+							},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ProviderServiceListProvidersWithResponse (used by list provider command)
+		mockInfraClient.EXPECT().ProviderServiceListProvidersWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, _ *infra.ProviderServiceListProvidersParams, _ ...infra.RequestEditorFn) (*infra.ProviderServiceListProvidersResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ProviderServiceListProvidersResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.ProviderServiceListProvidersResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListProvidersResponse{
+							Providers: []infra.ProviderResource{
+								{
+									Name:           "provider",
+									ApiEndpoint:    "hello.com",
+									ProviderKind:   "PROVIDER_KIND_BAREMETAL",
+									ProviderVendor: (*infra.ProviderVendor)(stringPtr("PROVIDER_VENDOR_UNSPECIFIED")),
+									ResourceId:     func(s string) *string { return &s }("provider-7ceae560"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+							},
+							TotalElements: 1,
+							HasNext:       false,
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceListWithResponse (used by list provider command)
+		mockInfraClient.EXPECT().ScheduleServiceListSchedulesWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, _ *infra.ScheduleServiceListSchedulesParams, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceListSchedulesResponse, error) {
+
+				name := "schedule"
+				rid := "repeatedsche-abcd1234"
+				sid := "singlesche-abcd1234"
+				site := "site-abcd1234"
+
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceListSchedulesResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.ScheduleServiceListSchedulesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListSchedulesResponse{
+							RepeatedSchedules: []infra.RepeatedScheduleResource{
+								{
+									CronDayMonth:    "1",
+									CronDayWeek:     "1",
+									CronHours:       "1",
+									CronMinutes:     "1",
+									CronMonth:       "1",
+									DurationSeconds: 1,
+									Name:            &name,
+									ResourceId:      &rid,
+									ScheduleStatus:  infra.SCHEDULESTATUSMAINTENANCE,
+									TargetHostId:    nil,
+									TargetRegionId:  nil,
+									TargetSiteId:    &site,
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+							},
+							SingleSchedules: []infra.SingleScheduleResource{
+								{
+									Name:           &name,
+									ResourceId:     &sid,
+									ScheduleStatus: infra.SCHEDULESTATUSMAINTENANCE,
+									TargetHostId:   nil,
+									TargetRegionId: nil,
+									TargetSiteId:   &site,
+									StartSeconds:   10000,
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+							},
+							TotalElements: 1,
+							HasNext:       false,
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceCreateRepeatedScheduleWithResponse
+		mockInfraClient.EXPECT().ScheduleServiceCreateRepeatedScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, body infra.ScheduleServiceCreateRepeatedScheduleJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceCreateRepeatedScheduleResponse, error) {
+
+				rid := "repeatedsche-abcd1234"
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceCreateRepeatedScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.ScheduleServiceCreateRepeatedScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.RepeatedScheduleResource{
+							CronDayMonth:    "1",
+							CronDayWeek:     "1",
+							CronHours:       "1",
+							CronMinutes:     "1",
+							CronMonth:       "1",
+							DurationSeconds: 1,
+							Name:            body.Name,
+							ResourceId:      &rid,
+							ScheduleStatus:  infra.SCHEDULESTATUSMAINTENANCE,
+							TargetHostId:    nil,
+							TargetRegionId:  nil,
+							TargetSiteId:    body.TargetSiteId,
+							Timestamps: &infra.Timestamps{
+								CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+								UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceCreateSingleScheduleWithResponse
+		mockInfraClient.EXPECT().ScheduleServiceCreateSingleScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, body infra.ScheduleServiceCreateSingleScheduleJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceCreateSingleScheduleResponse, error) {
+
+				rid := "repeatedsche-abcd1234"
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceCreateSingleScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					return &infra.ScheduleServiceCreateSingleScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
+						JSON200: &infra.SingleScheduleResource{
+							StartSeconds:   body.StartSeconds,
+							Name:           body.Name,
+							ResourceId:     &rid,
+							ScheduleStatus: infra.SCHEDULESTATUSMAINTENANCE,
+							TargetHostId:   nil,
+							TargetRegionId: nil,
+							TargetSiteId:   body.TargetSiteId,
+							Timestamps: &infra.Timestamps{
+								CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+								UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+							},
+						},
+					}, nil
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceDeleteRepeatedScheduleWithResponse (used by delete provider command)
+		mockInfraClient.EXPECT().ScheduleServiceDeleteRepeatedScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, scheduleId string, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceDeleteRepeatedScheduleResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceDeleteRepeatedScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch scheduleId {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ScheduleServiceDeleteRepeatedScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Schedule not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ScheduleServiceDeleteRepeatedScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceDeleteSingleScheduleWithResponse (used by delete provider command)
+		mockInfraClient.EXPECT().ScheduleServiceDeleteSingleScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, scheduleId string, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceDeleteSingleScheduleResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceDeleteSingleScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch scheduleId {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ScheduleServiceDeleteSingleScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Schedule not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ScheduleServiceDeleteSingleScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceGetSingleScheduleWithResponse
+		mockInfraClient.EXPECT().ScheduleServiceGetSingleScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, id string, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceGetSingleScheduleResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceGetSingleScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					name := "schedule"
+					site := "site-abcd1234"
+					switch id {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ScheduleServiceGetSingleScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Provider not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ScheduleServiceGetSingleScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.SingleScheduleResource{
+								StartSeconds:   1,
+								Name:           &name,
+								ResourceId:     &id,
+								ScheduleStatus: infra.SCHEDULESTATUSMAINTENANCE,
+								TargetHostId:   nil,
+								TargetRegionId: nil,
+								TargetSiteId:   &site,
+							},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServiceGetRepeatedScheduleWithResponse
+		mockInfraClient.EXPECT().ScheduleServiceGetRepeatedScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, id string, _ ...infra.RequestEditorFn) (*infra.ScheduleServiceGetRepeatedScheduleResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServiceGetRepeatedScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					name := "schedule"
+					site := "site-abcd1234"
+					switch id {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ScheduleServiceGetRepeatedScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Provider not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ScheduleServiceGetRepeatedScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.RepeatedScheduleResource{
+								CronDayMonth:    "1",
+								CronDayWeek:     "1",
+								CronHours:       "1",
+								CronMinutes:     "1",
+								CronMonth:       "1",
+								DurationSeconds: 1,
+								Name:            &name,
+								ResourceId:      &id,
+								ScheduleStatus:  infra.SCHEDULESTATUSMAINTENANCE,
+								TargetHostId:    nil,
+								TargetRegionId:  nil,
+								TargetSiteId:    &site,
+							},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServicePatchSingleScheduleWithResponse
+		mockInfraClient.EXPECT().ScheduleServicePatchSingleScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, id string, body infra.ScheduleServicePatchSingleScheduleJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ScheduleServicePatchSingleScheduleResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServicePatchSingleScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch id {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ScheduleServicePatchSingleScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Provider not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ScheduleServicePatchSingleScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.SingleScheduleResource{
+								StartSeconds:   body.StartSeconds,
+								Name:           body.Name,
+								ScheduleStatus: body.ScheduleStatus,
+							},
+						}, nil
+					}
+				}
+			},
+		).AnyTimes()
+
+		// Mock ScheduleServicePatchRepeatedScheduleWithResponse
+		mockInfraClient.EXPECT().ScheduleServicePatchRepeatedScheduleWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, projectName string, id string, body infra.ScheduleServicePatchRepeatedScheduleJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ScheduleServicePatchRepeatedScheduleResponse, error) {
+				switch projectName {
+				case "invalid-project":
+					return &infra.ScheduleServicePatchRepeatedScheduleResponse{
+						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+						JSONDefault: &infra.ConnectError{
+							Message: func(s string) *string { return &s }("Project not found"),
+							Code: func() *infra.ConnectErrorCode {
+								code := infra.Unknown
+								return &code
+							}(),
+						},
+					}, nil
+				default:
+					switch id {
+					case "nonexistent-provider", "invalid-provider-id":
+						return &infra.ScheduleServicePatchRepeatedScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+							JSONDefault: &infra.ConnectError{
+								Message: func(s string) *string { return &s }("Provider not found"),
+								Code: func() *infra.ConnectErrorCode {
+									code := infra.NotFound
+									return &code
+								}(),
+							},
+						}, nil
+					default:
+						return &infra.ScheduleServicePatchRepeatedScheduleResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.RepeatedScheduleResource{
+								CronDayMonth:    body.CronDayMonth,
+								CronDayWeek:     body.CronDayWeek,
+								CronHours:       body.CronHours,
+								CronMinutes:     body.CronMinutes,
+								CronMonth:       body.CronMonth,
+								DurationSeconds: body.DurationSeconds,
+								Name:            body.Name,
+								ScheduleStatus:  body.ScheduleStatus,
+							},
 						}, nil
 					}
 				}

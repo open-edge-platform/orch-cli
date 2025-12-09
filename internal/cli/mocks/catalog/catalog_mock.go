@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 package catalog
 
 import (
@@ -5,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time" // Make sure this import is present
 
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
@@ -13,8 +17,14 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func applicationKindPtr(k catapi.ApplicationKind) *catapi.ApplicationKind { return &k }
-func boolPtr(b bool) *bool                                                { return &b }
+// State tracking for mock behavior
+var (
+	createdProfiles = make(map[string][]catapi.CatalogV3DeploymentProfile)
+	mockStateMutex  sync.RWMutex
+)
+
+func applicationKindPtr(k catapi.CatalogV3Kind) *catapi.CatalogV3Kind { return &k }
+func boolPtr(b bool) *bool                                            { return &b }
 
 func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 	return func(cmd *cobra.Command) (context.Context, catapi.ClientWithResponsesInterface, string, error) {
@@ -53,8 +63,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 				name, displayName, regType := getRegistryInfo(registryName)
 				resp := &catapi.CatalogServiceGetRegistryResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &catapi.GetRegistryResponse{
-						Registry: catapi.Registry{
+					JSON200: &catapi.CatalogV3GetRegistryResponse{
+						Registry: catapi.CatalogV3Registry{
 							Name:        name,
 							DisplayName: stringPtr(displayName),
 							Description: stringPtr("new-description"),
@@ -77,7 +87,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		).DoAndReturn(
 			func(_ context.Context, _ string, params *catapi.CatalogServiceListRegistriesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListRegistriesResponse, error) {
 				// You may want to simulate both registries in the list
-				registries := []catapi.Registry{}
+				registries := []catapi.CatalogV3Registry{}
 				for _, registryName := range []string{"registry-image", "registry-helm"} {
 					name, displayName, regType := getRegistryInfo(registryName)
 					var authToken, username *string
@@ -88,7 +98,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 						authToken = stringPtr("********")
 						username = stringPtr("<none>")
 					}
-					registries = append(registries, catapi.Registry{
+					registries = append(registries, catapi.CatalogV3Registry{
 						Name:        name,
 						DisplayName: stringPtr(displayName),
 						Description: stringPtr("Registry-Description"),
@@ -102,7 +112,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 				}
 				resp := &catapi.CatalogServiceListRegistriesResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &catapi.ListRegistriesResponse{
+					JSON200: &catapi.CatalogV3ListRegistriesResponse{
 						Registries: registries,
 					},
 				}
@@ -125,8 +135,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 				name, displayName, regType := getRegistryInfo(registryName)
 				resp := &catapi.CatalogServiceCreateRegistryResponse{
 					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
-					JSON200: &catapi.CreateRegistryResponse{
-						Registry: catapi.Registry{
+					JSON200: &catapi.CatalogV3CreateRegistryResponse{
+						Registry: catapi.CatalogV3Registry{
 							Name:        name,
 							DisplayName: stringPtr(displayName),
 							Description: stringPtr("Registry-Description"),
@@ -182,13 +192,13 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 				description := "Profile.Description"
 				chartValues := "dmFsdWVzOiAxCnZhbDoy" // You can set a base64 string if needed
 
-				profiles := []catapi.Profile{
+				profiles := []catapi.CatalogV3Profile{
 					{
 						Name:        "new-profile",
 						DisplayName: &displayName,
 						Description: &description,
 						ChartValues: &chartValues,
-						DeploymentRequirement: &[]catapi.DeploymentRequirement{
+						DeploymentRequirement: &[]catapi.CatalogV3DeploymentRequirement{
 							{
 								Name:                  "requirement",
 								Version:               "1.2.3",
@@ -197,7 +207,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 						},
 						CreateTime: timePtr(testTime),
 						UpdateTime: timePtr(testTime),
-						ParameterTemplates: &[]catapi.ParameterTemplate{
+						ParameterTemplates: &[]catapi.CatalogV3ParameterTemplate{
 							{
 								Name:            "param1",
 								DisplayName:     stringPtr("Parameter 1"),
@@ -211,8 +221,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 
 				return &catapi.CatalogServiceGetApplicationResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &catapi.GetApplicationResponse{
-						Application: catapi.Application{
+					JSON200: &catapi.CatalogV3GetApplicationResponse{
+						Application: catapi.CatalogV3Application{
 							Name:               appName,
 							Version:            appVersion,
 							DisplayName:        &displayName,
@@ -257,7 +267,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			func(_ context.Context, _ string, _ interface{}, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateApplicationResponse, error) {
 				return &catapi.CatalogServiceCreateApplicationResponse{
 					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
-					JSON200:      &catapi.CreateApplicationResponse{
+					JSON200:      &catapi.CatalogV3CreateApplicationResponse{
 						// Fill with mock application data as needed
 					},
 				}, nil
@@ -270,19 +280,19 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			func(_ context.Context, _ string, _ *catapi.CatalogServiceListApplicationsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListApplicationsResponse, error) {
 				return &catapi.CatalogServiceListApplicationsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &catapi.ListApplicationsResponse{
-						Applications: []catapi.Application{
+					JSON200: &catapi.CatalogV3ListApplicationsResponse{
+						Applications: []catapi.CatalogV3Application{
 							{
 								Name:               "new-application",
 								Version:            "1.2.3",
-								Kind:               applicationKindPtr(catapi.ApplicationKindKINDNORMAL),
+								Kind:               applicationKindPtr(catapi.KINDNORMAL),
 								DisplayName:        stringPtr("application.display.name"),
 								Description:        stringPtr("Application.Description"),
 								ChartName:          "chart-name",
 								ChartVersion:       "22.33.44",
 								HelmRegistryName:   "test-registry",
 								ImageRegistryName:  nil,
-								Profiles:           &[]catapi.Profile{},
+								Profiles:           &[]catapi.CatalogV3Profile{},
 								DefaultProfileName: stringPtr(""),
 								CreateTime:         timePtr(testTime),
 								UpdateTime:         timePtr(testTime),
@@ -290,14 +300,14 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							{
 								Name:               "addon-app",
 								Version:            "1.0.0",
-								Kind:               applicationKindPtr(catapi.ApplicationKindKINDADDON),
+								Kind:               applicationKindPtr(catapi.KINDADDON),
 								DisplayName:        stringPtr("addon.display.name"),
 								Description:        stringPtr("Addon Description"),
 								ChartName:          "addon-chart",
 								ChartVersion:       "1.0.0",
 								HelmRegistryName:   "addon-registry",
 								ImageRegistryName:  nil,
-								Profiles:           &[]catapi.Profile{},
+								Profiles:           &[]catapi.CatalogV3Profile{},
 								DefaultProfileName: stringPtr(""),
 								CreateTime:         timePtr(testTime),
 								UpdateTime:         timePtr(testTime),
@@ -305,14 +315,14 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							{
 								Name:               "extension-app",
 								Version:            "2.0.0",
-								Kind:               applicationKindPtr(catapi.ApplicationKindKINDEXTENSION),
+								Kind:               applicationKindPtr(catapi.KINDEXTENSION),
 								DisplayName:        stringPtr("extension.display.name"),
 								Description:        stringPtr("Extension Description"),
 								ChartName:          "extension-chart",
 								ChartVersion:       "2.0.0",
 								HelmRegistryName:   "extension-registry",
 								ImageRegistryName:  nil,
-								Profiles:           &[]catapi.Profile{},
+								Profiles:           &[]catapi.CatalogV3Profile{},
 								DefaultProfileName: stringPtr(""),
 								CreateTime:         timePtr(testTime),
 								UpdateTime:         timePtr(testTime),
@@ -330,19 +340,19 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			func(_ context.Context, _ string, _ string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetApplicationVersionsResponse, error) {
 				return &catapi.CatalogServiceGetApplicationVersionsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &catapi.GetApplicationVersionsResponse{
-						Application: []catapi.Application{
+					JSON200: &catapi.CatalogV3GetApplicationVersionsResponse{
+						Application: []catapi.CatalogV3Application{
 							{
 								Name:               "new-application",
 								Version:            "1.2.3",
-								Kind:               applicationKindPtr(catapi.ApplicationKindKINDNORMAL),
+								Kind:               applicationKindPtr(catapi.KINDNORMAL),
 								DisplayName:        stringPtr("application.display.name"),
 								Description:        stringPtr("Application.Description"),
 								ChartName:          "chart-name",
 								ChartVersion:       "22.33.44",
 								HelmRegistryName:   "test-registry",
 								ImageRegistryName:  nil,
-								Profiles:           &[]catapi.Profile{},
+								Profiles:           &[]catapi.CatalogV3Profile{},
 								DefaultProfileName: stringPtr(""),
 								CreateTime:         timePtr(testTime),
 								UpdateTime:         timePtr(testTime),
@@ -372,7 +382,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			func(_ context.Context, _ string, _ catapi.CatalogServiceCreateDeploymentPackageJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateDeploymentPackageResponse, error) {
 				return &catapi.CatalogServiceCreateDeploymentPackageResponse{
 					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
-					JSON200:      &catapi.CreateDeploymentPackageResponse{
+					JSON200:      &catapi.CatalogV3CreateDeploymentPackageResponse{
 						// Fill with mock deployment package data as needed
 					},
 				}, nil
@@ -383,28 +393,46 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(_ context.Context, _ string, deploymentPackageName string, version string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetDeploymentPackageResponse, error) {
+				// Get the tracked profiles for this package
+				mockStateMutex.RLock()
+				key := deploymentPackageName + ":" + version
+				profiles, exists := createdProfiles[key]
+				mockStateMutex.RUnlock()
+
+				// If no tracked profiles, use default profiles
+				if !exists {
+					profiles = []catapi.CatalogV3DeploymentProfile{
+						{
+							Name:                "deployment-package-profile",
+							DisplayName:         stringPtr("deployment.profile.display.name"),
+							Description:         stringPtr("Profile.for.testing"),
+							CreateTime:          timePtr(testTime),
+							UpdateTime:          timePtr(testTime),
+							ApplicationProfiles: map[string]string{},
+						},
+						{
+							Name:                "test-deployment-profile",
+							DisplayName:         stringPtr("test.deployment.profile.display.name"),
+							Description:         stringPtr("Test.Profile.for.testing"),
+							CreateTime:          timePtr(testTime),
+							UpdateTime:          timePtr(testTime),
+							ApplicationProfiles: map[string]string{},
+						},
+					}
+				}
 
 				return &catapi.CatalogServiceGetDeploymentPackageResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &catapi.GetDeploymentPackageResponse{
-						DeploymentPackage: catapi.DeploymentPackage{
-							Name:        deploymentPackageName,
-							Version:     version,
-							DisplayName: stringPtr("displayName"),
-							Description: stringPtr("description"),
-							Profiles: &[]catapi.DeploymentProfile{
-								{
-									Name:                "deployment-package-profile",
-									DisplayName:         stringPtr("deployment.profile.display.name"),
-									Description:         stringPtr("Profile.for.testing"),
-									CreateTime:          timePtr(testTime),
-									UpdateTime:          timePtr(testTime),
-									ApplicationProfiles: map[string]string{},
-								},
-							},
+					JSON200: &catapi.CatalogV3GetDeploymentPackageResponse{
+						DeploymentPackage: catapi.CatalogV3DeploymentPackage{
+							Name:                    deploymentPackageName,
+							Version:                 version,
+							DisplayName:             stringPtr("displayName"),
+							Description:             stringPtr("description"),
+							Profiles:                &profiles,
 							DefaultProfileName:      stringPtr("default-profile"),
-							ApplicationDependencies: &[]catapi.ApplicationDependency{},
-							ApplicationReferences: []catapi.ApplicationReference{
+							ApplicationDependencies: &[]catapi.CatalogV3ApplicationDependency{},
+							ApplicationReferences: []catapi.CatalogV3ApplicationReference{
 								{Name: "app1", Version: "1.0"},
 								{Name: "app2", Version: "1.0"},
 							},
@@ -418,7 +446,31 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceUpdateDeploymentPackageWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ string, _ string, _ catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
+			func(_ context.Context, _ string, pkgName string, version string, body catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
+				// Track the profiles from the update request
+				mockStateMutex.Lock()
+				key := pkgName + ":" + version
+				if body.Profiles != nil {
+					// Ensure all profiles have required fields set
+					profiles := make([]catapi.CatalogV3DeploymentProfile, len(*body.Profiles))
+					for i, profile := range *body.Profiles {
+						profiles[i] = profile
+						// Ensure time fields are set if they're nil
+						if profiles[i].CreateTime == nil {
+							profiles[i].CreateTime = timePtr(testTime)
+						}
+						if profiles[i].UpdateTime == nil {
+							profiles[i].UpdateTime = timePtr(testTime)
+						}
+						// Ensure ApplicationProfiles is not nil
+						if profiles[i].ApplicationProfiles == nil {
+							profiles[i].ApplicationProfiles = map[string]string{}
+						}
+					}
+					createdProfiles[key] = profiles
+				}
+				mockStateMutex.Unlock()
+
 				respBody, err := json.Marshal(struct {
 					Success bool   `json:"success"`
 					Message string `json:"message"`
@@ -440,32 +492,51 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(_ context.Context, _ string, _ *catapi.CatalogServiceListDeploymentPackagesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListDeploymentPackagesResponse, error) {
+				// Get the tracked profiles for deployment-pkg:1.0.0
+				mockStateMutex.RLock()
+				key := "deployment-pkg:1.0.0"
+				profiles, exists := createdProfiles[key]
+				mockStateMutex.RUnlock()
+
+				// If no tracked profiles, use default profiles
+				if !exists {
+					profiles = []catapi.CatalogV3DeploymentProfile{
+						{
+							Name:                "deployment-package-profile",
+							DisplayName:         stringPtr("deployment.profile.display.name"),
+							Description:         stringPtr("Profile.for.testing"),
+							CreateTime:          timePtr(testTime),
+							UpdateTime:          timePtr(testTime),
+							ApplicationProfiles: map[string]string{},
+						},
+						{
+							Name:                "test-deployment-profile",
+							DisplayName:         stringPtr("test.deployment.profile.display.name"),
+							Description:         stringPtr("Test.Profile.for.testing"),
+							CreateTime:          timePtr(testTime),
+							UpdateTime:          timePtr(testTime),
+							ApplicationProfiles: map[string]string{},
+						},
+					}
+				}
+
 				return &catapi.CatalogServiceListDeploymentPackagesResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &catapi.ListDeploymentPackagesResponse{
-						DeploymentPackages: []catapi.DeploymentPackage{
+					JSON200: &catapi.CatalogV3ListDeploymentPackagesResponse{
+						DeploymentPackages: []catapi.CatalogV3DeploymentPackage{
 							{
-								Name:        "deployment-pkg",
-								Version:     "1.0",
-								DisplayName: stringPtr("deployment.package.display.name"),
-								Description: stringPtr("Publisher.for.testing"),
-								Profiles: &[]catapi.DeploymentProfile{
-									{
-										Name:                "deployment-package-profile",
-										DisplayName:         stringPtr("deployment.profile.display.name"),
-										Description:         stringPtr("Profile.for.testing"),
-										CreateTime:          timePtr(testTime),
-										UpdateTime:          timePtr(testTime),
-										ApplicationProfiles: map[string]string{},
-									},
+								Name:                    "deployment-pkg",
+								Version:                 "1.0.0",
+								DisplayName:             stringPtr("deployment.package.display.name"),
+								Description:             stringPtr("Publisher.for.testing"),
+								Profiles:                &profiles,
+								ApplicationDependencies: &[]catapi.CatalogV3ApplicationDependency{},
+								ApplicationReferences: []catapi.CatalogV3ApplicationReference{
+									{Name: "app1", Version: "1.0.0"},
+									{Name: "app2", Version: "1.0.0"},
 								},
-								ApplicationDependencies: &[]catapi.ApplicationDependency{},
-								ApplicationReferences: []catapi.ApplicationReference{
-									{Name: "app1", Version: "1.0"},
-									{Name: "app2", Version: "1.0"},
-								},
-								Artifacts:          []catapi.ArtifactReference{},
-								Extensions:         []catapi.APIExtension{},
+								Artifacts:          []catapi.CatalogV3ArtifactReference{},
+								Extensions:         []catapi.CatalogV3APIExtension{},
 								IsDeployed:         boolPtr(false),
 								IsVisible:          boolPtr(true),
 								DefaultProfileName: stringPtr("default-profile"),
@@ -495,14 +566,14 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			func(_ context.Context, _ string, deploymentPackageName string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetDeploymentPackageVersionsResponse, error) {
 				return &catapi.CatalogServiceGetDeploymentPackageVersionsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &catapi.GetDeploymentPackageVersionsResponse{
-						DeploymentPackages: []catapi.DeploymentPackage{
+					JSON200: &catapi.CatalogV3GetDeploymentPackageVersionsResponse{
+						DeploymentPackages: []catapi.CatalogV3DeploymentPackage{
 							{
 								Name:        deploymentPackageName,
 								Version:     "1.0",
 								DisplayName: stringPtr("deployment.package.display.name"),
 								Description: stringPtr("Publisher.for.testing"),
-								Profiles: &[]catapi.DeploymentProfile{
+								Profiles: &[]catapi.CatalogV3DeploymentProfile{
 									{
 										Name:                "deployment-package-profile",
 										DisplayName:         stringPtr("deployment.profile.display.name"),
@@ -525,7 +596,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			func(_ context.Context, _ string, _ catapi.CatalogServiceCreateArtifactJSONRequestBody, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceCreateArtifactResponse, error) {
 				return &catapi.CatalogServiceCreateArtifactResponse{
 					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
-					JSON200:      &catapi.CreateArtifactResponse{
+					JSON200:      &catapi.CatalogV3CreateArtifactResponse{
 						// Fill with mock artifact data as needed
 					},
 				}, nil
@@ -538,8 +609,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			func(_ context.Context, _ string, _ *catapi.CatalogServiceListArtifactsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListArtifactsResponse, error) {
 				return &catapi.CatalogServiceListArtifactsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &catapi.ListArtifactsResponse{
-						Artifacts: []catapi.Artifact{
+					JSON200: &catapi.CatalogV3ListArtifactsResponse{
+						Artifacts: []catapi.CatalogV3Artifact{
 
 							{
 								Name:        "artifact",
@@ -562,8 +633,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			func(_ context.Context, _ string, artifactName string, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceGetArtifactResponse, error) {
 				return &catapi.CatalogServiceGetArtifactResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &catapi.GetArtifactResponse{
-						Artifact: catapi.Artifact{
+					JSON200: &catapi.CatalogV3GetArtifactResponse{
+						Artifact: catapi.CatalogV3Artifact{
 							Name:        artifactName,
 							DisplayName: stringPtr("artifact-display-name"),
 							Description: stringPtr("Artifact-Description"),

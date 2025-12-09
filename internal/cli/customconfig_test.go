@@ -5,6 +5,7 @@ package cli
 
 import (
 	"fmt"
+	"testing"
 )
 
 func (s *CLITestSuite) createCustomConfig(project string, name string, path string, args commandArgs) (string, error) {
@@ -130,4 +131,57 @@ func (s *CLITestSuite) TestCustomConfig() {
 	_, err = s.deleteCustomConfig(project, "nonexistent-config", make(map[string]string))
 	s.EqualError(err, "no custom config matches the given name")
 
+}
+
+func FuzzCustomConfig(f *testing.F) {
+	// Seed with valid and invalid input combinations
+	f.Add("test-config", "./testdata/cloudinit.yaml", "description", project)
+	f.Add("", "./testdata/cloudinit.yaml", "", project)
+	f.Add("test-config", "", "", project)
+	f.Add("test-config", "blabla", "asfsf", "")
+
+	f.Fuzz(func(t *testing.T, configName, path, description, publisher string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		args := map[string]string{
+			"description": description,
+		}
+
+		// --- Create CustomConfig ---
+		_, err := testSuite.createCustomConfig(publisher, configName, path, args)
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- List CustomConfig ---
+		_, err = testSuite.listCustomConfig(publisher, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- Get CustomConfig ---
+		_, err = testSuite.getCustomConfig(publisher, configName, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- Delete CustomConfig ---
+		_, err = testSuite.deleteCustomConfig(publisher, configName, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+	})
 }

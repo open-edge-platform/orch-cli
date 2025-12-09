@@ -20,7 +20,7 @@ func (s *CLITestSuite) createArtifact(project string, artifactName string, args 
 }
 
 func (s *CLITestSuite) listArtifacts(project string, verbose bool, orderBy string, filter string) (string, error) {
-	args := `get artifacts --project ` + project
+	args := `list artifacts --project ` + project
 	if verbose {
 		args = args + " -v"
 	}
@@ -128,7 +128,7 @@ func (s *CLITestSuite) TestArtifact() {
 }
 
 func TestPrintArtifactEvent(t *testing.T) {
-	artifact := catapi.Artifact{
+	artifact := catapi.CatalogV3Artifact{
 		Name:        "test-artifact",
 		DisplayName: strPtr("Test Artifact"),
 		Description: strPtr("A test artifact"),

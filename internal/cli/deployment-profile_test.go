@@ -17,7 +17,7 @@ func (s *CLITestSuite) createDeploymentProfile(pubName string, pkgName string, p
 }
 
 func (s *CLITestSuite) listDeploymentProfiles(pubName string, pkgName string, pkgVersion string, verbose bool) (string, error) {
-	args := fmt.Sprintf(`get deployment-package-profiles --project %s %s %s`,
+	args := fmt.Sprintf(`list deployment-package-profiles --project %s %s %s`,
 		pubName, pkgName, pkgVersion)
 	if verbose {
 		args = args + " -v"
@@ -47,10 +47,10 @@ func (s *CLITestSuite) TestDeploymentProfile() {
 		app1                         = "app1"
 		pubName                      = "pubtest"
 		pkgName                      = "deployment-pkg"
-		pkgVersion                   = "1.0"
-		pkgProfileName               = "deployment-package-profile"
-		deploymentProfileDisplayName = "deployment.profile.display.name"
-		deploymentProfileDescription = "Profile.for.testing"
+		pkgVersion                   = "1.0.0"
+		pkgProfileName               = "new-test-deployment-profile"
+		deploymentProfileDisplayName = "test.deployment.profile.display.name"
+		deploymentProfileDescription = "Test.Profile.for.testing"
 	)
 
 	// create test application and a deployment package
@@ -58,7 +58,7 @@ func (s *CLITestSuite) TestDeploymentProfile() {
 	s.NoError(s.createTestApplication(pubName, app1))
 	s.NoError(s.createTestDeploymentPackage(pubName, pkgName, pkgVersion, app1, pkgVersion))
 
-	// create a deployment profile
+	// Test against existing deployment profile in mock data, then create a new one
 	createArgs := map[string]string{
 		"display-name": deploymentProfileDisplayName,
 		"description":  deploymentProfileDescription,
@@ -107,32 +107,22 @@ func (s *CLITestSuite) TestDeploymentProfile() {
 	err = s.updateDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName, updateArgs)
 	s.NoError(err)
 
-	// check that the deployment profile was updated
+	// check that the deployment profile exists
 	_, err = s.getDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName)
 	s.NoError(err)
-	// TODOCommenting out not viable to mock at this moment
-	// parsedGetOutput := mapCliOutput(getCmdOutput)
-	// expectedOutput[pkgProfileName]["Display Name"] = `new.display-name`
-	// s.compareOutput(expectedOutput, parsedGetOutput)
 
 	// delete the deployment profile
 	err = s.deleteDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName)
 	s.NoError(err)
-
-	// /Commenting out fot now not viable to mock
-	// // Make sure deployment profile is gone
-	// _, err = s.getDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName)
-	// s.Error(err)
-	// s.Contains(err.Error(), ` not found`)
 }
 
 func FuzzDeploymentProfile(f *testing.F) {
 	// Seed with valid and invalid input combinations
-	f.Add("pubtest", "deployment-pkg", "1.0", "deployment-package-profile", "display.name", "desc")
-	f.Add("", "deployment-pkg", "1.0", "deployment-package-profile", "display.name", "desc")     // missing pubName
-	f.Add("pubtest", "", "1.0", "deployment-package-profile", "display.name", "desc")            // missing pkgName
-	f.Add("pubtest", "deployment-pkg", "", "deployment-package-profile", "display.name", "desc") // missing pkgVersion
-	f.Add("pubtest", "deployment-pkg", "1.0", "", "display.name", "desc")                        // missing pkgProfileName
+	f.Add("pubtest", "deployment-pkg", "1.0.0", "fuzz-test-deployment-profile", "display.name", "desc")
+	f.Add("", "deployment-pkg", "1.0.0", "fuzz-test-deployment-profile", "display.name", "desc")   // missing pubName
+	f.Add("pubtest", "", "1.0.0", "fuzz-test-deployment-profile", "display.name", "desc")          // missing pkgName
+	f.Add("pubtest", "deployment-pkg", "", "fuzz-test-deployment-profile", "display.name", "desc") // missing pkgVersion
+	f.Add("pubtest", "deployment-pkg", "1.0.0", "", "display.name", "desc")                        // missing pkgProfileName
 
 	f.Fuzz(func(t *testing.T, pubName, pkgName, pkgVersion, pkgProfileName, displayName, description string) {
 		testSuite := new(CLITestSuite)

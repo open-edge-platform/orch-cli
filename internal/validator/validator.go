@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -57,7 +58,7 @@ func SanitizeEntries(entries []types.HostRecord) ([]types.HostRecord, error) {
 		errMsg := ""
 		sanitizedRecord := record
 
-		// if line has anything other than Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,AMTEnable,CloudInitMeta,K8sClusterTemplate terminate
+		// if line has anything other than Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSIZE,CloudInitMeta,K8sClusterTemplate terminate
 		if record.Error != "" {
 			return nil, e.NewCustomError(e.ErrNoComment)
 		}
@@ -99,6 +100,16 @@ func SanitizeEntries(entries []types.HostRecord) ([]types.HostRecord, error) {
 			sanitizedRecord.Site = siteID
 		} else {
 			errMsg = fmt.Sprintf("%s %s;", errMsg, e.NewCustomError(e.ErrSiteRequired).Error())
+		}
+
+		// Check if LVM Size is an integer and non-negative
+		if record.LVMSize != "" {
+			lvmSize := strings.Trim(record.LVMSize, TRIMSET)
+			if _, err := strconv.Atoi(lvmSize); err != nil {
+				errMsg = fmt.Sprintf("%s%s;", errMsg, e.NewCustomError(e.ErrInvalidLVMSize).Error())
+			} else {
+				sanitizedRecord.LVMSize = lvmSize
+			}
 		}
 
 		//Check if Cluster Template is valid
@@ -195,4 +206,18 @@ func CheckCSV(filename string, globalOverrides types.HostRecord) ([]types.HostRe
 		fmt.Printf("Generating error file: %s\n", newFilename)
 	}
 	return validated, errVal
+}
+
+// Version pattern as defined in catalog OpenAPI spec
+// Allows: 1.0.0, v1.0.0, 2.0.0-rc1, 2.0.0-pre-rc1, 2.0.0+build.123
+const VERSIONPATTERN = `^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+(-[a-z0-9]+)*)?(\+[a-z0-9]+([.-][a-z0-9]+)*)?$`
+
+// ValidateVersion validates that a version string matches the semantic versioning pattern
+// used by the catalog service. Returns an error if the version is invalid.
+func ValidateVersion(version string) error {
+	versionRe := regexp.MustCompile(VERSIONPATTERN)
+	if !versionRe.MatchString(version) {
+		return fmt.Errorf("invalid version format '%s'. Valid formats: 1.0.0, v1.0.0, 2.0.0-rc1, 2.0.0-pre-rc1 (semantic versioning with optional 'v' prefix)", version)
+	}
+	return nil
 }

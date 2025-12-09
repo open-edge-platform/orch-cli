@@ -39,6 +39,8 @@ const (
 	ErrOSProfileRequired
 	ErrSiteRequired
 	ErrInvalidClusterTemplate
+	ErrInvalidLVMSize
+	ErrInvalidOSUpdatePolicy
 )
 
 var errorMessages = map[ErrorCode]string{
@@ -70,6 +72,8 @@ var errorMessages = map[ErrorCode]string{
 	ErrOSProfileRequired:      "OS Profile is required",
 	ErrSiteRequired:           "Site is required",
 	ErrInvalidClusterTemplate: "Invalid cluster template",
+	ErrInvalidLVMSize:         "Invalid LVM Size",
+	ErrInvalidOSUpdatePolicy:  "Invalid OS Update Policy",
 }
 
 type CustomError struct {

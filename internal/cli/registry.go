@@ -19,6 +19,7 @@ func getCreateRegistryCommand() *cobra.Command {
 		Short:   "Create a registry",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli create registry my-registry --root-url https://my-registry.example.com --username my-user --auth-token my-token --project some-project",
+		Aliases: registryAliases,
 		RunE:    runCreateRegistryCommand,
 	}
 	addEntityFlags(cmd, "registry")
@@ -36,7 +37,7 @@ func getCreateRegistryCommand() *cobra.Command {
 func getListRegistriesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "registries [flags]",
-		Aliases: []string{"regs"},
+		Aliases: registryAliases,
 		Short:   "List all registries",
 		Example: "orch-cli list registries --project some-project --order-by name",
 		RunE:    runListRegistriesCommand,
@@ -52,7 +53,7 @@ func getGetRegistryCommand() *cobra.Command {
 		Short:   "Get a registry",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli get registry my-registry --project some-project",
-		Aliases: []string{"reg"},
+		Aliases: registryAliases,
 		RunE:    runGetRegistryCommand,
 	}
 	cmd.Flags().Bool("show-sensitive-info", false, "show sensitive info, e.g. auth-token, CA certs")
@@ -65,6 +66,7 @@ func getSetRegistryCommand() *cobra.Command {
 		Short:   "Update a registry",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli set registry my-registry --root-url https://my-registry.example.com --username my-user --auth-token my-token --project some-project",
+		Aliases: registryAliases,
 		RunE:    runSetRegistryCommand,
 	}
 	addEntityFlags(cmd, "registry")
@@ -84,7 +86,7 @@ func getDeleteRegistryCommand() *cobra.Command {
 		Short:   "Delete a registry",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli delete registry my-registry --project some-project",
-		Aliases: []string{"del-reg", "rm-reg"},
+		Aliases: registryAliases,
 		RunE:    runDeleteRegistryCommand,
 	}
 	return cmd
@@ -93,7 +95,7 @@ func getDeleteRegistryCommand() *cobra.Command {
 var registryHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
 	"Name", "Display Name", "Description", "Type", "Root URL")
 
-func printRegistries(writer io.Writer, registryList *[]catapi.Registry, verbose bool, showSensitive bool) {
+func printRegistries(writer io.Writer, registryList *[]catapi.CatalogV3Registry, verbose bool, showSensitive bool) {
 	for _, r := range *registryList {
 		if !verbose {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", r.Name,
@@ -171,7 +173,7 @@ func runCreateRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating registry %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating registry %s", name))
 }
 
 func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
@@ -225,7 +227,7 @@ func runGetRegistryCommand(cmd *cobra.Command, args []string) error {
 		registryHeader, fmt.Sprintf("error getting registry %s", name)); !proceed {
 		return err
 	}
-	printRegistries(writer, &[]catapi.Registry{resp.JSON200.Registry}, verbose, showSensitive)
+	printRegistries(writer, &[]catapi.CatalogV3Registry{resp.JSON200.Registry}, verbose, showSensitive)
 	return writer.Flush()
 }
 
@@ -242,11 +244,17 @@ func runSetRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("registry %s not found", name)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("registry %s not found", name)); err != nil {
 		return err
 	}
 
 	registry := gresp.JSON200.Registry
+
+	// Get registry type - use flag value if provided, otherwise keep existing
+	registryType := registry.Type
+	if cmd.Flags().Changed("registry-type") {
+		registryType = getRegistryType(cmd)
+	}
 
 	resp, _ := catalogClient.CatalogServiceUpdateRegistryWithResponse(ctx, projectName, name,
 		catapi.CatalogServiceUpdateRegistryJSONRequestBody{
@@ -258,13 +266,13 @@ func runSetRegistryCommand(cmd *cobra.Command, args []string) error {
 			Username:     getFlagOrDefault(cmd, "username", registry.Username),
 			AuthToken:    getFlagOrDefault(cmd, "auth-token", registry.AuthToken),
 			Cacerts:      getFlagOrDefault(cmd, "ca-certs", registry.Cacerts),
-			Type:         registry.Type,
+			Type:         registryType,
 			ApiType:      getFlagOrDefault(cmd, "api-type", registry.ApiType),
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while updating registry %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating registry %s", name))
 }
 
 func runDeleteRegistryCommand(cmd *cobra.Command, args []string) error {
@@ -279,7 +287,7 @@ func runDeleteRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("registry %s not found", name)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("registry %s not found", name)); err != nil {
 		return err
 	}
 
@@ -287,14 +295,14 @@ func runDeleteRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting registry %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting registry %s", name))
 }
 
 func printRegistryEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {
-	var item catapi.Registry
+	var item catapi.CatalogV3Registry
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printRegistries(writer, &[]catapi.Registry{item}, verbose, false)
+	printRegistries(writer, &[]catapi.CatalogV3Registry{item}, verbose, false)
 	return nil
 }

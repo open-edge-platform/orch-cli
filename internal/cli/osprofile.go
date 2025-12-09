@@ -46,6 +46,9 @@ spec:
   osPackageManifestURL: files-edge-orch/repository/microvisor/non_rt/<manifest.json>
   securityFeature: SECURITY_FEATURE_NONE
   platformBundle:
+  metadata:
+	key1: value1
+	key2: value2
 
 See 
 https://github.com/open-edge-platform/infra-core/tree/main/os-profiles`
@@ -75,7 +78,13 @@ var osProfileSchema = `
 		"existingCvesURL": { "type": ["string", "null"] },
 		"fixedCvesURL": { "type": ["string", "null"] },
         "securityFeature": { "type": "string" },
-        "platformBundle": { "type": ["string", "null"] }
+        "platformBundle": { "type": ["string", "null"] },
+		"tlsCaCert": { "type": ["string", "null"] },
+		"description": { "type": ["string", "null"] },
+		"metadata": { 
+          "type": ["object", "null"],
+          "additionalProperties": true
+        }
       },
       "required": [
         "name", "type", "provider", "architecture", "profileName",
@@ -89,19 +98,22 @@ var osProfileSchema = `
 `
 
 type OSProfileSpec struct {
-	Name              string `yaml:"name"`
-	Type              string `yaml:"type"`
-	Provider          string `yaml:"provider"`
-	Architecture      string `yaml:"architecture"`
-	ProfileName       string `yaml:"profileName"`
-	OsImageURL        string `yaml:"osImageUrl"`
-	OsImageSha256     string `yaml:"osImageSha256"`
-	OsImageVersion    string `yaml:"osImageVersion"`
-	OSPackageURL      string `yaml:"osPackageManifestURL"`
-	SecurityFeature   string `yaml:"securityFeature"`
-	PlatformBundle    string `yaml:"platformBundle"`
-	OsExistingCvesURL string `yaml:"osExistingCvesURL"`
-	OsFixedCvesURL    string `yaml:"osFixedCvesURL"`
+	Name              string                 `yaml:"name"`
+	Type              string                 `yaml:"type"`
+	Provider          string                 `yaml:"provider"`
+	Architecture      string                 `yaml:"architecture"`
+	ProfileName       string                 `yaml:"profileName"`
+	OsImageURL        string                 `yaml:"osImageUrl"`
+	OsImageSha256     string                 `yaml:"osImageSha256"`
+	OsImageVersion    string                 `yaml:"osImageVersion"`
+	OSPackageURL      string                 `yaml:"osPackageManifestURL"`
+	SecurityFeature   string                 `yaml:"securityFeature"`
+	PlatformBundle    string                 `yaml:"platformBundle"`
+	OsExistingCvesURL string                 `yaml:"osExistingCvesURL"`
+	OsFixedCvesURL    string                 `yaml:"osFixedCvesURL"`
+	TLSCaCert         string                 `yaml:"tlsCaCert"`
+	Description       string                 `yaml:"description"`
+	Metadata          map[string]interface{} `yaml:"metadata"`
 }
 
 type NestedSpec struct {
@@ -121,7 +133,6 @@ func printOSProfiles(writer io.Writer, OSProfiles []infra.OperatingSystemResourc
 			_, _ = fmt.Fprintf(writer, "Architecture:\t %s\n", *osp.Architecture)
 			_, _ = fmt.Fprintf(writer, "Repository URL:\t %s\n", *osp.RepoUrl)
 			_, _ = fmt.Fprintf(writer, "sha256:\t %v\n", osp.Sha256)
-			_, _ = fmt.Fprintf(writer, "Kernel Command:\t %v\n", toJSON(osp.KernelCommand))
 		}
 	}
 }
@@ -138,15 +149,20 @@ func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) 
 	_, _ = fmt.Fprintf(writer, "Image ID: \t%s\n", *OSProfile.ImageId)
 	_, _ = fmt.Fprintf(writer, "Image URL: \t%s\n", *OSProfile.ImageUrl)
 	_, _ = fmt.Fprintf(writer, "Repository URL: \t%s\n", *OSProfile.RepoUrl)
+	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", *OSProfile.Description)
+	_, _ = fmt.Fprintf(writer, "Metadata: \t%s\n", *OSProfile.Metadata)
 	_, _ = fmt.Fprintf(writer, "Security Feature: \t%v\n", toJSON(OSProfile.SecurityFeature))
 	_, _ = fmt.Fprintf(writer, "Architecture: \t%s\n", *OSProfile.Architecture)
 	_, _ = fmt.Fprintf(writer, "OS type: \t%s\n", *OSProfile.OsType)
 	_, _ = fmt.Fprintf(writer, "OS provider: \t%s\n", *OSProfile.OsProvider)
 	_, _ = fmt.Fprintf(writer, "Platform Bundle: \t%s\n", *OSProfile.PlatformBundle)
-	_, _ = fmt.Fprintf(writer, "Update Sources: \t%v\n", OSProfile.UpdateSources)
 	_, _ = fmt.Fprintf(writer, "Installed Packages: \t%v\n", toJSON(OSProfile.InstalledPackages))
 	_, _ = fmt.Fprintf(writer, "Created: \t%v\n", OSProfile.Timestamps.CreatedAt)
 	_, _ = fmt.Fprintf(writer, "Updated: \t%v\n", OSProfile.Timestamps.UpdatedAt)
+
+	if OSProfile.TlsCaCert != nil {
+		_, _ = fmt.Fprintf(writer, "TLS CA Cert: \t%v\n", *OSProfile.TlsCaCert)
+	}
 
 	if OSProfile.ExistingCves != nil && OSProfile.FixedCves != nil {
 
@@ -264,6 +280,7 @@ func getGetOSProfileCommand() *cobra.Command {
 		Short:   "Get an OS profile",
 		Example: getOSProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osProfileAliases,
 		RunE:    runGetOSProfileCommand,
 	}
 	return cmd
@@ -274,6 +291,7 @@ func getListOSProfileCommand() *cobra.Command {
 		Use:     "osprofile [flags]",
 		Short:   "List all OS profiles",
 		Example: listOSProfileExamples,
+		Aliases: osProfileAliases,
 		RunE:    runListOSProfileCommand,
 	}
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")
@@ -286,6 +304,7 @@ func getCreateOSProfileCommand() *cobra.Command {
 		Short:   "Creates OS profile",
 		Example: createOSProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osProfileAliases,
 		RunE:    runCreateOSProfileCommand,
 	}
 	return cmd
@@ -297,6 +316,7 @@ func getDeleteOSProfileCommand() *cobra.Command {
 		Short:   "Delete an OS profile",
 		Example: deleteOSProfileExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osProfileAliases,
 		RunE:    runDeleteOSProfileCommand,
 	}
 	return cmd
@@ -388,7 +408,7 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if err = checkResponse(gresp.HTTPResponse, "Error getting OS profiles"); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, "Error getting OS profiles"); err != nil {
 		return err
 	}
 
@@ -397,6 +417,11 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("OS Profile %s already exists", spec.Spec.Name)
 	}
 	// End TODO
+
+	metadataJSON, err := convertMetadataToAPIString(spec.Spec.Metadata)
+	if err != nil {
+		return fmt.Errorf("metadata validation failed: %v", err)
+	}
 
 	resp, err := OSProfileClient.OperatingSystemServiceCreateOperatingSystemWithResponse(ctx, projectName,
 		infra.OperatingSystemServiceCreateOperatingSystemJSONRequestBody{
@@ -412,11 +437,14 @@ func runCreateOSProfileCommand(cmd *cobra.Command, args []string) error {
 			Sha256:          spec.Spec.OsImageSha256,
 			FixedCvesUrl:    &spec.Spec.OsFixedCvesURL,
 			ExistingCvesUrl: &spec.Spec.OsExistingCvesURL,
+			TlsCaCert:       &spec.Spec.TLSCaCert,
+			Description:     &spec.Spec.Description,
+			Metadata:        metadataJSON,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating OS Profile from %s", path))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating OS Profile from %s", path))
 }
 
 // Deletes OS Profile - checks if a profile already exists and then deletes it if it does
@@ -432,7 +460,7 @@ func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if err = checkResponse(gresp.HTTPResponse, "Error getting OS profiles"); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, "Error getting OS profiles"); err != nil {
 		return err
 	}
 
@@ -448,7 +476,7 @@ func runDeleteOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS profile %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting OS profile %s", name))
 }
 
 // Converts map[interface{}]interface{} to map[string]interface{} recursively
@@ -466,4 +494,46 @@ func toStringKeyMap(m interface{}) interface{} {
 		}
 	}
 	return m
+}
+
+func convertMetadataToAPIString(metadata map[string]interface{}) (*string, error) {
+	if len(metadata) == 0 {
+		return nil, nil
+	}
+
+	// Convert metadata map to JSON string
+	jsonBytes, err := json.Marshal(metadata)
+	if err != nil {
+		return nil, fmt.Errorf("error converting metadata to JSON: %v", err)
+	}
+
+	jsonStr := string(jsonBytes)
+
+	// Check length constraint (500 characters)
+	if len(jsonStr) > 500 {
+		return nil, fmt.Errorf("metadata JSON exceeds maximum length of 500 characters (got %d): %s", len(jsonStr), jsonStr)
+	}
+
+	// Validate against API regex pattern: ^$|^[a-z0-9,.\-_:/"\\ \\n{}\[\]]+$
+	// This will fail if the input contains invalid characters - no sanitization
+	for i, char := range jsonStr {
+		valid := false
+		switch {
+		case char >= 'a' && char <= 'z':
+			valid = true
+		case char >= '0' && char <= '9':
+			valid = true
+		case char == ',' || char == '.' || char == '-' || char == '_' ||
+			char == ':' || char == '/' || char == '"' || char == '\\' ||
+			char == ' ' || char == '\n' || char == '{' || char == '}' ||
+			char == '[' || char == ']':
+			valid = true
+		}
+
+		if !valid {
+			return nil, fmt.Errorf("metadata contains invalid character '%c' at position %d. API only allows: a-z, 0-9, comma, period, dash, underscore, colon, forward slash, quotes, backslash, space, newline, curly braces, square brackets", char, i)
+		}
+	}
+
+	return &jsonStr, nil
 }

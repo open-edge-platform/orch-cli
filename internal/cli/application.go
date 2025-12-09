@@ -4,37 +4,35 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+	"github.com/open-edge-platform/orch-library/go/pkg/loader"
 	"github.com/spf13/cobra"
-)
-
-var (
-	applicationAliases       = []string{"app"}
-	deploymentPackageAliases = []string{"package", "bundle", "pkg"}
-	deploymentProfileAliases = []string{"package-profile", "deployment-profile", "bundle-profile"}
+	"gopkg.in/yaml.v2"
 )
 
 func getCreateApplicationCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "application <name> <version> [flags]",
+		Use:     "application {<name> <version>|<file-path>} [flags]",
 		Aliases: applicationAliases,
 		Short:   "Create an application",
-		Args:    cobra.ExactArgs(2),
-		Example: "orch-cli create application my-app 1.0.0 --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project",
+		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli create application my-app 1.0.0 --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project\norch-cli create application my-app.yaml --project some-project",
 		RunE:    runCreateApplicationCommand,
 	}
 	addEntityFlags(cmd, "application")
-	cmd.Flags().String("chart-name", "", "Helm chart name for deploying the application (required)")
-	_ = cmd.MarkFlagRequired("chart-name")
-	cmd.Flags().String("chart-version", "", "Helm chart version (required)")
-	_ = cmd.MarkFlagRequired("chart-version")
-	cmd.Flags().String("chart-registry", "", "Helm chart registry (required)")
-	_ = cmd.MarkFlagRequired("chart-registry")
+	cmd.Flags().String("chart-name", "", "Helm chart name for deploying the application (required when not using YAML file)")
+	cmd.Flags().String("chart-version", "", "Helm chart version (required when not using YAML file)")
+	cmd.Flags().String("chart-registry", "", "Helm chart registry (required when not using YAML file)")
 	cmd.Flags().String("image-registry", "", "image registry")
 	cmd.Flags().String("kind", "normal", "application kind: normal, addon, extension")
 	return cmd
@@ -43,7 +41,7 @@ func getCreateApplicationCommand() *cobra.Command {
 func getListApplicationsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "applications [flags]",
-		Aliases: []string{"apps", "applications"},
+		Aliases: applicationAliases,
 		Short:   "List all applications",
 		Example: "orch-cli list applications --project some-project",
 		RunE:    runListApplicationsCommand,
@@ -67,11 +65,11 @@ func getGetApplicationCommand() *cobra.Command {
 
 func getSetApplicationCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "application <name> <version> [flags]",
+		Use:     "application {<name> <version>|<file-path>} [flags]",
 		Aliases: applicationAliases,
 		Short:   "Update an application",
-		Args:    cobra.ExactArgs(2),
-		Example: "orch-cli set application my-app 1.0.0 --display-name 'My Application' --description 'An example application' --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project",
+		Args:    cobra.RangeArgs(1, 2),
+		Example: "orch-cli set application my-app 1.0.0 --display-name 'My Application' --description 'An example application' --chart-name my-chart --chart-version 1.0.0 --chart-registry my-registry --project some-project\norch-cli set application my-app.yaml --project some-project",
 		RunE:    runSetApplicationCommand,
 	}
 	addEntityFlags(cmd, "application")
@@ -98,7 +96,7 @@ func getDeleteApplicationCommand() *cobra.Command {
 var applicationHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
 	"Name", "Display Name", "Version", "Kind", "Chart Name", "Chart Version", "Helm Registry Name", "Default Profile")
 
-func printApplications(writer io.Writer, appList *[]catapi.Application, verbose bool) {
+func printApplications(writer io.Writer, appList *[]catapi.CatalogV3Application, verbose bool) {
 	for _, app := range *appList {
 		if !verbose {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", app.Name,
@@ -127,7 +125,130 @@ func printApplications(writer io.Writer, appList *[]catapi.Application, verbose 
 	}
 }
 
+// applicationYAMLSpec represents the structure of an application YAML file
+type applicationYAMLSpec struct {
+	SpecSchema string `yaml:"specSchema"`
+	Profiles   []struct {
+		Name           string `yaml:"name"`
+		ValuesFileName string `yaml:"valuesFileName"`
+	} `yaml:"profiles"`
+}
+
+// extractReferencedValuesFiles extracts referenced values files from an application YAML
+func extractReferencedValuesFiles(yamlPath string) ([]string, error) {
+	// Read the YAML file
+	data, err := os.ReadFile(yamlPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read YAML file: %w", err)
+	}
+
+	// Parse the YAML to check if it's an application spec
+	var spec applicationYAMLSpec
+	if err := yaml.Unmarshal(data, &spec); err != nil {
+		// Not a valid YAML or not an application spec, return empty list
+		return nil, nil
+	}
+
+	// Check if this is an Application spec
+	if spec.SpecSchema != "Application" {
+		return nil, nil
+	}
+
+	// Extract values file names from profiles
+	var referencedFiles []string
+	baseDir := filepath.Dir(yamlPath)
+
+	for _, profile := range spec.Profiles {
+		if profile.ValuesFileName != "" {
+			valuesFilePath := filepath.Join(baseDir, profile.ValuesFileName)
+			// Check if the file exists
+			if _, err := os.Stat(valuesFilePath); err == nil {
+				referencedFiles = append(referencedFiles, valuesFilePath)
+			} else {
+				// File doesn't exist, but we should warn the user
+				fmt.Fprintf(os.Stderr, "Warning: Referenced values file not found: %s\n", valuesFilePath)
+			}
+		}
+	}
+
+	return referencedFiles, nil
+}
+
+// uploadApplicationResourceFile uploads an application YAML file and its referenced values files
+func uploadApplicationResourceFile(cmd *cobra.Command, filePath string) error {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return err
+	}
+
+	projectUUID, err := getProjectName(cmd)
+	if err != nil {
+		return err
+	}
+
+	ctx := cmd.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	// Get the access token
+	accessToken, err := auth.GetAccessToken(ctx)
+	if err != nil {
+		// Log warning but continue with empty token
+		accessToken = ""
+	}
+
+	// Collect all files to upload
+	filesToUpload := []string{filePath}
+
+	// Check if this is an application YAML and extract referenced values files
+	referencedFiles, err := extractReferencedValuesFiles(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to extract referenced files: %w", err)
+	}
+
+	if len(referencedFiles) > 0 {
+		filesToUpload = append(filesToUpload, referencedFiles...)
+		fmt.Printf("Uploading application with %d referenced values file(s)\n", len(referencedFiles))
+	}
+
+	loader := loader.NewLoader(serverAddress, projectUUID)
+	return loader.LoadResources(ctx, accessToken, filesToUpload)
+}
+
 func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
+	// Check if a file path was provided (single argument ending with .yaml or .yml)
+	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
+		return uploadApplicationResourceFile(cmd, args[0])
+	}
+
+	// Validate we have name and version
+	if len(args) != 2 {
+		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
+	}
+
+	name := args[0]
+	version := args[1]
+
+	// Validate version format
+	if err := validator.ValidateVersion(version); err != nil {
+		return err
+	}
+
+	// Validate required flags when not using YAML file
+	chartName, _ := cmd.Flags().GetString("chart-name")
+	chartVersion, _ := cmd.Flags().GetString("chart-version")
+	chartRegistry, _ := cmd.Flags().GetString("chart-registry")
+
+	if chartName == "" || chartVersion == "" || chartRegistry == "" {
+		return fmt.Errorf("--chart-name, --chart-version, and --chart-registry are required when not using a YAML file")
+	}
+
+	// Validate chart version format
+	if err := validator.ValidateVersion(chartVersion); err != nil {
+		return fmt.Errorf("invalid chart version: %w", err)
+	}
+
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
@@ -137,9 +258,7 @@ func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	name := args[0]
-	version := args[1]
-	defaultKind := catapi.ApplicationKindKINDNORMAL
+	defaultKind := catapi.KINDNORMAL
 
 	resp, err := catalogClient.CatalogServiceCreateApplicationWithResponse(ctx, projectName,
 		catapi.CatalogServiceCreateApplicationJSONRequestBody{
@@ -156,50 +275,50 @@ func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating application %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating application %s", name))
 }
 
-func applicationKind2String(kind *catapi.ApplicationKind) string {
+func applicationKind2String(kind *catapi.CatalogV3Kind) string {
 	if kind == nil {
 		return "normal"
 	}
 	switch *kind {
-	case catapi.ApplicationKindKINDNORMAL:
+	case catapi.KINDNORMAL:
 		return "normal"
-	case catapi.ApplicationKindKINDADDON:
+	case catapi.KINDADDON:
 		return "addon"
-	case catapi.ApplicationKindKINDEXTENSION:
+	case catapi.KINDEXTENSION:
 		return "extension"
 	}
 	return "normal"
 }
 
-func string2ApplicationKind(kind string) catapi.ApplicationKind {
+func string2ApplicationKind(kind string) catapi.CatalogV3Kind {
 	switch kind {
 	case "normal":
-		return catapi.ApplicationKindKINDNORMAL
+		return catapi.KINDNORMAL
 	case "addon":
-		return catapi.ApplicationKindKINDADDON
+		return catapi.KINDADDON
 	case "extension":
-		return catapi.ApplicationKindKINDEXTENSION
+		return catapi.KINDEXTENSION
 	}
-	return catapi.ApplicationKindKINDNORMAL
+	return catapi.KINDNORMAL
 }
 
-func getApplicationKind(cmd *cobra.Command, def *catapi.ApplicationKind) *catapi.ApplicationKind {
+func getApplicationKind(cmd *cobra.Command, def *catapi.CatalogV3Kind) *catapi.CatalogV3Kind {
 	dv := applicationKind2String(def)
 	kind := string2ApplicationKind(*getFlagOrDefault(cmd, "kind", &dv))
 	return &kind
 }
 
-func getApplicationKinds(cmd *cobra.Command) *[]catapi.CatalogServiceListApplicationsParamsKinds {
+func getApplicationKinds(cmd *cobra.Command) *[]catapi.CatalogV3Kind {
 	kinds, _ := cmd.Flags().GetStringSlice("kind")
 	if len(kinds) == 0 {
 		return nil
 	}
-	list := make([]catapi.CatalogServiceListApplicationsParamsKinds, 0, len(kinds))
+	list := make([]catapi.CatalogV3Kind, 0, len(kinds))
 	for _, k := range kinds {
-		list = append(list, catapi.CatalogServiceListApplicationsParamsKinds(string2ApplicationKind(k)))
+		list = append(list, string2ApplicationKind(k))
 	}
 	return &list
 }
@@ -243,7 +362,7 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	name := args[0]
-	var appList []catapi.Application
+	var appList []catapi.CatalogV3Application
 	if len(args) == 2 {
 		version := args[1]
 		resp, err := catalogClient.CatalogServiceGetApplicationWithResponse(ctx, projectName, name, version,
@@ -276,6 +395,16 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetApplicationCommand(cmd *cobra.Command, args []string) error {
+	// Check if a file path was provided (single argument ending with .yaml or .yml)
+	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
+		return uploadApplicationResourceFile(cmd, args[0])
+	}
+
+	// Validate we have name and version
+	if len(args) != 2 {
+		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
+	}
+
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
@@ -289,7 +418,7 @@ func runSetApplicationCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
 		return err
 	}
 
@@ -312,7 +441,7 @@ func runSetApplicationCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while updating application %s:%s", name, version))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating application %s:%s", name, version))
 }
 
 func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
@@ -331,7 +460,7 @@ func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if err = checkResponse(resp.HTTPResponse, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
+		if err = checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("application %s:%s not found", name, version)); err != nil {
 			return err
 		}
 		deleteResp, err := catalogClient.CatalogServiceDeleteApplicationWithResponse(ctx, projectName, name, version,
@@ -339,7 +468,7 @@ func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		return checkResponse(deleteResp.HTTPResponse, fmt.Sprintf("error deleting application %s:%s", name, version))
+		return checkResponse(deleteResp.HTTPResponse, deleteResp.Body, fmt.Sprintf("error deleting application %s:%s", name, version))
 	}
 
 	// Otherwise delete all versions
@@ -348,7 +477,7 @@ func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(resp.HTTPResponse, fmt.Sprintf("error getting application versions %s", name)); err != nil {
+	if err = checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error getting application versions %s", name)); err != nil {
 		return err
 	}
 	if len(resp.JSON200.Application) == 0 {
@@ -361,7 +490,7 @@ func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if err := checkResponse(deleteResp.HTTPResponse, fmt.Sprintf("error deleting application %s:%s", app.Name, app.Version)); err != nil {
+		if err := checkResponse(deleteResp.HTTPResponse, deleteResp.Body, fmt.Sprintf("error deleting application %s:%s", app.Name, app.Version)); err != nil {
 			return err
 		}
 	}
@@ -369,10 +498,10 @@ func runDeleteApplicationCommand(cmd *cobra.Command, args []string) error {
 }
 
 func printApplicationEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {
-	var item catapi.Application
+	var item catapi.CatalogV3Application
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printApplications(writer, &[]catapi.Application{item}, verbose)
+	printApplications(writer, &[]catapi.CatalogV3Application{item}, verbose)
 	return nil
 }

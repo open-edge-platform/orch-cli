@@ -20,7 +20,7 @@ func (s *CLITestSuite) createDeploymentPackage(project string, applicationName s
 }
 
 func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orderBy string, filter string) (string, error) {
-	args := `get deployment-packages --project ` + project
+	args := `list deployment-packages --project ` + project
 	if verbose {
 		args = args + " -v"
 	}
@@ -57,7 +57,7 @@ func (s *CLITestSuite) updateDeploymentPackage(project string, pkgName string, p
 
 func (s *CLITestSuite) createTestDeploymentPackage(project string, pkgName string, pkgVersion string, appName string, appVersion string) error {
 	createArgs := map[string]string{
-		"application-reference": fmt.Sprintf("%s:%s:%s", appName, appVersion, project),
+		"application-reference": fmt.Sprintf("%s:%s", appName, appVersion),
 	}
 	return s.createDeploymentPackage(project, pkgName, pkgVersion, createArgs)
 }
@@ -68,7 +68,7 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 		app2                         = "app2"
 		project                      = "pubtest"
 		pkgName                      = "deployment-pkg"
-		pkgVersion                   = "1.0"
+		pkgVersion                   = "1.0.0"
 		deploymentPackageDisplayName = "deployment.package.display.name"
 		deploymentPackageDescription = "Publisher.for.testing"
 	)
@@ -80,9 +80,9 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 
 	// create a deployment package
 	createArgs := map[string]string{
-		"application-reference": fmt.Sprintf("%s:%s:%s,%s:%s:%s",
-			app1, pkgVersion, project,
-			app2, pkgVersion, project,
+		"application-reference": fmt.Sprintf("%s:%s,%s:%s",
+			app1, pkgVersion,
+			app2, pkgVersion,
 		),
 		"display-name": deploymentPackageDisplayName,
 		"description":  deploymentPackageDescription,
@@ -126,7 +126,7 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 			"Description":              deploymentPackageDescription,
 			"Is Deployed":              "false",
 			"Is Visible":               "true",
-			"Applications":             `[app1:1.0 app2:1.0]`,
+			"Applications":             `[app1:1.0.0 app2:1.0.0]`,
 			"Application Dependencies": `[]`,
 			"Profiles":                 ``,
 			"Default Profile":          "",
@@ -174,8 +174,8 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 }
 
 func TestPrintDeploymentPackageEvent(t *testing.T) {
-	kind := catapi.DeploymentPackageKind("normal")
-	dp := catapi.DeploymentPackage{
+	kind := catapi.CatalogV3Kind("normal")
+	dp := catapi.CatalogV3DeploymentPackage{
 		Name:        "test-deployment-pkg",
 		Version:     "1.0.0",
 		DisplayName: strPtr("Test Deployment Package"),
@@ -196,12 +196,12 @@ func TestPrintDeploymentPackageEvent(t *testing.T) {
 
 func FuzzDeploymentPackage(f *testing.F) {
 	// Seed with valid and invalid input combinations
-	f.Add("pubtest", "deployment-pkg", "1.0", "app1", "1.0", "display.name", "desc")
-	f.Add("", "deployment-pkg", "1.0", "app1", "1.0", "display.name", "desc")     // missing project
-	f.Add("pubtest", "", "1.0", "app1", "1.0", "display.name", "desc")            // missing pkgName
-	f.Add("pubtest", "deployment-pkg", "", "app1", "1.0", "display.name", "desc") // missing pkgVersion
-	f.Add("pubtest", "deployment-pkg", "1.0", "", "1.0", "display.name", "desc")  // missing appName
-	f.Add("pubtest", "deployment-pkg", "1.0", "app1", "", "display.name", "desc") // missing appVersion
+	f.Add("pubtest", "deployment-pkg", "1.0.0", "app1", "1.0.0", "display.name", "desc")
+	f.Add("", "deployment-pkg", "1.0.0", "app1", "1.0.0", "display.name", "desc")    // missing project
+	f.Add("pubtest", "", "1.0.0", "app1", "1.0.0", "display.name", "desc")           // missing pkgName
+	f.Add("pubtest", "deployment-pkg", "", "app1", "1.0.0", "display.name", "desc")  // missing pkgVersion
+	f.Add("pubtest", "deployment-pkg", "1.0.0", "", "1.0.0", "display.name", "desc") // missing appName
+	f.Add("pubtest", "deployment-pkg", "1.0.0", "app1", "", "display.name", "desc")  // missing appVersion
 
 	f.Fuzz(func(t *testing.T, project, pkgName, pkgVersion, appName, appVersion, displayName, description string) {
 		testSuite := new(CLITestSuite)

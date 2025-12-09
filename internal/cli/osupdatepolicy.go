@@ -50,13 +50,13 @@ var osUpdatePolicySchema = `
     "spec": {
       "type": "object",
       "properties": {
-        "name":            { "type": "string" },
-        "description":     { "type": "string" },
-        "installPackages": { "type": "string" },
-        "kernelCommand":   { "type": "string" },
-        "targetOs":        { "type": "string" },
-        "updateSources":   { "type": ["array", "null"], "items": { "type": "string" } },
-        "updatePolicy":    { "type": "string" }
+        "name":                  { "type": "string" },
+        "description":           { "type": "string" },
+        "updatePackages":        { "type": "string" },
+        "updateKernelCommand":   { "type": "string" },
+        "targetOs":              { "type": "string" },
+        "updateSources":         { "type": ["array", "null"], "items": { "type": "string" } },
+        "updatePolicy":          { "type": "string" }
       },
       "required": ["name", "description", "updatePolicy"]
     }
@@ -66,13 +66,13 @@ var osUpdatePolicySchema = `
 `
 
 type OSUpdatePolicy struct {
-	Name            string   `yaml:"name"`
-	Description     string   `yaml:"description"`
-	InstallPackages string   `yaml:"installPackages"`
-	KernelCommand   string   `yaml:"kernelCommand"`
-	TargetOS        string   `yaml:"targetOs"`
-	UpdateSources   []string `yaml:"updateSources"`
-	UpdatePolicy    string   `yaml:"updatePolicy"`
+	Name                string   `yaml:"name"`
+	Description         string   `yaml:"description"`
+	UpdatePackages      string   `yaml:"updatePackages"`
+	UpdateKernelCommand string   `yaml:"updateKernelCommand"`
+	TargetOS            string   `yaml:"targetOs"`
+	UpdateSources       []string `yaml:"updateSources"`
+	UpdatePolicy        string   `yaml:"updatePolicy"`
 }
 
 type UpdateNestedSpec struct {
@@ -109,8 +109,9 @@ func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy)
 	_, _ = fmt.Fprintf(writer, "Name:\t %s\n", OSUpdatePolicy.Name)
 	_, _ = fmt.Fprintf(writer, "Resource ID:\t %s\n", *OSUpdatePolicy.ResourceId)
 	_, _ = fmt.Fprintf(writer, "Target OS ID:\t %s\n", *OSUpdatePolicy.TargetOsId)
+	_, _ = fmt.Fprintf(writer, "Kernel Command:\t %s\n", *OSUpdatePolicy.UpdateKernelCommand)
 	_, _ = fmt.Fprintf(writer, "Description:\t %v\n", *OSUpdatePolicy.Description)
-	_, _ = fmt.Fprintf(writer, "Install Packages:\t %s\n", *OSUpdatePolicy.InstallPackages)
+	_, _ = fmt.Fprintf(writer, "Update Packages:\t %s\n", *OSUpdatePolicy.UpdatePackages)
 	_, _ = fmt.Fprintf(writer, "Update Policy:\t %s\n", *OSUpdatePolicy.UpdatePolicy)
 	_, _ = fmt.Fprintf(writer, "Create at:\t %v\n", *OSUpdatePolicy.Timestamps.CreatedAt)
 	_, _ = fmt.Fprintf(writer, "Updated at:\t %v\n", *OSUpdatePolicy.Timestamps.CreatedAt)
@@ -187,6 +188,7 @@ func getGetOSUpdatePolicyCommand() *cobra.Command {
 		Short:   "Get an OS Update policy",
 		Example: getOSUpdatePolicyExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osUpdatePolicyAliases,
 		RunE:    runGetOSUpdatePolicyCommand,
 	}
 	return cmd
@@ -197,6 +199,7 @@ func getListOSUpdatePolicyCommand() *cobra.Command {
 		Use:     "osupdatepolicy [flags]",
 		Short:   "List all OS Update policies",
 		Example: listOSUpdatePolicyExamples,
+		Aliases: osUpdatePolicyAliases,
 		RunE:    runListOSUpdatePolicyCommand,
 	}
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")
@@ -209,6 +212,7 @@ func getCreateOSUpdatePolicyCommand() *cobra.Command {
 		Short:   "Creates OS Update policy",
 		Example: createOSUpdatePolicyExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osUpdatePolicyAliases,
 		RunE:    runCreateOSUpdatePolicyCommand,
 	}
 	return cmd
@@ -220,6 +224,7 @@ func getDeleteOSUpdatePolicyCommand() *cobra.Command {
 		Short:   "Delete an OS Update policy",
 		Example: deleteOSUpdatePolicyExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: osUpdatePolicyAliases,
 		RunE:    runDeleteOSUpdatePolicyCommand,
 	}
 	return cmd
@@ -351,12 +356,12 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 		updpol = infra.UpdatePolicy(spec.Spec.UpdatePolicy)
 	}
 
-	if spec.Spec.InstallPackages != "" {
-		packages = &spec.Spec.InstallPackages
+	if spec.Spec.UpdatePackages != "" {
+		packages = &spec.Spec.UpdatePackages
 	}
 
-	if spec.Spec.KernelCommand != "" {
-		kernel = &spec.Spec.KernelCommand
+	if spec.Spec.UpdateKernelCommand != "" {
+		kernel = &spec.Spec.UpdateKernelCommand
 	}
 
 	if spec.Spec.UpdateSources != nil {
@@ -370,19 +375,18 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	//Create policy
 	resp, err := OSUPolicyClient.OSUpdatePolicyCreateOSUpdatePolicyWithResponse(ctx, projectName,
 		infra.OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody{
-			Name:            spec.Spec.Name,
-			Description:     &spec.Spec.Description,
-			InstallPackages: packages,
-			KernelCommand:   kernel,
-			//TargetOs:        profile,
-			TargetOsId:    profileID,
-			UpdateSources: sources,
-			UpdatePolicy:  &updpol,
+			Name:                spec.Spec.Name,
+			Description:         &spec.Spec.Description,
+			UpdatePackages:      packages,
+			UpdateKernelCommand: kernel,
+			TargetOsId:          profileID,
+			UpdateSources:       sources,
+			UpdatePolicy:        &updpol,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating OS Update Profiles from %s", path))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating OS Update Profiles from %s", path))
 }
 
 // Deletes OS Update Policy - checks if a policy  already exists and then deletes it if it does
@@ -420,5 +424,5 @@ func runDeleteOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting OS Update policy %s", policyID))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting OS Update policy %s", policyID))
 }

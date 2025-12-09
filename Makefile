@@ -13,8 +13,14 @@ RELEASE_BINS    := $(foreach rel,$(RELEASE_OS_ARCH),$(RELEASE_DIR)/$(RELEASE_NAM
 GOLANG_COVER_VERSION = v0.2.0
 GOLANG_GOCOVER_COBERTURA_VERSION = v1.2.0
 GOPATH := $(shell go env GOPATH)
+PATH := $(GOPATH)/bin:$(PATH)
 
 INSTALL_PATH  ?= /usr/local/bin
+
+OAPI_CODEGEN_VERSION = v2.4.1
+MOCKGEN_VERSION = v0.5.2
+
+FUZZ_TIME ?= 30m
 
 .PHONY: build test
 
@@ -51,7 +57,7 @@ build: mod-update
 
 install: build
 	@# Help: Installs client tool
-	cp build/_output/$(RELEASE_NAME) ${INSTALL_PATH}
+	sudo cp build/_output/$(RELEASE_NAME) ${INSTALL_PATH}
 
 lint:
 	@# Help: Runs lint stage
@@ -66,6 +72,7 @@ mdlint: ## lint all markdown README.md files
 
 test: mod-update
 	@# Help: Runs test stage
+	@trap 'rm -rf internal/cli/preflight_error* internal/cli/import_error*' EXIT; \
 	go test -race -gcflags=-l `go list $(PKG)/cmd/... $(PKG)/internal/... $(PKG)/pkg/...`
 
 fuzz:
@@ -73,9 +80,9 @@ fuzz:
 	rm -f fuzz.log
 	for pkg in $$(go list ./cmd/... ./internal/... ./pkg/...); do \
 		for fuzzfunc in $$(go test -list '^Fuzz' $$pkg | grep '^Fuzz' | awk '{print $$1}'); do \
-			echo "==> GOMEMLIMIT=2GiB GOMAXPROCS=2 go test -fuzz=$$fuzzfunc -fuzztime=30m -parallel=1 $$pkg" | tee -a fuzz.log ; \
+			echo "==> GOMEMLIMIT=2GiB GOMAXPROCS=2 go test -fuzz=$$fuzzfunc -fuzztime=$(FUZZ_TIME) -parallel=1 $$pkg" | tee -a fuzz.log ; \
 			sleep 2 ; \
-			GOMEMLIMIT=2GiB GOMAXPROCS=2 go test -fuzz=^$$fuzzfunc$$ -fuzztime=30m -parallel=1 $$pkg 2>&1 | tee -a fuzz.log ; \
+			GOMEMLIMIT=2GiB GOMAXPROCS=2 go test -fuzz=^$$fuzzfunc$$ -fuzztime=$(FUZZ_TIME) -parallel=1 $$pkg 2>&1 | tee -a fuzz.log ; \
 			rm -rf internal/cli/preflight_error* internal/cli/import_error*; \
 		done \
 	done
@@ -97,10 +104,35 @@ fetch-rps-openapi:
 	@# Help: Fetch the OpenDMT RPS OpenAPI spec
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-opendmt-rps-openapi.yaml -o pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 
-fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi fetch-infra-openapi
+fetch-utils-openapi:
+	@# Help: Fetch the Utils API OpenAPI spec
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/orch-utils.tenancy-datamodel.openapi.yaml -o pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
+
+fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi fetch-infra-openapi fetch-rps-openapi fetch-utils-openapi
 	@# Help: Fetch OpenAPI specs for all components
 
-rest-client-gen:
+
+oapi-codegen-dependency:
+	@# Help: Install oapi-codegen if not present
+	@if ! command -v oapi-codegen >/dev/null 2>&1; then \
+		echo "Installing oapi-codegen $(OAPI_CODEGEN_VERSION)..."; \
+		go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@$(OAPI_CODEGEN_VERSION); \
+	else \
+		echo "oapi-codegen already installed: $$(command -v oapi-codegen)"; \
+	fi
+
+mockgen-dependency:
+	@# Help: Install mockgen if not present
+	@if ! command -v mockgen >/dev/null 2>&1; then \
+		echo "Installing mockgen $(MOCKGEN_VERSION)..."; \
+		go install go.uber.org/mock/mockgen@$(MOCKGEN_VERSION); \
+	else \
+		echo "mockgen already installed: $$(command -v mockgen)"; \
+	fi
+
+# Supported oapi-codegen version v2.4.1
+# install command: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.4.1
+rest-client-gen: oapi-codegen-dependency
 	@# Help: Generate Rest client from the MT GW openapi spec.
 	oapi-codegen -generate client -old-config-style -package catalog -o pkg/rest/catalog/client.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
 	oapi-codegen -generate types -old-config-style -package catalog -o pkg/rest/catalog/types.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
@@ -114,8 +146,12 @@ rest-client-gen:
 	oapi-codegen -generate types -old-config-style -package infra -o pkg/rest/infra/types.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 	oapi-codegen -generate client -old-config-style -package rps -o pkg/rest/rps/client.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 	oapi-codegen -generate types -old-config-style -package rps -o pkg/rest/rps/types.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
+	oapi-codegen -generate client -old-config-style -package tenancy -o pkg/rest/tenancy/client.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
+	oapi-codegen -generate types -old-config-style -package tenancy -o pkg/rest/tenancy/types.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
 
-mock-client-gen:
+# Supported mockgen version v0.5.2
+# install command: go install go.uber.org/mock/mockgen@v0.5.2
+mock-client-gen: mockgen-dependency
 	@# Help: Generate mock clients for testing
 	mockgen -source=pkg/rest/catalog/client.go -destination=pkg/rest/catalog/mock_client.go -package=catalog
 	mockgen -source=pkg/rest/catalogutilities/client.go -destination=pkg/rest/catalogutilities/mock_client.go -package=catalogutilities
@@ -123,6 +159,7 @@ mock-client-gen:
 	mockgen -source=pkg/rest/cluster/client.go -destination=pkg/rest/cluster/mock_client.go -package=cluster
 	mockgen -source=pkg/rest/infra/client.go -destination=pkg/rest/infra/mock_client.go -package=infra
 	mockgen -source=pkg/rest/rps/client.go -destination=pkg/rest/rps/mock_client.go -package=rps
+	mockgen -source=pkg/rest/tenancy/client.go -destination=pkg/rest/tenancy/mock_client.go -package=tenancy
 
 cli-docs:
 	@# Help: Generates markdowns for the orchestrator cli

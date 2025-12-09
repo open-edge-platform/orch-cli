@@ -46,8 +46,8 @@ func (s *CLITestSuite) TestOSUpdateRun() {
 			"Resource ID":    "osupdate-run-abc123",
 			"Status":         "completed",
 			"Applied Policy": "security-policy-v1.2",
-			"Start Time":     "2025-01-15 10:30:00 +0000 UTC",
-			"End Time":       "2025-01-15 10:30:00 +0000 UTC",
+			"Start Time":     "2025-01-15T10:30:00Z",
+			"End Time":       "2025-01-15T10:30:00Z",
 		},
 	}
 
@@ -73,8 +73,8 @@ func (s *CLITestSuite) TestOSUpdateRun() {
 		"Status Detail:":   "All updates applied successfully",
 		"Applied Policy:":  "security-policy-v1.2",
 		"Description:":     "Monthly security updates for edge devices",
-		"Start Time:":      "2025-01-15 10:30:00 +0000 UTC",
-		"End Time:":        "2025-01-15 10:30:00 +0000 UTC",
+		"Start Time:":      "2025-01-15T10:30:00Z",
+		"End Time:":        "2025-01-15T10:30:00Z",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedGetOutput)

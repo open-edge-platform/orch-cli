@@ -8,6 +8,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	amtAliases               = []string{"amtprofile", "amtprofiles", "amt", "amts"}
+	applicationAliases       = []string{"application", "applications", "app", "apps"}
+	artifactAliases          = []string{"artifact", "artifacts", "art", "arts"}
+	chartAliases             = []string{"chart", "charts"}
+	clusterAliases           = []string{"cluster", "clusters", "cl", "cls"}
+	clusterTemplateAliases   = []string{"clustertemplate", "clustertemplates", "template", "templates", "ctmpl", "ctmps"}
+	customConfigAliases      = []string{"customconfig", "customconfigs", "cfg", "cfgs"}
+	deploymentPackageAliases = []string{"deployment-package", "deployment-packages", "package", "packages", "bundle", "bundles", "pkg", "pkgs"}
+	deploymentProfileAliases = []string{"deployment-package-profile", "deployment-package-profiles", "deployment-profile", "deployment-profiles", "package-profile", "bundle-profile"}
+	deploymentAliases        = []string{"deployment", "deployments", "dep", "deps"}
+	hostAliases              = []string{"host", "hosts", "hs"}
+	networkAliases           = []string{"network", "networks", "net", "nets"}
+	osProfileAliases         = []string{"osprofile", "osprofiles", "osp", "osps"}
+	organizationAliases      = []string{"organization", "organizations", "org", "orgs"}
+	osUpdatePolicyAliases    = []string{"osupdatepolicy", "osupdatepolicies", "oup", "oups"}
+	osUpdateRunAliases       = []string{"osupdaterun", "osupdateruns", "our", "ours"}
+	providerAliases          = []string{"provider", "providers", "prov", "provs"}
+	profileAliases           = []string{"profile", "profiles", "prof", "profs"}
+	projectAliases           = []string{"project", "projects", "proj", "projs"}
+	registryAliases          = []string{"registry", "registries", "reg", "regs"}
+	regionAliases            = []string{"region", "regions", "regn", "regns"}
+	siteAliases              = []string{"site", "sites", "st", "sts"}
+	scheduleAliases          = []string{"schedule", "schedules", "sch", "schs"}
+	sshKeyAliases            = []string{"sshkey", "sshkeys", "ssh", "sshs"}
+)
+
 func getCreateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "create",
@@ -37,6 +64,11 @@ func getCreateCommand() *cobra.Command {
 		getCreateSiteCommand(),
 		getCreateHostCommand(),
 		getCreateOSProfileCommand(),
+		getCreateProviderCommand(),
+		getCreateSSHKeyCommand(),
+		getCreateScheduleCommand(),
+		getCreateProjectCommand(),
+		getCreateOrganizationCommand(),
 	)
 	return cmd
 }
@@ -56,7 +88,7 @@ func getListCommand() *cobra.Command {
 		getListDeploymentPackagesCommand(),
 		getListDeploymentProfilesCommand(),
 		getListNetworksCommand(),
-
+		getListChartsCommand(),
 		getListDeploymentsCommand(),
 		getListClusterCommand(),
 		getListClusterTemplatesCommand(),
@@ -69,6 +101,11 @@ func getListCommand() *cobra.Command {
 		getListRegionCommand(),
 		getListOSProfileCommand(),
 		getListHostCommand(),
+		getListProviderCommand(),
+		getListSSHKeyCommand(),
+		getListScheduleCommand(),
+		getListProjectCommand(),
+		getListOrganizationCommand(),
 	)
 	return catalogListRootCmd
 }
@@ -91,20 +128,6 @@ func getGetCommand() *cobra.Command {
 		getGetDeploymentCommand(),
 		getGetClusterCommand(),
 
-		// Add plurals here for consistency with kubectl
-		getListRegistriesCommand(),
-		getListArtifactsCommand(),
-		getListApplicationsCommand(),
-		getListProfilesCommand(),
-		getListDeploymentPackagesCommand(),
-		getListDeploymentProfilesCommand(),
-
-		getListChartsCommand(),
-
-		getListDeploymentsCommand(),
-
-		getListNetworksCommand(),
-
 		getGetOSUpdateRunCommand(),
 		getGetOSUpdatePolicyCommand(),
 		getGetAmtProfileCommand(),
@@ -113,6 +136,11 @@ func getGetCommand() *cobra.Command {
 		getGetRegionCommand(),
 		getGetSiteCommand(),
 		getGetHostCommand(),
+		getGetProviderCommand(),
+		getGetSSHKeyCommand(),
+		getGetScheduleCommand(),
+		getGetProjectCommand(),
+		getGetOrganizationCommand(),
 	)
 	return catalogGetRootCmd
 }
@@ -137,6 +165,19 @@ func getSetCommand() *cobra.Command {
 		getSetNetworkCommand(),
 
 		getSetHostCommand(),
+		getSetScheduleCommand(),
+	)
+	return cmd
+}
+
+func getUpgradeCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:               "upgrade",
+		Short:             "Upgrade deployment",
+		PersistentPreRunE: auth.CheckAuth,
+	}
+	cmd.AddCommand(
+		getUpgradeDeploymentCommand(),
 	)
 	return cmd
 }
@@ -168,6 +209,11 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteSiteCommand(),
 		getDeleteOSProfileCommand(),
 		getDeleteHostCommand(),
+		getDeleteProviderCommand(),
+		getDeleteSSHKeyCommand(),
+		getDeleteScheduleCommand(),
+		getDeleteProjectCommand(),
+		getDeleteOrganizationCommand(),
 	)
 	return catalogDeleteRootCmd
 }

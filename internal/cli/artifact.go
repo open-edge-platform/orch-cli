@@ -19,6 +19,7 @@ func getCreateArtifactCommand() *cobra.Command {
 		Short:   "Create an artifact",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli create artifact my-artifact --mime-type application/octet-stream --artifact /path/to/artifact --project some-project",
+		Aliases: artifactAliases,
 		RunE:    runCreateArtifactCommand,
 	}
 	addEntityFlags(cmd, "artifact")
@@ -33,6 +34,7 @@ func getListArtifactsCommand() *cobra.Command {
 		Use:     "artifacts [flags]",
 		Short:   "List all artifacts",
 		Example: "orch-cli list artifacts --project some-project --order-by name",
+		Aliases: artifactAliases,
 		RunE:    runListArtifactsCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "artifact")
@@ -45,6 +47,7 @@ func getGetArtifactCommand() *cobra.Command {
 		Short:   "Get an artifact",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli get artifact my-artifact --project some-project",
+		Aliases: artifactAliases,
 		RunE:    runGetArtifactCommand,
 	}
 	return cmd
@@ -56,6 +59,7 @@ func getSetArtifactCommand() *cobra.Command {
 		Short:   "Update an artifact",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli set artifact my-artifact --mime-type application/octet-stream --artifact /path/to/artifact --project some-project",
+		Aliases: artifactAliases,
 		RunE:    runSetArtifactCommand,
 	}
 	addEntityFlags(cmd, "artifact")
@@ -70,6 +74,7 @@ func getDeleteArtifactCommand() *cobra.Command {
 		Short:   "Delete an artifact",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli delete artifact my-artifact --project some-project",
+		Aliases: artifactAliases,
 		RunE:    runDeleteArtifactCommand,
 	}
 	return cmd
@@ -77,7 +82,7 @@ func getDeleteArtifactCommand() *cobra.Command {
 
 var artifactHeader = fmt.Sprintf("%s\t%s\t%s", "Name", "Display Name", "Description")
 
-func printArtifacts(writer io.Writer, artifactList *[]catapi.Artifact, verbose bool) {
+func printArtifacts(writer io.Writer, artifactList *[]catapi.CatalogV3Artifact, verbose bool) {
 	for _, a := range *artifactList {
 		if !verbose {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\n", a.Name, valueOrNone(a.DisplayName), valueOrNone(a.Description))
@@ -117,7 +122,7 @@ func runCreateArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating artifact %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating artifact %s", name))
 }
 
 func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
@@ -166,7 +171,7 @@ func runGetArtifactCommand(cmd *cobra.Command, args []string) error {
 		fmt.Sprintf("error getting artifact %s", name)); !proceed {
 		return err
 	}
-	printArtifacts(writer, &[]catapi.Artifact{resp.JSON200.Artifact}, verbose)
+	printArtifacts(writer, &[]catapi.CatalogV3Artifact{resp.JSON200.Artifact}, verbose)
 	return writer.Flush()
 }
 
@@ -181,7 +186,7 @@ func runSetArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("artifact %s not found", name)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("artifact %s not found", name)); err != nil {
 		return err
 	}
 
@@ -208,7 +213,7 @@ func runSetArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while updating artifact %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating artifact %s", name))
 }
 
 func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
@@ -222,7 +227,7 @@ func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("artifact %s not found", name)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("artifact %s not found", name)); err != nil {
 		return err
 	}
 
@@ -230,14 +235,14 @@ func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting artifact %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting artifact %s", name))
 }
 
 func printArtifactEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {
-	var item catapi.Artifact
+	var item catapi.CatalogV3Artifact
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printArtifacts(writer, &[]catapi.Artifact{item}, verbose)
+	printArtifacts(writer, &[]catapi.CatalogV3Artifact{item}, verbose)
 	return nil
 }

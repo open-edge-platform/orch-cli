@@ -42,6 +42,11 @@ func (s *CLITestSuite) setHost(publisher string, hostID string, args commandArgs
 	return s.runCommand(commandString)
 }
 
+func (s *CLITestSuite) updateOsHost(publisher string, hostID string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`update-os host %s --project %s`, hostID, publisher))
+	return s.runCommand(commandString)
+}
+
 func (s *CLITestSuite) filterTest() {
 	testCases := []struct {
 		input    string
@@ -84,6 +89,29 @@ func (s *CLITestSuite) testResolvePower() {
 
 	for _, tc := range tests {
 		result, err := resolvePower(tc.input)
+		if tc.wantErr {
+			s.Error(err, "expected error for input %q", tc.input)
+		} else {
+			s.NoError(err, "unexpected error for input %q", tc.input)
+			s.Equal(tc.expected, result, "unexpected result for input %q", tc.input)
+		}
+	}
+}
+
+func (s *CLITestSuite) testResolveAmtState() {
+	tests := []struct {
+		input    string
+		expected infra.AmtState
+		wantErr  bool
+	}{
+		{"provisioned", infra.AMTSTATEPROVISIONED, false},
+		{"unprovisioned", infra.AMTSTATEUNPROVISIONED, false},
+		{"invalid", "", true},
+		{"", "", true},
+	}
+
+	for _, tc := range tests {
+		result, err := resolveAmtState(tc.input)
 		if tc.wantErr {
 			s.Error(err, "expected error for input %q", tc.input)
 		} else {
@@ -149,7 +177,7 @@ func (s *CLITestSuite) TestHost() {
 		"site":             "site-abcd1111",
 		"secure":           "true",
 		"remote-user":      "user",
-		"os-profile":       "microvisor-nonrt",
+		"os-profile":       "Edge Microvisor Toolkit 3.0.20250504",
 		"metadata":         "key1=value1",
 		"cloud-init":       "custom",
 		"cluster-deploy":   "true",
@@ -250,6 +278,8 @@ func (s *CLITestSuite) TestHost() {
 
 	s.testResolvePower()
 
+	s.testResolveAmtState()
+
 	// Test list hosts with no filters
 	listOutput, err := s.listHost(project, make(map[string]string))
 	s.NoError(err)
@@ -343,40 +373,52 @@ func (s *CLITestSuite) TestHost() {
 
 	parsedOutput := mapGetOutput(getOutput)
 	expectedOutput := map[string]string{
-		"Host Info:":                   "",
-		"-   Host Resurce ID:":         "host-abc12345",
-		"-   Name:":                    "edge-host-001",
-		"-   OS Profile:":              "Edge Microvisor Toolkit 3.0.20250504",
-		"-   Host Status Details:":     "INSTANCE_STATUS_RUNNING",
-		"-   Provisioning Status:":     "PROVISIONING_STATUS_COMPLETED",
-		"Status details:":              "",
-		"-   Host Status:":             "Running",
-		"-   Update Status:":           "",
-		"-   NIC Name and IP Address:": "eth0 192.168.1.102;",
-		"Specification:":               "",
-		"-   Serial Number:":           "1234567890",
-		"-   UUID:":                    "550e8400-e29b-41d4-a716-446655440000",
-		"-   OS:":                      "Edge Microvisor Toolkit 3.0.20250504",
-		"-   BIOS Vendor:":             "Lenovo",
-		"-   Product Name:":            "ThinkSystem SR650",
-		"Customizations:":              "",
-		"-   Custom configs:":          "nginx-config",
-		"CPU Info:":                    "",
-		"-   CPU Model:":               "Intel(R) Xeon(R) CPU E5-2670 v3",
-		"-   CPU Cores:":               "8",
-		"-   CPU Architecture:":        "x86_64",
-		"-   CPU Threads:":             "32",
-		"-   CPU Sockets:":             "2",
-		"AMT Info:":                    "",
-		"-   AMT Status:":              "AMT_STATE_PROVISIONED",
-		"-   Current Power Status:":    "POWER_STATE_ON",
-		"-   Desired Power Status:":    "POWER_STATE_ON",
-		"-   Power Command Policy :":   "POWER_COMMAND_POLICY_ALWAYS_ON",
-		"-   PowerOn Time :":           "1",
-		"-   Affected Packages:":       "[fluent-bit-3.1.9-11.emt3.x86_64]",
-		"-   CVE ID:":                  "CVE-2021-1234",
-		"-   Priority:":                "HIGH",
-		"CVE Info (existing CVEs):":    "",
+		"Detailed Host Information":       "",
+		"Host Info:":                      "",
+		"-   Host Resurce ID:":            "host-abc12345",
+		"-   Name:":                       "edge-host-001",
+		"-   OS Profile:":                 "Edge Microvisor Toolkit 3.0.20250504",
+		"-   Host Status Details:":        "INSTANCE_STATUS_RUNNING",
+		"-   Provisioning Status:":        "PROVISIONING_STATUS_COMPLETED",
+		"-   OS Update Policy:":           "",
+		"Status details:":                 "",
+		"-   Host Status:":                "Running",
+		"-   Update Status:":              "",
+		"-   NIC Name and IP Address:":    "eth0 192.168.1.102;",
+		"-   LVM Size:":                   "10 GB",
+		"Specification:":                  "",
+		"-   Serial Number:":              "1234567890",
+		"-   UUID:":                       "550e8400-e29b-41d4-a716-446655440000",
+		"-   OS:":                         "Edge Microvisor Toolkit 3.0.20250504",
+		"-   BIOS Vendor:":                "Lenovo",
+		"-   Product Name:":               "ThinkSystem SR650",
+		"Customizations:":                 "",
+		"-   Custom configs:":             "nginx-config",
+		"CPU Info:":                       "",
+		"Model":                           "Cores   |Architecture   |Threads   |Sockets",
+		"Intel(R) Xeon(R) CPU E5-2670 v3": "8       |x86_64         |32        |2",
+		"Memory Info:":                    "",
+		"Total (GB)":                      "",
+		"16":                              "",
+		"Storage Info:":                   "",
+		"WWID":                            "Capacity   |Model    |Serial   |Vendor",
+		"abcd":                            "0 GB       |Model1   |123456   |Vendor1",
+		"GPU Info:":                       "",
+		"Device":                          "Vendor       |Capabilities   |PCI Address",
+		"TestGPU":                         "TestVendor   |cap1,cap2      |03:00.0",
+		"USB Info:":                       "",
+		"Class":                           "Serial   |Vendor ID   |Product ID   |Bus   |Address",
+		"Hub":                             "123456   |abcd        |1234         |8     |1",
+		"Interfaces Info:":                "",
+		"Name":                            "Links State   |MTU      |MAC Address         |PCI Identifier   |SRIOV   |SRIOV VF Total   |SRIOV VF Number   |BMC Interface",
+		"eth0":                            "UNSPECIFIED   |1500     |30:d0:42:d9:02:7c   |0000:19:00.0     |true    |8                |4                 |true",
+		"AMT Info:":                       "",
+		"-   AMT Status:":                 "AMT_STATE_PROVISIONED",
+		"-   Current Power Status:":       "POWER_STATE_ON",
+		"-   Desired Power Status:":       "POWER_STATE_ON",
+		"-   Power Command Policy :":      "POWER_COMMAND_POLICY_ALWAYS_ON",
+		"-   PowerOn Time :":              "2025-12-03T08:25:13Z",
+		"-   Desired AMT State :":         "AMT_STATE_PROVISIONED",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
@@ -409,6 +451,24 @@ func (s *CLITestSuite) TestHost() {
 	HostArgs = map[string]string{
 		"power-policy": "immediate",
 		"power":        "on",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	// Test AMT State set
+	HostArgs = map[string]string{
+		"amt-state": "provisioned",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	// Test AMT State set
+	HostArgs = map[string]string{
+		"amt-state": "unprovisioned",
 	}
 
 	// Test set host with host
@@ -448,14 +508,186 @@ func (s *CLITestSuite) TestHost() {
 	// Test delete host with non-existent host
 	_, err = s.deleteHost(project, "host-11111111", make(map[string]string))
 	s.Error(err)
+
+	// --- CSV Generation Test ---
+	os.Remove("test_output.csv")
+	HostArgs = map[string]string{
+		"generate-csv": "test_output.csv",
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	files, _ := os.ReadDir(".")
+	for _, f := range files {
+		fmt.Println("File:", f.Name())
+	}
+	s.NoError(err)
+	s.True(PathExists("test_output.csv"), "CSV file was not generated")
+	defer os.Remove("test_output.csv")
+
+	// --- CSV Import Test ---
+	csvContent := `Name,ResourceID,DesiredAmtState
+host-153,host-0a6e769d,provisioned
+host-65,host-0f523c97,unprovisioned
+`
+	csvPath := "test_import.csv"
+	err = os.WriteFile(csvPath, []byte(csvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPath)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPath,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
+
+	///////////////////////////////////
+	// Host Update Tests
+	///////////////////////////////////
+	hostID = "host-abcd1000"
+
+	//Test updating host OS with non-existent osupdate policy
+	HostArgs = map[string]string{}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.EqualError(err, "\nfound 1 issues related to non-existing hosts and/or no set OS update policies - fix them and re-apply")
+
+	hostID = "host-abc12345"
+
+	//Test updating host OS with no policy set
+	HostArgs = map[string]string{}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	//Test updating host OS with invalid policy
+	HostArgs = map[string]string{
+		"osupdatepolicy": "updatepolicy-abc12345",
+	}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.EqualError(err, "Invalid OS Update Policy")
+
+	//Test updating host OS with new policy
+	HostArgs = map[string]string{
+		"osupdatepolicy": "osupdatepolicy-aaaabbbb",
+	}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	//Test generating CSV for OS update
+	HostArgs = map[string]string{
+		"generate-csv": "os_update_hosts.csv",
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+	s.True(PathExists("os_update_hosts.csv"), "OS update CSV file was not generated")
+	defer os.Remove("os_update_hosts.csv")
+
+	//Test generating CSV for OS update with region filter
+	HostArgs = map[string]string{
+		"generate-csv": "os_update_hosts.csv",
+		"region":       "region-abcd1234",
+		"filter":       "serialNumber='62NS6R3'",
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+	s.True(PathExists("os_update_hosts.csv"), "OS update CSV file was not generated")
+	defer os.Remove("os_update_hosts.csv")
+
+	//Test generating CSV for OS update with site filter
+	HostArgs = map[string]string{
+		"generate-csv": "os_update_hosts.csv",
+		"site":         "site-abcd1234",
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+	s.True(PathExists("os_update_hosts.csv"), "OS update CSV file was not generated")
+	defer os.Remove("os_update_hosts.csv")
+
+	//Test generating CSV for OS update but file already exists
+	HostArgs = map[string]string{
+		"generate-csv": "os_update_hosts.csv",
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+	s.True(PathExists("os_update_hosts.csv"), "OS update CSV file was not generated")
+	defer os.Remove("os_update_hosts.csv")
+
+	//Test generating CSV for OS update with site filter but file does not exist
+	HostArgs = map[string]string{
+		"generate-csv": "os_update_hosts2.csv",
+		"site":         "site-abcd1234",
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+	s.True(PathExists("os_update_hosts2.csv"), "OS update CSV file was not generated")
+	defer os.Remove("os_update_hosts2.csv")
+
+	// Test updating host OS from CSV
+	updateCsvContent := `Name,ResourceID,OSUpdatePolicyID
+host-153,host-abc12345
+host-65,host-abcd2001,osupdatepolicy-aaaabbbb
+host-66,host-abcd2002,osupdatepolicy-aaaabbbb
+`
+	updateCsvPath := "test_update_import.csv"
+	err = os.WriteFile(updateCsvPath, []byte(updateCsvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(updateCsvPath)
+	HostArgs = map[string]string{
+		"import-from-csv": updateCsvPath,
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.NoError(err)
+
+	// Test updating host OS from CSV - invalid entry
+	updateCsvContent = `Name,ResourceID,OSUpdatePolicyID
+host-153host-abc12345
+host-65,host-abcd1001,osupdatepolicy-blobabbbb
+host-66,host-abcd1002,osupdatepolicy-aaaabbbb
+`
+	updateCsvPath = "test_update_import.csv"
+	err = os.WriteFile(updateCsvPath, []byte(updateCsvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(updateCsvPath)
+	HostArgs = map[string]string{
+		"import-from-csv": updateCsvPath,
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.EqualError(err, "\nerrors found in CSV import, please correct and re-import")
+
+	// Test updating host OS from CSV - nonexisting policies
+	updateCsvContent = `Name,ResourceID,OSUpdatePolicyID
+host-65,host-abcd1001,osupdatepolicy-ccccaaaa
+host-66,host-abcd1002,osupdatepolicy-ccccaaaa
+`
+	updateCsvPath = "test_update_import.csv"
+	err = os.WriteFile(updateCsvPath, []byte(updateCsvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(updateCsvPath)
+	HostArgs = map[string]string{
+		"import-from-csv": updateCsvPath,
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.EqualError(err, "\nfound 2 references to non-existing OS update policies - fix them and re-apply")
+
+	// Test updating host OS from CSV - no instance
+	updateCsvContent = `Name,ResourceID,OSUpdatePolicyID
+host-65,host-abcd1001
+host-66,host-abcd1002,osupdatepolicy-abcd1234
+`
+	updateCsvPath = "test_update_import.csv"
+	err = os.WriteFile(updateCsvPath, []byte(updateCsvContent), 0600)
+	s.NoError(err)
+	defer os.Remove(updateCsvPath)
+	HostArgs = map[string]string{
+		"import-from-csv": updateCsvPath,
+	}
+	_, err = s.updateOsHost(project, "", HostArgs)
+	s.EqualError(err, "\nfound 2 issues related to non-existing hosts and/or no set OS update policies - fix them and re-apply")
 }
 
 func FuzzHost(f *testing.F) {
 	// Initial corpus with basic input
-	f.Add("project", "./testdata/mock.csv", "", "", "", "", "", "", "", "", "", "", "host-abcd1234", "on", "immediate")
-	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "host-abcd1234", "", "")
-	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "", "on", "immediate")
-	f.Fuzz(func(t *testing.T, project string, path string, remoteUser string, site string, secure string, osProfile string, metadata string, clusterDeploy string, clusterTemplate string, clusterConfig string, cloudInit string, amt string, name string, pwr string, pol string) {
+	f.Add("project", "./testdata/mock.csv", "", "", "", "", "", "", "", "", "", "", "host-abcd1234", "on", "immediate", "provisioned")
+	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "61", "host-abcd1234", "", "", "")
+	f.Add("project", "./testdata/mock.csv", "user", "site-abcd1234", "true", "os-abcd1234", "key=value", "true", "template:version", "role:all", "config1&config2", "true", "", "on", "immediate", "provisioned")
+	f.Fuzz(func(t *testing.T, project string, path string, remoteUser string, site string, secure string, osProfile string, metadata string, clusterDeploy string, clusterTemplate string, clusterConfig string, cloudInit string, lvm string, name string, pwr string, pol string, amt string) {
 		testSuite := new(CLITestSuite)
 		testSuite.SetT(t) // Set the testing.T instance
 		testSuite.SetupSuite()
@@ -477,7 +709,7 @@ func FuzzHost(f *testing.F) {
 			"cluster-template": clusterTemplate,
 			"cluster-config":   clusterConfig,
 			"cloud-init":       cloudInit,
-			"amt":              amt,
+			"lvm-size":         lvm,
 		}
 
 		_, err := testSuite.createHost(project, HostArgs)
@@ -492,6 +724,7 @@ func FuzzHost(f *testing.F) {
 		HostArgs = map[string]string{
 			"power":        pwr,
 			"power-policy": pol,
+			"amt-state":    amt,
 		}
 
 		_, err = testSuite.setHost(project, name, HostArgs)

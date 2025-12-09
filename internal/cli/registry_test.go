@@ -33,7 +33,7 @@ func (s *CLITestSuite) createRegistry(project string, name string, args commandA
 }
 
 func (s *CLITestSuite) listRegistries(project string, verbose bool, showSensitive bool, orderBy string, filter string) (string, error) {
-	args := `get registries --project ` + project
+	args := `list registries --project ` + project
 	if verbose {
 		args = args + " -v"
 		if showSensitive {
@@ -196,7 +196,7 @@ func (s *CLITestSuite) TestImageRegistry() {
 }
 
 func TestPrintRegistryEvent(t *testing.T) {
-	reg := catapi.Registry{
+	reg := catapi.CatalogV3Registry{
 		Name:        "test-registry",
 		DisplayName: strPtr("Test Registry"),
 		Description: strPtr("A test registry"),

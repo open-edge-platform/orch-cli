@@ -68,11 +68,11 @@ func (s *CLITestSuite) deleteDeployment(publisher string, deployment string, arg
 
 func (s *CLITestSuite) TestDeployment() {
 	//TODO: These test should be expanded to compare outputs for list and get
-	err := s.createDeployment("test-app", "v1.0.0", map[string]string{
+	err := s.createDeployment("deployment-pkg", "1.0.0", map[string]string{
 		"project":           project,
 		"display-name":      "Test",
 		"profile":           "test-profile",
-		"application-label": "test-app.l1=l1value,test-app.l2=l2value",
+		"application-label": "app1.l1=l1value,app2.l2=l2value",
 	})
 	s.NoError(err)
 
@@ -91,13 +91,13 @@ func (s *CLITestSuite) TestDeployment() {
 
 func FuzzDeployment(f *testing.F) {
 	// Seed with valid and invalid input combinations
-	f.Add("test-app", "v1.0.0", "test-deployment", project, "test-profile", "Test", "test-app.l1=l1value,test-app.l2=l2value")
-	f.Add("", "v1.0.0", "test-deployment", project, "test-profile", "Test", "")
-	f.Add("test-app", "", "test-deployment", project, "test-profile", "Test", "")
-	f.Add("test-app", "v1.0.0", "", project, "test-profile", "Test", "")
-	f.Add("test-app", "v1.0.0", "test-deployment", "", "test-profile", "Test", "")
-	f.Add("test-app", "v1.0.0", "test-deployment", project, "", "Test", "")
-	f.Add("test-app", "v1.0.0", "test-deployment", project, "test-profile", "", "")
+	f.Add("deployment-pkg", "1.0.0", "test-deployment", project, "test-profile", "Test", "app1.l1=l1value,app2.l2=l2value")
+	f.Add("", "1.0.0", "test-deployment", project, "test-profile", "Test", "")
+	f.Add("deployment-pkg", "", "test-deployment", project, "test-profile", "Test", "")
+	f.Add("deployment-pkg", "1.0.0", "", project, "test-profile", "Test", "")
+	f.Add("deployment-pkg", "1.0.0", "test-deployment", "", "test-profile", "Test", "")
+	f.Add("deployment-pkg", "1.0.0", "test-deployment", project, "", "Test", "")
+	f.Add("deployment-pkg", "1.0.0", "test-deployment", project, "test-profile", "", "")
 
 	f.Fuzz(func(t *testing.T, appName, version, deployment, publisher, profile, displayName, appLabel string) {
 		testSuite := new(CLITestSuite)

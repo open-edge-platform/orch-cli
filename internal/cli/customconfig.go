@@ -114,6 +114,7 @@ func getGetCustomConfigCommand() *cobra.Command {
 		Short:   "Get a Cloud Init configuration",
 		Example: getCustomConfigExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: customConfigAliases,
 		RunE:    runGetCustomConfigCommand,
 	}
 	return cmd
@@ -124,6 +125,7 @@ func getListCustomConfigCommand() *cobra.Command {
 		Use:     "customconfig [flags]",
 		Short:   "List all Cloud Init configurations",
 		Example: listCustomConfigExamples,
+		Aliases: customConfigAliases,
 		RunE:    runListCustomConfigCommand,
 	}
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of cloud init list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter <filter> see https://google.aip.dev/160 and API spec.")
@@ -136,6 +138,7 @@ func getCreateCustomConfigCommand() *cobra.Command {
 		Short:   "Creates Cloud Init configuration",
 		Example: createCustomConfigExamples,
 		Args:    cobra.ExactArgs(2),
+		Aliases: customConfigAliases,
 		RunE:    runCreateCustomConfigCommand,
 	}
 	cmd.PersistentFlags().StringP("description", "d", viper.GetString("description"), "Optional flag used to provide a description to a cloud init config resource")
@@ -148,6 +151,7 @@ func getDeleteCustomConfigCommand() *cobra.Command {
 		Short:   "Delete a Cloud Init config",
 		Example: deleteCustomConfigExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: customConfigAliases,
 		RunE:    runDeleteCustomConfigCommand,
 	}
 	return cmd
@@ -261,7 +265,7 @@ func runCreateCustomConfigCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating Cloud Init config from %s", path))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating Cloud Init config from %s", path))
 }
 
 // Deletes Cloud Init config - checks if a config already exists and then deletes it if it does
@@ -279,7 +283,7 @@ func runDeleteCustomConfigCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if err = checkResponse(gresp.HTTPResponse, "Error getting custom configs"); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, "Error getting custom configs"); err != nil {
 		return err
 	}
 
@@ -294,5 +298,5 @@ func runDeleteCustomConfigCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting Cloud Init config %s", name))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting Cloud Init config %s", name))
 }

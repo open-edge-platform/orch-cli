@@ -21,7 +21,7 @@ func (s *CLITestSuite) createApplication(project string, applicationName string,
 }
 
 func (s *CLITestSuite) listApplications(project string, verbose bool, orderBy string, filter string, kind string) (string, error) {
-	args := `get applications --project ` + project
+	args := `list applications --project ` + project
 	if verbose {
 		args = args + " -v"
 	}
@@ -58,9 +58,9 @@ func (s *CLITestSuite) createTestApplication(pubName string, applicationName str
 	createArgs := map[string]string{
 		"chart-name":     "chart",
 		"chart-registry": "reg",
-		"chart-version":  "1.0",
+		"chart-version":  "1.0.0",
 	}
-	return s.createApplication(pubName, applicationName, "1.0", createArgs)
+	return s.createApplication(pubName, applicationName, "1.0.0", createArgs)
 }
 
 func (s *CLITestSuite) TestApplication() {
@@ -212,8 +212,8 @@ func (s *CLITestSuite) TestApplication() {
 }
 
 func TestPrintApplicationEvent(t *testing.T) {
-	kind := catapi.ApplicationKindKINDNORMAL
-	app := catapi.Application{
+	kind := catapi.KINDNORMAL
+	app := catapi.CatalogV3Application{
 		Name:               "test-app",
 		Version:            "1.0.0",
 		Kind:               &kind, // take address of variable, not constant
@@ -222,7 +222,7 @@ func TestPrintApplicationEvent(t *testing.T) {
 		ChartName:          "test-chart",
 		ChartVersion:       "0.1.0",
 		HelmRegistryName:   "test-registry",
-		Profiles:           &[]catapi.Profile{},
+		Profiles:           &[]catapi.CatalogV3Profile{},
 		DefaultProfileName: strPtr("default"),
 	}
 	payload, err := json.Marshal(app)

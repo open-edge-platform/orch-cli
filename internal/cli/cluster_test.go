@@ -3,7 +3,10 @@
 
 package cli
 
-import "fmt"
+import (
+	"fmt"
+	"testing"
+)
 
 func (s *CLITestSuite) createCluster(publisher string, name string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`create cluster %s --project %s`, name, publisher))
@@ -126,4 +129,57 @@ func (s *CLITestSuite) TestCluster() {
 	_, err = s.deleteCluster("nonexistent-project", name, CArgs)
 	s.EqualError(err, "failed to soft delete cluster 'test-cluster-1': failed to delete cluster test-cluster-1: Not Found")
 
+}
+
+func FuzzCluster(f *testing.F) {
+	// Seed with valid and invalid input combinations
+	f.Add("test-cluster", "d7911144-3010-11f0-a1c2-370d26b04195:all", project)
+	f.Add("", "d7911144-3010-11f0-a1c2-370d26b04195:all", project)
+	f.Add("test-cluster", "", project)
+	f.Add("test-cluster", "d7911144-3010-11f0-a1c2-370d26b04195:all", "")
+
+	f.Fuzz(func(t *testing.T, clusterName, nodeName, publisher string) {
+		testSuite := new(CLITestSuite)
+		testSuite.SetT(t)
+		testSuite.SetupSuite()
+		defer testSuite.TearDownSuite()
+		testSuite.SetupTest()
+		defer testSuite.TearDownTest()
+
+		args := map[string]string{
+			"nodes": nodeName,
+		}
+
+		// --- Create Cluster ---
+		_, err := testSuite.createCluster(clusterName, nodeName, args)
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- List Cluster ---
+		_, err = testSuite.listCluster(publisher, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- Get Cluster ---
+		_, err = testSuite.getCluster(publisher, clusterName, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		// --- Delete Cluster ---
+		_, err = testSuite.deleteCluster(publisher, clusterName, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+	})
 }

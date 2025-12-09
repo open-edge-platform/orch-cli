@@ -7,7 +7,7 @@ on:
   pull_request:
     types: [labeled]
   schedule:
-    - cron: "0 0 * * *" # Run every day at midnight
+    - cron: "0 0 * * *"  # Run every day at midnight
   workflow_dispatch:  # Run on manual trigger
     inputs:
       run-component-tests:
@@ -28,7 +28,7 @@ jobs:
     name: Deploy Kind Orchestrator and Run Component Tests
     if: |
       ${{ inputs.run-component-tests || github.event_name == 'schedule' || github.event.label.name == 'run-component-tests' }}
-    runs-on: ubuntu-24.04-16core-64GB # ubuntu-24.04-4core-16GB ubuntu-22.04-32core-128GB & ubuntu-24.04-16core-64GB
+    runs-on: ubuntu-24.04-16core-64GB  # ubuntu-24.04-4core-16GB ubuntu-22.04-32core-128GB & ubuntu-24.04-16core-64GB
     timeout-minutes: 60
     env:
       ORCH_DEFAULT_PASSWORD: ${{ secrets.ORCH_DEFAULT_PASSWORD }}
@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
         with:
           repository: open-edge-platform/edge-manageability-framework
           token: ${{ secrets.SYS_ORCH_GITHUB }}
@@ -53,10 +53,10 @@ jobs:
           git config --global url."https://${{ secrets.SYS_ORCH_GITHUB }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
       - name: Setup asdf and install dependencies
-        uses: open-edge-platform/orch-utils/.github/actions/setup-asdf@76f80a5e5b044bf31fc28925f9ae27da86733820
+        uses: open-edge-platform/orch-utils/.github/actions/setup-asdf@951ed4c7958311d2d5de1a920e7e6065fc03eef2
 
       - name: Checkout app-orch-catalog repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: open-edge-platform/app-orch-catalog
           path: app-orch-catalog
@@ -66,7 +66,9 @@ jobs:
       - name: Get current git hash of the app-orch-catalog PR
         id: get-git-hash-catalog
         working-directory: app-orch-catalog
-        run: echo "GIT_HASH_CHARTS=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+        env:
+          GIT_HASH_CHARTS: ${{ github.event.pull_request.head.sha }}
+        run: echo "GIT_HASH_CHARTS=${GIT_HASH_CHARTS}" >> "$GITHUB_ENV"
 
       - name: Get current git hash of the edge-manageability-framework PR
         id: get-git-hash-deploy
@@ -124,7 +126,7 @@ jobs:
         working-directory: app-orch-catalog
         run: |
           make coder-redeploy
-          make coder-rebuild 
+          make coder-rebuild
 
       - name: Describe app-orch-catalog
         run: kubectl describe deployments.app -n orch-app app-orch-catalog
@@ -142,13 +144,13 @@ jobs:
               echo "Waiting for 10 seconds before checking again..."
               sleep 10
             fi
-          done  
+          done
 
       - name: Run Catalog Component Tests
         working-directory: app-orch-catalog/test
         run: |
           make component-tests
-          echo "Component tests done!"  
+          echo "Component tests done!"
 
       - name: Get diagnostic information
         if: always()
@@ -160,11 +162,11 @@ jobs:
 
       - name: Upload diagnostic artifacts
         if: always()
-        uses: actions/upload-artifact@v4.4.3
+        uses: actions/upload-artifact@v5.0.0
         with:
           name: pods-apps-logs
           path: |
             argo-diag.txt
             pods-describe.txt
             pods-list.txt
-            argocd-applications.yaml    
+            argocd-applications.yaml

@@ -22,6 +22,7 @@ import (
 	deploymentmock "github.com/open-edge-platform/cli/internal/cli/mocks/deployment"
 	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
 	rpsmock "github.com/open-edge-platform/cli/internal/cli/mocks/rps"
+	tenancymock "github.com/open-edge-platform/cli/internal/cli/mocks/tenancy"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/spf13/viper"
@@ -67,6 +68,7 @@ func (s *CLITestSuite) SetupSuite() {
 	ClusterFactory = clustermock.CreateClusterMock(mctrl)
 	RpsFactory = rpsmock.CreateRpsMock(mctrl)
 	DeploymentFactory = deploymentmock.CreateDeploymentMock(mctrl)
+	TenancyFactory = tenancymock.CreateTenancyMock(mctrl)
 
 	//Mock server for network tests - TODO rework network
 	s.testServer = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -98,6 +100,9 @@ func (s *CLITestSuite) TearDownSuite() {
 	InfraFactory = nil
 	ClusterFactory = nil
 	RpsFactory = nil
+	DeploymentFactory = nil
+	TenancyFactory = nil
+
 	viper.Set(auth.UserName, "")
 	viper.Set(auth.RefreshTokenField, "")
 	viper.Set(auth.ClientIDField, "")
@@ -254,7 +259,11 @@ func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
 
 func addCommandArgs(args commandArgs, commandString string) string {
 	for argName, argValue := range args {
-		commandString = commandString + fmt.Sprintf(` --%s %s `, argName, argValue)
+		if argValue == "" {
+			commandString += fmt.Sprintf(" --%s", argName)
+		} else {
+			commandString += fmt.Sprintf(" --%s=%s", argName, argValue)
+		}
 	}
 	return commandString
 }
@@ -462,12 +471,17 @@ func mapGetOutput(output string) map[string]string {
 			continue
 		}
 
+		// Ignore lines that start with more than 2 dashes
+		if strings.HasPrefix(line, "---") {
+			continue
+		}
+
 		// Handle lines that contain pipe separators
 		if strings.Contains(line, "|") {
 			parts := strings.Split(line, "|")
 			if len(parts) >= 2 {
 				key := strings.TrimSpace(parts[0])
-				value := strings.TrimSpace(parts[1])
+				value := strings.TrimSpace(strings.Join(parts[1:], "|")) // Join all remaining parts
 
 				// Remove quotes from value if present
 				value = strings.Trim(value, `"`)
@@ -480,7 +494,7 @@ func mapGetOutput(output string) map[string]string {
 					contentParts := strings.Split(content, "|")
 					if len(contentParts) >= 2 {
 						hostKey := strings.TrimSpace(contentParts[0])
-						hostValue := strings.TrimSpace(contentParts[1])
+						hostValue := strings.TrimSpace(strings.Join(contentParts[1:], "|")) // Join all remaining parts
 						hostValue = strings.Trim(hostValue, `"`)
 						result["-   "+hostKey] = hostValue
 					}
@@ -494,6 +508,13 @@ func mapGetOutput(output string) map[string]string {
 			// Handle section headers (lines ending with ":")
 			if strings.HasSuffix(line, ":") && !strings.Contains(line, "|") {
 				result[line] = ""
+			} else {
+				// Handle standalone values (like memory values or table data)
+				// Check if this looks like a numeric value or table data
+				if strings.TrimSpace(line) != "" {
+					// For cases like "Total (GB)" or "16" - treat as key with empty value
+					result[line] = ""
+				}
 			}
 		}
 	}

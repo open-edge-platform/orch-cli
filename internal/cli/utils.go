@@ -17,17 +17,24 @@ import (
 	"text/tabwriter"
 
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
+	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
+	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
 )
 
 const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
+
+const (
+	REGION = 0
+	SITE   = 1
+)
 
 // Use the interface type instead of the concrete function type
 var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
@@ -48,6 +55,10 @@ var RpsFactory interfaces.RpsFactoryFunc = func(cmd *cobra.Command) (context.Con
 
 var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command) (context.Context, depapi.ClientWithResponsesInterface, string, error) {
 	return getDeploymentServiceContext(cmd)
+}
+
+var TenancyFactory interfaces.TenancyFactoryFunc = func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, error) {
+	return getTenancyServiceContext(cmd)
 }
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
@@ -147,6 +158,19 @@ func getRpsServiceContext(cmd *cobra.Command) (context.Context, *rpsapi.ClientWi
 	return context.Background(), rpsClient, projectName, nil
 }
 
+// Get the new background context, REST client, and project name given the specified command.
+func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.ClientWithResponses, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return nil, nil, err
+	}
+	tenancyClient, err := tenantapi.NewClientWithResponses(serverAddress, TLS13TenancyClientOption())
+	if err != nil {
+		return nil, nil, err
+	}
+	return context.Background(), tenancyClient, nil
+}
+
 // Adds the mandatory project UUID, and the standard display-name, and description
 func addEntityFlags(cmd *cobra.Command, entity string) {
 	cmd.Flags().String("display-name", "", fmt.Sprintf("%s display name", entity))
@@ -174,15 +198,47 @@ func getEntityFlags(cmd *cobra.Command) (string, string, error) {
 	return displayName, description, err
 }
 
+func checkProjectExists(cmd *cobra.Command, projectName string) error {
+	ctx, projectClient, err := TenancyFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	resp, err := projectClient.GETV1ProjectsProjectProjectWithResponse(ctx, projectName, auth.AddAuthHeader)
+
+	// If the project does not exist, then resp.JSON200 and err will both be nil.
+	// If the project does exist, but the user does not have access to see it, then statusUnauthorized will
+	// be returned.
+
+	if err == nil && (resp == nil || resp.JSON200 == nil || statusUnauthorized(resp.HTTPResponse)) {
+		return fmt.Errorf("project %s does not exist or you do not have access to it", projectName)
+	}
+
+	if err != nil {
+		return processError(err)
+	}
+
+	return nil
+}
+
 // Get the project name from the flag.
 func getProjectName(cmd *cobra.Command) (string, error) {
 	projectName, err := cmd.Flags().GetString("project")
 	if err != nil {
 		return "", err
 	}
+
 	if projectName == "" {
 		return "", fmt.Errorf("required flag \"project\" not set")
 	}
+
+	// We're assuming that if getProjectName is required, then the project must exist.
+	// CLI commands that do not require projects should never call getProjectName.
+	err = checkProjectExists(cmd, projectName)
+	if err != nil {
+		return "", err
+	}
+
 	return projectName, nil
 }
 
@@ -265,21 +321,43 @@ func readInputWithLimit(path string) ([]byte, error) {
 
 // Checks the specified REST status and if it signals an anomaly, return an error formatted using the specified message
 // and status details.
-func checkResponse(response *http.Response, message string) error {
+func checkResponse(response *http.Response, body []byte, message string) error {
 	if response != nil {
-		return checkResponseCode(response.StatusCode, message, response.Status)
+		return checkResponseCode(response.StatusCode, message, response.Status, body)
 	}
 	return nil
 }
 
 // Checks the specified REST status and if it signals an anomaly, return an error formatted using the specified message
 // and status details.
-func checkResponseCode(responseCode int, message string, responseMessage string) error {
+func checkResponseCode(responseCode int, message string, responseMessage string, body []byte) error {
 	if responseCode == 401 {
 		return fmt.Errorf("%s. Unauthorized. Please Login. %s", message, responseMessage)
 	} else if responseCode != 200 && responseCode != 201 && responseCode != 204 {
+		// Try to parse the JSON body to extract just the message
+		var errorResponse struct {
+			Message string `json:"message"`
+		}
+
+		var bodyMessage string
+		if len(body) > 0 {
+			if err := json.Unmarshal(body, &errorResponse); err == nil && errorResponse.Message != "" {
+				bodyMessage = fmt.Sprintf("\"%s\"", errorResponse.Message)
+			} else {
+				// Fallback to raw body if JSON parsing fails
+				bodyMessage = string(body)
+			}
+		}
+
 		if len(message) > 0 {
+			if bodyMessage != "" {
+				return fmt.Errorf("%s: %s\n%s", message, responseMessage, bodyMessage)
+			}
 			return fmt.Errorf("%s: %s", message, responseMessage)
+		}
+
+		if bodyMessage != "" {
+			return fmt.Errorf("%s\n%s", responseMessage, bodyMessage)
 		}
 		return fmt.Errorf("%s", responseMessage)
 	}
@@ -312,11 +390,11 @@ func checkResponseGRPC(response *http.Response, message string) error {
 			// if the grpc Status included a message then use it and return.
 			// Otherwise, fall back to the standard response message.
 			if status.Message != "" {
-				return checkResponseCode(response.StatusCode, message, status.Message)
+				return checkResponseCode(response.StatusCode, message, status.Message, []byte{})
 			}
 		}
 	}
-	return checkResponseCode(response.StatusCode, message, response.Status)
+	return checkResponseCode(response.StatusCode, message, response.Status, []byte{})
 }
 
 // Checks the status code and returns the appropriate error
@@ -352,7 +430,6 @@ func statusForbidden(response *http.Response) bool {
 	return response.StatusCode == 403
 }
 
-// Processes any error and any anomalous GET HTTP responses and determines whether to proceed or not
 func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer, verbose bool, header string, message string) (proceed bool, err error) {
 	if err = statusIsAbnormal(resp, message, resp.Status); err != nil {
 		return false, err
@@ -363,6 +440,7 @@ func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer,
 	} else if statusForbidden(resp) {
 		return false, getError(body, "Unauthorized (forbidden). Please login")
 	}
+
 	if !verbose {
 		_, _ = fmt.Fprintf(writer, "%s\n", header)
 	}
@@ -475,6 +553,20 @@ func TLS13ClusterClientOption() func(*coapi.Client) error {
 
 func TLS13RPSClientOption() func(*rpsapi.Client) error {
 	return func(c *rpsapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+
+func TLS13TenancyClientOption() func(*tenantapi.Client) error {
+	return func(c *tenantapi.Client) error {
 		c.Client = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{

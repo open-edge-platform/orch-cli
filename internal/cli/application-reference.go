@@ -59,12 +59,12 @@ func runCreateApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("deployment package %s:%s not found", pkgName, pkgVersion)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("deployment package %s:%s not found", pkgName, pkgVersion)); err != nil {
 		return err
 	}
 
 	pkg := gresp.JSON200.DeploymentPackage
-	pkg.ApplicationReferences = append(pkg.ApplicationReferences, catapi.ApplicationReference{
+	pkg.ApplicationReferences = append(pkg.ApplicationReferences, catapi.CatalogV3ApplicationReference{
 		Name:    applicationFields[0],
 		Version: applicationFields[1],
 	})
@@ -73,7 +73,7 @@ func runCreateApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	if err != nil {
 		return err
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error while creating application reference %s", args[2]))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating application reference %s", args[2]))
 }
 
 func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) error {
@@ -93,7 +93,7 @@ func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	if err != nil {
 		return processError(err)
 	}
-	if err = checkResponse(gresp.HTTPResponse, fmt.Sprintf("deployment package %s:%s not found", pkgName, pkgVersion)); err != nil {
+	if err = checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("deployment package %s:%s not found", pkgName, pkgVersion)); err != nil {
 		return err
 	}
 
@@ -109,25 +109,28 @@ func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	if err != nil {
 		return err
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting application reference %s for deployment package %s:%s",
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting application reference %s for deployment package %s:%s",
 		applicationName, pkgName, pkgVersion))
 }
 
-func updateDeploymentPackage(ctx context.Context, projectName string, client catapi.ClientWithResponsesInterface, pkg catapi.DeploymentPackage) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
+func updateDeploymentPackage(ctx context.Context, projectName string, client catapi.ClientWithResponsesInterface, pkg catapi.CatalogV3DeploymentPackage) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {
 	return client.CatalogServiceUpdateDeploymentPackageWithResponse(ctx, projectName, pkg.Name, pkg.Version,
 		catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody{
-			Name:                    pkg.Name,
-			Version:                 pkg.Version,
-			DisplayName:             pkg.DisplayName,
-			Description:             pkg.Description,
-			ApplicationReferences:   pkg.ApplicationReferences,
-			Profiles:                pkg.Profiles,
-			DefaultProfileName:      pkg.DefaultProfileName,
-			ApplicationDependencies: pkg.ApplicationDependencies,
-			Artifacts:               pkg.Artifacts,
-			DefaultNamespaces:       pkg.DefaultNamespaces,
-			Extensions:              pkg.Extensions,
-			IsDeployed:              pkg.IsDeployed,
-			IsVisible:               pkg.IsVisible,
+			Name:                       pkg.Name,
+			Version:                    pkg.Version,
+			DisplayName:                pkg.DisplayName,
+			Description:                pkg.Description,
+			Kind:                       pkg.Kind,
+			ApplicationReferences:      pkg.ApplicationReferences,
+			Profiles:                   pkg.Profiles,
+			DefaultProfileName:         pkg.DefaultProfileName,
+			ApplicationDependencies:    pkg.ApplicationDependencies,
+			Artifacts:                  pkg.Artifacts,
+			DefaultNamespaces:          pkg.DefaultNamespaces,
+			Extensions:                 pkg.Extensions,
+			IsDeployed:                 pkg.IsDeployed,
+			IsVisible:                  pkg.IsVisible,
+			ForbidsMultipleDeployments: pkg.ForbidsMultipleDeployments,
+			Namespaces:                 pkg.Namespaces,
 		}, auth.AddAuthHeader)
 }

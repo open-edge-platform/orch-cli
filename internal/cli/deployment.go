@@ -4,14 +4,17 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 
+	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
-
+	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	"github.com/spf13/cobra"
 )
@@ -22,8 +25,8 @@ func getCreateDeploymentCommand() *cobra.Command {
 		Short:   "Create a deployment",
 		Example: "orch-cli create deployment my-package 1.0.0 --project sample-project --display-name my-deployment --profile sample-profile --application-label <app>.<label>=<label-value>",
 		Args:    cobra.ExactArgs(2),
-
-		RunE: runCreateDeploymentCommand,
+		Aliases: deploymentAliases,
+		RunE:    runCreateDeploymentCommand,
 	}
 	cmd.Flags().String("display-name", "", "deployment display name")
 	cmd.Flags().String("profile", "", "deployment profile to use")
@@ -37,7 +40,7 @@ func getCreateDeploymentCommand() *cobra.Command {
 func getListDeploymentsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployments [flags]",
-		Aliases: []string{"deployment"},
+		Aliases: deploymentAliases,
 		Short:   "List all deployments",
 		Example: "orch-cli list deployments --project some-project",
 		RunE:    runListDeploymentsCommand,
@@ -48,6 +51,7 @@ func getListDeploymentsCommand() *cobra.Command {
 func getGetDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment <deployment-id> [flags]",
+		Aliases: deploymentAliases,
 		Short:   "Get a deployment",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli get deployment 12345 --project some-project",
@@ -62,6 +66,7 @@ func getSetDeploymentCommand() *cobra.Command {
 		Short:   "Update a deployment",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli set deployment 12345 --project some-project --name my-deployment --package-name my-package --package-version 1.0.0 --profile sample-profile --application-namespace <app>=<namespace> --application-set <app>.<prop>=<prop-value> --application-label <app>.<label>=<label-value>",
+		Aliases: deploymentAliases,
 		RunE:    runSetDeploymentCommand,
 	}
 	cmd.Flags().String("name", "", "deployment name")
@@ -75,12 +80,27 @@ func getSetDeploymentCommand() *cobra.Command {
 	return cmd
 }
 
+func getUpgradeDeploymentCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "deployment <deployment-id> [flags]",
+		Short:   "Upgrade a deployment to a new package version",
+		Args:    cobra.ExactArgs(1),
+		Example: "orch-cli upgrade deployment 12345 --package-version 1.1.0",
+		Aliases: deploymentAliases,
+		RunE:    runUpgradeDeploymentCommand,
+	}
+	cmd.Flags().String("package-version", "", "new deployment package version to upgrade to")
+	_ = cmd.MarkFlagRequired("package-version")
+	return cmd
+}
+
 func getDeleteDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment <deployment-id> [flags]",
 		Short:   "Delete a deployment",
 		Args:    cobra.ExactArgs(1),
 		Example: "orch-cli delete deployment 12345 --project some-project",
+		Aliases: deploymentAliases,
 		RunE:    runDeleteDeploymentCommand,
 	}
 	return cmd
@@ -115,13 +135,40 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 	appName := args[0]
 	appVersion := args[1]
 
+	// Validate version format
+	if err := validator.ValidateVersion(appVersion); err != nil {
+		return err
+	}
+
+	// Get catalog client for fetching deployment package
+	_, catalogClient, _, err := CatalogFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Get valid application names from the deployment package for validation
+	validAppNames, err := getValidApplicationNames(ctx, catalogClient, projectName, appName, appVersion)
+	if err != nil {
+		return err
+	}
+
 	overrideValues, err := getOverrideValues(cmd)
 	if err != nil {
 		return err
 	}
 
+	// Validate that application names in overrides exist in the deployment package
+	if err := validateApplicationNames(overrideValues, validAppNames, "application-set"); err != nil {
+		return err
+	}
+
 	targetClusters, deploymentType, err := getTargetClusters(cmd, false) // do not allow empty target clusters
 	if err != nil {
+		return err
+	}
+
+	// Validate that application names in target clusters exist in the deployment package
+	if err := validateTargetClustersApplicationNames(targetClusters, validAppNames); err != nil {
 		return err
 	}
 
@@ -138,7 +185,7 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error creating deployment for application %s:%s", appName, appVersion))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating deployment for application %s:%s", appName, appVersion))
 }
 
 func getOverrideValues(cmd *cobra.Command) ([]depapi.OverrideValues, error) {
@@ -356,7 +403,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if gresp.HTTPResponse.StatusCode != http.StatusOK {
-		return checkResponse(gresp.HTTPResponse, fmt.Sprintf("error getting for application %s", deploymentID))
+		return checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("error getting for application %s", deploymentID))
 	}
 
 	dep := gresp.JSON200.Deployment
@@ -383,7 +430,49 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error updating deployment %s", deploymentID))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error updating deployment %s", deploymentID))
+}
+
+func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
+	ctx, deploymentClient, projectName, err := DeploymentFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	deploymentID := args[0]
+	newPackageVersion, _ := cmd.Flags().GetString("package-version")
+
+	// Get the current deployment to retrieve package name and other details
+	gresp, err := deploymentClient.DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
+		auth.AddAuthHeader)
+	if err != nil {
+		return err
+	}
+
+	if gresp.HTTPResponse.StatusCode != http.StatusOK {
+		return checkResponse(gresp.HTTPResponse, gresp.Body, fmt.Sprintf("error getting deployment %s", deploymentID))
+	}
+
+	dep := gresp.JSON200.Deployment
+
+	// Build the update request with the new package version
+	request := depapi.DeploymentServiceUpdateDeploymentJSONRequestBody{
+		DeployId:       &deploymentID,
+		Name:           dep.Name,
+		AppName:        dep.AppName,
+		AppVersion:     newPackageVersion, // Use the new package version
+		DisplayName:    dep.DisplayName,
+		ProfileName:    dep.ProfileName,
+		OverrideValues: dep.OverrideValues,
+		TargetClusters: dep.TargetClusters,
+		DeploymentType: dep.DeploymentType,
+	}
+
+	resp, err := deploymentClient.DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error upgrading deployment %s to version %s", deploymentID, newPackageVersion))
 }
 
 func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
@@ -399,5 +488,88 @@ func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, fmt.Sprintf("error deleting deployment %s", deploymentID))
+	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting deployment %s", deploymentID))
+}
+
+// getValidApplicationNames fetches the deployment package and returns the list of valid application names
+func getValidApplicationNames(ctx context.Context, catalogClient catapi.ClientWithResponsesInterface, projectName, packageName, packageVersion string) (map[string]bool, error) {
+	resp, err := catalogClient.CatalogServiceGetDeploymentPackageWithResponse(ctx, projectName, packageName, packageVersion, auth.AddAuthHeader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch deployment package: %w", err)
+	}
+
+	if resp.StatusCode() != 200 {
+		return nil, fmt.Errorf("failed to fetch deployment package %s:%s (status %d)", packageName, packageVersion, resp.StatusCode())
+	}
+
+	if resp.JSON200 == nil || len(resp.JSON200.DeploymentPackage.ApplicationReferences) == 0 {
+		return nil, fmt.Errorf("deployment package %s:%s has no applications", packageName, packageVersion)
+	}
+
+	// Build a map of valid application names
+	validNames := make(map[string]bool)
+	for _, appRef := range resp.JSON200.DeploymentPackage.ApplicationReferences {
+		validNames[appRef.Name] = true
+	}
+
+	if len(validNames) == 0 {
+		return nil, fmt.Errorf("deployment package %s:%s has no valid application names", packageName, packageVersion)
+	}
+
+	return validNames, nil
+}
+
+// validateApplicationNames checks that all application names in overrides exist in validNames
+func validateApplicationNames(overrides []depapi.OverrideValues, validNames map[string]bool, flagName string) error {
+	var invalidNames []string
+	for _, override := range overrides {
+		appName := override.AppName
+		if !validNames[appName] {
+			invalidNames = append(invalidNames, appName)
+		}
+	}
+
+	if len(invalidNames) > 0 {
+		validList := make([]string, 0, len(validNames))
+		for name := range validNames {
+			validList = append(validList, name)
+		}
+		sort.Strings(validList)
+		return fmt.Errorf("invalid application name(s) in --%s: %v. Valid names: %v",
+			flagName, invalidNames, validList)
+	}
+
+	return nil
+}
+
+// validateTargetClustersApplicationNames checks that all application names in target clusters exist in validNames
+func validateTargetClustersApplicationNames(targetClusters *[]depapi.TargetClusters, validNames map[string]bool) error {
+	if targetClusters == nil {
+		return nil
+	}
+
+	var invalidNames []string
+	seenInvalid := make(map[string]bool)
+
+	for _, tc := range *targetClusters {
+		if tc.AppName != nil {
+			appName := *tc.AppName
+			if !validNames[appName] && !seenInvalid[appName] {
+				invalidNames = append(invalidNames, appName)
+				seenInvalid[appName] = true
+			}
+		}
+	}
+
+	if len(invalidNames) > 0 {
+		validList := make([]string, 0, len(validNames))
+		for name := range validNames {
+			validList = append(validList, name)
+		}
+		sort.Strings(validList)
+		return fmt.Errorf("invalid application name(s) in --application-cluster-id or --application-label: %v. Valid names: %v",
+			invalidNames, validList)
+	}
+
+	return nil
 }

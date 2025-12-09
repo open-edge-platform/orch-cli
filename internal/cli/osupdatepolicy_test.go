@@ -47,6 +47,11 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 	_, err = s.createOSUpdatePolicy(project, "./testdata/mutableosupdateprofile.yaml", OArgs)
 	s.NoError(err)
 
+	//Create OS Update Policy mutable
+	OArgs = map[string]string{}
+	_, err = s.createOSUpdatePolicy(project, "./testdata/immutableosupdateprofile.yaml", OArgs)
+	s.NoError(err)
+
 	/////////////////////////////
 	// Test OS Update Policy List
 	/////////////////////////////
@@ -90,14 +95,15 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 	parsedGetOutput := mapGetOutput(getOutput)
 
 	expectedOutput := map[string]string{
-		"Name:":             "security-policy-v1.2",
-		"Resource ID:":      id, // "osupdatepolicy-abc12345"
-		"Target OS ID:":     "os-1234abcd",
-		"Description:":      "Monthly security update policy",
-		"Install Packages:": "curl wget vim",
-		"Update Policy:":    "UPDATE_POLICY_LATEST",
-		"Create at:":        "2025-01-15 10:30:00 +0000 UTC",
-		"Updated at:":       "2025-01-15 10:30:00 +0000 UTC",
+		"Name:":            "security-policy-v1.2",
+		"Resource ID:":     id, // "osupdatepolicy-abc12345"
+		"Target OS ID:":    "os-1234abcd",
+		"Kernel Command:":  "console=ttyS0",
+		"Description:":     "Monthly security update policy",
+		"Update Packages:": "curl wget vim",
+		"Update Policy:":   "UPDATE_POLICY_LATEST",
+		"Create at:":       "2025-01-15 10:30:00 +0000 UTC",
+		"Updated at:":      "2025-01-15 10:30:00 +0000 UTC",
 	}
 	s.compareGetOutput(expectedOutput, parsedGetOutput)
 

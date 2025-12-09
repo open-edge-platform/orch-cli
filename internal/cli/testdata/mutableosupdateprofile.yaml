@@ -6,14 +6,9 @@ spec:
   name: myupdateubuntu
   updatePolicy: "UPDATE_POLICY_TARGET"
   description: "an update profile"
-  installPackages: |
-    curl
-    vim
-    htop
-    net-tools
-  kernelCommand: "hugepages=2"
+  updatePackages: curl
+  updateKernelCommand: "hugepages=2"
   # For mock purpose the EMT name is used as it already exists
-  targetOs: "Edge Microvisor Toolkit 3.0.20250504"
   updateSources:
     - "source1"
     - "source2"

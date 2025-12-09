@@ -50,6 +50,7 @@ func getListRegionCommand() *cobra.Command {
 		Use:     "region [flags]",
 		Short:   "List all regions in tree",
 		Example: listRegionExamples,
+		Aliases: regionAliases,
 		RunE:    runListRegionCommand,
 	}
 	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of region list to filter region by parent region")
@@ -62,6 +63,7 @@ func getGetRegionCommand() *cobra.Command {
 		Short:   "Get a region",
 		Example: getRegionExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: regionAliases,
 		RunE:    runGetRegionCommand,
 	}
 	return cmd
@@ -73,6 +75,7 @@ func getCreateRegionCommand() *cobra.Command {
 		Short:   "Create a region",
 		Example: createRegionExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: regionAliases,
 		RunE:    runCreateRegionCommand,
 	}
 	cmd.PersistentFlags().StringP("parent", "f", viper.GetString("parent"), "Optional parent region used ot create a sub region: --parent region-aaaa1111")
@@ -86,6 +89,7 @@ func getDeleteRegionCommand() *cobra.Command {
 		Short:   "Delete a region",
 		Example: deleteRegionExamples,
 		Args:    cobra.ExactArgs(1),
+		Aliases: regionAliases,
 		RunE:    runDeleteRegionCommand,
 	}
 	return cmd
@@ -127,7 +131,7 @@ func runCreateRegionCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = checkName(name)
+	err = checkName(name, REGION)
 	if err != nil {
 		return err
 	}
@@ -147,7 +151,7 @@ func runCreateRegionCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		err = checkResponse(presp.HTTPResponse, "error while creating region - parent region not found")
+		err = checkResponse(presp.HTTPResponse, presp.Body, "error while creating region - parent region not found")
 		if err != nil {
 			return processError(err)
 		}
@@ -163,7 +167,7 @@ func runCreateRegionCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, "error while creating region")
+	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating region")
 }
 
 func runDeleteRegionCommand(cmd *cobra.Command, args []string) error {
@@ -185,7 +189,7 @@ func runDeleteRegionCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	err = checkResponse(resp.HTTPResponse, "error while deleting region")
+	err = checkResponse(resp.HTTPResponse, resp.Body, "error while deleting region")
 	if err != nil {
 		if strings.Contains(string(resp.Body), `"message":"region_resource not found"`) {
 			return errors.New("region does not exist")
@@ -326,15 +330,24 @@ func printRegion(writer io.Writer, region *infra.RegionResource) {
 
 }
 
-func checkName(name string) error {
-	pattern := `^[a-zA-Z0-9]+$`
+func checkName(name string, resource int) error {
+	pattern := `^[a-zA-Z-_0-9./: ]+$`
 	re := regexp.MustCompile(pattern)
+
+	//The REGION API regex accepts space, but a name with space is not accepted when metadata is derived from it
+	if resource == REGION && strings.Contains(name, " ") {
+		return errors.New("invalid region name")
+	}
 
 	if re.MatchString(name) {
 		return nil
 	}
-
-	return errors.New("invalid region name")
+	if resource == REGION {
+		return errors.New("invalid region name")
+	} else if resource == SITE {
+		return errors.New("invalid site name")
+	}
+	return errors.New("invalid resource name")
 }
 
 func checkID(id string) error {

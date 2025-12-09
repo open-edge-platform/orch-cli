@@ -15,6 +15,13 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
+// Defines values for AmtSku.
+const (
+	AMTSKUAMT         AmtSku = "AMT_SKU_AMT"
+	AMTSKUISM         AmtSku = "AMT_SKU_ISM"
+	AMTSKUUNSPECIFIED AmtSku = "AMT_SKU_UNSPECIFIED"
+)
+
 // Defines values for AmtState.
 const (
 	AMTSTATEDISCONNECTED  AmtState = "AMT_STATE_DISCONNECTED"
@@ -115,6 +122,7 @@ const (
 	POWERSTATEON          PowerState = "POWER_STATE_ON"
 	POWERSTATEPOWERCYCLE  PowerState = "POWER_STATE_POWER_CYCLE"
 	POWERSTATERESET       PowerState = "POWER_STATE_RESET"
+	POWERSTATERESETREPEAT PowerState = "POWER_STATE_RESET_REPEAT"
 	POWERSTATESLEEP       PowerState = "POWER_STATE_SLEEP"
 	POWERSTATEUNSPECIFIED PowerState = "POWER_STATE_UNSPECIFIED"
 )
@@ -209,6 +217,9 @@ const (
 	Unimplemented      ConnectErrorCode = "unimplemented"
 	Unknown            ConnectErrorCode = "unknown"
 )
+
+// AmtSku defines model for AmtSku.
+type AmtSku string
 
 // AmtState The state of the AMT (Active Management Technology) component.
 type AmtState string
@@ -315,14 +326,16 @@ type HostRegister struct {
 	// SerialNumber The host serial number.
 	SerialNumber *string `json:"serialNumber,omitempty"`
 
+	// UserLvmSize LVM size in GB
+	UserLvmSize *int `json:"userLvmSize,omitempty"`
+
 	// Uuid The host UUID.
 	Uuid *string `json:"uuid,omitempty"`
 }
 
 // HostResource A Host resource.
 type HostResource struct {
-	// AmtSku coming from device introspection
-	AmtSku *string `json:"amtSku,omitempty"`
+	AmtSku *AmtSku `json:"amtSku,omitempty"`
 
 	// AmtStatus coming from device introspection. Set only by the DM RM.
 	AmtStatus *string `json:"amtStatus,omitempty"`
@@ -482,6 +495,9 @@ type HostResource struct {
 	SiteId     *string     `json:"siteId,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
+	// UserLvmSize LVM size in GB.
+	UserLvmSize *int `json:"userLvmSize,omitempty"`
+
 	// Uuid (OPTIONAL) The host UUID identifier; UUID is unique and immutable.
 	Uuid *string `json:"uuid,omitempty"`
 }
@@ -618,9 +634,6 @@ type InstanceKind string
 //
 //	host or hypervisor.
 type InstanceResource struct {
-	// CurrentOs An OS resource.
-	CurrentOs *OperatingSystemResource `json:"currentOs,omitempty"`
-
 	// CurrentState The Instance States.
 	CurrentState *InstanceState `json:"currentState,omitempty"`
 
@@ -629,9 +642,6 @@ type InstanceResource struct {
 
 	// CustomConfigID The list of custom config associated with the instance.
 	CustomConfigID *[]string `json:"customConfigID,omitempty"`
-
-	// DesiredOs An OS resource.
-	DesiredOs *OperatingSystemResource `json:"desiredOs,omitempty"`
 
 	// DesiredState The Instance States.
 	DesiredState *InstanceState `json:"desiredState,omitempty"`
@@ -711,9 +721,6 @@ type InstanceResource struct {
 
 	// UpdateStatus textual message that describes the update status of Instance. Set by RMs only.
 	UpdateStatus *string `json:"updateStatus,omitempty"`
-
-	// UpdateStatusDetail Deprecated, will be removed in EMF v3.2.0, use OSUpdateRun instead. JSON field storing details of Instance update status. Set by RMs only. Beta, subject to change.
-	UpdateStatusDetail *string `json:"updateStatusDetail,omitempty"`
 
 	// UpdateStatusIndicator The status indicator.
 	UpdateStatusIndicator *StatusIndication `json:"updateStatusIndicator,omitempty"`
@@ -1036,14 +1043,6 @@ type OSUpdatePolicy struct {
 	// Description User-provided, human-readable description.
 	Description *string `json:"description,omitempty"`
 
-	// InstallPackages Freeform text, OS-dependent. A list of package names, one per line (newline separated). Must not contain version information.
-	//  Applies only to Mutable OSes.
-	InstallPackages *string `json:"installPackages,omitempty"`
-
-	// KernelCommand The OS resource's kernel Command Line Options.
-	//  Applies only to Mutable OSes.
-	KernelCommand *string `json:"kernelCommand,omitempty"`
-
 	// Name User-provided, human-readable name.
 	Name string `json:"name"`
 
@@ -1056,6 +1055,14 @@ type OSUpdatePolicy struct {
 	// TargetOsId The unique identifier of target OS will be associated with the OS Update policy.
 	TargetOsId *string     `json:"targetOsId,omitempty"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
+
+	// UpdateKernelCommand The OS resource's kernel Command Line Options.
+	//  Applies only to Mutable OSes.
+	UpdateKernelCommand *string `json:"updateKernelCommand,omitempty"`
+
+	// UpdatePackages Freeform text, OS-dependent. A list of package names, one per line (newline separated). Must not contain version information.
+	//  Applies only to Mutable OSes.
+	UpdatePackages *string `json:"updatePackages,omitempty"`
 
 	// UpdatePolicy States of the host.
 	UpdatePolicy *UpdatePolicy `json:"updatePolicy,omitempty"`
@@ -1073,96 +1080,8 @@ type OSUpdateRun struct {
 	// Description Human-readable description.
 	Description *string `json:"description,omitempty"`
 
-	// EndTime A Timestamp represents a point in time independent of any time zone or local
-	//  calendar, encoded as a count of seconds and fractions of seconds at
-	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
-	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
-	//  Gregorian calendar backwards to year one.
-	//
-	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
-	//  second table is needed for interpretation, using a [24-hour linear
-	//  smear](https://developers.google.com/time/smear).
-	//
-	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
-	//  restricting to that range, we ensure that we can convert to and from [RFC
-	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
-	//
-	//  # Examples
-	//
-	//  Example 1: Compute Timestamp from POSIX `time()`.
-	//
-	//      Timestamp timestamp;
-	//      timestamp.set_seconds(time(NULL));
-	//      timestamp.set_nanos(0);
-	//
-	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
-	//
-	//      struct timeval tv;
-	//      gettimeofday(&tv, NULL);
-	//
-	//      Timestamp timestamp;
-	//      timestamp.set_seconds(tv.tv_sec);
-	//      timestamp.set_nanos(tv.tv_usec * 1000);
-	//
-	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
-	//
-	//      FILETIME ft;
-	//      GetSystemTimeAsFileTime(&ft);
-	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
-	//
-	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
-	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
-	//      Timestamp timestamp;
-	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
-	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
-	//
-	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
-	//
-	//      long millis = System.currentTimeMillis();
-	//
-	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
-	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
-	//
-	//  Example 5: Compute Timestamp from Java `Instant.now()`.
-	//
-	//      Instant now = Instant.now();
-	//
-	//      Timestamp timestamp =
-	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
-	//              .setNanos(now.getNano()).build();
-	//
-	//  Example 6: Compute Timestamp from current time in Python.
-	//
-	//      timestamp = Timestamp()
-	//      timestamp.GetCurrentTime()
-	//
-	//  # JSON Mapping
-	//
-	//  In JSON format, the Timestamp type is encoded as a string in the
-	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
-	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
-	//  where {year} is always expressed using four digits while {month}, {day},
-	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
-	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
-	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
-	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
-	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
-	//  able to accept both UTC and other timezones (as indicated by an offset).
-	//
-	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
-	//  01:30 UTC on January 15, 2017.
-	//
-	//  In JavaScript, one can convert a Date object to this format using the
-	//  standard
-	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
-	//  method. In Python, a standard `datetime.datetime` object can be converted
-	//  to this format using
-	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
-	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
-	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
-	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
-	//  ) to obtain a formatter capable of generating timestamps in this format.
-	EndTime *GoogleProtobufTimestamp `json:"endTime,omitempty"`
+	// EndTime UTC timestamp of OS Update ended.
+	EndTime *int `json:"endTime,omitempty"`
 
 	// Instance InstanceResource describes an instantiated OS install, running on either a
 	//  host or hypervisor.
@@ -1174,96 +1093,8 @@ type OSUpdateRun struct {
 	// ResourceId resource ID, generated by the inventory on Create.
 	ResourceId *string `json:"resourceId,omitempty"`
 
-	// StartTime A Timestamp represents a point in time independent of any time zone or local
-	//  calendar, encoded as a count of seconds and fractions of seconds at
-	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
-	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
-	//  Gregorian calendar backwards to year one.
-	//
-	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
-	//  second table is needed for interpretation, using a [24-hour linear
-	//  smear](https://developers.google.com/time/smear).
-	//
-	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
-	//  restricting to that range, we ensure that we can convert to and from [RFC
-	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
-	//
-	//  # Examples
-	//
-	//  Example 1: Compute Timestamp from POSIX `time()`.
-	//
-	//      Timestamp timestamp;
-	//      timestamp.set_seconds(time(NULL));
-	//      timestamp.set_nanos(0);
-	//
-	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
-	//
-	//      struct timeval tv;
-	//      gettimeofday(&tv, NULL);
-	//
-	//      Timestamp timestamp;
-	//      timestamp.set_seconds(tv.tv_sec);
-	//      timestamp.set_nanos(tv.tv_usec * 1000);
-	//
-	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
-	//
-	//      FILETIME ft;
-	//      GetSystemTimeAsFileTime(&ft);
-	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
-	//
-	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
-	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
-	//      Timestamp timestamp;
-	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
-	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
-	//
-	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
-	//
-	//      long millis = System.currentTimeMillis();
-	//
-	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
-	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
-	//
-	//  Example 5: Compute Timestamp from Java `Instant.now()`.
-	//
-	//      Instant now = Instant.now();
-	//
-	//      Timestamp timestamp =
-	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
-	//              .setNanos(now.getNano()).build();
-	//
-	//  Example 6: Compute Timestamp from current time in Python.
-	//
-	//      timestamp = Timestamp()
-	//      timestamp.GetCurrentTime()
-	//
-	//  # JSON Mapping
-	//
-	//  In JSON format, the Timestamp type is encoded as a string in the
-	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
-	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
-	//  where {year} is always expressed using four digits while {month}, {day},
-	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
-	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
-	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
-	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
-	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
-	//  able to accept both UTC and other timezones (as indicated by an offset).
-	//
-	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
-	//  01:30 UTC on January 15, 2017.
-	//
-	//  In JavaScript, one can convert a Date object to this format using the
-	//  standard
-	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
-	//  method. In Python, a standard `datetime.datetime` object can be converted
-	//  to this format using
-	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
-	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
-	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
-	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
-	//  ) to obtain a formatter capable of generating timestamps in this format.
-	StartTime *GoogleProtobufTimestamp `json:"startTime,omitempty"`
+	// StartTime UTC timestamp of OS Update started.
+	StartTime *int `json:"startTime,omitempty"`
 
 	// Status Short message that describes what happened during the OS Update.
 	Status *string `json:"status,omitempty"`
@@ -1274,97 +1105,9 @@ type OSUpdateRun struct {
 	// StatusIndicator The status indicator.
 	StatusIndicator *StatusIndication `json:"statusIndicator,omitempty"`
 
-	// StatusTimestamp A Timestamp represents a point in time independent of any time zone or local
-	//  calendar, encoded as a count of seconds and fractions of seconds at
-	//  nanosecond resolution. The count is relative to an epoch at UTC midnight on
-	//  January 1, 1970, in the proleptic Gregorian calendar which extends the
-	//  Gregorian calendar backwards to year one.
-	//
-	//  All minutes are 60 seconds long. Leap seconds are "smeared" so that no leap
-	//  second table is needed for interpretation, using a [24-hour linear
-	//  smear](https://developers.google.com/time/smear).
-	//
-	//  The range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By
-	//  restricting to that range, we ensure that we can convert to and from [RFC
-	//  3339](https://www.ietf.org/rfc/rfc3339.txt) date strings.
-	//
-	//  # Examples
-	//
-	//  Example 1: Compute Timestamp from POSIX `time()`.
-	//
-	//      Timestamp timestamp;
-	//      timestamp.set_seconds(time(NULL));
-	//      timestamp.set_nanos(0);
-	//
-	//  Example 2: Compute Timestamp from POSIX `gettimeofday()`.
-	//
-	//      struct timeval tv;
-	//      gettimeofday(&tv, NULL);
-	//
-	//      Timestamp timestamp;
-	//      timestamp.set_seconds(tv.tv_sec);
-	//      timestamp.set_nanos(tv.tv_usec * 1000);
-	//
-	//  Example 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.
-	//
-	//      FILETIME ft;
-	//      GetSystemTimeAsFileTime(&ft);
-	//      UINT64 ticks = (((UINT64)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
-	//
-	//      // A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z
-	//      // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z.
-	//      Timestamp timestamp;
-	//      timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL));
-	//      timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));
-	//
-	//  Example 4: Compute Timestamp from Java `System.currentTimeMillis()`.
-	//
-	//      long millis = System.currentTimeMillis();
-	//
-	//      Timestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000)
-	//          .setNanos((int) ((millis % 1000) * 1000000)).build();
-	//
-	//  Example 5: Compute Timestamp from Java `Instant.now()`.
-	//
-	//      Instant now = Instant.now();
-	//
-	//      Timestamp timestamp =
-	//          Timestamp.newBuilder().setSeconds(now.getEpochSecond())
-	//              .setNanos(now.getNano()).build();
-	//
-	//  Example 6: Compute Timestamp from current time in Python.
-	//
-	//      timestamp = Timestamp()
-	//      timestamp.GetCurrentTime()
-	//
-	//  # JSON Mapping
-	//
-	//  In JSON format, the Timestamp type is encoded as a string in the
-	//  [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
-	//  format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z"
-	//  where {year} is always expressed using four digits while {month}, {day},
-	//  {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional
-	//  seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution),
-	//  are optional. The "Z" suffix indicates the timezone ("UTC"); the timezone
-	//  is required. A proto3 JSON serializer should always use UTC (as indicated by
-	//  "Z") when printing the Timestamp type and a proto3 JSON parser should be
-	//  able to accept both UTC and other timezones (as indicated by an offset).
-	//
-	//  For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
-	//  01:30 UTC on January 15, 2017.
-	//
-	//  In JavaScript, one can convert a Date object to this format using the
-	//  standard
-	//  [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString)
-	//  method. In Python, a standard `datetime.datetime` object can be converted
-	//  to this format using
-	//  [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with
-	//  the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use
-	//  the Joda Time's [`ISODateTimeFormat.dateTime()`](
-	//  http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()
-	//  ) to obtain a formatter capable of generating timestamps in this format.
-	StatusTimestamp *GoogleProtobufTimestamp `json:"statusTimestamp,omitempty"`
-	Timestamps      *Timestamps              `json:"timestamps,omitempty"`
+	// StatusTimestamp UTC timestamp of OS Update status reported.
+	StatusTimestamp *int        `json:"statusTimestamp,omitempty"`
+	Timestamps      *Timestamps `json:"timestamps,omitempty"`
 }
 
 // OnboardHostResponse Response of a Host Register request.
@@ -1400,9 +1143,6 @@ type OperatingSystemResource struct {
 	// InstalledPackagesUrl (IMMUTABLE) The URL of the OS manifest which contains install packages details. This will be used to fill the installed_packages field
 	//  for the advance use case to allow manual creation of OSProfiles when supported from backend.
 	InstalledPackagesUrl *string `json:"installedPackagesUrl,omitempty"`
-
-	// KernelCommand Deprecated, will be removed in EMF v3.2.0, this has been moved to new resource OSUpdatePolicy. The OS resource's kernel Command Line Options.
-	KernelCommand *string `json:"kernelCommand,omitempty"`
 
 	// Metadata Opaque JSON field storing metadata associated to this OS resource. Expected to be a JSON object with string keys and values, or an empty string.
 	Metadata *string `json:"metadata,omitempty"`
@@ -1443,9 +1183,8 @@ type OperatingSystemResource struct {
 	Sha256     string      `json:"sha256"`
 	Timestamps *Timestamps `json:"timestamps,omitempty"`
 
-	// UpdateSources Deprecated, will be removed in EMF v3.2.0, this has been moved to new resource OSUpdatePolicy. The list of OS resource update sources.
-	//  Should be in 'DEB822 Source Format' for Debian style OSs
-	UpdateSources *[]string `json:"updateSources,omitempty"`
+	// TlsCaCert user-provided, TLS CA Certificate
+	TlsCaCert *string `json:"tlsCaCert,omitempty"`
 }
 
 // OsProviderKind OsProviderKind describes "owner" of the OS, that will drive OS provisioning.
