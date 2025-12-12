@@ -126,7 +126,6 @@ func (f Format) Execute(writer io.Writer, withHeaders bool, nameLimit int, data 
 		slice := reflect.ValueOf(data)
 		if slice.Kind() == reflect.Slice {
 			for i := 0; i < slice.Len(); i++ {
-				fmt.Printf("%+v\n", slice.Index(i).Interface())
 				if err = tmpl.Execute(tabWriter, slice.Index(i).Interface()); err != nil {
 					return err
 				}

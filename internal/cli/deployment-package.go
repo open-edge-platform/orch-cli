@@ -22,7 +22,6 @@ import (
 )
 
 const (
-	DEFAULT_DEPLOYMENT_PACKAGE_ORDER          = "Name"
 	DEFAULT_DEPLOYMENT_PACKAGE_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Version}}\t{{.Kind}}\t{{.DefaultProfileName}}\t{{.IsDeployed}}"
 	DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT = `Name: {{.Name}}
 Display Name: {{.DisplayName}}
@@ -30,6 +29,19 @@ Description: {{.Description}}
 Version: {{.Version}}
 Kind: {{.Kind}}
 Is Deployed: {{.IsDeployed}}
+Applications:
+{{- range .ApplicationReferences}}
+  {{.Name}}:{{.Version}}
+{{end -}}
+Dependencies:
+{{- range .ApplicationDependencies}}
+  {{.Name}} {{.Requires}}
+{{end -}}
+Profiles:
+{{- range .Profiles}}
+  {{.Name}}
+{{end -}}
+Default Profile: {{.DefaultProfileName}}
 `
 )
 
