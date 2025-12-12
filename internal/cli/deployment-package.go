@@ -5,7 +5,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime"
@@ -15,10 +14,23 @@ import (
 
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
 	"github.com/open-edge-platform/orch-library/go/pkg/loader"
 	"github.com/spf13/cobra"
+)
+
+const (
+	DEFAULT_DEPLOYMENT_PACKAGE_ORDER          = "Name"
+	DEFAULT_DEPLOYMENT_PACKAGE_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Version}}\t{{.Kind}}\t{{.DefaultProfileName}}\t{{.IsDeployed}}"
+	DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT = `Name: {{.Name}}
+Display Name: {{.DisplayName}}
+Description: {{.Description}}
+Version: {{.Version}}
+Kind: {{.Kind}}
+Is Deployed: {{.IsDeployed}}
+`
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
@@ -49,6 +61,7 @@ func getListDeploymentPackagesCommand() *cobra.Command {
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "deployment package")
 	cmd.Flags().StringSlice("kind", []string{}, "deployment package kind: normal, addon, extension")
+	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
 	return cmd
 }
 
@@ -110,60 +123,26 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 	return cmd
 }
 
-var deploymentPackageHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-	"Name", "Display Name", "Version", "Kind", "Default Profile", "Is Deployed", "Is Visible", "Application Count")
-
-func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, verbose bool) {
-	for _, ca := range *caList {
-		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%t\t%t\t%d\n", ca.Name,
-				valueOrNone(ca.DisplayName), ca.Version, deploymentPackageKind2String(ca.Kind),
-				valueOrNone(ca.DefaultProfileName), safeBool(ca.IsDeployed), safeBool(ca.IsVisible),
-				len(ca.ApplicationReferences))
-		} else {
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", ca.Name)
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(ca.DisplayName))
-			_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(ca.Description))
-			_, _ = fmt.Fprintf(writer, "Version: %s\n", ca.Version)
-			_, _ = fmt.Fprintf(writer, "Kind: %s\n", deploymentPackageKind2String(ca.Kind))
-			_, _ = fmt.Fprintf(writer, "Is Deployed: %t\n", safeBool(ca.IsDeployed))
-			_, _ = fmt.Fprintf(writer, "Is Visible: %t\n", safeBool(ca.IsVisible))
-
-			refs := make([]string, 0, len(ca.ApplicationReferences))
-			for _, ref := range ca.ApplicationReferences {
-				refs = append(refs, fmt.Sprintf("%s:%s", ref.Name, ref.Version))
-			}
-			_, _ = fmt.Fprintf(writer, "Applications: %v\n", refs)
-
-			deps := make([]string, 0, len(*ca.ApplicationDependencies))
-			for _, dep := range *ca.ApplicationDependencies {
-				deps = append(deps, fmt.Sprintf("%s->%s", dep.Name, dep.Requires))
-			}
-			_, _ = fmt.Fprintf(writer, "Application Dependencies: %v\n", deps)
-
-			profiles := make([]string, 0, len(*ca.Profiles))
-			for _, p := range *ca.Profiles {
-				profiles = append(profiles, p.Name)
-			}
-			_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
-			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n", *ca.DefaultProfileName)
-
-			extensions := make([]string, 0, len(ca.Extensions))
-			for _, ext := range ca.Extensions {
-				extensions = append(extensions, ext.Name)
-			}
-			_, _ = fmt.Fprintf(writer, "Extensions: %v\n", extensions)
-
-			artifacts := make([]string, 0, len(ca.Artifacts))
-			for _, ext := range ca.Artifacts {
-				artifacts = append(artifacts, fmt.Sprintf("%s:%s", ext.Name, ext.Purpose))
-			}
-			_, _ = fmt.Fprintf(writer, "Artifacts: %v\n", artifacts)
-
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", ca.CreateTime.Format(timeLayout))
-			_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", ca.UpdateTime.Format(timeLayout))
-		}
+func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, verbose bool) {
+	var outputFormat string
+	if verbose {
+		outputFormat = DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT
+	} else {
+		outputFormat = DEFAULT_DEPLOYMENT_PACKAGE_FORMAT
 	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    "",
+		OrderBy:   "",
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *caList,
+	}
+
+	GenerateOutput(&result)
 }
 
 // Produces an application reference from the specified <name>:<version> string
@@ -334,11 +313,11 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, deploymentPackageHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, "",
 		"error listing deployment packages"); !proceed {
 		return err
 	}
-	printDeploymentPackages(writer, &resp.JSON200.DeploymentPackages, verbose)
+	printDeploymentPackages(cmd, writer, &resp.JSON200.DeploymentPackages, verbose)
 	return writer.Flush()
 }
 
@@ -359,7 +338,7 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, deploymentPackageHeader,
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, "",
 			fmt.Sprintf("error getting deployment package %s:%s", name, version)); !proceed {
 			return err
 		}
@@ -370,7 +349,7 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, deploymentPackageHeader,
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, "",
 			fmt.Sprintf("error getting deployment package %s versions", name)); !proceed {
 			return err
 		}
@@ -379,7 +358,7 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("no versions of deployment package %s found", name)
 		}
 	}
-	printDeploymentPackages(writer, &deploymentPkgs, verbose)
+	printDeploymentPackages(cmd, writer, &deploymentPkgs, verbose)
 	return writer.Flush()
 }
 
@@ -594,15 +573,6 @@ func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	}
 	fmt.Printf("Deployment package exported to %s\n", filename)
 
-	return nil
-}
-
-func printDeploymentPackageEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {
-	var item catapi.CatalogV3DeploymentPackage
-	if err := json.Unmarshal(payload, &item); err != nil {
-		return err
-	}
-	printDeploymentPackages(writer, &[]catapi.CatalogV3DeploymentPackage{item}, verbose)
 	return nil
 }
 

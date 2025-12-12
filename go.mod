@@ -10,6 +10,7 @@ require (
 	github.com/atomix/dazl v1.1.4
 	github.com/go-task/slim-sprig v2.20.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/golang/protobuf v1.5.4
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/oapi-codegen/runtime v1.1.2
