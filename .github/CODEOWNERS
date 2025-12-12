@@ -7,7 +7,7 @@
 # someone opens a pull request.
 
 # Everything requires team review by default
-* @scottmbaker @damiankopyto @rranjan3 @krishnajs @hyunsun @jkossak @daveroge
+* @scottmbaker @damiankopyto @rranjan3 @krishnajs @hyunsun @jkossak
 
 # CI files
 .github/ @adimoft @daveroge @shanedonohue @manilk1x @scottmbaker @damiankopyto @rranjan3 @krishnajs @hyunsun @jkossak
