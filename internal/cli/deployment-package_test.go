@@ -103,7 +103,6 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 			"Display Name":      deploymentPackageDisplayName,
 			"Default Profile":   "default-profile",
 			"Is Deployed":       "false",
-			"Is Visible":        "true",
 			"Application Count": "2",
 		},
 	}
@@ -125,7 +124,6 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 			"Display Name":             deploymentPackageDisplayName,
 			"Description":              deploymentPackageDescription,
 			"Is Deployed":              "false",
-			"Is Visible":               "true",
 			"Applications":             `[app1:1.0.0 app2:1.0.0]`,
 			"Application Dependencies": `[]`,
 			"Profiles":                 ``,
