@@ -611,7 +611,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				_ = ctx        // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				_ = hostId     // Acknowledge we're not using it
-				stamp := 1
 
 				switch projectName {
 				case "invalid-project":
@@ -704,7 +703,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								DesiredAmtState:    (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
 								DesiredPowerState:  (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
 								PowerCommandPolicy: (*infra.PowerCommandPolicy)(stringPtr("POWER_COMMAND_POLICY_ALWAYS_ON")),
-								PowerOnTime:        &stamp,
+								PowerOnTime:        func() *int { i := 1764750313; return &i }(),
 								HostNics: &[]infra.HostnicResource{
 									{
 										DeviceName: stringPtr("eth0"),

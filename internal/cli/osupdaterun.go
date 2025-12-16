@@ -6,6 +6,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
@@ -34,7 +35,9 @@ func printOSUpdateRuns(writer io.Writer, OSUpdateRuns []infra.OSUpdateRun, verbo
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status)
 		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%d\t%d\n", *run.Name, *run.ResourceId, *run.Status, run.AppliedPolicy.Name, *run.StartTime, *run.EndTime)
+			startTime := time.Unix(int64(*run.StartTime), 0).Format(time.RFC3339)
+			endTime := time.Unix(int64(*run.EndTime), 0).Format(time.RFC3339)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status, run.AppliedPolicy.Name, startTime, endTime)
 		}
 	}
 }
@@ -48,8 +51,12 @@ func printOSUpdateRun(writer io.Writer, OSUpdateRun *infra.OSUpdateRun) {
 	_, _ = fmt.Fprintf(writer, "Status Detail: \t%s\n", *OSUpdateRun.StatusDetails)
 	_, _ = fmt.Fprintf(writer, "Applied Policy: \t%v\n", OSUpdateRun.AppliedPolicy.Name)
 	_, _ = fmt.Fprintf(writer, "Description: \t%v\n", *OSUpdateRun.Description)
-	_, _ = fmt.Fprintf(writer, "Start Time: \t%d\n", *OSUpdateRun.StartTime)
-	_, _ = fmt.Fprintf(writer, "End Time: \t%d\n", *OSUpdateRun.EndTime)
+
+	startTime := time.Unix(int64(*OSUpdateRun.StartTime), 0).Format(time.RFC3339)
+	endTime := time.Unix(int64(*OSUpdateRun.EndTime), 0).Format(time.RFC3339)
+
+	_, _ = fmt.Fprintf(writer, "Start Time: \t%s\n", startTime)
+	_, _ = fmt.Fprintf(writer, "End Time: \t%s\n", endTime)
 }
 
 func getGetOSUpdateRunCommand() *cobra.Command {
