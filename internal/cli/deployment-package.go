@@ -34,7 +34,6 @@ func getCreateDeploymentPackageCommand() *cobra.Command {
 	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
-	cmd.Flags().Bool("visible", true, "mark deployment package as visible or not")
 	cmd.Flags().String("kind", "normal", "deployment package kind: normal, addon, extension")
 	return cmd
 }
@@ -80,7 +79,6 @@ func getSetDeploymentPackageCommand() *cobra.Command {
 	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
-	cmd.Flags().Bool("visible", true, "mark deployment package as visible or not")
 	cmd.Flags().Bool("deployed", false, "mark deployment package as deployed or not")
 	return cmd
 }
@@ -110,15 +108,15 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 	return cmd
 }
 
-var deploymentPackageHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-	"Name", "Display Name", "Version", "Kind", "Default Profile", "Is Deployed", "Is Visible", "Application Count")
+var deploymentPackageHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s",
+	"Name", "Display Name", "Version", "Kind", "Default Profile", "Is Deployed", "Application Count")
 
 func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, verbose bool) {
 	for _, ca := range *caList {
 		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%t\t%t\t%d\n", ca.Name,
+			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%t\t%d\n", ca.Name,
 				valueOrNone(ca.DisplayName), ca.Version, deploymentPackageKind2String(ca.Kind),
-				valueOrNone(ca.DefaultProfileName), safeBool(ca.IsDeployed), safeBool(ca.IsVisible),
+				valueOrNone(ca.DefaultProfileName), safeBool(ca.IsDeployed),
 				len(ca.ApplicationReferences))
 		} else {
 			_, _ = fmt.Fprintf(writer, "Name: %s\n", ca.Name)
@@ -127,7 +125,6 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3Deploym
 			_, _ = fmt.Fprintf(writer, "Version: %s\n", ca.Version)
 			_, _ = fmt.Fprintf(writer, "Kind: %s\n", deploymentPackageKind2String(ca.Kind))
 			_, _ = fmt.Fprintf(writer, "Is Deployed: %t\n", safeBool(ca.IsDeployed))
-			_, _ = fmt.Fprintf(writer, "Is Visible: %t\n", safeBool(ca.IsVisible))
 
 			refs := make([]string, 0, len(ca.ApplicationReferences))
 			for _, ref := range ca.ApplicationReferences {
@@ -247,7 +244,6 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	}
 
 	defaultKind := catapi.KINDNORMAL
-	defaultVisible := true
 
 	resp, err := catalogClient.CatalogServiceCreateDeploymentPackageWithResponse(ctx, projectName,
 		catapi.CatalogServiceCreateDeploymentPackageJSONRequestBody{
@@ -258,7 +254,6 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 			Description:             &description,
 			ApplicationReferences:   applicationReferences,
 			ApplicationDependencies: &applicationDependencies,
-			IsVisible:               getBoolFlagOrDefault(cmd, "visible", &defaultVisible),
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -459,7 +454,6 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			Description:             getFlagOrDefault(cmd, "description", deploymentPackage.Description),
 			DefaultProfileName:      getFlagOrDefault(cmd, "default-profile", deploymentPackage.DefaultProfileName),
 			IsDeployed:              getBoolFlagOrDefault(cmd, "deployed", deploymentPackage.IsDeployed),
-			IsVisible:               getBoolFlagOrDefault(cmd, "visible", deploymentPackage.IsVisible),
 			Profiles:                deploymentPackage.Profiles,
 			ApplicationReferences:   applicationReferences,
 			ApplicationDependencies: &applicationDependencies,
