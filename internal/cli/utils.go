@@ -26,10 +26,22 @@ import (
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
+
+const (
+	OOB_FEATURE           = "edge-infrastructure-manager.oob"
+	ONBOARDING_FEATURE    = "edge-infrastructure-manager.onboarding"
+	PROVISIONING_FEATURE  = "edge-infrastructure-manager.provisioning"
+	DAY2_FEATURE          = "edge-infrastructure-manager.day2"
+	APP_ORCH_FEATURE      = "application-orchestration"
+	CLUSTER_ORCH_FEATURE  = "cluster-orchestration"
+	OBSERVABILITY_FEATURE = "observability"
+	MULTITENANCY_FEATURE  = "multitenancy"
+)
 
 const (
 	REGION = 0
@@ -598,4 +610,35 @@ func isExpectedError(err error) bool {
 		}
 	}
 	return false
+}
+
+// addCommandIfFeatureEnabled conditionally adds a command to a parent command if the feature is enabled
+func addCommandIfFeatureEnabled(parent *cobra.Command, child *cobra.Command, feature string) {
+	if isFeatureEnabled(feature) {
+		// TODO maybe create another config with all availablec ommands? fmt.Printf("Adding command %s for feature %s\n", child.Name(), feature)
+		parent.AddCommand(child)
+	}
+}
+
+func isFeatureEnabled(feature string) bool {
+	switch feature {
+	case OOB_FEATURE:
+		return viper.GetBool("edge-infrastructure-manager.oob")
+	case ONBOARDING_FEATURE:
+		return viper.GetBool("edge-infrastructure-manager.onboarding")
+	case PROVISIONING_FEATURE:
+		return viper.GetBool("edge-infrastructure-manager.provisioning")
+	case DAY2_FEATURE:
+		return viper.GetBool("edge-infrastructure-manager.day2")
+	case OBSERVABILITY_FEATURE:
+		return viper.GetBool("observability")
+	case APP_ORCH_FEATURE:
+		return viper.GetBool("application-orchestration")
+	case CLUSTER_ORCH_FEATURE:
+		return viper.GetBool("cluster-orchestration")
+	case MULTITENANCY_FEATURE:
+		return viper.GetBool("multitenancy")
+	default:
+		return true // Default to enabled for unknown features
+	}
 }

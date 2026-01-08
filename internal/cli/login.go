@@ -171,6 +171,11 @@ func login(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// TODO get the config from EO endpoint, parse it out and pass on to loadConfig()
+	if err := loadFeatureConfig(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -187,5 +192,25 @@ func logout(_ *cobra.Command, _ []string) error {
 		return viper.WriteConfig()
 	}
 	log.Info("Was not logged in - no-op")
+	return nil
+}
+
+func loadFeatureConfig() error {
+
+	// TODO: For now we hardcode the feature config here. Then extract from EO endpoint later.
+	viper.Set("version", "2026.0")
+	viper.Set("application-orchestration", false)
+	viper.Set("cluster-orchestration", false)
+	viper.Set("edge-infrastructure-manager.onboarding", true)
+	viper.Set("edge-infrastructure-manager.provisioning", false)
+	viper.Set("edge-infrastructure-manager.day2", false)
+	viper.Set("edge-infrastructure-manager.oob", false)
+	viper.Set("observability", false)
+	viper.Set("multitenancy", false)
+
+	if err := viper.WriteConfig(); err != nil {
+		return err
+	}
+
 	return nil
 }

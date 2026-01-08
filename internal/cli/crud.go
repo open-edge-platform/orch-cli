@@ -44,32 +44,43 @@ func getCreateCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		getCreateRegistryCommand(),
-		getCreateArtifactCommand(),
-		getCreateApplicationCommand(),
-		getCreateProfileCommand(),
-		getCreateDeploymentPackageCommand(),
-		getCreateDeploymentProfileCommand(),
-		getCreateApplicationReferenceCommand(),
-		getCreateNetworkCommand(),
-
-		getCreateDeploymentCommand(),
-
-		getCreateClusterCommand(),
-
-		getCreateOSUpdatePolicyCommand(),
-		getCreateAmtProfileCommand(),
-		getCreateCustomConfigCommand(),
-		getCreateRegionCommand(),
-		getCreateSiteCommand(),
-		getCreateHostCommand(),
-		getCreateOSProfileCommand(),
-		getCreateProviderCommand(),
-		getCreateSSHKeyCommand(),
-		getCreateScheduleCommand(),
-		getCreateProjectCommand(),
-		getCreateOrganizationCommand(),
+	// Core commands
 	)
+	// App related commands
+	addCommandIfFeatureEnabled(cmd, getCreateRegistryCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateArtifactCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateApplicationCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateProfileCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateDeploymentPackageCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateDeploymentProfileCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateApplicationReferenceCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateNetworkCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateDeploymentCommand(), APP_ORCH_FEATURE)
+
+	// Cluster related commands
+	addCommandIfFeatureEnabled(cmd, getCreateClusterCommand(), CLUSTER_ORCH_FEATURE)
+
+	// Day2 related commands
+	addCommandIfFeatureEnabled(cmd, getCreateOSUpdatePolicyCommand(), DAY2_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateScheduleCommand(), DAY2_FEATURE)
+
+	// Onboarding related commands
+	addCommandIfFeatureEnabled(cmd, getCreateHostCommand(), ONBOARDING_FEATURE)
+
+	// Provisioning related commands
+	addCommandIfFeatureEnabled(cmd, getCreateOSProfileCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateCustomConfigCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateRegionCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateSiteCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateProviderCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateSSHKeyCommand(), PROVISIONING_FEATURE)
+
+	// Out of Band Management related commands
+	addCommandIfFeatureEnabled(cmd, getCreateAmtProfileCommand(), OOB_FEATURE)
+
+	// Multitenancy related commands
+	addCommandIfFeatureEnabled(cmd, getCreateProjectCommand(), MULTITENANCY_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getCreateOrganizationCommand(), MULTITENANCY_FEATURE)
 	return cmd
 }
 
@@ -95,7 +106,6 @@ func getListCommand() *cobra.Command {
 
 		getListOSUpdateRunCommand(),
 		getListOSUpdatePolicyCommand(),
-		getListAmtProfileCommand(),
 		getListCustomConfigCommand(),
 		getListSiteCommand(),
 		getListRegionCommand(),
@@ -107,6 +117,7 @@ func getListCommand() *cobra.Command {
 		getListProjectCommand(),
 		getListOrganizationCommand(),
 	)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListAmtProfileCommand(), OOB_FEATURE)
 	return catalogListRootCmd
 }
 
@@ -130,7 +141,6 @@ func getGetCommand() *cobra.Command {
 
 		getGetOSUpdateRunCommand(),
 		getGetOSUpdatePolicyCommand(),
-		getGetAmtProfileCommand(),
 		getGetCustomConfigCommand(),
 		getGetOSProfileCommand(),
 		getGetRegionCommand(),
@@ -142,6 +152,7 @@ func getGetCommand() *cobra.Command {
 		getGetProjectCommand(),
 		getGetOrganizationCommand(),
 	)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetAmtProfileCommand(), OOB_FEATURE)
 	return catalogGetRootCmd
 }
 
@@ -203,7 +214,6 @@ func getDeleteCommand() *cobra.Command {
 
 		getDeleteOSUpdateRunCommand(),
 		getDeleteOSUpdatePolicyCommand(),
-		getDeleteAmtProfileCommand(),
 		getDeleteCustomConfigCommand(),
 		getDeleteRegionCommand(),
 		getDeleteSiteCommand(),
@@ -215,5 +225,6 @@ func getDeleteCommand() *cobra.Command {
 		getDeleteProjectCommand(),
 		getDeleteOrganizationCommand(),
 	)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteAmtProfileCommand(), OOB_FEATURE)
 	return catalogDeleteRootCmd
 }
