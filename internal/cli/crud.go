@@ -43,9 +43,8 @@ func getCreateCommand() *cobra.Command {
 		PersistentPreRunE: auth.CheckAuth,
 	}
 
-	cmd.AddCommand(
-	// Core commands
-	)
+	//cmd.AddCommand(	// Core commands)
+
 	// App related commands
 	addCommandIfFeatureEnabled(cmd, getCreateRegistryCommand(), APP_ORCH_FEATURE)
 	addCommandIfFeatureEnabled(cmd, getCreateArtifactCommand(), APP_ORCH_FEATURE)
@@ -91,33 +90,47 @@ func getListCommand() *cobra.Command {
 		Short:             "List various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
 	}
-	catalogListRootCmd.AddCommand(
-		getListRegistriesCommand(),
-		getListArtifactsCommand(),
-		getListApplicationsCommand(),
-		getListProfilesCommand(),
-		getListDeploymentPackagesCommand(),
-		getListDeploymentProfilesCommand(),
-		getListNetworksCommand(),
-		getListChartsCommand(),
-		getListDeploymentsCommand(),
-		getListClusterCommand(),
-		getListClusterTemplatesCommand(),
 
-		getListOSUpdateRunCommand(),
-		getListOSUpdatePolicyCommand(),
-		getListCustomConfigCommand(),
-		getListSiteCommand(),
-		getListRegionCommand(),
-		getListOSProfileCommand(),
-		getListHostCommand(),
-		getListProviderCommand(),
-		getListSSHKeyCommand(),
-		getListScheduleCommand(),
-		getListProjectCommand(),
-		getListOrganizationCommand(),
-	)
+	//catalogListRootCmd.AddCommand()
+
+	// App related commands
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListRegistriesCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListArtifactsCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListApplicationsCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListProfilesCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListDeploymentPackagesCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListDeploymentProfilesCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListNetworksCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListChartsCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListDeploymentsCommand(), APP_ORCH_FEATURE)
+
+	// Cluster related commands
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListClusterTemplatesCommand(), CLUSTER_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListClusterCommand(), CLUSTER_ORCH_FEATURE)
+
+	// Day2 related commands
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListScheduleCommand(), DAY2_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListOSUpdateRunCommand(), DAY2_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListOSUpdatePolicyCommand(), DAY2_FEATURE)
+
+	// Onboarding related commands
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListHostCommand(), ONBOARDING_FEATURE)
+
+	// Provisioning related commands
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListOSProfileCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListCustomConfigCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListRegionCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListSiteCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListProviderCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListSSHKeyCommand(), PROVISIONING_FEATURE)
+
+	// Out of Band Management related commands
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListAmtProfileCommand(), OOB_FEATURE)
+
+	// Multitenancy related commands
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListProjectCommand(), MULTITENANCY_FEATURE)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListOrganizationCommand(), MULTITENANCY_FEATURE)
+
 	return catalogListRootCmd
 }
 
@@ -127,32 +140,44 @@ func getGetCommand() *cobra.Command {
 		Short:             "Get various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
 	}
-	catalogGetRootCmd.AddCommand(
-		getGetRegistryCommand(),
-		getGetArtifactCommand(),
-		getGetApplicationCommand(),
-		getGetProfileCommand(),
-		getGetDeploymentPackageCommand(),
-		getGetDeploymentProfileCommand(),
-		getGetNetworkCommand(),
+	//catalogGetRootCmd.AddCommand()
 
-		getGetDeploymentCommand(),
-		getGetClusterCommand(),
+	// App related commands
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetRegistryCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetArtifactCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetApplicationCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetProfileCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetDeploymentPackageCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetDeploymentProfileCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetNetworkCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetDeploymentCommand(), APP_ORCH_FEATURE)
 
-		getGetOSUpdateRunCommand(),
-		getGetOSUpdatePolicyCommand(),
-		getGetCustomConfigCommand(),
-		getGetOSProfileCommand(),
-		getGetRegionCommand(),
-		getGetSiteCommand(),
-		getGetHostCommand(),
-		getGetProviderCommand(),
-		getGetSSHKeyCommand(),
-		getGetScheduleCommand(),
-		getGetProjectCommand(),
-		getGetOrganizationCommand(),
-	)
+	// Cluster related commands
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetClusterCommand(), CLUSTER_ORCH_FEATURE)
+
+	// Day2 related commands
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetScheduleCommand(), DAY2_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetOSUpdateRunCommand(), DAY2_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetOSUpdatePolicyCommand(), DAY2_FEATURE)
+
+	// Onboarding related commands
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetHostCommand(), ONBOARDING_FEATURE)
+
+	// Provisioning related commands
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetOSProfileCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetCustomConfigCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetRegionCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetSiteCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetProviderCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetSSHKeyCommand(), PROVISIONING_FEATURE)
+
+	// Out of Band Management related commands
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetAmtProfileCommand(), OOB_FEATURE)
+
+	// Multitenancy related commands
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetProjectCommand(), MULTITENANCY_FEATURE)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetOrganizationCommand(), MULTITENANCY_FEATURE)
+
 	return catalogGetRootCmd
 }
 
@@ -163,21 +188,23 @@ func getSetCommand() *cobra.Command {
 		Short:             "Update various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
 	}
-	cmd.AddCommand(
-		getSetRegistryCommand(),
-		getSetArtifactCommand(),
-		getSetApplicationCommand(),
-		getSetProfileCommand(),
-		getSetDeploymentPackageCommand(),
-		getSetDeploymentProfileCommand(),
+	//cmd.AddCommand()
 
-		getSetDeploymentCommand(),
+	// App related commands
+	addCommandIfFeatureEnabled(cmd, getSetRegistryCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getSetArtifactCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getSetApplicationCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getSetProfileCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getSetDeploymentPackageCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getSetDeploymentProfileCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getSetDeploymentCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getSetNetworkCommand(), APP_ORCH_FEATURE)
 
-		getSetNetworkCommand(),
+	// Onboarding related commands
+	addCommandIfFeatureEnabled(cmd, getSetHostCommand(), ONBOARDING_FEATURE)
 
-		getSetHostCommand(),
-		getSetScheduleCommand(),
-	)
+	// Day2 related commands
+	addCommandIfFeatureEnabled(cmd, getSetScheduleCommand(), DAY2_FEATURE)
 	return cmd
 }
 
@@ -187,9 +214,9 @@ func getUpgradeCommand() *cobra.Command {
 		Short:             "Upgrade deployment",
 		PersistentPreRunE: auth.CheckAuth,
 	}
-	cmd.AddCommand(
-		getUpgradeDeploymentCommand(),
-	)
+	//cmd.AddCommand()
+	// App related commands
+	addCommandIfFeatureEnabled(cmd, getUpgradeDeploymentCommand(), APP_ORCH_FEATURE)
 	return cmd
 }
 
@@ -199,32 +226,44 @@ func getDeleteCommand() *cobra.Command {
 		Short:             "Delete various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
 	}
-	catalogDeleteRootCmd.AddCommand(
-		getDeleteRegistryCommand(),
-		getDeleteArtifactCommand(),
-		getDeleteApplicationCommand(),
-		getDeleteProfileCommand(),
-		getDeleteDeploymentPackageCommand(),
-		getDeleteDeploymentProfileCommand(),
-		getDeleteApplicationReferenceCommand(),
+	//catalogDeleteRootCmd.AddCommand()
 
-		getDeleteDeploymentCommand(),
-		getDeleteClusterCommand(),
-		getDeleteNetworkCommand(),
+	// App related commands
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteRegistryCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteArtifactCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteApplicationCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteProfileCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteDeploymentPackageCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteDeploymentProfileCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteApplicationReferenceCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteDeploymentCommand(), APP_ORCH_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteNetworkCommand(), APP_ORCH_FEATURE)
 
-		getDeleteOSUpdateRunCommand(),
-		getDeleteOSUpdatePolicyCommand(),
-		getDeleteCustomConfigCommand(),
-		getDeleteRegionCommand(),
-		getDeleteSiteCommand(),
-		getDeleteOSProfileCommand(),
-		getDeleteHostCommand(),
-		getDeleteProviderCommand(),
-		getDeleteSSHKeyCommand(),
-		getDeleteScheduleCommand(),
-		getDeleteProjectCommand(),
-		getDeleteOrganizationCommand(),
-	)
+	// Cluster related commands
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteClusterCommand(), CLUSTER_ORCH_FEATURE)
+
+	// Day2 related commands
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteScheduleCommand(), DAY2_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteOSUpdateRunCommand(), DAY2_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteOSUpdatePolicyCommand(), DAY2_FEATURE)
+
+	// Onboarding related commands
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteHostCommand(), ONBOARDING_FEATURE)
+
+	// Provisioning related commands
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteCustomConfigCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteRegionCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteSiteCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteOSProfileCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteProviderCommand(), PROVISIONING_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteSSHKeyCommand(), PROVISIONING_FEATURE)
+
+	// Out of Band Management related commands
 	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteAmtProfileCommand(), OOB_FEATURE)
+
+	// Multitenancy related commands
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteProjectCommand(), MULTITENANCY_FEATURE)
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteOrganizationCommand(), MULTITENANCY_FEATURE)
+
 	return catalogDeleteRootCmd
 }

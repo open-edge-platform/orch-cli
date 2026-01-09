@@ -615,7 +615,7 @@ func isExpectedError(err error) bool {
 // addCommandIfFeatureEnabled conditionally adds a command to a parent command if the feature is enabled
 func addCommandIfFeatureEnabled(parent *cobra.Command, child *cobra.Command, feature string) {
 	if isFeatureEnabled(feature) {
-		// TODO maybe create another config with all availablec ommands? fmt.Printf("Adding command %s for feature %s\n", child.Name(), feature)
+		// TODO maybe create another config with all availablec commands? fmt.Printf("Adding command %s for feature %s\n", child.Name(), feature)
 		parent.AddCommand(child)
 	}
 }

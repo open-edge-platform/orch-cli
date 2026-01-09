@@ -1223,9 +1223,7 @@ func getDeauthorizeCommand() *cobra.Command {
 		PersistentPreRunE: auth.CheckAuth,
 	}
 
-	cmd.AddCommand(
-		getDeauthorizeHostCommand(),
-	)
+	addCommandIfFeatureEnabled(cmd, getDeauthorizeHostCommand(), ONBOARDING_FEATURE)
 	return cmd
 }
 
@@ -1236,9 +1234,7 @@ func getUpdateCommand() *cobra.Command {
 		PersistentPreRunE: auth.CheckAuth,
 	}
 
-	cmd.AddCommand(
-		getUpdateHostCommand(),
-	)
+	addCommandIfFeatureEnabled(cmd, getUpdateHostCommand(), DAY2_FEATURE)
 	return cmd
 }
 
