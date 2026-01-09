@@ -19,6 +19,7 @@ var (
 	deploymentPackageAliases = []string{"deployment-package", "deployment-packages", "package", "packages", "bundle", "bundles", "pkg", "pkgs"}
 	deploymentProfileAliases = []string{"deployment-package-profile", "deployment-package-profiles", "deployment-profile", "deployment-profiles", "package-profile", "bundle-profile"}
 	deploymentAliases        = []string{"deployment", "deployments", "dep", "deps"}
+	featuresAliases          = []string{"feature", "features", "feat", "feats"}
 	hostAliases              = []string{"host", "hosts", "hs"}
 	networkAliases           = []string{"network", "networks", "net", "nets"}
 	osProfileAliases         = []string{"osprofile", "osprofiles", "osp", "osps"}
@@ -91,7 +92,9 @@ func getListCommand() *cobra.Command {
 		PersistentPreRunE: auth.CheckAuth,
 	}
 
-	//catalogListRootCmd.AddCommand()
+	catalogListRootCmd.AddCommand(
+		getListFeaturesCommand(),
+	)
 
 	// App related commands
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListRegistriesCommand(), APP_ORCH_FEATURE)

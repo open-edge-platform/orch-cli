@@ -33,20 +33,24 @@ const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
-	OOB_FEATURE           = "edge-infrastructure-manager.oob"
-	ONBOARDING_FEATURE    = "edge-infrastructure-manager.onboarding"
-	PROVISIONING_FEATURE  = "edge-infrastructure-manager.provisioning"
-	DAY2_FEATURE          = "edge-infrastructure-manager.day2"
-	APP_ORCH_FEATURE      = "application-orchestration"
-	CLUSTER_ORCH_FEATURE  = "cluster-orchestration"
-	OBSERVABILITY_FEATURE = "observability"
-	MULTITENANCY_FEATURE  = "multitenancy"
+	OOB_FEATURE           = "orchestrator.features.edge-infrastructure-manager.oob"
+	ONBOARDING_FEATURE    = "orchestrator.features.edge-infrastructure-manager.onboarding"
+	PROVISIONING_FEATURE  = "orchestrator.features.edge-infrastructure-manager.provisioning"
+	DAY2_FEATURE          = "orchestrator.features.edge-infrastructure-manager.day2"
+	APP_ORCH_FEATURE      = "orchestrator.features.application-orchestration"
+	CLUSTER_ORCH_FEATURE  = "orchestrator.features.cluster-orchestration"
+	OBSERVABILITY_FEATURE = "orchestrator.features.observability"
+	MULTITENANCY_FEATURE  = "orchestrator.features.multitenancy"
+	ORCH_VERSION          = "orchestrator.version"
 )
 
 const (
 	REGION = 0
 	SITE   = 1
 )
+
+var disabledCommands []string = []string{}
+var enabledCommands []string = []string{}
 
 // Use the interface type instead of the concrete function type
 var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
@@ -614,30 +618,33 @@ func isExpectedError(err error) bool {
 
 // addCommandIfFeatureEnabled conditionally adds a command to a parent command if the feature is enabled
 func addCommandIfFeatureEnabled(parent *cobra.Command, child *cobra.Command, feature string) {
+	commandPath := parent.Name() + " " + child.Name()
 	if isFeatureEnabled(feature) {
-		// TODO maybe create another config with all availablec commands? fmt.Printf("Adding command %s for feature %s\n", child.Name(), feature)
+		enabledCommands = append(enabledCommands, commandPath)
 		parent.AddCommand(child)
+	} else {
+		disabledCommands = append(disabledCommands, commandPath)
 	}
 }
 
 func isFeatureEnabled(feature string) bool {
 	switch feature {
 	case OOB_FEATURE:
-		return viper.GetBool("edge-infrastructure-manager.oob")
+		return viper.GetBool(OOB_FEATURE)
 	case ONBOARDING_FEATURE:
-		return viper.GetBool("edge-infrastructure-manager.onboarding")
+		return viper.GetBool(ONBOARDING_FEATURE)
 	case PROVISIONING_FEATURE:
-		return viper.GetBool("edge-infrastructure-manager.provisioning")
+		return viper.GetBool(PROVISIONING_FEATURE)
 	case DAY2_FEATURE:
-		return viper.GetBool("edge-infrastructure-manager.day2")
+		return viper.GetBool(DAY2_FEATURE)
 	case OBSERVABILITY_FEATURE:
-		return viper.GetBool("observability")
+		return viper.GetBool(OBSERVABILITY_FEATURE)
 	case APP_ORCH_FEATURE:
-		return viper.GetBool("application-orchestration")
+		return viper.GetBool(APP_ORCH_FEATURE)
 	case CLUSTER_ORCH_FEATURE:
-		return viper.GetBool("cluster-orchestration")
+		return viper.GetBool(CLUSTER_ORCH_FEATURE)
 	case MULTITENANCY_FEATURE:
-		return viper.GetBool("multitenancy")
+		return viper.GetBool(MULTITENANCY_FEATURE)
 	default:
 		return true // Default to enabled for unknown features
 	}

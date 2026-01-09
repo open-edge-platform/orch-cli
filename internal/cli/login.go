@@ -198,15 +198,15 @@ func logout(_ *cobra.Command, _ []string) error {
 func loadFeatureConfig() error {
 
 	// TODO: For now we hardcode the feature config here. Then extract from EO endpoint later.
-	viper.Set("version", "2026.0")
-	viper.Set("application-orchestration", false)
-	viper.Set("cluster-orchestration", false)
-	viper.Set("edge-infrastructure-manager.onboarding", true)
-	viper.Set("edge-infrastructure-manager.provisioning", false)
-	viper.Set("edge-infrastructure-manager.day2", false)
-	viper.Set("edge-infrastructure-manager.oob", false)
-	viper.Set("observability", false)
-	viper.Set("multitenancy", false)
+	viper.Set("orchestrator.version", "2026.0")
+	viper.Set("orchestrator.features.application-orchestration", false)
+	viper.Set("orchestrator.features.cluster-orchestration", false)
+	viper.Set("orchestrator.features.edge-infrastructure-manager.onboarding", true)
+	viper.Set("orchestrator.features.edge-infrastructure-manager.provisioning", false)
+	viper.Set("orchestrator.features.edge-infrastructure-manager.day2", false)
+	viper.Set("orchestrator.features.edge-infrastructure-manager.oob", false)
+	viper.Set("orchestrator.features.observability", false)
+	viper.Set("orchestrator.features.multitenancy", false)
 
 	if err := viper.WriteConfig(); err != nil {
 		return err

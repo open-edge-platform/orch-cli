@@ -20,8 +20,10 @@ func versionCommand() *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			fmt.Printf("Orchestrator CLI version %s %s\n", Version, runtime.GOARCH)
 
-			if viper.GetString("version") != "" {
-				fmt.Printf("Target Edge Orchestrator version %s\n", viper.GetString("version"))
+			if viper.GetString(ORCH_VERSION) != "" {
+				fmt.Printf("Target Edge Orchestrator version %s\n", viper.GetString(ORCH_VERSION))
+			} else {
+				fmt.Printf("Target Edge Orchestrator version not retrieved\n")
 			}
 			return nil
 		},
