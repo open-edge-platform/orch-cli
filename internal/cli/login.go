@@ -203,7 +203,7 @@ func loadFeatureConfig() error {
 	viper.Set("cluster-orchestration", false)
 	viper.Set("edge-infrastructure-manager.onboarding", true)
 	viper.Set("edge-infrastructure-manager.provisioning", false)
-	viper.Set("edge-infrastructure-manager.day2", false)
+	viper.Set("edge-infrastructure-manager.day2", true)
 	viper.Set("edge-infrastructure-manager.oob", false)
 	viper.Set("observability", false)
 	viper.Set("multitenancy", false)

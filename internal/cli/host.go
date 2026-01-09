@@ -72,7 +72,7 @@ Remote User - Optional remote user name or resource ID to configure for the host
 Metadata - Optional metadata to configure for the host
 LVMSize - Optional LVM size to be configured for the host
 CloudInitMeta - Optional Cloud Init Metadata to be configured for the host
-K8sEnable - Optional command to enable cluster deployment
+K8sEnable - Optional command to enable cluster deployment (only used if Cluster Orchestration feature is enabled in the Edge Orchestrator)
 K8sClusterTemplate - Optional Cluster template to be used for K8s deployment on the host, must be provided if K8sEnable is true
 K8sClusterConfig - Optional Cluster config to be used to specify role and cluster name and/or cluster labels
 
@@ -696,7 +696,7 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 		return
 	}
 
-	if rOut.K8sEnable == "true" {
+	if rOut.K8sEnable == "true" && isFeatureEnabled(CLUSTER_ORCH_FEATURE) {
 		err = createCluster(ctx2, cClient, respCache, projectName, hostID, rOut)
 		if err != nil {
 			rIn.Error = err.Error()
@@ -1331,14 +1331,18 @@ func getSetHostCommand() *cobra.Command {
 		Aliases: hostAliases,
 		RunE:    runSetHostCommand,
 	}
-	cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
-	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
 	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host import")
 	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
-	cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
-	cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
-	cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
-	cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
+	if isFeatureEnabled(OOB_FEATURE) {
+		cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
+		cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
+		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
+		cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
+		cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
+	}
+	if isFeatureEnabled(DAY2_FEATURE) {
+		cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
+	}
 
 	return cmd
 }
