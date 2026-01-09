@@ -199,14 +199,14 @@ func loadFeatureConfig() error {
 
 	// TODO: For now we hardcode the feature config here. Then extract from EO endpoint later.
 	viper.Set("version", "2026.0")
-	viper.Set("application-orchestration", false)
-	viper.Set("cluster-orchestration", false)
+	viper.Set("application-orchestration", true)
+	viper.Set("cluster-orchestration", true)
 	viper.Set("edge-infrastructure-manager.onboarding", true)
-	viper.Set("edge-infrastructure-manager.provisioning", false)
+	viper.Set("edge-infrastructure-manager.provisioning", true)
 	viper.Set("edge-infrastructure-manager.day2", true)
-	viper.Set("edge-infrastructure-manager.oob", false)
-	viper.Set("observability", false)
-	viper.Set("multitenancy", false)
+	viper.Set("edge-infrastructure-manager.oob", true)
+	viper.Set("observability", true)
+	viper.Set("multitenancy", true)
 
 	if err := viper.WriteConfig(); err != nil {
 		return err
