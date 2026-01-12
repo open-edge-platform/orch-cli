@@ -696,7 +696,7 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 		return
 	}
 
-	if rOut.K8sEnable == "true" && isFeatureEnabled(CLUSTER_ORCH_FEATURE) {
+	if rOut.K8sEnable == "true" && isFeatureEnabled(ClusterOrchFeature) {
 		err = createCluster(ctx2, cClient, respCache, projectName, hostID, rOut)
 		if err != nil {
 			rIn.Error = err.Error()
@@ -1223,7 +1223,7 @@ func getDeauthorizeCommand() *cobra.Command {
 		PersistentPreRunE: auth.CheckAuth,
 	}
 
-	addCommandIfFeatureEnabled(cmd, getDeauthorizeHostCommand(), ONBOARDING_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getDeauthorizeHostCommand(), OnboardingFeature)
 	return cmd
 }
 
@@ -1234,7 +1234,7 @@ func getUpdateCommand() *cobra.Command {
 		PersistentPreRunE: auth.CheckAuth,
 	}
 
-	addCommandIfFeatureEnabled(cmd, getUpdateHostCommand(), DAY2_FEATURE)
+	addCommandIfFeatureEnabled(cmd, getUpdateHostCommand(), Day2Feature)
 	return cmd
 }
 
@@ -1333,14 +1333,14 @@ func getSetHostCommand() *cobra.Command {
 	}
 	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host import")
 	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
-	if isFeatureEnabled(OOB_FEATURE) {
+	if isFeatureEnabled(OobFeature) {
 		cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
 		cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
 		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
 		cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
 		cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
 	}
-	if isFeatureEnabled(DAY2_FEATURE) {
+	if isFeatureEnabled(Day2Feature) {
 		cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
 	}
 

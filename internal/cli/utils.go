@@ -33,15 +33,15 @@ const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
-	OOB_FEATURE           = "orchestrator.features.edge-infrastructure-manager.oob"
-	ONBOARDING_FEATURE    = "orchestrator.features.edge-infrastructure-manager.onboarding"
-	PROVISIONING_FEATURE  = "orchestrator.features.edge-infrastructure-manager.provisioning"
-	DAY2_FEATURE          = "orchestrator.features.edge-infrastructure-manager.day2"
-	APP_ORCH_FEATURE      = "orchestrator.features.application-orchestration"
-	CLUSTER_ORCH_FEATURE  = "orchestrator.features.cluster-orchestration"
-	OBSERVABILITY_FEATURE = "orchestrator.features.observability"
-	MULTITENANCY_FEATURE  = "orchestrator.features.multitenancy"
-	ORCH_VERSION          = "orchestrator.version"
+	OobFeature           = "orchestrator.features.edge-infrastructure-manager.oob"
+	OnboardingFeature    = "orchestrator.features.edge-infrastructure-manager.onboarding"
+	ProvisioningFeature  = "orchestrator.features.edge-infrastructure-manager.provisioning"
+	Day2Feature          = "orchestrator.features.edge-infrastructure-manager.day2"
+	AppOrchFeature       = "orchestrator.features.application-orchestration"
+	ClusterOrchFeature   = "orchestrator.features.cluster-orchestration"
+	ObservabilityFeature = "orchestrator.features.observability"
+	MultitenancyFeature  = "orchestrator.features.multitenancy"
+	OrchVersion          = "orchestrator.version"
 )
 
 const (
@@ -49,8 +49,8 @@ const (
 	SITE   = 1
 )
 
-var disabledCommands []string = []string{}
-var enabledCommands []string = []string{}
+var disabledCommands = []string{}
+var enabledCommands = []string{}
 
 // Use the interface type instead of the concrete function type
 var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
@@ -629,22 +629,22 @@ func addCommandIfFeatureEnabled(parent *cobra.Command, child *cobra.Command, fea
 
 func isFeatureEnabled(feature string) bool {
 	switch feature {
-	case OOB_FEATURE:
-		return viper.GetBool(OOB_FEATURE)
-	case ONBOARDING_FEATURE:
-		return viper.GetBool(ONBOARDING_FEATURE)
-	case PROVISIONING_FEATURE:
-		return viper.GetBool(PROVISIONING_FEATURE)
-	case DAY2_FEATURE:
-		return viper.GetBool(DAY2_FEATURE)
-	case OBSERVABILITY_FEATURE:
-		return viper.GetBool(OBSERVABILITY_FEATURE)
-	case APP_ORCH_FEATURE:
-		return viper.GetBool(APP_ORCH_FEATURE)
-	case CLUSTER_ORCH_FEATURE:
-		return viper.GetBool(CLUSTER_ORCH_FEATURE)
-	case MULTITENANCY_FEATURE:
-		return viper.GetBool(MULTITENANCY_FEATURE)
+	case OobFeature:
+		return viper.GetBool(OobFeature)
+	case OnboardingFeature:
+		return viper.GetBool(OnboardingFeature)
+	case ProvisioningFeature:
+		return viper.GetBool(ProvisioningFeature)
+	case Day2Feature:
+		return viper.GetBool(Day2Feature)
+	case ObservabilityFeature:
+		return viper.GetBool(ObservabilityFeature)
+	case AppOrchFeature:
+		return viper.GetBool(AppOrchFeature)
+	case ClusterOrchFeature:
+		return viper.GetBool(ClusterOrchFeature)
+	case MultitenancyFeature:
+		return viper.GetBool(MultitenancyFeature)
 	default:
 		return true // Default to enabled for unknown features
 	}
