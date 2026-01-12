@@ -19,3 +19,4 @@ spec:
   osPackageManifestURL: sample.json
   securityFeature: SECURITY_FEATURE_NONE
   platformBundle: ""
+
