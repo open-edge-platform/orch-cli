@@ -342,12 +342,14 @@ func checkName(name string, resource int) error {
 	if re.MatchString(name) {
 		return nil
 	}
-	if resource == REGION {
+	switch resource {
+	case REGION:
 		return errors.New("invalid region name")
-	} else if resource == SITE {
+	case SITE:
 		return errors.New("invalid site name")
+	default:
+		return errors.New("invalid resource name")
 	}
-	return errors.New("invalid resource name")
 }
 
 func checkID(id string) error {
