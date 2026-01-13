@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-package types
+package types // nolint:revive
 
 type HostRecord struct {
 	Serial     string

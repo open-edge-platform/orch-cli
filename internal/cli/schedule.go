@@ -67,16 +67,18 @@ func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleReso
 
 	for _, schedule := range singleSchedules {
 
-		if schedule.TargetHostId != nil && *schedule.TargetHostId != "" {
+		switch {
+		case schedule.TargetHostId != nil && *schedule.TargetHostId != "":
 			target = *schedule.TargetHostId
-		} else if schedule.TargetRegionId != nil && *schedule.TargetRegionId != "" {
+		case schedule.TargetRegionId != nil && *schedule.TargetRegionId != "":
 			target = *schedule.TargetRegionId
-		} else if schedule.TargetSiteId != nil && *schedule.TargetSiteId != "" {
+		case schedule.TargetSiteId != nil && *schedule.TargetSiteId != "":
 			target = *schedule.TargetSiteId
 		}
-		if schedule.ScheduleStatus == infra.SCHEDULESTATUSMAINTENANCE {
+		switch schedule.ScheduleStatus {
+		case infra.SCHEDULESTATUSMAINTENANCE:
 			status = "Maintenance"
-		} else if schedule.ScheduleStatus == infra.SCHEDULESTATUSOSUPDATE {
+		case infra.SCHEDULESTATUSOSUPDATE:
 			status = "OS Update"
 		}
 		maintenanceType = "single"
@@ -88,16 +90,18 @@ func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleReso
 		}
 	}
 	for _, schedule := range repeatedSchedules {
-		if schedule.TargetHostId != nil && *schedule.TargetHostId != "" {
+		switch {
+		case schedule.TargetHostId != nil && *schedule.TargetHostId != "":
 			target = *schedule.TargetHostId
-		} else if schedule.TargetRegionId != nil && *schedule.TargetRegionId != "" {
+		case schedule.TargetRegionId != nil && *schedule.TargetRegionId != "":
 			target = *schedule.TargetRegionId
-		} else if schedule.TargetSiteId != nil && *schedule.TargetSiteId != "" {
+		case schedule.TargetSiteId != nil && *schedule.TargetSiteId != "":
 			target = *schedule.TargetSiteId
 		}
-		if schedule.ScheduleStatus == infra.SCHEDULESTATUSMAINTENANCE {
+		switch schedule.ScheduleStatus {
+		case infra.SCHEDULESTATUSMAINTENANCE:
 			status = "Maintenance"
-		} else if schedule.ScheduleStatus == infra.SCHEDULESTATUSOSUPDATE {
+		case infra.SCHEDULESTATUSOSUPDATE:
 			status = "OS Update"
 		}
 		maintenanceType = "repeated"
@@ -236,11 +240,12 @@ func parseTargetResource(target string) (hostname, region, site *string, err err
 
 	targetType := parts[0]
 
-	if targetType == "host" {
+	switch targetType {
+	case "host":
 		return &target, nil, nil, nil
-	} else if targetType == "region" {
+	case "region":
 		return nil, &target, nil, nil
-	} else if targetType == "site" {
+	case "site":
 		return nil, nil, &target, nil
 	}
 	return nil, nil, nil, fmt.Errorf("invalid target type '%s', must be one of: host, region, site", targetType)

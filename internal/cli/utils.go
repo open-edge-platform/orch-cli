@@ -19,7 +19,6 @@ import (
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
-	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
@@ -41,7 +40,7 @@ var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context
 	return getInfraServiceContext(cmd)
 }
 
-var ClusterFactory interfaces.ClusterFactoryFunc = func(cmd *cobra.Command) (context.Context, cluster.ClientWithResponsesInterface, string, error) {
+var ClusterFactory interfaces.ClusterFactoryFunc = func(cmd *cobra.Command) (context.Context, coapi.ClientWithResponsesInterface, string, error) {
 	return getClusterServiceContext(cmd)
 }
 
@@ -399,12 +398,14 @@ func checkResponseGRPC(response *http.Response, message string) error {
 
 // Checks the status code and returns the appropriate error
 func checkStatus(statusCode int, message string, statusMessage string) (proceed bool, err error) {
-	if statusCode == http.StatusOK {
+	switch statusCode {
+	case http.StatusOK:
 		return true, nil
-	} else if statusCode == 403 {
+	case 403:
 		return false, fmt.Errorf("%s: %s. Unauthenticated. Please login", message, statusMessage)
+	default:
+		return false, fmt.Errorf("no response from backend - check api-endpoint and deployment-endpoint")
 	}
-	return false, fmt.Errorf("no response from backend - check api-endpoint and deployment-endpoint")
 }
 
 // Returns an error if the status is abnormal, i.e. status code is not OK and not merely NOT_FOUND
@@ -431,13 +432,14 @@ func statusForbidden(response *http.Response) bool {
 }
 
 func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer, verbose bool, header string, message string) (proceed bool, err error) {
-	if err = statusIsAbnormal(resp, message, resp.Status); err != nil {
-		return false, err
-	} else if statusIsNotFound(resp) {
+	switch {
+	case statusIsAbnormal(resp, message, resp.Status) != nil:
+		return false, statusIsAbnormal(resp, message, resp.Status)
+	case statusIsNotFound(resp):
 		return false, getError(body, message)
-	} else if statusUnauthorized(resp) {
+	case statusUnauthorized(resp):
 		return false, getError(body, "Unauthorized. Please login")
-	} else if statusForbidden(resp) {
+	case statusForbidden(resp):
 		return false, getError(body, "Unauthorized (forbidden). Please login")
 	}
 
@@ -460,7 +462,7 @@ func getError(body []byte, prefixMessage string) error {
 
 func processError(err error) error {
 	if strings.Contains(err.Error(), "504 DNS look up failed") {
-		return fmt.Errorf("Unauthorized. Please login: token expired")
+		return fmt.Errorf("unauthorized. Please login: token expired")
 	}
 	return err
 }
