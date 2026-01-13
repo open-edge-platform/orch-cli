@@ -432,9 +432,10 @@ func statusForbidden(response *http.Response) bool {
 }
 
 func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer, verbose bool, header string, message string) (proceed bool, err error) {
+	abnormalErr := statusIsAbnormal(resp, message, resp.Status)
 	switch {
-	case statusIsAbnormal(resp, message, resp.Status) != nil:
-		return false, statusIsAbnormal(resp, message, resp.Status)
+	case abnormalErr != nil:
+		return false, abnormalErr
 	case statusIsNotFound(resp):
 		return false, getError(body, message)
 	case statusUnauthorized(resp):
