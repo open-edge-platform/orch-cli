@@ -23,6 +23,7 @@ import (
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
+	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchestrator"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
@@ -75,6 +76,10 @@ var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command
 
 var TenancyFactory interfaces.TenancyFactoryFunc = func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, error) {
 	return getTenancyServiceContext(cmd)
+}
+
+var OrchestratorFactory interfaces.OrchestratorFactoryFunc = func(cmd *cobra.Command) (context.Context, orchapi.ClientWithResponsesInterface, error) {
+	return getOrchestratorServiceContext(cmd)
 }
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
@@ -185,6 +190,19 @@ func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.C
 		return nil, nil, err
 	}
 	return context.Background(), tenancyClient, nil
+}
+
+// Get the new background context and REST client for orchestrator service.
+func getOrchestratorServiceContext(cmd *cobra.Command) (context.Context, *orchapi.Client, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return nil, nil, err
+	}
+	orchClient, err := orchapi.NewClient(serverAddress, TLS13OrchestratorClientOption())
+	if err != nil {
+		return nil, nil, err
+	}
+	return context.Background(), orchClient, nil
 }
 
 // Adds the mandatory project UUID, and the standard display-name, and description
@@ -583,6 +601,20 @@ func TLS13RPSClientOption() func(*rpsapi.Client) error {
 
 func TLS13TenancyClientOption() func(*tenantapi.Client) error {
 	return func(c *tenantapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+
+func TLS13OrchestratorClientOption() func(*orchapi.Client) error {
+	return func(c *orchapi.Client) error {
 		c.Client = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{

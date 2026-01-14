@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/rest/orchestrator"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -171,8 +172,20 @@ func login(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// TODO get the config from EO endpoint, parse it out and pass on to loadConfig()
-	if err := loadFeatureConfig(); err != nil {
+	ctx, orchCLient, err := OrchestratorFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	resp, err := orchCLient.GetOrchestratorInfoWithResponse(ctx, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if resp.StatusCode() != 200 {
+		return fmt.Errorf("failed to get orchestrator info: %s", resp.Status())
+	}
+
+	if err := loadFeatureConfig(resp.JSON200); err != nil {
 		return err
 	}
 
@@ -195,22 +208,39 @@ func logout(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func loadFeatureConfig() error {
+func loadFeatureConfig(info *orchestrator.OrchestratorInfo) error {
+	if info == nil || info.Orchestrator == nil {
+		return fmt.Errorf("invalid orchestrator info")
+	}
 
-	// TODO: For now we hardcode the feature config here. Then extract from EO endpoint later.
-	viper.Set("orchestrator.version", "2026.0")
-	viper.Set("orchestrator.features.application-orchestration", true)
-	viper.Set("orchestrator.features.cluster-orchestration", true)
-	viper.Set("orchestrator.features.edge-infrastructure-manager.onboarding", true)
-	viper.Set("orchestrator.features.edge-infrastructure-manager.provisioning", true)
-	viper.Set("orchestrator.features.edge-infrastructure-manager.day2", true)
-	viper.Set("orchestrator.features.edge-infrastructure-manager.oob", true)
-	viper.Set("orchestrator.features.observability", true)
-	viper.Set("orchestrator.features.multitenancy", true)
+	// Set version
+	if info.Orchestrator.Version != nil {
+		viper.Set("orchestrator.version", *info.Orchestrator.Version)
+	}
+
+	// Process features recursively
+	if info.Orchestrator.Features != nil {
+		for featureName, featureInfo := range info.Orchestrator.Features {
+			processFeature("orchestrator.features."+featureName, featureInfo)
+		}
+	}
 
 	if err := viper.WriteConfig(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// processFeature recursively processes features and sets viper config
+func processFeature(prefix string, feature orchestrator.FeatureInfo) {
+	// Set the installed status for this feature
+	if feature.Installed != nil {
+		viper.Set(prefix, *feature.Installed)
+	}
+
+	// Process nested features
+	for nestedName, nestedFeature := range feature.Features {
+		processFeature(prefix+"."+nestedName, nestedFeature)
+	}
 }

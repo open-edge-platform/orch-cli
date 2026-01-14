@@ -682,26 +682,28 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 		return
 	}
 
-	err = createInstance(ctx, hClient, respCache, projectName, hostID, rOut, rIn, globalAttr)
-	if err != nil {
-		rIn.Error = err.Error()
-		*erringRecords = append(*erringRecords, rIn)
-		return
-	}
-
-	err = allocateHostToSiteAndAddMetadata(ctx, hClient, projectName, hostID, rOut)
-	if err != nil {
-		rIn.Error = err.Error()
-		*erringRecords = append(*erringRecords, rIn)
-		return
-	}
-
-	if rOut.K8sEnable == "true" && isFeatureEnabled(ClusterOrchFeature) {
-		err = createCluster(ctx2, cClient, respCache, projectName, hostID, rOut)
+	if isFeatureEnabled(ProvisioningFeature) {
+		err = createInstance(ctx, hClient, respCache, projectName, hostID, rOut, rIn, globalAttr)
 		if err != nil {
 			rIn.Error = err.Error()
 			*erringRecords = append(*erringRecords, rIn)
 			return
+		}
+
+		err = allocateHostToSiteAndAddMetadata(ctx, hClient, projectName, hostID, rOut)
+		if err != nil {
+			rIn.Error = err.Error()
+			*erringRecords = append(*erringRecords, rIn)
+			return
+		}
+
+		if rOut.K8sEnable == "true" && isFeatureEnabled(ClusterOrchFeature) {
+			err = createCluster(ctx2, cClient, respCache, projectName, hostID, rOut)
+			if err != nil {
+				rIn.Error = err.Error()
+				*erringRecords = append(*erringRecords, rIn)
+				return
+			}
 		}
 	}
 
@@ -826,34 +828,39 @@ func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSe
 // Sanitize fields, convert named resources to resource IDs
 func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClient infra.ClientWithResponsesInterface, projectName string, record types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient cluster.ClientWithResponsesInterface) (*types.HostRecord, error) {
 
-	isSecure := resolveSecure(record.Secure, globalAttr.Secure)
+	var osProfileID, siteID, laID, metadataToUse, cloudInitIDs string
+	var isSecure types.RecordSecure
+	err := error(nil)
 
-	osProfileID, err := resolveOSProfile(ctx, hClient, projectName, record.OSProfile, globalAttr.OSProfile, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
+	if isFeatureEnabled(ProvisioningFeature) {
+		isSecure = resolveSecure(record.Secure, globalAttr.Secure)
+
+		osProfileID, err = resolveOSProfile(ctx, hClient, projectName, record.OSProfile, globalAttr.OSProfile, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
+
+		if valErr := validateSecurityFeature(record.OSProfile, globalAttr.OSProfile, isSecure, record, respCache, erringRecords); valErr != nil {
+			return nil, valErr
+		}
+
+		siteID, err = resolveSite(ctx, hClient, projectName, record.Site, globalAttr.Site, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
+
+		laID, err = resolveRemoteUser(ctx, hClient, projectName, record.RemoteUser, globalAttr.RemoteUser, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
+
+		metadataToUse = resolveMetadata(record.Metadata, globalAttr.Metadata)
+
+		cloudInitIDs, err = resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, globalAttr.CloudInitMeta, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	if valErr := validateSecurityFeature(record.OSProfile, globalAttr.OSProfile, isSecure, record, respCache, erringRecords); valErr != nil {
-		return nil, valErr
-	}
-
-	siteID, err := resolveSite(ctx, hClient, projectName, record.Site, globalAttr.Site, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
-
-	laID, err := resolveRemoteUser(ctx, hClient, projectName, record.RemoteUser, globalAttr.RemoteUser, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
-
-	metadataToUse := resolveMetadata(record.Metadata, globalAttr.Metadata)
-
-	cloudInitIDs, err := resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, globalAttr.CloudInitMeta, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
-
 	lvmSize := resolveLVMSize(record.LVMSize, globalAttr.LVMSize)
 
 	isK8s := resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
@@ -1489,54 +1496,57 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	// Get instances in order to map additional host details
-	instances := make([]infra.InstanceResource, 0)
-	for offset := 0; ; offset += pageSize {
-		iresp, err := hostClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
-			&infra.InstanceServiceListInstancesParams{
-				PageSize: &pageSize,
-				Offset:   &offset,
-			}, auth.AddAuthHeader)
-		if err != nil {
-			return processError(err)
-		}
-		if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving instance"); err != nil {
-			return err
-		}
-		instances = append(instances, iresp.JSON200.Instances...)
-		if !iresp.JSON200.HasNext {
-			break // No more instances to process
-		}
-	}
-	matchedHosts := make([]infra.HostResource, 0)
-	notMatchedHosts := make([]infra.HostResource, 0)
+	if isFeatureEnabled(ProvisioningFeature) {
 
-	//Map workloads to hosts
-	for _, host := range hosts {
-		for _, instance := range instances {
-			if instance.WorkloadMembers != nil && instance.InstanceID != nil && host.Instance != nil && host.Instance.InstanceID != nil && *instance.InstanceID == *host.Instance.InstanceID {
-				host.Instance.WorkloadMembers = instance.WorkloadMembers
-				if workload != "" && len(*host.Instance.WorkloadMembers) > 0 {
-					if *(*host.Instance.WorkloadMembers)[0].Workload.Name == workload {
-						matchedHosts = append(matchedHosts, host)
+		// Get instances in order to map additional host details
+		instances := make([]infra.InstanceResource, 0)
+		for offset := 0; ; offset += pageSize {
+			iresp, err := hostClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
+				&infra.InstanceServiceListInstancesParams{
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving instance"); err != nil {
+				return err
+			}
+			instances = append(instances, iresp.JSON200.Instances...)
+			if !iresp.JSON200.HasNext {
+				break // No more instances to process
+			}
+		}
+		matchedHosts := make([]infra.HostResource, 0)
+		notMatchedHosts := make([]infra.HostResource, 0)
+
+		//Map workloads to hosts
+		for _, host := range hosts {
+			for _, instance := range instances {
+				if instance.WorkloadMembers != nil && instance.InstanceID != nil && host.Instance != nil && host.Instance.InstanceID != nil && *instance.InstanceID == *host.Instance.InstanceID {
+					host.Instance.WorkloadMembers = instance.WorkloadMembers
+					if workload != "" && len(*host.Instance.WorkloadMembers) > 0 {
+						if *(*host.Instance.WorkloadMembers)[0].Workload.Name == workload {
+							matchedHosts = append(matchedHosts, host)
+						}
 					}
+					break
 				}
-				break
+			}
+			if workload == "NotAssigned" {
+				if (host.Instance != nil && len(*host.Instance.WorkloadMembers) == 0) || host.Instance == nil {
+					notMatchedHosts = append(notMatchedHosts, host)
+				}
 			}
 		}
+
+		if workload != "" {
+			hosts = matchedHosts
+		}
+
 		if workload == "NotAssigned" {
-			if (host.Instance != nil && len(*host.Instance.WorkloadMembers) == 0) || host.Instance == nil {
-				notMatchedHosts = append(notMatchedHosts, host)
-			}
+			hosts = notMatchedHosts
 		}
-	}
-
-	if workload != "" {
-		hosts = matchedHosts
-	}
-
-	if workload == "NotAssigned" {
-		hosts = notMatchedHosts
 	}
 
 	printHosts(writer, &hosts, verbose)
