@@ -619,7 +619,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		powerOnTimeStr := "N/A"
 		if host.PowerOnTime != nil {
 			powerOnTime := time.Unix(int64(*host.PowerOnTime), 0)
-			powerOnTimeStr = powerOnTime.Format(time.RFC3339)
+			powerOnTimeStr = powerOnTime.UTC().Format(time.RFC3339)
 		}
 		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", powerOnTimeStr)
 		_, _ = fmt.Fprintf(writer, "-\tDesired AMT State :\t %v\n", *host.DesiredAmtState)

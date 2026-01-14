@@ -35,8 +35,8 @@ func printOSUpdateRuns(writer io.Writer, OSUpdateRuns []infra.OSUpdateRun, verbo
 		if !verbose {
 			fmt.Fprintf(writer, "%s\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status)
 		} else {
-			startTime := time.Unix(int64(*run.StartTime), 0).Format(time.RFC3339)
-			endTime := time.Unix(int64(*run.EndTime), 0).Format(time.RFC3339)
+			startTime := time.Unix(int64(*run.StartTime), 0).UTC().Format(time.RFC3339)
+			endTime := time.Unix(int64(*run.EndTime), 0).UTC().Format(time.RFC3339)
 			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status, run.AppliedPolicy.Name, startTime, endTime)
 		}
 	}
@@ -52,8 +52,8 @@ func printOSUpdateRun(writer io.Writer, OSUpdateRun *infra.OSUpdateRun) {
 	_, _ = fmt.Fprintf(writer, "Applied Policy: \t%v\n", OSUpdateRun.AppliedPolicy.Name)
 	_, _ = fmt.Fprintf(writer, "Description: \t%v\n", *OSUpdateRun.Description)
 
-	startTime := time.Unix(int64(*OSUpdateRun.StartTime), 0).Format(time.RFC3339)
-	endTime := time.Unix(int64(*OSUpdateRun.EndTime), 0).Format(time.RFC3339)
+	startTime := time.Unix(int64(*OSUpdateRun.StartTime), 0).UTC().Format(time.RFC3339)
+	endTime := time.Unix(int64(*OSUpdateRun.EndTime), 0).UTC().Format(time.RFC3339)
 
 	_, _ = fmt.Fprintf(writer, "Start Time: \t%s\n", startTime)
 	_, _ = fmt.Fprintf(writer, "End Time: \t%s\n", endTime)
