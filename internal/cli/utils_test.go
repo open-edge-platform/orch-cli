@@ -171,6 +171,11 @@ func TestGetServiceContexts(t *testing.T) {
 	//nolint:dogsled
 	_, _, err = getTenancyServiceContext(cmd)
 	assert.NoError(t, err)
+
+	// Tenancy
+	//nolint:dogsled
+	_, _, err = getOrchestratorServiceContext(cmd)
+	assert.NoError(t, err)
 }
 
 func TestCheckResponseGRPC(t *testing.T) {
