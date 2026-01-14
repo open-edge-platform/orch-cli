@@ -208,7 +208,7 @@ func logout(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func loadFeatureConfig(info *orchestrator.OrchestratorInfo) error {
+func loadFeatureConfig(info *orchestrator.Info) error {
 	if info == nil || info.Orchestrator == nil {
 		return fmt.Errorf("invalid orchestrator info")
 	}
