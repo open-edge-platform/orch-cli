@@ -33,6 +33,7 @@ const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
+	EIMFeature           = "orchestrator.features.edge-infrastructure-manager.installed"
 	OobFeature           = "orchestrator.features.edge-infrastructure-manager.oob.installed"
 	OnboardingFeature    = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
 	ProvisioningFeature  = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"

@@ -182,7 +182,11 @@ func login(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 	if resp.StatusCode() != 200 {
-		return fmt.Errorf("failed to get orchestrator info: %s", resp.Status())
+		// Set default feature flags for backward compatibility with older orchestrators
+		if err := setDefaultFeatureFlags(); err != nil {
+			return err
+		}
+		return fmt.Errorf("failed to get orchestrator info - setting all the features to enabled by default for backward compatibility: %s", resp.Status())
 	}
 
 	if err := loadFeatureConfig(resp.JSON200); err != nil {
@@ -201,6 +205,17 @@ func logout(_ *cobra.Command, _ []string) error {
 		viper.Set(auth.UserName, "")
 		viper.Set(auth.ClientIDField, "")
 		viper.Set(auth.KeycloakEndpointField, "")
+
+		// Clean up orchestrator configuration
+		viper.Set(OobFeature, false)
+		viper.Set(OnboardingFeature, false)
+		viper.Set(ProvisioningFeature, false)
+		viper.Set(Day2Feature, false)
+		viper.Set(AppOrchFeature, false)
+		viper.Set(ClusterOrchFeature, false)
+		viper.Set(ObservabilityFeature, false)
+		viper.Set(MultitenancyFeature, false)
+		viper.Set(EIMFeature, false)
 
 		return viper.WriteConfig()
 	}
@@ -229,6 +244,23 @@ func loadFeatureConfig(info *orchestrator.Info) error {
 		return err
 	}
 
+	return nil
+}
+
+// setDefaultFeatureFlags sets all feature flags to true by default for backward compatibility
+func setDefaultFeatureFlags() error {
+	viper.Set(OobFeature, true)
+	viper.Set(OnboardingFeature, true)
+	viper.Set(ProvisioningFeature, true)
+	viper.Set(Day2Feature, true)
+	viper.Set(AppOrchFeature, true)
+	viper.Set(ClusterOrchFeature, true)
+	viper.Set(ObservabilityFeature, true)
+	viper.Set(MultitenancyFeature, true)
+	viper.Set(EIMFeature, true)
+	if err := viper.WriteConfig(); err != nil {
+		return err
+	}
 	return nil
 }
 
