@@ -25,12 +25,13 @@ func printFeatures(cmd *cobra.Command) {
 }
 
 func printCommands(cmd *cobra.Command, ctype string) {
-	if ctype == "disabled" {
+	switch ctype {
+	case "disabled":
 		fmt.Fprintln(cmd.OutOrStdout(), "\nDisabled Commands:")
 		for _, c := range disabledCommands {
 			fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", c)
 		}
-	} else if ctype == "enabled" {
+	case "enabled":
 		fmt.Fprintln(cmd.OutOrStdout(), "\nEnabled Commands:")
 		for _, c := range enabledCommands {
 			fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", c)
