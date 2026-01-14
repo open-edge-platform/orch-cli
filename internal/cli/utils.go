@@ -34,14 +34,14 @@ const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
-	OobFeature           = "orchestrator.features.edge-infrastructure-manager.oob"
-	OnboardingFeature    = "orchestrator.features.edge-infrastructure-manager.onboarding"
-	ProvisioningFeature  = "orchestrator.features.edge-infrastructure-manager.provisioning"
-	Day2Feature          = "orchestrator.features.edge-infrastructure-manager.day2"
-	AppOrchFeature       = "orchestrator.features.application-orchestration"
-	ClusterOrchFeature   = "orchestrator.features.cluster-orchestration"
-	ObservabilityFeature = "orchestrator.features.observability"
-	MultitenancyFeature  = "orchestrator.features.multitenancy"
+	OobFeature           = "orchestrator.features.edge-infrastructure-manager.oob.installed"
+	OnboardingFeature    = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
+	ProvisioningFeature  = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"
+	Day2Feature          = "orchestrator.features.edge-infrastructure-manager.day2.installed"
+	AppOrchFeature       = "orchestrator.features.application-orchestration.installed"
+	ClusterOrchFeature   = "orchestrator.features.cluster-orchestration.installed"
+	ObservabilityFeature = "orchestrator.features.observability.installed"
+	MultitenancyFeature  = "orchestrator.features.multitenancy.installed"
 	OrchVersion          = "orchestrator.version"
 )
 

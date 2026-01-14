@@ -236,7 +236,7 @@ func loadFeatureConfig(info *orchestrator.OrchestratorInfo) error {
 func processFeature(prefix string, feature orchestrator.FeatureInfo) {
 	// Set the installed status for this feature
 	if feature.Installed != nil {
-		viper.Set(prefix, *feature.Installed)
+		viper.Set(prefix+".installed", *feature.Installed)
 	}
 
 	// Process nested features
