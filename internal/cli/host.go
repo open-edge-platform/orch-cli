@@ -863,21 +863,24 @@ func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClie
 	}
 	lvmSize := resolveLVMSize(record.LVMSize, globalAttr.LVMSize)
 
-	isK8s := resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
-	k8sConfig := record.K8sConfig
-	k8sTmplID := record.K8sClusterTemplate
-	if isK8s == "true" {
-		if record.K8sConfig != "" || globalAttr.K8sConfig != "" {
-			k8sConfig, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig)
-			if err != nil {
-				return nil, err
+	var isK8s, k8sConfig, k8sTmplID string
+	if isFeatureEnabled(ClusterOrchFeature) {
+		isK8s = resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
+		k8sConfig = record.K8sConfig
+		k8sTmplID = record.K8sClusterTemplate
+		if isK8s == "true" {
+			if record.K8sConfig != "" || globalAttr.K8sConfig != "" {
+				k8sConfig, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig)
+				if err != nil {
+					return nil, err
+				}
 			}
-		}
 
-		if record.K8sClusterTemplate != "" || globalAttr.K8sClusterTemplate != "" {
-			k8sTmplID, err = resolveClusterTemplate(ctx2, cClient, projectName, record.K8sClusterTemplate, globalAttr.K8sClusterTemplate, record, respCache, erringRecords)
-			if err != nil {
-				return nil, err
+			if record.K8sClusterTemplate != "" || globalAttr.K8sClusterTemplate != "" {
+				k8sTmplID, err = resolveClusterTemplate(ctx2, cClient, projectName, record.K8sClusterTemplate, globalAttr.K8sClusterTemplate, record, respCache, erringRecords)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -1669,7 +1672,8 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 
 	if dryRun {
 		fmt.Println("--dry-run flag provided, validating input, hosts will not be imported")
-		_, err := validator.CheckCSV(csvFilePath, *globalAttr)
+		provisioningSupported := viper.GetBool(ProvisioningFeature)
+		_, err := validator.CheckCSV(csvFilePath, *globalAttr, provisioningSupported)
 		if err != nil {
 			return err
 		}
@@ -1677,7 +1681,8 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	validated, err := validator.CheckCSV(csvFilePath, *globalAttr)
+	provisioningSupported := viper.GetBool(ProvisioningFeature)
+	validated, err := validator.CheckCSV(csvFilePath, *globalAttr, provisioningSupported)
 	if err != nil {
 		return err
 	}

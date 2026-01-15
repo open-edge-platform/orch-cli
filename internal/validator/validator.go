@@ -41,7 +41,7 @@ const LAIDPATTERN = `^localaccount-[0-9a-f]{8}$`
 
 const CLSTRTMPLTPATTERN = `^[a-zA-Z0-9_\-\.]+:v\d+\.\d+\.\d+$`
 
-func SanitizeEntries(entries []types.HostRecord) ([]types.HostRecord, error) {
+func SanitizeEntries(entries []types.HostRecord, provisioningSupported bool) ([]types.HostRecord, error) {
 	var failure error
 	sanitizedRecords := []types.HostRecord{}
 	mapSN := make(map[string]int)
@@ -86,19 +86,21 @@ func SanitizeEntries(entries []types.HostRecord) ([]types.HostRecord, error) {
 		// pattern match cannot be used to validate the field here as name does
 		// not have a known pattern.
 		// Refer inventory/api/os/v1/os.proto for more details
+		// Only required if provisioning is supported
 		if record.OSProfile != "" {
 			osProfileID := strings.Trim(record.OSProfile, TRIMSET)
 			sanitizedRecord.OSProfile = osProfileID
-		} else {
+		} else if provisioningSupported {
 			errMsg = fmt.Sprintf("%s %s;", errMsg, e.NewCustomError(e.ErrOSProfileRequired).Error())
 		}
 
 		//Check if Site is provided
+		// Only required if provisioning is supported
 		if record.Site != "" {
 			siteID := strings.Trim(record.Site, TRIMSET)
 			errMsg = validateSite(siteRe, siteID, errMsg)
 			sanitizedRecord.Site = siteID
-		} else {
+		} else if provisioningSupported {
 			errMsg = fmt.Sprintf("%s %s;", errMsg, e.NewCustomError(e.ErrSiteRequired).Error())
 		}
 
@@ -170,7 +172,7 @@ func validateSite(siteRe *regexp.Regexp, site, errMsg string) string {
 
 // checkCSV checks the contents of the given CSV file (or additional overides) & generates an error
 // if errors are found in the CSV (or in overides).
-func CheckCSV(filename string, globalOverrides types.HostRecord) ([]types.HostRecord, error) {
+func CheckCSV(filename string, globalOverrides types.HostRecord, provisioningSupported bool) ([]types.HostRecord, error) {
 	fmt.Printf("Checking CSV file: %s\n", filename)
 
 	content, err := files.ReadHostRecords(filename)
@@ -192,7 +194,7 @@ func CheckCSV(filename string, globalOverrides types.HostRecord) ([]types.HostRe
 		}
 	}
 
-	validated, errVal := SanitizeEntries(content)
+	validated, errVal := SanitizeEntries(content, provisioningSupported)
 	if errVal != nil && validated == nil {
 		return nil, errVal
 	}
