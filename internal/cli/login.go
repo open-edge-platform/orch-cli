@@ -82,7 +82,7 @@ func login(cmd *cobra.Command, args []string) error {
 		}
 		parts := strings.SplitN(u.Host, ".", 2)
 		if len(parts) != 2 {
-			return fmt.Errorf("Failed to determine keycloak enpoint from api endpoint. Consider using --keycloak flag")
+			return fmt.Errorf("failed to determine keycloak enpoint from api endpoint. Consider using --keycloak flag")
 		}
 		keycloakEp = fmt.Sprintf("https://keycloak.%s/realms/master", parts[1])
 		fmt.Printf("Determined keycloak endpoint from api endpoint: %s\n", keycloakEp)

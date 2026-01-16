@@ -329,8 +329,8 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 				_ = ctx         // Acknowledge we're not using it
 				_ = reqEditors  // Acknowledge we're not using it
 				_ = clusterName // Acknowledge we're not using it
-				switch {
-				case projectName == "nonexistent-project":
+				switch projectName {
+				case "nonexistent-project":
 					return &cluster.DeleteV2ProjectsProjectNameClustersNameResponse{
 						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
 						JSON404: &cluster.N404NotFound{

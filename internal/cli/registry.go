@@ -132,11 +132,11 @@ func verifyRegistryType(cmd *cobra.Command) error {
 
 func getRegistryType(cmd *cobra.Command) string {
 	typeFromCommand := *getFlag(cmd, "registry-type")
-	if typeFromCommand == "helm" {
+	switch typeFromCommand {
+	case "helm":
 		return "HELM"
-	} else if typeFromCommand == "image" {
+	case "image":
 		return "IMAGE"
-
 	}
 	return ""
 }
