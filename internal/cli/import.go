@@ -19,6 +19,16 @@ func getImportCommand() *cobra.Command {
 		Short:             "Create orchestrator resources by importing from an external source",
 		PersistentPreRunE: auth.CheckAuth,
 		Example:           "orch-cli import helm-chart oci:/path/to/chart:1.0.0 --project some-project",
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 	cmd.AddCommand(
 		getImportHelmChartCommand(),

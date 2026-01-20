@@ -4,6 +4,9 @@
 package cli
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/spf13/cobra"
 )
@@ -42,6 +45,16 @@ func getCreateCommand() *cobra.Command {
 		Args:              cobra.MinimumNArgs(1),
 		Short:             "Create various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 
 	//cmd.AddCommand(	// Core commands)
@@ -90,6 +103,16 @@ func getListCommand() *cobra.Command {
 		Aliases:           []string{"ls", "show"},
 		Short:             "List various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 
 	catalogListRootCmd.AddCommand(
@@ -142,6 +165,16 @@ func getGetCommand() *cobra.Command {
 		Use:               "get",
 		Short:             "Get various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 	//catalogGetRootCmd.AddCommand()
 
@@ -190,6 +223,16 @@ func getSetCommand() *cobra.Command {
 		Aliases:           []string{"update"},
 		Short:             "Update various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 	//cmd.AddCommand()
 
@@ -216,6 +259,16 @@ func getUpgradeCommand() *cobra.Command {
 		Use:               "upgrade",
 		Short:             "Upgrade deployment",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 	//cmd.AddCommand()
 	// App related commands
@@ -228,6 +281,16 @@ func getDeleteCommand() *cobra.Command {
 		Use:               "delete",
 		Short:             "Delete various orchestrator service entities",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 	//catalogDeleteRootCmd.AddCommand()
 

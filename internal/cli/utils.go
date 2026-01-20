@@ -685,3 +685,61 @@ func isFeatureEnabled(feature string) bool {
 		return true // Default to enabled for unknown features
 	}
 }
+
+// isCommandDisabled checks if a command is in the disabled commands list
+func isCommandDisabled(parentCmd string, subCmd string) bool {
+	commandPath := parentCmd + " " + subCmd
+	for _, dc := range disabledCommands {
+		if dc == commandPath {
+			return true
+		}
+	}
+	return false
+}
+
+// resolveCommandAlias attempts to resolve a command name or alias to its canonical name
+// by checking if the input matches any disabled command or its aliases
+func resolveCommandAlias(parentName string, input string) string {
+	// Check all disabled commands for this parent
+	for _, dc := range disabledCommands {
+		parts := strings.Fields(dc)
+		if len(parts) == 2 && parts[0] == parentName {
+			cmdName := parts[1]
+			// If input matches the command name, return it
+			if cmdName == input {
+				return cmdName
+			}
+			// Check if input might be an alias by checking common patterns
+			// The canonical command name is always the singular form (first in the alias list)
+			// Common patterns: schedule/schedules, host/hosts, etc.
+			if strings.HasPrefix(input, cmdName) || strings.HasPrefix(cmdName, input) {
+				// Possible match - return the canonical name
+				return cmdName
+			}
+			// Also check plurals and common abbreviations
+			if input == cmdName+"s" || input+"s" == cmdName {
+				return cmdName
+			}
+		}
+	}
+	return input
+}
+
+// isCommandDisabledWithParent checks if a command or any of its aliases is in the disabled commands list
+// It takes the parent cobra command to resolve aliases
+func isCommandDisabledWithParent(parentCmd *cobra.Command, subCmd string) bool {
+	parentName := parentCmd.Name()
+
+	// First check the direct command name
+	if isCommandDisabled(parentName, subCmd) {
+		return true
+	}
+
+	// Try to resolve the subCmd to its canonical name and check if that's disabled
+	resolvedCmd := resolveCommandAlias(parentName, subCmd)
+	if resolvedCmd != subCmd && isCommandDisabled(parentName, resolvedCmd) {
+		return true
+	}
+
+	return false
+}

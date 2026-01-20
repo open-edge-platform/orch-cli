@@ -1242,6 +1242,16 @@ func getUpdateCommand() *cobra.Command {
 		Use:               "update-os",
 		Short:             "Update host",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 
 	addCommandIfFeatureEnabled(cmd, getUpdateHostCommand(), Day2Feature)

@@ -49,7 +49,8 @@ func Init() {
 func Execute() {
 	rootCmd := getRootCmd()
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Fprintf(os.Stderr, "Error: %s\n\n", err)
+		_ = rootCmd.Usage()
 		os.Exit(1)
 	}
 }
