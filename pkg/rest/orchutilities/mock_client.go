@@ -7,7 +7,7 @@
 //
 
 // Package orchestrator is a generated GoMock package.
-package orchestrator
+package orchutilities
 
 import (
 	context "context"

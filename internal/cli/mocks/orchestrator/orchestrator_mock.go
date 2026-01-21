@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
-	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchestrator"
+	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	"github.com/spf13/cobra"
 	"go.uber.org/mock/gomock"
 )

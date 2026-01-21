@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
-	"github.com/open-edge-platform/cli/pkg/rest/orchestrator"
+	"github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -223,7 +223,7 @@ func logout(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func loadFeatureConfig(info *orchestrator.Info) error {
+func loadFeatureConfig(info *orchutilities.Info) error {
 	if info == nil || info.Orchestrator == nil {
 		return fmt.Errorf("invalid orchestrator info")
 	}
@@ -265,7 +265,7 @@ func setDefaultFeatureFlags() error {
 }
 
 // processFeature recursively processes features and sets viper config
-func processFeature(prefix string, feature orchestrator.FeatureInfo) {
+func processFeature(prefix string, feature orchutilities.FeatureInfo) {
 	// Set the installed status for this feature
 	if feature.Installed != nil {
 		viper.Set(prefix+".installed", *feature.Installed)

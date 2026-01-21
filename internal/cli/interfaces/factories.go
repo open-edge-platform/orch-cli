@@ -10,7 +10,7 @@ import (
 	cluster "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
-	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchestrator"
+	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"

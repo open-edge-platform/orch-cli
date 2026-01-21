@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// Package orchestrator provides primitives to interact with the orchestrator HTTP API.
+// Package orchutilities provides primitives to interact with the orchestrator HTTP API.
 // This is a manually created client for endpoints not covered by OpenAPI specs.
-package orchestrator
+package orchutilities
 
 import (
 	"context"
