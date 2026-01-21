@@ -1,3 +1,4 @@
+---
 # testdata/upload-file.yaml
 apiVersion: v1
 kind: ConfigMap
