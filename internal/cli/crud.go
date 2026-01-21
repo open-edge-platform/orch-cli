@@ -20,7 +20,6 @@ var (
 	deploymentProfileAliases = []string{"deployment-package-profile", "deployment-package-profiles", "deployment-profile", "deployment-profiles", "package-profile", "bundle-profile"}
 	deploymentAliases        = []string{"deployment", "deployments", "dep", "deps"}
 	hostAliases              = []string{"host", "hosts", "hs"}
-	networkAliases           = []string{"network", "networks", "net", "nets"}
 	osProfileAliases         = []string{"osprofile", "osprofiles", "osp", "osps"}
 	organizationAliases      = []string{"organization", "organizations", "org", "orgs"}
 	osUpdatePolicyAliases    = []string{"osupdatepolicy", "osupdatepolicies", "oup", "oups"}
@@ -51,7 +50,6 @@ func getCreateCommand() *cobra.Command {
 		getCreateDeploymentPackageCommand(),
 		getCreateDeploymentProfileCommand(),
 		getCreateApplicationReferenceCommand(),
-		getCreateNetworkCommand(),
 
 		getCreateDeploymentCommand(),
 
@@ -87,7 +85,6 @@ func getListCommand() *cobra.Command {
 		getListProfilesCommand(),
 		getListDeploymentPackagesCommand(),
 		getListDeploymentProfilesCommand(),
-		getListNetworksCommand(),
 		getListChartsCommand(),
 		getListDeploymentsCommand(),
 		getListClusterCommand(),
@@ -123,7 +120,6 @@ func getGetCommand() *cobra.Command {
 		getGetProfileCommand(),
 		getGetDeploymentPackageCommand(),
 		getGetDeploymentProfileCommand(),
-		getGetNetworkCommand(),
 
 		getGetDeploymentCommand(),
 		getGetClusterCommand(),
@@ -162,8 +158,6 @@ func getSetCommand() *cobra.Command {
 
 		getSetDeploymentCommand(),
 
-		getSetNetworkCommand(),
-
 		getSetHostCommand(),
 		getSetScheduleCommand(),
 	)
@@ -199,7 +193,6 @@ func getDeleteCommand() *cobra.Command {
 
 		getDeleteDeploymentCommand(),
 		getDeleteClusterCommand(),
-		getDeleteNetworkCommand(),
 
 		getDeleteOSUpdateRunCommand(),
 		getDeleteOSUpdatePolicyCommand(),

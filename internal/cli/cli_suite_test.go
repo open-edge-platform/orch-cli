@@ -48,6 +48,8 @@ type CLITestSuite struct {
 	testServer *httptest.Server
 }
 
+var httpClient = &http.Client{Transport: &http.Transport{}}
+
 func (s *CLITestSuite) SetupSuite() {
 	viper.Set(auth.UserName, "")
 	viper.Set(auth.RefreshTokenField, "")
