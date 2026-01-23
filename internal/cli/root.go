@@ -6,6 +6,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/atomix/dazl"
 	clilib "github.com/open-edge-platform/orch-library/go/pkg/cli"
@@ -49,8 +50,26 @@ func Init() {
 func Execute() {
 	rootCmd := getRootCmd()
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n\n", err)
-		_ = rootCmd.Usage()
+		// Check if this is an unknown command error for a disabled command
+		if errStr := err.Error(); strings.Contains(errStr, "unknown command") {
+			// Extract the command name from the error
+			// Error format: unknown command "wipe" for "orch-cli"
+			if start := strings.Index(errStr, "\""); start != -1 {
+				if end := strings.Index(errStr[start+1:], "\""); end != -1 {
+					cmdName := errStr[start+1 : start+1+end]
+					if isCommandDisabledWithParent(rootCmd, cmdName) {
+						fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n", cmdName)
+						os.Exit(1)
+					}
+				}
+			}
+			// It's a truly unknown command - print the error with help suggestion
+			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+			fmt.Fprintf(os.Stderr, "Run '%s --help' for usage.\n", rootCmd.CommandPath())
+		} else {
+			// Other errors - print them
+			fmt.Fprintln(os.Stderr, err)
+		}
 		os.Exit(1)
 	}
 }
@@ -59,8 +78,8 @@ func getRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:           "orch-cli {create, get, set, list, delete, version} <resource> [flags]",
 		Short:         "Orch-cli Command Line Interface",
-		SilenceErrors: true,
 		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
 	// Set some factory defaults as a fallback
@@ -87,18 +106,25 @@ func getRootCmd() *cobra.Command {
 		getGetCommand(),
 		getSetCommand(),
 		getDeleteCommand(),
-		getUpgradeCommand(),
-		getUploadCommand(),
+
 		getLoginCommand(),
 		getLogoutCommand(),
-		getExportCommand(),
-		getDeauthorizeCommand(),
-		getUpdateCommand(),
-		getWipeProjectCommand(),
+
 		versionCommand(),
-		getImportCommand(),
+
 		getGenerateCommand(),
 	)
+
+	addCommandIfFeatureEnabled(rootCmd, getDeauthorizeCommand(), OnboardingFeature)
+
+	addCommandIfFeatureEnabled(rootCmd, getUpdateCommand(), Day2Feature)
+
+	addCommandIfFeatureEnabled(rootCmd, getWipeProjectCommand(), AppOrchFeature)
+	addCommandIfFeatureEnabled(rootCmd, getImportCommand(), AppOrchFeature)
+	addCommandIfFeatureEnabled(rootCmd, getUploadCommand(), AppOrchFeature)
+	addCommandIfFeatureEnabled(rootCmd, getUpgradeCommand(), AppOrchFeature)
+	addCommandIfFeatureEnabled(rootCmd, getExportCommand(), AppOrchFeature)
+
 	return rootCmd
 }
 

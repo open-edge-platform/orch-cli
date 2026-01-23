@@ -29,12 +29,16 @@ func printCommands(cmd *cobra.Command, ctype string) {
 	case "disabled":
 		fmt.Fprintln(cmd.OutOrStdout(), "\nDisabled Commands:")
 		for _, c := range disabledCommands {
-			fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", c)
+			// Strip "orch-cli " prefix from root-level commands
+			displayCmd := strings.TrimPrefix(c, "orch-cli ")
+			fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", displayCmd)
 		}
 	case "enabled":
 		fmt.Fprintln(cmd.OutOrStdout(), "\nEnabled Commands:")
 		for _, c := range enabledCommands {
-			fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", c)
+			// Strip "orch-cli " prefix from root-level commands
+			displayCmd := strings.TrimPrefix(c, "orch-cli ")
+			fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", displayCmd)
 		}
 	}
 }
