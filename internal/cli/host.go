@@ -72,7 +72,7 @@ Remote User - Optional remote user name or resource ID to configure for the host
 Metadata - Optional metadata to configure for the host
 LVMSize - Optional LVM size to be configured for the host
 CloudInitMeta - Optional Cloud Init Metadata to be configured for the host
-K8sEnable - Optional command to enable cluster deployment
+K8sEnable - Optional command to enable cluster deployment (only used if Cluster Orchestration feature is enabled in the Edge Orchestrator)
 K8sClusterTemplate - Optional Cluster template to be used for K8s deployment on the host, must be provided if K8sEnable is true
 K8sClusterConfig - Optional Cluster config to be used to specify role and cluster name and/or cluster labels
 
@@ -682,26 +682,28 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 		return
 	}
 
-	err = createInstance(ctx, hClient, respCache, projectName, hostID, rOut, rIn, globalAttr)
-	if err != nil {
-		rIn.Error = err.Error()
-		*erringRecords = append(*erringRecords, rIn)
-		return
-	}
-
-	err = allocateHostToSiteAndAddMetadata(ctx, hClient, projectName, hostID, rOut)
-	if err != nil {
-		rIn.Error = err.Error()
-		*erringRecords = append(*erringRecords, rIn)
-		return
-	}
-
-	if rOut.K8sEnable == "true" {
-		err = createCluster(ctx2, cClient, respCache, projectName, hostID, rOut)
+	if isFeatureEnabled(ProvisioningFeature) {
+		err = createInstance(ctx, hClient, respCache, projectName, hostID, rOut, rIn, globalAttr)
 		if err != nil {
 			rIn.Error = err.Error()
 			*erringRecords = append(*erringRecords, rIn)
 			return
+		}
+
+		err = allocateHostToSiteAndAddMetadata(ctx, hClient, projectName, hostID, rOut)
+		if err != nil {
+			rIn.Error = err.Error()
+			*erringRecords = append(*erringRecords, rIn)
+			return
+		}
+
+		if rOut.K8sEnable == "true" && isFeatureEnabled(ClusterOrchFeature) {
+			err = createCluster(ctx2, cClient, respCache, projectName, hostID, rOut)
+			if err != nil {
+				rIn.Error = err.Error()
+				*erringRecords = append(*erringRecords, rIn)
+				return
+			}
 		}
 	}
 
@@ -826,51 +828,59 @@ func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSe
 // Sanitize fields, convert named resources to resource IDs
 func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClient infra.ClientWithResponsesInterface, projectName string, record types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient cluster.ClientWithResponsesInterface) (*types.HostRecord, error) {
 
-	isSecure := resolveSecure(record.Secure, globalAttr.Secure)
+	var osProfileID, siteID, laID, metadataToUse, cloudInitIDs string
+	var isSecure types.RecordSecure
+	err := error(nil)
 
-	osProfileID, err := resolveOSProfile(ctx, hClient, projectName, record.OSProfile, globalAttr.OSProfile, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
+	if isFeatureEnabled(ProvisioningFeature) {
+		isSecure = resolveSecure(record.Secure, globalAttr.Secure)
 
-	if valErr := validateSecurityFeature(record.OSProfile, globalAttr.OSProfile, isSecure, record, respCache, erringRecords); valErr != nil {
-		return nil, valErr
-	}
-
-	siteID, err := resolveSite(ctx, hClient, projectName, record.Site, globalAttr.Site, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
-
-	laID, err := resolveRemoteUser(ctx, hClient, projectName, record.RemoteUser, globalAttr.RemoteUser, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
-
-	metadataToUse := resolveMetadata(record.Metadata, globalAttr.Metadata)
-
-	cloudInitIDs, err := resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, globalAttr.CloudInitMeta, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
-
-	lvmSize := resolveLVMSize(record.LVMSize, globalAttr.LVMSize)
-
-	isK8s := resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
-	k8sConfig := record.K8sConfig
-	k8sTmplID := record.K8sClusterTemplate
-	if isK8s == "true" {
-		if record.K8sConfig != "" || globalAttr.K8sConfig != "" {
-			k8sConfig, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig)
-			if err != nil {
-				return nil, err
-			}
+		osProfileID, err = resolveOSProfile(ctx, hClient, projectName, record.OSProfile, globalAttr.OSProfile, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
 		}
 
-		if record.K8sClusterTemplate != "" || globalAttr.K8sClusterTemplate != "" {
-			k8sTmplID, err = resolveClusterTemplate(ctx2, cClient, projectName, record.K8sClusterTemplate, globalAttr.K8sClusterTemplate, record, respCache, erringRecords)
-			if err != nil {
-				return nil, err
+		if valErr := validateSecurityFeature(record.OSProfile, globalAttr.OSProfile, isSecure, record, respCache, erringRecords); valErr != nil {
+			return nil, valErr
+		}
+
+		siteID, err = resolveSite(ctx, hClient, projectName, record.Site, globalAttr.Site, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
+
+		laID, err = resolveRemoteUser(ctx, hClient, projectName, record.RemoteUser, globalAttr.RemoteUser, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
+
+		metadataToUse = resolveMetadata(record.Metadata, globalAttr.Metadata)
+
+		cloudInitIDs, err = resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, globalAttr.CloudInitMeta, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
+	}
+	lvmSize := resolveLVMSize(record.LVMSize, globalAttr.LVMSize)
+
+	var isK8s, k8sConfig, k8sTmplID string
+	if isFeatureEnabled(ClusterOrchFeature) {
+		isK8s = resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
+		k8sConfig = record.K8sConfig
+		k8sTmplID = record.K8sClusterTemplate
+		if isK8s == "true" {
+			if record.K8sConfig != "" || globalAttr.K8sConfig != "" {
+				k8sConfig, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if record.K8sClusterTemplate != "" || globalAttr.K8sClusterTemplate != "" {
+				k8sTmplID, err = resolveClusterTemplate(ctx2, cClient, projectName, record.K8sClusterTemplate, globalAttr.K8sClusterTemplate, record, respCache, erringRecords)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -1221,11 +1231,19 @@ func getDeauthorizeCommand() *cobra.Command {
 		Args:              cobra.MinimumNArgs(1),
 		Short:             "Deauthorize host",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 
-	cmd.AddCommand(
-		getDeauthorizeHostCommand(),
-	)
+	addCommandIfFeatureEnabled(cmd, getDeauthorizeHostCommand(), OnboardingFeature)
 	return cmd
 }
 
@@ -1234,11 +1252,19 @@ func getUpdateCommand() *cobra.Command {
 		Use:               "update-os",
 		Short:             "Update host",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 
-	cmd.AddCommand(
-		getUpdateHostCommand(),
-	)
+	addCommandIfFeatureEnabled(cmd, getUpdateHostCommand(), Day2Feature)
 	return cmd
 }
 
@@ -1335,14 +1361,18 @@ func getSetHostCommand() *cobra.Command {
 		Aliases: hostAliases,
 		RunE:    runSetHostCommand,
 	}
-	cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
-	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
 	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host import")
 	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
-	cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
-	cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
-	cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
-	cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
+	if isFeatureEnabled(OobFeature) {
+		cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
+		cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
+		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
+		cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
+		cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
+	}
+	if isFeatureEnabled(Day2Feature) {
+		cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
+	}
 
 	return cmd
 }
@@ -1489,54 +1519,57 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	// Get instances in order to map additional host details
-	instances := make([]infra.InstanceResource, 0)
-	for offset := 0; ; offset += pageSize {
-		iresp, err := hostClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
-			&infra.InstanceServiceListInstancesParams{
-				PageSize: &pageSize,
-				Offset:   &offset,
-			}, auth.AddAuthHeader)
-		if err != nil {
-			return processError(err)
-		}
-		if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving instance"); err != nil {
-			return err
-		}
-		instances = append(instances, iresp.JSON200.Instances...)
-		if !iresp.JSON200.HasNext {
-			break // No more instances to process
-		}
-	}
-	matchedHosts := make([]infra.HostResource, 0)
-	notMatchedHosts := make([]infra.HostResource, 0)
+	if isFeatureEnabled(ProvisioningFeature) {
 
-	//Map workloads to hosts
-	for _, host := range hosts {
-		for _, instance := range instances {
-			if instance.WorkloadMembers != nil && instance.InstanceID != nil && host.Instance != nil && host.Instance.InstanceID != nil && *instance.InstanceID == *host.Instance.InstanceID {
-				host.Instance.WorkloadMembers = instance.WorkloadMembers
-				if workload != "" && len(*host.Instance.WorkloadMembers) > 0 {
-					if *(*host.Instance.WorkloadMembers)[0].Workload.Name == workload {
-						matchedHosts = append(matchedHosts, host)
+		// Get instances in order to map additional host details
+		instances := make([]infra.InstanceResource, 0)
+		for offset := 0; ; offset += pageSize {
+			iresp, err := hostClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
+				&infra.InstanceServiceListInstancesParams{
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving instance"); err != nil {
+				return err
+			}
+			instances = append(instances, iresp.JSON200.Instances...)
+			if !iresp.JSON200.HasNext {
+				break // No more instances to process
+			}
+		}
+		matchedHosts := make([]infra.HostResource, 0)
+		notMatchedHosts := make([]infra.HostResource, 0)
+
+		//Map workloads to hosts
+		for _, host := range hosts {
+			for _, instance := range instances {
+				if instance.WorkloadMembers != nil && instance.InstanceID != nil && host.Instance != nil && host.Instance.InstanceID != nil && *instance.InstanceID == *host.Instance.InstanceID {
+					host.Instance.WorkloadMembers = instance.WorkloadMembers
+					if workload != "" && len(*host.Instance.WorkloadMembers) > 0 {
+						if *(*host.Instance.WorkloadMembers)[0].Workload.Name == workload {
+							matchedHosts = append(matchedHosts, host)
+						}
 					}
+					break
 				}
-				break
+			}
+			if workload == "NotAssigned" {
+				if (host.Instance != nil && len(*host.Instance.WorkloadMembers) == 0) || host.Instance == nil {
+					notMatchedHosts = append(notMatchedHosts, host)
+				}
 			}
 		}
+
+		if workload != "" {
+			hosts = matchedHosts
+		}
+
 		if workload == "NotAssigned" {
-			if (host.Instance != nil && len(*host.Instance.WorkloadMembers) == 0) || host.Instance == nil {
-				notMatchedHosts = append(notMatchedHosts, host)
-			}
+			hosts = notMatchedHosts
 		}
-	}
-
-	if workload != "" {
-		hosts = matchedHosts
-	}
-
-	if workload == "NotAssigned" {
-		hosts = notMatchedHosts
 	}
 
 	printHosts(writer, &hosts, verbose)
@@ -1659,7 +1692,8 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 
 	if dryRun {
 		fmt.Println("--dry-run flag provided, validating input, hosts will not be imported")
-		_, err := validator.CheckCSV(csvFilePath, *globalAttr)
+		provisioningSupported := viper.GetBool(ProvisioningFeature)
+		_, err := validator.CheckCSV(csvFilePath, *globalAttr, provisioningSupported)
 		if err != nil {
 			return err
 		}
@@ -1667,7 +1701,8 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	validated, err := validator.CheckCSV(csvFilePath, *globalAttr)
+	provisioningSupported := viper.GetBool(ProvisioningFeature)
+	validated, err := validator.CheckCSV(csvFilePath, *globalAttr, provisioningSupported)
 	if err != nil {
 		return err
 	}

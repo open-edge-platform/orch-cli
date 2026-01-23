@@ -50,7 +50,6 @@ func getListAmtProfileCommand() *cobra.Command {
 		Aliases: amtAliases,
 		RunE:    runListAmtProfileCommand,
 	}
-	//cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of site list to filter sites by parent region")
 	return cmd
 }
 
