@@ -24,7 +24,6 @@ var (
 	deploymentAliases        = []string{"deployment", "deployments", "dep", "deps"}
 	featuresAliases          = []string{"feature", "features", "feat", "feats"}
 	hostAliases              = []string{"host", "hosts", "hs"}
-	networkAliases           = []string{"network", "networks", "net", "nets"}
 	osProfileAliases         = []string{"osprofile", "osprofiles", "osp", "osps"}
 	organizationAliases      = []string{"organization", "organizations", "org", "orgs"}
 	osUpdatePolicyAliases    = []string{"osupdatepolicy", "osupdatepolicies", "oup", "oups"}
@@ -67,7 +66,6 @@ func getCreateCommand() *cobra.Command {
 	addCommandIfFeatureEnabled(cmd, getCreateDeploymentPackageCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(cmd, getCreateDeploymentProfileCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(cmd, getCreateApplicationReferenceCommand(), AppOrchFeature)
-	addCommandIfFeatureEnabled(cmd, getCreateNetworkCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(cmd, getCreateDeploymentCommand(), AppOrchFeature)
 
 	// Cluster related commands
@@ -126,7 +124,6 @@ func getListCommand() *cobra.Command {
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListProfilesCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListDeploymentPackagesCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListDeploymentProfilesCommand(), AppOrchFeature)
-	addCommandIfFeatureEnabled(catalogListRootCmd, getListNetworksCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListChartsCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListDeploymentsCommand(), AppOrchFeature)
 
@@ -185,7 +182,6 @@ func getGetCommand() *cobra.Command {
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetProfileCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetDeploymentPackageCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetDeploymentProfileCommand(), AppOrchFeature)
-	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetNetworkCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetDeploymentCommand(), AppOrchFeature)
 
 	// Cluster related commands
@@ -244,7 +240,6 @@ func getSetCommand() *cobra.Command {
 	addCommandIfFeatureEnabled(cmd, getSetDeploymentPackageCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(cmd, getSetDeploymentProfileCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(cmd, getSetDeploymentCommand(), AppOrchFeature)
-	addCommandIfFeatureEnabled(cmd, getSetNetworkCommand(), AppOrchFeature)
 
 	// Onboarding related commands
 	addCommandIfFeatureEnabled(cmd, getSetHostCommand(), OnboardingFeature)
@@ -303,7 +298,6 @@ func getDeleteCommand() *cobra.Command {
 	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteDeploymentProfileCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteApplicationReferenceCommand(), AppOrchFeature)
 	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteDeploymentCommand(), AppOrchFeature)
-	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteNetworkCommand(), AppOrchFeature)
 
 	// Cluster related commands
 	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteClusterCommand(), ClusterOrchFeature)
