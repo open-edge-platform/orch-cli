@@ -6,8 +6,6 @@ package cli
 import (
 	"bytes"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
@@ -21,6 +19,7 @@ import (
 	clustermock "github.com/open-edge-platform/cli/internal/cli/mocks/cluster"
 	deploymentmock "github.com/open-edge-platform/cli/internal/cli/mocks/deployment"
 	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
+	orchestratormock "github.com/open-edge-platform/cli/internal/cli/mocks/orchestrator"
 	rpsmock "github.com/open-edge-platform/cli/internal/cli/mocks/rps"
 	tenancymock "github.com/open-edge-platform/cli/internal/cli/mocks/tenancy"
 
@@ -44,8 +43,7 @@ type linesCommandOutput []string
 
 type CLITestSuite struct {
 	suite.Suite
-	proxy      restproxy.MockRestProxy
-	testServer *httptest.Server
+	proxy restproxy.MockRestProxy
 }
 
 func (s *CLITestSuite) SetupSuite() {
@@ -69,29 +67,7 @@ func (s *CLITestSuite) SetupSuite() {
 	RpsFactory = rpsmock.CreateRpsMock(mctrl)
 	DeploymentFactory = deploymentmock.CreateDeploymentMock(mctrl)
 	TenancyFactory = tenancymock.CreateTenancyMock(mctrl)
-
-	//Mock server for network tests - TODO rework network
-	s.testServer = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/networks") && r.Method == "GET" {
-			// List networks
-			w.WriteHeader(http.StatusOK)
-			if _, err := w.Write([]byte(`[{"name":"test-net","spec":{"type":"application-mesh","description":"desc"}}]`)); err != nil {
-				return
-			}
-			return
-		}
-		if strings.Contains(r.URL.Path, "/networks/") && r.Method == "GET" {
-			// Get network
-			w.WriteHeader(http.StatusOK)
-			if _, err := w.Write([]byte(`{"type":"application-mesh","description":"desc"}`)); err != nil {
-				return
-			}
-			return
-		}
-		// ...add more as needed...
-		w.WriteHeader(http.StatusOK)
-	}))
-	httpClient = s.testServer.Client()
+	OrchestratorFactory = orchestratormock.CreateOrchestratorMock(mctrl)
 }
 
 func (s *CLITestSuite) TearDownSuite() {
@@ -102,6 +78,7 @@ func (s *CLITestSuite) TearDownSuite() {
 	RpsFactory = nil
 	DeploymentFactory = nil
 	TenancyFactory = nil
+	OrchestratorFactory = nil
 
 	viper.Set(auth.UserName, "")
 	viper.Set(auth.RefreshTokenField, "")
@@ -242,13 +219,8 @@ func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
 	args := parseArgs(commandArgs)
 
 	args = append(args, "--debug-headers")
-	if strings.Contains(commandArgs, "network") {
-		args = append(args, "--api-endpoint")
-		args = append(args, s.testServer.URL)
-	} else {
-		args = append(args, "--api-endpoint")
-		args = append(args, c.Server)
-	}
+	args = append(args, "--api-endpoint")
+	args = append(args, c.Server)
 	cmd.SetArgs(args)
 	stdout := new(bytes.Buffer)
 	cmd.SetOut(stdout)

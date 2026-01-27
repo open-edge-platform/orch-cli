@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -171,6 +172,27 @@ func login(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	ctx, orchCLient, err := OrchestratorFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	resp, err := orchCLient.GetOrchestratorInfoWithResponse(ctx, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if resp.StatusCode() != 200 {
+		// Set default feature flags for backward compatibility with older orchestrators
+		if err := setDefaultFeatureFlags(); err != nil {
+			return err
+		}
+		return fmt.Errorf("failed to get orchestrator info - setting all the features to enabled by default for backward compatibility: %s", resp.Status())
+	}
+
+	if err := loadFeatureConfig(resp.JSON200); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -184,8 +206,73 @@ func logout(_ *cobra.Command, _ []string) error {
 		viper.Set(auth.ClientIDField, "")
 		viper.Set(auth.KeycloakEndpointField, "")
 
+		// Clean up orchestrator configuration
+		viper.Set(OobFeature, false)
+		viper.Set(OnboardingFeature, false)
+		viper.Set(ProvisioningFeature, false)
+		viper.Set(Day2Feature, false)
+		viper.Set(AppOrchFeature, false)
+		viper.Set(ClusterOrchFeature, false)
+		viper.Set(ObservabilityFeature, false)
+		viper.Set(MultitenancyFeature, false)
+		viper.Set(EIMFeature, false)
+
 		return viper.WriteConfig()
 	}
 	log.Info("Was not logged in - no-op")
 	return nil
+}
+
+func loadFeatureConfig(info *orchutilities.Info) error {
+	if info == nil || info.Orchestrator == nil {
+		return fmt.Errorf("invalid orchestrator info")
+	}
+
+	// Set version
+	if info.Orchestrator.Version != nil {
+		viper.Set("orchestrator.version", *info.Orchestrator.Version)
+	}
+
+	// Process features recursively
+	if info.Orchestrator.Features != nil {
+		for featureName, featureInfo := range info.Orchestrator.Features {
+			processFeature("orchestrator.features."+featureName, featureInfo)
+		}
+	}
+
+	if err := viper.WriteConfig(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// setDefaultFeatureFlags sets all feature flags to true by default for backward compatibility
+func setDefaultFeatureFlags() error {
+	viper.Set(OobFeature, true)
+	viper.Set(OnboardingFeature, true)
+	viper.Set(ProvisioningFeature, true)
+	viper.Set(Day2Feature, true)
+	viper.Set(AppOrchFeature, true)
+	viper.Set(ClusterOrchFeature, true)
+	viper.Set(ObservabilityFeature, true)
+	viper.Set(MultitenancyFeature, true)
+	viper.Set(EIMFeature, true)
+	if err := viper.WriteConfig(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// processFeature recursively processes features and sets viper config
+func processFeature(prefix string, feature orchutilities.FeatureInfo) {
+	// Set the installed status for this feature
+	if feature.Installed != nil {
+		viper.Set(prefix+".installed", *feature.Installed)
+	}
+
+	// Process nested features
+	for nestedName, nestedFeature := range feature.Features {
+		processFeature(prefix+"."+nestedName, nestedFeature)
+	}
 }

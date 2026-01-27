@@ -379,11 +379,26 @@ func TestSanitizeEntries(t *testing.T) {
 				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "os1", Site: "site-c69a3c81", K8sClusterTemplate: "baseline:v2", Error: "Invalid cluster template;"},
 			},
 		},
+		{
+			name: "Provisioning not supported - OSProfile and Site not required",
+			lines: []types.HostRecord{
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "", Site: ""},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "", Site: ""},
+			},
+			expectErr: false,
+			expectStr: []types.HostRecord{
+				{Serial: "ABCD123", UUID: "4c4c4c4c-0000-1111-2222-333333333333", OSProfile: "", Site: ""},
+				{Serial: "QWERTY123", UUID: "1c1c1c1c-0000-1111-2222-333333333333", OSProfile: "", Site: ""},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			out, err := validator.SanitizeEntries(tt.lines)
+			// Default to provisioning supported for existing tests
+			// except for the specific test case that checks when provisioning is not supported
+			provisioningSupported := tt.name != "Provisioning not supported - OSProfile and Site not required"
+			out, err := validator.SanitizeEntries(tt.lines, provisioningSupported)
 
 			if tt.expectErr {
 				assert.Error(t, err, "SanitizeEntries() should return an error")
@@ -477,7 +492,7 @@ func TestCheckCSV(t *testing.T) {
 			}
 
 			// Run CheckCSV
-			out, err := validator.CheckCSV(tmpFile, *globalAttr)
+			out, err := validator.CheckCSV(tmpFile, *globalAttr, true)
 
 			if tt.expectErr {
 				assert.Error(t, err, "CheckCSV() should return an error")
@@ -557,7 +572,7 @@ func TestCheckCSVOverrides(t *testing.T) {
 			}
 
 			// Run CheckCSV
-			out, err := validator.CheckCSV(tmpFile, *globalAttr)
+			out, err := validator.CheckCSV(tmpFile, *globalAttr, true)
 
 			if tt.expectErr {
 				assert.Error(t, err, "CheckCSV() should return an error")

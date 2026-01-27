@@ -22,18 +22,36 @@ import (
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
+	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
+	EIMFeature           = "orchestrator.features.edge-infrastructure-manager.installed"
+	OobFeature           = "orchestrator.features.edge-infrastructure-manager.oob.installed"
+	OnboardingFeature    = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
+	ProvisioningFeature  = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"
+	Day2Feature          = "orchestrator.features.edge-infrastructure-manager.day2.installed"
+	AppOrchFeature       = "orchestrator.features.application-orchestration.installed"
+	ClusterOrchFeature   = "orchestrator.features.cluster-orchestration.installed"
+	ObservabilityFeature = "orchestrator.features.observability.installed"
+	MultitenancyFeature  = "orchestrator.features.multitenancy.installed"
+	OrchVersion          = "orchestrator.version"
+)
+
+const (
 	REGION = 0
 	SITE   = 1
 )
+
+var disabledCommands = []string{}
+var enabledCommands = []string{}
 
 // Use the interface type instead of the concrete function type
 var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
@@ -58,6 +76,10 @@ var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command
 
 var TenancyFactory interfaces.TenancyFactoryFunc = func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, error) {
 	return getTenancyServiceContext(cmd)
+}
+
+var OrchestratorFactory interfaces.OrchestratorFactoryFunc = func(cmd *cobra.Command) (context.Context, orchapi.ClientWithResponsesInterface, error) {
+	return getOrchestratorServiceContext(cmd)
 }
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
@@ -168,6 +190,19 @@ func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.C
 		return nil, nil, err
 	}
 	return context.Background(), tenancyClient, nil
+}
+
+// Get the new background context and REST client for orchestrator service.
+func getOrchestratorServiceContext(cmd *cobra.Command) (context.Context, *orchapi.Client, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return nil, nil, err
+	}
+	orchClient, err := orchapi.NewClient(serverAddress, TLS13OrchestratorClientOption())
+	if err != nil {
+		return nil, nil, err
+	}
+	return context.Background(), orchClient, nil
 }
 
 // Adds the mandatory project UUID, and the standard display-name, and description
@@ -582,6 +617,20 @@ func TLS13TenancyClientOption() func(*tenantapi.Client) error {
 	}
 }
 
+func TLS13OrchestratorClientOption() func(*orchapi.Client) error {
+	return func(c *orchapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+
 // Helper function for fuzz tests
 func isExpectedError(err error) bool {
 	if err == nil {
@@ -600,5 +649,97 @@ func isExpectedError(err error) bool {
 			return true
 		}
 	}
+	return false
+}
+
+// addCommandIfFeatureEnabled conditionally adds a command to a parent command if the feature is enabled
+func addCommandIfFeatureEnabled(parent *cobra.Command, child *cobra.Command, feature string) {
+	commandPath := parent.Name() + " " + child.Name()
+	if isFeatureEnabled(feature) {
+		enabledCommands = append(enabledCommands, commandPath)
+		parent.AddCommand(child)
+	} else {
+		disabledCommands = append(disabledCommands, commandPath)
+	}
+}
+
+func isFeatureEnabled(feature string) bool {
+	switch feature {
+	case OobFeature:
+		return viper.GetBool(OobFeature)
+	case OnboardingFeature:
+		return viper.GetBool(OnboardingFeature)
+	case ProvisioningFeature:
+		return viper.GetBool(ProvisioningFeature)
+	case Day2Feature:
+		return viper.GetBool(Day2Feature)
+	case ObservabilityFeature:
+		return viper.GetBool(ObservabilityFeature)
+	case AppOrchFeature:
+		return viper.GetBool(AppOrchFeature)
+	case ClusterOrchFeature:
+		return viper.GetBool(ClusterOrchFeature)
+	case MultitenancyFeature:
+		return viper.GetBool(MultitenancyFeature)
+	default:
+		return true // Default to enabled for unknown features
+	}
+}
+
+// isCommandDisabled checks if a command is in the disabled commands list
+func isCommandDisabled(parentCmd string, subCmd string) bool {
+	commandPath := parentCmd + " " + subCmd
+	for _, dc := range disabledCommands {
+		if dc == commandPath {
+			return true
+		}
+	}
+	return false
+}
+
+// resolveCommandAlias attempts to resolve a command name or alias to its canonical name
+// by checking if the input matches any disabled command or its aliases
+func resolveCommandAlias(parentName string, input string) string {
+	// Check all disabled commands for this parent
+	for _, dc := range disabledCommands {
+		parts := strings.Fields(dc)
+		if len(parts) == 2 && parts[0] == parentName {
+			cmdName := parts[1]
+			// If input matches the command name, return it
+			if cmdName == input {
+				return cmdName
+			}
+			// Check if input might be an alias by checking common patterns
+			// The canonical command name is always the singular form (first in the alias list)
+			// Common patterns: schedule/schedules, host/hosts, etc.
+			if strings.HasPrefix(input, cmdName) || strings.HasPrefix(cmdName, input) {
+				// Possible match - return the canonical name
+				return cmdName
+			}
+			// Also check plurals and common abbreviations
+			if input == cmdName+"s" || input+"s" == cmdName {
+				return cmdName
+			}
+		}
+	}
+	return input
+}
+
+// isCommandDisabledWithParent checks if a command or any of its aliases is in the disabled commands list
+// It takes the parent cobra command to resolve aliases
+func isCommandDisabledWithParent(parentCmd *cobra.Command, subCmd string) bool {
+	parentName := parentCmd.Name()
+
+	// First check the direct command name
+	if isCommandDisabled(parentName, subCmd) {
+		return true
+	}
+
+	// Try to resolve the subCmd to its canonical name and check if that's disabled
+	resolvedCmd := resolveCommandAlias(parentName, subCmd)
+	if resolvedCmd != subCmd && isCommandDisabled(parentName, resolvedCmd) {
+		return true
+	}
+
 	return false
 }

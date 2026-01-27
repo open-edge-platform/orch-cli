@@ -10,6 +10,7 @@ import (
 	cluster "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
+	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
@@ -23,3 +24,4 @@ type KeycloakFactoryFunc func(ctx context.Context, endpoint string) (openidconne
 type RpsFactoryFunc func(cmd *cobra.Command) (context.Context, rpsapi.ClientWithResponsesInterface, string, error)
 type DeploymentFactoryFunc func(cmd *cobra.Command) (context.Context, depapi.ClientWithResponsesInterface, string, error)
 type TenancyFactoryFunc func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, error)
+type OrchestratorFactoryFunc func(cmd *cobra.Command) (context.Context, orchapi.ClientWithResponsesInterface, error)
