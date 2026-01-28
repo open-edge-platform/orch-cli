@@ -1025,6 +1025,7 @@ func runSetScheduleCommand(cmd *cobra.Command, args []string) error {
 		}
 
 		resp, err := scheduleClient.ScheduleServicePatchRepeatedScheduleWithResponse(ctx, projectName, id,
+			&infra.ScheduleServicePatchRepeatedScheduleParams{},
 			infra.ScheduleServicePatchRepeatedScheduleJSONRequestBody{
 				Name:            &name,
 				ScheduleStatus:  infra.ScheduleStatus(maintenanceType),
@@ -1083,6 +1084,7 @@ func runSetScheduleCommand(cmd *cobra.Command, args []string) error {
 		}
 
 		resp, err := scheduleClient.ScheduleServicePatchSingleScheduleWithResponse(ctx, projectName, id,
+			&infra.ScheduleServicePatchSingleScheduleParams{},
 			infra.ScheduleServicePatchSingleScheduleJSONRequestBody{
 				Name:           &name,
 				ScheduleStatus: infra.ScheduleStatus(maintenanceType),

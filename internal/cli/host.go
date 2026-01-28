@@ -1021,7 +1021,7 @@ func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface
 		return *siteResource.ResourceId, nil
 	}
 
-	resp, err := hClient.SiteServiceGetSiteWithResponse(ctx, projectName, "regionID", siteToQuery, auth.AddAuthHeader)
+	resp, err := hClient.SiteServiceGetSite2WithResponse(ctx, projectName, "regionID", siteToQuery, auth.AddAuthHeader)
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
@@ -1458,8 +1458,8 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 
 		regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
 
-		cresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, *region,
-			&infra.SiteServiceListSitesParams{
+		cresp, err := hostClient.SiteServiceListSites2WithResponse(ctx, projectName, *region,
+			&infra.SiteServiceListSites2Params{
 				Filter: &regFilter,
 			}, auth.AddAuthHeader)
 		if err != nil {
@@ -1898,7 +1898,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				fmt.Printf("InfraFactory error for host %s: %v\n", name, err)
 				continue
 			}
-			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, infra.HostServicePatchHostJSONRequestBody{
+			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 				DesiredAmtState: &amtState,
 			}, auth.AddAuthHeader)
 			if err != nil {
@@ -1975,7 +1975,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	host := *iresp.JSON200
 
 	if (powerFlag != "" || policyFlag != "") && host.Instance != nil {
-		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
+		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			PowerCommandPolicy: policy,
 			DesiredPowerState:  power,
 			Name:               host.Name,
@@ -1989,7 +1989,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if updatePolicy != nil && host.Instance != nil && host.Instance.InstanceID != nil && updFlag != "" {
-		resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
+		resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, &infra.InstanceServicePatchInstanceParams{}, infra.InstanceServicePatchInstanceJSONRequestBody{
 			OsUpdatePolicyID: updatePolicy,
 		}, auth.AddAuthHeader)
 		if err != nil {
@@ -2001,7 +2001,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if amtState != nil && host.Instance != nil {
-		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
+		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			DesiredAmtState: amtState,
 			Name:            host.Name,
 		}, auth.AddAuthHeader)
@@ -2056,8 +2056,8 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 
 				regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
 
-				cresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, *region,
-					&infra.SiteServiceListSitesParams{
+				cresp, err := hostClient.SiteServiceListSites2WithResponse(ctx, projectName, *region,
+					&infra.SiteServiceListSites2Params{
 						Filter: &regFilter,
 					}, auth.AddAuthHeader)
 				if err != nil {
@@ -2357,7 +2357,7 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 		if host.Instance != nil && host.Instance.UpdatePolicy != nil && host.Instance.UpdatePolicy.ResourceId != nil && policyID == *host.Instance.UpdatePolicy.ResourceId {
 			continue
 		} else if host.Instance != nil {
-			iresp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
+			iresp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, &infra.InstanceServicePatchInstanceParams{}, infra.InstanceServicePatchInstanceJSONRequestBody{
 				OsUpdatePolicyID: &policyID,
 			}, auth.AddAuthHeader)
 			if err != nil {
@@ -2438,7 +2438,7 @@ func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterfac
 	// Register host
 
 	resp, err := hClient.HostServiceRegisterHostWithResponse(ctx, projectName,
-		infra.HostServiceRegisterHostJSONRequestBody{
+		&infra.HostServiceRegisterHostParams{}, infra.HostServiceRegisterHostJSONRequestBody{
 			Name:         &hostName,
 			SerialNumber: &sNo,
 			Uuid:         &uuid,
@@ -2642,7 +2642,7 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientW
 		}
 	}
 
-	sresp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+	sresp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{},
 		infra.HostServicePatchHostJSONRequestBody{
 			Name:     hostID,
 			Metadata: metadata,

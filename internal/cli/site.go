@@ -114,8 +114,8 @@ func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 	sites := make([]infra.SiteResource, 0)
 
 	for offset := 0; ; offset += pageSize {
-		resp, err := siteClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
-			&infra.SiteServiceListSitesParams{
+		resp, err := siteClient.SiteServiceListSites2WithResponse(ctx, projectName, queryRegion,
+			&infra.SiteServiceListSites2Params{
 				Filter: regFilter,
 				Offset: &offset,
 			}, auth.AddAuthHeader)
@@ -183,7 +183,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := siteClient.SiteServiceCreateSiteWithResponse(ctx, projectName, "empty",
+	resp, err := siteClient.SiteServiceCreateSite2WithResponse(ctx, projectName, "empty",
 		infra.SiteServiceCreateSiteJSONRequestBody{
 			Name:     &name,
 			SiteLat:  siteLat,
@@ -205,7 +205,7 @@ func runGetSiteCommand(cmd *cobra.Command, args []string) error {
 
 	id := args[0]
 
-	resp, err := siteClient.SiteServiceGetSiteWithResponse(ctx, projectName,
+	resp, err := siteClient.SiteServiceGetSite2WithResponse(ctx, projectName,
 		"empty", id, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -228,7 +228,7 @@ func runDeleteSiteCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := siteClient.SiteServiceDeleteSiteWithResponse(ctx, projectName,
+	resp, err := siteClient.SiteServiceDeleteSite2WithResponse(ctx, projectName,
 		"empty", id, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
