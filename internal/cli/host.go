@@ -1021,7 +1021,7 @@ func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface
 		return *siteResource.ResourceId, nil
 	}
 
-	resp, err := hClient.SiteServiceGetSite2WithResponse(ctx, projectName, "regionID", siteToQuery, auth.AddAuthHeader)
+	resp, err := hClient.SiteServiceGetSiteWithResponse(ctx, projectName, "regionID", siteToQuery, auth.AddAuthHeader)
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
@@ -1458,8 +1458,8 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 
 		regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
 
-		cresp, err := hostClient.SiteServiceListSites2WithResponse(ctx, projectName, *region,
-			&infra.SiteServiceListSites2Params{
+		cresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, *region,
+			&infra.SiteServiceListSitesParams{
 				Filter: &regFilter,
 			}, auth.AddAuthHeader)
 		if err != nil {
@@ -2056,8 +2056,8 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 
 				regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
 
-				cresp, err := hostClient.SiteServiceListSites2WithResponse(ctx, projectName, *region,
-					&infra.SiteServiceListSites2Params{
+				cresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, *region,
+					&infra.SiteServiceListSitesParams{
 						Filter: &regFilter,
 					}, auth.AddAuthHeader)
 				if err != nil {

@@ -1016,26 +1016,26 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		).AnyTimes()
 
 		// Mock DeleteSite (used by delete command)
-		mockInfraClient.EXPECT().SiteServiceDeleteSite2WithResponse(
+		mockInfraClient.EXPECT().SiteServiceDeleteSiteWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName, regionId, siteId string, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceDeleteSite2Response, error) {
+			func(ctx context.Context, projectName, regionId, siteId string, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceDeleteSiteResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				_ = regionId   // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
-					return &infra.SiteServiceDeleteSite2Response{
+					return &infra.SiteServiceDeleteSiteResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
 				default:
 					switch siteId {
 					case "nonexistent-site", "invalid-site-id":
-						return &infra.SiteServiceDeleteSite2Response{
+						return &infra.SiteServiceDeleteSiteResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
 						}, nil
 					default:
-						return &infra.SiteServiceDeleteSite2Response{
+						return &infra.SiteServiceDeleteSiteResponse{
 							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
 						}, nil
 					}
@@ -1044,21 +1044,21 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		).AnyTimes()
 
 		// Mock CreateSite (used by create command)
-		mockInfraClient.EXPECT().SiteServiceCreateSite2WithResponse(
+		mockInfraClient.EXPECT().SiteServiceCreateSiteWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, regionId string, body infra.SiteServiceCreateSite2JSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceCreateSite2Response, error) {
+			func(ctx context.Context, projectName string, regionId string, body infra.SiteServiceCreateSiteJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceCreateSiteResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				_ = regionId   // Acknowledge we're not using it
 
 				switch projectName {
 				case "invalid-project":
-					return &infra.SiteServiceCreateSite2Response{
+					return &infra.SiteServiceCreateSiteResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
 				default:
-					return &infra.SiteServiceCreateSite2Response{
+					return &infra.SiteServiceCreateSiteResponse{
 						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
 						JSON200: &infra.SiteResource{
 							ResourceId:        stringPtr("site-abcd1111"),
@@ -1079,21 +1079,21 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 			},
 		).AnyTimes()
 		// Mock GetSite (used by get command)
-		mockInfraClient.EXPECT().SiteServiceGetSite2WithResponse(
+		mockInfraClient.EXPECT().SiteServiceGetSiteWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName, region string, siteId string, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceGetSite2Response, error) {
+			func(ctx context.Context, projectName, region string, siteId string, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceGetSiteResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				_ = region     // Acknowledge we're not using it
 
 				switch projectName {
 				case "invalid-project":
-					return &infra.SiteServiceGetSite2Response{
+					return &infra.SiteServiceGetSiteResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
 				default:
-					return &infra.SiteServiceGetSite2Response{
+					return &infra.SiteServiceGetSiteResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.SiteResource{
 							ResourceId: stringPtr(siteId),

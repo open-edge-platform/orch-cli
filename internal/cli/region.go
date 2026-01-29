@@ -247,8 +247,8 @@ func runListRegionCommand(cmd *cobra.Command, _ []string) error {
 		//Get all sites per region
 		regFilter := fmt.Sprintf("region.resource_id='%s'", *region.ResourceId)
 
-		sresp, err := regionClient.SiteServiceListSites2WithResponse(ctx, projectName, *region.ResourceId,
-			&infra.SiteServiceListSites2Params{
+		sresp, err := regionClient.SiteServiceListSitesWithResponse(ctx, projectName, *region.ResourceId,
+			&infra.SiteServiceListSitesParams{
 				Filter: &regFilter,
 			}, auth.AddAuthHeader)
 		if err != nil {

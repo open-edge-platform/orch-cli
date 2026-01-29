@@ -143,8 +143,8 @@ type ClientInterface interface {
 
 	HostServicePatchRegisterHost2(ctx context.Context, resourceId string, params *HostServicePatchRegisterHost2Params, body HostServicePatchRegisterHost2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// HostServiceGetHostsSummary3 request
-	HostServiceGetHostsSummary3(ctx context.Context, params *HostServiceGetHostsSummary3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// HostServiceGetHostsSummary2 request
+	HostServiceGetHostsSummary2(ctx context.Context, params *HostServiceGetHostsSummary2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// InstanceServiceListInstances2 request
 	InstanceServiceListInstances2(ctx context.Context, params *InstanceServiceListInstances2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -170,6 +170,9 @@ type ClientInterface interface {
 
 	InstanceServiceUpdateInstance2(ctx context.Context, resourceId string, params *InstanceServiceUpdateInstance2Params, body InstanceServiceUpdateInstance2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// InstanceServiceInvalidateInstance2 request
+	InstanceServiceInvalidateInstance2(ctx context.Context, resourceId string, params *InstanceServiceInvalidateInstance2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// LocalAccountServiceListLocalAccounts2 request
 	LocalAccountServiceListLocalAccounts2(ctx context.Context, params *LocalAccountServiceListLocalAccounts2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -187,29 +190,29 @@ type ClientInterface interface {
 	// LocationServiceListLocations2 request
 	LocationServiceListLocations2(ctx context.Context, params *LocationServiceListLocations2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServiceListOperatingSystems3 request
-	OperatingSystemServiceListOperatingSystems3(ctx context.Context, params *OperatingSystemServiceListOperatingSystems3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// OperatingSystemServiceListOperatingSystems2 request
+	OperatingSystemServiceListOperatingSystems2(ctx context.Context, params *OperatingSystemServiceListOperatingSystems2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServiceCreateOperatingSystem3WithBody request with any body
-	OperatingSystemServiceCreateOperatingSystem3WithBody(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// OperatingSystemServiceCreateOperatingSystem2WithBody request with any body
+	OperatingSystemServiceCreateOperatingSystem2WithBody(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	OperatingSystemServiceCreateOperatingSystem3(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem3Params, body OperatingSystemServiceCreateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	OperatingSystemServiceCreateOperatingSystem2(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem2Params, body OperatingSystemServiceCreateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServiceDeleteOperatingSystem3 request
-	OperatingSystemServiceDeleteOperatingSystem3(ctx context.Context, resourceId string, params *OperatingSystemServiceDeleteOperatingSystem3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// OperatingSystemServiceDeleteOperatingSystem2 request
+	OperatingSystemServiceDeleteOperatingSystem2(ctx context.Context, resourceId string, params *OperatingSystemServiceDeleteOperatingSystem2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServiceGetOperatingSystem3 request
-	OperatingSystemServiceGetOperatingSystem3(ctx context.Context, resourceId string, params *OperatingSystemServiceGetOperatingSystem3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// OperatingSystemServiceGetOperatingSystem2 request
+	OperatingSystemServiceGetOperatingSystem2(ctx context.Context, resourceId string, params *OperatingSystemServiceGetOperatingSystem2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServicePatchOperatingSystem3WithBody request with any body
-	OperatingSystemServicePatchOperatingSystem3WithBody(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// OperatingSystemServicePatchOperatingSystem2WithBody request with any body
+	OperatingSystemServicePatchOperatingSystem2WithBody(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	OperatingSystemServicePatchOperatingSystem3(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, body OperatingSystemServicePatchOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	OperatingSystemServicePatchOperatingSystem2(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, body OperatingSystemServicePatchOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServiceUpdateOperatingSystem3WithBody request with any body
-	OperatingSystemServiceUpdateOperatingSystem3WithBody(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// OperatingSystemServiceUpdateOperatingSystem2WithBody request with any body
+	OperatingSystemServiceUpdateOperatingSystem2WithBody(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	OperatingSystemServiceUpdateOperatingSystem3(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem3Params, body OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	OperatingSystemServiceUpdateOperatingSystem2(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem2Params, body OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// OSUpdatePolicyListOSUpdatePolicy2 request
 	OSUpdatePolicyListOSUpdatePolicy2(ctx context.Context, params *OSUpdatePolicyListOSUpdatePolicy2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -272,108 +275,108 @@ type ClientInterface interface {
 
 	RegionServiceUpdateRegion2(ctx context.Context, resourceId string, params *RegionServiceUpdateRegion2Params, body RegionServiceUpdateRegion2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceListSchedules3 request
-	ScheduleServiceListSchedules3(ctx context.Context, params *ScheduleServiceListSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceListSchedules2 request
+	ScheduleServiceListSchedules2(ctx context.Context, params *ScheduleServiceListSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceListRepeatedSchedules3 request
-	ScheduleServiceListRepeatedSchedules3(ctx context.Context, params *ScheduleServiceListRepeatedSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceListRepeatedSchedules2 request
+	ScheduleServiceListRepeatedSchedules2(ctx context.Context, params *ScheduleServiceListRepeatedSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceCreateRepeatedSchedule3WithBody request with any body
-	ScheduleServiceCreateRepeatedSchedule3WithBody(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceCreateRepeatedSchedule2WithBody request with any body
+	ScheduleServiceCreateRepeatedSchedule2WithBody(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServiceCreateRepeatedSchedule3(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule3Params, body ScheduleServiceCreateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServiceCreateRepeatedSchedule2(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule2Params, body ScheduleServiceCreateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceDeleteRepeatedSchedule3 request
-	ScheduleServiceDeleteRepeatedSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceDeleteRepeatedSchedule3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceDeleteRepeatedSchedule2 request
+	ScheduleServiceDeleteRepeatedSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceDeleteRepeatedSchedule2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceGetRepeatedSchedule3 request
-	ScheduleServiceGetRepeatedSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceGetRepeatedSchedule3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceGetRepeatedSchedule2 request
+	ScheduleServiceGetRepeatedSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceGetRepeatedSchedule2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServicePatchRepeatedSchedule3WithBody request with any body
-	ScheduleServicePatchRepeatedSchedule3WithBody(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServicePatchRepeatedSchedule2WithBody request with any body
+	ScheduleServicePatchRepeatedSchedule2WithBody(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServicePatchRepeatedSchedule3(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, body ScheduleServicePatchRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServicePatchRepeatedSchedule2(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, body ScheduleServicePatchRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceUpdateRepeatedSchedule3WithBody request with any body
-	ScheduleServiceUpdateRepeatedSchedule3WithBody(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceUpdateRepeatedSchedule2WithBody request with any body
+	ScheduleServiceUpdateRepeatedSchedule2WithBody(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServiceUpdateRepeatedSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule3Params, body ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServiceUpdateRepeatedSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule2Params, body ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceListSingleSchedules3 request
-	ScheduleServiceListSingleSchedules3(ctx context.Context, params *ScheduleServiceListSingleSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceListSingleSchedules2 request
+	ScheduleServiceListSingleSchedules2(ctx context.Context, params *ScheduleServiceListSingleSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceCreateSingleSchedule3WithBody request with any body
-	ScheduleServiceCreateSingleSchedule3WithBody(ctx context.Context, params *ScheduleServiceCreateSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceCreateSingleSchedule2WithBody request with any body
+	ScheduleServiceCreateSingleSchedule2WithBody(ctx context.Context, params *ScheduleServiceCreateSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServiceCreateSingleSchedule3(ctx context.Context, params *ScheduleServiceCreateSingleSchedule3Params, body ScheduleServiceCreateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServiceCreateSingleSchedule2(ctx context.Context, params *ScheduleServiceCreateSingleSchedule2Params, body ScheduleServiceCreateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceDeleteSingleSchedule3 request
-	ScheduleServiceDeleteSingleSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceDeleteSingleSchedule3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceDeleteSingleSchedule2 request
+	ScheduleServiceDeleteSingleSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceDeleteSingleSchedule2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceGetSingleSchedule3 request
-	ScheduleServiceGetSingleSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceGetSingleSchedule3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceGetSingleSchedule2 request
+	ScheduleServiceGetSingleSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceGetSingleSchedule2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServicePatchSingleSchedule3WithBody request with any body
-	ScheduleServicePatchSingleSchedule3WithBody(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServicePatchSingleSchedule2WithBody request with any body
+	ScheduleServicePatchSingleSchedule2WithBody(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServicePatchSingleSchedule3(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, body ScheduleServicePatchSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServicePatchSingleSchedule2(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, body ScheduleServicePatchSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceUpdateSingleSchedule3WithBody request with any body
-	ScheduleServiceUpdateSingleSchedule3WithBody(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceUpdateSingleSchedule2WithBody request with any body
+	ScheduleServiceUpdateSingleSchedule2WithBody(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServiceUpdateSingleSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule3Params, body ScheduleServiceUpdateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServiceUpdateSingleSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule2Params, body ScheduleServiceUpdateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceListSites3 request
-	SiteServiceListSites3(ctx context.Context, params *SiteServiceListSites3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceListSites2 request
+	SiteServiceListSites2(ctx context.Context, params *SiteServiceListSites2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceCreateSite3WithBody request with any body
-	SiteServiceCreateSite3WithBody(ctx context.Context, params *SiteServiceCreateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceCreateSite2WithBody request with any body
+	SiteServiceCreateSite2WithBody(ctx context.Context, params *SiteServiceCreateSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	SiteServiceCreateSite3(ctx context.Context, params *SiteServiceCreateSite3Params, body SiteServiceCreateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	SiteServiceCreateSite2(ctx context.Context, params *SiteServiceCreateSite2Params, body SiteServiceCreateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceDeleteSite3 request
-	SiteServiceDeleteSite3(ctx context.Context, resourceId string, params *SiteServiceDeleteSite3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceDeleteSite2 request
+	SiteServiceDeleteSite2(ctx context.Context, resourceId string, params *SiteServiceDeleteSite2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceGetSite3 request
-	SiteServiceGetSite3(ctx context.Context, resourceId string, params *SiteServiceGetSite3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceGetSite2 request
+	SiteServiceGetSite2(ctx context.Context, resourceId string, params *SiteServiceGetSite2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServicePatchSite3WithBody request with any body
-	SiteServicePatchSite3WithBody(ctx context.Context, resourceId string, params *SiteServicePatchSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServicePatchSite2WithBody request with any body
+	SiteServicePatchSite2WithBody(ctx context.Context, resourceId string, params *SiteServicePatchSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	SiteServicePatchSite3(ctx context.Context, resourceId string, params *SiteServicePatchSite3Params, body SiteServicePatchSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	SiteServicePatchSite2(ctx context.Context, resourceId string, params *SiteServicePatchSite2Params, body SiteServicePatchSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceUpdateSite3WithBody request with any body
-	SiteServiceUpdateSite3WithBody(ctx context.Context, resourceId string, params *SiteServiceUpdateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceUpdateSite2WithBody request with any body
+	SiteServiceUpdateSite2WithBody(ctx context.Context, resourceId string, params *SiteServiceUpdateSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	SiteServiceUpdateSite3(ctx context.Context, resourceId string, params *SiteServiceUpdateSite3Params, body SiteServiceUpdateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	SiteServiceUpdateSite2(ctx context.Context, resourceId string, params *SiteServiceUpdateSite2Params, body SiteServiceUpdateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TelemetryLogsGroupServiceListTelemetryLogsGroups3 request
-	TelemetryLogsGroupServiceListTelemetryLogsGroups3(ctx context.Context, params *TelemetryLogsGroupServiceListTelemetryLogsGroups3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// TelemetryLogsGroupServiceListTelemetryLogsGroups2 request
+	TelemetryLogsGroupServiceListTelemetryLogsGroups2(ctx context.Context, params *TelemetryLogsGroupServiceListTelemetryLogsGroups2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBody request with any body
-	TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBody(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBody request with any body
+	TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBody(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	TelemetryLogsGroupServiceCreateTelemetryLogsGroup3(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	TelemetryLogsGroupServiceCreateTelemetryLogsGroup2(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3 request
-	TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2 request
+	TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TelemetryLogsGroupServiceGetTelemetryLogsGroup3 request
-	TelemetryLogsGroupServiceGetTelemetryLogsGroup3(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceGetTelemetryLogsGroup3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// TelemetryLogsGroupServiceGetTelemetryLogsGroup2 request
+	TelemetryLogsGroupServiceGetTelemetryLogsGroup2(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceGetTelemetryLogsGroup2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TelemetryMetricsGroupServiceListTelemetryMetricsGroups3 request
-	TelemetryMetricsGroupServiceListTelemetryMetricsGroups3(ctx context.Context, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// TelemetryMetricsGroupServiceListTelemetryMetricsGroups2 request
+	TelemetryMetricsGroupServiceListTelemetryMetricsGroups2(ctx context.Context, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBody request with any body
-	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBody(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBody request with any body
+	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBody(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3 request
-	TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2 request
+	TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3 request
-	TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2 request
+	TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TelemetryLogsProfileServiceListTelemetryLogsProfiles2 request
 	TelemetryLogsProfileServiceListTelemetryLogsProfiles2(ctx context.Context, params *TelemetryLogsProfileServiceListTelemetryLogsProfiles2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -474,6 +477,9 @@ type ClientInterface interface {
 
 	HostServiceRegisterHost(ctx context.Context, projectName string, params *HostServiceRegisterHostParams, body HostServiceRegisterHostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// HostServiceGetHostsSummary request
+	HostServiceGetHostsSummary(ctx context.Context, projectName string, params *HostServiceGetHostsSummaryParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// HostServiceDeleteHost request
 	HostServiceDeleteHost(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -501,11 +507,8 @@ type ClientInterface interface {
 
 	HostServicePatchRegisterHost(ctx context.Context, projectName string, resourceId string, body HostServicePatchRegisterHostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// HostServiceGetHostsSummary request
-	HostServiceGetHostsSummary(ctx context.Context, projectName string, params *HostServiceGetHostsSummaryParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// HostServiceGetHostsSummary2 request
-	HostServiceGetHostsSummary2(ctx context.Context, projectName string, params *HostServiceGetHostsSummary2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// HostServiceGetHostsSummary3 request
+	HostServiceGetHostsSummary3(ctx context.Context, projectName string, params *HostServiceGetHostsSummary3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// InstanceServiceListInstances request
 	InstanceServiceListInstances(ctx context.Context, projectName string, params *InstanceServiceListInstancesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -534,6 +537,30 @@ type ClientInterface interface {
 	// InstanceServiceInvalidateInstance request
 	InstanceServiceInvalidateInstance(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// OperatingSystemServiceListOperatingSystems3 request
+	OperatingSystemServiceListOperatingSystems3(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystems3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OperatingSystemServiceCreateOperatingSystem3WithBody request with any body
+	OperatingSystemServiceCreateOperatingSystem3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	OperatingSystemServiceCreateOperatingSystem3(ctx context.Context, projectName string, body OperatingSystemServiceCreateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OperatingSystemServiceDeleteOperatingSystem3 request
+	OperatingSystemServiceDeleteOperatingSystem3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OperatingSystemServiceGetOperatingSystem3 request
+	OperatingSystemServiceGetOperatingSystem3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OperatingSystemServicePatchOperatingSystem3WithBody request with any body
+	OperatingSystemServicePatchOperatingSystem3WithBody(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	OperatingSystemServicePatchOperatingSystem3(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, body OperatingSystemServicePatchOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OperatingSystemServiceUpdateOperatingSystem3WithBody request with any body
+	OperatingSystemServiceUpdateOperatingSystem3WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	OperatingSystemServiceUpdateOperatingSystem3(ctx context.Context, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// OperatingSystemServiceListOperatingSystems request
 	OperatingSystemServiceListOperatingSystems(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystemsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -558,80 +585,80 @@ type ClientInterface interface {
 
 	OperatingSystemServiceUpdateOperatingSystem(ctx context.Context, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystemJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServiceListOperatingSystems2 request
-	OperatingSystemServiceListOperatingSystems2(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystems2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceListSchedules request
+	ScheduleServiceListSchedules(ctx context.Context, projectName string, params *ScheduleServiceListSchedulesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServiceCreateOperatingSystem2WithBody request with any body
-	OperatingSystemServiceCreateOperatingSystem2WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceListRepeatedSchedules3 request
+	ScheduleServiceListRepeatedSchedules3(ctx context.Context, projectName string, params *ScheduleServiceListRepeatedSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	OperatingSystemServiceCreateOperatingSystem2(ctx context.Context, projectName string, body OperatingSystemServiceCreateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceCreateRepeatedSchedule3WithBody request with any body
+	ScheduleServiceCreateRepeatedSchedule3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServiceDeleteOperatingSystem2 request
-	OperatingSystemServiceDeleteOperatingSystem2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServiceCreateRepeatedSchedule3(ctx context.Context, projectName string, body ScheduleServiceCreateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServiceGetOperatingSystem2 request
-	OperatingSystemServiceGetOperatingSystem2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceDeleteRepeatedSchedule3 request
+	ScheduleServiceDeleteRepeatedSchedule3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServicePatchOperatingSystem2WithBody request with any body
-	OperatingSystemServicePatchOperatingSystem2WithBody(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceGetRepeatedSchedule3 request
+	ScheduleServiceGetRepeatedSchedule3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	OperatingSystemServicePatchOperatingSystem2(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, body OperatingSystemServicePatchOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServicePatchRepeatedSchedule3WithBody request with any body
+	ScheduleServicePatchRepeatedSchedule3WithBody(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OperatingSystemServiceUpdateOperatingSystem2WithBody request with any body
-	OperatingSystemServiceUpdateOperatingSystem2WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServicePatchRepeatedSchedule3(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, body ScheduleServicePatchRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	OperatingSystemServiceUpdateOperatingSystem2(ctx context.Context, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceUpdateRepeatedSchedule3WithBody request with any body
+	ScheduleServiceUpdateRepeatedSchedule3WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceListSchedules2 request
-	ScheduleServiceListSchedules2(ctx context.Context, projectName string, params *ScheduleServiceListSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServiceUpdateRepeatedSchedule3(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceListRepeatedSchedules2 request
-	ScheduleServiceListRepeatedSchedules2(ctx context.Context, projectName string, params *ScheduleServiceListRepeatedSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceListSingleSchedules3 request
+	ScheduleServiceListSingleSchedules3(ctx context.Context, projectName string, params *ScheduleServiceListSingleSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceCreateRepeatedSchedule2WithBody request with any body
-	ScheduleServiceCreateRepeatedSchedule2WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceCreateSingleSchedule3WithBody request with any body
+	ScheduleServiceCreateSingleSchedule3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServiceCreateRepeatedSchedule2(ctx context.Context, projectName string, body ScheduleServiceCreateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServiceCreateSingleSchedule3(ctx context.Context, projectName string, body ScheduleServiceCreateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceDeleteRepeatedSchedule2 request
-	ScheduleServiceDeleteRepeatedSchedule2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceDeleteSingleSchedule3 request
+	ScheduleServiceDeleteSingleSchedule3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceGetRepeatedSchedule2 request
-	ScheduleServiceGetRepeatedSchedule2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceGetSingleSchedule3 request
+	ScheduleServiceGetSingleSchedule3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServicePatchRepeatedSchedule2WithBody request with any body
-	ScheduleServicePatchRepeatedSchedule2WithBody(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServicePatchSingleSchedule3WithBody request with any body
+	ScheduleServicePatchSingleSchedule3WithBody(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServicePatchRepeatedSchedule2(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, body ScheduleServicePatchRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServicePatchSingleSchedule3(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, body ScheduleServicePatchSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceUpdateRepeatedSchedule2WithBody request with any body
-	ScheduleServiceUpdateRepeatedSchedule2WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceUpdateSingleSchedule3WithBody request with any body
+	ScheduleServiceUpdateSingleSchedule3WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServiceUpdateRepeatedSchedule2(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ScheduleServiceUpdateSingleSchedule3(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceListSingleSchedules2 request
-	ScheduleServiceListSingleSchedules2(ctx context.Context, projectName string, params *ScheduleServiceListSingleSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServiceListWorkloads request
+	WorkloadServiceListWorkloads(ctx context.Context, projectName string, params *WorkloadServiceListWorkloadsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceCreateSingleSchedule2WithBody request with any body
-	ScheduleServiceCreateSingleSchedule2WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServiceCreateWorkloadWithBody request with any body
+	WorkloadServiceCreateWorkloadWithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServiceCreateSingleSchedule2(ctx context.Context, projectName string, body ScheduleServiceCreateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	WorkloadServiceCreateWorkload(ctx context.Context, projectName string, body WorkloadServiceCreateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceDeleteSingleSchedule2 request
-	ScheduleServiceDeleteSingleSchedule2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServiceDeleteWorkload request
+	WorkloadServiceDeleteWorkload(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceGetSingleSchedule2 request
-	ScheduleServiceGetSingleSchedule2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServiceGetWorkload request
+	WorkloadServiceGetWorkload(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServicePatchSingleSchedule2WithBody request with any body
-	ScheduleServicePatchSingleSchedule2WithBody(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServicePatchWorkloadWithBody request with any body
+	WorkloadServicePatchWorkloadWithBody(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServicePatchSingleSchedule2(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, body ScheduleServicePatchSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	WorkloadServicePatchWorkload(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, body WorkloadServicePatchWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceUpdateSingleSchedule2WithBody request with any body
-	ScheduleServiceUpdateSingleSchedule2WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServiceUpdateWorkloadWithBody request with any body
+	WorkloadServiceUpdateWorkloadWithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	ScheduleServiceUpdateSingleSchedule2(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	WorkloadServiceUpdateWorkload(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CustomConfigServiceListCustomConfigs request
 	CustomConfigServiceListCustomConfigs(ctx context.Context, projectName string, params *CustomConfigServiceListCustomConfigsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -664,29 +691,6 @@ type ClientInterface interface {
 	// LocationServiceListLocations request
 	LocationServiceListLocations(ctx context.Context, projectName string, params *LocationServiceListLocationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// OSUpdatePolicyListOSUpdatePolicy3 request
-	OSUpdatePolicyListOSUpdatePolicy3(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicy3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// OSUpdatePolicyCreateOSUpdatePolicy3WithBody request with any body
-	OSUpdatePolicyCreateOSUpdatePolicy3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	OSUpdatePolicyCreateOSUpdatePolicy3(ctx context.Context, projectName string, body OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// OSUpdatePolicyDeleteOSUpdatePolicy3 request
-	OSUpdatePolicyDeleteOSUpdatePolicy3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// OSUpdatePolicyGetOSUpdatePolicy3 request
-	OSUpdatePolicyGetOSUpdatePolicy3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// OSUpdateRunListOSUpdateRun3 request
-	OSUpdateRunListOSUpdateRun3(ctx context.Context, projectName string, params *OSUpdateRunListOSUpdateRun3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// OSUpdateRunDeleteOSUpdateRun3 request
-	OSUpdateRunDeleteOSUpdateRun3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// OSUpdateRunGetOSUpdateRun3 request
-	OSUpdateRunGetOSUpdateRun3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// OSUpdatePolicyListOSUpdatePolicy request
 	OSUpdatePolicyListOSUpdatePolicy(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicyParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -710,6 +714,29 @@ type ClientInterface interface {
 	// OSUpdateRunGetOSUpdateRun request
 	OSUpdateRunGetOSUpdateRun(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// OSUpdatePolicyListOSUpdatePolicy3 request
+	OSUpdatePolicyListOSUpdatePolicy3(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicy3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OSUpdatePolicyCreateOSUpdatePolicy3WithBody request with any body
+	OSUpdatePolicyCreateOSUpdatePolicy3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	OSUpdatePolicyCreateOSUpdatePolicy3(ctx context.Context, projectName string, body OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OSUpdatePolicyDeleteOSUpdatePolicy3 request
+	OSUpdatePolicyDeleteOSUpdatePolicy3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OSUpdatePolicyGetOSUpdatePolicy3 request
+	OSUpdatePolicyGetOSUpdatePolicy3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OSUpdateRunListOSUpdateRun3 request
+	OSUpdateRunListOSUpdateRun3(ctx context.Context, projectName string, params *OSUpdateRunListOSUpdateRun3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OSUpdateRunDeleteOSUpdateRun3 request
+	OSUpdateRunDeleteOSUpdateRun3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// OSUpdateRunGetOSUpdateRun3 request
+	OSUpdateRunGetOSUpdateRun3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ProviderServiceListProviders request
 	ProviderServiceListProviders(ctx context.Context, projectName string, params *ProviderServiceListProvidersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -732,29 +759,29 @@ type ClientInterface interface {
 
 	RegionServiceCreateRegion(ctx context.Context, projectName string, body RegionServiceCreateRegionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceListSites2 request
-	SiteServiceListSites2(ctx context.Context, projectName string, regionId string, params *SiteServiceListSites2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceListSites request
+	SiteServiceListSites(ctx context.Context, projectName string, regionId string, params *SiteServiceListSitesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceCreateSite2WithBody request with any body
-	SiteServiceCreateSite2WithBody(ctx context.Context, projectName string, regionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceCreateSiteWithBody request with any body
+	SiteServiceCreateSiteWithBody(ctx context.Context, projectName string, regionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	SiteServiceCreateSite2(ctx context.Context, projectName string, regionId string, body SiteServiceCreateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	SiteServiceCreateSite(ctx context.Context, projectName string, regionId string, body SiteServiceCreateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceDeleteSite2 request
-	SiteServiceDeleteSite2(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceDeleteSite request
+	SiteServiceDeleteSite(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceGetSite2 request
-	SiteServiceGetSite2(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceGetSite request
+	SiteServiceGetSite(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServicePatchSite2WithBody request with any body
-	SiteServicePatchSite2WithBody(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServicePatchSiteWithBody request with any body
+	SiteServicePatchSiteWithBody(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	SiteServicePatchSite2(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSite2Params, body SiteServicePatchSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	SiteServicePatchSite(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSiteParams, body SiteServicePatchSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceUpdateSite2WithBody request with any body
-	SiteServiceUpdateSite2WithBody(ctx context.Context, projectName string, regionId string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceUpdateSiteWithBody request with any body
+	SiteServiceUpdateSiteWithBody(ctx context.Context, projectName string, regionId string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	SiteServiceUpdateSite2(ctx context.Context, projectName string, regionId string, resourceId string, body SiteServiceUpdateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	SiteServiceUpdateSite(ctx context.Context, projectName string, regionId string, resourceId string, body SiteServiceUpdateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// RegionServiceDeleteRegion request
 	RegionServiceDeleteRegion(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -772,8 +799,8 @@ type ClientInterface interface {
 
 	RegionServiceUpdateRegion(ctx context.Context, projectName string, resourceId string, body RegionServiceUpdateRegionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ScheduleServiceListSchedules request
-	ScheduleServiceListSchedules(ctx context.Context, projectName string, params *ScheduleServiceListSchedulesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ScheduleServiceListSchedules3 request
+	ScheduleServiceListSchedules3(ctx context.Context, projectName string, params *ScheduleServiceListSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ScheduleServiceListRepeatedSchedules request
 	ScheduleServiceListRepeatedSchedules(ctx context.Context, projectName string, params *ScheduleServiceListRepeatedSchedulesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -823,29 +850,57 @@ type ClientInterface interface {
 
 	ScheduleServiceUpdateSingleSchedule(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateSingleScheduleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceListSites request
-	SiteServiceListSites(ctx context.Context, projectName string, params *SiteServiceListSitesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceListSites3 request
+	SiteServiceListSites3(ctx context.Context, projectName string, params *SiteServiceListSites3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceCreateSiteWithBody request with any body
-	SiteServiceCreateSiteWithBody(ctx context.Context, projectName string, params *SiteServiceCreateSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceCreateSite3WithBody request with any body
+	SiteServiceCreateSite3WithBody(ctx context.Context, projectName string, params *SiteServiceCreateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	SiteServiceCreateSite(ctx context.Context, projectName string, params *SiteServiceCreateSiteParams, body SiteServiceCreateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	SiteServiceCreateSite3(ctx context.Context, projectName string, params *SiteServiceCreateSite3Params, body SiteServiceCreateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceDeleteSite request
-	SiteServiceDeleteSite(ctx context.Context, projectName string, resourceId string, params *SiteServiceDeleteSiteParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceDeleteSite3 request
+	SiteServiceDeleteSite3(ctx context.Context, projectName string, resourceId string, params *SiteServiceDeleteSite3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceGetSite request
-	SiteServiceGetSite(ctx context.Context, projectName string, resourceId string, params *SiteServiceGetSiteParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceGetSite3 request
+	SiteServiceGetSite3(ctx context.Context, projectName string, resourceId string, params *SiteServiceGetSite3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServicePatchSiteWithBody request with any body
-	SiteServicePatchSiteWithBody(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServicePatchSite3WithBody request with any body
+	SiteServicePatchSite3WithBody(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	SiteServicePatchSite(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSiteParams, body SiteServicePatchSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	SiteServicePatchSite3(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSite3Params, body SiteServicePatchSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SiteServiceUpdateSiteWithBody request with any body
-	SiteServiceUpdateSiteWithBody(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SiteServiceUpdateSite3WithBody request with any body
+	SiteServiceUpdateSite3WithBody(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	SiteServiceUpdateSite(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSiteParams, body SiteServiceUpdateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	SiteServiceUpdateSite3(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSite3Params, body SiteServiceUpdateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TelemetryLogsGroupServiceListTelemetryLogsGroups3 request
+	TelemetryLogsGroupServiceListTelemetryLogsGroups3(ctx context.Context, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBody request with any body
+	TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	TelemetryLogsGroupServiceCreateTelemetryLogsGroup3(ctx context.Context, projectName string, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3 request
+	TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TelemetryLogsGroupServiceGetTelemetryLogsGroup3 request
+	TelemetryLogsGroupServiceGetTelemetryLogsGroup3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TelemetryMetricsGroupServiceListTelemetryMetricsGroups3 request
+	TelemetryMetricsGroupServiceListTelemetryMetricsGroups3(ctx context.Context, projectName string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBody request with any body
+	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3(ctx context.Context, projectName string, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3 request
+	TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3 request
+	TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TelemetryLogsGroupServiceListTelemetryLogsGroups request
 	TelemetryLogsGroupServiceListTelemetryLogsGroups(ctx context.Context, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -874,34 +929,6 @@ type ClientInterface interface {
 
 	// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup request
 	TelemetryMetricsGroupServiceGetTelemetryMetricsGroup(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// TelemetryLogsGroupServiceListTelemetryLogsGroups2 request
-	TelemetryLogsGroupServiceListTelemetryLogsGroups2(ctx context.Context, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBody request with any body
-	TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	TelemetryLogsGroupServiceCreateTelemetryLogsGroup2(ctx context.Context, projectName string, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2 request
-	TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// TelemetryLogsGroupServiceGetTelemetryLogsGroup2 request
-	TelemetryLogsGroupServiceGetTelemetryLogsGroup2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// TelemetryMetricsGroupServiceListTelemetryMetricsGroups2 request
-	TelemetryMetricsGroupServiceListTelemetryMetricsGroups2(ctx context.Context, projectName string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBody request with any body
-	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2(ctx context.Context, projectName string, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2 request
-	TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2 request
-	TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TelemetryLogsProfileServiceListTelemetryLogsProfiles request
 	TelemetryLogsProfileServiceListTelemetryLogsProfiles(ctx context.Context, projectName string, params *TelemetryLogsProfileServiceListTelemetryLogsProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -965,29 +992,29 @@ type ClientInterface interface {
 	// WorkloadMemberServiceGetWorkloadMember request
 	WorkloadMemberServiceGetWorkloadMember(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// WorkloadServiceListWorkloads request
-	WorkloadServiceListWorkloads(ctx context.Context, projectName string, params *WorkloadServiceListWorkloadsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServiceListWorkloads3 request
+	WorkloadServiceListWorkloads3(ctx context.Context, projectName string, params *WorkloadServiceListWorkloads3Params, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// WorkloadServiceCreateWorkloadWithBody request with any body
-	WorkloadServiceCreateWorkloadWithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServiceCreateWorkload3WithBody request with any body
+	WorkloadServiceCreateWorkload3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	WorkloadServiceCreateWorkload(ctx context.Context, projectName string, body WorkloadServiceCreateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	WorkloadServiceCreateWorkload3(ctx context.Context, projectName string, body WorkloadServiceCreateWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// WorkloadServiceDeleteWorkload request
-	WorkloadServiceDeleteWorkload(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServiceDeleteWorkload3 request
+	WorkloadServiceDeleteWorkload3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// WorkloadServiceGetWorkload request
-	WorkloadServiceGetWorkload(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServiceGetWorkload3 request
+	WorkloadServiceGetWorkload3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// WorkloadServicePatchWorkloadWithBody request with any body
-	WorkloadServicePatchWorkloadWithBody(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServicePatchWorkload3WithBody request with any body
+	WorkloadServicePatchWorkload3WithBody(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkload3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	WorkloadServicePatchWorkload(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, body WorkloadServicePatchWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	WorkloadServicePatchWorkload3(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkload3Params, body WorkloadServicePatchWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// WorkloadServiceUpdateWorkloadWithBody request with any body
-	WorkloadServiceUpdateWorkloadWithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// WorkloadServiceUpdateWorkload3WithBody request with any body
+	WorkloadServiceUpdateWorkload3WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	WorkloadServiceUpdateWorkload(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	WorkloadServiceUpdateWorkload3(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) CustomConfigServiceListCustomConfigs2(ctx context.Context, params *CustomConfigServiceListCustomConfigs2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -1230,8 +1257,8 @@ func (c *Client) HostServicePatchRegisterHost2(ctx context.Context, resourceId s
 	return c.Client.Do(req)
 }
 
-func (c *Client) HostServiceGetHostsSummary3(ctx context.Context, params *HostServiceGetHostsSummary3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewHostServiceGetHostsSummary3Request(c.Server, params)
+func (c *Client) HostServiceGetHostsSummary2(ctx context.Context, params *HostServiceGetHostsSummary2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHostServiceGetHostsSummary2Request(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1350,6 +1377,18 @@ func (c *Client) InstanceServiceUpdateInstance2(ctx context.Context, resourceId 
 	return c.Client.Do(req)
 }
 
+func (c *Client) InstanceServiceInvalidateInstance2(ctx context.Context, resourceId string, params *InstanceServiceInvalidateInstance2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewInstanceServiceInvalidateInstance2Request(c.Server, resourceId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) LocalAccountServiceListLocalAccounts2(ctx context.Context, params *LocalAccountServiceListLocalAccounts2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewLocalAccountServiceListLocalAccounts2Request(c.Server, params)
 	if err != nil {
@@ -1422,8 +1461,8 @@ func (c *Client) LocationServiceListLocations2(ctx context.Context, params *Loca
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceListOperatingSystems3(ctx context.Context, params *OperatingSystemServiceListOperatingSystems3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceListOperatingSystems3Request(c.Server, params)
+func (c *Client) OperatingSystemServiceListOperatingSystems2(ctx context.Context, params *OperatingSystemServiceListOperatingSystems2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceListOperatingSystems2Request(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1434,8 +1473,8 @@ func (c *Client) OperatingSystemServiceListOperatingSystems3(ctx context.Context
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceCreateOperatingSystem3WithBody(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceCreateOperatingSystem3RequestWithBody(c.Server, params, contentType, body)
+func (c *Client) OperatingSystemServiceCreateOperatingSystem2WithBody(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceCreateOperatingSystem2RequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1446,8 +1485,8 @@ func (c *Client) OperatingSystemServiceCreateOperatingSystem3WithBody(ctx contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceCreateOperatingSystem3(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem3Params, body OperatingSystemServiceCreateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceCreateOperatingSystem3Request(c.Server, params, body)
+func (c *Client) OperatingSystemServiceCreateOperatingSystem2(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem2Params, body OperatingSystemServiceCreateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceCreateOperatingSystem2Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1458,8 +1497,8 @@ func (c *Client) OperatingSystemServiceCreateOperatingSystem3(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceDeleteOperatingSystem3(ctx context.Context, resourceId string, params *OperatingSystemServiceDeleteOperatingSystem3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceDeleteOperatingSystem3Request(c.Server, resourceId, params)
+func (c *Client) OperatingSystemServiceDeleteOperatingSystem2(ctx context.Context, resourceId string, params *OperatingSystemServiceDeleteOperatingSystem2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceDeleteOperatingSystem2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1470,8 +1509,8 @@ func (c *Client) OperatingSystemServiceDeleteOperatingSystem3(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceGetOperatingSystem3(ctx context.Context, resourceId string, params *OperatingSystemServiceGetOperatingSystem3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceGetOperatingSystem3Request(c.Server, resourceId, params)
+func (c *Client) OperatingSystemServiceGetOperatingSystem2(ctx context.Context, resourceId string, params *OperatingSystemServiceGetOperatingSystem2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceGetOperatingSystem2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1482,8 +1521,8 @@ func (c *Client) OperatingSystemServiceGetOperatingSystem3(ctx context.Context, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServicePatchOperatingSystem3WithBody(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServicePatchOperatingSystem3RequestWithBody(c.Server, resourceId, params, contentType, body)
+func (c *Client) OperatingSystemServicePatchOperatingSystem2WithBody(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServicePatchOperatingSystem2RequestWithBody(c.Server, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1494,8 +1533,8 @@ func (c *Client) OperatingSystemServicePatchOperatingSystem3WithBody(ctx context
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServicePatchOperatingSystem3(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, body OperatingSystemServicePatchOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServicePatchOperatingSystem3Request(c.Server, resourceId, params, body)
+func (c *Client) OperatingSystemServicePatchOperatingSystem2(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, body OperatingSystemServicePatchOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServicePatchOperatingSystem2Request(c.Server, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1506,8 +1545,8 @@ func (c *Client) OperatingSystemServicePatchOperatingSystem3(ctx context.Context
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceUpdateOperatingSystem3WithBody(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceUpdateOperatingSystem3RequestWithBody(c.Server, resourceId, params, contentType, body)
+func (c *Client) OperatingSystemServiceUpdateOperatingSystem2WithBody(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceUpdateOperatingSystem2RequestWithBody(c.Server, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1518,8 +1557,8 @@ func (c *Client) OperatingSystemServiceUpdateOperatingSystem3WithBody(ctx contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceUpdateOperatingSystem3(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem3Params, body OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceUpdateOperatingSystem3Request(c.Server, resourceId, params, body)
+func (c *Client) OperatingSystemServiceUpdateOperatingSystem2(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem2Params, body OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceUpdateOperatingSystem2Request(c.Server, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1794,8 +1833,8 @@ func (c *Client) RegionServiceUpdateRegion2(ctx context.Context, resourceId stri
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceListSchedules3(ctx context.Context, params *ScheduleServiceListSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceListSchedules3Request(c.Server, params)
+func (c *Client) ScheduleServiceListSchedules2(ctx context.Context, params *ScheduleServiceListSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceListSchedules2Request(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1806,8 +1845,8 @@ func (c *Client) ScheduleServiceListSchedules3(ctx context.Context, params *Sche
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceListRepeatedSchedules3(ctx context.Context, params *ScheduleServiceListRepeatedSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceListRepeatedSchedules3Request(c.Server, params)
+func (c *Client) ScheduleServiceListRepeatedSchedules2(ctx context.Context, params *ScheduleServiceListRepeatedSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceListRepeatedSchedules2Request(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1818,8 +1857,8 @@ func (c *Client) ScheduleServiceListRepeatedSchedules3(ctx context.Context, para
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceCreateRepeatedSchedule3WithBody(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceCreateRepeatedSchedule3RequestWithBody(c.Server, params, contentType, body)
+func (c *Client) ScheduleServiceCreateRepeatedSchedule2WithBody(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceCreateRepeatedSchedule2RequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1830,8 +1869,8 @@ func (c *Client) ScheduleServiceCreateRepeatedSchedule3WithBody(ctx context.Cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceCreateRepeatedSchedule3(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule3Params, body ScheduleServiceCreateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceCreateRepeatedSchedule3Request(c.Server, params, body)
+func (c *Client) ScheduleServiceCreateRepeatedSchedule2(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule2Params, body ScheduleServiceCreateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceCreateRepeatedSchedule2Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1842,8 +1881,8 @@ func (c *Client) ScheduleServiceCreateRepeatedSchedule3(ctx context.Context, par
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceDeleteRepeatedSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceDeleteRepeatedSchedule3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceDeleteRepeatedSchedule3Request(c.Server, resourceId, params)
+func (c *Client) ScheduleServiceDeleteRepeatedSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceDeleteRepeatedSchedule2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceDeleteRepeatedSchedule2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1854,8 +1893,8 @@ func (c *Client) ScheduleServiceDeleteRepeatedSchedule3(ctx context.Context, res
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceGetRepeatedSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceGetRepeatedSchedule3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceGetRepeatedSchedule3Request(c.Server, resourceId, params)
+func (c *Client) ScheduleServiceGetRepeatedSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceGetRepeatedSchedule2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceGetRepeatedSchedule2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1866,8 +1905,8 @@ func (c *Client) ScheduleServiceGetRepeatedSchedule3(ctx context.Context, resour
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServicePatchRepeatedSchedule3WithBody(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServicePatchRepeatedSchedule3RequestWithBody(c.Server, resourceId, params, contentType, body)
+func (c *Client) ScheduleServicePatchRepeatedSchedule2WithBody(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServicePatchRepeatedSchedule2RequestWithBody(c.Server, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1878,8 +1917,8 @@ func (c *Client) ScheduleServicePatchRepeatedSchedule3WithBody(ctx context.Conte
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServicePatchRepeatedSchedule3(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, body ScheduleServicePatchRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServicePatchRepeatedSchedule3Request(c.Server, resourceId, params, body)
+func (c *Client) ScheduleServicePatchRepeatedSchedule2(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, body ScheduleServicePatchRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServicePatchRepeatedSchedule2Request(c.Server, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1890,8 +1929,8 @@ func (c *Client) ScheduleServicePatchRepeatedSchedule3(ctx context.Context, reso
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceUpdateRepeatedSchedule3WithBody(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceUpdateRepeatedSchedule3RequestWithBody(c.Server, resourceId, params, contentType, body)
+func (c *Client) ScheduleServiceUpdateRepeatedSchedule2WithBody(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceUpdateRepeatedSchedule2RequestWithBody(c.Server, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1902,8 +1941,8 @@ func (c *Client) ScheduleServiceUpdateRepeatedSchedule3WithBody(ctx context.Cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceUpdateRepeatedSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule3Params, body ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceUpdateRepeatedSchedule3Request(c.Server, resourceId, params, body)
+func (c *Client) ScheduleServiceUpdateRepeatedSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule2Params, body ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceUpdateRepeatedSchedule2Request(c.Server, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1914,8 +1953,8 @@ func (c *Client) ScheduleServiceUpdateRepeatedSchedule3(ctx context.Context, res
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceListSingleSchedules3(ctx context.Context, params *ScheduleServiceListSingleSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceListSingleSchedules3Request(c.Server, params)
+func (c *Client) ScheduleServiceListSingleSchedules2(ctx context.Context, params *ScheduleServiceListSingleSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceListSingleSchedules2Request(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1926,8 +1965,8 @@ func (c *Client) ScheduleServiceListSingleSchedules3(ctx context.Context, params
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceCreateSingleSchedule3WithBody(ctx context.Context, params *ScheduleServiceCreateSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceCreateSingleSchedule3RequestWithBody(c.Server, params, contentType, body)
+func (c *Client) ScheduleServiceCreateSingleSchedule2WithBody(ctx context.Context, params *ScheduleServiceCreateSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceCreateSingleSchedule2RequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1938,8 +1977,8 @@ func (c *Client) ScheduleServiceCreateSingleSchedule3WithBody(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceCreateSingleSchedule3(ctx context.Context, params *ScheduleServiceCreateSingleSchedule3Params, body ScheduleServiceCreateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceCreateSingleSchedule3Request(c.Server, params, body)
+func (c *Client) ScheduleServiceCreateSingleSchedule2(ctx context.Context, params *ScheduleServiceCreateSingleSchedule2Params, body ScheduleServiceCreateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceCreateSingleSchedule2Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1950,8 +1989,8 @@ func (c *Client) ScheduleServiceCreateSingleSchedule3(ctx context.Context, param
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceDeleteSingleSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceDeleteSingleSchedule3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceDeleteSingleSchedule3Request(c.Server, resourceId, params)
+func (c *Client) ScheduleServiceDeleteSingleSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceDeleteSingleSchedule2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceDeleteSingleSchedule2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1962,8 +2001,8 @@ func (c *Client) ScheduleServiceDeleteSingleSchedule3(ctx context.Context, resou
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceGetSingleSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceGetSingleSchedule3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceGetSingleSchedule3Request(c.Server, resourceId, params)
+func (c *Client) ScheduleServiceGetSingleSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceGetSingleSchedule2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceGetSingleSchedule2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1974,8 +2013,8 @@ func (c *Client) ScheduleServiceGetSingleSchedule3(ctx context.Context, resource
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServicePatchSingleSchedule3WithBody(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServicePatchSingleSchedule3RequestWithBody(c.Server, resourceId, params, contentType, body)
+func (c *Client) ScheduleServicePatchSingleSchedule2WithBody(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServicePatchSingleSchedule2RequestWithBody(c.Server, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1986,8 +2025,8 @@ func (c *Client) ScheduleServicePatchSingleSchedule3WithBody(ctx context.Context
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServicePatchSingleSchedule3(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, body ScheduleServicePatchSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServicePatchSingleSchedule3Request(c.Server, resourceId, params, body)
+func (c *Client) ScheduleServicePatchSingleSchedule2(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, body ScheduleServicePatchSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServicePatchSingleSchedule2Request(c.Server, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1998,8 +2037,8 @@ func (c *Client) ScheduleServicePatchSingleSchedule3(ctx context.Context, resour
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceUpdateSingleSchedule3WithBody(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceUpdateSingleSchedule3RequestWithBody(c.Server, resourceId, params, contentType, body)
+func (c *Client) ScheduleServiceUpdateSingleSchedule2WithBody(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceUpdateSingleSchedule2RequestWithBody(c.Server, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2010,8 +2049,8 @@ func (c *Client) ScheduleServiceUpdateSingleSchedule3WithBody(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceUpdateSingleSchedule3(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule3Params, body ScheduleServiceUpdateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceUpdateSingleSchedule3Request(c.Server, resourceId, params, body)
+func (c *Client) ScheduleServiceUpdateSingleSchedule2(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule2Params, body ScheduleServiceUpdateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceUpdateSingleSchedule2Request(c.Server, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2022,8 +2061,8 @@ func (c *Client) ScheduleServiceUpdateSingleSchedule3(ctx context.Context, resou
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceListSites3(ctx context.Context, params *SiteServiceListSites3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceListSites3Request(c.Server, params)
+func (c *Client) SiteServiceListSites2(ctx context.Context, params *SiteServiceListSites2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceListSites2Request(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2034,8 +2073,8 @@ func (c *Client) SiteServiceListSites3(ctx context.Context, params *SiteServiceL
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceCreateSite3WithBody(ctx context.Context, params *SiteServiceCreateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceCreateSite3RequestWithBody(c.Server, params, contentType, body)
+func (c *Client) SiteServiceCreateSite2WithBody(ctx context.Context, params *SiteServiceCreateSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceCreateSite2RequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2046,8 +2085,8 @@ func (c *Client) SiteServiceCreateSite3WithBody(ctx context.Context, params *Sit
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceCreateSite3(ctx context.Context, params *SiteServiceCreateSite3Params, body SiteServiceCreateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceCreateSite3Request(c.Server, params, body)
+func (c *Client) SiteServiceCreateSite2(ctx context.Context, params *SiteServiceCreateSite2Params, body SiteServiceCreateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceCreateSite2Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2058,8 +2097,8 @@ func (c *Client) SiteServiceCreateSite3(ctx context.Context, params *SiteService
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceDeleteSite3(ctx context.Context, resourceId string, params *SiteServiceDeleteSite3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceDeleteSite3Request(c.Server, resourceId, params)
+func (c *Client) SiteServiceDeleteSite2(ctx context.Context, resourceId string, params *SiteServiceDeleteSite2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceDeleteSite2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2070,8 +2109,8 @@ func (c *Client) SiteServiceDeleteSite3(ctx context.Context, resourceId string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceGetSite3(ctx context.Context, resourceId string, params *SiteServiceGetSite3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceGetSite3Request(c.Server, resourceId, params)
+func (c *Client) SiteServiceGetSite2(ctx context.Context, resourceId string, params *SiteServiceGetSite2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceGetSite2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2082,8 +2121,8 @@ func (c *Client) SiteServiceGetSite3(ctx context.Context, resourceId string, par
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServicePatchSite3WithBody(ctx context.Context, resourceId string, params *SiteServicePatchSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServicePatchSite3RequestWithBody(c.Server, resourceId, params, contentType, body)
+func (c *Client) SiteServicePatchSite2WithBody(ctx context.Context, resourceId string, params *SiteServicePatchSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServicePatchSite2RequestWithBody(c.Server, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2094,8 +2133,8 @@ func (c *Client) SiteServicePatchSite3WithBody(ctx context.Context, resourceId s
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServicePatchSite3(ctx context.Context, resourceId string, params *SiteServicePatchSite3Params, body SiteServicePatchSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServicePatchSite3Request(c.Server, resourceId, params, body)
+func (c *Client) SiteServicePatchSite2(ctx context.Context, resourceId string, params *SiteServicePatchSite2Params, body SiteServicePatchSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServicePatchSite2Request(c.Server, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2106,8 +2145,8 @@ func (c *Client) SiteServicePatchSite3(ctx context.Context, resourceId string, p
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceUpdateSite3WithBody(ctx context.Context, resourceId string, params *SiteServiceUpdateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceUpdateSite3RequestWithBody(c.Server, resourceId, params, contentType, body)
+func (c *Client) SiteServiceUpdateSite2WithBody(ctx context.Context, resourceId string, params *SiteServiceUpdateSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceUpdateSite2RequestWithBody(c.Server, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2118,8 +2157,8 @@ func (c *Client) SiteServiceUpdateSite3WithBody(ctx context.Context, resourceId 
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceUpdateSite3(ctx context.Context, resourceId string, params *SiteServiceUpdateSite3Params, body SiteServiceUpdateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceUpdateSite3Request(c.Server, resourceId, params, body)
+func (c *Client) SiteServiceUpdateSite2(ctx context.Context, resourceId string, params *SiteServiceUpdateSite2Params, body SiteServiceUpdateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceUpdateSite2Request(c.Server, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2130,8 +2169,8 @@ func (c *Client) SiteServiceUpdateSite3(ctx context.Context, resourceId string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) TelemetryLogsGroupServiceListTelemetryLogsGroups3(ctx context.Context, params *TelemetryLogsGroupServiceListTelemetryLogsGroups3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryLogsGroupServiceListTelemetryLogsGroups3Request(c.Server, params)
+func (c *Client) TelemetryLogsGroupServiceListTelemetryLogsGroups2(ctx context.Context, params *TelemetryLogsGroupServiceListTelemetryLogsGroups2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryLogsGroupServiceListTelemetryLogsGroups2Request(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2142,8 +2181,8 @@ func (c *Client) TelemetryLogsGroupServiceListTelemetryLogsGroups3(ctx context.C
 	return c.Client.Do(req)
 }
 
-func (c *Client) TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBody(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3RequestWithBody(c.Server, params, contentType, body)
+func (c *Client) TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBody(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2RequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2154,8 +2193,8 @@ func (c *Client) TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBody(ctx 
 	return c.Client.Do(req)
 }
 
-func (c *Client) TelemetryLogsGroupServiceCreateTelemetryLogsGroup3(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Request(c.Server, params, body)
+func (c *Client) TelemetryLogsGroupServiceCreateTelemetryLogsGroup2(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2166,8 +2205,8 @@ func (c *Client) TelemetryLogsGroupServiceCreateTelemetryLogsGroup3(ctx context.
 	return c.Client.Do(req)
 }
 
-func (c *Client) TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Request(c.Server, resourceId, params)
+func (c *Client) TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2178,8 +2217,8 @@ func (c *Client) TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3(ctx context.
 	return c.Client.Do(req)
 }
 
-func (c *Client) TelemetryLogsGroupServiceGetTelemetryLogsGroup3(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceGetTelemetryLogsGroup3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryLogsGroupServiceGetTelemetryLogsGroup3Request(c.Server, resourceId, params)
+func (c *Client) TelemetryLogsGroupServiceGetTelemetryLogsGroup2(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceGetTelemetryLogsGroup2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryLogsGroupServiceGetTelemetryLogsGroup2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2190,8 +2229,8 @@ func (c *Client) TelemetryLogsGroupServiceGetTelemetryLogsGroup3(ctx context.Con
 	return c.Client.Do(req)
 }
 
-func (c *Client) TelemetryMetricsGroupServiceListTelemetryMetricsGroups3(ctx context.Context, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Request(c.Server, params)
+func (c *Client) TelemetryMetricsGroupServiceListTelemetryMetricsGroups2(ctx context.Context, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Request(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2202,8 +2241,8 @@ func (c *Client) TelemetryMetricsGroupServiceListTelemetryMetricsGroups3(ctx con
 	return c.Client.Do(req)
 }
 
-func (c *Client) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBody(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3RequestWithBody(c.Server, params, contentType, body)
+func (c *Client) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBody(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2RequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2214,8 +2253,8 @@ func (c *Client) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBod
 	return c.Client.Do(req)
 }
 
-func (c *Client) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Request(c.Server, params, body)
+func (c *Client) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2226,8 +2265,8 @@ func (c *Client) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3(ctx co
 	return c.Client.Do(req)
 }
 
-func (c *Client) TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Request(c.Server, resourceId, params)
+func (c *Client) TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2238,8 +2277,8 @@ func (c *Client) TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3(ctx co
 	return c.Client.Do(req)
 }
 
-func (c *Client) TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Request(c.Server, resourceId, params)
+func (c *Client) TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Request(c.Server, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2694,6 +2733,18 @@ func (c *Client) HostServiceRegisterHost(ctx context.Context, projectName string
 	return c.Client.Do(req)
 }
 
+func (c *Client) HostServiceGetHostsSummary(ctx context.Context, projectName string, params *HostServiceGetHostsSummaryParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHostServiceGetHostsSummaryRequest(c.Server, projectName, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) HostServiceDeleteHost(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewHostServiceDeleteHostRequest(c.Server, projectName, resourceId)
 	if err != nil {
@@ -2814,20 +2865,8 @@ func (c *Client) HostServicePatchRegisterHost(ctx context.Context, projectName s
 	return c.Client.Do(req)
 }
 
-func (c *Client) HostServiceGetHostsSummary(ctx context.Context, projectName string, params *HostServiceGetHostsSummaryParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewHostServiceGetHostsSummaryRequest(c.Server, projectName, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) HostServiceGetHostsSummary2(ctx context.Context, projectName string, params *HostServiceGetHostsSummary2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewHostServiceGetHostsSummary2Request(c.Server, projectName, params)
+func (c *Client) HostServiceGetHostsSummary3(ctx context.Context, projectName string, params *HostServiceGetHostsSummary3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHostServiceGetHostsSummary3Request(c.Server, projectName, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2958,6 +2997,114 @@ func (c *Client) InstanceServiceInvalidateInstance(ctx context.Context, projectN
 	return c.Client.Do(req)
 }
 
+func (c *Client) OperatingSystemServiceListOperatingSystems3(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystems3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceListOperatingSystems3Request(c.Server, projectName, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OperatingSystemServiceCreateOperatingSystem3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceCreateOperatingSystem3RequestWithBody(c.Server, projectName, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OperatingSystemServiceCreateOperatingSystem3(ctx context.Context, projectName string, body OperatingSystemServiceCreateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceCreateOperatingSystem3Request(c.Server, projectName, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OperatingSystemServiceDeleteOperatingSystem3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceDeleteOperatingSystem3Request(c.Server, projectName, resourceId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OperatingSystemServiceGetOperatingSystem3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceGetOperatingSystem3Request(c.Server, projectName, resourceId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OperatingSystemServicePatchOperatingSystem3WithBody(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServicePatchOperatingSystem3RequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OperatingSystemServicePatchOperatingSystem3(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, body OperatingSystemServicePatchOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServicePatchOperatingSystem3Request(c.Server, projectName, resourceId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OperatingSystemServiceUpdateOperatingSystem3WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceUpdateOperatingSystem3RequestWithBody(c.Server, projectName, resourceId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OperatingSystemServiceUpdateOperatingSystem3(ctx context.Context, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOperatingSystemServiceUpdateOperatingSystem3Request(c.Server, projectName, resourceId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) OperatingSystemServiceListOperatingSystems(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystemsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewOperatingSystemServiceListOperatingSystemsRequest(c.Server, projectName, params)
 	if err != nil {
@@ -3066,8 +3213,8 @@ func (c *Client) OperatingSystemServiceUpdateOperatingSystem(ctx context.Context
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceListOperatingSystems2(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystems2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceListOperatingSystems2Request(c.Server, projectName, params)
+func (c *Client) ScheduleServiceListSchedules(ctx context.Context, projectName string, params *ScheduleServiceListSchedulesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceListSchedulesRequest(c.Server, projectName, params)
 	if err != nil {
 		return nil, err
 	}
@@ -3078,8 +3225,8 @@ func (c *Client) OperatingSystemServiceListOperatingSystems2(ctx context.Context
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceCreateOperatingSystem2WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceCreateOperatingSystem2RequestWithBody(c.Server, projectName, contentType, body)
+func (c *Client) ScheduleServiceListRepeatedSchedules3(ctx context.Context, projectName string, params *ScheduleServiceListRepeatedSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceListRepeatedSchedules3Request(c.Server, projectName, params)
 	if err != nil {
 		return nil, err
 	}
@@ -3090,8 +3237,8 @@ func (c *Client) OperatingSystemServiceCreateOperatingSystem2WithBody(ctx contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceCreateOperatingSystem2(ctx context.Context, projectName string, body OperatingSystemServiceCreateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceCreateOperatingSystem2Request(c.Server, projectName, body)
+func (c *Client) ScheduleServiceCreateRepeatedSchedule3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceCreateRepeatedSchedule3RequestWithBody(c.Server, projectName, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3102,8 +3249,8 @@ func (c *Client) OperatingSystemServiceCreateOperatingSystem2(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceDeleteOperatingSystem2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceDeleteOperatingSystem2Request(c.Server, projectName, resourceId)
+func (c *Client) ScheduleServiceCreateRepeatedSchedule3(ctx context.Context, projectName string, body ScheduleServiceCreateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceCreateRepeatedSchedule3Request(c.Server, projectName, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3114,8 +3261,8 @@ func (c *Client) OperatingSystemServiceDeleteOperatingSystem2(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceGetOperatingSystem2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceGetOperatingSystem2Request(c.Server, projectName, resourceId)
+func (c *Client) ScheduleServiceDeleteRepeatedSchedule3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceDeleteRepeatedSchedule3Request(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -3126,8 +3273,8 @@ func (c *Client) OperatingSystemServiceGetOperatingSystem2(ctx context.Context, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServicePatchOperatingSystem2WithBody(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServicePatchOperatingSystem2RequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
+func (c *Client) ScheduleServiceGetRepeatedSchedule3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceGetRepeatedSchedule3Request(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -3138,8 +3285,8 @@ func (c *Client) OperatingSystemServicePatchOperatingSystem2WithBody(ctx context
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServicePatchOperatingSystem2(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, body OperatingSystemServicePatchOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServicePatchOperatingSystem2Request(c.Server, projectName, resourceId, params, body)
+func (c *Client) ScheduleServicePatchRepeatedSchedule3WithBody(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServicePatchRepeatedSchedule3RequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3150,8 +3297,8 @@ func (c *Client) OperatingSystemServicePatchOperatingSystem2(ctx context.Context
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceUpdateOperatingSystem2WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceUpdateOperatingSystem2RequestWithBody(c.Server, projectName, resourceId, contentType, body)
+func (c *Client) ScheduleServicePatchRepeatedSchedule3(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, body ScheduleServicePatchRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServicePatchRepeatedSchedule3Request(c.Server, projectName, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3162,8 +3309,8 @@ func (c *Client) OperatingSystemServiceUpdateOperatingSystem2WithBody(ctx contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) OperatingSystemServiceUpdateOperatingSystem2(ctx context.Context, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOperatingSystemServiceUpdateOperatingSystem2Request(c.Server, projectName, resourceId, body)
+func (c *Client) ScheduleServiceUpdateRepeatedSchedule3WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceUpdateRepeatedSchedule3RequestWithBody(c.Server, projectName, resourceId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3174,8 +3321,8 @@ func (c *Client) OperatingSystemServiceUpdateOperatingSystem2(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceListSchedules2(ctx context.Context, projectName string, params *ScheduleServiceListSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceListSchedules2Request(c.Server, projectName, params)
+func (c *Client) ScheduleServiceUpdateRepeatedSchedule3(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceUpdateRepeatedSchedule3Request(c.Server, projectName, resourceId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3186,8 +3333,8 @@ func (c *Client) ScheduleServiceListSchedules2(ctx context.Context, projectName 
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceListRepeatedSchedules2(ctx context.Context, projectName string, params *ScheduleServiceListRepeatedSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceListRepeatedSchedules2Request(c.Server, projectName, params)
+func (c *Client) ScheduleServiceListSingleSchedules3(ctx context.Context, projectName string, params *ScheduleServiceListSingleSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceListSingleSchedules3Request(c.Server, projectName, params)
 	if err != nil {
 		return nil, err
 	}
@@ -3198,8 +3345,8 @@ func (c *Client) ScheduleServiceListRepeatedSchedules2(ctx context.Context, proj
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceCreateRepeatedSchedule2WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceCreateRepeatedSchedule2RequestWithBody(c.Server, projectName, contentType, body)
+func (c *Client) ScheduleServiceCreateSingleSchedule3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceCreateSingleSchedule3RequestWithBody(c.Server, projectName, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3210,8 +3357,8 @@ func (c *Client) ScheduleServiceCreateRepeatedSchedule2WithBody(ctx context.Cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceCreateRepeatedSchedule2(ctx context.Context, projectName string, body ScheduleServiceCreateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceCreateRepeatedSchedule2Request(c.Server, projectName, body)
+func (c *Client) ScheduleServiceCreateSingleSchedule3(ctx context.Context, projectName string, body ScheduleServiceCreateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceCreateSingleSchedule3Request(c.Server, projectName, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3222,8 +3369,8 @@ func (c *Client) ScheduleServiceCreateRepeatedSchedule2(ctx context.Context, pro
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceDeleteRepeatedSchedule2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceDeleteRepeatedSchedule2Request(c.Server, projectName, resourceId)
+func (c *Client) ScheduleServiceDeleteSingleSchedule3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceDeleteSingleSchedule3Request(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -3234,8 +3381,8 @@ func (c *Client) ScheduleServiceDeleteRepeatedSchedule2(ctx context.Context, pro
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceGetRepeatedSchedule2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceGetRepeatedSchedule2Request(c.Server, projectName, resourceId)
+func (c *Client) ScheduleServiceGetSingleSchedule3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceGetSingleSchedule3Request(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -3246,8 +3393,8 @@ func (c *Client) ScheduleServiceGetRepeatedSchedule2(ctx context.Context, projec
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServicePatchRepeatedSchedule2WithBody(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServicePatchRepeatedSchedule2RequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
+func (c *Client) ScheduleServicePatchSingleSchedule3WithBody(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServicePatchSingleSchedule3RequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3258,8 +3405,8 @@ func (c *Client) ScheduleServicePatchRepeatedSchedule2WithBody(ctx context.Conte
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServicePatchRepeatedSchedule2(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, body ScheduleServicePatchRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServicePatchRepeatedSchedule2Request(c.Server, projectName, resourceId, params, body)
+func (c *Client) ScheduleServicePatchSingleSchedule3(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, body ScheduleServicePatchSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServicePatchSingleSchedule3Request(c.Server, projectName, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3270,8 +3417,8 @@ func (c *Client) ScheduleServicePatchRepeatedSchedule2(ctx context.Context, proj
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceUpdateRepeatedSchedule2WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceUpdateRepeatedSchedule2RequestWithBody(c.Server, projectName, resourceId, contentType, body)
+func (c *Client) ScheduleServiceUpdateSingleSchedule3WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceUpdateSingleSchedule3RequestWithBody(c.Server, projectName, resourceId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3282,8 +3429,8 @@ func (c *Client) ScheduleServiceUpdateRepeatedSchedule2WithBody(ctx context.Cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceUpdateRepeatedSchedule2(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceUpdateRepeatedSchedule2Request(c.Server, projectName, resourceId, body)
+func (c *Client) ScheduleServiceUpdateSingleSchedule3(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceUpdateSingleSchedule3Request(c.Server, projectName, resourceId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3294,8 +3441,8 @@ func (c *Client) ScheduleServiceUpdateRepeatedSchedule2(ctx context.Context, pro
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceListSingleSchedules2(ctx context.Context, projectName string, params *ScheduleServiceListSingleSchedules2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceListSingleSchedules2Request(c.Server, projectName, params)
+func (c *Client) WorkloadServiceListWorkloads(ctx context.Context, projectName string, params *WorkloadServiceListWorkloadsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceListWorkloadsRequest(c.Server, projectName, params)
 	if err != nil {
 		return nil, err
 	}
@@ -3306,8 +3453,8 @@ func (c *Client) ScheduleServiceListSingleSchedules2(ctx context.Context, projec
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceCreateSingleSchedule2WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceCreateSingleSchedule2RequestWithBody(c.Server, projectName, contentType, body)
+func (c *Client) WorkloadServiceCreateWorkloadWithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceCreateWorkloadRequestWithBody(c.Server, projectName, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3318,8 +3465,8 @@ func (c *Client) ScheduleServiceCreateSingleSchedule2WithBody(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceCreateSingleSchedule2(ctx context.Context, projectName string, body ScheduleServiceCreateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceCreateSingleSchedule2Request(c.Server, projectName, body)
+func (c *Client) WorkloadServiceCreateWorkload(ctx context.Context, projectName string, body WorkloadServiceCreateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceCreateWorkloadRequest(c.Server, projectName, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3330,8 +3477,8 @@ func (c *Client) ScheduleServiceCreateSingleSchedule2(ctx context.Context, proje
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceDeleteSingleSchedule2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceDeleteSingleSchedule2Request(c.Server, projectName, resourceId)
+func (c *Client) WorkloadServiceDeleteWorkload(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceDeleteWorkloadRequest(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -3342,8 +3489,8 @@ func (c *Client) ScheduleServiceDeleteSingleSchedule2(ctx context.Context, proje
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceGetSingleSchedule2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceGetSingleSchedule2Request(c.Server, projectName, resourceId)
+func (c *Client) WorkloadServiceGetWorkload(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceGetWorkloadRequest(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -3354,8 +3501,8 @@ func (c *Client) ScheduleServiceGetSingleSchedule2(ctx context.Context, projectN
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServicePatchSingleSchedule2WithBody(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServicePatchSingleSchedule2RequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
+func (c *Client) WorkloadServicePatchWorkloadWithBody(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServicePatchWorkloadRequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3366,8 +3513,8 @@ func (c *Client) ScheduleServicePatchSingleSchedule2WithBody(ctx context.Context
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServicePatchSingleSchedule2(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, body ScheduleServicePatchSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServicePatchSingleSchedule2Request(c.Server, projectName, resourceId, params, body)
+func (c *Client) WorkloadServicePatchWorkload(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, body WorkloadServicePatchWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServicePatchWorkloadRequest(c.Server, projectName, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3378,8 +3525,8 @@ func (c *Client) ScheduleServicePatchSingleSchedule2(ctx context.Context, projec
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceUpdateSingleSchedule2WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceUpdateSingleSchedule2RequestWithBody(c.Server, projectName, resourceId, contentType, body)
+func (c *Client) WorkloadServiceUpdateWorkloadWithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceUpdateWorkloadRequestWithBody(c.Server, projectName, resourceId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3390,8 +3537,8 @@ func (c *Client) ScheduleServiceUpdateSingleSchedule2WithBody(ctx context.Contex
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceUpdateSingleSchedule2(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceUpdateSingleSchedule2Request(c.Server, projectName, resourceId, body)
+func (c *Client) WorkloadServiceUpdateWorkload(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceUpdateWorkloadRequest(c.Server, projectName, resourceId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3534,102 +3681,6 @@ func (c *Client) LocationServiceListLocations(ctx context.Context, projectName s
 	return c.Client.Do(req)
 }
 
-func (c *Client) OSUpdatePolicyListOSUpdatePolicy3(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicy3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOSUpdatePolicyListOSUpdatePolicy3Request(c.Server, projectName, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) OSUpdatePolicyCreateOSUpdatePolicy3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOSUpdatePolicyCreateOSUpdatePolicy3RequestWithBody(c.Server, projectName, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) OSUpdatePolicyCreateOSUpdatePolicy3(ctx context.Context, projectName string, body OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOSUpdatePolicyCreateOSUpdatePolicy3Request(c.Server, projectName, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) OSUpdatePolicyDeleteOSUpdatePolicy3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOSUpdatePolicyDeleteOSUpdatePolicy3Request(c.Server, projectName, resourceId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) OSUpdatePolicyGetOSUpdatePolicy3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOSUpdatePolicyGetOSUpdatePolicy3Request(c.Server, projectName, resourceId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) OSUpdateRunListOSUpdateRun3(ctx context.Context, projectName string, params *OSUpdateRunListOSUpdateRun3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOSUpdateRunListOSUpdateRun3Request(c.Server, projectName, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) OSUpdateRunDeleteOSUpdateRun3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOSUpdateRunDeleteOSUpdateRun3Request(c.Server, projectName, resourceId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) OSUpdateRunGetOSUpdateRun3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewOSUpdateRunGetOSUpdateRun3Request(c.Server, projectName, resourceId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) OSUpdatePolicyListOSUpdatePolicy(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicyParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewOSUpdatePolicyListOSUpdatePolicyRequest(c.Server, projectName, params)
 	if err != nil {
@@ -3716,6 +3767,102 @@ func (c *Client) OSUpdateRunDeleteOSUpdateRun(ctx context.Context, projectName s
 
 func (c *Client) OSUpdateRunGetOSUpdateRun(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewOSUpdateRunGetOSUpdateRunRequest(c.Server, projectName, resourceId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OSUpdatePolicyListOSUpdatePolicy3(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicy3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOSUpdatePolicyListOSUpdatePolicy3Request(c.Server, projectName, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OSUpdatePolicyCreateOSUpdatePolicy3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOSUpdatePolicyCreateOSUpdatePolicy3RequestWithBody(c.Server, projectName, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OSUpdatePolicyCreateOSUpdatePolicy3(ctx context.Context, projectName string, body OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOSUpdatePolicyCreateOSUpdatePolicy3Request(c.Server, projectName, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OSUpdatePolicyDeleteOSUpdatePolicy3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOSUpdatePolicyDeleteOSUpdatePolicy3Request(c.Server, projectName, resourceId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OSUpdatePolicyGetOSUpdatePolicy3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOSUpdatePolicyGetOSUpdatePolicy3Request(c.Server, projectName, resourceId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OSUpdateRunListOSUpdateRun3(ctx context.Context, projectName string, params *OSUpdateRunListOSUpdateRun3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOSUpdateRunListOSUpdateRun3Request(c.Server, projectName, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OSUpdateRunDeleteOSUpdateRun3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOSUpdateRunDeleteOSUpdateRun3Request(c.Server, projectName, resourceId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) OSUpdateRunGetOSUpdateRun3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewOSUpdateRunGetOSUpdateRun3Request(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -3822,8 +3969,8 @@ func (c *Client) RegionServiceCreateRegion(ctx context.Context, projectName stri
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceListSites2(ctx context.Context, projectName string, regionId string, params *SiteServiceListSites2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceListSites2Request(c.Server, projectName, regionId, params)
+func (c *Client) SiteServiceListSites(ctx context.Context, projectName string, regionId string, params *SiteServiceListSitesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceListSitesRequest(c.Server, projectName, regionId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -3834,8 +3981,8 @@ func (c *Client) SiteServiceListSites2(ctx context.Context, projectName string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceCreateSite2WithBody(ctx context.Context, projectName string, regionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceCreateSite2RequestWithBody(c.Server, projectName, regionId, contentType, body)
+func (c *Client) SiteServiceCreateSiteWithBody(ctx context.Context, projectName string, regionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceCreateSiteRequestWithBody(c.Server, projectName, regionId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3846,8 +3993,8 @@ func (c *Client) SiteServiceCreateSite2WithBody(ctx context.Context, projectName
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceCreateSite2(ctx context.Context, projectName string, regionId string, body SiteServiceCreateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceCreateSite2Request(c.Server, projectName, regionId, body)
+func (c *Client) SiteServiceCreateSite(ctx context.Context, projectName string, regionId string, body SiteServiceCreateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceCreateSiteRequest(c.Server, projectName, regionId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3858,8 +4005,8 @@ func (c *Client) SiteServiceCreateSite2(ctx context.Context, projectName string,
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceDeleteSite2(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceDeleteSite2Request(c.Server, projectName, regionId, resourceId)
+func (c *Client) SiteServiceDeleteSite(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceDeleteSiteRequest(c.Server, projectName, regionId, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -3870,8 +4017,8 @@ func (c *Client) SiteServiceDeleteSite2(ctx context.Context, projectName string,
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceGetSite2(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceGetSite2Request(c.Server, projectName, regionId, resourceId)
+func (c *Client) SiteServiceGetSite(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceGetSiteRequest(c.Server, projectName, regionId, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -3882,8 +4029,8 @@ func (c *Client) SiteServiceGetSite2(ctx context.Context, projectName string, re
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServicePatchSite2WithBody(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServicePatchSite2RequestWithBody(c.Server, projectName, regionId, resourceId, params, contentType, body)
+func (c *Client) SiteServicePatchSiteWithBody(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServicePatchSiteRequestWithBody(c.Server, projectName, regionId, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3894,8 +4041,8 @@ func (c *Client) SiteServicePatchSite2WithBody(ctx context.Context, projectName 
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServicePatchSite2(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSite2Params, body SiteServicePatchSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServicePatchSite2Request(c.Server, projectName, regionId, resourceId, params, body)
+func (c *Client) SiteServicePatchSite(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSiteParams, body SiteServicePatchSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServicePatchSiteRequest(c.Server, projectName, regionId, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3906,8 +4053,8 @@ func (c *Client) SiteServicePatchSite2(ctx context.Context, projectName string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceUpdateSite2WithBody(ctx context.Context, projectName string, regionId string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceUpdateSite2RequestWithBody(c.Server, projectName, regionId, resourceId, contentType, body)
+func (c *Client) SiteServiceUpdateSiteWithBody(ctx context.Context, projectName string, regionId string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceUpdateSiteRequestWithBody(c.Server, projectName, regionId, resourceId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -3918,8 +4065,8 @@ func (c *Client) SiteServiceUpdateSite2WithBody(ctx context.Context, projectName
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceUpdateSite2(ctx context.Context, projectName string, regionId string, resourceId string, body SiteServiceUpdateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceUpdateSite2Request(c.Server, projectName, regionId, resourceId, body)
+func (c *Client) SiteServiceUpdateSite(ctx context.Context, projectName string, regionId string, resourceId string, body SiteServiceUpdateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceUpdateSiteRequest(c.Server, projectName, regionId, resourceId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4002,8 +4149,8 @@ func (c *Client) RegionServiceUpdateRegion(ctx context.Context, projectName stri
 	return c.Client.Do(req)
 }
 
-func (c *Client) ScheduleServiceListSchedules(ctx context.Context, projectName string, params *ScheduleServiceListSchedulesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewScheduleServiceListSchedulesRequest(c.Server, projectName, params)
+func (c *Client) ScheduleServiceListSchedules3(ctx context.Context, projectName string, params *ScheduleServiceListSchedules3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewScheduleServiceListSchedules3Request(c.Server, projectName, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4230,8 +4377,8 @@ func (c *Client) ScheduleServiceUpdateSingleSchedule(ctx context.Context, projec
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceListSites(ctx context.Context, projectName string, params *SiteServiceListSitesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceListSitesRequest(c.Server, projectName, params)
+func (c *Client) SiteServiceListSites3(ctx context.Context, projectName string, params *SiteServiceListSites3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceListSites3Request(c.Server, projectName, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4242,8 +4389,8 @@ func (c *Client) SiteServiceListSites(ctx context.Context, projectName string, p
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceCreateSiteWithBody(ctx context.Context, projectName string, params *SiteServiceCreateSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceCreateSiteRequestWithBody(c.Server, projectName, params, contentType, body)
+func (c *Client) SiteServiceCreateSite3WithBody(ctx context.Context, projectName string, params *SiteServiceCreateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceCreateSite3RequestWithBody(c.Server, projectName, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4254,8 +4401,8 @@ func (c *Client) SiteServiceCreateSiteWithBody(ctx context.Context, projectName 
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceCreateSite(ctx context.Context, projectName string, params *SiteServiceCreateSiteParams, body SiteServiceCreateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceCreateSiteRequest(c.Server, projectName, params, body)
+func (c *Client) SiteServiceCreateSite3(ctx context.Context, projectName string, params *SiteServiceCreateSite3Params, body SiteServiceCreateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceCreateSite3Request(c.Server, projectName, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4266,8 +4413,8 @@ func (c *Client) SiteServiceCreateSite(ctx context.Context, projectName string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceDeleteSite(ctx context.Context, projectName string, resourceId string, params *SiteServiceDeleteSiteParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceDeleteSiteRequest(c.Server, projectName, resourceId, params)
+func (c *Client) SiteServiceDeleteSite3(ctx context.Context, projectName string, resourceId string, params *SiteServiceDeleteSite3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceDeleteSite3Request(c.Server, projectName, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4278,8 +4425,8 @@ func (c *Client) SiteServiceDeleteSite(ctx context.Context, projectName string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceGetSite(ctx context.Context, projectName string, resourceId string, params *SiteServiceGetSiteParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceGetSiteRequest(c.Server, projectName, resourceId, params)
+func (c *Client) SiteServiceGetSite3(ctx context.Context, projectName string, resourceId string, params *SiteServiceGetSite3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceGetSite3Request(c.Server, projectName, resourceId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4290,8 +4437,8 @@ func (c *Client) SiteServiceGetSite(ctx context.Context, projectName string, res
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServicePatchSiteWithBody(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServicePatchSiteRequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
+func (c *Client) SiteServicePatchSite3WithBody(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServicePatchSite3RequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4302,8 +4449,8 @@ func (c *Client) SiteServicePatchSiteWithBody(ctx context.Context, projectName s
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServicePatchSite(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSiteParams, body SiteServicePatchSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServicePatchSiteRequest(c.Server, projectName, resourceId, params, body)
+func (c *Client) SiteServicePatchSite3(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSite3Params, body SiteServicePatchSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServicePatchSite3Request(c.Server, projectName, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4314,8 +4461,8 @@ func (c *Client) SiteServicePatchSite(ctx context.Context, projectName string, r
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceUpdateSiteWithBody(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceUpdateSiteRequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
+func (c *Client) SiteServiceUpdateSite3WithBody(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceUpdateSite3RequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4326,8 +4473,128 @@ func (c *Client) SiteServiceUpdateSiteWithBody(ctx context.Context, projectName 
 	return c.Client.Do(req)
 }
 
-func (c *Client) SiteServiceUpdateSite(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSiteParams, body SiteServiceUpdateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSiteServiceUpdateSiteRequest(c.Server, projectName, resourceId, params, body)
+func (c *Client) SiteServiceUpdateSite3(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSite3Params, body SiteServiceUpdateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSiteServiceUpdateSite3Request(c.Server, projectName, resourceId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TelemetryLogsGroupServiceListTelemetryLogsGroups3(ctx context.Context, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryLogsGroupServiceListTelemetryLogsGroups3Request(c.Server, projectName, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3RequestWithBody(c.Server, projectName, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TelemetryLogsGroupServiceCreateTelemetryLogsGroup3(ctx context.Context, projectName string, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Request(c.Server, projectName, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Request(c.Server, projectName, resourceId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TelemetryLogsGroupServiceGetTelemetryLogsGroup3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryLogsGroupServiceGetTelemetryLogsGroup3Request(c.Server, projectName, resourceId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TelemetryMetricsGroupServiceListTelemetryMetricsGroups3(ctx context.Context, projectName string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Request(c.Server, projectName, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3RequestWithBody(c.Server, projectName, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3(ctx context.Context, projectName string, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Request(c.Server, projectName, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Request(c.Server, projectName, resourceId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Request(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -4448,126 +4715,6 @@ func (c *Client) TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup(ctx con
 
 func (c *Client) TelemetryMetricsGroupServiceGetTelemetryMetricsGroup(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroupRequest(c.Server, projectName, resourceId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) TelemetryLogsGroupServiceListTelemetryLogsGroups2(ctx context.Context, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryLogsGroupServiceListTelemetryLogsGroups2Request(c.Server, projectName, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2RequestWithBody(c.Server, projectName, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) TelemetryLogsGroupServiceCreateTelemetryLogsGroup2(ctx context.Context, projectName string, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Request(c.Server, projectName, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Request(c.Server, projectName, resourceId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) TelemetryLogsGroupServiceGetTelemetryLogsGroup2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryLogsGroupServiceGetTelemetryLogsGroup2Request(c.Server, projectName, resourceId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) TelemetryMetricsGroupServiceListTelemetryMetricsGroups2(ctx context.Context, projectName string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Request(c.Server, projectName, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2RequestWithBody(c.Server, projectName, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2(ctx context.Context, projectName string, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Request(c.Server, projectName, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Request(c.Server, projectName, resourceId)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Request(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -4854,8 +5001,8 @@ func (c *Client) WorkloadMemberServiceGetWorkloadMember(ctx context.Context, pro
 	return c.Client.Do(req)
 }
 
-func (c *Client) WorkloadServiceListWorkloads(ctx context.Context, projectName string, params *WorkloadServiceListWorkloadsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewWorkloadServiceListWorkloadsRequest(c.Server, projectName, params)
+func (c *Client) WorkloadServiceListWorkloads3(ctx context.Context, projectName string, params *WorkloadServiceListWorkloads3Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceListWorkloads3Request(c.Server, projectName, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4866,8 +5013,8 @@ func (c *Client) WorkloadServiceListWorkloads(ctx context.Context, projectName s
 	return c.Client.Do(req)
 }
 
-func (c *Client) WorkloadServiceCreateWorkloadWithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewWorkloadServiceCreateWorkloadRequestWithBody(c.Server, projectName, contentType, body)
+func (c *Client) WorkloadServiceCreateWorkload3WithBody(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceCreateWorkload3RequestWithBody(c.Server, projectName, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4878,8 +5025,8 @@ func (c *Client) WorkloadServiceCreateWorkloadWithBody(ctx context.Context, proj
 	return c.Client.Do(req)
 }
 
-func (c *Client) WorkloadServiceCreateWorkload(ctx context.Context, projectName string, body WorkloadServiceCreateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewWorkloadServiceCreateWorkloadRequest(c.Server, projectName, body)
+func (c *Client) WorkloadServiceCreateWorkload3(ctx context.Context, projectName string, body WorkloadServiceCreateWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceCreateWorkload3Request(c.Server, projectName, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4890,8 +5037,8 @@ func (c *Client) WorkloadServiceCreateWorkload(ctx context.Context, projectName 
 	return c.Client.Do(req)
 }
 
-func (c *Client) WorkloadServiceDeleteWorkload(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewWorkloadServiceDeleteWorkloadRequest(c.Server, projectName, resourceId)
+func (c *Client) WorkloadServiceDeleteWorkload3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceDeleteWorkload3Request(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -4902,8 +5049,8 @@ func (c *Client) WorkloadServiceDeleteWorkload(ctx context.Context, projectName 
 	return c.Client.Do(req)
 }
 
-func (c *Client) WorkloadServiceGetWorkload(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewWorkloadServiceGetWorkloadRequest(c.Server, projectName, resourceId)
+func (c *Client) WorkloadServiceGetWorkload3(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceGetWorkload3Request(c.Server, projectName, resourceId)
 	if err != nil {
 		return nil, err
 	}
@@ -4914,8 +5061,8 @@ func (c *Client) WorkloadServiceGetWorkload(ctx context.Context, projectName str
 	return c.Client.Do(req)
 }
 
-func (c *Client) WorkloadServicePatchWorkloadWithBody(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewWorkloadServicePatchWorkloadRequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
+func (c *Client) WorkloadServicePatchWorkload3WithBody(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkload3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServicePatchWorkload3RequestWithBody(c.Server, projectName, resourceId, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4926,8 +5073,8 @@ func (c *Client) WorkloadServicePatchWorkloadWithBody(ctx context.Context, proje
 	return c.Client.Do(req)
 }
 
-func (c *Client) WorkloadServicePatchWorkload(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, body WorkloadServicePatchWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewWorkloadServicePatchWorkloadRequest(c.Server, projectName, resourceId, params, body)
+func (c *Client) WorkloadServicePatchWorkload3(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkload3Params, body WorkloadServicePatchWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServicePatchWorkload3Request(c.Server, projectName, resourceId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4938,8 +5085,8 @@ func (c *Client) WorkloadServicePatchWorkload(ctx context.Context, projectName s
 	return c.Client.Do(req)
 }
 
-func (c *Client) WorkloadServiceUpdateWorkloadWithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewWorkloadServiceUpdateWorkloadRequestWithBody(c.Server, projectName, resourceId, contentType, body)
+func (c *Client) WorkloadServiceUpdateWorkload3WithBody(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceUpdateWorkload3RequestWithBody(c.Server, projectName, resourceId, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4950,8 +5097,8 @@ func (c *Client) WorkloadServiceUpdateWorkloadWithBody(ctx context.Context, proj
 	return c.Client.Do(req)
 }
 
-func (c *Client) WorkloadServiceUpdateWorkload(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewWorkloadServiceUpdateWorkloadRequest(c.Server, projectName, resourceId, body)
+func (c *Client) WorkloadServiceUpdateWorkload3(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWorkloadServiceUpdateWorkload3Request(c.Server, projectName, resourceId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5618,9 +5765,9 @@ func NewHostServicePatchHost2RequestWithBody(server string, resourceId string, p
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -5909,8 +6056,8 @@ func NewHostServicePatchRegisterHost2RequestWithBody(server string, resourceId s
 	return req, nil
 }
 
-// NewHostServiceGetHostsSummary3Request generates requests for HostServiceGetHostsSummary3
-func NewHostServiceGetHostsSummary3Request(server string, params *HostServiceGetHostsSummary3Params) (*http.Request, error) {
+// NewHostServiceGetHostsSummary2Request generates requests for HostServiceGetHostsSummary2
+func NewHostServiceGetHostsSummary2Request(server string, params *HostServiceGetHostsSummary2Params) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -6281,9 +6428,9 @@ func NewInstanceServicePatchInstance2RequestWithBody(server string, resourceId s
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -6383,6 +6530,58 @@ func NewInstanceServiceUpdateInstance2RequestWithBody(server string, resourceId 
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewInstanceServiceInvalidateInstance2Request generates requests for InstanceServiceInvalidateInstance2
+func NewInstanceServiceInvalidateInstance2Request(server string, resourceId string, params *InstanceServiceInvalidateInstance2Params) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/edge-infra.orchestrator.apis/v2/instances/%s/invalidate", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "projectName", runtime.ParamLocationQuery, params.ProjectName); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -6751,8 +6950,8 @@ func NewLocationServiceListLocations2Request(server string, params *LocationServ
 	return req, nil
 }
 
-// NewOperatingSystemServiceListOperatingSystems3Request generates requests for OperatingSystemServiceListOperatingSystems3
-func NewOperatingSystemServiceListOperatingSystems3Request(server string, params *OperatingSystemServiceListOperatingSystems3Params) (*http.Request, error) {
+// NewOperatingSystemServiceListOperatingSystems2Request generates requests for OperatingSystemServiceListOperatingSystems2
+func NewOperatingSystemServiceListOperatingSystems2Request(server string, params *OperatingSystemServiceListOperatingSystems2Params) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -6860,19 +7059,19 @@ func NewOperatingSystemServiceListOperatingSystems3Request(server string, params
 	return req, nil
 }
 
-// NewOperatingSystemServiceCreateOperatingSystem3Request calls the generic OperatingSystemServiceCreateOperatingSystem3 builder with application/json body
-func NewOperatingSystemServiceCreateOperatingSystem3Request(server string, params *OperatingSystemServiceCreateOperatingSystem3Params, body OperatingSystemServiceCreateOperatingSystem3JSONRequestBody) (*http.Request, error) {
+// NewOperatingSystemServiceCreateOperatingSystem2Request calls the generic OperatingSystemServiceCreateOperatingSystem2 builder with application/json body
+func NewOperatingSystemServiceCreateOperatingSystem2Request(server string, params *OperatingSystemServiceCreateOperatingSystem2Params, body OperatingSystemServiceCreateOperatingSystem2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewOperatingSystemServiceCreateOperatingSystem3RequestWithBody(server, params, "application/json", bodyReader)
+	return NewOperatingSystemServiceCreateOperatingSystem2RequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewOperatingSystemServiceCreateOperatingSystem3RequestWithBody generates requests for OperatingSystemServiceCreateOperatingSystem3 with any type of body
-func NewOperatingSystemServiceCreateOperatingSystem3RequestWithBody(server string, params *OperatingSystemServiceCreateOperatingSystem3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewOperatingSystemServiceCreateOperatingSystem2RequestWithBody generates requests for OperatingSystemServiceCreateOperatingSystem2 with any type of body
+func NewOperatingSystemServiceCreateOperatingSystem2RequestWithBody(server string, params *OperatingSystemServiceCreateOperatingSystem2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -6918,8 +7117,8 @@ func NewOperatingSystemServiceCreateOperatingSystem3RequestWithBody(server strin
 	return req, nil
 }
 
-// NewOperatingSystemServiceDeleteOperatingSystem3Request generates requests for OperatingSystemServiceDeleteOperatingSystem3
-func NewOperatingSystemServiceDeleteOperatingSystem3Request(server string, resourceId string, params *OperatingSystemServiceDeleteOperatingSystem3Params) (*http.Request, error) {
+// NewOperatingSystemServiceDeleteOperatingSystem2Request generates requests for OperatingSystemServiceDeleteOperatingSystem2
+func NewOperatingSystemServiceDeleteOperatingSystem2Request(server string, resourceId string, params *OperatingSystemServiceDeleteOperatingSystem2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -6970,8 +7169,8 @@ func NewOperatingSystemServiceDeleteOperatingSystem3Request(server string, resou
 	return req, nil
 }
 
-// NewOperatingSystemServiceGetOperatingSystem3Request generates requests for OperatingSystemServiceGetOperatingSystem3
-func NewOperatingSystemServiceGetOperatingSystem3Request(server string, resourceId string, params *OperatingSystemServiceGetOperatingSystem3Params) (*http.Request, error) {
+// NewOperatingSystemServiceGetOperatingSystem2Request generates requests for OperatingSystemServiceGetOperatingSystem2
+func NewOperatingSystemServiceGetOperatingSystem2Request(server string, resourceId string, params *OperatingSystemServiceGetOperatingSystem2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7022,19 +7221,19 @@ func NewOperatingSystemServiceGetOperatingSystem3Request(server string, resource
 	return req, nil
 }
 
-// NewOperatingSystemServicePatchOperatingSystem3Request calls the generic OperatingSystemServicePatchOperatingSystem3 builder with application/json body
-func NewOperatingSystemServicePatchOperatingSystem3Request(server string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, body OperatingSystemServicePatchOperatingSystem3JSONRequestBody) (*http.Request, error) {
+// NewOperatingSystemServicePatchOperatingSystem2Request calls the generic OperatingSystemServicePatchOperatingSystem2 builder with application/json body
+func NewOperatingSystemServicePatchOperatingSystem2Request(server string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, body OperatingSystemServicePatchOperatingSystem2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewOperatingSystemServicePatchOperatingSystem3RequestWithBody(server, resourceId, params, "application/json", bodyReader)
+	return NewOperatingSystemServicePatchOperatingSystem2RequestWithBody(server, resourceId, params, "application/json", bodyReader)
 }
 
-// NewOperatingSystemServicePatchOperatingSystem3RequestWithBody generates requests for OperatingSystemServicePatchOperatingSystem3 with any type of body
-func NewOperatingSystemServicePatchOperatingSystem3RequestWithBody(server string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewOperatingSystemServicePatchOperatingSystem2RequestWithBody generates requests for OperatingSystemServicePatchOperatingSystem2 with any type of body
+func NewOperatingSystemServicePatchOperatingSystem2RequestWithBody(server string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7062,9 +7261,9 @@ func NewOperatingSystemServicePatchOperatingSystem3RequestWithBody(server string
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -7103,19 +7302,19 @@ func NewOperatingSystemServicePatchOperatingSystem3RequestWithBody(server string
 	return req, nil
 }
 
-// NewOperatingSystemServiceUpdateOperatingSystem3Request calls the generic OperatingSystemServiceUpdateOperatingSystem3 builder with application/json body
-func NewOperatingSystemServiceUpdateOperatingSystem3Request(server string, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem3Params, body OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody) (*http.Request, error) {
+// NewOperatingSystemServiceUpdateOperatingSystem2Request calls the generic OperatingSystemServiceUpdateOperatingSystem2 builder with application/json body
+func NewOperatingSystemServiceUpdateOperatingSystem2Request(server string, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem2Params, body OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewOperatingSystemServiceUpdateOperatingSystem3RequestWithBody(server, resourceId, params, "application/json", bodyReader)
+	return NewOperatingSystemServiceUpdateOperatingSystem2RequestWithBody(server, resourceId, params, "application/json", bodyReader)
 }
 
-// NewOperatingSystemServiceUpdateOperatingSystem3RequestWithBody generates requests for OperatingSystemServiceUpdateOperatingSystem3 with any type of body
-func NewOperatingSystemServiceUpdateOperatingSystem3RequestWithBody(server string, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewOperatingSystemServiceUpdateOperatingSystem2RequestWithBody generates requests for OperatingSystemServiceUpdateOperatingSystem2 with any type of body
+func NewOperatingSystemServiceUpdateOperatingSystem2RequestWithBody(server string, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8250,9 +8449,9 @@ func NewRegionServicePatchRegion2RequestWithBody(server string, resourceId strin
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -8356,8 +8555,8 @@ func NewRegionServiceUpdateRegion2RequestWithBody(server string, resourceId stri
 	return req, nil
 }
 
-// NewScheduleServiceListSchedules3Request generates requests for ScheduleServiceListSchedules3
-func NewScheduleServiceListSchedules3Request(server string, params *ScheduleServiceListSchedules3Params) (*http.Request, error) {
+// NewScheduleServiceListSchedules2Request generates requests for ScheduleServiceListSchedules2
+func NewScheduleServiceListSchedules2Request(server string, params *ScheduleServiceListSchedules2Params) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -8497,8 +8696,8 @@ func NewScheduleServiceListSchedules3Request(server string, params *ScheduleServ
 	return req, nil
 }
 
-// NewScheduleServiceListRepeatedSchedules3Request generates requests for ScheduleServiceListRepeatedSchedules3
-func NewScheduleServiceListRepeatedSchedules3Request(server string, params *ScheduleServiceListRepeatedSchedules3Params) (*http.Request, error) {
+// NewScheduleServiceListRepeatedSchedules2Request generates requests for ScheduleServiceListRepeatedSchedules2
+func NewScheduleServiceListRepeatedSchedules2Request(server string, params *ScheduleServiceListRepeatedSchedules2Params) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -8638,19 +8837,19 @@ func NewScheduleServiceListRepeatedSchedules3Request(server string, params *Sche
 	return req, nil
 }
 
-// NewScheduleServiceCreateRepeatedSchedule3Request calls the generic ScheduleServiceCreateRepeatedSchedule3 builder with application/json body
-func NewScheduleServiceCreateRepeatedSchedule3Request(server string, params *ScheduleServiceCreateRepeatedSchedule3Params, body ScheduleServiceCreateRepeatedSchedule3JSONRequestBody) (*http.Request, error) {
+// NewScheduleServiceCreateRepeatedSchedule2Request calls the generic ScheduleServiceCreateRepeatedSchedule2 builder with application/json body
+func NewScheduleServiceCreateRepeatedSchedule2Request(server string, params *ScheduleServiceCreateRepeatedSchedule2Params, body ScheduleServiceCreateRepeatedSchedule2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServiceCreateRepeatedSchedule3RequestWithBody(server, params, "application/json", bodyReader)
+	return NewScheduleServiceCreateRepeatedSchedule2RequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewScheduleServiceCreateRepeatedSchedule3RequestWithBody generates requests for ScheduleServiceCreateRepeatedSchedule3 with any type of body
-func NewScheduleServiceCreateRepeatedSchedule3RequestWithBody(server string, params *ScheduleServiceCreateRepeatedSchedule3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServiceCreateRepeatedSchedule2RequestWithBody generates requests for ScheduleServiceCreateRepeatedSchedule2 with any type of body
+func NewScheduleServiceCreateRepeatedSchedule2RequestWithBody(server string, params *ScheduleServiceCreateRepeatedSchedule2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -8696,8 +8895,8 @@ func NewScheduleServiceCreateRepeatedSchedule3RequestWithBody(server string, par
 	return req, nil
 }
 
-// NewScheduleServiceDeleteRepeatedSchedule3Request generates requests for ScheduleServiceDeleteRepeatedSchedule3
-func NewScheduleServiceDeleteRepeatedSchedule3Request(server string, resourceId string, params *ScheduleServiceDeleteRepeatedSchedule3Params) (*http.Request, error) {
+// NewScheduleServiceDeleteRepeatedSchedule2Request generates requests for ScheduleServiceDeleteRepeatedSchedule2
+func NewScheduleServiceDeleteRepeatedSchedule2Request(server string, resourceId string, params *ScheduleServiceDeleteRepeatedSchedule2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8748,8 +8947,8 @@ func NewScheduleServiceDeleteRepeatedSchedule3Request(server string, resourceId 
 	return req, nil
 }
 
-// NewScheduleServiceGetRepeatedSchedule3Request generates requests for ScheduleServiceGetRepeatedSchedule3
-func NewScheduleServiceGetRepeatedSchedule3Request(server string, resourceId string, params *ScheduleServiceGetRepeatedSchedule3Params) (*http.Request, error) {
+// NewScheduleServiceGetRepeatedSchedule2Request generates requests for ScheduleServiceGetRepeatedSchedule2
+func NewScheduleServiceGetRepeatedSchedule2Request(server string, resourceId string, params *ScheduleServiceGetRepeatedSchedule2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8800,19 +8999,19 @@ func NewScheduleServiceGetRepeatedSchedule3Request(server string, resourceId str
 	return req, nil
 }
 
-// NewScheduleServicePatchRepeatedSchedule3Request calls the generic ScheduleServicePatchRepeatedSchedule3 builder with application/json body
-func NewScheduleServicePatchRepeatedSchedule3Request(server string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, body ScheduleServicePatchRepeatedSchedule3JSONRequestBody) (*http.Request, error) {
+// NewScheduleServicePatchRepeatedSchedule2Request calls the generic ScheduleServicePatchRepeatedSchedule2 builder with application/json body
+func NewScheduleServicePatchRepeatedSchedule2Request(server string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, body ScheduleServicePatchRepeatedSchedule2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServicePatchRepeatedSchedule3RequestWithBody(server, resourceId, params, "application/json", bodyReader)
+	return NewScheduleServicePatchRepeatedSchedule2RequestWithBody(server, resourceId, params, "application/json", bodyReader)
 }
 
-// NewScheduleServicePatchRepeatedSchedule3RequestWithBody generates requests for ScheduleServicePatchRepeatedSchedule3 with any type of body
-func NewScheduleServicePatchRepeatedSchedule3RequestWithBody(server string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServicePatchRepeatedSchedule2RequestWithBody generates requests for ScheduleServicePatchRepeatedSchedule2 with any type of body
+func NewScheduleServicePatchRepeatedSchedule2RequestWithBody(server string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8840,9 +9039,9 @@ func NewScheduleServicePatchRepeatedSchedule3RequestWithBody(server string, reso
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -8881,19 +9080,19 @@ func NewScheduleServicePatchRepeatedSchedule3RequestWithBody(server string, reso
 	return req, nil
 }
 
-// NewScheduleServiceUpdateRepeatedSchedule3Request calls the generic ScheduleServiceUpdateRepeatedSchedule3 builder with application/json body
-func NewScheduleServiceUpdateRepeatedSchedule3Request(server string, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule3Params, body ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody) (*http.Request, error) {
+// NewScheduleServiceUpdateRepeatedSchedule2Request calls the generic ScheduleServiceUpdateRepeatedSchedule2 builder with application/json body
+func NewScheduleServiceUpdateRepeatedSchedule2Request(server string, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule2Params, body ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServiceUpdateRepeatedSchedule3RequestWithBody(server, resourceId, params, "application/json", bodyReader)
+	return NewScheduleServiceUpdateRepeatedSchedule2RequestWithBody(server, resourceId, params, "application/json", bodyReader)
 }
 
-// NewScheduleServiceUpdateRepeatedSchedule3RequestWithBody generates requests for ScheduleServiceUpdateRepeatedSchedule3 with any type of body
-func NewScheduleServiceUpdateRepeatedSchedule3RequestWithBody(server string, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServiceUpdateRepeatedSchedule2RequestWithBody generates requests for ScheduleServiceUpdateRepeatedSchedule2 with any type of body
+func NewScheduleServiceUpdateRepeatedSchedule2RequestWithBody(server string, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -8946,8 +9145,8 @@ func NewScheduleServiceUpdateRepeatedSchedule3RequestWithBody(server string, res
 	return req, nil
 }
 
-// NewScheduleServiceListSingleSchedules3Request generates requests for ScheduleServiceListSingleSchedules3
-func NewScheduleServiceListSingleSchedules3Request(server string, params *ScheduleServiceListSingleSchedules3Params) (*http.Request, error) {
+// NewScheduleServiceListSingleSchedules2Request generates requests for ScheduleServiceListSingleSchedules2
+func NewScheduleServiceListSingleSchedules2Request(server string, params *ScheduleServiceListSingleSchedules2Params) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -9087,19 +9286,19 @@ func NewScheduleServiceListSingleSchedules3Request(server string, params *Schedu
 	return req, nil
 }
 
-// NewScheduleServiceCreateSingleSchedule3Request calls the generic ScheduleServiceCreateSingleSchedule3 builder with application/json body
-func NewScheduleServiceCreateSingleSchedule3Request(server string, params *ScheduleServiceCreateSingleSchedule3Params, body ScheduleServiceCreateSingleSchedule3JSONRequestBody) (*http.Request, error) {
+// NewScheduleServiceCreateSingleSchedule2Request calls the generic ScheduleServiceCreateSingleSchedule2 builder with application/json body
+func NewScheduleServiceCreateSingleSchedule2Request(server string, params *ScheduleServiceCreateSingleSchedule2Params, body ScheduleServiceCreateSingleSchedule2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServiceCreateSingleSchedule3RequestWithBody(server, params, "application/json", bodyReader)
+	return NewScheduleServiceCreateSingleSchedule2RequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewScheduleServiceCreateSingleSchedule3RequestWithBody generates requests for ScheduleServiceCreateSingleSchedule3 with any type of body
-func NewScheduleServiceCreateSingleSchedule3RequestWithBody(server string, params *ScheduleServiceCreateSingleSchedule3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServiceCreateSingleSchedule2RequestWithBody generates requests for ScheduleServiceCreateSingleSchedule2 with any type of body
+func NewScheduleServiceCreateSingleSchedule2RequestWithBody(server string, params *ScheduleServiceCreateSingleSchedule2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -9145,8 +9344,8 @@ func NewScheduleServiceCreateSingleSchedule3RequestWithBody(server string, param
 	return req, nil
 }
 
-// NewScheduleServiceDeleteSingleSchedule3Request generates requests for ScheduleServiceDeleteSingleSchedule3
-func NewScheduleServiceDeleteSingleSchedule3Request(server string, resourceId string, params *ScheduleServiceDeleteSingleSchedule3Params) (*http.Request, error) {
+// NewScheduleServiceDeleteSingleSchedule2Request generates requests for ScheduleServiceDeleteSingleSchedule2
+func NewScheduleServiceDeleteSingleSchedule2Request(server string, resourceId string, params *ScheduleServiceDeleteSingleSchedule2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -9197,8 +9396,8 @@ func NewScheduleServiceDeleteSingleSchedule3Request(server string, resourceId st
 	return req, nil
 }
 
-// NewScheduleServiceGetSingleSchedule3Request generates requests for ScheduleServiceGetSingleSchedule3
-func NewScheduleServiceGetSingleSchedule3Request(server string, resourceId string, params *ScheduleServiceGetSingleSchedule3Params) (*http.Request, error) {
+// NewScheduleServiceGetSingleSchedule2Request generates requests for ScheduleServiceGetSingleSchedule2
+func NewScheduleServiceGetSingleSchedule2Request(server string, resourceId string, params *ScheduleServiceGetSingleSchedule2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -9249,19 +9448,19 @@ func NewScheduleServiceGetSingleSchedule3Request(server string, resourceId strin
 	return req, nil
 }
 
-// NewScheduleServicePatchSingleSchedule3Request calls the generic ScheduleServicePatchSingleSchedule3 builder with application/json body
-func NewScheduleServicePatchSingleSchedule3Request(server string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, body ScheduleServicePatchSingleSchedule3JSONRequestBody) (*http.Request, error) {
+// NewScheduleServicePatchSingleSchedule2Request calls the generic ScheduleServicePatchSingleSchedule2 builder with application/json body
+func NewScheduleServicePatchSingleSchedule2Request(server string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, body ScheduleServicePatchSingleSchedule2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServicePatchSingleSchedule3RequestWithBody(server, resourceId, params, "application/json", bodyReader)
+	return NewScheduleServicePatchSingleSchedule2RequestWithBody(server, resourceId, params, "application/json", bodyReader)
 }
 
-// NewScheduleServicePatchSingleSchedule3RequestWithBody generates requests for ScheduleServicePatchSingleSchedule3 with any type of body
-func NewScheduleServicePatchSingleSchedule3RequestWithBody(server string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServicePatchSingleSchedule2RequestWithBody generates requests for ScheduleServicePatchSingleSchedule2 with any type of body
+func NewScheduleServicePatchSingleSchedule2RequestWithBody(server string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -9289,9 +9488,9 @@ func NewScheduleServicePatchSingleSchedule3RequestWithBody(server string, resour
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -9330,19 +9529,19 @@ func NewScheduleServicePatchSingleSchedule3RequestWithBody(server string, resour
 	return req, nil
 }
 
-// NewScheduleServiceUpdateSingleSchedule3Request calls the generic ScheduleServiceUpdateSingleSchedule3 builder with application/json body
-func NewScheduleServiceUpdateSingleSchedule3Request(server string, resourceId string, params *ScheduleServiceUpdateSingleSchedule3Params, body ScheduleServiceUpdateSingleSchedule3JSONRequestBody) (*http.Request, error) {
+// NewScheduleServiceUpdateSingleSchedule2Request calls the generic ScheduleServiceUpdateSingleSchedule2 builder with application/json body
+func NewScheduleServiceUpdateSingleSchedule2Request(server string, resourceId string, params *ScheduleServiceUpdateSingleSchedule2Params, body ScheduleServiceUpdateSingleSchedule2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServiceUpdateSingleSchedule3RequestWithBody(server, resourceId, params, "application/json", bodyReader)
+	return NewScheduleServiceUpdateSingleSchedule2RequestWithBody(server, resourceId, params, "application/json", bodyReader)
 }
 
-// NewScheduleServiceUpdateSingleSchedule3RequestWithBody generates requests for ScheduleServiceUpdateSingleSchedule3 with any type of body
-func NewScheduleServiceUpdateSingleSchedule3RequestWithBody(server string, resourceId string, params *ScheduleServiceUpdateSingleSchedule3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServiceUpdateSingleSchedule2RequestWithBody generates requests for ScheduleServiceUpdateSingleSchedule2 with any type of body
+func NewScheduleServiceUpdateSingleSchedule2RequestWithBody(server string, resourceId string, params *ScheduleServiceUpdateSingleSchedule2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -9395,8 +9594,8 @@ func NewScheduleServiceUpdateSingleSchedule3RequestWithBody(server string, resou
 	return req, nil
 }
 
-// NewSiteServiceListSites3Request generates requests for SiteServiceListSites3
-func NewSiteServiceListSites3Request(server string, params *SiteServiceListSites3Params) (*http.Request, error) {
+// NewSiteServiceListSites2Request generates requests for SiteServiceListSites2
+func NewSiteServiceListSites2Request(server string, params *SiteServiceListSites2Params) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -9520,19 +9719,19 @@ func NewSiteServiceListSites3Request(server string, params *SiteServiceListSites
 	return req, nil
 }
 
-// NewSiteServiceCreateSite3Request calls the generic SiteServiceCreateSite3 builder with application/json body
-func NewSiteServiceCreateSite3Request(server string, params *SiteServiceCreateSite3Params, body SiteServiceCreateSite3JSONRequestBody) (*http.Request, error) {
+// NewSiteServiceCreateSite2Request calls the generic SiteServiceCreateSite2 builder with application/json body
+func NewSiteServiceCreateSite2Request(server string, params *SiteServiceCreateSite2Params, body SiteServiceCreateSite2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewSiteServiceCreateSite3RequestWithBody(server, params, "application/json", bodyReader)
+	return NewSiteServiceCreateSite2RequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewSiteServiceCreateSite3RequestWithBody generates requests for SiteServiceCreateSite3 with any type of body
-func NewSiteServiceCreateSite3RequestWithBody(server string, params *SiteServiceCreateSite3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewSiteServiceCreateSite2RequestWithBody generates requests for SiteServiceCreateSite2 with any type of body
+func NewSiteServiceCreateSite2RequestWithBody(server string, params *SiteServiceCreateSite2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -9594,8 +9793,8 @@ func NewSiteServiceCreateSite3RequestWithBody(server string, params *SiteService
 	return req, nil
 }
 
-// NewSiteServiceDeleteSite3Request generates requests for SiteServiceDeleteSite3
-func NewSiteServiceDeleteSite3Request(server string, resourceId string, params *SiteServiceDeleteSite3Params) (*http.Request, error) {
+// NewSiteServiceDeleteSite2Request generates requests for SiteServiceDeleteSite2
+func NewSiteServiceDeleteSite2Request(server string, resourceId string, params *SiteServiceDeleteSite2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -9662,8 +9861,8 @@ func NewSiteServiceDeleteSite3Request(server string, resourceId string, params *
 	return req, nil
 }
 
-// NewSiteServiceGetSite3Request generates requests for SiteServiceGetSite3
-func NewSiteServiceGetSite3Request(server string, resourceId string, params *SiteServiceGetSite3Params) (*http.Request, error) {
+// NewSiteServiceGetSite2Request generates requests for SiteServiceGetSite2
+func NewSiteServiceGetSite2Request(server string, resourceId string, params *SiteServiceGetSite2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -9730,19 +9929,19 @@ func NewSiteServiceGetSite3Request(server string, resourceId string, params *Sit
 	return req, nil
 }
 
-// NewSiteServicePatchSite3Request calls the generic SiteServicePatchSite3 builder with application/json body
-func NewSiteServicePatchSite3Request(server string, resourceId string, params *SiteServicePatchSite3Params, body SiteServicePatchSite3JSONRequestBody) (*http.Request, error) {
+// NewSiteServicePatchSite2Request calls the generic SiteServicePatchSite2 builder with application/json body
+func NewSiteServicePatchSite2Request(server string, resourceId string, params *SiteServicePatchSite2Params, body SiteServicePatchSite2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewSiteServicePatchSite3RequestWithBody(server, resourceId, params, "application/json", bodyReader)
+	return NewSiteServicePatchSite2RequestWithBody(server, resourceId, params, "application/json", bodyReader)
 }
 
-// NewSiteServicePatchSite3RequestWithBody generates requests for SiteServicePatchSite3 with any type of body
-func NewSiteServicePatchSite3RequestWithBody(server string, resourceId string, params *SiteServicePatchSite3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewSiteServicePatchSite2RequestWithBody generates requests for SiteServicePatchSite2 with any type of body
+func NewSiteServicePatchSite2RequestWithBody(server string, resourceId string, params *SiteServicePatchSite2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -9770,9 +9969,9 @@ func NewSiteServicePatchSite3RequestWithBody(server string, resourceId string, p
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -9827,19 +10026,19 @@ func NewSiteServicePatchSite3RequestWithBody(server string, resourceId string, p
 	return req, nil
 }
 
-// NewSiteServiceUpdateSite3Request calls the generic SiteServiceUpdateSite3 builder with application/json body
-func NewSiteServiceUpdateSite3Request(server string, resourceId string, params *SiteServiceUpdateSite3Params, body SiteServiceUpdateSite3JSONRequestBody) (*http.Request, error) {
+// NewSiteServiceUpdateSite2Request calls the generic SiteServiceUpdateSite2 builder with application/json body
+func NewSiteServiceUpdateSite2Request(server string, resourceId string, params *SiteServiceUpdateSite2Params, body SiteServiceUpdateSite2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewSiteServiceUpdateSite3RequestWithBody(server, resourceId, params, "application/json", bodyReader)
+	return NewSiteServiceUpdateSite2RequestWithBody(server, resourceId, params, "application/json", bodyReader)
 }
 
-// NewSiteServiceUpdateSite3RequestWithBody generates requests for SiteServiceUpdateSite3 with any type of body
-func NewSiteServiceUpdateSite3RequestWithBody(server string, resourceId string, params *SiteServiceUpdateSite3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewSiteServiceUpdateSite2RequestWithBody generates requests for SiteServiceUpdateSite2 with any type of body
+func NewSiteServiceUpdateSite2RequestWithBody(server string, resourceId string, params *SiteServiceUpdateSite2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -9908,8 +10107,8 @@ func NewSiteServiceUpdateSite3RequestWithBody(server string, resourceId string, 
 	return req, nil
 }
 
-// NewTelemetryLogsGroupServiceListTelemetryLogsGroups3Request generates requests for TelemetryLogsGroupServiceListTelemetryLogsGroups3
-func NewTelemetryLogsGroupServiceListTelemetryLogsGroups3Request(server string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups3Params) (*http.Request, error) {
+// NewTelemetryLogsGroupServiceListTelemetryLogsGroups2Request generates requests for TelemetryLogsGroupServiceListTelemetryLogsGroups2
+func NewTelemetryLogsGroupServiceListTelemetryLogsGroups2Request(server string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups2Params) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -10001,19 +10200,19 @@ func NewTelemetryLogsGroupServiceListTelemetryLogsGroups3Request(server string, 
 	return req, nil
 }
 
-// NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Request calls the generic TelemetryLogsGroupServiceCreateTelemetryLogsGroup3 builder with application/json body
-func NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Request(server string, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody) (*http.Request, error) {
+// NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Request calls the generic TelemetryLogsGroupServiceCreateTelemetryLogsGroup2 builder with application/json body
+func NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Request(server string, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3RequestWithBody(server, params, "application/json", bodyReader)
+	return NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2RequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3RequestWithBody generates requests for TelemetryLogsGroupServiceCreateTelemetryLogsGroup3 with any type of body
-func NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3RequestWithBody(server string, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2RequestWithBody generates requests for TelemetryLogsGroupServiceCreateTelemetryLogsGroup2 with any type of body
+func NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2RequestWithBody(server string, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -10059,8 +10258,8 @@ func NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3RequestWithBody(server
 	return req, nil
 }
 
-// NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Request generates requests for TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3
-func NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Request(server string, resourceId string, params *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Params) (*http.Request, error) {
+// NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Request generates requests for TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2
+func NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Request(server string, resourceId string, params *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10111,8 +10310,8 @@ func NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Request(server string,
 	return req, nil
 }
 
-// NewTelemetryLogsGroupServiceGetTelemetryLogsGroup3Request generates requests for TelemetryLogsGroupServiceGetTelemetryLogsGroup3
-func NewTelemetryLogsGroupServiceGetTelemetryLogsGroup3Request(server string, resourceId string, params *TelemetryLogsGroupServiceGetTelemetryLogsGroup3Params) (*http.Request, error) {
+// NewTelemetryLogsGroupServiceGetTelemetryLogsGroup2Request generates requests for TelemetryLogsGroupServiceGetTelemetryLogsGroup2
+func NewTelemetryLogsGroupServiceGetTelemetryLogsGroup2Request(server string, resourceId string, params *TelemetryLogsGroupServiceGetTelemetryLogsGroup2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10163,8 +10362,8 @@ func NewTelemetryLogsGroupServiceGetTelemetryLogsGroup3Request(server string, re
 	return req, nil
 }
 
-// NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Request generates requests for TelemetryMetricsGroupServiceListTelemetryMetricsGroups3
-func NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Request(server string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params) (*http.Request, error) {
+// NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Request generates requests for TelemetryMetricsGroupServiceListTelemetryMetricsGroups2
+func NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Request(server string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -10256,19 +10455,19 @@ func NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Request(server st
 	return req, nil
 }
 
-// NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Request calls the generic TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3 builder with application/json body
-func NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Request(server string, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody) (*http.Request, error) {
+// NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Request calls the generic TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2 builder with application/json body
+func NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Request(server string, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3RequestWithBody(server, params, "application/json", bodyReader)
+	return NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2RequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3RequestWithBody generates requests for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3 with any type of body
-func NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3RequestWithBody(server string, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2RequestWithBody generates requests for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2 with any type of body
+func NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2RequestWithBody(server string, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -10314,8 +10513,8 @@ func NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3RequestWithBody(
 	return req, nil
 }
 
-// NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Request generates requests for TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3
-func NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Request(server string, resourceId string, params *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Params) (*http.Request, error) {
+// NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Request generates requests for TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2
+func NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Request(server string, resourceId string, params *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10366,8 +10565,8 @@ func NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Request(server s
 	return req, nil
 }
 
-// NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Request generates requests for TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3
-func NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Request(server string, resourceId string, params *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Params) (*http.Request, error) {
+// NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Request generates requests for TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2
+func NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Request(server string, resourceId string, params *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -10777,9 +10976,9 @@ func NewTelemetryLogsProfileServicePatchTelemetryLogsProfile2RequestWithBody(ser
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -11242,9 +11441,9 @@ func NewTelemetryMetricsProfileServicePatchTelemetryMetricsProfile2RequestWithBo
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -11930,9 +12129,9 @@ func NewWorkloadServicePatchWorkload2RequestWithBody(server string, resourceId s
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -12256,6 +12455,62 @@ func NewHostServiceRegisterHostRequestWithBody(server string, projectName string
 	return req, nil
 }
 
+// NewHostServiceGetHostsSummaryRequest generates requests for HostServiceGetHostsSummary
+func NewHostServiceGetHostsSummaryRequest(server string, projectName string, params *HostServiceGetHostsSummaryParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/hosts/summary", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewHostServiceDeleteHostRequest generates requests for HostServiceDeleteHost
 func NewHostServiceDeleteHostRequest(server string, projectName string, resourceId string) (*http.Request, error) {
 	var err error
@@ -12385,9 +12640,9 @@ func NewHostServicePatchHostRequestWithBody(server string, projectName string, r
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -12626,64 +12881,8 @@ func NewHostServicePatchRegisterHostRequestWithBody(server string, projectName s
 	return req, nil
 }
 
-// NewHostServiceGetHostsSummaryRequest generates requests for HostServiceGetHostsSummary
-func NewHostServiceGetHostsSummaryRequest(server string, projectName string, params *HostServiceGetHostsSummaryParams) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/hosts:summary", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Filter != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewHostServiceGetHostsSummary2Request generates requests for HostServiceGetHostsSummary2
-func NewHostServiceGetHostsSummary2Request(server string, projectName string, params *HostServiceGetHostsSummary2Params) (*http.Request, error) {
+// NewHostServiceGetHostsSummary3Request generates requests for HostServiceGetHostsSummary3
+func NewHostServiceGetHostsSummary3Request(server string, projectName string, params *HostServiceGetHostsSummary3Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -13018,9 +13217,9 @@ func NewInstanceServicePatchInstanceRequestWithBody(server string, projectName s
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -13142,6 +13341,369 @@ func NewInstanceServiceInvalidateInstanceRequest(server string, projectName stri
 	return req, nil
 }
 
+// NewOperatingSystemServiceListOperatingSystems3Request generates requests for OperatingSystemServiceListOperatingSystems3
+func NewOperatingSystemServiceListOperatingSystems3Request(server string, projectName string, params *OperatingSystemServiceListOperatingSystems3Params) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.OrderBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PageSize != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewOperatingSystemServiceCreateOperatingSystem3Request calls the generic OperatingSystemServiceCreateOperatingSystem3 builder with application/json body
+func NewOperatingSystemServiceCreateOperatingSystem3Request(server string, projectName string, body OperatingSystemServiceCreateOperatingSystem3JSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewOperatingSystemServiceCreateOperatingSystem3RequestWithBody(server, projectName, "application/json", bodyReader)
+}
+
+// NewOperatingSystemServiceCreateOperatingSystem3RequestWithBody generates requests for OperatingSystemServiceCreateOperatingSystem3 with any type of body
+func NewOperatingSystemServiceCreateOperatingSystem3RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewOperatingSystemServiceDeleteOperatingSystem3Request generates requests for OperatingSystemServiceDeleteOperatingSystem3
+func NewOperatingSystemServiceDeleteOperatingSystem3Request(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewOperatingSystemServiceGetOperatingSystem3Request generates requests for OperatingSystemServiceGetOperatingSystem3
+func NewOperatingSystemServiceGetOperatingSystem3Request(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewOperatingSystemServicePatchOperatingSystem3Request calls the generic OperatingSystemServicePatchOperatingSystem3 builder with application/json body
+func NewOperatingSystemServicePatchOperatingSystem3Request(server string, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, body OperatingSystemServicePatchOperatingSystem3JSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewOperatingSystemServicePatchOperatingSystem3RequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
+}
+
+// NewOperatingSystemServicePatchOperatingSystem3RequestWithBody generates requests for OperatingSystemServicePatchOperatingSystem3 with any type of body
+func NewOperatingSystemServicePatchOperatingSystem3RequestWithBody(server string, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.FieldMask != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewOperatingSystemServiceUpdateOperatingSystem3Request calls the generic OperatingSystemServiceUpdateOperatingSystem3 builder with application/json body
+func NewOperatingSystemServiceUpdateOperatingSystem3Request(server string, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewOperatingSystemServiceUpdateOperatingSystem3RequestWithBody(server, projectName, resourceId, "application/json", bodyReader)
+}
+
+// NewOperatingSystemServiceUpdateOperatingSystem3RequestWithBody generates requests for OperatingSystemServiceUpdateOperatingSystem3 with any type of body
+func NewOperatingSystemServiceUpdateOperatingSystem3RequestWithBody(server string, projectName string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewOperatingSystemServiceListOperatingSystemsRequest generates requests for OperatingSystemServiceListOperatingSystems
 func NewOperatingSystemServiceListOperatingSystemsRequest(server string, projectName string, params *OperatingSystemServiceListOperatingSystemsParams) (*http.Request, error) {
 	var err error
@@ -13158,7 +13720,7 @@ func NewOperatingSystemServiceListOperatingSystemsRequest(server string, project
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems", pathParam0)
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -13273,7 +13835,7 @@ func NewOperatingSystemServiceCreateOperatingSystemRequestWithBody(server string
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems", pathParam0)
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -13316,7 +13878,7 @@ func NewOperatingSystemServiceDeleteOperatingSystemRequest(server string, projec
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -13357,7 +13919,7 @@ func NewOperatingSystemServiceGetOperatingSystemRequest(server string, projectNa
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -13409,7 +13971,7 @@ func NewOperatingSystemServicePatchOperatingSystemRequestWithBody(server string,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -13422,9 +13984,9 @@ func NewOperatingSystemServicePatchOperatingSystemRequestWithBody(server string,
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -13485,369 +14047,6 @@ func NewOperatingSystemServiceUpdateOperatingSystemRequestWithBody(server string
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/operating_systems/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PUT", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewOperatingSystemServiceListOperatingSystems2Request generates requests for OperatingSystemServiceListOperatingSystems2
-func NewOperatingSystemServiceListOperatingSystems2Request(server string, projectName string, params *OperatingSystemServiceListOperatingSystems2Params) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.OrderBy != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Filter != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.PageSize != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Offset != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewOperatingSystemServiceCreateOperatingSystem2Request calls the generic OperatingSystemServiceCreateOperatingSystem2 builder with application/json body
-func NewOperatingSystemServiceCreateOperatingSystem2Request(server string, projectName string, body OperatingSystemServiceCreateOperatingSystem2JSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewOperatingSystemServiceCreateOperatingSystem2RequestWithBody(server, projectName, "application/json", bodyReader)
-}
-
-// NewOperatingSystemServiceCreateOperatingSystem2RequestWithBody generates requests for OperatingSystemServiceCreateOperatingSystem2 with any type of body
-func NewOperatingSystemServiceCreateOperatingSystem2RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewOperatingSystemServiceDeleteOperatingSystem2Request generates requests for OperatingSystemServiceDeleteOperatingSystem2
-func NewOperatingSystemServiceDeleteOperatingSystem2Request(server string, projectName string, resourceId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewOperatingSystemServiceGetOperatingSystem2Request generates requests for OperatingSystemServiceGetOperatingSystem2
-func NewOperatingSystemServiceGetOperatingSystem2Request(server string, projectName string, resourceId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewOperatingSystemServicePatchOperatingSystem2Request calls the generic OperatingSystemServicePatchOperatingSystem2 builder with application/json body
-func NewOperatingSystemServicePatchOperatingSystem2Request(server string, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, body OperatingSystemServicePatchOperatingSystem2JSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewOperatingSystemServicePatchOperatingSystem2RequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
-}
-
-// NewOperatingSystemServicePatchOperatingSystem2RequestWithBody generates requests for OperatingSystemServicePatchOperatingSystem2 with any type of body
-func NewOperatingSystemServicePatchOperatingSystem2RequestWithBody(server string, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.FieldMaskPaths != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("PATCH", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewOperatingSystemServiceUpdateOperatingSystem2Request calls the generic OperatingSystemServiceUpdateOperatingSystem2 builder with application/json body
-func NewOperatingSystemServiceUpdateOperatingSystem2Request(server string, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewOperatingSystemServiceUpdateOperatingSystem2RequestWithBody(server, projectName, resourceId, "application/json", bodyReader)
-}
-
-// NewOperatingSystemServiceUpdateOperatingSystem2RequestWithBody generates requests for OperatingSystemServiceUpdateOperatingSystem2 with any type of body
-func NewOperatingSystemServiceUpdateOperatingSystem2RequestWithBody(server string, projectName string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
 	operationPath := fmt.Sprintf("/v1/projects/%s/compute/os/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
@@ -13868,8 +14067,8 @@ func NewOperatingSystemServiceUpdateOperatingSystem2RequestWithBody(server strin
 	return req, nil
 }
 
-// NewScheduleServiceListSchedules2Request generates requests for ScheduleServiceListSchedules2
-func NewScheduleServiceListSchedules2Request(server string, projectName string, params *ScheduleServiceListSchedules2Params) (*http.Request, error) {
+// NewScheduleServiceListSchedulesRequest generates requests for ScheduleServiceListSchedules
+func NewScheduleServiceListSchedulesRequest(server string, projectName string, params *ScheduleServiceListSchedulesParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14004,8 +14203,8 @@ func NewScheduleServiceListSchedules2Request(server string, projectName string, 
 	return req, nil
 }
 
-// NewScheduleServiceListRepeatedSchedules2Request generates requests for ScheduleServiceListRepeatedSchedules2
-func NewScheduleServiceListRepeatedSchedules2Request(server string, projectName string, params *ScheduleServiceListRepeatedSchedules2Params) (*http.Request, error) {
+// NewScheduleServiceListRepeatedSchedules3Request generates requests for ScheduleServiceListRepeatedSchedules3
+func NewScheduleServiceListRepeatedSchedules3Request(server string, projectName string, params *ScheduleServiceListRepeatedSchedules3Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14140,19 +14339,19 @@ func NewScheduleServiceListRepeatedSchedules2Request(server string, projectName 
 	return req, nil
 }
 
-// NewScheduleServiceCreateRepeatedSchedule2Request calls the generic ScheduleServiceCreateRepeatedSchedule2 builder with application/json body
-func NewScheduleServiceCreateRepeatedSchedule2Request(server string, projectName string, body ScheduleServiceCreateRepeatedSchedule2JSONRequestBody) (*http.Request, error) {
+// NewScheduleServiceCreateRepeatedSchedule3Request calls the generic ScheduleServiceCreateRepeatedSchedule3 builder with application/json body
+func NewScheduleServiceCreateRepeatedSchedule3Request(server string, projectName string, body ScheduleServiceCreateRepeatedSchedule3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServiceCreateRepeatedSchedule2RequestWithBody(server, projectName, "application/json", bodyReader)
+	return NewScheduleServiceCreateRepeatedSchedule3RequestWithBody(server, projectName, "application/json", bodyReader)
 }
 
-// NewScheduleServiceCreateRepeatedSchedule2RequestWithBody generates requests for ScheduleServiceCreateRepeatedSchedule2 with any type of body
-func NewScheduleServiceCreateRepeatedSchedule2RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServiceCreateRepeatedSchedule3RequestWithBody generates requests for ScheduleServiceCreateRepeatedSchedule3 with any type of body
+func NewScheduleServiceCreateRepeatedSchedule3RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14187,8 +14386,8 @@ func NewScheduleServiceCreateRepeatedSchedule2RequestWithBody(server string, pro
 	return req, nil
 }
 
-// NewScheduleServiceDeleteRepeatedSchedule2Request generates requests for ScheduleServiceDeleteRepeatedSchedule2
-func NewScheduleServiceDeleteRepeatedSchedule2Request(server string, projectName string, resourceId string) (*http.Request, error) {
+// NewScheduleServiceDeleteRepeatedSchedule3Request generates requests for ScheduleServiceDeleteRepeatedSchedule3
+func NewScheduleServiceDeleteRepeatedSchedule3Request(server string, projectName string, resourceId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14228,8 +14427,8 @@ func NewScheduleServiceDeleteRepeatedSchedule2Request(server string, projectName
 	return req, nil
 }
 
-// NewScheduleServiceGetRepeatedSchedule2Request generates requests for ScheduleServiceGetRepeatedSchedule2
-func NewScheduleServiceGetRepeatedSchedule2Request(server string, projectName string, resourceId string) (*http.Request, error) {
+// NewScheduleServiceGetRepeatedSchedule3Request generates requests for ScheduleServiceGetRepeatedSchedule3
+func NewScheduleServiceGetRepeatedSchedule3Request(server string, projectName string, resourceId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14269,19 +14468,19 @@ func NewScheduleServiceGetRepeatedSchedule2Request(server string, projectName st
 	return req, nil
 }
 
-// NewScheduleServicePatchRepeatedSchedule2Request calls the generic ScheduleServicePatchRepeatedSchedule2 builder with application/json body
-func NewScheduleServicePatchRepeatedSchedule2Request(server string, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, body ScheduleServicePatchRepeatedSchedule2JSONRequestBody) (*http.Request, error) {
+// NewScheduleServicePatchRepeatedSchedule3Request calls the generic ScheduleServicePatchRepeatedSchedule3 builder with application/json body
+func NewScheduleServicePatchRepeatedSchedule3Request(server string, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, body ScheduleServicePatchRepeatedSchedule3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServicePatchRepeatedSchedule2RequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
+	return NewScheduleServicePatchRepeatedSchedule3RequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
 }
 
-// NewScheduleServicePatchRepeatedSchedule2RequestWithBody generates requests for ScheduleServicePatchRepeatedSchedule2 with any type of body
-func NewScheduleServicePatchRepeatedSchedule2RequestWithBody(server string, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServicePatchRepeatedSchedule3RequestWithBody generates requests for ScheduleServicePatchRepeatedSchedule3 with any type of body
+func NewScheduleServicePatchRepeatedSchedule3RequestWithBody(server string, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14316,9 +14515,9 @@ func NewScheduleServicePatchRepeatedSchedule2RequestWithBody(server string, proj
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -14345,19 +14544,19 @@ func NewScheduleServicePatchRepeatedSchedule2RequestWithBody(server string, proj
 	return req, nil
 }
 
-// NewScheduleServiceUpdateRepeatedSchedule2Request calls the generic ScheduleServiceUpdateRepeatedSchedule2 builder with application/json body
-func NewScheduleServiceUpdateRepeatedSchedule2Request(server string, projectName string, resourceId string, body ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody) (*http.Request, error) {
+// NewScheduleServiceUpdateRepeatedSchedule3Request calls the generic ScheduleServiceUpdateRepeatedSchedule3 builder with application/json body
+func NewScheduleServiceUpdateRepeatedSchedule3Request(server string, projectName string, resourceId string, body ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServiceUpdateRepeatedSchedule2RequestWithBody(server, projectName, resourceId, "application/json", bodyReader)
+	return NewScheduleServiceUpdateRepeatedSchedule3RequestWithBody(server, projectName, resourceId, "application/json", bodyReader)
 }
 
-// NewScheduleServiceUpdateRepeatedSchedule2RequestWithBody generates requests for ScheduleServiceUpdateRepeatedSchedule2 with any type of body
-func NewScheduleServiceUpdateRepeatedSchedule2RequestWithBody(server string, projectName string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServiceUpdateRepeatedSchedule3RequestWithBody generates requests for ScheduleServiceUpdateRepeatedSchedule3 with any type of body
+func NewScheduleServiceUpdateRepeatedSchedule3RequestWithBody(server string, projectName string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14399,8 +14598,8 @@ func NewScheduleServiceUpdateRepeatedSchedule2RequestWithBody(server string, pro
 	return req, nil
 }
 
-// NewScheduleServiceListSingleSchedules2Request generates requests for ScheduleServiceListSingleSchedules2
-func NewScheduleServiceListSingleSchedules2Request(server string, projectName string, params *ScheduleServiceListSingleSchedules2Params) (*http.Request, error) {
+// NewScheduleServiceListSingleSchedules3Request generates requests for ScheduleServiceListSingleSchedules3
+func NewScheduleServiceListSingleSchedules3Request(server string, projectName string, params *ScheduleServiceListSingleSchedules3Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14535,19 +14734,19 @@ func NewScheduleServiceListSingleSchedules2Request(server string, projectName st
 	return req, nil
 }
 
-// NewScheduleServiceCreateSingleSchedule2Request calls the generic ScheduleServiceCreateSingleSchedule2 builder with application/json body
-func NewScheduleServiceCreateSingleSchedule2Request(server string, projectName string, body ScheduleServiceCreateSingleSchedule2JSONRequestBody) (*http.Request, error) {
+// NewScheduleServiceCreateSingleSchedule3Request calls the generic ScheduleServiceCreateSingleSchedule3 builder with application/json body
+func NewScheduleServiceCreateSingleSchedule3Request(server string, projectName string, body ScheduleServiceCreateSingleSchedule3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServiceCreateSingleSchedule2RequestWithBody(server, projectName, "application/json", bodyReader)
+	return NewScheduleServiceCreateSingleSchedule3RequestWithBody(server, projectName, "application/json", bodyReader)
 }
 
-// NewScheduleServiceCreateSingleSchedule2RequestWithBody generates requests for ScheduleServiceCreateSingleSchedule2 with any type of body
-func NewScheduleServiceCreateSingleSchedule2RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServiceCreateSingleSchedule3RequestWithBody generates requests for ScheduleServiceCreateSingleSchedule3 with any type of body
+func NewScheduleServiceCreateSingleSchedule3RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14582,8 +14781,8 @@ func NewScheduleServiceCreateSingleSchedule2RequestWithBody(server string, proje
 	return req, nil
 }
 
-// NewScheduleServiceDeleteSingleSchedule2Request generates requests for ScheduleServiceDeleteSingleSchedule2
-func NewScheduleServiceDeleteSingleSchedule2Request(server string, projectName string, resourceId string) (*http.Request, error) {
+// NewScheduleServiceDeleteSingleSchedule3Request generates requests for ScheduleServiceDeleteSingleSchedule3
+func NewScheduleServiceDeleteSingleSchedule3Request(server string, projectName string, resourceId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14623,8 +14822,8 @@ func NewScheduleServiceDeleteSingleSchedule2Request(server string, projectName s
 	return req, nil
 }
 
-// NewScheduleServiceGetSingleSchedule2Request generates requests for ScheduleServiceGetSingleSchedule2
-func NewScheduleServiceGetSingleSchedule2Request(server string, projectName string, resourceId string) (*http.Request, error) {
+// NewScheduleServiceGetSingleSchedule3Request generates requests for ScheduleServiceGetSingleSchedule3
+func NewScheduleServiceGetSingleSchedule3Request(server string, projectName string, resourceId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14664,19 +14863,19 @@ func NewScheduleServiceGetSingleSchedule2Request(server string, projectName stri
 	return req, nil
 }
 
-// NewScheduleServicePatchSingleSchedule2Request calls the generic ScheduleServicePatchSingleSchedule2 builder with application/json body
-func NewScheduleServicePatchSingleSchedule2Request(server string, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, body ScheduleServicePatchSingleSchedule2JSONRequestBody) (*http.Request, error) {
+// NewScheduleServicePatchSingleSchedule3Request calls the generic ScheduleServicePatchSingleSchedule3 builder with application/json body
+func NewScheduleServicePatchSingleSchedule3Request(server string, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, body ScheduleServicePatchSingleSchedule3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServicePatchSingleSchedule2RequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
+	return NewScheduleServicePatchSingleSchedule3RequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
 }
 
-// NewScheduleServicePatchSingleSchedule2RequestWithBody generates requests for ScheduleServicePatchSingleSchedule2 with any type of body
-func NewScheduleServicePatchSingleSchedule2RequestWithBody(server string, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServicePatchSingleSchedule3RequestWithBody generates requests for ScheduleServicePatchSingleSchedule3 with any type of body
+func NewScheduleServicePatchSingleSchedule3RequestWithBody(server string, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14711,9 +14910,9 @@ func NewScheduleServicePatchSingleSchedule2RequestWithBody(server string, projec
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -14740,19 +14939,19 @@ func NewScheduleServicePatchSingleSchedule2RequestWithBody(server string, projec
 	return req, nil
 }
 
-// NewScheduleServiceUpdateSingleSchedule2Request calls the generic ScheduleServiceUpdateSingleSchedule2 builder with application/json body
-func NewScheduleServiceUpdateSingleSchedule2Request(server string, projectName string, resourceId string, body ScheduleServiceUpdateSingleSchedule2JSONRequestBody) (*http.Request, error) {
+// NewScheduleServiceUpdateSingleSchedule3Request calls the generic ScheduleServiceUpdateSingleSchedule3 builder with application/json body
+func NewScheduleServiceUpdateSingleSchedule3Request(server string, projectName string, resourceId string, body ScheduleServiceUpdateSingleSchedule3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewScheduleServiceUpdateSingleSchedule2RequestWithBody(server, projectName, resourceId, "application/json", bodyReader)
+	return NewScheduleServiceUpdateSingleSchedule3RequestWithBody(server, projectName, resourceId, "application/json", bodyReader)
 }
 
-// NewScheduleServiceUpdateSingleSchedule2RequestWithBody generates requests for ScheduleServiceUpdateSingleSchedule2 with any type of body
-func NewScheduleServiceUpdateSingleSchedule2RequestWithBody(server string, projectName string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewScheduleServiceUpdateSingleSchedule3RequestWithBody generates requests for ScheduleServiceUpdateSingleSchedule3 with any type of body
+func NewScheduleServiceUpdateSingleSchedule3RequestWithBody(server string, projectName string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14775,6 +14974,369 @@ func NewScheduleServiceUpdateSingleSchedule2RequestWithBody(server string, proje
 	}
 
 	operationPath := fmt.Sprintf("/v1/projects/%s/compute/schedules/single/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewWorkloadServiceListWorkloadsRequest generates requests for WorkloadServiceListWorkloads
+func NewWorkloadServiceListWorkloadsRequest(server string, projectName string, params *WorkloadServiceListWorkloadsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/workloads", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.OrderBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PageSize != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewWorkloadServiceCreateWorkloadRequest calls the generic WorkloadServiceCreateWorkload builder with application/json body
+func NewWorkloadServiceCreateWorkloadRequest(server string, projectName string, body WorkloadServiceCreateWorkloadJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewWorkloadServiceCreateWorkloadRequestWithBody(server, projectName, "application/json", bodyReader)
+}
+
+// NewWorkloadServiceCreateWorkloadRequestWithBody generates requests for WorkloadServiceCreateWorkload with any type of body
+func NewWorkloadServiceCreateWorkloadRequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/workloads", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewWorkloadServiceDeleteWorkloadRequest generates requests for WorkloadServiceDeleteWorkload
+func NewWorkloadServiceDeleteWorkloadRequest(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/workloads/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewWorkloadServiceGetWorkloadRequest generates requests for WorkloadServiceGetWorkload
+func NewWorkloadServiceGetWorkloadRequest(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/workloads/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewWorkloadServicePatchWorkloadRequest calls the generic WorkloadServicePatchWorkload builder with application/json body
+func NewWorkloadServicePatchWorkloadRequest(server string, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, body WorkloadServicePatchWorkloadJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewWorkloadServicePatchWorkloadRequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
+}
+
+// NewWorkloadServicePatchWorkloadRequestWithBody generates requests for WorkloadServicePatchWorkload with any type of body
+func NewWorkloadServicePatchWorkloadRequestWithBody(server string, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/workloads/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.FieldMask != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewWorkloadServiceUpdateWorkloadRequest calls the generic WorkloadServiceUpdateWorkload builder with application/json body
+func NewWorkloadServiceUpdateWorkloadRequest(server string, projectName string, resourceId string, body WorkloadServiceUpdateWorkloadJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewWorkloadServiceUpdateWorkloadRequestWithBody(server, projectName, resourceId, "application/json", bodyReader)
+}
+
+// NewWorkloadServiceUpdateWorkloadRequestWithBody generates requests for WorkloadServiceUpdateWorkload with any type of body
+func NewWorkloadServiceUpdateWorkloadRequestWithBody(server string, projectName string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/compute/workloads/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -15348,425 +15910,6 @@ func NewLocationServiceListLocationsRequest(server string, projectName string, p
 	return req, nil
 }
 
-// NewOSUpdatePolicyListOSUpdatePolicy3Request generates requests for OSUpdatePolicyListOSUpdatePolicy3
-func NewOSUpdatePolicyListOSUpdatePolicy3Request(server string, projectName string, params *OSUpdatePolicyListOSUpdatePolicy3Params) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-policies", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.OrderBy != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Filter != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.PageSize != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Offset != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewOSUpdatePolicyCreateOSUpdatePolicy3Request calls the generic OSUpdatePolicyCreateOSUpdatePolicy3 builder with application/json body
-func NewOSUpdatePolicyCreateOSUpdatePolicy3Request(server string, projectName string, body OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewOSUpdatePolicyCreateOSUpdatePolicy3RequestWithBody(server, projectName, "application/json", bodyReader)
-}
-
-// NewOSUpdatePolicyCreateOSUpdatePolicy3RequestWithBody generates requests for OSUpdatePolicyCreateOSUpdatePolicy3 with any type of body
-func NewOSUpdatePolicyCreateOSUpdatePolicy3RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-policies", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewOSUpdatePolicyDeleteOSUpdatePolicy3Request generates requests for OSUpdatePolicyDeleteOSUpdatePolicy3
-func NewOSUpdatePolicyDeleteOSUpdatePolicy3Request(server string, projectName string, resourceId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-policies/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewOSUpdatePolicyGetOSUpdatePolicy3Request generates requests for OSUpdatePolicyGetOSUpdatePolicy3
-func NewOSUpdatePolicyGetOSUpdatePolicy3Request(server string, projectName string, resourceId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-policies/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewOSUpdateRunListOSUpdateRun3Request generates requests for OSUpdateRunListOSUpdateRun3
-func NewOSUpdateRunListOSUpdateRun3Request(server string, projectName string, params *OSUpdateRunListOSUpdateRun3Params) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-runs", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.OrderBy != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Filter != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.PageSize != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Offset != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewOSUpdateRunDeleteOSUpdateRun3Request generates requests for OSUpdateRunDeleteOSUpdateRun3
-func NewOSUpdateRunDeleteOSUpdateRun3Request(server string, projectName string, resourceId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-runs/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewOSUpdateRunGetOSUpdateRun3Request generates requests for OSUpdateRunGetOSUpdateRun3
-func NewOSUpdateRunGetOSUpdateRun3Request(server string, projectName string, resourceId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-runs/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewOSUpdatePolicyListOSUpdatePolicyRequest generates requests for OSUpdatePolicyListOSUpdatePolicy
 func NewOSUpdatePolicyListOSUpdatePolicyRequest(server string, projectName string, params *OSUpdatePolicyListOSUpdatePolicyParams) (*http.Request, error) {
 	var err error
@@ -15783,7 +15926,7 @@ func NewOSUpdatePolicyListOSUpdatePolicyRequest(server string, projectName strin
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_policy", pathParam0)
+	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-policies", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -15898,7 +16041,7 @@ func NewOSUpdatePolicyCreateOSUpdatePolicyRequestWithBody(server string, project
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_policy", pathParam0)
+	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-policies", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -15941,7 +16084,7 @@ func NewOSUpdatePolicyDeleteOSUpdatePolicyRequest(server string, projectName str
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_policy/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-policies/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -15982,7 +16125,7 @@ func NewOSUpdatePolicyGetOSUpdatePolicyRequest(server string, projectName string
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_policy/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-policies/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -16016,7 +16159,7 @@ func NewOSUpdateRunListOSUpdateRunRequest(server string, projectName string, par
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_run", pathParam0)
+	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-runs", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -16127,7 +16270,7 @@ func NewOSUpdateRunDeleteOSUpdateRunRequest(server string, projectName string, r
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_run/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-runs/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -16147,6 +16290,425 @@ func NewOSUpdateRunDeleteOSUpdateRunRequest(server string, projectName string, r
 
 // NewOSUpdateRunGetOSUpdateRunRequest generates requests for OSUpdateRunGetOSUpdateRun
 func NewOSUpdateRunGetOSUpdateRunRequest(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/os-update-runs/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewOSUpdatePolicyListOSUpdatePolicy3Request generates requests for OSUpdatePolicyListOSUpdatePolicy3
+func NewOSUpdatePolicyListOSUpdatePolicy3Request(server string, projectName string, params *OSUpdatePolicyListOSUpdatePolicy3Params) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_policy", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.OrderBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PageSize != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewOSUpdatePolicyCreateOSUpdatePolicy3Request calls the generic OSUpdatePolicyCreateOSUpdatePolicy3 builder with application/json body
+func NewOSUpdatePolicyCreateOSUpdatePolicy3Request(server string, projectName string, body OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewOSUpdatePolicyCreateOSUpdatePolicy3RequestWithBody(server, projectName, "application/json", bodyReader)
+}
+
+// NewOSUpdatePolicyCreateOSUpdatePolicy3RequestWithBody generates requests for OSUpdatePolicyCreateOSUpdatePolicy3 with any type of body
+func NewOSUpdatePolicyCreateOSUpdatePolicy3RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_policy", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewOSUpdatePolicyDeleteOSUpdatePolicy3Request generates requests for OSUpdatePolicyDeleteOSUpdatePolicy3
+func NewOSUpdatePolicyDeleteOSUpdatePolicy3Request(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_policy/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewOSUpdatePolicyGetOSUpdatePolicy3Request generates requests for OSUpdatePolicyGetOSUpdatePolicy3
+func NewOSUpdatePolicyGetOSUpdatePolicy3Request(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_policy/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewOSUpdateRunListOSUpdateRun3Request generates requests for OSUpdateRunListOSUpdateRun3
+func NewOSUpdateRunListOSUpdateRun3Request(server string, projectName string, params *OSUpdateRunListOSUpdateRun3Params) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_run", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.OrderBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "filter", runtime.ParamLocationQuery, *params.Filter); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PageSize != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewOSUpdateRunDeleteOSUpdateRun3Request generates requests for OSUpdateRunDeleteOSUpdateRun3
+func NewOSUpdateRunDeleteOSUpdateRun3Request(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/os_update_run/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewOSUpdateRunGetOSUpdateRun3Request generates requests for OSUpdateRunGetOSUpdateRun3
+func NewOSUpdateRunGetOSUpdateRun3Request(server string, projectName string, resourceId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16586,8 +17148,8 @@ func NewRegionServiceCreateRegionRequestWithBody(server string, projectName stri
 	return req, nil
 }
 
-// NewSiteServiceListSites2Request generates requests for SiteServiceListSites2
-func NewSiteServiceListSites2Request(server string, projectName string, regionId string, params *SiteServiceListSites2Params) (*http.Request, error) {
+// NewSiteServiceListSitesRequest generates requests for SiteServiceListSites
+func NewSiteServiceListSitesRequest(server string, projectName string, regionId string, params *SiteServiceListSitesParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16697,19 +17259,19 @@ func NewSiteServiceListSites2Request(server string, projectName string, regionId
 	return req, nil
 }
 
-// NewSiteServiceCreateSite2Request calls the generic SiteServiceCreateSite2 builder with application/json body
-func NewSiteServiceCreateSite2Request(server string, projectName string, regionId string, body SiteServiceCreateSite2JSONRequestBody) (*http.Request, error) {
+// NewSiteServiceCreateSiteRequest calls the generic SiteServiceCreateSite builder with application/json body
+func NewSiteServiceCreateSiteRequest(server string, projectName string, regionId string, body SiteServiceCreateSiteJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewSiteServiceCreateSite2RequestWithBody(server, projectName, regionId, "application/json", bodyReader)
+	return NewSiteServiceCreateSiteRequestWithBody(server, projectName, regionId, "application/json", bodyReader)
 }
 
-// NewSiteServiceCreateSite2RequestWithBody generates requests for SiteServiceCreateSite2 with any type of body
-func NewSiteServiceCreateSite2RequestWithBody(server string, projectName string, regionId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewSiteServiceCreateSiteRequestWithBody generates requests for SiteServiceCreateSite with any type of body
+func NewSiteServiceCreateSiteRequestWithBody(server string, projectName string, regionId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16751,8 +17313,8 @@ func NewSiteServiceCreateSite2RequestWithBody(server string, projectName string,
 	return req, nil
 }
 
-// NewSiteServiceDeleteSite2Request generates requests for SiteServiceDeleteSite2
-func NewSiteServiceDeleteSite2Request(server string, projectName string, regionId string, resourceId string) (*http.Request, error) {
+// NewSiteServiceDeleteSiteRequest generates requests for SiteServiceDeleteSite
+func NewSiteServiceDeleteSiteRequest(server string, projectName string, regionId string, resourceId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16799,8 +17361,8 @@ func NewSiteServiceDeleteSite2Request(server string, projectName string, regionI
 	return req, nil
 }
 
-// NewSiteServiceGetSite2Request generates requests for SiteServiceGetSite2
-func NewSiteServiceGetSite2Request(server string, projectName string, regionId string, resourceId string) (*http.Request, error) {
+// NewSiteServiceGetSiteRequest generates requests for SiteServiceGetSite
+func NewSiteServiceGetSiteRequest(server string, projectName string, regionId string, resourceId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16847,19 +17409,19 @@ func NewSiteServiceGetSite2Request(server string, projectName string, regionId s
 	return req, nil
 }
 
-// NewSiteServicePatchSite2Request calls the generic SiteServicePatchSite2 builder with application/json body
-func NewSiteServicePatchSite2Request(server string, projectName string, regionId string, resourceId string, params *SiteServicePatchSite2Params, body SiteServicePatchSite2JSONRequestBody) (*http.Request, error) {
+// NewSiteServicePatchSiteRequest calls the generic SiteServicePatchSite builder with application/json body
+func NewSiteServicePatchSiteRequest(server string, projectName string, regionId string, resourceId string, params *SiteServicePatchSiteParams, body SiteServicePatchSiteJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewSiteServicePatchSite2RequestWithBody(server, projectName, regionId, resourceId, params, "application/json", bodyReader)
+	return NewSiteServicePatchSiteRequestWithBody(server, projectName, regionId, resourceId, params, "application/json", bodyReader)
 }
 
-// NewSiteServicePatchSite2RequestWithBody generates requests for SiteServicePatchSite2 with any type of body
-func NewSiteServicePatchSite2RequestWithBody(server string, projectName string, regionId string, resourceId string, params *SiteServicePatchSite2Params, contentType string, body io.Reader) (*http.Request, error) {
+// NewSiteServicePatchSiteRequestWithBody generates requests for SiteServicePatchSite with any type of body
+func NewSiteServicePatchSiteRequestWithBody(server string, projectName string, regionId string, resourceId string, params *SiteServicePatchSiteParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -16901,9 +17463,9 @@ func NewSiteServicePatchSite2RequestWithBody(server string, projectName string, 
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -16930,19 +17492,19 @@ func NewSiteServicePatchSite2RequestWithBody(server string, projectName string, 
 	return req, nil
 }
 
-// NewSiteServiceUpdateSite2Request calls the generic SiteServiceUpdateSite2 builder with application/json body
-func NewSiteServiceUpdateSite2Request(server string, projectName string, regionId string, resourceId string, body SiteServiceUpdateSite2JSONRequestBody) (*http.Request, error) {
+// NewSiteServiceUpdateSiteRequest calls the generic SiteServiceUpdateSite builder with application/json body
+func NewSiteServiceUpdateSiteRequest(server string, projectName string, regionId string, resourceId string, body SiteServiceUpdateSiteJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewSiteServiceUpdateSite2RequestWithBody(server, projectName, regionId, resourceId, "application/json", bodyReader)
+	return NewSiteServiceUpdateSiteRequestWithBody(server, projectName, regionId, resourceId, "application/json", bodyReader)
 }
 
-// NewSiteServiceUpdateSite2RequestWithBody generates requests for SiteServiceUpdateSite2 with any type of body
-func NewSiteServiceUpdateSite2RequestWithBody(server string, projectName string, regionId string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewSiteServiceUpdateSiteRequestWithBody generates requests for SiteServiceUpdateSite with any type of body
+func NewSiteServiceUpdateSiteRequestWithBody(server string, projectName string, regionId string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -17120,9 +17682,9 @@ func NewRegionServicePatchRegionRequestWithBody(server string, projectName strin
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -17203,8 +17765,8 @@ func NewRegionServiceUpdateRegionRequestWithBody(server string, projectName stri
 	return req, nil
 }
 
-// NewScheduleServiceListSchedulesRequest generates requests for ScheduleServiceListSchedules
-func NewScheduleServiceListSchedulesRequest(server string, projectName string, params *ScheduleServiceListSchedulesParams) (*http.Request, error) {
+// NewScheduleServiceListSchedules3Request generates requests for ScheduleServiceListSchedules3
+func NewScheduleServiceListSchedules3Request(server string, projectName string, params *ScheduleServiceListSchedules3Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -17651,9 +18213,9 @@ func NewScheduleServicePatchRepeatedScheduleRequestWithBody(server string, proje
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -18046,9 +18608,9 @@ func NewScheduleServicePatchSingleScheduleRequestWithBody(server string, project
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -18129,8 +18691,8 @@ func NewScheduleServiceUpdateSingleScheduleRequestWithBody(server string, projec
 	return req, nil
 }
 
-// NewSiteServiceListSitesRequest generates requests for SiteServiceListSites
-func NewSiteServiceListSitesRequest(server string, projectName string, params *SiteServiceListSitesParams) (*http.Request, error) {
+// NewSiteServiceListSites3Request generates requests for SiteServiceListSites3
+func NewSiteServiceListSites3Request(server string, projectName string, params *SiteServiceListSites3Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -18249,19 +18811,19 @@ func NewSiteServiceListSitesRequest(server string, projectName string, params *S
 	return req, nil
 }
 
-// NewSiteServiceCreateSiteRequest calls the generic SiteServiceCreateSite builder with application/json body
-func NewSiteServiceCreateSiteRequest(server string, projectName string, params *SiteServiceCreateSiteParams, body SiteServiceCreateSiteJSONRequestBody) (*http.Request, error) {
+// NewSiteServiceCreateSite3Request calls the generic SiteServiceCreateSite3 builder with application/json body
+func NewSiteServiceCreateSite3Request(server string, projectName string, params *SiteServiceCreateSite3Params, body SiteServiceCreateSite3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewSiteServiceCreateSiteRequestWithBody(server, projectName, params, "application/json", bodyReader)
+	return NewSiteServiceCreateSite3RequestWithBody(server, projectName, params, "application/json", bodyReader)
 }
 
-// NewSiteServiceCreateSiteRequestWithBody generates requests for SiteServiceCreateSite with any type of body
-func NewSiteServiceCreateSiteRequestWithBody(server string, projectName string, params *SiteServiceCreateSiteParams, contentType string, body io.Reader) (*http.Request, error) {
+// NewSiteServiceCreateSite3RequestWithBody generates requests for SiteServiceCreateSite3 with any type of body
+func NewSiteServiceCreateSite3RequestWithBody(server string, projectName string, params *SiteServiceCreateSite3Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -18318,8 +18880,8 @@ func NewSiteServiceCreateSiteRequestWithBody(server string, projectName string, 
 	return req, nil
 }
 
-// NewSiteServiceDeleteSiteRequest generates requests for SiteServiceDeleteSite
-func NewSiteServiceDeleteSiteRequest(server string, projectName string, resourceId string, params *SiteServiceDeleteSiteParams) (*http.Request, error) {
+// NewSiteServiceDeleteSite3Request generates requests for SiteServiceDeleteSite3
+func NewSiteServiceDeleteSite3Request(server string, projectName string, resourceId string, params *SiteServiceDeleteSite3Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -18381,8 +18943,8 @@ func NewSiteServiceDeleteSiteRequest(server string, projectName string, resource
 	return req, nil
 }
 
-// NewSiteServiceGetSiteRequest generates requests for SiteServiceGetSite
-func NewSiteServiceGetSiteRequest(server string, projectName string, resourceId string, params *SiteServiceGetSiteParams) (*http.Request, error) {
+// NewSiteServiceGetSite3Request generates requests for SiteServiceGetSite3
+func NewSiteServiceGetSite3Request(server string, projectName string, resourceId string, params *SiteServiceGetSite3Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -18444,19 +19006,19 @@ func NewSiteServiceGetSiteRequest(server string, projectName string, resourceId 
 	return req, nil
 }
 
-// NewSiteServicePatchSiteRequest calls the generic SiteServicePatchSite builder with application/json body
-func NewSiteServicePatchSiteRequest(server string, projectName string, resourceId string, params *SiteServicePatchSiteParams, body SiteServicePatchSiteJSONRequestBody) (*http.Request, error) {
+// NewSiteServicePatchSite3Request calls the generic SiteServicePatchSite3 builder with application/json body
+func NewSiteServicePatchSite3Request(server string, projectName string, resourceId string, params *SiteServicePatchSite3Params, body SiteServicePatchSite3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewSiteServicePatchSiteRequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
+	return NewSiteServicePatchSite3RequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
 }
 
-// NewSiteServicePatchSiteRequestWithBody generates requests for SiteServicePatchSite with any type of body
-func NewSiteServicePatchSiteRequestWithBody(server string, projectName string, resourceId string, params *SiteServicePatchSiteParams, contentType string, body io.Reader) (*http.Request, error) {
+// NewSiteServicePatchSite3RequestWithBody generates requests for SiteServicePatchSite3 with any type of body
+func NewSiteServicePatchSite3RequestWithBody(server string, projectName string, resourceId string, params *SiteServicePatchSite3Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -18491,9 +19053,9 @@ func NewSiteServicePatchSiteRequestWithBody(server string, projectName string, r
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -18536,19 +19098,19 @@ func NewSiteServicePatchSiteRequestWithBody(server string, projectName string, r
 	return req, nil
 }
 
-// NewSiteServiceUpdateSiteRequest calls the generic SiteServiceUpdateSite builder with application/json body
-func NewSiteServiceUpdateSiteRequest(server string, projectName string, resourceId string, params *SiteServiceUpdateSiteParams, body SiteServiceUpdateSiteJSONRequestBody) (*http.Request, error) {
+// NewSiteServiceUpdateSite3Request calls the generic SiteServiceUpdateSite3 builder with application/json body
+func NewSiteServiceUpdateSite3Request(server string, projectName string, resourceId string, params *SiteServiceUpdateSite3Params, body SiteServiceUpdateSite3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewSiteServiceUpdateSiteRequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
+	return NewSiteServiceUpdateSite3RequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
 }
 
-// NewSiteServiceUpdateSiteRequestWithBody generates requests for SiteServiceUpdateSite with any type of body
-func NewSiteServiceUpdateSiteRequestWithBody(server string, projectName string, resourceId string, params *SiteServiceUpdateSiteParams, contentType string, body io.Reader) (*http.Request, error) {
+// NewSiteServiceUpdateSite3RequestWithBody generates requests for SiteServiceUpdateSite3 with any type of body
+func NewSiteServiceUpdateSite3RequestWithBody(server string, projectName string, resourceId string, params *SiteServiceUpdateSite3Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -18612,6 +19174,440 @@ func NewSiteServiceUpdateSiteRequestWithBody(server string, projectName string, 
 	return req, nil
 }
 
+// NewTelemetryLogsGroupServiceListTelemetryLogsGroups3Request generates requests for TelemetryLogsGroupServiceListTelemetryLogsGroups3
+func NewTelemetryLogsGroupServiceListTelemetryLogsGroups3Request(server string, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups3Params) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/logs", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PageSize != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.OrderBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Request calls the generic TelemetryLogsGroupServiceCreateTelemetryLogsGroup3 builder with application/json body
+func NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Request(server string, projectName string, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3RequestWithBody(server, projectName, "application/json", bodyReader)
+}
+
+// NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3RequestWithBody generates requests for TelemetryLogsGroupServiceCreateTelemetryLogsGroup3 with any type of body
+func NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup3RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/logs", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Request generates requests for TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3
+func NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Request(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/logs/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTelemetryLogsGroupServiceGetTelemetryLogsGroup3Request generates requests for TelemetryLogsGroupServiceGetTelemetryLogsGroup3
+func NewTelemetryLogsGroupServiceGetTelemetryLogsGroup3Request(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/logs/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Request generates requests for TelemetryMetricsGroupServiceListTelemetryMetricsGroups3
+func NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Request(server string, projectName string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/metrics", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.PageSize != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.OrderBy != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Request calls the generic TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3 builder with application/json body
+func NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Request(server string, projectName string, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3RequestWithBody(server, projectName, "application/json", bodyReader)
+}
+
+// NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3RequestWithBody generates requests for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3 with any type of body
+func NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/metrics", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Request generates requests for TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3
+func NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Request(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/metrics/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Request generates requests for TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3
+func NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Request(server string, projectName string, resourceId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/metrics/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTelemetryLogsGroupServiceListTelemetryLogsGroupsRequest generates requests for TelemetryLogsGroupServiceListTelemetryLogsGroups
 func NewTelemetryLogsGroupServiceListTelemetryLogsGroupsRequest(server string, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroupsParams) (*http.Request, error) {
 	var err error
@@ -18628,7 +19624,7 @@ func NewTelemetryLogsGroupServiceListTelemetryLogsGroupsRequest(server string, p
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/logs", pathParam0)
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/loggroups", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -18727,7 +19723,7 @@ func NewTelemetryLogsGroupServiceCreateTelemetryLogsGroupRequestWithBody(server 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/logs", pathParam0)
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/loggroups", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -18770,7 +19766,7 @@ func NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroupRequest(server string, 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/logs/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/loggroups/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -18811,7 +19807,7 @@ func NewTelemetryLogsGroupServiceGetTelemetryLogsGroupRequest(server string, pro
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/logs/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/loggroups/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -18845,7 +19841,7 @@ func NewTelemetryMetricsGroupServiceListTelemetryMetricsGroupsRequest(server str
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/metrics", pathParam0)
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/metricgroups", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -18944,7 +19940,7 @@ func NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroupRequestWithBody(s
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/metrics", pathParam0)
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/metricgroups", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -18987,7 +19983,7 @@ func NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroupRequest(server st
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/metrics/%s", pathParam0, pathParam1)
+	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/metricgroups/%s", pathParam0, pathParam1)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -19007,440 +20003,6 @@ func NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroupRequest(server st
 
 // NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroupRequest generates requests for TelemetryMetricsGroupServiceGetTelemetryMetricsGroup
 func NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroupRequest(server string, projectName string, resourceId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/groups/metrics/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewTelemetryLogsGroupServiceListTelemetryLogsGroups2Request generates requests for TelemetryLogsGroupServiceListTelemetryLogsGroups2
-func NewTelemetryLogsGroupServiceListTelemetryLogsGroups2Request(server string, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups2Params) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/loggroups", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.PageSize != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Offset != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.OrderBy != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Request calls the generic TelemetryLogsGroupServiceCreateTelemetryLogsGroup2 builder with application/json body
-func NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Request(server string, projectName string, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2RequestWithBody(server, projectName, "application/json", bodyReader)
-}
-
-// NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2RequestWithBody generates requests for TelemetryLogsGroupServiceCreateTelemetryLogsGroup2 with any type of body
-func NewTelemetryLogsGroupServiceCreateTelemetryLogsGroup2RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/loggroups", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Request generates requests for TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2
-func NewTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Request(server string, projectName string, resourceId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/loggroups/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewTelemetryLogsGroupServiceGetTelemetryLogsGroup2Request generates requests for TelemetryLogsGroupServiceGetTelemetryLogsGroup2
-func NewTelemetryLogsGroupServiceGetTelemetryLogsGroup2Request(server string, projectName string, resourceId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/loggroups/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Request generates requests for TelemetryMetricsGroupServiceListTelemetryMetricsGroups2
-func NewTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Request(server string, projectName string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/metricgroups", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.PageSize != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "pageSize", runtime.ParamLocationQuery, *params.PageSize); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Offset != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.OrderBy != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "orderBy", runtime.ParamLocationQuery, *params.OrderBy); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Request calls the generic TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2 builder with application/json body
-func NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Request(server string, projectName string, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2RequestWithBody(server, projectName, "application/json", bodyReader)
-}
-
-// NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2RequestWithBody generates requests for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2 with any type of body
-func NewTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/metricgroups", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Request generates requests for TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2
-func NewTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Request(server string, projectName string, resourceId string) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "projectName", runtime.ParamLocationPath, projectName)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "resourceId", runtime.ParamLocationPath, resourceId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/projects/%s/telemetry/metricgroups/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Request generates requests for TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2
-func NewTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Request(server string, projectName string, resourceId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -19808,9 +20370,9 @@ func NewTelemetryLogsProfileServicePatchTelemetryLogsProfileRequestWithBody(serv
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -20219,9 +20781,9 @@ func NewTelemetryMetricsProfileServicePatchTelemetryMetricsProfileRequestWithBod
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -20535,8 +21097,8 @@ func NewWorkloadMemberServiceGetWorkloadMemberRequest(server string, projectName
 	return req, nil
 }
 
-// NewWorkloadServiceListWorkloadsRequest generates requests for WorkloadServiceListWorkloads
-func NewWorkloadServiceListWorkloadsRequest(server string, projectName string, params *WorkloadServiceListWorkloadsParams) (*http.Request, error) {
+// NewWorkloadServiceListWorkloads3Request generates requests for WorkloadServiceListWorkloads3
+func NewWorkloadServiceListWorkloads3Request(server string, projectName string, params *WorkloadServiceListWorkloads3Params) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20639,19 +21201,19 @@ func NewWorkloadServiceListWorkloadsRequest(server string, projectName string, p
 	return req, nil
 }
 
-// NewWorkloadServiceCreateWorkloadRequest calls the generic WorkloadServiceCreateWorkload builder with application/json body
-func NewWorkloadServiceCreateWorkloadRequest(server string, projectName string, body WorkloadServiceCreateWorkloadJSONRequestBody) (*http.Request, error) {
+// NewWorkloadServiceCreateWorkload3Request calls the generic WorkloadServiceCreateWorkload3 builder with application/json body
+func NewWorkloadServiceCreateWorkload3Request(server string, projectName string, body WorkloadServiceCreateWorkload3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewWorkloadServiceCreateWorkloadRequestWithBody(server, projectName, "application/json", bodyReader)
+	return NewWorkloadServiceCreateWorkload3RequestWithBody(server, projectName, "application/json", bodyReader)
 }
 
-// NewWorkloadServiceCreateWorkloadRequestWithBody generates requests for WorkloadServiceCreateWorkload with any type of body
-func NewWorkloadServiceCreateWorkloadRequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
+// NewWorkloadServiceCreateWorkload3RequestWithBody generates requests for WorkloadServiceCreateWorkload3 with any type of body
+func NewWorkloadServiceCreateWorkload3RequestWithBody(server string, projectName string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20686,8 +21248,8 @@ func NewWorkloadServiceCreateWorkloadRequestWithBody(server string, projectName 
 	return req, nil
 }
 
-// NewWorkloadServiceDeleteWorkloadRequest generates requests for WorkloadServiceDeleteWorkload
-func NewWorkloadServiceDeleteWorkloadRequest(server string, projectName string, resourceId string) (*http.Request, error) {
+// NewWorkloadServiceDeleteWorkload3Request generates requests for WorkloadServiceDeleteWorkload3
+func NewWorkloadServiceDeleteWorkload3Request(server string, projectName string, resourceId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20727,8 +21289,8 @@ func NewWorkloadServiceDeleteWorkloadRequest(server string, projectName string, 
 	return req, nil
 }
 
-// NewWorkloadServiceGetWorkloadRequest generates requests for WorkloadServiceGetWorkload
-func NewWorkloadServiceGetWorkloadRequest(server string, projectName string, resourceId string) (*http.Request, error) {
+// NewWorkloadServiceGetWorkload3Request generates requests for WorkloadServiceGetWorkload3
+func NewWorkloadServiceGetWorkload3Request(server string, projectName string, resourceId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20768,19 +21330,19 @@ func NewWorkloadServiceGetWorkloadRequest(server string, projectName string, res
 	return req, nil
 }
 
-// NewWorkloadServicePatchWorkloadRequest calls the generic WorkloadServicePatchWorkload builder with application/json body
-func NewWorkloadServicePatchWorkloadRequest(server string, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, body WorkloadServicePatchWorkloadJSONRequestBody) (*http.Request, error) {
+// NewWorkloadServicePatchWorkload3Request calls the generic WorkloadServicePatchWorkload3 builder with application/json body
+func NewWorkloadServicePatchWorkload3Request(server string, projectName string, resourceId string, params *WorkloadServicePatchWorkload3Params, body WorkloadServicePatchWorkload3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewWorkloadServicePatchWorkloadRequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
+	return NewWorkloadServicePatchWorkload3RequestWithBody(server, projectName, resourceId, params, "application/json", bodyReader)
 }
 
-// NewWorkloadServicePatchWorkloadRequestWithBody generates requests for WorkloadServicePatchWorkload with any type of body
-func NewWorkloadServicePatchWorkloadRequestWithBody(server string, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, contentType string, body io.Reader) (*http.Request, error) {
+// NewWorkloadServicePatchWorkload3RequestWithBody generates requests for WorkloadServicePatchWorkload3 with any type of body
+func NewWorkloadServicePatchWorkload3RequestWithBody(server string, projectName string, resourceId string, params *WorkloadServicePatchWorkload3Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20815,9 +21377,9 @@ func NewWorkloadServicePatchWorkloadRequestWithBody(server string, projectName s
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if params.FieldMaskPaths != nil {
+		if params.FieldMask != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask.paths", runtime.ParamLocationQuery, *params.FieldMaskPaths); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fieldMask", runtime.ParamLocationQuery, *params.FieldMask); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -20844,19 +21406,19 @@ func NewWorkloadServicePatchWorkloadRequestWithBody(server string, projectName s
 	return req, nil
 }
 
-// NewWorkloadServiceUpdateWorkloadRequest calls the generic WorkloadServiceUpdateWorkload builder with application/json body
-func NewWorkloadServiceUpdateWorkloadRequest(server string, projectName string, resourceId string, body WorkloadServiceUpdateWorkloadJSONRequestBody) (*http.Request, error) {
+// NewWorkloadServiceUpdateWorkload3Request calls the generic WorkloadServiceUpdateWorkload3 builder with application/json body
+func NewWorkloadServiceUpdateWorkload3Request(server string, projectName string, resourceId string, body WorkloadServiceUpdateWorkload3JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewWorkloadServiceUpdateWorkloadRequestWithBody(server, projectName, resourceId, "application/json", bodyReader)
+	return NewWorkloadServiceUpdateWorkload3RequestWithBody(server, projectName, resourceId, "application/json", bodyReader)
 }
 
-// NewWorkloadServiceUpdateWorkloadRequestWithBody generates requests for WorkloadServiceUpdateWorkload with any type of body
-func NewWorkloadServiceUpdateWorkloadRequestWithBody(server string, projectName string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
+// NewWorkloadServiceUpdateWorkload3RequestWithBody generates requests for WorkloadServiceUpdateWorkload3 with any type of body
+func NewWorkloadServiceUpdateWorkload3RequestWithBody(server string, projectName string, resourceId string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -20995,8 +21557,8 @@ type ClientWithResponsesInterface interface {
 
 	HostServicePatchRegisterHost2WithResponse(ctx context.Context, resourceId string, params *HostServicePatchRegisterHost2Params, body HostServicePatchRegisterHost2JSONRequestBody, reqEditors ...RequestEditorFn) (*HostServicePatchRegisterHost2Response, error)
 
-	// HostServiceGetHostsSummary3WithResponse request
-	HostServiceGetHostsSummary3WithResponse(ctx context.Context, params *HostServiceGetHostsSummary3Params, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummary3Response, error)
+	// HostServiceGetHostsSummary2WithResponse request
+	HostServiceGetHostsSummary2WithResponse(ctx context.Context, params *HostServiceGetHostsSummary2Params, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummary2Response, error)
 
 	// InstanceServiceListInstances2WithResponse request
 	InstanceServiceListInstances2WithResponse(ctx context.Context, params *InstanceServiceListInstances2Params, reqEditors ...RequestEditorFn) (*InstanceServiceListInstances2Response, error)
@@ -21022,6 +21584,9 @@ type ClientWithResponsesInterface interface {
 
 	InstanceServiceUpdateInstance2WithResponse(ctx context.Context, resourceId string, params *InstanceServiceUpdateInstance2Params, body InstanceServiceUpdateInstance2JSONRequestBody, reqEditors ...RequestEditorFn) (*InstanceServiceUpdateInstance2Response, error)
 
+	// InstanceServiceInvalidateInstance2WithResponse request
+	InstanceServiceInvalidateInstance2WithResponse(ctx context.Context, resourceId string, params *InstanceServiceInvalidateInstance2Params, reqEditors ...RequestEditorFn) (*InstanceServiceInvalidateInstance2Response, error)
+
 	// LocalAccountServiceListLocalAccounts2WithResponse request
 	LocalAccountServiceListLocalAccounts2WithResponse(ctx context.Context, params *LocalAccountServiceListLocalAccounts2Params, reqEditors ...RequestEditorFn) (*LocalAccountServiceListLocalAccounts2Response, error)
 
@@ -21039,29 +21604,29 @@ type ClientWithResponsesInterface interface {
 	// LocationServiceListLocations2WithResponse request
 	LocationServiceListLocations2WithResponse(ctx context.Context, params *LocationServiceListLocations2Params, reqEditors ...RequestEditorFn) (*LocationServiceListLocations2Response, error)
 
-	// OperatingSystemServiceListOperatingSystems3WithResponse request
-	OperatingSystemServiceListOperatingSystems3WithResponse(ctx context.Context, params *OperatingSystemServiceListOperatingSystems3Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceListOperatingSystems3Response, error)
+	// OperatingSystemServiceListOperatingSystems2WithResponse request
+	OperatingSystemServiceListOperatingSystems2WithResponse(ctx context.Context, params *OperatingSystemServiceListOperatingSystems2Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceListOperatingSystems2Response, error)
 
-	// OperatingSystemServiceCreateOperatingSystem3WithBodyWithResponse request with any body
-	OperatingSystemServiceCreateOperatingSystem3WithBodyWithResponse(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem3Response, error)
+	// OperatingSystemServiceCreateOperatingSystem2WithBodyWithResponse request with any body
+	OperatingSystemServiceCreateOperatingSystem2WithBodyWithResponse(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem2Response, error)
 
-	OperatingSystemServiceCreateOperatingSystem3WithResponse(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem3Params, body OperatingSystemServiceCreateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem3Response, error)
+	OperatingSystemServiceCreateOperatingSystem2WithResponse(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem2Params, body OperatingSystemServiceCreateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem2Response, error)
 
-	// OperatingSystemServiceDeleteOperatingSystem3WithResponse request
-	OperatingSystemServiceDeleteOperatingSystem3WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceDeleteOperatingSystem3Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceDeleteOperatingSystem3Response, error)
+	// OperatingSystemServiceDeleteOperatingSystem2WithResponse request
+	OperatingSystemServiceDeleteOperatingSystem2WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceDeleteOperatingSystem2Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceDeleteOperatingSystem2Response, error)
 
-	// OperatingSystemServiceGetOperatingSystem3WithResponse request
-	OperatingSystemServiceGetOperatingSystem3WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceGetOperatingSystem3Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceGetOperatingSystem3Response, error)
+	// OperatingSystemServiceGetOperatingSystem2WithResponse request
+	OperatingSystemServiceGetOperatingSystem2WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceGetOperatingSystem2Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceGetOperatingSystem2Response, error)
 
-	// OperatingSystemServicePatchOperatingSystem3WithBodyWithResponse request with any body
-	OperatingSystemServicePatchOperatingSystem3WithBodyWithResponse(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem3Response, error)
+	// OperatingSystemServicePatchOperatingSystem2WithBodyWithResponse request with any body
+	OperatingSystemServicePatchOperatingSystem2WithBodyWithResponse(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem2Response, error)
 
-	OperatingSystemServicePatchOperatingSystem3WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, body OperatingSystemServicePatchOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem3Response, error)
+	OperatingSystemServicePatchOperatingSystem2WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, body OperatingSystemServicePatchOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem2Response, error)
 
-	// OperatingSystemServiceUpdateOperatingSystem3WithBodyWithResponse request with any body
-	OperatingSystemServiceUpdateOperatingSystem3WithBodyWithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem3Response, error)
+	// OperatingSystemServiceUpdateOperatingSystem2WithBodyWithResponse request with any body
+	OperatingSystemServiceUpdateOperatingSystem2WithBodyWithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem2Response, error)
 
-	OperatingSystemServiceUpdateOperatingSystem3WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem3Params, body OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem3Response, error)
+	OperatingSystemServiceUpdateOperatingSystem2WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem2Params, body OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem2Response, error)
 
 	// OSUpdatePolicyListOSUpdatePolicy2WithResponse request
 	OSUpdatePolicyListOSUpdatePolicy2WithResponse(ctx context.Context, params *OSUpdatePolicyListOSUpdatePolicy2Params, reqEditors ...RequestEditorFn) (*OSUpdatePolicyListOSUpdatePolicy2Response, error)
@@ -21124,108 +21689,108 @@ type ClientWithResponsesInterface interface {
 
 	RegionServiceUpdateRegion2WithResponse(ctx context.Context, resourceId string, params *RegionServiceUpdateRegion2Params, body RegionServiceUpdateRegion2JSONRequestBody, reqEditors ...RequestEditorFn) (*RegionServiceUpdateRegion2Response, error)
 
-	// ScheduleServiceListSchedules3WithResponse request
-	ScheduleServiceListSchedules3WithResponse(ctx context.Context, params *ScheduleServiceListSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedules3Response, error)
+	// ScheduleServiceListSchedules2WithResponse request
+	ScheduleServiceListSchedules2WithResponse(ctx context.Context, params *ScheduleServiceListSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedules2Response, error)
 
-	// ScheduleServiceListRepeatedSchedules3WithResponse request
-	ScheduleServiceListRepeatedSchedules3WithResponse(ctx context.Context, params *ScheduleServiceListRepeatedSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListRepeatedSchedules3Response, error)
+	// ScheduleServiceListRepeatedSchedules2WithResponse request
+	ScheduleServiceListRepeatedSchedules2WithResponse(ctx context.Context, params *ScheduleServiceListRepeatedSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListRepeatedSchedules2Response, error)
 
-	// ScheduleServiceCreateRepeatedSchedule3WithBodyWithResponse request with any body
-	ScheduleServiceCreateRepeatedSchedule3WithBodyWithResponse(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule3Response, error)
+	// ScheduleServiceCreateRepeatedSchedule2WithBodyWithResponse request with any body
+	ScheduleServiceCreateRepeatedSchedule2WithBodyWithResponse(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule2Response, error)
 
-	ScheduleServiceCreateRepeatedSchedule3WithResponse(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule3Params, body ScheduleServiceCreateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule3Response, error)
+	ScheduleServiceCreateRepeatedSchedule2WithResponse(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule2Params, body ScheduleServiceCreateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule2Response, error)
 
-	// ScheduleServiceDeleteRepeatedSchedule3WithResponse request
-	ScheduleServiceDeleteRepeatedSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceDeleteRepeatedSchedule3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteRepeatedSchedule3Response, error)
+	// ScheduleServiceDeleteRepeatedSchedule2WithResponse request
+	ScheduleServiceDeleteRepeatedSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceDeleteRepeatedSchedule2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteRepeatedSchedule2Response, error)
 
-	// ScheduleServiceGetRepeatedSchedule3WithResponse request
-	ScheduleServiceGetRepeatedSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceGetRepeatedSchedule3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceGetRepeatedSchedule3Response, error)
+	// ScheduleServiceGetRepeatedSchedule2WithResponse request
+	ScheduleServiceGetRepeatedSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceGetRepeatedSchedule2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceGetRepeatedSchedule2Response, error)
 
-	// ScheduleServicePatchRepeatedSchedule3WithBodyWithResponse request with any body
-	ScheduleServicePatchRepeatedSchedule3WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule3Response, error)
+	// ScheduleServicePatchRepeatedSchedule2WithBodyWithResponse request with any body
+	ScheduleServicePatchRepeatedSchedule2WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule2Response, error)
 
-	ScheduleServicePatchRepeatedSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, body ScheduleServicePatchRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule3Response, error)
+	ScheduleServicePatchRepeatedSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, body ScheduleServicePatchRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule2Response, error)
 
-	// ScheduleServiceUpdateRepeatedSchedule3WithBodyWithResponse request with any body
-	ScheduleServiceUpdateRepeatedSchedule3WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule3Response, error)
+	// ScheduleServiceUpdateRepeatedSchedule2WithBodyWithResponse request with any body
+	ScheduleServiceUpdateRepeatedSchedule2WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule2Response, error)
 
-	ScheduleServiceUpdateRepeatedSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule3Params, body ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule3Response, error)
+	ScheduleServiceUpdateRepeatedSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule2Params, body ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule2Response, error)
 
-	// ScheduleServiceListSingleSchedules3WithResponse request
-	ScheduleServiceListSingleSchedules3WithResponse(ctx context.Context, params *ScheduleServiceListSingleSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSingleSchedules3Response, error)
+	// ScheduleServiceListSingleSchedules2WithResponse request
+	ScheduleServiceListSingleSchedules2WithResponse(ctx context.Context, params *ScheduleServiceListSingleSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSingleSchedules2Response, error)
 
-	// ScheduleServiceCreateSingleSchedule3WithBodyWithResponse request with any body
-	ScheduleServiceCreateSingleSchedule3WithBodyWithResponse(ctx context.Context, params *ScheduleServiceCreateSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule3Response, error)
+	// ScheduleServiceCreateSingleSchedule2WithBodyWithResponse request with any body
+	ScheduleServiceCreateSingleSchedule2WithBodyWithResponse(ctx context.Context, params *ScheduleServiceCreateSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule2Response, error)
 
-	ScheduleServiceCreateSingleSchedule3WithResponse(ctx context.Context, params *ScheduleServiceCreateSingleSchedule3Params, body ScheduleServiceCreateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule3Response, error)
+	ScheduleServiceCreateSingleSchedule2WithResponse(ctx context.Context, params *ScheduleServiceCreateSingleSchedule2Params, body ScheduleServiceCreateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule2Response, error)
 
-	// ScheduleServiceDeleteSingleSchedule3WithResponse request
-	ScheduleServiceDeleteSingleSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceDeleteSingleSchedule3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteSingleSchedule3Response, error)
+	// ScheduleServiceDeleteSingleSchedule2WithResponse request
+	ScheduleServiceDeleteSingleSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceDeleteSingleSchedule2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteSingleSchedule2Response, error)
 
-	// ScheduleServiceGetSingleSchedule3WithResponse request
-	ScheduleServiceGetSingleSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceGetSingleSchedule3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceGetSingleSchedule3Response, error)
+	// ScheduleServiceGetSingleSchedule2WithResponse request
+	ScheduleServiceGetSingleSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceGetSingleSchedule2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceGetSingleSchedule2Response, error)
 
-	// ScheduleServicePatchSingleSchedule3WithBodyWithResponse request with any body
-	ScheduleServicePatchSingleSchedule3WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule3Response, error)
+	// ScheduleServicePatchSingleSchedule2WithBodyWithResponse request with any body
+	ScheduleServicePatchSingleSchedule2WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule2Response, error)
 
-	ScheduleServicePatchSingleSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, body ScheduleServicePatchSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule3Response, error)
+	ScheduleServicePatchSingleSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, body ScheduleServicePatchSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule2Response, error)
 
-	// ScheduleServiceUpdateSingleSchedule3WithBodyWithResponse request with any body
-	ScheduleServiceUpdateSingleSchedule3WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule3Response, error)
+	// ScheduleServiceUpdateSingleSchedule2WithBodyWithResponse request with any body
+	ScheduleServiceUpdateSingleSchedule2WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule2Response, error)
 
-	ScheduleServiceUpdateSingleSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule3Params, body ScheduleServiceUpdateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule3Response, error)
+	ScheduleServiceUpdateSingleSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule2Params, body ScheduleServiceUpdateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule2Response, error)
 
-	// SiteServiceListSites3WithResponse request
-	SiteServiceListSites3WithResponse(ctx context.Context, params *SiteServiceListSites3Params, reqEditors ...RequestEditorFn) (*SiteServiceListSites3Response, error)
+	// SiteServiceListSites2WithResponse request
+	SiteServiceListSites2WithResponse(ctx context.Context, params *SiteServiceListSites2Params, reqEditors ...RequestEditorFn) (*SiteServiceListSites2Response, error)
 
-	// SiteServiceCreateSite3WithBodyWithResponse request with any body
-	SiteServiceCreateSite3WithBodyWithResponse(ctx context.Context, params *SiteServiceCreateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite3Response, error)
+	// SiteServiceCreateSite2WithBodyWithResponse request with any body
+	SiteServiceCreateSite2WithBodyWithResponse(ctx context.Context, params *SiteServiceCreateSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite2Response, error)
 
-	SiteServiceCreateSite3WithResponse(ctx context.Context, params *SiteServiceCreateSite3Params, body SiteServiceCreateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite3Response, error)
+	SiteServiceCreateSite2WithResponse(ctx context.Context, params *SiteServiceCreateSite2Params, body SiteServiceCreateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite2Response, error)
 
-	// SiteServiceDeleteSite3WithResponse request
-	SiteServiceDeleteSite3WithResponse(ctx context.Context, resourceId string, params *SiteServiceDeleteSite3Params, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSite3Response, error)
+	// SiteServiceDeleteSite2WithResponse request
+	SiteServiceDeleteSite2WithResponse(ctx context.Context, resourceId string, params *SiteServiceDeleteSite2Params, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSite2Response, error)
 
-	// SiteServiceGetSite3WithResponse request
-	SiteServiceGetSite3WithResponse(ctx context.Context, resourceId string, params *SiteServiceGetSite3Params, reqEditors ...RequestEditorFn) (*SiteServiceGetSite3Response, error)
+	// SiteServiceGetSite2WithResponse request
+	SiteServiceGetSite2WithResponse(ctx context.Context, resourceId string, params *SiteServiceGetSite2Params, reqEditors ...RequestEditorFn) (*SiteServiceGetSite2Response, error)
 
-	// SiteServicePatchSite3WithBodyWithResponse request with any body
-	SiteServicePatchSite3WithBodyWithResponse(ctx context.Context, resourceId string, params *SiteServicePatchSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSite3Response, error)
+	// SiteServicePatchSite2WithBodyWithResponse request with any body
+	SiteServicePatchSite2WithBodyWithResponse(ctx context.Context, resourceId string, params *SiteServicePatchSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSite2Response, error)
 
-	SiteServicePatchSite3WithResponse(ctx context.Context, resourceId string, params *SiteServicePatchSite3Params, body SiteServicePatchSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSite3Response, error)
+	SiteServicePatchSite2WithResponse(ctx context.Context, resourceId string, params *SiteServicePatchSite2Params, body SiteServicePatchSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSite2Response, error)
 
-	// SiteServiceUpdateSite3WithBodyWithResponse request with any body
-	SiteServiceUpdateSite3WithBodyWithResponse(ctx context.Context, resourceId string, params *SiteServiceUpdateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite3Response, error)
+	// SiteServiceUpdateSite2WithBodyWithResponse request with any body
+	SiteServiceUpdateSite2WithBodyWithResponse(ctx context.Context, resourceId string, params *SiteServiceUpdateSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite2Response, error)
 
-	SiteServiceUpdateSite3WithResponse(ctx context.Context, resourceId string, params *SiteServiceUpdateSite3Params, body SiteServiceUpdateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite3Response, error)
+	SiteServiceUpdateSite2WithResponse(ctx context.Context, resourceId string, params *SiteServiceUpdateSite2Params, body SiteServiceUpdateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite2Response, error)
 
-	// TelemetryLogsGroupServiceListTelemetryLogsGroups3WithResponse request
-	TelemetryLogsGroupServiceListTelemetryLogsGroups3WithResponse(ctx context.Context, params *TelemetryLogsGroupServiceListTelemetryLogsGroups3Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceListTelemetryLogsGroups3Response, error)
+	// TelemetryLogsGroupServiceListTelemetryLogsGroups2WithResponse request
+	TelemetryLogsGroupServiceListTelemetryLogsGroups2WithResponse(ctx context.Context, params *TelemetryLogsGroupServiceListTelemetryLogsGroups2Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceListTelemetryLogsGroups2Response, error)
 
-	// TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBodyWithResponse request with any body
-	TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBodyWithResponse(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response, error)
+	// TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBodyWithResponse request with any body
+	TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBodyWithResponse(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response, error)
 
-	TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithResponse(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response, error)
+	TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithResponse(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response, error)
 
-	// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3WithResponse request
-	TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3WithResponse(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response, error)
+	// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2WithResponse request
+	TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2WithResponse(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response, error)
 
-	// TelemetryLogsGroupServiceGetTelemetryLogsGroup3WithResponse request
-	TelemetryLogsGroupServiceGetTelemetryLogsGroup3WithResponse(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceGetTelemetryLogsGroup3Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response, error)
+	// TelemetryLogsGroupServiceGetTelemetryLogsGroup2WithResponse request
+	TelemetryLogsGroupServiceGetTelemetryLogsGroup2WithResponse(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceGetTelemetryLogsGroup2Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response, error)
 
-	// TelemetryMetricsGroupServiceListTelemetryMetricsGroups3WithResponse request
-	TelemetryMetricsGroupServiceListTelemetryMetricsGroups3WithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response, error)
+	// TelemetryMetricsGroupServiceListTelemetryMetricsGroups2WithResponse request
+	TelemetryMetricsGroupServiceListTelemetryMetricsGroups2WithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response, error)
 
-	// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBodyWithResponse request with any body
-	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBodyWithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response, error)
+	// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBodyWithResponse request with any body
+	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBodyWithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response, error)
 
-	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response, error)
+	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response, error)
 
-	// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3WithResponse request
-	TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3WithResponse(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response, error)
+	// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2WithResponse request
+	TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2WithResponse(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response, error)
 
-	// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3WithResponse request
-	TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3WithResponse(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response, error)
+	// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2WithResponse request
+	TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2WithResponse(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response, error)
 
 	// TelemetryLogsProfileServiceListTelemetryLogsProfiles2WithResponse request
 	TelemetryLogsProfileServiceListTelemetryLogsProfiles2WithResponse(ctx context.Context, params *TelemetryLogsProfileServiceListTelemetryLogsProfiles2Params, reqEditors ...RequestEditorFn) (*TelemetryLogsProfileServiceListTelemetryLogsProfiles2Response, error)
@@ -21326,6 +21891,9 @@ type ClientWithResponsesInterface interface {
 
 	HostServiceRegisterHostWithResponse(ctx context.Context, projectName string, params *HostServiceRegisterHostParams, body HostServiceRegisterHostJSONRequestBody, reqEditors ...RequestEditorFn) (*HostServiceRegisterHostResponse, error)
 
+	// HostServiceGetHostsSummaryWithResponse request
+	HostServiceGetHostsSummaryWithResponse(ctx context.Context, projectName string, params *HostServiceGetHostsSummaryParams, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummaryResponse, error)
+
 	// HostServiceDeleteHostWithResponse request
 	HostServiceDeleteHostWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*HostServiceDeleteHostResponse, error)
 
@@ -21353,11 +21921,8 @@ type ClientWithResponsesInterface interface {
 
 	HostServicePatchRegisterHostWithResponse(ctx context.Context, projectName string, resourceId string, body HostServicePatchRegisterHostJSONRequestBody, reqEditors ...RequestEditorFn) (*HostServicePatchRegisterHostResponse, error)
 
-	// HostServiceGetHostsSummaryWithResponse request
-	HostServiceGetHostsSummaryWithResponse(ctx context.Context, projectName string, params *HostServiceGetHostsSummaryParams, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummaryResponse, error)
-
-	// HostServiceGetHostsSummary2WithResponse request
-	HostServiceGetHostsSummary2WithResponse(ctx context.Context, projectName string, params *HostServiceGetHostsSummary2Params, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummary2Response, error)
+	// HostServiceGetHostsSummary3WithResponse request
+	HostServiceGetHostsSummary3WithResponse(ctx context.Context, projectName string, params *HostServiceGetHostsSummary3Params, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummary3Response, error)
 
 	// InstanceServiceListInstancesWithResponse request
 	InstanceServiceListInstancesWithResponse(ctx context.Context, projectName string, params *InstanceServiceListInstancesParams, reqEditors ...RequestEditorFn) (*InstanceServiceListInstancesResponse, error)
@@ -21386,6 +21951,30 @@ type ClientWithResponsesInterface interface {
 	// InstanceServiceInvalidateInstanceWithResponse request
 	InstanceServiceInvalidateInstanceWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*InstanceServiceInvalidateInstanceResponse, error)
 
+	// OperatingSystemServiceListOperatingSystems3WithResponse request
+	OperatingSystemServiceListOperatingSystems3WithResponse(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystems3Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceListOperatingSystems3Response, error)
+
+	// OperatingSystemServiceCreateOperatingSystem3WithBodyWithResponse request with any body
+	OperatingSystemServiceCreateOperatingSystem3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem3Response, error)
+
+	OperatingSystemServiceCreateOperatingSystem3WithResponse(ctx context.Context, projectName string, body OperatingSystemServiceCreateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem3Response, error)
+
+	// OperatingSystemServiceDeleteOperatingSystem3WithResponse request
+	OperatingSystemServiceDeleteOperatingSystem3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OperatingSystemServiceDeleteOperatingSystem3Response, error)
+
+	// OperatingSystemServiceGetOperatingSystem3WithResponse request
+	OperatingSystemServiceGetOperatingSystem3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OperatingSystemServiceGetOperatingSystem3Response, error)
+
+	// OperatingSystemServicePatchOperatingSystem3WithBodyWithResponse request with any body
+	OperatingSystemServicePatchOperatingSystem3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem3Response, error)
+
+	OperatingSystemServicePatchOperatingSystem3WithResponse(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, body OperatingSystemServicePatchOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem3Response, error)
+
+	// OperatingSystemServiceUpdateOperatingSystem3WithBodyWithResponse request with any body
+	OperatingSystemServiceUpdateOperatingSystem3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem3Response, error)
+
+	OperatingSystemServiceUpdateOperatingSystem3WithResponse(ctx context.Context, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem3Response, error)
+
 	// OperatingSystemServiceListOperatingSystemsWithResponse request
 	OperatingSystemServiceListOperatingSystemsWithResponse(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystemsParams, reqEditors ...RequestEditorFn) (*OperatingSystemServiceListOperatingSystemsResponse, error)
 
@@ -21410,80 +21999,80 @@ type ClientWithResponsesInterface interface {
 
 	OperatingSystemServiceUpdateOperatingSystemWithResponse(ctx context.Context, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystemJSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystemResponse, error)
 
-	// OperatingSystemServiceListOperatingSystems2WithResponse request
-	OperatingSystemServiceListOperatingSystems2WithResponse(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystems2Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceListOperatingSystems2Response, error)
+	// ScheduleServiceListSchedulesWithResponse request
+	ScheduleServiceListSchedulesWithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSchedulesParams, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedulesResponse, error)
 
-	// OperatingSystemServiceCreateOperatingSystem2WithBodyWithResponse request with any body
-	OperatingSystemServiceCreateOperatingSystem2WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem2Response, error)
+	// ScheduleServiceListRepeatedSchedules3WithResponse request
+	ScheduleServiceListRepeatedSchedules3WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListRepeatedSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListRepeatedSchedules3Response, error)
 
-	OperatingSystemServiceCreateOperatingSystem2WithResponse(ctx context.Context, projectName string, body OperatingSystemServiceCreateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem2Response, error)
+	// ScheduleServiceCreateRepeatedSchedule3WithBodyWithResponse request with any body
+	ScheduleServiceCreateRepeatedSchedule3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule3Response, error)
 
-	// OperatingSystemServiceDeleteOperatingSystem2WithResponse request
-	OperatingSystemServiceDeleteOperatingSystem2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OperatingSystemServiceDeleteOperatingSystem2Response, error)
+	ScheduleServiceCreateRepeatedSchedule3WithResponse(ctx context.Context, projectName string, body ScheduleServiceCreateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule3Response, error)
 
-	// OperatingSystemServiceGetOperatingSystem2WithResponse request
-	OperatingSystemServiceGetOperatingSystem2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OperatingSystemServiceGetOperatingSystem2Response, error)
+	// ScheduleServiceDeleteRepeatedSchedule3WithResponse request
+	ScheduleServiceDeleteRepeatedSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteRepeatedSchedule3Response, error)
 
-	// OperatingSystemServicePatchOperatingSystem2WithBodyWithResponse request with any body
-	OperatingSystemServicePatchOperatingSystem2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem2Response, error)
+	// ScheduleServiceGetRepeatedSchedule3WithResponse request
+	ScheduleServiceGetRepeatedSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceGetRepeatedSchedule3Response, error)
 
-	OperatingSystemServicePatchOperatingSystem2WithResponse(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, body OperatingSystemServicePatchOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem2Response, error)
+	// ScheduleServicePatchRepeatedSchedule3WithBodyWithResponse request with any body
+	ScheduleServicePatchRepeatedSchedule3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule3Response, error)
 
-	// OperatingSystemServiceUpdateOperatingSystem2WithBodyWithResponse request with any body
-	OperatingSystemServiceUpdateOperatingSystem2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem2Response, error)
+	ScheduleServicePatchRepeatedSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, body ScheduleServicePatchRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule3Response, error)
 
-	OperatingSystemServiceUpdateOperatingSystem2WithResponse(ctx context.Context, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem2Response, error)
+	// ScheduleServiceUpdateRepeatedSchedule3WithBodyWithResponse request with any body
+	ScheduleServiceUpdateRepeatedSchedule3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule3Response, error)
 
-	// ScheduleServiceListSchedules2WithResponse request
-	ScheduleServiceListSchedules2WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedules2Response, error)
+	ScheduleServiceUpdateRepeatedSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule3Response, error)
 
-	// ScheduleServiceListRepeatedSchedules2WithResponse request
-	ScheduleServiceListRepeatedSchedules2WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListRepeatedSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListRepeatedSchedules2Response, error)
+	// ScheduleServiceListSingleSchedules3WithResponse request
+	ScheduleServiceListSingleSchedules3WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSingleSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSingleSchedules3Response, error)
 
-	// ScheduleServiceCreateRepeatedSchedule2WithBodyWithResponse request with any body
-	ScheduleServiceCreateRepeatedSchedule2WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule2Response, error)
+	// ScheduleServiceCreateSingleSchedule3WithBodyWithResponse request with any body
+	ScheduleServiceCreateSingleSchedule3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule3Response, error)
 
-	ScheduleServiceCreateRepeatedSchedule2WithResponse(ctx context.Context, projectName string, body ScheduleServiceCreateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule2Response, error)
+	ScheduleServiceCreateSingleSchedule3WithResponse(ctx context.Context, projectName string, body ScheduleServiceCreateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule3Response, error)
 
-	// ScheduleServiceDeleteRepeatedSchedule2WithResponse request
-	ScheduleServiceDeleteRepeatedSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteRepeatedSchedule2Response, error)
+	// ScheduleServiceDeleteSingleSchedule3WithResponse request
+	ScheduleServiceDeleteSingleSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteSingleSchedule3Response, error)
 
-	// ScheduleServiceGetRepeatedSchedule2WithResponse request
-	ScheduleServiceGetRepeatedSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceGetRepeatedSchedule2Response, error)
+	// ScheduleServiceGetSingleSchedule3WithResponse request
+	ScheduleServiceGetSingleSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceGetSingleSchedule3Response, error)
 
-	// ScheduleServicePatchRepeatedSchedule2WithBodyWithResponse request with any body
-	ScheduleServicePatchRepeatedSchedule2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule2Response, error)
+	// ScheduleServicePatchSingleSchedule3WithBodyWithResponse request with any body
+	ScheduleServicePatchSingleSchedule3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule3Response, error)
 
-	ScheduleServicePatchRepeatedSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, body ScheduleServicePatchRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule2Response, error)
+	ScheduleServicePatchSingleSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, body ScheduleServicePatchSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule3Response, error)
 
-	// ScheduleServiceUpdateRepeatedSchedule2WithBodyWithResponse request with any body
-	ScheduleServiceUpdateRepeatedSchedule2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule2Response, error)
+	// ScheduleServiceUpdateSingleSchedule3WithBodyWithResponse request with any body
+	ScheduleServiceUpdateSingleSchedule3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule3Response, error)
 
-	ScheduleServiceUpdateRepeatedSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule2Response, error)
+	ScheduleServiceUpdateSingleSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule3Response, error)
 
-	// ScheduleServiceListSingleSchedules2WithResponse request
-	ScheduleServiceListSingleSchedules2WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSingleSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSingleSchedules2Response, error)
+	// WorkloadServiceListWorkloadsWithResponse request
+	WorkloadServiceListWorkloadsWithResponse(ctx context.Context, projectName string, params *WorkloadServiceListWorkloadsParams, reqEditors ...RequestEditorFn) (*WorkloadServiceListWorkloadsResponse, error)
 
-	// ScheduleServiceCreateSingleSchedule2WithBodyWithResponse request with any body
-	ScheduleServiceCreateSingleSchedule2WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule2Response, error)
+	// WorkloadServiceCreateWorkloadWithBodyWithResponse request with any body
+	WorkloadServiceCreateWorkloadWithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkloadResponse, error)
 
-	ScheduleServiceCreateSingleSchedule2WithResponse(ctx context.Context, projectName string, body ScheduleServiceCreateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule2Response, error)
+	WorkloadServiceCreateWorkloadWithResponse(ctx context.Context, projectName string, body WorkloadServiceCreateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkloadResponse, error)
 
-	// ScheduleServiceDeleteSingleSchedule2WithResponse request
-	ScheduleServiceDeleteSingleSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteSingleSchedule2Response, error)
+	// WorkloadServiceDeleteWorkloadWithResponse request
+	WorkloadServiceDeleteWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceDeleteWorkloadResponse, error)
 
-	// ScheduleServiceGetSingleSchedule2WithResponse request
-	ScheduleServiceGetSingleSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceGetSingleSchedule2Response, error)
+	// WorkloadServiceGetWorkloadWithResponse request
+	WorkloadServiceGetWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceGetWorkloadResponse, error)
 
-	// ScheduleServicePatchSingleSchedule2WithBodyWithResponse request with any body
-	ScheduleServicePatchSingleSchedule2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule2Response, error)
+	// WorkloadServicePatchWorkloadWithBodyWithResponse request with any body
+	WorkloadServicePatchWorkloadWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkloadResponse, error)
 
-	ScheduleServicePatchSingleSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, body ScheduleServicePatchSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule2Response, error)
+	WorkloadServicePatchWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, body WorkloadServicePatchWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkloadResponse, error)
 
-	// ScheduleServiceUpdateSingleSchedule2WithBodyWithResponse request with any body
-	ScheduleServiceUpdateSingleSchedule2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule2Response, error)
+	// WorkloadServiceUpdateWorkloadWithBodyWithResponse request with any body
+	WorkloadServiceUpdateWorkloadWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkloadResponse, error)
 
-	ScheduleServiceUpdateSingleSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule2Response, error)
+	WorkloadServiceUpdateWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkloadResponse, error)
 
 	// CustomConfigServiceListCustomConfigsWithResponse request
 	CustomConfigServiceListCustomConfigsWithResponse(ctx context.Context, projectName string, params *CustomConfigServiceListCustomConfigsParams, reqEditors ...RequestEditorFn) (*CustomConfigServiceListCustomConfigsResponse, error)
@@ -21516,29 +22105,6 @@ type ClientWithResponsesInterface interface {
 	// LocationServiceListLocationsWithResponse request
 	LocationServiceListLocationsWithResponse(ctx context.Context, projectName string, params *LocationServiceListLocationsParams, reqEditors ...RequestEditorFn) (*LocationServiceListLocationsResponse, error)
 
-	// OSUpdatePolicyListOSUpdatePolicy3WithResponse request
-	OSUpdatePolicyListOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicy3Params, reqEditors ...RequestEditorFn) (*OSUpdatePolicyListOSUpdatePolicy3Response, error)
-
-	// OSUpdatePolicyCreateOSUpdatePolicy3WithBodyWithResponse request with any body
-	OSUpdatePolicyCreateOSUpdatePolicy3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OSUpdatePolicyCreateOSUpdatePolicy3Response, error)
-
-	OSUpdatePolicyCreateOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, body OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody, reqEditors ...RequestEditorFn) (*OSUpdatePolicyCreateOSUpdatePolicy3Response, error)
-
-	// OSUpdatePolicyDeleteOSUpdatePolicy3WithResponse request
-	OSUpdatePolicyDeleteOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdatePolicyDeleteOSUpdatePolicy3Response, error)
-
-	// OSUpdatePolicyGetOSUpdatePolicy3WithResponse request
-	OSUpdatePolicyGetOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdatePolicyGetOSUpdatePolicy3Response, error)
-
-	// OSUpdateRunListOSUpdateRun3WithResponse request
-	OSUpdateRunListOSUpdateRun3WithResponse(ctx context.Context, projectName string, params *OSUpdateRunListOSUpdateRun3Params, reqEditors ...RequestEditorFn) (*OSUpdateRunListOSUpdateRun3Response, error)
-
-	// OSUpdateRunDeleteOSUpdateRun3WithResponse request
-	OSUpdateRunDeleteOSUpdateRun3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdateRunDeleteOSUpdateRun3Response, error)
-
-	// OSUpdateRunGetOSUpdateRun3WithResponse request
-	OSUpdateRunGetOSUpdateRun3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdateRunGetOSUpdateRun3Response, error)
-
 	// OSUpdatePolicyListOSUpdatePolicyWithResponse request
 	OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicyParams, reqEditors ...RequestEditorFn) (*OSUpdatePolicyListOSUpdatePolicyResponse, error)
 
@@ -21562,6 +22128,29 @@ type ClientWithResponsesInterface interface {
 	// OSUpdateRunGetOSUpdateRunWithResponse request
 	OSUpdateRunGetOSUpdateRunWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdateRunGetOSUpdateRunResponse, error)
 
+	// OSUpdatePolicyListOSUpdatePolicy3WithResponse request
+	OSUpdatePolicyListOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicy3Params, reqEditors ...RequestEditorFn) (*OSUpdatePolicyListOSUpdatePolicy3Response, error)
+
+	// OSUpdatePolicyCreateOSUpdatePolicy3WithBodyWithResponse request with any body
+	OSUpdatePolicyCreateOSUpdatePolicy3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OSUpdatePolicyCreateOSUpdatePolicy3Response, error)
+
+	OSUpdatePolicyCreateOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, body OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody, reqEditors ...RequestEditorFn) (*OSUpdatePolicyCreateOSUpdatePolicy3Response, error)
+
+	// OSUpdatePolicyDeleteOSUpdatePolicy3WithResponse request
+	OSUpdatePolicyDeleteOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdatePolicyDeleteOSUpdatePolicy3Response, error)
+
+	// OSUpdatePolicyGetOSUpdatePolicy3WithResponse request
+	OSUpdatePolicyGetOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdatePolicyGetOSUpdatePolicy3Response, error)
+
+	// OSUpdateRunListOSUpdateRun3WithResponse request
+	OSUpdateRunListOSUpdateRun3WithResponse(ctx context.Context, projectName string, params *OSUpdateRunListOSUpdateRun3Params, reqEditors ...RequestEditorFn) (*OSUpdateRunListOSUpdateRun3Response, error)
+
+	// OSUpdateRunDeleteOSUpdateRun3WithResponse request
+	OSUpdateRunDeleteOSUpdateRun3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdateRunDeleteOSUpdateRun3Response, error)
+
+	// OSUpdateRunGetOSUpdateRun3WithResponse request
+	OSUpdateRunGetOSUpdateRun3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdateRunGetOSUpdateRun3Response, error)
+
 	// ProviderServiceListProvidersWithResponse request
 	ProviderServiceListProvidersWithResponse(ctx context.Context, projectName string, params *ProviderServiceListProvidersParams, reqEditors ...RequestEditorFn) (*ProviderServiceListProvidersResponse, error)
 
@@ -21584,29 +22173,29 @@ type ClientWithResponsesInterface interface {
 
 	RegionServiceCreateRegionWithResponse(ctx context.Context, projectName string, body RegionServiceCreateRegionJSONRequestBody, reqEditors ...RequestEditorFn) (*RegionServiceCreateRegionResponse, error)
 
-	// SiteServiceListSites2WithResponse request
-	SiteServiceListSites2WithResponse(ctx context.Context, projectName string, regionId string, params *SiteServiceListSites2Params, reqEditors ...RequestEditorFn) (*SiteServiceListSites2Response, error)
+	// SiteServiceListSitesWithResponse request
+	SiteServiceListSitesWithResponse(ctx context.Context, projectName string, regionId string, params *SiteServiceListSitesParams, reqEditors ...RequestEditorFn) (*SiteServiceListSitesResponse, error)
 
-	// SiteServiceCreateSite2WithBodyWithResponse request with any body
-	SiteServiceCreateSite2WithBodyWithResponse(ctx context.Context, projectName string, regionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite2Response, error)
+	// SiteServiceCreateSiteWithBodyWithResponse request with any body
+	SiteServiceCreateSiteWithBodyWithResponse(ctx context.Context, projectName string, regionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSiteResponse, error)
 
-	SiteServiceCreateSite2WithResponse(ctx context.Context, projectName string, regionId string, body SiteServiceCreateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite2Response, error)
+	SiteServiceCreateSiteWithResponse(ctx context.Context, projectName string, regionId string, body SiteServiceCreateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSiteResponse, error)
 
-	// SiteServiceDeleteSite2WithResponse request
-	SiteServiceDeleteSite2WithResponse(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSite2Response, error)
+	// SiteServiceDeleteSiteWithResponse request
+	SiteServiceDeleteSiteWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSiteResponse, error)
 
-	// SiteServiceGetSite2WithResponse request
-	SiteServiceGetSite2WithResponse(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*SiteServiceGetSite2Response, error)
+	// SiteServiceGetSiteWithResponse request
+	SiteServiceGetSiteWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*SiteServiceGetSiteResponse, error)
 
-	// SiteServicePatchSite2WithBodyWithResponse request with any body
-	SiteServicePatchSite2WithBodyWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSite2Response, error)
+	// SiteServicePatchSiteWithBodyWithResponse request with any body
+	SiteServicePatchSiteWithBodyWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSiteResponse, error)
 
-	SiteServicePatchSite2WithResponse(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSite2Params, body SiteServicePatchSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSite2Response, error)
+	SiteServicePatchSiteWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSiteParams, body SiteServicePatchSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSiteResponse, error)
 
-	// SiteServiceUpdateSite2WithBodyWithResponse request with any body
-	SiteServiceUpdateSite2WithBodyWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite2Response, error)
+	// SiteServiceUpdateSiteWithBodyWithResponse request with any body
+	SiteServiceUpdateSiteWithBodyWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSiteResponse, error)
 
-	SiteServiceUpdateSite2WithResponse(ctx context.Context, projectName string, regionId string, resourceId string, body SiteServiceUpdateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite2Response, error)
+	SiteServiceUpdateSiteWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, body SiteServiceUpdateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSiteResponse, error)
 
 	// RegionServiceDeleteRegionWithResponse request
 	RegionServiceDeleteRegionWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*RegionServiceDeleteRegionResponse, error)
@@ -21624,8 +22213,8 @@ type ClientWithResponsesInterface interface {
 
 	RegionServiceUpdateRegionWithResponse(ctx context.Context, projectName string, resourceId string, body RegionServiceUpdateRegionJSONRequestBody, reqEditors ...RequestEditorFn) (*RegionServiceUpdateRegionResponse, error)
 
-	// ScheduleServiceListSchedulesWithResponse request
-	ScheduleServiceListSchedulesWithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSchedulesParams, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedulesResponse, error)
+	// ScheduleServiceListSchedules3WithResponse request
+	ScheduleServiceListSchedules3WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedules3Response, error)
 
 	// ScheduleServiceListRepeatedSchedulesWithResponse request
 	ScheduleServiceListRepeatedSchedulesWithResponse(ctx context.Context, projectName string, params *ScheduleServiceListRepeatedSchedulesParams, reqEditors ...RequestEditorFn) (*ScheduleServiceListRepeatedSchedulesResponse, error)
@@ -21675,29 +22264,57 @@ type ClientWithResponsesInterface interface {
 
 	ScheduleServiceUpdateSingleScheduleWithResponse(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateSingleScheduleJSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleScheduleResponse, error)
 
-	// SiteServiceListSitesWithResponse request
-	SiteServiceListSitesWithResponse(ctx context.Context, projectName string, params *SiteServiceListSitesParams, reqEditors ...RequestEditorFn) (*SiteServiceListSitesResponse, error)
+	// SiteServiceListSites3WithResponse request
+	SiteServiceListSites3WithResponse(ctx context.Context, projectName string, params *SiteServiceListSites3Params, reqEditors ...RequestEditorFn) (*SiteServiceListSites3Response, error)
 
-	// SiteServiceCreateSiteWithBodyWithResponse request with any body
-	SiteServiceCreateSiteWithBodyWithResponse(ctx context.Context, projectName string, params *SiteServiceCreateSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSiteResponse, error)
+	// SiteServiceCreateSite3WithBodyWithResponse request with any body
+	SiteServiceCreateSite3WithBodyWithResponse(ctx context.Context, projectName string, params *SiteServiceCreateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite3Response, error)
 
-	SiteServiceCreateSiteWithResponse(ctx context.Context, projectName string, params *SiteServiceCreateSiteParams, body SiteServiceCreateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSiteResponse, error)
+	SiteServiceCreateSite3WithResponse(ctx context.Context, projectName string, params *SiteServiceCreateSite3Params, body SiteServiceCreateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite3Response, error)
 
-	// SiteServiceDeleteSiteWithResponse request
-	SiteServiceDeleteSiteWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceDeleteSiteParams, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSiteResponse, error)
+	// SiteServiceDeleteSite3WithResponse request
+	SiteServiceDeleteSite3WithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceDeleteSite3Params, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSite3Response, error)
 
-	// SiteServiceGetSiteWithResponse request
-	SiteServiceGetSiteWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceGetSiteParams, reqEditors ...RequestEditorFn) (*SiteServiceGetSiteResponse, error)
+	// SiteServiceGetSite3WithResponse request
+	SiteServiceGetSite3WithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceGetSite3Params, reqEditors ...RequestEditorFn) (*SiteServiceGetSite3Response, error)
 
-	// SiteServicePatchSiteWithBodyWithResponse request with any body
-	SiteServicePatchSiteWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSiteResponse, error)
+	// SiteServicePatchSite3WithBodyWithResponse request with any body
+	SiteServicePatchSite3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSite3Response, error)
 
-	SiteServicePatchSiteWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSiteParams, body SiteServicePatchSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSiteResponse, error)
+	SiteServicePatchSite3WithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSite3Params, body SiteServicePatchSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSite3Response, error)
 
-	// SiteServiceUpdateSiteWithBodyWithResponse request with any body
-	SiteServiceUpdateSiteWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSiteResponse, error)
+	// SiteServiceUpdateSite3WithBodyWithResponse request with any body
+	SiteServiceUpdateSite3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite3Response, error)
 
-	SiteServiceUpdateSiteWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSiteParams, body SiteServiceUpdateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSiteResponse, error)
+	SiteServiceUpdateSite3WithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSite3Params, body SiteServiceUpdateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite3Response, error)
+
+	// TelemetryLogsGroupServiceListTelemetryLogsGroups3WithResponse request
+	TelemetryLogsGroupServiceListTelemetryLogsGroups3WithResponse(ctx context.Context, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups3Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceListTelemetryLogsGroups3Response, error)
+
+	// TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBodyWithResponse request with any body
+	TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response, error)
+
+	TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithResponse(ctx context.Context, projectName string, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response, error)
+
+	// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3WithResponse request
+	TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response, error)
+
+	// TelemetryLogsGroupServiceGetTelemetryLogsGroup3WithResponse request
+	TelemetryLogsGroupServiceGetTelemetryLogsGroup3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response, error)
+
+	// TelemetryMetricsGroupServiceListTelemetryMetricsGroups3WithResponse request
+	TelemetryMetricsGroupServiceListTelemetryMetricsGroups3WithResponse(ctx context.Context, projectName string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response, error)
+
+	// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBodyWithResponse request with any body
+	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response, error)
+
+	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithResponse(ctx context.Context, projectName string, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response, error)
+
+	// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3WithResponse request
+	TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response, error)
+
+	// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3WithResponse request
+	TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response, error)
 
 	// TelemetryLogsGroupServiceListTelemetryLogsGroupsWithResponse request
 	TelemetryLogsGroupServiceListTelemetryLogsGroupsWithResponse(ctx context.Context, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroupsParams, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceListTelemetryLogsGroupsResponse, error)
@@ -21726,34 +22343,6 @@ type ClientWithResponsesInterface interface {
 
 	// TelemetryMetricsGroupServiceGetTelemetryMetricsGroupWithResponse request
 	TelemetryMetricsGroupServiceGetTelemetryMetricsGroupWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroupResponse, error)
-
-	// TelemetryLogsGroupServiceListTelemetryLogsGroups2WithResponse request
-	TelemetryLogsGroupServiceListTelemetryLogsGroups2WithResponse(ctx context.Context, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups2Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceListTelemetryLogsGroups2Response, error)
-
-	// TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBodyWithResponse request with any body
-	TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response, error)
-
-	TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithResponse(ctx context.Context, projectName string, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response, error)
-
-	// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2WithResponse request
-	TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response, error)
-
-	// TelemetryLogsGroupServiceGetTelemetryLogsGroup2WithResponse request
-	TelemetryLogsGroupServiceGetTelemetryLogsGroup2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response, error)
-
-	// TelemetryMetricsGroupServiceListTelemetryMetricsGroups2WithResponse request
-	TelemetryMetricsGroupServiceListTelemetryMetricsGroups2WithResponse(ctx context.Context, projectName string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response, error)
-
-	// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBodyWithResponse request with any body
-	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response, error)
-
-	TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithResponse(ctx context.Context, projectName string, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response, error)
-
-	// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2WithResponse request
-	TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response, error)
-
-	// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2WithResponse request
-	TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response, error)
 
 	// TelemetryLogsProfileServiceListTelemetryLogsProfilesWithResponse request
 	TelemetryLogsProfileServiceListTelemetryLogsProfilesWithResponse(ctx context.Context, projectName string, params *TelemetryLogsProfileServiceListTelemetryLogsProfilesParams, reqEditors ...RequestEditorFn) (*TelemetryLogsProfileServiceListTelemetryLogsProfilesResponse, error)
@@ -21817,29 +22406,29 @@ type ClientWithResponsesInterface interface {
 	// WorkloadMemberServiceGetWorkloadMemberWithResponse request
 	WorkloadMemberServiceGetWorkloadMemberWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadMemberServiceGetWorkloadMemberResponse, error)
 
-	// WorkloadServiceListWorkloadsWithResponse request
-	WorkloadServiceListWorkloadsWithResponse(ctx context.Context, projectName string, params *WorkloadServiceListWorkloadsParams, reqEditors ...RequestEditorFn) (*WorkloadServiceListWorkloadsResponse, error)
+	// WorkloadServiceListWorkloads3WithResponse request
+	WorkloadServiceListWorkloads3WithResponse(ctx context.Context, projectName string, params *WorkloadServiceListWorkloads3Params, reqEditors ...RequestEditorFn) (*WorkloadServiceListWorkloads3Response, error)
 
-	// WorkloadServiceCreateWorkloadWithBodyWithResponse request with any body
-	WorkloadServiceCreateWorkloadWithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkloadResponse, error)
+	// WorkloadServiceCreateWorkload3WithBodyWithResponse request with any body
+	WorkloadServiceCreateWorkload3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkload3Response, error)
 
-	WorkloadServiceCreateWorkloadWithResponse(ctx context.Context, projectName string, body WorkloadServiceCreateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkloadResponse, error)
+	WorkloadServiceCreateWorkload3WithResponse(ctx context.Context, projectName string, body WorkloadServiceCreateWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkload3Response, error)
 
-	// WorkloadServiceDeleteWorkloadWithResponse request
-	WorkloadServiceDeleteWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceDeleteWorkloadResponse, error)
+	// WorkloadServiceDeleteWorkload3WithResponse request
+	WorkloadServiceDeleteWorkload3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceDeleteWorkload3Response, error)
 
-	// WorkloadServiceGetWorkloadWithResponse request
-	WorkloadServiceGetWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceGetWorkloadResponse, error)
+	// WorkloadServiceGetWorkload3WithResponse request
+	WorkloadServiceGetWorkload3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceGetWorkload3Response, error)
 
-	// WorkloadServicePatchWorkloadWithBodyWithResponse request with any body
-	WorkloadServicePatchWorkloadWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkloadResponse, error)
+	// WorkloadServicePatchWorkload3WithBodyWithResponse request with any body
+	WorkloadServicePatchWorkload3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkload3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkload3Response, error)
 
-	WorkloadServicePatchWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, body WorkloadServicePatchWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkloadResponse, error)
+	WorkloadServicePatchWorkload3WithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkload3Params, body WorkloadServicePatchWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkload3Response, error)
 
-	// WorkloadServiceUpdateWorkloadWithBodyWithResponse request with any body
-	WorkloadServiceUpdateWorkloadWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkloadResponse, error)
+	// WorkloadServiceUpdateWorkload3WithBodyWithResponse request with any body
+	WorkloadServiceUpdateWorkload3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkload3Response, error)
 
-	WorkloadServiceUpdateWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkloadResponse, error)
+	WorkloadServiceUpdateWorkload3WithResponse(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkload3Response, error)
 }
 
 type CustomConfigServiceListCustomConfigs2Response struct {
@@ -22150,14 +22739,14 @@ func (r HostServicePatchRegisterHost2Response) StatusCode() int {
 	return 0
 }
 
-type HostServiceGetHostsSummary3Response struct {
+type HostServiceGetHostsSummary2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *GetHostSummaryResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r HostServiceGetHostsSummary3Response) Status() string {
+func (r HostServiceGetHostsSummary2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22165,7 +22754,7 @@ func (r HostServiceGetHostsSummary3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r HostServiceGetHostsSummary3Response) StatusCode() int {
+func (r HostServiceGetHostsSummary2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -22304,6 +22893,28 @@ func (r InstanceServiceUpdateInstance2Response) StatusCode() int {
 	return 0
 }
 
+type InstanceServiceInvalidateInstance2Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InvalidateInstanceResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r InstanceServiceInvalidateInstance2Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r InstanceServiceInvalidateInstance2Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type LocalAccountServiceListLocalAccounts2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -22414,14 +23025,14 @@ func (r LocationServiceListLocations2Response) StatusCode() int {
 	return 0
 }
 
-type OperatingSystemServiceListOperatingSystems3Response struct {
+type OperatingSystemServiceListOperatingSystems2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListOperatingSystemsResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r OperatingSystemServiceListOperatingSystems3Response) Status() string {
+func (r OperatingSystemServiceListOperatingSystems2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22429,21 +23040,21 @@ func (r OperatingSystemServiceListOperatingSystems3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServiceListOperatingSystems3Response) StatusCode() int {
+func (r OperatingSystemServiceListOperatingSystems2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type OperatingSystemServiceCreateOperatingSystem3Response struct {
+type OperatingSystemServiceCreateOperatingSystem2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *OperatingSystemResource
 }
 
 // Status returns HTTPResponse.Status
-func (r OperatingSystemServiceCreateOperatingSystem3Response) Status() string {
+func (r OperatingSystemServiceCreateOperatingSystem2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22451,21 +23062,21 @@ func (r OperatingSystemServiceCreateOperatingSystem3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServiceCreateOperatingSystem3Response) StatusCode() int {
+func (r OperatingSystemServiceCreateOperatingSystem2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type OperatingSystemServiceDeleteOperatingSystem3Response struct {
+type OperatingSystemServiceDeleteOperatingSystem2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteOperatingSystemResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r OperatingSystemServiceDeleteOperatingSystem3Response) Status() string {
+func (r OperatingSystemServiceDeleteOperatingSystem2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22473,21 +23084,21 @@ func (r OperatingSystemServiceDeleteOperatingSystem3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServiceDeleteOperatingSystem3Response) StatusCode() int {
+func (r OperatingSystemServiceDeleteOperatingSystem2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type OperatingSystemServiceGetOperatingSystem3Response struct {
+type OperatingSystemServiceGetOperatingSystem2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *OperatingSystemResource
 }
 
 // Status returns HTTPResponse.Status
-func (r OperatingSystemServiceGetOperatingSystem3Response) Status() string {
+func (r OperatingSystemServiceGetOperatingSystem2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22495,21 +23106,21 @@ func (r OperatingSystemServiceGetOperatingSystem3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServiceGetOperatingSystem3Response) StatusCode() int {
+func (r OperatingSystemServiceGetOperatingSystem2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type OperatingSystemServicePatchOperatingSystem3Response struct {
+type OperatingSystemServicePatchOperatingSystem2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *OperatingSystemResource
 }
 
 // Status returns HTTPResponse.Status
-func (r OperatingSystemServicePatchOperatingSystem3Response) Status() string {
+func (r OperatingSystemServicePatchOperatingSystem2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22517,21 +23128,21 @@ func (r OperatingSystemServicePatchOperatingSystem3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServicePatchOperatingSystem3Response) StatusCode() int {
+func (r OperatingSystemServicePatchOperatingSystem2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type OperatingSystemServiceUpdateOperatingSystem3Response struct {
+type OperatingSystemServiceUpdateOperatingSystem2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *OperatingSystemResource
 }
 
 // Status returns HTTPResponse.Status
-func (r OperatingSystemServiceUpdateOperatingSystem3Response) Status() string {
+func (r OperatingSystemServiceUpdateOperatingSystem2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22539,7 +23150,7 @@ func (r OperatingSystemServiceUpdateOperatingSystem3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServiceUpdateOperatingSystem3Response) StatusCode() int {
+func (r OperatingSystemServiceUpdateOperatingSystem2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -22920,14 +23531,14 @@ func (r RegionServiceUpdateRegion2Response) StatusCode() int {
 	return 0
 }
 
-type ScheduleServiceListSchedules3Response struct {
+type ScheduleServiceListSchedules2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListSchedulesResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceListSchedules3Response) Status() string {
+func (r ScheduleServiceListSchedules2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22935,21 +23546,21 @@ func (r ScheduleServiceListSchedules3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceListSchedules3Response) StatusCode() int {
+func (r ScheduleServiceListSchedules2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceListRepeatedSchedules3Response struct {
+type ScheduleServiceListRepeatedSchedules2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListRepeatedSchedulesResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceListRepeatedSchedules3Response) Status() string {
+func (r ScheduleServiceListRepeatedSchedules2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22957,21 +23568,21 @@ func (r ScheduleServiceListRepeatedSchedules3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceListRepeatedSchedules3Response) StatusCode() int {
+func (r ScheduleServiceListRepeatedSchedules2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceCreateRepeatedSchedule3Response struct {
+type ScheduleServiceCreateRepeatedSchedule2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RepeatedScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceCreateRepeatedSchedule3Response) Status() string {
+func (r ScheduleServiceCreateRepeatedSchedule2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -22979,21 +23590,21 @@ func (r ScheduleServiceCreateRepeatedSchedule3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceCreateRepeatedSchedule3Response) StatusCode() int {
+func (r ScheduleServiceCreateRepeatedSchedule2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceDeleteRepeatedSchedule3Response struct {
+type ScheduleServiceDeleteRepeatedSchedule2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteRepeatedScheduleResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceDeleteRepeatedSchedule3Response) Status() string {
+func (r ScheduleServiceDeleteRepeatedSchedule2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23001,21 +23612,21 @@ func (r ScheduleServiceDeleteRepeatedSchedule3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceDeleteRepeatedSchedule3Response) StatusCode() int {
+func (r ScheduleServiceDeleteRepeatedSchedule2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceGetRepeatedSchedule3Response struct {
+type ScheduleServiceGetRepeatedSchedule2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RepeatedScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceGetRepeatedSchedule3Response) Status() string {
+func (r ScheduleServiceGetRepeatedSchedule2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23023,21 +23634,21 @@ func (r ScheduleServiceGetRepeatedSchedule3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceGetRepeatedSchedule3Response) StatusCode() int {
+func (r ScheduleServiceGetRepeatedSchedule2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServicePatchRepeatedSchedule3Response struct {
+type ScheduleServicePatchRepeatedSchedule2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RepeatedScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServicePatchRepeatedSchedule3Response) Status() string {
+func (r ScheduleServicePatchRepeatedSchedule2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23045,21 +23656,21 @@ func (r ScheduleServicePatchRepeatedSchedule3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServicePatchRepeatedSchedule3Response) StatusCode() int {
+func (r ScheduleServicePatchRepeatedSchedule2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceUpdateRepeatedSchedule3Response struct {
+type ScheduleServiceUpdateRepeatedSchedule2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RepeatedScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceUpdateRepeatedSchedule3Response) Status() string {
+func (r ScheduleServiceUpdateRepeatedSchedule2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23067,21 +23678,21 @@ func (r ScheduleServiceUpdateRepeatedSchedule3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceUpdateRepeatedSchedule3Response) StatusCode() int {
+func (r ScheduleServiceUpdateRepeatedSchedule2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceListSingleSchedules3Response struct {
+type ScheduleServiceListSingleSchedules2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListSingleSchedulesResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceListSingleSchedules3Response) Status() string {
+func (r ScheduleServiceListSingleSchedules2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23089,21 +23700,21 @@ func (r ScheduleServiceListSingleSchedules3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceListSingleSchedules3Response) StatusCode() int {
+func (r ScheduleServiceListSingleSchedules2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceCreateSingleSchedule3Response struct {
+type ScheduleServiceCreateSingleSchedule2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SingleScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceCreateSingleSchedule3Response) Status() string {
+func (r ScheduleServiceCreateSingleSchedule2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23111,21 +23722,21 @@ func (r ScheduleServiceCreateSingleSchedule3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceCreateSingleSchedule3Response) StatusCode() int {
+func (r ScheduleServiceCreateSingleSchedule2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceDeleteSingleSchedule3Response struct {
+type ScheduleServiceDeleteSingleSchedule2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteSingleScheduleResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceDeleteSingleSchedule3Response) Status() string {
+func (r ScheduleServiceDeleteSingleSchedule2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23133,21 +23744,21 @@ func (r ScheduleServiceDeleteSingleSchedule3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceDeleteSingleSchedule3Response) StatusCode() int {
+func (r ScheduleServiceDeleteSingleSchedule2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceGetSingleSchedule3Response struct {
+type ScheduleServiceGetSingleSchedule2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SingleScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceGetSingleSchedule3Response) Status() string {
+func (r ScheduleServiceGetSingleSchedule2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23155,21 +23766,21 @@ func (r ScheduleServiceGetSingleSchedule3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceGetSingleSchedule3Response) StatusCode() int {
+func (r ScheduleServiceGetSingleSchedule2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServicePatchSingleSchedule3Response struct {
+type ScheduleServicePatchSingleSchedule2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SingleScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServicePatchSingleSchedule3Response) Status() string {
+func (r ScheduleServicePatchSingleSchedule2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23177,21 +23788,21 @@ func (r ScheduleServicePatchSingleSchedule3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServicePatchSingleSchedule3Response) StatusCode() int {
+func (r ScheduleServicePatchSingleSchedule2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceUpdateSingleSchedule3Response struct {
+type ScheduleServiceUpdateSingleSchedule2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SingleScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceUpdateSingleSchedule3Response) Status() string {
+func (r ScheduleServiceUpdateSingleSchedule2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23199,21 +23810,21 @@ func (r ScheduleServiceUpdateSingleSchedule3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceUpdateSingleSchedule3Response) StatusCode() int {
+func (r ScheduleServiceUpdateSingleSchedule2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceListSites3Response struct {
+type SiteServiceListSites2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListSitesResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceListSites3Response) Status() string {
+func (r SiteServiceListSites2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23221,21 +23832,21 @@ func (r SiteServiceListSites3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceListSites3Response) StatusCode() int {
+func (r SiteServiceListSites2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceCreateSite3Response struct {
+type SiteServiceCreateSite2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceCreateSite3Response) Status() string {
+func (r SiteServiceCreateSite2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23243,21 +23854,21 @@ func (r SiteServiceCreateSite3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceCreateSite3Response) StatusCode() int {
+func (r SiteServiceCreateSite2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceDeleteSite3Response struct {
+type SiteServiceDeleteSite2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteSiteResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceDeleteSite3Response) Status() string {
+func (r SiteServiceDeleteSite2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23265,21 +23876,21 @@ func (r SiteServiceDeleteSite3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceDeleteSite3Response) StatusCode() int {
+func (r SiteServiceDeleteSite2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceGetSite3Response struct {
+type SiteServiceGetSite2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceGetSite3Response) Status() string {
+func (r SiteServiceGetSite2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23287,21 +23898,21 @@ func (r SiteServiceGetSite3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceGetSite3Response) StatusCode() int {
+func (r SiteServiceGetSite2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServicePatchSite3Response struct {
+type SiteServicePatchSite2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServicePatchSite3Response) Status() string {
+func (r SiteServicePatchSite2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23309,21 +23920,21 @@ func (r SiteServicePatchSite3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServicePatchSite3Response) StatusCode() int {
+func (r SiteServicePatchSite2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceUpdateSite3Response struct {
+type SiteServiceUpdateSite2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceUpdateSite3Response) Status() string {
+func (r SiteServiceUpdateSite2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23331,21 +23942,21 @@ func (r SiteServiceUpdateSite3Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceUpdateSite3Response) StatusCode() int {
+func (r SiteServiceUpdateSite2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type TelemetryLogsGroupServiceListTelemetryLogsGroups3Response struct {
+type TelemetryLogsGroupServiceListTelemetryLogsGroups2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListTelemetryLogsGroupsResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r TelemetryLogsGroupServiceListTelemetryLogsGroups3Response) Status() string {
+func (r TelemetryLogsGroupServiceListTelemetryLogsGroups2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23353,21 +23964,21 @@ func (r TelemetryLogsGroupServiceListTelemetryLogsGroups3Response) Status() stri
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryLogsGroupServiceListTelemetryLogsGroups3Response) StatusCode() int {
+func (r TelemetryLogsGroupServiceListTelemetryLogsGroups2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response struct {
+type TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *TelemetryLogsGroupResource
 }
 
 // Status returns HTTPResponse.Status
-func (r TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response) Status() string {
+func (r TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23375,21 +23986,21 @@ func (r TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response) Status() str
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response) StatusCode() int {
+func (r TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response struct {
+type TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteTelemetryLogsGroupResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response) Status() string {
+func (r TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23397,21 +24008,21 @@ func (r TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response) Status() str
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response) StatusCode() int {
+func (r TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response struct {
+type TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *TelemetryLogsGroupResource
 }
 
 // Status returns HTTPResponse.Status
-func (r TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response) Status() string {
+func (r TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23419,21 +24030,21 @@ func (r TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response) Status() string
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response) StatusCode() int {
+func (r TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response struct {
+type TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListTelemetryMetricsGroupsResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response) Status() string {
+func (r TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23441,21 +24052,21 @@ func (r TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response) Status(
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response) StatusCode() int {
+func (r TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response struct {
+type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *TelemetryMetricsGroupResource
 }
 
 // Status returns HTTPResponse.Status
-func (r TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response) Status() string {
+func (r TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23463,21 +24074,21 @@ func (r TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response) Status
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response) StatusCode() int {
+func (r TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response struct {
+type TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteTelemetryMetricsGroupResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response) Status() string {
+func (r TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23485,21 +24096,21 @@ func (r TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response) Status
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response) StatusCode() int {
+func (r TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response struct {
+type TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *TelemetryMetricsGroupResource
 }
 
 // Status returns HTTPResponse.Status
-func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response) Status() string {
+func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -23507,7 +24118,7 @@ func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response) Status() 
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response) StatusCode() int {
+func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -24064,6 +24675,28 @@ func (r HostServiceRegisterHostResponse) StatusCode() int {
 	return 0
 }
 
+type HostServiceGetHostsSummaryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GetHostSummaryResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r HostServiceGetHostsSummaryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r HostServiceGetHostsSummaryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type HostServiceDeleteHostResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -24218,14 +24851,14 @@ func (r HostServicePatchRegisterHostResponse) StatusCode() int {
 	return 0
 }
 
-type HostServiceGetHostsSummaryResponse struct {
+type HostServiceGetHostsSummary3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *GetHostSummaryResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r HostServiceGetHostsSummaryResponse) Status() string {
+func (r HostServiceGetHostsSummary3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24233,29 +24866,7 @@ func (r HostServiceGetHostsSummaryResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r HostServiceGetHostsSummaryResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type HostServiceGetHostsSummary2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *GetHostSummaryResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r HostServiceGetHostsSummary2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r HostServiceGetHostsSummary2Response) StatusCode() int {
+func (r HostServiceGetHostsSummary3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -24416,6 +25027,138 @@ func (r InstanceServiceInvalidateInstanceResponse) StatusCode() int {
 	return 0
 }
 
+type OperatingSystemServiceListOperatingSystems3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListOperatingSystemsResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r OperatingSystemServiceListOperatingSystems3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OperatingSystemServiceListOperatingSystems3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OperatingSystemServiceCreateOperatingSystem3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OperatingSystemResource
+}
+
+// Status returns HTTPResponse.Status
+func (r OperatingSystemServiceCreateOperatingSystem3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OperatingSystemServiceCreateOperatingSystem3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OperatingSystemServiceDeleteOperatingSystem3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteOperatingSystemResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r OperatingSystemServiceDeleteOperatingSystem3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OperatingSystemServiceDeleteOperatingSystem3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OperatingSystemServiceGetOperatingSystem3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OperatingSystemResource
+}
+
+// Status returns HTTPResponse.Status
+func (r OperatingSystemServiceGetOperatingSystem3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OperatingSystemServiceGetOperatingSystem3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OperatingSystemServicePatchOperatingSystem3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OperatingSystemResource
+}
+
+// Status returns HTTPResponse.Status
+func (r OperatingSystemServicePatchOperatingSystem3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OperatingSystemServicePatchOperatingSystem3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OperatingSystemServiceUpdateOperatingSystem3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OperatingSystemResource
+}
+
+// Status returns HTTPResponse.Status
+func (r OperatingSystemServiceUpdateOperatingSystem3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OperatingSystemServiceUpdateOperatingSystem3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type OperatingSystemServiceListOperatingSystemsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -24548,146 +25291,14 @@ func (r OperatingSystemServiceUpdateOperatingSystemResponse) StatusCode() int {
 	return 0
 }
 
-type OperatingSystemServiceListOperatingSystems2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ListOperatingSystemsResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r OperatingSystemServiceListOperatingSystems2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServiceListOperatingSystems2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OperatingSystemServiceCreateOperatingSystem2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *OperatingSystemResource
-}
-
-// Status returns HTTPResponse.Status
-func (r OperatingSystemServiceCreateOperatingSystem2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServiceCreateOperatingSystem2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OperatingSystemServiceDeleteOperatingSystem2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *DeleteOperatingSystemResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r OperatingSystemServiceDeleteOperatingSystem2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServiceDeleteOperatingSystem2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OperatingSystemServiceGetOperatingSystem2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *OperatingSystemResource
-}
-
-// Status returns HTTPResponse.Status
-func (r OperatingSystemServiceGetOperatingSystem2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServiceGetOperatingSystem2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OperatingSystemServicePatchOperatingSystem2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *OperatingSystemResource
-}
-
-// Status returns HTTPResponse.Status
-func (r OperatingSystemServicePatchOperatingSystem2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServicePatchOperatingSystem2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OperatingSystemServiceUpdateOperatingSystem2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *OperatingSystemResource
-}
-
-// Status returns HTTPResponse.Status
-func (r OperatingSystemServiceUpdateOperatingSystem2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OperatingSystemServiceUpdateOperatingSystem2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type ScheduleServiceListSchedules2Response struct {
+type ScheduleServiceListSchedulesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListSchedulesResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceListSchedules2Response) Status() string {
+func (r ScheduleServiceListSchedulesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24695,21 +25306,21 @@ func (r ScheduleServiceListSchedules2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceListSchedules2Response) StatusCode() int {
+func (r ScheduleServiceListSchedulesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceListRepeatedSchedules2Response struct {
+type ScheduleServiceListRepeatedSchedules3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListRepeatedSchedulesResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceListRepeatedSchedules2Response) Status() string {
+func (r ScheduleServiceListRepeatedSchedules3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24717,21 +25328,21 @@ func (r ScheduleServiceListRepeatedSchedules2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceListRepeatedSchedules2Response) StatusCode() int {
+func (r ScheduleServiceListRepeatedSchedules3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceCreateRepeatedSchedule2Response struct {
+type ScheduleServiceCreateRepeatedSchedule3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RepeatedScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceCreateRepeatedSchedule2Response) Status() string {
+func (r ScheduleServiceCreateRepeatedSchedule3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24739,21 +25350,21 @@ func (r ScheduleServiceCreateRepeatedSchedule2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceCreateRepeatedSchedule2Response) StatusCode() int {
+func (r ScheduleServiceCreateRepeatedSchedule3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceDeleteRepeatedSchedule2Response struct {
+type ScheduleServiceDeleteRepeatedSchedule3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteRepeatedScheduleResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceDeleteRepeatedSchedule2Response) Status() string {
+func (r ScheduleServiceDeleteRepeatedSchedule3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24761,21 +25372,21 @@ func (r ScheduleServiceDeleteRepeatedSchedule2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceDeleteRepeatedSchedule2Response) StatusCode() int {
+func (r ScheduleServiceDeleteRepeatedSchedule3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceGetRepeatedSchedule2Response struct {
+type ScheduleServiceGetRepeatedSchedule3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RepeatedScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceGetRepeatedSchedule2Response) Status() string {
+func (r ScheduleServiceGetRepeatedSchedule3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24783,21 +25394,21 @@ func (r ScheduleServiceGetRepeatedSchedule2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceGetRepeatedSchedule2Response) StatusCode() int {
+func (r ScheduleServiceGetRepeatedSchedule3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServicePatchRepeatedSchedule2Response struct {
+type ScheduleServicePatchRepeatedSchedule3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RepeatedScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServicePatchRepeatedSchedule2Response) Status() string {
+func (r ScheduleServicePatchRepeatedSchedule3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24805,21 +25416,21 @@ func (r ScheduleServicePatchRepeatedSchedule2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServicePatchRepeatedSchedule2Response) StatusCode() int {
+func (r ScheduleServicePatchRepeatedSchedule3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceUpdateRepeatedSchedule2Response struct {
+type ScheduleServiceUpdateRepeatedSchedule3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RepeatedScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceUpdateRepeatedSchedule2Response) Status() string {
+func (r ScheduleServiceUpdateRepeatedSchedule3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24827,21 +25438,21 @@ func (r ScheduleServiceUpdateRepeatedSchedule2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceUpdateRepeatedSchedule2Response) StatusCode() int {
+func (r ScheduleServiceUpdateRepeatedSchedule3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceListSingleSchedules2Response struct {
+type ScheduleServiceListSingleSchedules3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListSingleSchedulesResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceListSingleSchedules2Response) Status() string {
+func (r ScheduleServiceListSingleSchedules3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24849,21 +25460,21 @@ func (r ScheduleServiceListSingleSchedules2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceListSingleSchedules2Response) StatusCode() int {
+func (r ScheduleServiceListSingleSchedules3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceCreateSingleSchedule2Response struct {
+type ScheduleServiceCreateSingleSchedule3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SingleScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceCreateSingleSchedule2Response) Status() string {
+func (r ScheduleServiceCreateSingleSchedule3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24871,21 +25482,21 @@ func (r ScheduleServiceCreateSingleSchedule2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceCreateSingleSchedule2Response) StatusCode() int {
+func (r ScheduleServiceCreateSingleSchedule3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceDeleteSingleSchedule2Response struct {
+type ScheduleServiceDeleteSingleSchedule3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteSingleScheduleResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceDeleteSingleSchedule2Response) Status() string {
+func (r ScheduleServiceDeleteSingleSchedule3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24893,21 +25504,21 @@ func (r ScheduleServiceDeleteSingleSchedule2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceDeleteSingleSchedule2Response) StatusCode() int {
+func (r ScheduleServiceDeleteSingleSchedule3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceGetSingleSchedule2Response struct {
+type ScheduleServiceGetSingleSchedule3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SingleScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceGetSingleSchedule2Response) Status() string {
+func (r ScheduleServiceGetSingleSchedule3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24915,21 +25526,21 @@ func (r ScheduleServiceGetSingleSchedule2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceGetSingleSchedule2Response) StatusCode() int {
+func (r ScheduleServiceGetSingleSchedule3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServicePatchSingleSchedule2Response struct {
+type ScheduleServicePatchSingleSchedule3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SingleScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServicePatchSingleSchedule2Response) Status() string {
+func (r ScheduleServicePatchSingleSchedule3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24937,21 +25548,21 @@ func (r ScheduleServicePatchSingleSchedule2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServicePatchSingleSchedule2Response) StatusCode() int {
+func (r ScheduleServicePatchSingleSchedule3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type ScheduleServiceUpdateSingleSchedule2Response struct {
+type ScheduleServiceUpdateSingleSchedule3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SingleScheduleResource
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceUpdateSingleSchedule2Response) Status() string {
+func (r ScheduleServiceUpdateSingleSchedule3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -24959,7 +25570,139 @@ func (r ScheduleServiceUpdateSingleSchedule2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceUpdateSingleSchedule2Response) StatusCode() int {
+func (r ScheduleServiceUpdateSingleSchedule3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type WorkloadServiceListWorkloadsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListWorkloadsResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkloadServiceListWorkloadsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkloadServiceListWorkloadsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type WorkloadServiceCreateWorkloadResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkloadResource
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkloadServiceCreateWorkloadResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkloadServiceCreateWorkloadResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type WorkloadServiceDeleteWorkloadResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteWorkloadResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkloadServiceDeleteWorkloadResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkloadServiceDeleteWorkloadResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type WorkloadServiceGetWorkloadResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkloadResource
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkloadServiceGetWorkloadResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkloadServiceGetWorkloadResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type WorkloadServicePatchWorkloadResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkloadResource
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkloadServicePatchWorkloadResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkloadServicePatchWorkloadResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type WorkloadServiceUpdateWorkloadResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkloadResource
+}
+
+// Status returns HTTPResponse.Status
+func (r WorkloadServiceUpdateWorkloadResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WorkloadServiceUpdateWorkloadResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -25164,160 +25907,6 @@ func (r LocationServiceListLocationsResponse) StatusCode() int {
 	return 0
 }
 
-type OSUpdatePolicyListOSUpdatePolicy3Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ListOSUpdatePolicyResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r OSUpdatePolicyListOSUpdatePolicy3Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OSUpdatePolicyListOSUpdatePolicy3Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OSUpdatePolicyCreateOSUpdatePolicy3Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *OSUpdatePolicy
-}
-
-// Status returns HTTPResponse.Status
-func (r OSUpdatePolicyCreateOSUpdatePolicy3Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OSUpdatePolicyCreateOSUpdatePolicy3Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OSUpdatePolicyDeleteOSUpdatePolicy3Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *DeleteOSUpdatePolicyResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r OSUpdatePolicyDeleteOSUpdatePolicy3Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OSUpdatePolicyDeleteOSUpdatePolicy3Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OSUpdatePolicyGetOSUpdatePolicy3Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *OSUpdatePolicy
-}
-
-// Status returns HTTPResponse.Status
-func (r OSUpdatePolicyGetOSUpdatePolicy3Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OSUpdatePolicyGetOSUpdatePolicy3Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OSUpdateRunListOSUpdateRun3Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ListOSUpdateRunResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r OSUpdateRunListOSUpdateRun3Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OSUpdateRunListOSUpdateRun3Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OSUpdateRunDeleteOSUpdateRun3Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *DeleteOSUpdateRunResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r OSUpdateRunDeleteOSUpdateRun3Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OSUpdateRunDeleteOSUpdateRun3Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type OSUpdateRunGetOSUpdateRun3Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *OSUpdateRun
-}
-
-// Status returns HTTPResponse.Status
-func (r OSUpdateRunGetOSUpdateRun3Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r OSUpdateRunGetOSUpdateRun3Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type OSUpdatePolicyListOSUpdatePolicyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -25472,6 +26061,160 @@ func (r OSUpdateRunGetOSUpdateRunResponse) StatusCode() int {
 	return 0
 }
 
+type OSUpdatePolicyListOSUpdatePolicy3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListOSUpdatePolicyResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r OSUpdatePolicyListOSUpdatePolicy3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OSUpdatePolicyListOSUpdatePolicy3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OSUpdatePolicyCreateOSUpdatePolicy3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OSUpdatePolicy
+}
+
+// Status returns HTTPResponse.Status
+func (r OSUpdatePolicyCreateOSUpdatePolicy3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OSUpdatePolicyCreateOSUpdatePolicy3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OSUpdatePolicyDeleteOSUpdatePolicy3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteOSUpdatePolicyResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r OSUpdatePolicyDeleteOSUpdatePolicy3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OSUpdatePolicyDeleteOSUpdatePolicy3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OSUpdatePolicyGetOSUpdatePolicy3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OSUpdatePolicy
+}
+
+// Status returns HTTPResponse.Status
+func (r OSUpdatePolicyGetOSUpdatePolicy3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OSUpdatePolicyGetOSUpdatePolicy3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OSUpdateRunListOSUpdateRun3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListOSUpdateRunResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r OSUpdateRunListOSUpdateRun3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OSUpdateRunListOSUpdateRun3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OSUpdateRunDeleteOSUpdateRun3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteOSUpdateRunResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r OSUpdateRunDeleteOSUpdateRun3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OSUpdateRunDeleteOSUpdateRun3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type OSUpdateRunGetOSUpdateRun3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OSUpdateRun
+}
+
+// Status returns HTTPResponse.Status
+func (r OSUpdateRunGetOSUpdateRun3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r OSUpdateRunGetOSUpdateRun3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ProviderServiceListProvidersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -25604,14 +26347,14 @@ func (r RegionServiceCreateRegionResponse) StatusCode() int {
 	return 0
 }
 
-type SiteServiceListSites2Response struct {
+type SiteServiceListSitesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListSitesResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceListSites2Response) Status() string {
+func (r SiteServiceListSitesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -25619,21 +26362,21 @@ func (r SiteServiceListSites2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceListSites2Response) StatusCode() int {
+func (r SiteServiceListSitesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceCreateSite2Response struct {
+type SiteServiceCreateSiteResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceCreateSite2Response) Status() string {
+func (r SiteServiceCreateSiteResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -25641,21 +26384,21 @@ func (r SiteServiceCreateSite2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceCreateSite2Response) StatusCode() int {
+func (r SiteServiceCreateSiteResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceDeleteSite2Response struct {
+type SiteServiceDeleteSiteResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteSiteResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceDeleteSite2Response) Status() string {
+func (r SiteServiceDeleteSiteResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -25663,21 +26406,21 @@ func (r SiteServiceDeleteSite2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceDeleteSite2Response) StatusCode() int {
+func (r SiteServiceDeleteSiteResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceGetSite2Response struct {
+type SiteServiceGetSiteResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceGetSite2Response) Status() string {
+func (r SiteServiceGetSiteResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -25685,21 +26428,21 @@ func (r SiteServiceGetSite2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceGetSite2Response) StatusCode() int {
+func (r SiteServiceGetSiteResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServicePatchSite2Response struct {
+type SiteServicePatchSiteResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServicePatchSite2Response) Status() string {
+func (r SiteServicePatchSiteResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -25707,21 +26450,21 @@ func (r SiteServicePatchSite2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServicePatchSite2Response) StatusCode() int {
+func (r SiteServicePatchSiteResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceUpdateSite2Response struct {
+type SiteServiceUpdateSiteResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceUpdateSite2Response) Status() string {
+func (r SiteServiceUpdateSiteResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -25729,7 +26472,7 @@ func (r SiteServiceUpdateSite2Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceUpdateSite2Response) StatusCode() int {
+func (r SiteServiceUpdateSiteResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -25824,14 +26567,14 @@ func (r RegionServiceUpdateRegionResponse) StatusCode() int {
 	return 0
 }
 
-type ScheduleServiceListSchedulesResponse struct {
+type ScheduleServiceListSchedules3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListSchedulesResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r ScheduleServiceListSchedulesResponse) Status() string {
+func (r ScheduleServiceListSchedules3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -25839,7 +26582,7 @@ func (r ScheduleServiceListSchedulesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ScheduleServiceListSchedulesResponse) StatusCode() int {
+func (r ScheduleServiceListSchedules3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -26110,14 +26853,14 @@ func (r ScheduleServiceUpdateSingleScheduleResponse) StatusCode() int {
 	return 0
 }
 
-type SiteServiceListSitesResponse struct {
+type SiteServiceListSites3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListSitesResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceListSitesResponse) Status() string {
+func (r SiteServiceListSites3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -26125,21 +26868,21 @@ func (r SiteServiceListSitesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceListSitesResponse) StatusCode() int {
+func (r SiteServiceListSites3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceCreateSiteResponse struct {
+type SiteServiceCreateSite3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceCreateSiteResponse) Status() string {
+func (r SiteServiceCreateSite3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -26147,21 +26890,21 @@ func (r SiteServiceCreateSiteResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceCreateSiteResponse) StatusCode() int {
+func (r SiteServiceCreateSite3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceDeleteSiteResponse struct {
+type SiteServiceDeleteSite3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteSiteResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceDeleteSiteResponse) Status() string {
+func (r SiteServiceDeleteSite3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -26169,21 +26912,21 @@ func (r SiteServiceDeleteSiteResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceDeleteSiteResponse) StatusCode() int {
+func (r SiteServiceDeleteSite3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceGetSiteResponse struct {
+type SiteServiceGetSite3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceGetSiteResponse) Status() string {
+func (r SiteServiceGetSite3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -26191,21 +26934,21 @@ func (r SiteServiceGetSiteResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceGetSiteResponse) StatusCode() int {
+func (r SiteServiceGetSite3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServicePatchSiteResponse struct {
+type SiteServicePatchSite3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServicePatchSiteResponse) Status() string {
+func (r SiteServicePatchSite3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -26213,21 +26956,21 @@ func (r SiteServicePatchSiteResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServicePatchSiteResponse) StatusCode() int {
+func (r SiteServicePatchSite3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type SiteServiceUpdateSiteResponse struct {
+type SiteServiceUpdateSite3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SiteResource
 }
 
 // Status returns HTTPResponse.Status
-func (r SiteServiceUpdateSiteResponse) Status() string {
+func (r SiteServiceUpdateSite3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -26235,7 +26978,183 @@ func (r SiteServiceUpdateSiteResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SiteServiceUpdateSiteResponse) StatusCode() int {
+func (r SiteServiceUpdateSite3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TelemetryLogsGroupServiceListTelemetryLogsGroups3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListTelemetryLogsGroupsResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r TelemetryLogsGroupServiceListTelemetryLogsGroups3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TelemetryLogsGroupServiceListTelemetryLogsGroups3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TelemetryLogsGroupResource
+}
+
+// Status returns HTTPResponse.Status
+func (r TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteTelemetryLogsGroupResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TelemetryLogsGroupResource
+}
+
+// Status returns HTTPResponse.Status
+func (r TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ListTelemetryMetricsGroupsResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TelemetryMetricsGroupResource
+}
+
+// Status returns HTTPResponse.Status
+func (r TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeleteTelemetryMetricsGroupResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TelemetryMetricsGroupResource
+}
+
+// Status returns HTTPResponse.Status
+func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -26412,182 +27331,6 @@ func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroupResponse) Status() s
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroupResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type TelemetryLogsGroupServiceListTelemetryLogsGroups2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ListTelemetryLogsGroupsResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r TelemetryLogsGroupServiceListTelemetryLogsGroups2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryLogsGroupServiceListTelemetryLogsGroups2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *TelemetryLogsGroupResource
-}
-
-// Status returns HTTPResponse.Status
-func (r TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *DeleteTelemetryLogsGroupResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *TelemetryLogsGroupResource
-}
-
-// Status returns HTTPResponse.Status
-func (r TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ListTelemetryMetricsGroupsResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *TelemetryMetricsGroupResource
-}
-
-// Status returns HTTPResponse.Status
-func (r TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *DeleteTelemetryMetricsGroupResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *TelemetryMetricsGroupResource
-}
-
-// Status returns HTTPResponse.Status
-func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -26946,14 +27689,14 @@ func (r WorkloadMemberServiceGetWorkloadMemberResponse) StatusCode() int {
 	return 0
 }
 
-type WorkloadServiceListWorkloadsResponse struct {
+type WorkloadServiceListWorkloads3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ListWorkloadsResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r WorkloadServiceListWorkloadsResponse) Status() string {
+func (r WorkloadServiceListWorkloads3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -26961,21 +27704,21 @@ func (r WorkloadServiceListWorkloadsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r WorkloadServiceListWorkloadsResponse) StatusCode() int {
+func (r WorkloadServiceListWorkloads3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type WorkloadServiceCreateWorkloadResponse struct {
+type WorkloadServiceCreateWorkload3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *WorkloadResource
 }
 
 // Status returns HTTPResponse.Status
-func (r WorkloadServiceCreateWorkloadResponse) Status() string {
+func (r WorkloadServiceCreateWorkload3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -26983,21 +27726,21 @@ func (r WorkloadServiceCreateWorkloadResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r WorkloadServiceCreateWorkloadResponse) StatusCode() int {
+func (r WorkloadServiceCreateWorkload3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type WorkloadServiceDeleteWorkloadResponse struct {
+type WorkloadServiceDeleteWorkload3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeleteWorkloadResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r WorkloadServiceDeleteWorkloadResponse) Status() string {
+func (r WorkloadServiceDeleteWorkload3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -27005,21 +27748,21 @@ func (r WorkloadServiceDeleteWorkloadResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r WorkloadServiceDeleteWorkloadResponse) StatusCode() int {
+func (r WorkloadServiceDeleteWorkload3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type WorkloadServiceGetWorkloadResponse struct {
+type WorkloadServiceGetWorkload3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *WorkloadResource
 }
 
 // Status returns HTTPResponse.Status
-func (r WorkloadServiceGetWorkloadResponse) Status() string {
+func (r WorkloadServiceGetWorkload3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -27027,21 +27770,21 @@ func (r WorkloadServiceGetWorkloadResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r WorkloadServiceGetWorkloadResponse) StatusCode() int {
+func (r WorkloadServiceGetWorkload3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type WorkloadServicePatchWorkloadResponse struct {
+type WorkloadServicePatchWorkload3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *WorkloadResource
 }
 
 // Status returns HTTPResponse.Status
-func (r WorkloadServicePatchWorkloadResponse) Status() string {
+func (r WorkloadServicePatchWorkload3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -27049,21 +27792,21 @@ func (r WorkloadServicePatchWorkloadResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r WorkloadServicePatchWorkloadResponse) StatusCode() int {
+func (r WorkloadServicePatchWorkload3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type WorkloadServiceUpdateWorkloadResponse struct {
+type WorkloadServiceUpdateWorkload3Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *WorkloadResource
 }
 
 // Status returns HTTPResponse.Status
-func (r WorkloadServiceUpdateWorkloadResponse) Status() string {
+func (r WorkloadServiceUpdateWorkload3Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -27071,7 +27814,7 @@ func (r WorkloadServiceUpdateWorkloadResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r WorkloadServiceUpdateWorkloadResponse) StatusCode() int {
+func (r WorkloadServiceUpdateWorkload3Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -27252,13 +27995,13 @@ func (c *ClientWithResponses) HostServicePatchRegisterHost2WithResponse(ctx cont
 	return ParseHostServicePatchRegisterHost2Response(rsp)
 }
 
-// HostServiceGetHostsSummary3WithResponse request returning *HostServiceGetHostsSummary3Response
-func (c *ClientWithResponses) HostServiceGetHostsSummary3WithResponse(ctx context.Context, params *HostServiceGetHostsSummary3Params, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummary3Response, error) {
-	rsp, err := c.HostServiceGetHostsSummary3(ctx, params, reqEditors...)
+// HostServiceGetHostsSummary2WithResponse request returning *HostServiceGetHostsSummary2Response
+func (c *ClientWithResponses) HostServiceGetHostsSummary2WithResponse(ctx context.Context, params *HostServiceGetHostsSummary2Params, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummary2Response, error) {
+	rsp, err := c.HostServiceGetHostsSummary2(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseHostServiceGetHostsSummary3Response(rsp)
+	return ParseHostServiceGetHostsSummary2Response(rsp)
 }
 
 // InstanceServiceListInstances2WithResponse request returning *InstanceServiceListInstances2Response
@@ -27339,6 +28082,15 @@ func (c *ClientWithResponses) InstanceServiceUpdateInstance2WithResponse(ctx con
 	return ParseInstanceServiceUpdateInstance2Response(rsp)
 }
 
+// InstanceServiceInvalidateInstance2WithResponse request returning *InstanceServiceInvalidateInstance2Response
+func (c *ClientWithResponses) InstanceServiceInvalidateInstance2WithResponse(ctx context.Context, resourceId string, params *InstanceServiceInvalidateInstance2Params, reqEditors ...RequestEditorFn) (*InstanceServiceInvalidateInstance2Response, error) {
+	rsp, err := c.InstanceServiceInvalidateInstance2(ctx, resourceId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInstanceServiceInvalidateInstance2Response(rsp)
+}
+
 // LocalAccountServiceListLocalAccounts2WithResponse request returning *LocalAccountServiceListLocalAccounts2Response
 func (c *ClientWithResponses) LocalAccountServiceListLocalAccounts2WithResponse(ctx context.Context, params *LocalAccountServiceListLocalAccounts2Params, reqEditors ...RequestEditorFn) (*LocalAccountServiceListLocalAccounts2Response, error) {
 	rsp, err := c.LocalAccountServiceListLocalAccounts2(ctx, params, reqEditors...)
@@ -27392,82 +28144,82 @@ func (c *ClientWithResponses) LocationServiceListLocations2WithResponse(ctx cont
 	return ParseLocationServiceListLocations2Response(rsp)
 }
 
-// OperatingSystemServiceListOperatingSystems3WithResponse request returning *OperatingSystemServiceListOperatingSystems3Response
-func (c *ClientWithResponses) OperatingSystemServiceListOperatingSystems3WithResponse(ctx context.Context, params *OperatingSystemServiceListOperatingSystems3Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceListOperatingSystems3Response, error) {
-	rsp, err := c.OperatingSystemServiceListOperatingSystems3(ctx, params, reqEditors...)
+// OperatingSystemServiceListOperatingSystems2WithResponse request returning *OperatingSystemServiceListOperatingSystems2Response
+func (c *ClientWithResponses) OperatingSystemServiceListOperatingSystems2WithResponse(ctx context.Context, params *OperatingSystemServiceListOperatingSystems2Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceListOperatingSystems2Response, error) {
+	rsp, err := c.OperatingSystemServiceListOperatingSystems2(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceListOperatingSystems3Response(rsp)
+	return ParseOperatingSystemServiceListOperatingSystems2Response(rsp)
 }
 
-// OperatingSystemServiceCreateOperatingSystem3WithBodyWithResponse request with arbitrary body returning *OperatingSystemServiceCreateOperatingSystem3Response
-func (c *ClientWithResponses) OperatingSystemServiceCreateOperatingSystem3WithBodyWithResponse(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem3Response, error) {
-	rsp, err := c.OperatingSystemServiceCreateOperatingSystem3WithBody(ctx, params, contentType, body, reqEditors...)
+// OperatingSystemServiceCreateOperatingSystem2WithBodyWithResponse request with arbitrary body returning *OperatingSystemServiceCreateOperatingSystem2Response
+func (c *ClientWithResponses) OperatingSystemServiceCreateOperatingSystem2WithBodyWithResponse(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem2Response, error) {
+	rsp, err := c.OperatingSystemServiceCreateOperatingSystem2WithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceCreateOperatingSystem3Response(rsp)
+	return ParseOperatingSystemServiceCreateOperatingSystem2Response(rsp)
 }
 
-func (c *ClientWithResponses) OperatingSystemServiceCreateOperatingSystem3WithResponse(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem3Params, body OperatingSystemServiceCreateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem3Response, error) {
-	rsp, err := c.OperatingSystemServiceCreateOperatingSystem3(ctx, params, body, reqEditors...)
+func (c *ClientWithResponses) OperatingSystemServiceCreateOperatingSystem2WithResponse(ctx context.Context, params *OperatingSystemServiceCreateOperatingSystem2Params, body OperatingSystemServiceCreateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem2Response, error) {
+	rsp, err := c.OperatingSystemServiceCreateOperatingSystem2(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceCreateOperatingSystem3Response(rsp)
+	return ParseOperatingSystemServiceCreateOperatingSystem2Response(rsp)
 }
 
-// OperatingSystemServiceDeleteOperatingSystem3WithResponse request returning *OperatingSystemServiceDeleteOperatingSystem3Response
-func (c *ClientWithResponses) OperatingSystemServiceDeleteOperatingSystem3WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceDeleteOperatingSystem3Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceDeleteOperatingSystem3Response, error) {
-	rsp, err := c.OperatingSystemServiceDeleteOperatingSystem3(ctx, resourceId, params, reqEditors...)
+// OperatingSystemServiceDeleteOperatingSystem2WithResponse request returning *OperatingSystemServiceDeleteOperatingSystem2Response
+func (c *ClientWithResponses) OperatingSystemServiceDeleteOperatingSystem2WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceDeleteOperatingSystem2Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceDeleteOperatingSystem2Response, error) {
+	rsp, err := c.OperatingSystemServiceDeleteOperatingSystem2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceDeleteOperatingSystem3Response(rsp)
+	return ParseOperatingSystemServiceDeleteOperatingSystem2Response(rsp)
 }
 
-// OperatingSystemServiceGetOperatingSystem3WithResponse request returning *OperatingSystemServiceGetOperatingSystem3Response
-func (c *ClientWithResponses) OperatingSystemServiceGetOperatingSystem3WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceGetOperatingSystem3Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceGetOperatingSystem3Response, error) {
-	rsp, err := c.OperatingSystemServiceGetOperatingSystem3(ctx, resourceId, params, reqEditors...)
+// OperatingSystemServiceGetOperatingSystem2WithResponse request returning *OperatingSystemServiceGetOperatingSystem2Response
+func (c *ClientWithResponses) OperatingSystemServiceGetOperatingSystem2WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceGetOperatingSystem2Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceGetOperatingSystem2Response, error) {
+	rsp, err := c.OperatingSystemServiceGetOperatingSystem2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceGetOperatingSystem3Response(rsp)
+	return ParseOperatingSystemServiceGetOperatingSystem2Response(rsp)
 }
 
-// OperatingSystemServicePatchOperatingSystem3WithBodyWithResponse request with arbitrary body returning *OperatingSystemServicePatchOperatingSystem3Response
-func (c *ClientWithResponses) OperatingSystemServicePatchOperatingSystem3WithBodyWithResponse(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem3Response, error) {
-	rsp, err := c.OperatingSystemServicePatchOperatingSystem3WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
+// OperatingSystemServicePatchOperatingSystem2WithBodyWithResponse request with arbitrary body returning *OperatingSystemServicePatchOperatingSystem2Response
+func (c *ClientWithResponses) OperatingSystemServicePatchOperatingSystem2WithBodyWithResponse(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem2Response, error) {
+	rsp, err := c.OperatingSystemServicePatchOperatingSystem2WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServicePatchOperatingSystem3Response(rsp)
+	return ParseOperatingSystemServicePatchOperatingSystem2Response(rsp)
 }
 
-func (c *ClientWithResponses) OperatingSystemServicePatchOperatingSystem3WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, body OperatingSystemServicePatchOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem3Response, error) {
-	rsp, err := c.OperatingSystemServicePatchOperatingSystem3(ctx, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) OperatingSystemServicePatchOperatingSystem2WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, body OperatingSystemServicePatchOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem2Response, error) {
+	rsp, err := c.OperatingSystemServicePatchOperatingSystem2(ctx, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServicePatchOperatingSystem3Response(rsp)
+	return ParseOperatingSystemServicePatchOperatingSystem2Response(rsp)
 }
 
-// OperatingSystemServiceUpdateOperatingSystem3WithBodyWithResponse request with arbitrary body returning *OperatingSystemServiceUpdateOperatingSystem3Response
-func (c *ClientWithResponses) OperatingSystemServiceUpdateOperatingSystem3WithBodyWithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem3Response, error) {
-	rsp, err := c.OperatingSystemServiceUpdateOperatingSystem3WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
+// OperatingSystemServiceUpdateOperatingSystem2WithBodyWithResponse request with arbitrary body returning *OperatingSystemServiceUpdateOperatingSystem2Response
+func (c *ClientWithResponses) OperatingSystemServiceUpdateOperatingSystem2WithBodyWithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem2Response, error) {
+	rsp, err := c.OperatingSystemServiceUpdateOperatingSystem2WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceUpdateOperatingSystem3Response(rsp)
+	return ParseOperatingSystemServiceUpdateOperatingSystem2Response(rsp)
 }
 
-func (c *ClientWithResponses) OperatingSystemServiceUpdateOperatingSystem3WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem3Params, body OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem3Response, error) {
-	rsp, err := c.OperatingSystemServiceUpdateOperatingSystem3(ctx, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) OperatingSystemServiceUpdateOperatingSystem2WithResponse(ctx context.Context, resourceId string, params *OperatingSystemServiceUpdateOperatingSystem2Params, body OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem2Response, error) {
+	rsp, err := c.OperatingSystemServiceUpdateOperatingSystem2(ctx, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceUpdateOperatingSystem3Response(rsp)
+	return ParseOperatingSystemServiceUpdateOperatingSystem2Response(rsp)
 }
 
 // OSUpdatePolicyListOSUpdatePolicy2WithResponse request returning *OSUpdatePolicyListOSUpdatePolicy2Response
@@ -27663,335 +28415,335 @@ func (c *ClientWithResponses) RegionServiceUpdateRegion2WithResponse(ctx context
 	return ParseRegionServiceUpdateRegion2Response(rsp)
 }
 
-// ScheduleServiceListSchedules3WithResponse request returning *ScheduleServiceListSchedules3Response
-func (c *ClientWithResponses) ScheduleServiceListSchedules3WithResponse(ctx context.Context, params *ScheduleServiceListSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedules3Response, error) {
-	rsp, err := c.ScheduleServiceListSchedules3(ctx, params, reqEditors...)
+// ScheduleServiceListSchedules2WithResponse request returning *ScheduleServiceListSchedules2Response
+func (c *ClientWithResponses) ScheduleServiceListSchedules2WithResponse(ctx context.Context, params *ScheduleServiceListSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedules2Response, error) {
+	rsp, err := c.ScheduleServiceListSchedules2(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceListSchedules3Response(rsp)
+	return ParseScheduleServiceListSchedules2Response(rsp)
 }
 
-// ScheduleServiceListRepeatedSchedules3WithResponse request returning *ScheduleServiceListRepeatedSchedules3Response
-func (c *ClientWithResponses) ScheduleServiceListRepeatedSchedules3WithResponse(ctx context.Context, params *ScheduleServiceListRepeatedSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListRepeatedSchedules3Response, error) {
-	rsp, err := c.ScheduleServiceListRepeatedSchedules3(ctx, params, reqEditors...)
+// ScheduleServiceListRepeatedSchedules2WithResponse request returning *ScheduleServiceListRepeatedSchedules2Response
+func (c *ClientWithResponses) ScheduleServiceListRepeatedSchedules2WithResponse(ctx context.Context, params *ScheduleServiceListRepeatedSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListRepeatedSchedules2Response, error) {
+	rsp, err := c.ScheduleServiceListRepeatedSchedules2(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceListRepeatedSchedules3Response(rsp)
+	return ParseScheduleServiceListRepeatedSchedules2Response(rsp)
 }
 
-// ScheduleServiceCreateRepeatedSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServiceCreateRepeatedSchedule3Response
-func (c *ClientWithResponses) ScheduleServiceCreateRepeatedSchedule3WithBodyWithResponse(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceCreateRepeatedSchedule3WithBody(ctx, params, contentType, body, reqEditors...)
+// ScheduleServiceCreateRepeatedSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServiceCreateRepeatedSchedule2Response
+func (c *ClientWithResponses) ScheduleServiceCreateRepeatedSchedule2WithBodyWithResponse(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceCreateRepeatedSchedule2WithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceCreateRepeatedSchedule3Response(rsp)
+	return ParseScheduleServiceCreateRepeatedSchedule2Response(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServiceCreateRepeatedSchedule3WithResponse(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule3Params, body ScheduleServiceCreateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceCreateRepeatedSchedule3(ctx, params, body, reqEditors...)
+func (c *ClientWithResponses) ScheduleServiceCreateRepeatedSchedule2WithResponse(ctx context.Context, params *ScheduleServiceCreateRepeatedSchedule2Params, body ScheduleServiceCreateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceCreateRepeatedSchedule2(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceCreateRepeatedSchedule3Response(rsp)
+	return ParseScheduleServiceCreateRepeatedSchedule2Response(rsp)
 }
 
-// ScheduleServiceDeleteRepeatedSchedule3WithResponse request returning *ScheduleServiceDeleteRepeatedSchedule3Response
-func (c *ClientWithResponses) ScheduleServiceDeleteRepeatedSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceDeleteRepeatedSchedule3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteRepeatedSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceDeleteRepeatedSchedule3(ctx, resourceId, params, reqEditors...)
+// ScheduleServiceDeleteRepeatedSchedule2WithResponse request returning *ScheduleServiceDeleteRepeatedSchedule2Response
+func (c *ClientWithResponses) ScheduleServiceDeleteRepeatedSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceDeleteRepeatedSchedule2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteRepeatedSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceDeleteRepeatedSchedule2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceDeleteRepeatedSchedule3Response(rsp)
+	return ParseScheduleServiceDeleteRepeatedSchedule2Response(rsp)
 }
 
-// ScheduleServiceGetRepeatedSchedule3WithResponse request returning *ScheduleServiceGetRepeatedSchedule3Response
-func (c *ClientWithResponses) ScheduleServiceGetRepeatedSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceGetRepeatedSchedule3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceGetRepeatedSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceGetRepeatedSchedule3(ctx, resourceId, params, reqEditors...)
+// ScheduleServiceGetRepeatedSchedule2WithResponse request returning *ScheduleServiceGetRepeatedSchedule2Response
+func (c *ClientWithResponses) ScheduleServiceGetRepeatedSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceGetRepeatedSchedule2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceGetRepeatedSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceGetRepeatedSchedule2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceGetRepeatedSchedule3Response(rsp)
+	return ParseScheduleServiceGetRepeatedSchedule2Response(rsp)
 }
 
-// ScheduleServicePatchRepeatedSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServicePatchRepeatedSchedule3Response
-func (c *ClientWithResponses) ScheduleServicePatchRepeatedSchedule3WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule3Response, error) {
-	rsp, err := c.ScheduleServicePatchRepeatedSchedule3WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
+// ScheduleServicePatchRepeatedSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServicePatchRepeatedSchedule2Response
+func (c *ClientWithResponses) ScheduleServicePatchRepeatedSchedule2WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule2Response, error) {
+	rsp, err := c.ScheduleServicePatchRepeatedSchedule2WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServicePatchRepeatedSchedule3Response(rsp)
+	return ParseScheduleServicePatchRepeatedSchedule2Response(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServicePatchRepeatedSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, body ScheduleServicePatchRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule3Response, error) {
-	rsp, err := c.ScheduleServicePatchRepeatedSchedule3(ctx, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) ScheduleServicePatchRepeatedSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, body ScheduleServicePatchRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule2Response, error) {
+	rsp, err := c.ScheduleServicePatchRepeatedSchedule2(ctx, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServicePatchRepeatedSchedule3Response(rsp)
+	return ParseScheduleServicePatchRepeatedSchedule2Response(rsp)
 }
 
-// ScheduleServiceUpdateRepeatedSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServiceUpdateRepeatedSchedule3Response
-func (c *ClientWithResponses) ScheduleServiceUpdateRepeatedSchedule3WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceUpdateRepeatedSchedule3WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
+// ScheduleServiceUpdateRepeatedSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServiceUpdateRepeatedSchedule2Response
+func (c *ClientWithResponses) ScheduleServiceUpdateRepeatedSchedule2WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceUpdateRepeatedSchedule2WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceUpdateRepeatedSchedule3Response(rsp)
+	return ParseScheduleServiceUpdateRepeatedSchedule2Response(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServiceUpdateRepeatedSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule3Params, body ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceUpdateRepeatedSchedule3(ctx, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) ScheduleServiceUpdateRepeatedSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateRepeatedSchedule2Params, body ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceUpdateRepeatedSchedule2(ctx, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceUpdateRepeatedSchedule3Response(rsp)
+	return ParseScheduleServiceUpdateRepeatedSchedule2Response(rsp)
 }
 
-// ScheduleServiceListSingleSchedules3WithResponse request returning *ScheduleServiceListSingleSchedules3Response
-func (c *ClientWithResponses) ScheduleServiceListSingleSchedules3WithResponse(ctx context.Context, params *ScheduleServiceListSingleSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSingleSchedules3Response, error) {
-	rsp, err := c.ScheduleServiceListSingleSchedules3(ctx, params, reqEditors...)
+// ScheduleServiceListSingleSchedules2WithResponse request returning *ScheduleServiceListSingleSchedules2Response
+func (c *ClientWithResponses) ScheduleServiceListSingleSchedules2WithResponse(ctx context.Context, params *ScheduleServiceListSingleSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSingleSchedules2Response, error) {
+	rsp, err := c.ScheduleServiceListSingleSchedules2(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceListSingleSchedules3Response(rsp)
+	return ParseScheduleServiceListSingleSchedules2Response(rsp)
 }
 
-// ScheduleServiceCreateSingleSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServiceCreateSingleSchedule3Response
-func (c *ClientWithResponses) ScheduleServiceCreateSingleSchedule3WithBodyWithResponse(ctx context.Context, params *ScheduleServiceCreateSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceCreateSingleSchedule3WithBody(ctx, params, contentType, body, reqEditors...)
+// ScheduleServiceCreateSingleSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServiceCreateSingleSchedule2Response
+func (c *ClientWithResponses) ScheduleServiceCreateSingleSchedule2WithBodyWithResponse(ctx context.Context, params *ScheduleServiceCreateSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceCreateSingleSchedule2WithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceCreateSingleSchedule3Response(rsp)
+	return ParseScheduleServiceCreateSingleSchedule2Response(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServiceCreateSingleSchedule3WithResponse(ctx context.Context, params *ScheduleServiceCreateSingleSchedule3Params, body ScheduleServiceCreateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceCreateSingleSchedule3(ctx, params, body, reqEditors...)
+func (c *ClientWithResponses) ScheduleServiceCreateSingleSchedule2WithResponse(ctx context.Context, params *ScheduleServiceCreateSingleSchedule2Params, body ScheduleServiceCreateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceCreateSingleSchedule2(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceCreateSingleSchedule3Response(rsp)
+	return ParseScheduleServiceCreateSingleSchedule2Response(rsp)
 }
 
-// ScheduleServiceDeleteSingleSchedule3WithResponse request returning *ScheduleServiceDeleteSingleSchedule3Response
-func (c *ClientWithResponses) ScheduleServiceDeleteSingleSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceDeleteSingleSchedule3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteSingleSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceDeleteSingleSchedule3(ctx, resourceId, params, reqEditors...)
+// ScheduleServiceDeleteSingleSchedule2WithResponse request returning *ScheduleServiceDeleteSingleSchedule2Response
+func (c *ClientWithResponses) ScheduleServiceDeleteSingleSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceDeleteSingleSchedule2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteSingleSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceDeleteSingleSchedule2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceDeleteSingleSchedule3Response(rsp)
+	return ParseScheduleServiceDeleteSingleSchedule2Response(rsp)
 }
 
-// ScheduleServiceGetSingleSchedule3WithResponse request returning *ScheduleServiceGetSingleSchedule3Response
-func (c *ClientWithResponses) ScheduleServiceGetSingleSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceGetSingleSchedule3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceGetSingleSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceGetSingleSchedule3(ctx, resourceId, params, reqEditors...)
+// ScheduleServiceGetSingleSchedule2WithResponse request returning *ScheduleServiceGetSingleSchedule2Response
+func (c *ClientWithResponses) ScheduleServiceGetSingleSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceGetSingleSchedule2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceGetSingleSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceGetSingleSchedule2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceGetSingleSchedule3Response(rsp)
+	return ParseScheduleServiceGetSingleSchedule2Response(rsp)
 }
 
-// ScheduleServicePatchSingleSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServicePatchSingleSchedule3Response
-func (c *ClientWithResponses) ScheduleServicePatchSingleSchedule3WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule3Response, error) {
-	rsp, err := c.ScheduleServicePatchSingleSchedule3WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
+// ScheduleServicePatchSingleSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServicePatchSingleSchedule2Response
+func (c *ClientWithResponses) ScheduleServicePatchSingleSchedule2WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule2Response, error) {
+	rsp, err := c.ScheduleServicePatchSingleSchedule2WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServicePatchSingleSchedule3Response(rsp)
+	return ParseScheduleServicePatchSingleSchedule2Response(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServicePatchSingleSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, body ScheduleServicePatchSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule3Response, error) {
-	rsp, err := c.ScheduleServicePatchSingleSchedule3(ctx, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) ScheduleServicePatchSingleSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, body ScheduleServicePatchSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule2Response, error) {
+	rsp, err := c.ScheduleServicePatchSingleSchedule2(ctx, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServicePatchSingleSchedule3Response(rsp)
+	return ParseScheduleServicePatchSingleSchedule2Response(rsp)
 }
 
-// ScheduleServiceUpdateSingleSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServiceUpdateSingleSchedule3Response
-func (c *ClientWithResponses) ScheduleServiceUpdateSingleSchedule3WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceUpdateSingleSchedule3WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
+// ScheduleServiceUpdateSingleSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServiceUpdateSingleSchedule2Response
+func (c *ClientWithResponses) ScheduleServiceUpdateSingleSchedule2WithBodyWithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceUpdateSingleSchedule2WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceUpdateSingleSchedule3Response(rsp)
+	return ParseScheduleServiceUpdateSingleSchedule2Response(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServiceUpdateSingleSchedule3WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule3Params, body ScheduleServiceUpdateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule3Response, error) {
-	rsp, err := c.ScheduleServiceUpdateSingleSchedule3(ctx, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) ScheduleServiceUpdateSingleSchedule2WithResponse(ctx context.Context, resourceId string, params *ScheduleServiceUpdateSingleSchedule2Params, body ScheduleServiceUpdateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule2Response, error) {
+	rsp, err := c.ScheduleServiceUpdateSingleSchedule2(ctx, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceUpdateSingleSchedule3Response(rsp)
+	return ParseScheduleServiceUpdateSingleSchedule2Response(rsp)
 }
 
-// SiteServiceListSites3WithResponse request returning *SiteServiceListSites3Response
-func (c *ClientWithResponses) SiteServiceListSites3WithResponse(ctx context.Context, params *SiteServiceListSites3Params, reqEditors ...RequestEditorFn) (*SiteServiceListSites3Response, error) {
-	rsp, err := c.SiteServiceListSites3(ctx, params, reqEditors...)
+// SiteServiceListSites2WithResponse request returning *SiteServiceListSites2Response
+func (c *ClientWithResponses) SiteServiceListSites2WithResponse(ctx context.Context, params *SiteServiceListSites2Params, reqEditors ...RequestEditorFn) (*SiteServiceListSites2Response, error) {
+	rsp, err := c.SiteServiceListSites2(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceListSites3Response(rsp)
+	return ParseSiteServiceListSites2Response(rsp)
 }
 
-// SiteServiceCreateSite3WithBodyWithResponse request with arbitrary body returning *SiteServiceCreateSite3Response
-func (c *ClientWithResponses) SiteServiceCreateSite3WithBodyWithResponse(ctx context.Context, params *SiteServiceCreateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite3Response, error) {
-	rsp, err := c.SiteServiceCreateSite3WithBody(ctx, params, contentType, body, reqEditors...)
+// SiteServiceCreateSite2WithBodyWithResponse request with arbitrary body returning *SiteServiceCreateSite2Response
+func (c *ClientWithResponses) SiteServiceCreateSite2WithBodyWithResponse(ctx context.Context, params *SiteServiceCreateSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite2Response, error) {
+	rsp, err := c.SiteServiceCreateSite2WithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceCreateSite3Response(rsp)
+	return ParseSiteServiceCreateSite2Response(rsp)
 }
 
-func (c *ClientWithResponses) SiteServiceCreateSite3WithResponse(ctx context.Context, params *SiteServiceCreateSite3Params, body SiteServiceCreateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite3Response, error) {
-	rsp, err := c.SiteServiceCreateSite3(ctx, params, body, reqEditors...)
+func (c *ClientWithResponses) SiteServiceCreateSite2WithResponse(ctx context.Context, params *SiteServiceCreateSite2Params, body SiteServiceCreateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite2Response, error) {
+	rsp, err := c.SiteServiceCreateSite2(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceCreateSite3Response(rsp)
+	return ParseSiteServiceCreateSite2Response(rsp)
 }
 
-// SiteServiceDeleteSite3WithResponse request returning *SiteServiceDeleteSite3Response
-func (c *ClientWithResponses) SiteServiceDeleteSite3WithResponse(ctx context.Context, resourceId string, params *SiteServiceDeleteSite3Params, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSite3Response, error) {
-	rsp, err := c.SiteServiceDeleteSite3(ctx, resourceId, params, reqEditors...)
+// SiteServiceDeleteSite2WithResponse request returning *SiteServiceDeleteSite2Response
+func (c *ClientWithResponses) SiteServiceDeleteSite2WithResponse(ctx context.Context, resourceId string, params *SiteServiceDeleteSite2Params, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSite2Response, error) {
+	rsp, err := c.SiteServiceDeleteSite2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceDeleteSite3Response(rsp)
+	return ParseSiteServiceDeleteSite2Response(rsp)
 }
 
-// SiteServiceGetSite3WithResponse request returning *SiteServiceGetSite3Response
-func (c *ClientWithResponses) SiteServiceGetSite3WithResponse(ctx context.Context, resourceId string, params *SiteServiceGetSite3Params, reqEditors ...RequestEditorFn) (*SiteServiceGetSite3Response, error) {
-	rsp, err := c.SiteServiceGetSite3(ctx, resourceId, params, reqEditors...)
+// SiteServiceGetSite2WithResponse request returning *SiteServiceGetSite2Response
+func (c *ClientWithResponses) SiteServiceGetSite2WithResponse(ctx context.Context, resourceId string, params *SiteServiceGetSite2Params, reqEditors ...RequestEditorFn) (*SiteServiceGetSite2Response, error) {
+	rsp, err := c.SiteServiceGetSite2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceGetSite3Response(rsp)
+	return ParseSiteServiceGetSite2Response(rsp)
 }
 
-// SiteServicePatchSite3WithBodyWithResponse request with arbitrary body returning *SiteServicePatchSite3Response
-func (c *ClientWithResponses) SiteServicePatchSite3WithBodyWithResponse(ctx context.Context, resourceId string, params *SiteServicePatchSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSite3Response, error) {
-	rsp, err := c.SiteServicePatchSite3WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
+// SiteServicePatchSite2WithBodyWithResponse request with arbitrary body returning *SiteServicePatchSite2Response
+func (c *ClientWithResponses) SiteServicePatchSite2WithBodyWithResponse(ctx context.Context, resourceId string, params *SiteServicePatchSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSite2Response, error) {
+	rsp, err := c.SiteServicePatchSite2WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServicePatchSite3Response(rsp)
+	return ParseSiteServicePatchSite2Response(rsp)
 }
 
-func (c *ClientWithResponses) SiteServicePatchSite3WithResponse(ctx context.Context, resourceId string, params *SiteServicePatchSite3Params, body SiteServicePatchSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSite3Response, error) {
-	rsp, err := c.SiteServicePatchSite3(ctx, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) SiteServicePatchSite2WithResponse(ctx context.Context, resourceId string, params *SiteServicePatchSite2Params, body SiteServicePatchSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSite2Response, error) {
+	rsp, err := c.SiteServicePatchSite2(ctx, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServicePatchSite3Response(rsp)
+	return ParseSiteServicePatchSite2Response(rsp)
 }
 
-// SiteServiceUpdateSite3WithBodyWithResponse request with arbitrary body returning *SiteServiceUpdateSite3Response
-func (c *ClientWithResponses) SiteServiceUpdateSite3WithBodyWithResponse(ctx context.Context, resourceId string, params *SiteServiceUpdateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite3Response, error) {
-	rsp, err := c.SiteServiceUpdateSite3WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
+// SiteServiceUpdateSite2WithBodyWithResponse request with arbitrary body returning *SiteServiceUpdateSite2Response
+func (c *ClientWithResponses) SiteServiceUpdateSite2WithBodyWithResponse(ctx context.Context, resourceId string, params *SiteServiceUpdateSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite2Response, error) {
+	rsp, err := c.SiteServiceUpdateSite2WithBody(ctx, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceUpdateSite3Response(rsp)
+	return ParseSiteServiceUpdateSite2Response(rsp)
 }
 
-func (c *ClientWithResponses) SiteServiceUpdateSite3WithResponse(ctx context.Context, resourceId string, params *SiteServiceUpdateSite3Params, body SiteServiceUpdateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite3Response, error) {
-	rsp, err := c.SiteServiceUpdateSite3(ctx, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) SiteServiceUpdateSite2WithResponse(ctx context.Context, resourceId string, params *SiteServiceUpdateSite2Params, body SiteServiceUpdateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite2Response, error) {
+	rsp, err := c.SiteServiceUpdateSite2(ctx, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceUpdateSite3Response(rsp)
+	return ParseSiteServiceUpdateSite2Response(rsp)
 }
 
-// TelemetryLogsGroupServiceListTelemetryLogsGroups3WithResponse request returning *TelemetryLogsGroupServiceListTelemetryLogsGroups3Response
-func (c *ClientWithResponses) TelemetryLogsGroupServiceListTelemetryLogsGroups3WithResponse(ctx context.Context, params *TelemetryLogsGroupServiceListTelemetryLogsGroups3Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceListTelemetryLogsGroups3Response, error) {
-	rsp, err := c.TelemetryLogsGroupServiceListTelemetryLogsGroups3(ctx, params, reqEditors...)
+// TelemetryLogsGroupServiceListTelemetryLogsGroups2WithResponse request returning *TelemetryLogsGroupServiceListTelemetryLogsGroups2Response
+func (c *ClientWithResponses) TelemetryLogsGroupServiceListTelemetryLogsGroups2WithResponse(ctx context.Context, params *TelemetryLogsGroupServiceListTelemetryLogsGroups2Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceListTelemetryLogsGroups2Response, error) {
+	rsp, err := c.TelemetryLogsGroupServiceListTelemetryLogsGroups2(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseTelemetryLogsGroupServiceListTelemetryLogsGroups3Response(rsp)
+	return ParseTelemetryLogsGroupServiceListTelemetryLogsGroups2Response(rsp)
 }
 
-// TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBodyWithResponse request with arbitrary body returning *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response
-func (c *ClientWithResponses) TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBodyWithResponse(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response, error) {
-	rsp, err := c.TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBody(ctx, params, contentType, body, reqEditors...)
+// TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBodyWithResponse request with arbitrary body returning *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response
+func (c *ClientWithResponses) TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBodyWithResponse(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response, error) {
+	rsp, err := c.TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response(rsp)
+	return ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response(rsp)
 }
 
-func (c *ClientWithResponses) TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithResponse(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response, error) {
-	rsp, err := c.TelemetryLogsGroupServiceCreateTelemetryLogsGroup3(ctx, params, body, reqEditors...)
+func (c *ClientWithResponses) TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithResponse(ctx context.Context, params *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response, error) {
+	rsp, err := c.TelemetryLogsGroupServiceCreateTelemetryLogsGroup2(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response(rsp)
+	return ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response(rsp)
 }
 
-// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3WithResponse request returning *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response
-func (c *ClientWithResponses) TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3WithResponse(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response, error) {
-	rsp, err := c.TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3(ctx, resourceId, params, reqEditors...)
+// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2WithResponse request returning *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response
+func (c *ClientWithResponses) TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2WithResponse(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response, error) {
+	rsp, err := c.TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response(rsp)
+	return ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response(rsp)
 }
 
-// TelemetryLogsGroupServiceGetTelemetryLogsGroup3WithResponse request returning *TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response
-func (c *ClientWithResponses) TelemetryLogsGroupServiceGetTelemetryLogsGroup3WithResponse(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceGetTelemetryLogsGroup3Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response, error) {
-	rsp, err := c.TelemetryLogsGroupServiceGetTelemetryLogsGroup3(ctx, resourceId, params, reqEditors...)
+// TelemetryLogsGroupServiceGetTelemetryLogsGroup2WithResponse request returning *TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response
+func (c *ClientWithResponses) TelemetryLogsGroupServiceGetTelemetryLogsGroup2WithResponse(ctx context.Context, resourceId string, params *TelemetryLogsGroupServiceGetTelemetryLogsGroup2Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response, error) {
+	rsp, err := c.TelemetryLogsGroupServiceGetTelemetryLogsGroup2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup3Response(rsp)
+	return ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup2Response(rsp)
 }
 
-// TelemetryMetricsGroupServiceListTelemetryMetricsGroups3WithResponse request returning *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response
-func (c *ClientWithResponses) TelemetryMetricsGroupServiceListTelemetryMetricsGroups3WithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response, error) {
-	rsp, err := c.TelemetryMetricsGroupServiceListTelemetryMetricsGroups3(ctx, params, reqEditors...)
+// TelemetryMetricsGroupServiceListTelemetryMetricsGroups2WithResponse request returning *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response
+func (c *ClientWithResponses) TelemetryMetricsGroupServiceListTelemetryMetricsGroups2WithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response, error) {
+	rsp, err := c.TelemetryMetricsGroupServiceListTelemetryMetricsGroups2(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response(rsp)
+	return ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response(rsp)
 }
 
-// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBodyWithResponse request with arbitrary body returning *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response
-func (c *ClientWithResponses) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBodyWithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response, error) {
-	rsp, err := c.TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBody(ctx, params, contentType, body, reqEditors...)
+// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBodyWithResponse request with arbitrary body returning *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response
+func (c *ClientWithResponses) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBodyWithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response, error) {
+	rsp, err := c.TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response(rsp)
+	return ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response(rsp)
 }
 
-func (c *ClientWithResponses) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response, error) {
-	rsp, err := c.TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3(ctx, params, body, reqEditors...)
+func (c *ClientWithResponses) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithResponse(ctx context.Context, params *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response, error) {
+	rsp, err := c.TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response(rsp)
+	return ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response(rsp)
 }
 
-// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3WithResponse request returning *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response
-func (c *ClientWithResponses) TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3WithResponse(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response, error) {
-	rsp, err := c.TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3(ctx, resourceId, params, reqEditors...)
+// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2WithResponse request returning *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response
+func (c *ClientWithResponses) TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2WithResponse(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response, error) {
+	rsp, err := c.TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response(rsp)
+	return ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response(rsp)
 }
 
-// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3WithResponse request returning *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response
-func (c *ClientWithResponses) TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3WithResponse(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response, error) {
-	rsp, err := c.TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3(ctx, resourceId, params, reqEditors...)
+// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2WithResponse request returning *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response
+func (c *ClientWithResponses) TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2WithResponse(ctx context.Context, resourceId string, params *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response, error) {
+	rsp, err := c.TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2(ctx, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response(rsp)
+	return ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response(rsp)
 }
 
 // TelemetryLogsProfileServiceListTelemetryLogsProfiles2WithResponse request returning *TelemetryLogsProfileServiceListTelemetryLogsProfiles2Response
@@ -28315,6 +29067,15 @@ func (c *ClientWithResponses) HostServiceRegisterHostWithResponse(ctx context.Co
 	return ParseHostServiceRegisterHostResponse(rsp)
 }
 
+// HostServiceGetHostsSummaryWithResponse request returning *HostServiceGetHostsSummaryResponse
+func (c *ClientWithResponses) HostServiceGetHostsSummaryWithResponse(ctx context.Context, projectName string, params *HostServiceGetHostsSummaryParams, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummaryResponse, error) {
+	rsp, err := c.HostServiceGetHostsSummary(ctx, projectName, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseHostServiceGetHostsSummaryResponse(rsp)
+}
+
 // HostServiceDeleteHostWithResponse request returning *HostServiceDeleteHostResponse
 func (c *ClientWithResponses) HostServiceDeleteHostWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*HostServiceDeleteHostResponse, error) {
 	rsp, err := c.HostServiceDeleteHost(ctx, projectName, resourceId, reqEditors...)
@@ -28402,22 +29163,13 @@ func (c *ClientWithResponses) HostServicePatchRegisterHostWithResponse(ctx conte
 	return ParseHostServicePatchRegisterHostResponse(rsp)
 }
 
-// HostServiceGetHostsSummaryWithResponse request returning *HostServiceGetHostsSummaryResponse
-func (c *ClientWithResponses) HostServiceGetHostsSummaryWithResponse(ctx context.Context, projectName string, params *HostServiceGetHostsSummaryParams, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummaryResponse, error) {
-	rsp, err := c.HostServiceGetHostsSummary(ctx, projectName, params, reqEditors...)
+// HostServiceGetHostsSummary3WithResponse request returning *HostServiceGetHostsSummary3Response
+func (c *ClientWithResponses) HostServiceGetHostsSummary3WithResponse(ctx context.Context, projectName string, params *HostServiceGetHostsSummary3Params, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummary3Response, error) {
+	rsp, err := c.HostServiceGetHostsSummary3(ctx, projectName, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseHostServiceGetHostsSummaryResponse(rsp)
-}
-
-// HostServiceGetHostsSummary2WithResponse request returning *HostServiceGetHostsSummary2Response
-func (c *ClientWithResponses) HostServiceGetHostsSummary2WithResponse(ctx context.Context, projectName string, params *HostServiceGetHostsSummary2Params, reqEditors ...RequestEditorFn) (*HostServiceGetHostsSummary2Response, error) {
-	rsp, err := c.HostServiceGetHostsSummary2(ctx, projectName, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseHostServiceGetHostsSummary2Response(rsp)
+	return ParseHostServiceGetHostsSummary3Response(rsp)
 }
 
 // InstanceServiceListInstancesWithResponse request returning *InstanceServiceListInstancesResponse
@@ -28507,6 +29259,84 @@ func (c *ClientWithResponses) InstanceServiceInvalidateInstanceWithResponse(ctx 
 	return ParseInstanceServiceInvalidateInstanceResponse(rsp)
 }
 
+// OperatingSystemServiceListOperatingSystems3WithResponse request returning *OperatingSystemServiceListOperatingSystems3Response
+func (c *ClientWithResponses) OperatingSystemServiceListOperatingSystems3WithResponse(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystems3Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceListOperatingSystems3Response, error) {
+	rsp, err := c.OperatingSystemServiceListOperatingSystems3(ctx, projectName, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOperatingSystemServiceListOperatingSystems3Response(rsp)
+}
+
+// OperatingSystemServiceCreateOperatingSystem3WithBodyWithResponse request with arbitrary body returning *OperatingSystemServiceCreateOperatingSystem3Response
+func (c *ClientWithResponses) OperatingSystemServiceCreateOperatingSystem3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem3Response, error) {
+	rsp, err := c.OperatingSystemServiceCreateOperatingSystem3WithBody(ctx, projectName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOperatingSystemServiceCreateOperatingSystem3Response(rsp)
+}
+
+func (c *ClientWithResponses) OperatingSystemServiceCreateOperatingSystem3WithResponse(ctx context.Context, projectName string, body OperatingSystemServiceCreateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem3Response, error) {
+	rsp, err := c.OperatingSystemServiceCreateOperatingSystem3(ctx, projectName, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOperatingSystemServiceCreateOperatingSystem3Response(rsp)
+}
+
+// OperatingSystemServiceDeleteOperatingSystem3WithResponse request returning *OperatingSystemServiceDeleteOperatingSystem3Response
+func (c *ClientWithResponses) OperatingSystemServiceDeleteOperatingSystem3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OperatingSystemServiceDeleteOperatingSystem3Response, error) {
+	rsp, err := c.OperatingSystemServiceDeleteOperatingSystem3(ctx, projectName, resourceId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOperatingSystemServiceDeleteOperatingSystem3Response(rsp)
+}
+
+// OperatingSystemServiceGetOperatingSystem3WithResponse request returning *OperatingSystemServiceGetOperatingSystem3Response
+func (c *ClientWithResponses) OperatingSystemServiceGetOperatingSystem3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OperatingSystemServiceGetOperatingSystem3Response, error) {
+	rsp, err := c.OperatingSystemServiceGetOperatingSystem3(ctx, projectName, resourceId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOperatingSystemServiceGetOperatingSystem3Response(rsp)
+}
+
+// OperatingSystemServicePatchOperatingSystem3WithBodyWithResponse request with arbitrary body returning *OperatingSystemServicePatchOperatingSystem3Response
+func (c *ClientWithResponses) OperatingSystemServicePatchOperatingSystem3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem3Response, error) {
+	rsp, err := c.OperatingSystemServicePatchOperatingSystem3WithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOperatingSystemServicePatchOperatingSystem3Response(rsp)
+}
+
+func (c *ClientWithResponses) OperatingSystemServicePatchOperatingSystem3WithResponse(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem3Params, body OperatingSystemServicePatchOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem3Response, error) {
+	rsp, err := c.OperatingSystemServicePatchOperatingSystem3(ctx, projectName, resourceId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOperatingSystemServicePatchOperatingSystem3Response(rsp)
+}
+
+// OperatingSystemServiceUpdateOperatingSystem3WithBodyWithResponse request with arbitrary body returning *OperatingSystemServiceUpdateOperatingSystem3Response
+func (c *ClientWithResponses) OperatingSystemServiceUpdateOperatingSystem3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem3Response, error) {
+	rsp, err := c.OperatingSystemServiceUpdateOperatingSystem3WithBody(ctx, projectName, resourceId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOperatingSystemServiceUpdateOperatingSystem3Response(rsp)
+}
+
+func (c *ClientWithResponses) OperatingSystemServiceUpdateOperatingSystem3WithResponse(ctx context.Context, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem3Response, error) {
+	rsp, err := c.OperatingSystemServiceUpdateOperatingSystem3(ctx, projectName, resourceId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOperatingSystemServiceUpdateOperatingSystem3Response(rsp)
+}
+
 // OperatingSystemServiceListOperatingSystemsWithResponse request returning *OperatingSystemServiceListOperatingSystemsResponse
 func (c *ClientWithResponses) OperatingSystemServiceListOperatingSystemsWithResponse(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystemsParams, reqEditors ...RequestEditorFn) (*OperatingSystemServiceListOperatingSystemsResponse, error) {
 	rsp, err := c.OperatingSystemServiceListOperatingSystems(ctx, projectName, params, reqEditors...)
@@ -28585,247 +29415,247 @@ func (c *ClientWithResponses) OperatingSystemServiceUpdateOperatingSystemWithRes
 	return ParseOperatingSystemServiceUpdateOperatingSystemResponse(rsp)
 }
 
-// OperatingSystemServiceListOperatingSystems2WithResponse request returning *OperatingSystemServiceListOperatingSystems2Response
-func (c *ClientWithResponses) OperatingSystemServiceListOperatingSystems2WithResponse(ctx context.Context, projectName string, params *OperatingSystemServiceListOperatingSystems2Params, reqEditors ...RequestEditorFn) (*OperatingSystemServiceListOperatingSystems2Response, error) {
-	rsp, err := c.OperatingSystemServiceListOperatingSystems2(ctx, projectName, params, reqEditors...)
+// ScheduleServiceListSchedulesWithResponse request returning *ScheduleServiceListSchedulesResponse
+func (c *ClientWithResponses) ScheduleServiceListSchedulesWithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSchedulesParams, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedulesResponse, error) {
+	rsp, err := c.ScheduleServiceListSchedules(ctx, projectName, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceListOperatingSystems2Response(rsp)
+	return ParseScheduleServiceListSchedulesResponse(rsp)
 }
 
-// OperatingSystemServiceCreateOperatingSystem2WithBodyWithResponse request with arbitrary body returning *OperatingSystemServiceCreateOperatingSystem2Response
-func (c *ClientWithResponses) OperatingSystemServiceCreateOperatingSystem2WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem2Response, error) {
-	rsp, err := c.OperatingSystemServiceCreateOperatingSystem2WithBody(ctx, projectName, contentType, body, reqEditors...)
+// ScheduleServiceListRepeatedSchedules3WithResponse request returning *ScheduleServiceListRepeatedSchedules3Response
+func (c *ClientWithResponses) ScheduleServiceListRepeatedSchedules3WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListRepeatedSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListRepeatedSchedules3Response, error) {
+	rsp, err := c.ScheduleServiceListRepeatedSchedules3(ctx, projectName, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceCreateOperatingSystem2Response(rsp)
+	return ParseScheduleServiceListRepeatedSchedules3Response(rsp)
 }
 
-func (c *ClientWithResponses) OperatingSystemServiceCreateOperatingSystem2WithResponse(ctx context.Context, projectName string, body OperatingSystemServiceCreateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceCreateOperatingSystem2Response, error) {
-	rsp, err := c.OperatingSystemServiceCreateOperatingSystem2(ctx, projectName, body, reqEditors...)
+// ScheduleServiceCreateRepeatedSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServiceCreateRepeatedSchedule3Response
+func (c *ClientWithResponses) ScheduleServiceCreateRepeatedSchedule3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceCreateRepeatedSchedule3WithBody(ctx, projectName, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceCreateOperatingSystem2Response(rsp)
+	return ParseScheduleServiceCreateRepeatedSchedule3Response(rsp)
 }
 
-// OperatingSystemServiceDeleteOperatingSystem2WithResponse request returning *OperatingSystemServiceDeleteOperatingSystem2Response
-func (c *ClientWithResponses) OperatingSystemServiceDeleteOperatingSystem2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OperatingSystemServiceDeleteOperatingSystem2Response, error) {
-	rsp, err := c.OperatingSystemServiceDeleteOperatingSystem2(ctx, projectName, resourceId, reqEditors...)
+func (c *ClientWithResponses) ScheduleServiceCreateRepeatedSchedule3WithResponse(ctx context.Context, projectName string, body ScheduleServiceCreateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceCreateRepeatedSchedule3(ctx, projectName, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceDeleteOperatingSystem2Response(rsp)
+	return ParseScheduleServiceCreateRepeatedSchedule3Response(rsp)
 }
 
-// OperatingSystemServiceGetOperatingSystem2WithResponse request returning *OperatingSystemServiceGetOperatingSystem2Response
-func (c *ClientWithResponses) OperatingSystemServiceGetOperatingSystem2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OperatingSystemServiceGetOperatingSystem2Response, error) {
-	rsp, err := c.OperatingSystemServiceGetOperatingSystem2(ctx, projectName, resourceId, reqEditors...)
+// ScheduleServiceDeleteRepeatedSchedule3WithResponse request returning *ScheduleServiceDeleteRepeatedSchedule3Response
+func (c *ClientWithResponses) ScheduleServiceDeleteRepeatedSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteRepeatedSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceDeleteRepeatedSchedule3(ctx, projectName, resourceId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceGetOperatingSystem2Response(rsp)
+	return ParseScheduleServiceDeleteRepeatedSchedule3Response(rsp)
 }
 
-// OperatingSystemServicePatchOperatingSystem2WithBodyWithResponse request with arbitrary body returning *OperatingSystemServicePatchOperatingSystem2Response
-func (c *ClientWithResponses) OperatingSystemServicePatchOperatingSystem2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem2Response, error) {
-	rsp, err := c.OperatingSystemServicePatchOperatingSystem2WithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
+// ScheduleServiceGetRepeatedSchedule3WithResponse request returning *ScheduleServiceGetRepeatedSchedule3Response
+func (c *ClientWithResponses) ScheduleServiceGetRepeatedSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceGetRepeatedSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceGetRepeatedSchedule3(ctx, projectName, resourceId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServicePatchOperatingSystem2Response(rsp)
+	return ParseScheduleServiceGetRepeatedSchedule3Response(rsp)
 }
 
-func (c *ClientWithResponses) OperatingSystemServicePatchOperatingSystem2WithResponse(ctx context.Context, projectName string, resourceId string, params *OperatingSystemServicePatchOperatingSystem2Params, body OperatingSystemServicePatchOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServicePatchOperatingSystem2Response, error) {
-	rsp, err := c.OperatingSystemServicePatchOperatingSystem2(ctx, projectName, resourceId, params, body, reqEditors...)
+// ScheduleServicePatchRepeatedSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServicePatchRepeatedSchedule3Response
+func (c *ClientWithResponses) ScheduleServicePatchRepeatedSchedule3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule3Response, error) {
+	rsp, err := c.ScheduleServicePatchRepeatedSchedule3WithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServicePatchOperatingSystem2Response(rsp)
+	return ParseScheduleServicePatchRepeatedSchedule3Response(rsp)
 }
 
-// OperatingSystemServiceUpdateOperatingSystem2WithBodyWithResponse request with arbitrary body returning *OperatingSystemServiceUpdateOperatingSystem2Response
-func (c *ClientWithResponses) OperatingSystemServiceUpdateOperatingSystem2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem2Response, error) {
-	rsp, err := c.OperatingSystemServiceUpdateOperatingSystem2WithBody(ctx, projectName, resourceId, contentType, body, reqEditors...)
+func (c *ClientWithResponses) ScheduleServicePatchRepeatedSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule3Params, body ScheduleServicePatchRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule3Response, error) {
+	rsp, err := c.ScheduleServicePatchRepeatedSchedule3(ctx, projectName, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceUpdateOperatingSystem2Response(rsp)
+	return ParseScheduleServicePatchRepeatedSchedule3Response(rsp)
 }
 
-func (c *ClientWithResponses) OperatingSystemServiceUpdateOperatingSystem2WithResponse(ctx context.Context, projectName string, resourceId string, body OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody, reqEditors ...RequestEditorFn) (*OperatingSystemServiceUpdateOperatingSystem2Response, error) {
-	rsp, err := c.OperatingSystemServiceUpdateOperatingSystem2(ctx, projectName, resourceId, body, reqEditors...)
+// ScheduleServiceUpdateRepeatedSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServiceUpdateRepeatedSchedule3Response
+func (c *ClientWithResponses) ScheduleServiceUpdateRepeatedSchedule3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceUpdateRepeatedSchedule3WithBody(ctx, projectName, resourceId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOperatingSystemServiceUpdateOperatingSystem2Response(rsp)
+	return ParseScheduleServiceUpdateRepeatedSchedule3Response(rsp)
 }
 
-// ScheduleServiceListSchedules2WithResponse request returning *ScheduleServiceListSchedules2Response
-func (c *ClientWithResponses) ScheduleServiceListSchedules2WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedules2Response, error) {
-	rsp, err := c.ScheduleServiceListSchedules2(ctx, projectName, params, reqEditors...)
+func (c *ClientWithResponses) ScheduleServiceUpdateRepeatedSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceUpdateRepeatedSchedule3(ctx, projectName, resourceId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceListSchedules2Response(rsp)
+	return ParseScheduleServiceUpdateRepeatedSchedule3Response(rsp)
 }
 
-// ScheduleServiceListRepeatedSchedules2WithResponse request returning *ScheduleServiceListRepeatedSchedules2Response
-func (c *ClientWithResponses) ScheduleServiceListRepeatedSchedules2WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListRepeatedSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListRepeatedSchedules2Response, error) {
-	rsp, err := c.ScheduleServiceListRepeatedSchedules2(ctx, projectName, params, reqEditors...)
+// ScheduleServiceListSingleSchedules3WithResponse request returning *ScheduleServiceListSingleSchedules3Response
+func (c *ClientWithResponses) ScheduleServiceListSingleSchedules3WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSingleSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSingleSchedules3Response, error) {
+	rsp, err := c.ScheduleServiceListSingleSchedules3(ctx, projectName, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceListRepeatedSchedules2Response(rsp)
+	return ParseScheduleServiceListSingleSchedules3Response(rsp)
 }
 
-// ScheduleServiceCreateRepeatedSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServiceCreateRepeatedSchedule2Response
-func (c *ClientWithResponses) ScheduleServiceCreateRepeatedSchedule2WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceCreateRepeatedSchedule2WithBody(ctx, projectName, contentType, body, reqEditors...)
+// ScheduleServiceCreateSingleSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServiceCreateSingleSchedule3Response
+func (c *ClientWithResponses) ScheduleServiceCreateSingleSchedule3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceCreateSingleSchedule3WithBody(ctx, projectName, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceCreateRepeatedSchedule2Response(rsp)
+	return ParseScheduleServiceCreateSingleSchedule3Response(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServiceCreateRepeatedSchedule2WithResponse(ctx context.Context, projectName string, body ScheduleServiceCreateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateRepeatedSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceCreateRepeatedSchedule2(ctx, projectName, body, reqEditors...)
+func (c *ClientWithResponses) ScheduleServiceCreateSingleSchedule3WithResponse(ctx context.Context, projectName string, body ScheduleServiceCreateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceCreateSingleSchedule3(ctx, projectName, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceCreateRepeatedSchedule2Response(rsp)
+	return ParseScheduleServiceCreateSingleSchedule3Response(rsp)
 }
 
-// ScheduleServiceDeleteRepeatedSchedule2WithResponse request returning *ScheduleServiceDeleteRepeatedSchedule2Response
-func (c *ClientWithResponses) ScheduleServiceDeleteRepeatedSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteRepeatedSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceDeleteRepeatedSchedule2(ctx, projectName, resourceId, reqEditors...)
+// ScheduleServiceDeleteSingleSchedule3WithResponse request returning *ScheduleServiceDeleteSingleSchedule3Response
+func (c *ClientWithResponses) ScheduleServiceDeleteSingleSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteSingleSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceDeleteSingleSchedule3(ctx, projectName, resourceId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceDeleteRepeatedSchedule2Response(rsp)
+	return ParseScheduleServiceDeleteSingleSchedule3Response(rsp)
 }
 
-// ScheduleServiceGetRepeatedSchedule2WithResponse request returning *ScheduleServiceGetRepeatedSchedule2Response
-func (c *ClientWithResponses) ScheduleServiceGetRepeatedSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceGetRepeatedSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceGetRepeatedSchedule2(ctx, projectName, resourceId, reqEditors...)
+// ScheduleServiceGetSingleSchedule3WithResponse request returning *ScheduleServiceGetSingleSchedule3Response
+func (c *ClientWithResponses) ScheduleServiceGetSingleSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceGetSingleSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceGetSingleSchedule3(ctx, projectName, resourceId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceGetRepeatedSchedule2Response(rsp)
+	return ParseScheduleServiceGetSingleSchedule3Response(rsp)
 }
 
-// ScheduleServicePatchRepeatedSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServicePatchRepeatedSchedule2Response
-func (c *ClientWithResponses) ScheduleServicePatchRepeatedSchedule2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule2Response, error) {
-	rsp, err := c.ScheduleServicePatchRepeatedSchedule2WithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
+// ScheduleServicePatchSingleSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServicePatchSingleSchedule3Response
+func (c *ClientWithResponses) ScheduleServicePatchSingleSchedule3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule3Response, error) {
+	rsp, err := c.ScheduleServicePatchSingleSchedule3WithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServicePatchRepeatedSchedule2Response(rsp)
+	return ParseScheduleServicePatchSingleSchedule3Response(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServicePatchRepeatedSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchRepeatedSchedule2Params, body ScheduleServicePatchRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchRepeatedSchedule2Response, error) {
-	rsp, err := c.ScheduleServicePatchRepeatedSchedule2(ctx, projectName, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) ScheduleServicePatchSingleSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule3Params, body ScheduleServicePatchSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule3Response, error) {
+	rsp, err := c.ScheduleServicePatchSingleSchedule3(ctx, projectName, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServicePatchRepeatedSchedule2Response(rsp)
+	return ParseScheduleServicePatchSingleSchedule3Response(rsp)
 }
 
-// ScheduleServiceUpdateRepeatedSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServiceUpdateRepeatedSchedule2Response
-func (c *ClientWithResponses) ScheduleServiceUpdateRepeatedSchedule2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceUpdateRepeatedSchedule2WithBody(ctx, projectName, resourceId, contentType, body, reqEditors...)
+// ScheduleServiceUpdateSingleSchedule3WithBodyWithResponse request with arbitrary body returning *ScheduleServiceUpdateSingleSchedule3Response
+func (c *ClientWithResponses) ScheduleServiceUpdateSingleSchedule3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceUpdateSingleSchedule3WithBody(ctx, projectName, resourceId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceUpdateRepeatedSchedule2Response(rsp)
+	return ParseScheduleServiceUpdateSingleSchedule3Response(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServiceUpdateRepeatedSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateRepeatedSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceUpdateRepeatedSchedule2(ctx, projectName, resourceId, body, reqEditors...)
+func (c *ClientWithResponses) ScheduleServiceUpdateSingleSchedule3WithResponse(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateSingleSchedule3JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule3Response, error) {
+	rsp, err := c.ScheduleServiceUpdateSingleSchedule3(ctx, projectName, resourceId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceUpdateRepeatedSchedule2Response(rsp)
+	return ParseScheduleServiceUpdateSingleSchedule3Response(rsp)
 }
 
-// ScheduleServiceListSingleSchedules2WithResponse request returning *ScheduleServiceListSingleSchedules2Response
-func (c *ClientWithResponses) ScheduleServiceListSingleSchedules2WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSingleSchedules2Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSingleSchedules2Response, error) {
-	rsp, err := c.ScheduleServiceListSingleSchedules2(ctx, projectName, params, reqEditors...)
+// WorkloadServiceListWorkloadsWithResponse request returning *WorkloadServiceListWorkloadsResponse
+func (c *ClientWithResponses) WorkloadServiceListWorkloadsWithResponse(ctx context.Context, projectName string, params *WorkloadServiceListWorkloadsParams, reqEditors ...RequestEditorFn) (*WorkloadServiceListWorkloadsResponse, error) {
+	rsp, err := c.WorkloadServiceListWorkloads(ctx, projectName, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceListSingleSchedules2Response(rsp)
+	return ParseWorkloadServiceListWorkloadsResponse(rsp)
 }
 
-// ScheduleServiceCreateSingleSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServiceCreateSingleSchedule2Response
-func (c *ClientWithResponses) ScheduleServiceCreateSingleSchedule2WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceCreateSingleSchedule2WithBody(ctx, projectName, contentType, body, reqEditors...)
+// WorkloadServiceCreateWorkloadWithBodyWithResponse request with arbitrary body returning *WorkloadServiceCreateWorkloadResponse
+func (c *ClientWithResponses) WorkloadServiceCreateWorkloadWithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkloadResponse, error) {
+	rsp, err := c.WorkloadServiceCreateWorkloadWithBody(ctx, projectName, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceCreateSingleSchedule2Response(rsp)
+	return ParseWorkloadServiceCreateWorkloadResponse(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServiceCreateSingleSchedule2WithResponse(ctx context.Context, projectName string, body ScheduleServiceCreateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceCreateSingleSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceCreateSingleSchedule2(ctx, projectName, body, reqEditors...)
+func (c *ClientWithResponses) WorkloadServiceCreateWorkloadWithResponse(ctx context.Context, projectName string, body WorkloadServiceCreateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkloadResponse, error) {
+	rsp, err := c.WorkloadServiceCreateWorkload(ctx, projectName, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceCreateSingleSchedule2Response(rsp)
+	return ParseWorkloadServiceCreateWorkloadResponse(rsp)
 }
 
-// ScheduleServiceDeleteSingleSchedule2WithResponse request returning *ScheduleServiceDeleteSingleSchedule2Response
-func (c *ClientWithResponses) ScheduleServiceDeleteSingleSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceDeleteSingleSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceDeleteSingleSchedule2(ctx, projectName, resourceId, reqEditors...)
+// WorkloadServiceDeleteWorkloadWithResponse request returning *WorkloadServiceDeleteWorkloadResponse
+func (c *ClientWithResponses) WorkloadServiceDeleteWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceDeleteWorkloadResponse, error) {
+	rsp, err := c.WorkloadServiceDeleteWorkload(ctx, projectName, resourceId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceDeleteSingleSchedule2Response(rsp)
+	return ParseWorkloadServiceDeleteWorkloadResponse(rsp)
 }
 
-// ScheduleServiceGetSingleSchedule2WithResponse request returning *ScheduleServiceGetSingleSchedule2Response
-func (c *ClientWithResponses) ScheduleServiceGetSingleSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*ScheduleServiceGetSingleSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceGetSingleSchedule2(ctx, projectName, resourceId, reqEditors...)
+// WorkloadServiceGetWorkloadWithResponse request returning *WorkloadServiceGetWorkloadResponse
+func (c *ClientWithResponses) WorkloadServiceGetWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceGetWorkloadResponse, error) {
+	rsp, err := c.WorkloadServiceGetWorkload(ctx, projectName, resourceId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceGetSingleSchedule2Response(rsp)
+	return ParseWorkloadServiceGetWorkloadResponse(rsp)
 }
 
-// ScheduleServicePatchSingleSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServicePatchSingleSchedule2Response
-func (c *ClientWithResponses) ScheduleServicePatchSingleSchedule2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule2Response, error) {
-	rsp, err := c.ScheduleServicePatchSingleSchedule2WithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
+// WorkloadServicePatchWorkloadWithBodyWithResponse request with arbitrary body returning *WorkloadServicePatchWorkloadResponse
+func (c *ClientWithResponses) WorkloadServicePatchWorkloadWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkloadResponse, error) {
+	rsp, err := c.WorkloadServicePatchWorkloadWithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServicePatchSingleSchedule2Response(rsp)
+	return ParseWorkloadServicePatchWorkloadResponse(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServicePatchSingleSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, params *ScheduleServicePatchSingleSchedule2Params, body ScheduleServicePatchSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServicePatchSingleSchedule2Response, error) {
-	rsp, err := c.ScheduleServicePatchSingleSchedule2(ctx, projectName, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) WorkloadServicePatchWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, body WorkloadServicePatchWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkloadResponse, error) {
+	rsp, err := c.WorkloadServicePatchWorkload(ctx, projectName, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServicePatchSingleSchedule2Response(rsp)
+	return ParseWorkloadServicePatchWorkloadResponse(rsp)
 }
 
-// ScheduleServiceUpdateSingleSchedule2WithBodyWithResponse request with arbitrary body returning *ScheduleServiceUpdateSingleSchedule2Response
-func (c *ClientWithResponses) ScheduleServiceUpdateSingleSchedule2WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceUpdateSingleSchedule2WithBody(ctx, projectName, resourceId, contentType, body, reqEditors...)
+// WorkloadServiceUpdateWorkloadWithBodyWithResponse request with arbitrary body returning *WorkloadServiceUpdateWorkloadResponse
+func (c *ClientWithResponses) WorkloadServiceUpdateWorkloadWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkloadResponse, error) {
+	rsp, err := c.WorkloadServiceUpdateWorkloadWithBody(ctx, projectName, resourceId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceUpdateSingleSchedule2Response(rsp)
+	return ParseWorkloadServiceUpdateWorkloadResponse(rsp)
 }
 
-func (c *ClientWithResponses) ScheduleServiceUpdateSingleSchedule2WithResponse(ctx context.Context, projectName string, resourceId string, body ScheduleServiceUpdateSingleSchedule2JSONRequestBody, reqEditors ...RequestEditorFn) (*ScheduleServiceUpdateSingleSchedule2Response, error) {
-	rsp, err := c.ScheduleServiceUpdateSingleSchedule2(ctx, projectName, resourceId, body, reqEditors...)
+func (c *ClientWithResponses) WorkloadServiceUpdateWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkloadResponse, error) {
+	rsp, err := c.WorkloadServiceUpdateWorkload(ctx, projectName, resourceId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceUpdateSingleSchedule2Response(rsp)
+	return ParseWorkloadServiceUpdateWorkloadResponse(rsp)
 }
 
 // CustomConfigServiceListCustomConfigsWithResponse request returning *CustomConfigServiceListCustomConfigsResponse
@@ -28925,77 +29755,6 @@ func (c *ClientWithResponses) LocationServiceListLocationsWithResponse(ctx conte
 	return ParseLocationServiceListLocationsResponse(rsp)
 }
 
-// OSUpdatePolicyListOSUpdatePolicy3WithResponse request returning *OSUpdatePolicyListOSUpdatePolicy3Response
-func (c *ClientWithResponses) OSUpdatePolicyListOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicy3Params, reqEditors ...RequestEditorFn) (*OSUpdatePolicyListOSUpdatePolicy3Response, error) {
-	rsp, err := c.OSUpdatePolicyListOSUpdatePolicy3(ctx, projectName, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseOSUpdatePolicyListOSUpdatePolicy3Response(rsp)
-}
-
-// OSUpdatePolicyCreateOSUpdatePolicy3WithBodyWithResponse request with arbitrary body returning *OSUpdatePolicyCreateOSUpdatePolicy3Response
-func (c *ClientWithResponses) OSUpdatePolicyCreateOSUpdatePolicy3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OSUpdatePolicyCreateOSUpdatePolicy3Response, error) {
-	rsp, err := c.OSUpdatePolicyCreateOSUpdatePolicy3WithBody(ctx, projectName, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseOSUpdatePolicyCreateOSUpdatePolicy3Response(rsp)
-}
-
-func (c *ClientWithResponses) OSUpdatePolicyCreateOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, body OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody, reqEditors ...RequestEditorFn) (*OSUpdatePolicyCreateOSUpdatePolicy3Response, error) {
-	rsp, err := c.OSUpdatePolicyCreateOSUpdatePolicy3(ctx, projectName, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseOSUpdatePolicyCreateOSUpdatePolicy3Response(rsp)
-}
-
-// OSUpdatePolicyDeleteOSUpdatePolicy3WithResponse request returning *OSUpdatePolicyDeleteOSUpdatePolicy3Response
-func (c *ClientWithResponses) OSUpdatePolicyDeleteOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdatePolicyDeleteOSUpdatePolicy3Response, error) {
-	rsp, err := c.OSUpdatePolicyDeleteOSUpdatePolicy3(ctx, projectName, resourceId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseOSUpdatePolicyDeleteOSUpdatePolicy3Response(rsp)
-}
-
-// OSUpdatePolicyGetOSUpdatePolicy3WithResponse request returning *OSUpdatePolicyGetOSUpdatePolicy3Response
-func (c *ClientWithResponses) OSUpdatePolicyGetOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdatePolicyGetOSUpdatePolicy3Response, error) {
-	rsp, err := c.OSUpdatePolicyGetOSUpdatePolicy3(ctx, projectName, resourceId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseOSUpdatePolicyGetOSUpdatePolicy3Response(rsp)
-}
-
-// OSUpdateRunListOSUpdateRun3WithResponse request returning *OSUpdateRunListOSUpdateRun3Response
-func (c *ClientWithResponses) OSUpdateRunListOSUpdateRun3WithResponse(ctx context.Context, projectName string, params *OSUpdateRunListOSUpdateRun3Params, reqEditors ...RequestEditorFn) (*OSUpdateRunListOSUpdateRun3Response, error) {
-	rsp, err := c.OSUpdateRunListOSUpdateRun3(ctx, projectName, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseOSUpdateRunListOSUpdateRun3Response(rsp)
-}
-
-// OSUpdateRunDeleteOSUpdateRun3WithResponse request returning *OSUpdateRunDeleteOSUpdateRun3Response
-func (c *ClientWithResponses) OSUpdateRunDeleteOSUpdateRun3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdateRunDeleteOSUpdateRun3Response, error) {
-	rsp, err := c.OSUpdateRunDeleteOSUpdateRun3(ctx, projectName, resourceId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseOSUpdateRunDeleteOSUpdateRun3Response(rsp)
-}
-
-// OSUpdateRunGetOSUpdateRun3WithResponse request returning *OSUpdateRunGetOSUpdateRun3Response
-func (c *ClientWithResponses) OSUpdateRunGetOSUpdateRun3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdateRunGetOSUpdateRun3Response, error) {
-	rsp, err := c.OSUpdateRunGetOSUpdateRun3(ctx, projectName, resourceId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseOSUpdateRunGetOSUpdateRun3Response(rsp)
-}
-
 // OSUpdatePolicyListOSUpdatePolicyWithResponse request returning *OSUpdatePolicyListOSUpdatePolicyResponse
 func (c *ClientWithResponses) OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicyParams, reqEditors ...RequestEditorFn) (*OSUpdatePolicyListOSUpdatePolicyResponse, error) {
 	rsp, err := c.OSUpdatePolicyListOSUpdatePolicy(ctx, projectName, params, reqEditors...)
@@ -29065,6 +29824,77 @@ func (c *ClientWithResponses) OSUpdateRunGetOSUpdateRunWithResponse(ctx context.
 		return nil, err
 	}
 	return ParseOSUpdateRunGetOSUpdateRunResponse(rsp)
+}
+
+// OSUpdatePolicyListOSUpdatePolicy3WithResponse request returning *OSUpdatePolicyListOSUpdatePolicy3Response
+func (c *ClientWithResponses) OSUpdatePolicyListOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, params *OSUpdatePolicyListOSUpdatePolicy3Params, reqEditors ...RequestEditorFn) (*OSUpdatePolicyListOSUpdatePolicy3Response, error) {
+	rsp, err := c.OSUpdatePolicyListOSUpdatePolicy3(ctx, projectName, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOSUpdatePolicyListOSUpdatePolicy3Response(rsp)
+}
+
+// OSUpdatePolicyCreateOSUpdatePolicy3WithBodyWithResponse request with arbitrary body returning *OSUpdatePolicyCreateOSUpdatePolicy3Response
+func (c *ClientWithResponses) OSUpdatePolicyCreateOSUpdatePolicy3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OSUpdatePolicyCreateOSUpdatePolicy3Response, error) {
+	rsp, err := c.OSUpdatePolicyCreateOSUpdatePolicy3WithBody(ctx, projectName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOSUpdatePolicyCreateOSUpdatePolicy3Response(rsp)
+}
+
+func (c *ClientWithResponses) OSUpdatePolicyCreateOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, body OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody, reqEditors ...RequestEditorFn) (*OSUpdatePolicyCreateOSUpdatePolicy3Response, error) {
+	rsp, err := c.OSUpdatePolicyCreateOSUpdatePolicy3(ctx, projectName, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOSUpdatePolicyCreateOSUpdatePolicy3Response(rsp)
+}
+
+// OSUpdatePolicyDeleteOSUpdatePolicy3WithResponse request returning *OSUpdatePolicyDeleteOSUpdatePolicy3Response
+func (c *ClientWithResponses) OSUpdatePolicyDeleteOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdatePolicyDeleteOSUpdatePolicy3Response, error) {
+	rsp, err := c.OSUpdatePolicyDeleteOSUpdatePolicy3(ctx, projectName, resourceId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOSUpdatePolicyDeleteOSUpdatePolicy3Response(rsp)
+}
+
+// OSUpdatePolicyGetOSUpdatePolicy3WithResponse request returning *OSUpdatePolicyGetOSUpdatePolicy3Response
+func (c *ClientWithResponses) OSUpdatePolicyGetOSUpdatePolicy3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdatePolicyGetOSUpdatePolicy3Response, error) {
+	rsp, err := c.OSUpdatePolicyGetOSUpdatePolicy3(ctx, projectName, resourceId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOSUpdatePolicyGetOSUpdatePolicy3Response(rsp)
+}
+
+// OSUpdateRunListOSUpdateRun3WithResponse request returning *OSUpdateRunListOSUpdateRun3Response
+func (c *ClientWithResponses) OSUpdateRunListOSUpdateRun3WithResponse(ctx context.Context, projectName string, params *OSUpdateRunListOSUpdateRun3Params, reqEditors ...RequestEditorFn) (*OSUpdateRunListOSUpdateRun3Response, error) {
+	rsp, err := c.OSUpdateRunListOSUpdateRun3(ctx, projectName, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOSUpdateRunListOSUpdateRun3Response(rsp)
+}
+
+// OSUpdateRunDeleteOSUpdateRun3WithResponse request returning *OSUpdateRunDeleteOSUpdateRun3Response
+func (c *ClientWithResponses) OSUpdateRunDeleteOSUpdateRun3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdateRunDeleteOSUpdateRun3Response, error) {
+	rsp, err := c.OSUpdateRunDeleteOSUpdateRun3(ctx, projectName, resourceId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOSUpdateRunDeleteOSUpdateRun3Response(rsp)
+}
+
+// OSUpdateRunGetOSUpdateRun3WithResponse request returning *OSUpdateRunGetOSUpdateRun3Response
+func (c *ClientWithResponses) OSUpdateRunGetOSUpdateRun3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*OSUpdateRunGetOSUpdateRun3Response, error) {
+	rsp, err := c.OSUpdateRunGetOSUpdateRun3(ctx, projectName, resourceId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseOSUpdateRunGetOSUpdateRun3Response(rsp)
 }
 
 // ProviderServiceListProvidersWithResponse request returning *ProviderServiceListProvidersResponse
@@ -29137,82 +29967,82 @@ func (c *ClientWithResponses) RegionServiceCreateRegionWithResponse(ctx context.
 	return ParseRegionServiceCreateRegionResponse(rsp)
 }
 
-// SiteServiceListSites2WithResponse request returning *SiteServiceListSites2Response
-func (c *ClientWithResponses) SiteServiceListSites2WithResponse(ctx context.Context, projectName string, regionId string, params *SiteServiceListSites2Params, reqEditors ...RequestEditorFn) (*SiteServiceListSites2Response, error) {
-	rsp, err := c.SiteServiceListSites2(ctx, projectName, regionId, params, reqEditors...)
+// SiteServiceListSitesWithResponse request returning *SiteServiceListSitesResponse
+func (c *ClientWithResponses) SiteServiceListSitesWithResponse(ctx context.Context, projectName string, regionId string, params *SiteServiceListSitesParams, reqEditors ...RequestEditorFn) (*SiteServiceListSitesResponse, error) {
+	rsp, err := c.SiteServiceListSites(ctx, projectName, regionId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceListSites2Response(rsp)
+	return ParseSiteServiceListSitesResponse(rsp)
 }
 
-// SiteServiceCreateSite2WithBodyWithResponse request with arbitrary body returning *SiteServiceCreateSite2Response
-func (c *ClientWithResponses) SiteServiceCreateSite2WithBodyWithResponse(ctx context.Context, projectName string, regionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite2Response, error) {
-	rsp, err := c.SiteServiceCreateSite2WithBody(ctx, projectName, regionId, contentType, body, reqEditors...)
+// SiteServiceCreateSiteWithBodyWithResponse request with arbitrary body returning *SiteServiceCreateSiteResponse
+func (c *ClientWithResponses) SiteServiceCreateSiteWithBodyWithResponse(ctx context.Context, projectName string, regionId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSiteResponse, error) {
+	rsp, err := c.SiteServiceCreateSiteWithBody(ctx, projectName, regionId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceCreateSite2Response(rsp)
+	return ParseSiteServiceCreateSiteResponse(rsp)
 }
 
-func (c *ClientWithResponses) SiteServiceCreateSite2WithResponse(ctx context.Context, projectName string, regionId string, body SiteServiceCreateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite2Response, error) {
-	rsp, err := c.SiteServiceCreateSite2(ctx, projectName, regionId, body, reqEditors...)
+func (c *ClientWithResponses) SiteServiceCreateSiteWithResponse(ctx context.Context, projectName string, regionId string, body SiteServiceCreateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSiteResponse, error) {
+	rsp, err := c.SiteServiceCreateSite(ctx, projectName, regionId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceCreateSite2Response(rsp)
+	return ParseSiteServiceCreateSiteResponse(rsp)
 }
 
-// SiteServiceDeleteSite2WithResponse request returning *SiteServiceDeleteSite2Response
-func (c *ClientWithResponses) SiteServiceDeleteSite2WithResponse(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSite2Response, error) {
-	rsp, err := c.SiteServiceDeleteSite2(ctx, projectName, regionId, resourceId, reqEditors...)
+// SiteServiceDeleteSiteWithResponse request returning *SiteServiceDeleteSiteResponse
+func (c *ClientWithResponses) SiteServiceDeleteSiteWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSiteResponse, error) {
+	rsp, err := c.SiteServiceDeleteSite(ctx, projectName, regionId, resourceId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceDeleteSite2Response(rsp)
+	return ParseSiteServiceDeleteSiteResponse(rsp)
 }
 
-// SiteServiceGetSite2WithResponse request returning *SiteServiceGetSite2Response
-func (c *ClientWithResponses) SiteServiceGetSite2WithResponse(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*SiteServiceGetSite2Response, error) {
-	rsp, err := c.SiteServiceGetSite2(ctx, projectName, regionId, resourceId, reqEditors...)
+// SiteServiceGetSiteWithResponse request returning *SiteServiceGetSiteResponse
+func (c *ClientWithResponses) SiteServiceGetSiteWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, reqEditors ...RequestEditorFn) (*SiteServiceGetSiteResponse, error) {
+	rsp, err := c.SiteServiceGetSite(ctx, projectName, regionId, resourceId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceGetSite2Response(rsp)
+	return ParseSiteServiceGetSiteResponse(rsp)
 }
 
-// SiteServicePatchSite2WithBodyWithResponse request with arbitrary body returning *SiteServicePatchSite2Response
-func (c *ClientWithResponses) SiteServicePatchSite2WithBodyWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSite2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSite2Response, error) {
-	rsp, err := c.SiteServicePatchSite2WithBody(ctx, projectName, regionId, resourceId, params, contentType, body, reqEditors...)
+// SiteServicePatchSiteWithBodyWithResponse request with arbitrary body returning *SiteServicePatchSiteResponse
+func (c *ClientWithResponses) SiteServicePatchSiteWithBodyWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSiteResponse, error) {
+	rsp, err := c.SiteServicePatchSiteWithBody(ctx, projectName, regionId, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServicePatchSite2Response(rsp)
+	return ParseSiteServicePatchSiteResponse(rsp)
 }
 
-func (c *ClientWithResponses) SiteServicePatchSite2WithResponse(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSite2Params, body SiteServicePatchSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSite2Response, error) {
-	rsp, err := c.SiteServicePatchSite2(ctx, projectName, regionId, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) SiteServicePatchSiteWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, params *SiteServicePatchSiteParams, body SiteServicePatchSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSiteResponse, error) {
+	rsp, err := c.SiteServicePatchSite(ctx, projectName, regionId, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServicePatchSite2Response(rsp)
+	return ParseSiteServicePatchSiteResponse(rsp)
 }
 
-// SiteServiceUpdateSite2WithBodyWithResponse request with arbitrary body returning *SiteServiceUpdateSite2Response
-func (c *ClientWithResponses) SiteServiceUpdateSite2WithBodyWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite2Response, error) {
-	rsp, err := c.SiteServiceUpdateSite2WithBody(ctx, projectName, regionId, resourceId, contentType, body, reqEditors...)
+// SiteServiceUpdateSiteWithBodyWithResponse request with arbitrary body returning *SiteServiceUpdateSiteResponse
+func (c *ClientWithResponses) SiteServiceUpdateSiteWithBodyWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSiteResponse, error) {
+	rsp, err := c.SiteServiceUpdateSiteWithBody(ctx, projectName, regionId, resourceId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceUpdateSite2Response(rsp)
+	return ParseSiteServiceUpdateSiteResponse(rsp)
 }
 
-func (c *ClientWithResponses) SiteServiceUpdateSite2WithResponse(ctx context.Context, projectName string, regionId string, resourceId string, body SiteServiceUpdateSite2JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite2Response, error) {
-	rsp, err := c.SiteServiceUpdateSite2(ctx, projectName, regionId, resourceId, body, reqEditors...)
+func (c *ClientWithResponses) SiteServiceUpdateSiteWithResponse(ctx context.Context, projectName string, regionId string, resourceId string, body SiteServiceUpdateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSiteResponse, error) {
+	rsp, err := c.SiteServiceUpdateSite(ctx, projectName, regionId, resourceId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceUpdateSite2Response(rsp)
+	return ParseSiteServiceUpdateSiteResponse(rsp)
 }
 
 // RegionServiceDeleteRegionWithResponse request returning *RegionServiceDeleteRegionResponse
@@ -29267,13 +30097,13 @@ func (c *ClientWithResponses) RegionServiceUpdateRegionWithResponse(ctx context.
 	return ParseRegionServiceUpdateRegionResponse(rsp)
 }
 
-// ScheduleServiceListSchedulesWithResponse request returning *ScheduleServiceListSchedulesResponse
-func (c *ClientWithResponses) ScheduleServiceListSchedulesWithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSchedulesParams, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedulesResponse, error) {
-	rsp, err := c.ScheduleServiceListSchedules(ctx, projectName, params, reqEditors...)
+// ScheduleServiceListSchedules3WithResponse request returning *ScheduleServiceListSchedules3Response
+func (c *ClientWithResponses) ScheduleServiceListSchedules3WithResponse(ctx context.Context, projectName string, params *ScheduleServiceListSchedules3Params, reqEditors ...RequestEditorFn) (*ScheduleServiceListSchedules3Response, error) {
+	rsp, err := c.ScheduleServiceListSchedules3(ctx, projectName, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseScheduleServiceListSchedulesResponse(rsp)
+	return ParseScheduleServiceListSchedules3Response(rsp)
 }
 
 // ScheduleServiceListRepeatedSchedulesWithResponse request returning *ScheduleServiceListRepeatedSchedulesResponse
@@ -29432,82 +30262,170 @@ func (c *ClientWithResponses) ScheduleServiceUpdateSingleScheduleWithResponse(ct
 	return ParseScheduleServiceUpdateSingleScheduleResponse(rsp)
 }
 
-// SiteServiceListSitesWithResponse request returning *SiteServiceListSitesResponse
-func (c *ClientWithResponses) SiteServiceListSitesWithResponse(ctx context.Context, projectName string, params *SiteServiceListSitesParams, reqEditors ...RequestEditorFn) (*SiteServiceListSitesResponse, error) {
-	rsp, err := c.SiteServiceListSites(ctx, projectName, params, reqEditors...)
+// SiteServiceListSites3WithResponse request returning *SiteServiceListSites3Response
+func (c *ClientWithResponses) SiteServiceListSites3WithResponse(ctx context.Context, projectName string, params *SiteServiceListSites3Params, reqEditors ...RequestEditorFn) (*SiteServiceListSites3Response, error) {
+	rsp, err := c.SiteServiceListSites3(ctx, projectName, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceListSitesResponse(rsp)
+	return ParseSiteServiceListSites3Response(rsp)
 }
 
-// SiteServiceCreateSiteWithBodyWithResponse request with arbitrary body returning *SiteServiceCreateSiteResponse
-func (c *ClientWithResponses) SiteServiceCreateSiteWithBodyWithResponse(ctx context.Context, projectName string, params *SiteServiceCreateSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSiteResponse, error) {
-	rsp, err := c.SiteServiceCreateSiteWithBody(ctx, projectName, params, contentType, body, reqEditors...)
+// SiteServiceCreateSite3WithBodyWithResponse request with arbitrary body returning *SiteServiceCreateSite3Response
+func (c *ClientWithResponses) SiteServiceCreateSite3WithBodyWithResponse(ctx context.Context, projectName string, params *SiteServiceCreateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite3Response, error) {
+	rsp, err := c.SiteServiceCreateSite3WithBody(ctx, projectName, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceCreateSiteResponse(rsp)
+	return ParseSiteServiceCreateSite3Response(rsp)
 }
 
-func (c *ClientWithResponses) SiteServiceCreateSiteWithResponse(ctx context.Context, projectName string, params *SiteServiceCreateSiteParams, body SiteServiceCreateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSiteResponse, error) {
-	rsp, err := c.SiteServiceCreateSite(ctx, projectName, params, body, reqEditors...)
+func (c *ClientWithResponses) SiteServiceCreateSite3WithResponse(ctx context.Context, projectName string, params *SiteServiceCreateSite3Params, body SiteServiceCreateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceCreateSite3Response, error) {
+	rsp, err := c.SiteServiceCreateSite3(ctx, projectName, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceCreateSiteResponse(rsp)
+	return ParseSiteServiceCreateSite3Response(rsp)
 }
 
-// SiteServiceDeleteSiteWithResponse request returning *SiteServiceDeleteSiteResponse
-func (c *ClientWithResponses) SiteServiceDeleteSiteWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceDeleteSiteParams, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSiteResponse, error) {
-	rsp, err := c.SiteServiceDeleteSite(ctx, projectName, resourceId, params, reqEditors...)
+// SiteServiceDeleteSite3WithResponse request returning *SiteServiceDeleteSite3Response
+func (c *ClientWithResponses) SiteServiceDeleteSite3WithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceDeleteSite3Params, reqEditors ...RequestEditorFn) (*SiteServiceDeleteSite3Response, error) {
+	rsp, err := c.SiteServiceDeleteSite3(ctx, projectName, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceDeleteSiteResponse(rsp)
+	return ParseSiteServiceDeleteSite3Response(rsp)
 }
 
-// SiteServiceGetSiteWithResponse request returning *SiteServiceGetSiteResponse
-func (c *ClientWithResponses) SiteServiceGetSiteWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceGetSiteParams, reqEditors ...RequestEditorFn) (*SiteServiceGetSiteResponse, error) {
-	rsp, err := c.SiteServiceGetSite(ctx, projectName, resourceId, params, reqEditors...)
+// SiteServiceGetSite3WithResponse request returning *SiteServiceGetSite3Response
+func (c *ClientWithResponses) SiteServiceGetSite3WithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceGetSite3Params, reqEditors ...RequestEditorFn) (*SiteServiceGetSite3Response, error) {
+	rsp, err := c.SiteServiceGetSite3(ctx, projectName, resourceId, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceGetSiteResponse(rsp)
+	return ParseSiteServiceGetSite3Response(rsp)
 }
 
-// SiteServicePatchSiteWithBodyWithResponse request with arbitrary body returning *SiteServicePatchSiteResponse
-func (c *ClientWithResponses) SiteServicePatchSiteWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSiteResponse, error) {
-	rsp, err := c.SiteServicePatchSiteWithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
+// SiteServicePatchSite3WithBodyWithResponse request with arbitrary body returning *SiteServicePatchSite3Response
+func (c *ClientWithResponses) SiteServicePatchSite3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServicePatchSite3Response, error) {
+	rsp, err := c.SiteServicePatchSite3WithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServicePatchSiteResponse(rsp)
+	return ParseSiteServicePatchSite3Response(rsp)
 }
 
-func (c *ClientWithResponses) SiteServicePatchSiteWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSiteParams, body SiteServicePatchSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSiteResponse, error) {
-	rsp, err := c.SiteServicePatchSite(ctx, projectName, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) SiteServicePatchSite3WithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServicePatchSite3Params, body SiteServicePatchSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServicePatchSite3Response, error) {
+	rsp, err := c.SiteServicePatchSite3(ctx, projectName, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServicePatchSiteResponse(rsp)
+	return ParseSiteServicePatchSite3Response(rsp)
 }
 
-// SiteServiceUpdateSiteWithBodyWithResponse request with arbitrary body returning *SiteServiceUpdateSiteResponse
-func (c *ClientWithResponses) SiteServiceUpdateSiteWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSiteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSiteResponse, error) {
-	rsp, err := c.SiteServiceUpdateSiteWithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
+// SiteServiceUpdateSite3WithBodyWithResponse request with arbitrary body returning *SiteServiceUpdateSite3Response
+func (c *ClientWithResponses) SiteServiceUpdateSite3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSite3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite3Response, error) {
+	rsp, err := c.SiteServiceUpdateSite3WithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceUpdateSiteResponse(rsp)
+	return ParseSiteServiceUpdateSite3Response(rsp)
 }
 
-func (c *ClientWithResponses) SiteServiceUpdateSiteWithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSiteParams, body SiteServiceUpdateSiteJSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSiteResponse, error) {
-	rsp, err := c.SiteServiceUpdateSite(ctx, projectName, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) SiteServiceUpdateSite3WithResponse(ctx context.Context, projectName string, resourceId string, params *SiteServiceUpdateSite3Params, body SiteServiceUpdateSite3JSONRequestBody, reqEditors ...RequestEditorFn) (*SiteServiceUpdateSite3Response, error) {
+	rsp, err := c.SiteServiceUpdateSite3(ctx, projectName, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSiteServiceUpdateSiteResponse(rsp)
+	return ParseSiteServiceUpdateSite3Response(rsp)
+}
+
+// TelemetryLogsGroupServiceListTelemetryLogsGroups3WithResponse request returning *TelemetryLogsGroupServiceListTelemetryLogsGroups3Response
+func (c *ClientWithResponses) TelemetryLogsGroupServiceListTelemetryLogsGroups3WithResponse(ctx context.Context, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups3Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceListTelemetryLogsGroups3Response, error) {
+	rsp, err := c.TelemetryLogsGroupServiceListTelemetryLogsGroups3(ctx, projectName, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTelemetryLogsGroupServiceListTelemetryLogsGroups3Response(rsp)
+}
+
+// TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBodyWithResponse request with arbitrary body returning *TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response
+func (c *ClientWithResponses) TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response, error) {
+	rsp, err := c.TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithBody(ctx, projectName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response(rsp)
+}
+
+func (c *ClientWithResponses) TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithResponse(ctx context.Context, projectName string, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response, error) {
+	rsp, err := c.TelemetryLogsGroupServiceCreateTelemetryLogsGroup3(ctx, projectName, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response(rsp)
+}
+
+// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3WithResponse request returning *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response
+func (c *ClientWithResponses) TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response, error) {
+	rsp, err := c.TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3(ctx, projectName, resourceId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response(rsp)
+}
+
+// TelemetryLogsGroupServiceGetTelemetryLogsGroup3WithResponse request returning *TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response
+func (c *ClientWithResponses) TelemetryLogsGroupServiceGetTelemetryLogsGroup3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response, error) {
+	rsp, err := c.TelemetryLogsGroupServiceGetTelemetryLogsGroup3(ctx, projectName, resourceId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup3Response(rsp)
+}
+
+// TelemetryMetricsGroupServiceListTelemetryMetricsGroups3WithResponse request returning *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response
+func (c *ClientWithResponses) TelemetryMetricsGroupServiceListTelemetryMetricsGroups3WithResponse(ctx context.Context, projectName string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response, error) {
+	rsp, err := c.TelemetryMetricsGroupServiceListTelemetryMetricsGroups3(ctx, projectName, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response(rsp)
+}
+
+// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBodyWithResponse request with arbitrary body returning *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response
+func (c *ClientWithResponses) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response, error) {
+	rsp, err := c.TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithBody(ctx, projectName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response(rsp)
+}
+
+func (c *ClientWithResponses) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithResponse(ctx context.Context, projectName string, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response, error) {
+	rsp, err := c.TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3(ctx, projectName, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response(rsp)
+}
+
+// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3WithResponse request returning *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response
+func (c *ClientWithResponses) TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response, error) {
+	rsp, err := c.TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3(ctx, projectName, resourceId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response(rsp)
+}
+
+// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3WithResponse request returning *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response
+func (c *ClientWithResponses) TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response, error) {
+	rsp, err := c.TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3(ctx, projectName, resourceId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response(rsp)
 }
 
 // TelemetryLogsGroupServiceListTelemetryLogsGroupsWithResponse request returning *TelemetryLogsGroupServiceListTelemetryLogsGroupsResponse
@@ -29596,94 +30514,6 @@ func (c *ClientWithResponses) TelemetryMetricsGroupServiceGetTelemetryMetricsGro
 		return nil, err
 	}
 	return ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroupResponse(rsp)
-}
-
-// TelemetryLogsGroupServiceListTelemetryLogsGroups2WithResponse request returning *TelemetryLogsGroupServiceListTelemetryLogsGroups2Response
-func (c *ClientWithResponses) TelemetryLogsGroupServiceListTelemetryLogsGroups2WithResponse(ctx context.Context, projectName string, params *TelemetryLogsGroupServiceListTelemetryLogsGroups2Params, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceListTelemetryLogsGroups2Response, error) {
-	rsp, err := c.TelemetryLogsGroupServiceListTelemetryLogsGroups2(ctx, projectName, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseTelemetryLogsGroupServiceListTelemetryLogsGroups2Response(rsp)
-}
-
-// TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBodyWithResponse request with arbitrary body returning *TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response
-func (c *ClientWithResponses) TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response, error) {
-	rsp, err := c.TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithBody(ctx, projectName, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response(rsp)
-}
-
-func (c *ClientWithResponses) TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithResponse(ctx context.Context, projectName string, body TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response, error) {
-	rsp, err := c.TelemetryLogsGroupServiceCreateTelemetryLogsGroup2(ctx, projectName, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response(rsp)
-}
-
-// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2WithResponse request returning *TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response
-func (c *ClientWithResponses) TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response, error) {
-	rsp, err := c.TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2(ctx, projectName, resourceId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response(rsp)
-}
-
-// TelemetryLogsGroupServiceGetTelemetryLogsGroup2WithResponse request returning *TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response
-func (c *ClientWithResponses) TelemetryLogsGroupServiceGetTelemetryLogsGroup2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response, error) {
-	rsp, err := c.TelemetryLogsGroupServiceGetTelemetryLogsGroup2(ctx, projectName, resourceId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup2Response(rsp)
-}
-
-// TelemetryMetricsGroupServiceListTelemetryMetricsGroups2WithResponse request returning *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response
-func (c *ClientWithResponses) TelemetryMetricsGroupServiceListTelemetryMetricsGroups2WithResponse(ctx context.Context, projectName string, params *TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response, error) {
-	rsp, err := c.TelemetryMetricsGroupServiceListTelemetryMetricsGroups2(ctx, projectName, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response(rsp)
-}
-
-// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBodyWithResponse request with arbitrary body returning *TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response
-func (c *ClientWithResponses) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response, error) {
-	rsp, err := c.TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithBody(ctx, projectName, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response(rsp)
-}
-
-func (c *ClientWithResponses) TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithResponse(ctx context.Context, projectName string, body TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response, error) {
-	rsp, err := c.TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2(ctx, projectName, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response(rsp)
-}
-
-// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2WithResponse request returning *TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response
-func (c *ClientWithResponses) TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response, error) {
-	rsp, err := c.TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2(ctx, projectName, resourceId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response(rsp)
-}
-
-// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2WithResponse request returning *TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response
-func (c *ClientWithResponses) TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response, error) {
-	rsp, err := c.TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2(ctx, projectName, resourceId, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response(rsp)
 }
 
 // TelemetryLogsProfileServiceListTelemetryLogsProfilesWithResponse request returning *TelemetryLogsProfileServiceListTelemetryLogsProfilesResponse
@@ -29886,82 +30716,82 @@ func (c *ClientWithResponses) WorkloadMemberServiceGetWorkloadMemberWithResponse
 	return ParseWorkloadMemberServiceGetWorkloadMemberResponse(rsp)
 }
 
-// WorkloadServiceListWorkloadsWithResponse request returning *WorkloadServiceListWorkloadsResponse
-func (c *ClientWithResponses) WorkloadServiceListWorkloadsWithResponse(ctx context.Context, projectName string, params *WorkloadServiceListWorkloadsParams, reqEditors ...RequestEditorFn) (*WorkloadServiceListWorkloadsResponse, error) {
-	rsp, err := c.WorkloadServiceListWorkloads(ctx, projectName, params, reqEditors...)
+// WorkloadServiceListWorkloads3WithResponse request returning *WorkloadServiceListWorkloads3Response
+func (c *ClientWithResponses) WorkloadServiceListWorkloads3WithResponse(ctx context.Context, projectName string, params *WorkloadServiceListWorkloads3Params, reqEditors ...RequestEditorFn) (*WorkloadServiceListWorkloads3Response, error) {
+	rsp, err := c.WorkloadServiceListWorkloads3(ctx, projectName, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseWorkloadServiceListWorkloadsResponse(rsp)
+	return ParseWorkloadServiceListWorkloads3Response(rsp)
 }
 
-// WorkloadServiceCreateWorkloadWithBodyWithResponse request with arbitrary body returning *WorkloadServiceCreateWorkloadResponse
-func (c *ClientWithResponses) WorkloadServiceCreateWorkloadWithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkloadResponse, error) {
-	rsp, err := c.WorkloadServiceCreateWorkloadWithBody(ctx, projectName, contentType, body, reqEditors...)
+// WorkloadServiceCreateWorkload3WithBodyWithResponse request with arbitrary body returning *WorkloadServiceCreateWorkload3Response
+func (c *ClientWithResponses) WorkloadServiceCreateWorkload3WithBodyWithResponse(ctx context.Context, projectName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkload3Response, error) {
+	rsp, err := c.WorkloadServiceCreateWorkload3WithBody(ctx, projectName, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseWorkloadServiceCreateWorkloadResponse(rsp)
+	return ParseWorkloadServiceCreateWorkload3Response(rsp)
 }
 
-func (c *ClientWithResponses) WorkloadServiceCreateWorkloadWithResponse(ctx context.Context, projectName string, body WorkloadServiceCreateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkloadResponse, error) {
-	rsp, err := c.WorkloadServiceCreateWorkload(ctx, projectName, body, reqEditors...)
+func (c *ClientWithResponses) WorkloadServiceCreateWorkload3WithResponse(ctx context.Context, projectName string, body WorkloadServiceCreateWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceCreateWorkload3Response, error) {
+	rsp, err := c.WorkloadServiceCreateWorkload3(ctx, projectName, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseWorkloadServiceCreateWorkloadResponse(rsp)
+	return ParseWorkloadServiceCreateWorkload3Response(rsp)
 }
 
-// WorkloadServiceDeleteWorkloadWithResponse request returning *WorkloadServiceDeleteWorkloadResponse
-func (c *ClientWithResponses) WorkloadServiceDeleteWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceDeleteWorkloadResponse, error) {
-	rsp, err := c.WorkloadServiceDeleteWorkload(ctx, projectName, resourceId, reqEditors...)
+// WorkloadServiceDeleteWorkload3WithResponse request returning *WorkloadServiceDeleteWorkload3Response
+func (c *ClientWithResponses) WorkloadServiceDeleteWorkload3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceDeleteWorkload3Response, error) {
+	rsp, err := c.WorkloadServiceDeleteWorkload3(ctx, projectName, resourceId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseWorkloadServiceDeleteWorkloadResponse(rsp)
+	return ParseWorkloadServiceDeleteWorkload3Response(rsp)
 }
 
-// WorkloadServiceGetWorkloadWithResponse request returning *WorkloadServiceGetWorkloadResponse
-func (c *ClientWithResponses) WorkloadServiceGetWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceGetWorkloadResponse, error) {
-	rsp, err := c.WorkloadServiceGetWorkload(ctx, projectName, resourceId, reqEditors...)
+// WorkloadServiceGetWorkload3WithResponse request returning *WorkloadServiceGetWorkload3Response
+func (c *ClientWithResponses) WorkloadServiceGetWorkload3WithResponse(ctx context.Context, projectName string, resourceId string, reqEditors ...RequestEditorFn) (*WorkloadServiceGetWorkload3Response, error) {
+	rsp, err := c.WorkloadServiceGetWorkload3(ctx, projectName, resourceId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseWorkloadServiceGetWorkloadResponse(rsp)
+	return ParseWorkloadServiceGetWorkload3Response(rsp)
 }
 
-// WorkloadServicePatchWorkloadWithBodyWithResponse request with arbitrary body returning *WorkloadServicePatchWorkloadResponse
-func (c *ClientWithResponses) WorkloadServicePatchWorkloadWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkloadResponse, error) {
-	rsp, err := c.WorkloadServicePatchWorkloadWithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
+// WorkloadServicePatchWorkload3WithBodyWithResponse request with arbitrary body returning *WorkloadServicePatchWorkload3Response
+func (c *ClientWithResponses) WorkloadServicePatchWorkload3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkload3Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkload3Response, error) {
+	rsp, err := c.WorkloadServicePatchWorkload3WithBody(ctx, projectName, resourceId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseWorkloadServicePatchWorkloadResponse(rsp)
+	return ParseWorkloadServicePatchWorkload3Response(rsp)
 }
 
-func (c *ClientWithResponses) WorkloadServicePatchWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkloadParams, body WorkloadServicePatchWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkloadResponse, error) {
-	rsp, err := c.WorkloadServicePatchWorkload(ctx, projectName, resourceId, params, body, reqEditors...)
+func (c *ClientWithResponses) WorkloadServicePatchWorkload3WithResponse(ctx context.Context, projectName string, resourceId string, params *WorkloadServicePatchWorkload3Params, body WorkloadServicePatchWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServicePatchWorkload3Response, error) {
+	rsp, err := c.WorkloadServicePatchWorkload3(ctx, projectName, resourceId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseWorkloadServicePatchWorkloadResponse(rsp)
+	return ParseWorkloadServicePatchWorkload3Response(rsp)
 }
 
-// WorkloadServiceUpdateWorkloadWithBodyWithResponse request with arbitrary body returning *WorkloadServiceUpdateWorkloadResponse
-func (c *ClientWithResponses) WorkloadServiceUpdateWorkloadWithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkloadResponse, error) {
-	rsp, err := c.WorkloadServiceUpdateWorkloadWithBody(ctx, projectName, resourceId, contentType, body, reqEditors...)
+// WorkloadServiceUpdateWorkload3WithBodyWithResponse request with arbitrary body returning *WorkloadServiceUpdateWorkload3Response
+func (c *ClientWithResponses) WorkloadServiceUpdateWorkload3WithBodyWithResponse(ctx context.Context, projectName string, resourceId string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkload3Response, error) {
+	rsp, err := c.WorkloadServiceUpdateWorkload3WithBody(ctx, projectName, resourceId, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseWorkloadServiceUpdateWorkloadResponse(rsp)
+	return ParseWorkloadServiceUpdateWorkload3Response(rsp)
 }
 
-func (c *ClientWithResponses) WorkloadServiceUpdateWorkloadWithResponse(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkloadJSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkloadResponse, error) {
-	rsp, err := c.WorkloadServiceUpdateWorkload(ctx, projectName, resourceId, body, reqEditors...)
+func (c *ClientWithResponses) WorkloadServiceUpdateWorkload3WithResponse(ctx context.Context, projectName string, resourceId string, body WorkloadServiceUpdateWorkload3JSONRequestBody, reqEditors ...RequestEditorFn) (*WorkloadServiceUpdateWorkload3Response, error) {
+	rsp, err := c.WorkloadServiceUpdateWorkload3(ctx, projectName, resourceId, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseWorkloadServiceUpdateWorkloadResponse(rsp)
+	return ParseWorkloadServiceUpdateWorkload3Response(rsp)
 }
 
 // ParseCustomConfigServiceListCustomConfigs2Response parses an HTTP response from a CustomConfigServiceListCustomConfigs2WithResponse call
@@ -30328,15 +31158,15 @@ func ParseHostServicePatchRegisterHost2Response(rsp *http.Response) (*HostServic
 	return response, nil
 }
 
-// ParseHostServiceGetHostsSummary3Response parses an HTTP response from a HostServiceGetHostsSummary3WithResponse call
-func ParseHostServiceGetHostsSummary3Response(rsp *http.Response) (*HostServiceGetHostsSummary3Response, error) {
+// ParseHostServiceGetHostsSummary2Response parses an HTTP response from a HostServiceGetHostsSummary2WithResponse call
+func ParseHostServiceGetHostsSummary2Response(rsp *http.Response) (*HostServiceGetHostsSummary2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &HostServiceGetHostsSummary3Response{
+	response := &HostServiceGetHostsSummary2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30510,6 +31340,32 @@ func ParseInstanceServiceUpdateInstance2Response(rsp *http.Response) (*InstanceS
 	return response, nil
 }
 
+// ParseInstanceServiceInvalidateInstance2Response parses an HTTP response from a InstanceServiceInvalidateInstance2WithResponse call
+func ParseInstanceServiceInvalidateInstance2Response(rsp *http.Response) (*InstanceServiceInvalidateInstance2Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &InstanceServiceInvalidateInstance2Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InvalidateInstanceResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseLocalAccountServiceListLocalAccounts2Response parses an HTTP response from a LocalAccountServiceListLocalAccounts2WithResponse call
 func ParseLocalAccountServiceListLocalAccounts2Response(rsp *http.Response) (*LocalAccountServiceListLocalAccounts2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -30640,15 +31496,15 @@ func ParseLocationServiceListLocations2Response(rsp *http.Response) (*LocationSe
 	return response, nil
 }
 
-// ParseOperatingSystemServiceListOperatingSystems3Response parses an HTTP response from a OperatingSystemServiceListOperatingSystems3WithResponse call
-func ParseOperatingSystemServiceListOperatingSystems3Response(rsp *http.Response) (*OperatingSystemServiceListOperatingSystems3Response, error) {
+// ParseOperatingSystemServiceListOperatingSystems2Response parses an HTTP response from a OperatingSystemServiceListOperatingSystems2WithResponse call
+func ParseOperatingSystemServiceListOperatingSystems2Response(rsp *http.Response) (*OperatingSystemServiceListOperatingSystems2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OperatingSystemServiceListOperatingSystems3Response{
+	response := &OperatingSystemServiceListOperatingSystems2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30666,15 +31522,15 @@ func ParseOperatingSystemServiceListOperatingSystems3Response(rsp *http.Response
 	return response, nil
 }
 
-// ParseOperatingSystemServiceCreateOperatingSystem3Response parses an HTTP response from a OperatingSystemServiceCreateOperatingSystem3WithResponse call
-func ParseOperatingSystemServiceCreateOperatingSystem3Response(rsp *http.Response) (*OperatingSystemServiceCreateOperatingSystem3Response, error) {
+// ParseOperatingSystemServiceCreateOperatingSystem2Response parses an HTTP response from a OperatingSystemServiceCreateOperatingSystem2WithResponse call
+func ParseOperatingSystemServiceCreateOperatingSystem2Response(rsp *http.Response) (*OperatingSystemServiceCreateOperatingSystem2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OperatingSystemServiceCreateOperatingSystem3Response{
+	response := &OperatingSystemServiceCreateOperatingSystem2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30692,15 +31548,15 @@ func ParseOperatingSystemServiceCreateOperatingSystem3Response(rsp *http.Respons
 	return response, nil
 }
 
-// ParseOperatingSystemServiceDeleteOperatingSystem3Response parses an HTTP response from a OperatingSystemServiceDeleteOperatingSystem3WithResponse call
-func ParseOperatingSystemServiceDeleteOperatingSystem3Response(rsp *http.Response) (*OperatingSystemServiceDeleteOperatingSystem3Response, error) {
+// ParseOperatingSystemServiceDeleteOperatingSystem2Response parses an HTTP response from a OperatingSystemServiceDeleteOperatingSystem2WithResponse call
+func ParseOperatingSystemServiceDeleteOperatingSystem2Response(rsp *http.Response) (*OperatingSystemServiceDeleteOperatingSystem2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OperatingSystemServiceDeleteOperatingSystem3Response{
+	response := &OperatingSystemServiceDeleteOperatingSystem2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30718,15 +31574,15 @@ func ParseOperatingSystemServiceDeleteOperatingSystem3Response(rsp *http.Respons
 	return response, nil
 }
 
-// ParseOperatingSystemServiceGetOperatingSystem3Response parses an HTTP response from a OperatingSystemServiceGetOperatingSystem3WithResponse call
-func ParseOperatingSystemServiceGetOperatingSystem3Response(rsp *http.Response) (*OperatingSystemServiceGetOperatingSystem3Response, error) {
+// ParseOperatingSystemServiceGetOperatingSystem2Response parses an HTTP response from a OperatingSystemServiceGetOperatingSystem2WithResponse call
+func ParseOperatingSystemServiceGetOperatingSystem2Response(rsp *http.Response) (*OperatingSystemServiceGetOperatingSystem2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OperatingSystemServiceGetOperatingSystem3Response{
+	response := &OperatingSystemServiceGetOperatingSystem2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30744,15 +31600,15 @@ func ParseOperatingSystemServiceGetOperatingSystem3Response(rsp *http.Response) 
 	return response, nil
 }
 
-// ParseOperatingSystemServicePatchOperatingSystem3Response parses an HTTP response from a OperatingSystemServicePatchOperatingSystem3WithResponse call
-func ParseOperatingSystemServicePatchOperatingSystem3Response(rsp *http.Response) (*OperatingSystemServicePatchOperatingSystem3Response, error) {
+// ParseOperatingSystemServicePatchOperatingSystem2Response parses an HTTP response from a OperatingSystemServicePatchOperatingSystem2WithResponse call
+func ParseOperatingSystemServicePatchOperatingSystem2Response(rsp *http.Response) (*OperatingSystemServicePatchOperatingSystem2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OperatingSystemServicePatchOperatingSystem3Response{
+	response := &OperatingSystemServicePatchOperatingSystem2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -30770,15 +31626,15 @@ func ParseOperatingSystemServicePatchOperatingSystem3Response(rsp *http.Response
 	return response, nil
 }
 
-// ParseOperatingSystemServiceUpdateOperatingSystem3Response parses an HTTP response from a OperatingSystemServiceUpdateOperatingSystem3WithResponse call
-func ParseOperatingSystemServiceUpdateOperatingSystem3Response(rsp *http.Response) (*OperatingSystemServiceUpdateOperatingSystem3Response, error) {
+// ParseOperatingSystemServiceUpdateOperatingSystem2Response parses an HTTP response from a OperatingSystemServiceUpdateOperatingSystem2WithResponse call
+func ParseOperatingSystemServiceUpdateOperatingSystem2Response(rsp *http.Response) (*OperatingSystemServiceUpdateOperatingSystem2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OperatingSystemServiceUpdateOperatingSystem3Response{
+	response := &OperatingSystemServiceUpdateOperatingSystem2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31238,15 +32094,15 @@ func ParseRegionServiceUpdateRegion2Response(rsp *http.Response) (*RegionService
 	return response, nil
 }
 
-// ParseScheduleServiceListSchedules3Response parses an HTTP response from a ScheduleServiceListSchedules3WithResponse call
-func ParseScheduleServiceListSchedules3Response(rsp *http.Response) (*ScheduleServiceListSchedules3Response, error) {
+// ParseScheduleServiceListSchedules2Response parses an HTTP response from a ScheduleServiceListSchedules2WithResponse call
+func ParseScheduleServiceListSchedules2Response(rsp *http.Response) (*ScheduleServiceListSchedules2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceListSchedules3Response{
+	response := &ScheduleServiceListSchedules2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31264,15 +32120,15 @@ func ParseScheduleServiceListSchedules3Response(rsp *http.Response) (*ScheduleSe
 	return response, nil
 }
 
-// ParseScheduleServiceListRepeatedSchedules3Response parses an HTTP response from a ScheduleServiceListRepeatedSchedules3WithResponse call
-func ParseScheduleServiceListRepeatedSchedules3Response(rsp *http.Response) (*ScheduleServiceListRepeatedSchedules3Response, error) {
+// ParseScheduleServiceListRepeatedSchedules2Response parses an HTTP response from a ScheduleServiceListRepeatedSchedules2WithResponse call
+func ParseScheduleServiceListRepeatedSchedules2Response(rsp *http.Response) (*ScheduleServiceListRepeatedSchedules2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceListRepeatedSchedules3Response{
+	response := &ScheduleServiceListRepeatedSchedules2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31290,15 +32146,15 @@ func ParseScheduleServiceListRepeatedSchedules3Response(rsp *http.Response) (*Sc
 	return response, nil
 }
 
-// ParseScheduleServiceCreateRepeatedSchedule3Response parses an HTTP response from a ScheduleServiceCreateRepeatedSchedule3WithResponse call
-func ParseScheduleServiceCreateRepeatedSchedule3Response(rsp *http.Response) (*ScheduleServiceCreateRepeatedSchedule3Response, error) {
+// ParseScheduleServiceCreateRepeatedSchedule2Response parses an HTTP response from a ScheduleServiceCreateRepeatedSchedule2WithResponse call
+func ParseScheduleServiceCreateRepeatedSchedule2Response(rsp *http.Response) (*ScheduleServiceCreateRepeatedSchedule2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceCreateRepeatedSchedule3Response{
+	response := &ScheduleServiceCreateRepeatedSchedule2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31316,15 +32172,15 @@ func ParseScheduleServiceCreateRepeatedSchedule3Response(rsp *http.Response) (*S
 	return response, nil
 }
 
-// ParseScheduleServiceDeleteRepeatedSchedule3Response parses an HTTP response from a ScheduleServiceDeleteRepeatedSchedule3WithResponse call
-func ParseScheduleServiceDeleteRepeatedSchedule3Response(rsp *http.Response) (*ScheduleServiceDeleteRepeatedSchedule3Response, error) {
+// ParseScheduleServiceDeleteRepeatedSchedule2Response parses an HTTP response from a ScheduleServiceDeleteRepeatedSchedule2WithResponse call
+func ParseScheduleServiceDeleteRepeatedSchedule2Response(rsp *http.Response) (*ScheduleServiceDeleteRepeatedSchedule2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceDeleteRepeatedSchedule3Response{
+	response := &ScheduleServiceDeleteRepeatedSchedule2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31342,15 +32198,15 @@ func ParseScheduleServiceDeleteRepeatedSchedule3Response(rsp *http.Response) (*S
 	return response, nil
 }
 
-// ParseScheduleServiceGetRepeatedSchedule3Response parses an HTTP response from a ScheduleServiceGetRepeatedSchedule3WithResponse call
-func ParseScheduleServiceGetRepeatedSchedule3Response(rsp *http.Response) (*ScheduleServiceGetRepeatedSchedule3Response, error) {
+// ParseScheduleServiceGetRepeatedSchedule2Response parses an HTTP response from a ScheduleServiceGetRepeatedSchedule2WithResponse call
+func ParseScheduleServiceGetRepeatedSchedule2Response(rsp *http.Response) (*ScheduleServiceGetRepeatedSchedule2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceGetRepeatedSchedule3Response{
+	response := &ScheduleServiceGetRepeatedSchedule2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31368,15 +32224,15 @@ func ParseScheduleServiceGetRepeatedSchedule3Response(rsp *http.Response) (*Sche
 	return response, nil
 }
 
-// ParseScheduleServicePatchRepeatedSchedule3Response parses an HTTP response from a ScheduleServicePatchRepeatedSchedule3WithResponse call
-func ParseScheduleServicePatchRepeatedSchedule3Response(rsp *http.Response) (*ScheduleServicePatchRepeatedSchedule3Response, error) {
+// ParseScheduleServicePatchRepeatedSchedule2Response parses an HTTP response from a ScheduleServicePatchRepeatedSchedule2WithResponse call
+func ParseScheduleServicePatchRepeatedSchedule2Response(rsp *http.Response) (*ScheduleServicePatchRepeatedSchedule2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServicePatchRepeatedSchedule3Response{
+	response := &ScheduleServicePatchRepeatedSchedule2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31394,15 +32250,15 @@ func ParseScheduleServicePatchRepeatedSchedule3Response(rsp *http.Response) (*Sc
 	return response, nil
 }
 
-// ParseScheduleServiceUpdateRepeatedSchedule3Response parses an HTTP response from a ScheduleServiceUpdateRepeatedSchedule3WithResponse call
-func ParseScheduleServiceUpdateRepeatedSchedule3Response(rsp *http.Response) (*ScheduleServiceUpdateRepeatedSchedule3Response, error) {
+// ParseScheduleServiceUpdateRepeatedSchedule2Response parses an HTTP response from a ScheduleServiceUpdateRepeatedSchedule2WithResponse call
+func ParseScheduleServiceUpdateRepeatedSchedule2Response(rsp *http.Response) (*ScheduleServiceUpdateRepeatedSchedule2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceUpdateRepeatedSchedule3Response{
+	response := &ScheduleServiceUpdateRepeatedSchedule2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31420,15 +32276,15 @@ func ParseScheduleServiceUpdateRepeatedSchedule3Response(rsp *http.Response) (*S
 	return response, nil
 }
 
-// ParseScheduleServiceListSingleSchedules3Response parses an HTTP response from a ScheduleServiceListSingleSchedules3WithResponse call
-func ParseScheduleServiceListSingleSchedules3Response(rsp *http.Response) (*ScheduleServiceListSingleSchedules3Response, error) {
+// ParseScheduleServiceListSingleSchedules2Response parses an HTTP response from a ScheduleServiceListSingleSchedules2WithResponse call
+func ParseScheduleServiceListSingleSchedules2Response(rsp *http.Response) (*ScheduleServiceListSingleSchedules2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceListSingleSchedules3Response{
+	response := &ScheduleServiceListSingleSchedules2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31446,15 +32302,15 @@ func ParseScheduleServiceListSingleSchedules3Response(rsp *http.Response) (*Sche
 	return response, nil
 }
 
-// ParseScheduleServiceCreateSingleSchedule3Response parses an HTTP response from a ScheduleServiceCreateSingleSchedule3WithResponse call
-func ParseScheduleServiceCreateSingleSchedule3Response(rsp *http.Response) (*ScheduleServiceCreateSingleSchedule3Response, error) {
+// ParseScheduleServiceCreateSingleSchedule2Response parses an HTTP response from a ScheduleServiceCreateSingleSchedule2WithResponse call
+func ParseScheduleServiceCreateSingleSchedule2Response(rsp *http.Response) (*ScheduleServiceCreateSingleSchedule2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceCreateSingleSchedule3Response{
+	response := &ScheduleServiceCreateSingleSchedule2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31472,15 +32328,15 @@ func ParseScheduleServiceCreateSingleSchedule3Response(rsp *http.Response) (*Sch
 	return response, nil
 }
 
-// ParseScheduleServiceDeleteSingleSchedule3Response parses an HTTP response from a ScheduleServiceDeleteSingleSchedule3WithResponse call
-func ParseScheduleServiceDeleteSingleSchedule3Response(rsp *http.Response) (*ScheduleServiceDeleteSingleSchedule3Response, error) {
+// ParseScheduleServiceDeleteSingleSchedule2Response parses an HTTP response from a ScheduleServiceDeleteSingleSchedule2WithResponse call
+func ParseScheduleServiceDeleteSingleSchedule2Response(rsp *http.Response) (*ScheduleServiceDeleteSingleSchedule2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceDeleteSingleSchedule3Response{
+	response := &ScheduleServiceDeleteSingleSchedule2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31498,15 +32354,15 @@ func ParseScheduleServiceDeleteSingleSchedule3Response(rsp *http.Response) (*Sch
 	return response, nil
 }
 
-// ParseScheduleServiceGetSingleSchedule3Response parses an HTTP response from a ScheduleServiceGetSingleSchedule3WithResponse call
-func ParseScheduleServiceGetSingleSchedule3Response(rsp *http.Response) (*ScheduleServiceGetSingleSchedule3Response, error) {
+// ParseScheduleServiceGetSingleSchedule2Response parses an HTTP response from a ScheduleServiceGetSingleSchedule2WithResponse call
+func ParseScheduleServiceGetSingleSchedule2Response(rsp *http.Response) (*ScheduleServiceGetSingleSchedule2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceGetSingleSchedule3Response{
+	response := &ScheduleServiceGetSingleSchedule2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31524,15 +32380,15 @@ func ParseScheduleServiceGetSingleSchedule3Response(rsp *http.Response) (*Schedu
 	return response, nil
 }
 
-// ParseScheduleServicePatchSingleSchedule3Response parses an HTTP response from a ScheduleServicePatchSingleSchedule3WithResponse call
-func ParseScheduleServicePatchSingleSchedule3Response(rsp *http.Response) (*ScheduleServicePatchSingleSchedule3Response, error) {
+// ParseScheduleServicePatchSingleSchedule2Response parses an HTTP response from a ScheduleServicePatchSingleSchedule2WithResponse call
+func ParseScheduleServicePatchSingleSchedule2Response(rsp *http.Response) (*ScheduleServicePatchSingleSchedule2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServicePatchSingleSchedule3Response{
+	response := &ScheduleServicePatchSingleSchedule2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31550,15 +32406,15 @@ func ParseScheduleServicePatchSingleSchedule3Response(rsp *http.Response) (*Sche
 	return response, nil
 }
 
-// ParseScheduleServiceUpdateSingleSchedule3Response parses an HTTP response from a ScheduleServiceUpdateSingleSchedule3WithResponse call
-func ParseScheduleServiceUpdateSingleSchedule3Response(rsp *http.Response) (*ScheduleServiceUpdateSingleSchedule3Response, error) {
+// ParseScheduleServiceUpdateSingleSchedule2Response parses an HTTP response from a ScheduleServiceUpdateSingleSchedule2WithResponse call
+func ParseScheduleServiceUpdateSingleSchedule2Response(rsp *http.Response) (*ScheduleServiceUpdateSingleSchedule2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceUpdateSingleSchedule3Response{
+	response := &ScheduleServiceUpdateSingleSchedule2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31576,15 +32432,15 @@ func ParseScheduleServiceUpdateSingleSchedule3Response(rsp *http.Response) (*Sch
 	return response, nil
 }
 
-// ParseSiteServiceListSites3Response parses an HTTP response from a SiteServiceListSites3WithResponse call
-func ParseSiteServiceListSites3Response(rsp *http.Response) (*SiteServiceListSites3Response, error) {
+// ParseSiteServiceListSites2Response parses an HTTP response from a SiteServiceListSites2WithResponse call
+func ParseSiteServiceListSites2Response(rsp *http.Response) (*SiteServiceListSites2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceListSites3Response{
+	response := &SiteServiceListSites2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31602,15 +32458,15 @@ func ParseSiteServiceListSites3Response(rsp *http.Response) (*SiteServiceListSit
 	return response, nil
 }
 
-// ParseSiteServiceCreateSite3Response parses an HTTP response from a SiteServiceCreateSite3WithResponse call
-func ParseSiteServiceCreateSite3Response(rsp *http.Response) (*SiteServiceCreateSite3Response, error) {
+// ParseSiteServiceCreateSite2Response parses an HTTP response from a SiteServiceCreateSite2WithResponse call
+func ParseSiteServiceCreateSite2Response(rsp *http.Response) (*SiteServiceCreateSite2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceCreateSite3Response{
+	response := &SiteServiceCreateSite2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31628,15 +32484,15 @@ func ParseSiteServiceCreateSite3Response(rsp *http.Response) (*SiteServiceCreate
 	return response, nil
 }
 
-// ParseSiteServiceDeleteSite3Response parses an HTTP response from a SiteServiceDeleteSite3WithResponse call
-func ParseSiteServiceDeleteSite3Response(rsp *http.Response) (*SiteServiceDeleteSite3Response, error) {
+// ParseSiteServiceDeleteSite2Response parses an HTTP response from a SiteServiceDeleteSite2WithResponse call
+func ParseSiteServiceDeleteSite2Response(rsp *http.Response) (*SiteServiceDeleteSite2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceDeleteSite3Response{
+	response := &SiteServiceDeleteSite2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31654,15 +32510,15 @@ func ParseSiteServiceDeleteSite3Response(rsp *http.Response) (*SiteServiceDelete
 	return response, nil
 }
 
-// ParseSiteServiceGetSite3Response parses an HTTP response from a SiteServiceGetSite3WithResponse call
-func ParseSiteServiceGetSite3Response(rsp *http.Response) (*SiteServiceGetSite3Response, error) {
+// ParseSiteServiceGetSite2Response parses an HTTP response from a SiteServiceGetSite2WithResponse call
+func ParseSiteServiceGetSite2Response(rsp *http.Response) (*SiteServiceGetSite2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceGetSite3Response{
+	response := &SiteServiceGetSite2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31680,15 +32536,15 @@ func ParseSiteServiceGetSite3Response(rsp *http.Response) (*SiteServiceGetSite3R
 	return response, nil
 }
 
-// ParseSiteServicePatchSite3Response parses an HTTP response from a SiteServicePatchSite3WithResponse call
-func ParseSiteServicePatchSite3Response(rsp *http.Response) (*SiteServicePatchSite3Response, error) {
+// ParseSiteServicePatchSite2Response parses an HTTP response from a SiteServicePatchSite2WithResponse call
+func ParseSiteServicePatchSite2Response(rsp *http.Response) (*SiteServicePatchSite2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServicePatchSite3Response{
+	response := &SiteServicePatchSite2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31706,15 +32562,15 @@ func ParseSiteServicePatchSite3Response(rsp *http.Response) (*SiteServicePatchSi
 	return response, nil
 }
 
-// ParseSiteServiceUpdateSite3Response parses an HTTP response from a SiteServiceUpdateSite3WithResponse call
-func ParseSiteServiceUpdateSite3Response(rsp *http.Response) (*SiteServiceUpdateSite3Response, error) {
+// ParseSiteServiceUpdateSite2Response parses an HTTP response from a SiteServiceUpdateSite2WithResponse call
+func ParseSiteServiceUpdateSite2Response(rsp *http.Response) (*SiteServiceUpdateSite2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceUpdateSite3Response{
+	response := &SiteServiceUpdateSite2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31732,15 +32588,15 @@ func ParseSiteServiceUpdateSite3Response(rsp *http.Response) (*SiteServiceUpdate
 	return response, nil
 }
 
-// ParseTelemetryLogsGroupServiceListTelemetryLogsGroups3Response parses an HTTP response from a TelemetryLogsGroupServiceListTelemetryLogsGroups3WithResponse call
-func ParseTelemetryLogsGroupServiceListTelemetryLogsGroups3Response(rsp *http.Response) (*TelemetryLogsGroupServiceListTelemetryLogsGroups3Response, error) {
+// ParseTelemetryLogsGroupServiceListTelemetryLogsGroups2Response parses an HTTP response from a TelemetryLogsGroupServiceListTelemetryLogsGroups2WithResponse call
+func ParseTelemetryLogsGroupServiceListTelemetryLogsGroups2Response(rsp *http.Response) (*TelemetryLogsGroupServiceListTelemetryLogsGroups2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &TelemetryLogsGroupServiceListTelemetryLogsGroups3Response{
+	response := &TelemetryLogsGroupServiceListTelemetryLogsGroups2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31758,15 +32614,15 @@ func ParseTelemetryLogsGroupServiceListTelemetryLogsGroups3Response(rsp *http.Re
 	return response, nil
 }
 
-// ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response parses an HTTP response from a TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithResponse call
-func ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response(rsp *http.Response) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response, error) {
+// ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response parses an HTTP response from a TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithResponse call
+func ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response(rsp *http.Response) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response{
+	response := &TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31784,15 +32640,15 @@ func ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response(rsp *http.R
 	return response, nil
 }
 
-// ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response parses an HTTP response from a TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3WithResponse call
-func ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response(rsp *http.Response) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response, error) {
+// ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response parses an HTTP response from a TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2WithResponse call
+func ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response(rsp *http.Response) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response{
+	response := &TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31810,15 +32666,15 @@ func ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response(rsp *http.R
 	return response, nil
 }
 
-// ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup3Response parses an HTTP response from a TelemetryLogsGroupServiceGetTelemetryLogsGroup3WithResponse call
-func ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup3Response(rsp *http.Response) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response, error) {
+// ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup2Response parses an HTTP response from a TelemetryLogsGroupServiceGetTelemetryLogsGroup2WithResponse call
+func ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup2Response(rsp *http.Response) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response{
+	response := &TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31836,15 +32692,15 @@ func ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup3Response(rsp *http.Resp
 	return response, nil
 }
 
-// ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response parses an HTTP response from a TelemetryMetricsGroupServiceListTelemetryMetricsGroups3WithResponse call
-func ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response(rsp *http.Response) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response, error) {
+// ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response parses an HTTP response from a TelemetryMetricsGroupServiceListTelemetryMetricsGroups2WithResponse call
+func ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response(rsp *http.Response) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response{
+	response := &TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31862,15 +32718,15 @@ func ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response(rsp *h
 	return response, nil
 }
 
-// ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response parses an HTTP response from a TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithResponse call
-func ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response(rsp *http.Response) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response, error) {
+// ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response parses an HTTP response from a TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithResponse call
+func ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response(rsp *http.Response) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response{
+	response := &TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31888,15 +32744,15 @@ func ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response(rsp *
 	return response, nil
 }
 
-// ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response parses an HTTP response from a TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3WithResponse call
-func ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response(rsp *http.Response) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response, error) {
+// ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response parses an HTTP response from a TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2WithResponse call
+func ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response(rsp *http.Response) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response{
+	response := &TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -31914,15 +32770,15 @@ func ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response(rsp *
 	return response, nil
 }
 
-// ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response parses an HTTP response from a TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3WithResponse call
-func ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response(rsp *http.Response) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response, error) {
+// ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response parses an HTTP response from a TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2WithResponse call
+func ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response(rsp *http.Response) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response{
+	response := &TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -32590,6 +33446,32 @@ func ParseHostServiceRegisterHostResponse(rsp *http.Response) (*HostServiceRegis
 	return response, nil
 }
 
+// ParseHostServiceGetHostsSummaryResponse parses an HTTP response from a HostServiceGetHostsSummaryWithResponse call
+func ParseHostServiceGetHostsSummaryResponse(rsp *http.Response) (*HostServiceGetHostsSummaryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &HostServiceGetHostsSummaryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GetHostSummaryResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseHostServiceDeleteHostResponse parses an HTTP response from a HostServiceDeleteHostWithResponse call
 func ParseHostServiceDeleteHostResponse(rsp *http.Response) (*HostServiceDeleteHostResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -32772,41 +33654,15 @@ func ParseHostServicePatchRegisterHostResponse(rsp *http.Response) (*HostService
 	return response, nil
 }
 
-// ParseHostServiceGetHostsSummaryResponse parses an HTTP response from a HostServiceGetHostsSummaryWithResponse call
-func ParseHostServiceGetHostsSummaryResponse(rsp *http.Response) (*HostServiceGetHostsSummaryResponse, error) {
+// ParseHostServiceGetHostsSummary3Response parses an HTTP response from a HostServiceGetHostsSummary3WithResponse call
+func ParseHostServiceGetHostsSummary3Response(rsp *http.Response) (*HostServiceGetHostsSummary3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &HostServiceGetHostsSummaryResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GetHostSummaryResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseHostServiceGetHostsSummary2Response parses an HTTP response from a HostServiceGetHostsSummary2WithResponse call
-func ParseHostServiceGetHostsSummary2Response(rsp *http.Response) (*HostServiceGetHostsSummary2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &HostServiceGetHostsSummary2Response{
+	response := &HostServiceGetHostsSummary3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33006,6 +33862,162 @@ func ParseInstanceServiceInvalidateInstanceResponse(rsp *http.Response) (*Instan
 	return response, nil
 }
 
+// ParseOperatingSystemServiceListOperatingSystems3Response parses an HTTP response from a OperatingSystemServiceListOperatingSystems3WithResponse call
+func ParseOperatingSystemServiceListOperatingSystems3Response(rsp *http.Response) (*OperatingSystemServiceListOperatingSystems3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OperatingSystemServiceListOperatingSystems3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListOperatingSystemsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOperatingSystemServiceCreateOperatingSystem3Response parses an HTTP response from a OperatingSystemServiceCreateOperatingSystem3WithResponse call
+func ParseOperatingSystemServiceCreateOperatingSystem3Response(rsp *http.Response) (*OperatingSystemServiceCreateOperatingSystem3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OperatingSystemServiceCreateOperatingSystem3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OperatingSystemResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOperatingSystemServiceDeleteOperatingSystem3Response parses an HTTP response from a OperatingSystemServiceDeleteOperatingSystem3WithResponse call
+func ParseOperatingSystemServiceDeleteOperatingSystem3Response(rsp *http.Response) (*OperatingSystemServiceDeleteOperatingSystem3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OperatingSystemServiceDeleteOperatingSystem3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteOperatingSystemResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOperatingSystemServiceGetOperatingSystem3Response parses an HTTP response from a OperatingSystemServiceGetOperatingSystem3WithResponse call
+func ParseOperatingSystemServiceGetOperatingSystem3Response(rsp *http.Response) (*OperatingSystemServiceGetOperatingSystem3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OperatingSystemServiceGetOperatingSystem3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OperatingSystemResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOperatingSystemServicePatchOperatingSystem3Response parses an HTTP response from a OperatingSystemServicePatchOperatingSystem3WithResponse call
+func ParseOperatingSystemServicePatchOperatingSystem3Response(rsp *http.Response) (*OperatingSystemServicePatchOperatingSystem3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OperatingSystemServicePatchOperatingSystem3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OperatingSystemResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOperatingSystemServiceUpdateOperatingSystem3Response parses an HTTP response from a OperatingSystemServiceUpdateOperatingSystem3WithResponse call
+func ParseOperatingSystemServiceUpdateOperatingSystem3Response(rsp *http.Response) (*OperatingSystemServiceUpdateOperatingSystem3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OperatingSystemServiceUpdateOperatingSystem3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OperatingSystemResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseOperatingSystemServiceListOperatingSystemsResponse parses an HTTP response from a OperatingSystemServiceListOperatingSystemsWithResponse call
 func ParseOperatingSystemServiceListOperatingSystemsResponse(rsp *http.Response) (*OperatingSystemServiceListOperatingSystemsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -33162,171 +34174,15 @@ func ParseOperatingSystemServiceUpdateOperatingSystemResponse(rsp *http.Response
 	return response, nil
 }
 
-// ParseOperatingSystemServiceListOperatingSystems2Response parses an HTTP response from a OperatingSystemServiceListOperatingSystems2WithResponse call
-func ParseOperatingSystemServiceListOperatingSystems2Response(rsp *http.Response) (*OperatingSystemServiceListOperatingSystems2Response, error) {
+// ParseScheduleServiceListSchedulesResponse parses an HTTP response from a ScheduleServiceListSchedulesWithResponse call
+func ParseScheduleServiceListSchedulesResponse(rsp *http.Response) (*ScheduleServiceListSchedulesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OperatingSystemServiceListOperatingSystems2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListOperatingSystemsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOperatingSystemServiceCreateOperatingSystem2Response parses an HTTP response from a OperatingSystemServiceCreateOperatingSystem2WithResponse call
-func ParseOperatingSystemServiceCreateOperatingSystem2Response(rsp *http.Response) (*OperatingSystemServiceCreateOperatingSystem2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OperatingSystemServiceCreateOperatingSystem2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OperatingSystemResource
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOperatingSystemServiceDeleteOperatingSystem2Response parses an HTTP response from a OperatingSystemServiceDeleteOperatingSystem2WithResponse call
-func ParseOperatingSystemServiceDeleteOperatingSystem2Response(rsp *http.Response) (*OperatingSystemServiceDeleteOperatingSystem2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OperatingSystemServiceDeleteOperatingSystem2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DeleteOperatingSystemResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOperatingSystemServiceGetOperatingSystem2Response parses an HTTP response from a OperatingSystemServiceGetOperatingSystem2WithResponse call
-func ParseOperatingSystemServiceGetOperatingSystem2Response(rsp *http.Response) (*OperatingSystemServiceGetOperatingSystem2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OperatingSystemServiceGetOperatingSystem2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OperatingSystemResource
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOperatingSystemServicePatchOperatingSystem2Response parses an HTTP response from a OperatingSystemServicePatchOperatingSystem2WithResponse call
-func ParseOperatingSystemServicePatchOperatingSystem2Response(rsp *http.Response) (*OperatingSystemServicePatchOperatingSystem2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OperatingSystemServicePatchOperatingSystem2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OperatingSystemResource
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOperatingSystemServiceUpdateOperatingSystem2Response parses an HTTP response from a OperatingSystemServiceUpdateOperatingSystem2WithResponse call
-func ParseOperatingSystemServiceUpdateOperatingSystem2Response(rsp *http.Response) (*OperatingSystemServiceUpdateOperatingSystem2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OperatingSystemServiceUpdateOperatingSystem2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OperatingSystemResource
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseScheduleServiceListSchedules2Response parses an HTTP response from a ScheduleServiceListSchedules2WithResponse call
-func ParseScheduleServiceListSchedules2Response(rsp *http.Response) (*ScheduleServiceListSchedules2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ScheduleServiceListSchedules2Response{
+	response := &ScheduleServiceListSchedulesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33344,15 +34200,15 @@ func ParseScheduleServiceListSchedules2Response(rsp *http.Response) (*ScheduleSe
 	return response, nil
 }
 
-// ParseScheduleServiceListRepeatedSchedules2Response parses an HTTP response from a ScheduleServiceListRepeatedSchedules2WithResponse call
-func ParseScheduleServiceListRepeatedSchedules2Response(rsp *http.Response) (*ScheduleServiceListRepeatedSchedules2Response, error) {
+// ParseScheduleServiceListRepeatedSchedules3Response parses an HTTP response from a ScheduleServiceListRepeatedSchedules3WithResponse call
+func ParseScheduleServiceListRepeatedSchedules3Response(rsp *http.Response) (*ScheduleServiceListRepeatedSchedules3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceListRepeatedSchedules2Response{
+	response := &ScheduleServiceListRepeatedSchedules3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33370,15 +34226,15 @@ func ParseScheduleServiceListRepeatedSchedules2Response(rsp *http.Response) (*Sc
 	return response, nil
 }
 
-// ParseScheduleServiceCreateRepeatedSchedule2Response parses an HTTP response from a ScheduleServiceCreateRepeatedSchedule2WithResponse call
-func ParseScheduleServiceCreateRepeatedSchedule2Response(rsp *http.Response) (*ScheduleServiceCreateRepeatedSchedule2Response, error) {
+// ParseScheduleServiceCreateRepeatedSchedule3Response parses an HTTP response from a ScheduleServiceCreateRepeatedSchedule3WithResponse call
+func ParseScheduleServiceCreateRepeatedSchedule3Response(rsp *http.Response) (*ScheduleServiceCreateRepeatedSchedule3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceCreateRepeatedSchedule2Response{
+	response := &ScheduleServiceCreateRepeatedSchedule3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33396,15 +34252,15 @@ func ParseScheduleServiceCreateRepeatedSchedule2Response(rsp *http.Response) (*S
 	return response, nil
 }
 
-// ParseScheduleServiceDeleteRepeatedSchedule2Response parses an HTTP response from a ScheduleServiceDeleteRepeatedSchedule2WithResponse call
-func ParseScheduleServiceDeleteRepeatedSchedule2Response(rsp *http.Response) (*ScheduleServiceDeleteRepeatedSchedule2Response, error) {
+// ParseScheduleServiceDeleteRepeatedSchedule3Response parses an HTTP response from a ScheduleServiceDeleteRepeatedSchedule3WithResponse call
+func ParseScheduleServiceDeleteRepeatedSchedule3Response(rsp *http.Response) (*ScheduleServiceDeleteRepeatedSchedule3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceDeleteRepeatedSchedule2Response{
+	response := &ScheduleServiceDeleteRepeatedSchedule3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33422,15 +34278,15 @@ func ParseScheduleServiceDeleteRepeatedSchedule2Response(rsp *http.Response) (*S
 	return response, nil
 }
 
-// ParseScheduleServiceGetRepeatedSchedule2Response parses an HTTP response from a ScheduleServiceGetRepeatedSchedule2WithResponse call
-func ParseScheduleServiceGetRepeatedSchedule2Response(rsp *http.Response) (*ScheduleServiceGetRepeatedSchedule2Response, error) {
+// ParseScheduleServiceGetRepeatedSchedule3Response parses an HTTP response from a ScheduleServiceGetRepeatedSchedule3WithResponse call
+func ParseScheduleServiceGetRepeatedSchedule3Response(rsp *http.Response) (*ScheduleServiceGetRepeatedSchedule3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceGetRepeatedSchedule2Response{
+	response := &ScheduleServiceGetRepeatedSchedule3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33448,15 +34304,15 @@ func ParseScheduleServiceGetRepeatedSchedule2Response(rsp *http.Response) (*Sche
 	return response, nil
 }
 
-// ParseScheduleServicePatchRepeatedSchedule2Response parses an HTTP response from a ScheduleServicePatchRepeatedSchedule2WithResponse call
-func ParseScheduleServicePatchRepeatedSchedule2Response(rsp *http.Response) (*ScheduleServicePatchRepeatedSchedule2Response, error) {
+// ParseScheduleServicePatchRepeatedSchedule3Response parses an HTTP response from a ScheduleServicePatchRepeatedSchedule3WithResponse call
+func ParseScheduleServicePatchRepeatedSchedule3Response(rsp *http.Response) (*ScheduleServicePatchRepeatedSchedule3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServicePatchRepeatedSchedule2Response{
+	response := &ScheduleServicePatchRepeatedSchedule3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33474,15 +34330,15 @@ func ParseScheduleServicePatchRepeatedSchedule2Response(rsp *http.Response) (*Sc
 	return response, nil
 }
 
-// ParseScheduleServiceUpdateRepeatedSchedule2Response parses an HTTP response from a ScheduleServiceUpdateRepeatedSchedule2WithResponse call
-func ParseScheduleServiceUpdateRepeatedSchedule2Response(rsp *http.Response) (*ScheduleServiceUpdateRepeatedSchedule2Response, error) {
+// ParseScheduleServiceUpdateRepeatedSchedule3Response parses an HTTP response from a ScheduleServiceUpdateRepeatedSchedule3WithResponse call
+func ParseScheduleServiceUpdateRepeatedSchedule3Response(rsp *http.Response) (*ScheduleServiceUpdateRepeatedSchedule3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceUpdateRepeatedSchedule2Response{
+	response := &ScheduleServiceUpdateRepeatedSchedule3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33500,15 +34356,15 @@ func ParseScheduleServiceUpdateRepeatedSchedule2Response(rsp *http.Response) (*S
 	return response, nil
 }
 
-// ParseScheduleServiceListSingleSchedules2Response parses an HTTP response from a ScheduleServiceListSingleSchedules2WithResponse call
-func ParseScheduleServiceListSingleSchedules2Response(rsp *http.Response) (*ScheduleServiceListSingleSchedules2Response, error) {
+// ParseScheduleServiceListSingleSchedules3Response parses an HTTP response from a ScheduleServiceListSingleSchedules3WithResponse call
+func ParseScheduleServiceListSingleSchedules3Response(rsp *http.Response) (*ScheduleServiceListSingleSchedules3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceListSingleSchedules2Response{
+	response := &ScheduleServiceListSingleSchedules3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33526,15 +34382,15 @@ func ParseScheduleServiceListSingleSchedules2Response(rsp *http.Response) (*Sche
 	return response, nil
 }
 
-// ParseScheduleServiceCreateSingleSchedule2Response parses an HTTP response from a ScheduleServiceCreateSingleSchedule2WithResponse call
-func ParseScheduleServiceCreateSingleSchedule2Response(rsp *http.Response) (*ScheduleServiceCreateSingleSchedule2Response, error) {
+// ParseScheduleServiceCreateSingleSchedule3Response parses an HTTP response from a ScheduleServiceCreateSingleSchedule3WithResponse call
+func ParseScheduleServiceCreateSingleSchedule3Response(rsp *http.Response) (*ScheduleServiceCreateSingleSchedule3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceCreateSingleSchedule2Response{
+	response := &ScheduleServiceCreateSingleSchedule3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33552,15 +34408,15 @@ func ParseScheduleServiceCreateSingleSchedule2Response(rsp *http.Response) (*Sch
 	return response, nil
 }
 
-// ParseScheduleServiceDeleteSingleSchedule2Response parses an HTTP response from a ScheduleServiceDeleteSingleSchedule2WithResponse call
-func ParseScheduleServiceDeleteSingleSchedule2Response(rsp *http.Response) (*ScheduleServiceDeleteSingleSchedule2Response, error) {
+// ParseScheduleServiceDeleteSingleSchedule3Response parses an HTTP response from a ScheduleServiceDeleteSingleSchedule3WithResponse call
+func ParseScheduleServiceDeleteSingleSchedule3Response(rsp *http.Response) (*ScheduleServiceDeleteSingleSchedule3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceDeleteSingleSchedule2Response{
+	response := &ScheduleServiceDeleteSingleSchedule3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33578,15 +34434,15 @@ func ParseScheduleServiceDeleteSingleSchedule2Response(rsp *http.Response) (*Sch
 	return response, nil
 }
 
-// ParseScheduleServiceGetSingleSchedule2Response parses an HTTP response from a ScheduleServiceGetSingleSchedule2WithResponse call
-func ParseScheduleServiceGetSingleSchedule2Response(rsp *http.Response) (*ScheduleServiceGetSingleSchedule2Response, error) {
+// ParseScheduleServiceGetSingleSchedule3Response parses an HTTP response from a ScheduleServiceGetSingleSchedule3WithResponse call
+func ParseScheduleServiceGetSingleSchedule3Response(rsp *http.Response) (*ScheduleServiceGetSingleSchedule3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceGetSingleSchedule2Response{
+	response := &ScheduleServiceGetSingleSchedule3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33604,15 +34460,15 @@ func ParseScheduleServiceGetSingleSchedule2Response(rsp *http.Response) (*Schedu
 	return response, nil
 }
 
-// ParseScheduleServicePatchSingleSchedule2Response parses an HTTP response from a ScheduleServicePatchSingleSchedule2WithResponse call
-func ParseScheduleServicePatchSingleSchedule2Response(rsp *http.Response) (*ScheduleServicePatchSingleSchedule2Response, error) {
+// ParseScheduleServicePatchSingleSchedule3Response parses an HTTP response from a ScheduleServicePatchSingleSchedule3WithResponse call
+func ParseScheduleServicePatchSingleSchedule3Response(rsp *http.Response) (*ScheduleServicePatchSingleSchedule3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServicePatchSingleSchedule2Response{
+	response := &ScheduleServicePatchSingleSchedule3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33630,15 +34486,15 @@ func ParseScheduleServicePatchSingleSchedule2Response(rsp *http.Response) (*Sche
 	return response, nil
 }
 
-// ParseScheduleServiceUpdateSingleSchedule2Response parses an HTTP response from a ScheduleServiceUpdateSingleSchedule2WithResponse call
-func ParseScheduleServiceUpdateSingleSchedule2Response(rsp *http.Response) (*ScheduleServiceUpdateSingleSchedule2Response, error) {
+// ParseScheduleServiceUpdateSingleSchedule3Response parses an HTTP response from a ScheduleServiceUpdateSingleSchedule3WithResponse call
+func ParseScheduleServiceUpdateSingleSchedule3Response(rsp *http.Response) (*ScheduleServiceUpdateSingleSchedule3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceUpdateSingleSchedule2Response{
+	response := &ScheduleServiceUpdateSingleSchedule3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -33646,6 +34502,162 @@ func ParseScheduleServiceUpdateSingleSchedule2Response(rsp *http.Response) (*Sch
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SingleScheduleResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkloadServiceListWorkloadsResponse parses an HTTP response from a WorkloadServiceListWorkloadsWithResponse call
+func ParseWorkloadServiceListWorkloadsResponse(rsp *http.Response) (*WorkloadServiceListWorkloadsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkloadServiceListWorkloadsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListWorkloadsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkloadServiceCreateWorkloadResponse parses an HTTP response from a WorkloadServiceCreateWorkloadWithResponse call
+func ParseWorkloadServiceCreateWorkloadResponse(rsp *http.Response) (*WorkloadServiceCreateWorkloadResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkloadServiceCreateWorkloadResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkloadResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkloadServiceDeleteWorkloadResponse parses an HTTP response from a WorkloadServiceDeleteWorkloadWithResponse call
+func ParseWorkloadServiceDeleteWorkloadResponse(rsp *http.Response) (*WorkloadServiceDeleteWorkloadResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkloadServiceDeleteWorkloadResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteWorkloadResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkloadServiceGetWorkloadResponse parses an HTTP response from a WorkloadServiceGetWorkloadWithResponse call
+func ParseWorkloadServiceGetWorkloadResponse(rsp *http.Response) (*WorkloadServiceGetWorkloadResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkloadServiceGetWorkloadResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkloadResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkloadServicePatchWorkloadResponse parses an HTTP response from a WorkloadServicePatchWorkloadWithResponse call
+func ParseWorkloadServicePatchWorkloadResponse(rsp *http.Response) (*WorkloadServicePatchWorkloadResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkloadServicePatchWorkloadResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkloadResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseWorkloadServiceUpdateWorkloadResponse parses an HTTP response from a WorkloadServiceUpdateWorkloadWithResponse call
+func ParseWorkloadServiceUpdateWorkloadResponse(rsp *http.Response) (*WorkloadServiceUpdateWorkloadResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WorkloadServiceUpdateWorkloadResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkloadResource
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -33890,188 +34902,6 @@ func ParseLocationServiceListLocationsResponse(rsp *http.Response) (*LocationSer
 	return response, nil
 }
 
-// ParseOSUpdatePolicyListOSUpdatePolicy3Response parses an HTTP response from a OSUpdatePolicyListOSUpdatePolicy3WithResponse call
-func ParseOSUpdatePolicyListOSUpdatePolicy3Response(rsp *http.Response) (*OSUpdatePolicyListOSUpdatePolicy3Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OSUpdatePolicyListOSUpdatePolicy3Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListOSUpdatePolicyResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOSUpdatePolicyCreateOSUpdatePolicy3Response parses an HTTP response from a OSUpdatePolicyCreateOSUpdatePolicy3WithResponse call
-func ParseOSUpdatePolicyCreateOSUpdatePolicy3Response(rsp *http.Response) (*OSUpdatePolicyCreateOSUpdatePolicy3Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OSUpdatePolicyCreateOSUpdatePolicy3Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OSUpdatePolicy
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOSUpdatePolicyDeleteOSUpdatePolicy3Response parses an HTTP response from a OSUpdatePolicyDeleteOSUpdatePolicy3WithResponse call
-func ParseOSUpdatePolicyDeleteOSUpdatePolicy3Response(rsp *http.Response) (*OSUpdatePolicyDeleteOSUpdatePolicy3Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OSUpdatePolicyDeleteOSUpdatePolicy3Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DeleteOSUpdatePolicyResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOSUpdatePolicyGetOSUpdatePolicy3Response parses an HTTP response from a OSUpdatePolicyGetOSUpdatePolicy3WithResponse call
-func ParseOSUpdatePolicyGetOSUpdatePolicy3Response(rsp *http.Response) (*OSUpdatePolicyGetOSUpdatePolicy3Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OSUpdatePolicyGetOSUpdatePolicy3Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OSUpdatePolicy
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOSUpdateRunListOSUpdateRun3Response parses an HTTP response from a OSUpdateRunListOSUpdateRun3WithResponse call
-func ParseOSUpdateRunListOSUpdateRun3Response(rsp *http.Response) (*OSUpdateRunListOSUpdateRun3Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OSUpdateRunListOSUpdateRun3Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListOSUpdateRunResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOSUpdateRunDeleteOSUpdateRun3Response parses an HTTP response from a OSUpdateRunDeleteOSUpdateRun3WithResponse call
-func ParseOSUpdateRunDeleteOSUpdateRun3Response(rsp *http.Response) (*OSUpdateRunDeleteOSUpdateRun3Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OSUpdateRunDeleteOSUpdateRun3Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DeleteOSUpdateRunResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseOSUpdateRunGetOSUpdateRun3Response parses an HTTP response from a OSUpdateRunGetOSUpdateRun3WithResponse call
-func ParseOSUpdateRunGetOSUpdateRun3Response(rsp *http.Response) (*OSUpdateRunGetOSUpdateRun3Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &OSUpdateRunGetOSUpdateRun3Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest OSUpdateRun
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseOSUpdatePolicyListOSUpdatePolicyResponse parses an HTTP response from a OSUpdatePolicyListOSUpdatePolicyWithResponse call
 func ParseOSUpdatePolicyListOSUpdatePolicyResponse(rsp *http.Response) (*OSUpdatePolicyListOSUpdatePolicyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -34254,6 +35084,188 @@ func ParseOSUpdateRunGetOSUpdateRunResponse(rsp *http.Response) (*OSUpdateRunGet
 	return response, nil
 }
 
+// ParseOSUpdatePolicyListOSUpdatePolicy3Response parses an HTTP response from a OSUpdatePolicyListOSUpdatePolicy3WithResponse call
+func ParseOSUpdatePolicyListOSUpdatePolicy3Response(rsp *http.Response) (*OSUpdatePolicyListOSUpdatePolicy3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OSUpdatePolicyListOSUpdatePolicy3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListOSUpdatePolicyResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOSUpdatePolicyCreateOSUpdatePolicy3Response parses an HTTP response from a OSUpdatePolicyCreateOSUpdatePolicy3WithResponse call
+func ParseOSUpdatePolicyCreateOSUpdatePolicy3Response(rsp *http.Response) (*OSUpdatePolicyCreateOSUpdatePolicy3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OSUpdatePolicyCreateOSUpdatePolicy3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OSUpdatePolicy
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOSUpdatePolicyDeleteOSUpdatePolicy3Response parses an HTTP response from a OSUpdatePolicyDeleteOSUpdatePolicy3WithResponse call
+func ParseOSUpdatePolicyDeleteOSUpdatePolicy3Response(rsp *http.Response) (*OSUpdatePolicyDeleteOSUpdatePolicy3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OSUpdatePolicyDeleteOSUpdatePolicy3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteOSUpdatePolicyResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOSUpdatePolicyGetOSUpdatePolicy3Response parses an HTTP response from a OSUpdatePolicyGetOSUpdatePolicy3WithResponse call
+func ParseOSUpdatePolicyGetOSUpdatePolicy3Response(rsp *http.Response) (*OSUpdatePolicyGetOSUpdatePolicy3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OSUpdatePolicyGetOSUpdatePolicy3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OSUpdatePolicy
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOSUpdateRunListOSUpdateRun3Response parses an HTTP response from a OSUpdateRunListOSUpdateRun3WithResponse call
+func ParseOSUpdateRunListOSUpdateRun3Response(rsp *http.Response) (*OSUpdateRunListOSUpdateRun3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OSUpdateRunListOSUpdateRun3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListOSUpdateRunResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOSUpdateRunDeleteOSUpdateRun3Response parses an HTTP response from a OSUpdateRunDeleteOSUpdateRun3WithResponse call
+func ParseOSUpdateRunDeleteOSUpdateRun3Response(rsp *http.Response) (*OSUpdateRunDeleteOSUpdateRun3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OSUpdateRunDeleteOSUpdateRun3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteOSUpdateRunResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseOSUpdateRunGetOSUpdateRun3Response parses an HTTP response from a OSUpdateRunGetOSUpdateRun3WithResponse call
+func ParseOSUpdateRunGetOSUpdateRun3Response(rsp *http.Response) (*OSUpdateRunGetOSUpdateRun3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &OSUpdateRunGetOSUpdateRun3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OSUpdateRun
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseProviderServiceListProvidersResponse parses an HTTP response from a ProviderServiceListProvidersWithResponse call
 func ParseProviderServiceListProvidersResponse(rsp *http.Response) (*ProviderServiceListProvidersResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -34410,15 +35422,15 @@ func ParseRegionServiceCreateRegionResponse(rsp *http.Response) (*RegionServiceC
 	return response, nil
 }
 
-// ParseSiteServiceListSites2Response parses an HTTP response from a SiteServiceListSites2WithResponse call
-func ParseSiteServiceListSites2Response(rsp *http.Response) (*SiteServiceListSites2Response, error) {
+// ParseSiteServiceListSitesResponse parses an HTTP response from a SiteServiceListSitesWithResponse call
+func ParseSiteServiceListSitesResponse(rsp *http.Response) (*SiteServiceListSitesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceListSites2Response{
+	response := &SiteServiceListSitesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -34436,15 +35448,15 @@ func ParseSiteServiceListSites2Response(rsp *http.Response) (*SiteServiceListSit
 	return response, nil
 }
 
-// ParseSiteServiceCreateSite2Response parses an HTTP response from a SiteServiceCreateSite2WithResponse call
-func ParseSiteServiceCreateSite2Response(rsp *http.Response) (*SiteServiceCreateSite2Response, error) {
+// ParseSiteServiceCreateSiteResponse parses an HTTP response from a SiteServiceCreateSiteWithResponse call
+func ParseSiteServiceCreateSiteResponse(rsp *http.Response) (*SiteServiceCreateSiteResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceCreateSite2Response{
+	response := &SiteServiceCreateSiteResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -34462,15 +35474,15 @@ func ParseSiteServiceCreateSite2Response(rsp *http.Response) (*SiteServiceCreate
 	return response, nil
 }
 
-// ParseSiteServiceDeleteSite2Response parses an HTTP response from a SiteServiceDeleteSite2WithResponse call
-func ParseSiteServiceDeleteSite2Response(rsp *http.Response) (*SiteServiceDeleteSite2Response, error) {
+// ParseSiteServiceDeleteSiteResponse parses an HTTP response from a SiteServiceDeleteSiteWithResponse call
+func ParseSiteServiceDeleteSiteResponse(rsp *http.Response) (*SiteServiceDeleteSiteResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceDeleteSite2Response{
+	response := &SiteServiceDeleteSiteResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -34488,15 +35500,15 @@ func ParseSiteServiceDeleteSite2Response(rsp *http.Response) (*SiteServiceDelete
 	return response, nil
 }
 
-// ParseSiteServiceGetSite2Response parses an HTTP response from a SiteServiceGetSite2WithResponse call
-func ParseSiteServiceGetSite2Response(rsp *http.Response) (*SiteServiceGetSite2Response, error) {
+// ParseSiteServiceGetSiteResponse parses an HTTP response from a SiteServiceGetSiteWithResponse call
+func ParseSiteServiceGetSiteResponse(rsp *http.Response) (*SiteServiceGetSiteResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceGetSite2Response{
+	response := &SiteServiceGetSiteResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -34514,15 +35526,15 @@ func ParseSiteServiceGetSite2Response(rsp *http.Response) (*SiteServiceGetSite2R
 	return response, nil
 }
 
-// ParseSiteServicePatchSite2Response parses an HTTP response from a SiteServicePatchSite2WithResponse call
-func ParseSiteServicePatchSite2Response(rsp *http.Response) (*SiteServicePatchSite2Response, error) {
+// ParseSiteServicePatchSiteResponse parses an HTTP response from a SiteServicePatchSiteWithResponse call
+func ParseSiteServicePatchSiteResponse(rsp *http.Response) (*SiteServicePatchSiteResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServicePatchSite2Response{
+	response := &SiteServicePatchSiteResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -34540,15 +35552,15 @@ func ParseSiteServicePatchSite2Response(rsp *http.Response) (*SiteServicePatchSi
 	return response, nil
 }
 
-// ParseSiteServiceUpdateSite2Response parses an HTTP response from a SiteServiceUpdateSite2WithResponse call
-func ParseSiteServiceUpdateSite2Response(rsp *http.Response) (*SiteServiceUpdateSite2Response, error) {
+// ParseSiteServiceUpdateSiteResponse parses an HTTP response from a SiteServiceUpdateSiteWithResponse call
+func ParseSiteServiceUpdateSiteResponse(rsp *http.Response) (*SiteServiceUpdateSiteResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceUpdateSite2Response{
+	response := &SiteServiceUpdateSiteResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -34670,15 +35682,15 @@ func ParseRegionServiceUpdateRegionResponse(rsp *http.Response) (*RegionServiceU
 	return response, nil
 }
 
-// ParseScheduleServiceListSchedulesResponse parses an HTTP response from a ScheduleServiceListSchedulesWithResponse call
-func ParseScheduleServiceListSchedulesResponse(rsp *http.Response) (*ScheduleServiceListSchedulesResponse, error) {
+// ParseScheduleServiceListSchedules3Response parses an HTTP response from a ScheduleServiceListSchedules3WithResponse call
+func ParseScheduleServiceListSchedules3Response(rsp *http.Response) (*ScheduleServiceListSchedules3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ScheduleServiceListSchedulesResponse{
+	response := &ScheduleServiceListSchedules3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -35008,15 +36020,15 @@ func ParseScheduleServiceUpdateSingleScheduleResponse(rsp *http.Response) (*Sche
 	return response, nil
 }
 
-// ParseSiteServiceListSitesResponse parses an HTTP response from a SiteServiceListSitesWithResponse call
-func ParseSiteServiceListSitesResponse(rsp *http.Response) (*SiteServiceListSitesResponse, error) {
+// ParseSiteServiceListSites3Response parses an HTTP response from a SiteServiceListSites3WithResponse call
+func ParseSiteServiceListSites3Response(rsp *http.Response) (*SiteServiceListSites3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceListSitesResponse{
+	response := &SiteServiceListSites3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -35034,15 +36046,15 @@ func ParseSiteServiceListSitesResponse(rsp *http.Response) (*SiteServiceListSite
 	return response, nil
 }
 
-// ParseSiteServiceCreateSiteResponse parses an HTTP response from a SiteServiceCreateSiteWithResponse call
-func ParseSiteServiceCreateSiteResponse(rsp *http.Response) (*SiteServiceCreateSiteResponse, error) {
+// ParseSiteServiceCreateSite3Response parses an HTTP response from a SiteServiceCreateSite3WithResponse call
+func ParseSiteServiceCreateSite3Response(rsp *http.Response) (*SiteServiceCreateSite3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceCreateSiteResponse{
+	response := &SiteServiceCreateSite3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -35060,15 +36072,15 @@ func ParseSiteServiceCreateSiteResponse(rsp *http.Response) (*SiteServiceCreateS
 	return response, nil
 }
 
-// ParseSiteServiceDeleteSiteResponse parses an HTTP response from a SiteServiceDeleteSiteWithResponse call
-func ParseSiteServiceDeleteSiteResponse(rsp *http.Response) (*SiteServiceDeleteSiteResponse, error) {
+// ParseSiteServiceDeleteSite3Response parses an HTTP response from a SiteServiceDeleteSite3WithResponse call
+func ParseSiteServiceDeleteSite3Response(rsp *http.Response) (*SiteServiceDeleteSite3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceDeleteSiteResponse{
+	response := &SiteServiceDeleteSite3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -35086,15 +36098,15 @@ func ParseSiteServiceDeleteSiteResponse(rsp *http.Response) (*SiteServiceDeleteS
 	return response, nil
 }
 
-// ParseSiteServiceGetSiteResponse parses an HTTP response from a SiteServiceGetSiteWithResponse call
-func ParseSiteServiceGetSiteResponse(rsp *http.Response) (*SiteServiceGetSiteResponse, error) {
+// ParseSiteServiceGetSite3Response parses an HTTP response from a SiteServiceGetSite3WithResponse call
+func ParseSiteServiceGetSite3Response(rsp *http.Response) (*SiteServiceGetSite3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceGetSiteResponse{
+	response := &SiteServiceGetSite3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -35112,15 +36124,15 @@ func ParseSiteServiceGetSiteResponse(rsp *http.Response) (*SiteServiceGetSiteRes
 	return response, nil
 }
 
-// ParseSiteServicePatchSiteResponse parses an HTTP response from a SiteServicePatchSiteWithResponse call
-func ParseSiteServicePatchSiteResponse(rsp *http.Response) (*SiteServicePatchSiteResponse, error) {
+// ParseSiteServicePatchSite3Response parses an HTTP response from a SiteServicePatchSite3WithResponse call
+func ParseSiteServicePatchSite3Response(rsp *http.Response) (*SiteServicePatchSite3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServicePatchSiteResponse{
+	response := &SiteServicePatchSite3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -35138,15 +36150,15 @@ func ParseSiteServicePatchSiteResponse(rsp *http.Response) (*SiteServicePatchSit
 	return response, nil
 }
 
-// ParseSiteServiceUpdateSiteResponse parses an HTTP response from a SiteServiceUpdateSiteWithResponse call
-func ParseSiteServiceUpdateSiteResponse(rsp *http.Response) (*SiteServiceUpdateSiteResponse, error) {
+// ParseSiteServiceUpdateSite3Response parses an HTTP response from a SiteServiceUpdateSite3WithResponse call
+func ParseSiteServiceUpdateSite3Response(rsp *http.Response) (*SiteServiceUpdateSite3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SiteServiceUpdateSiteResponse{
+	response := &SiteServiceUpdateSite3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -35154,6 +36166,214 @@ func ParseSiteServiceUpdateSiteResponse(rsp *http.Response) (*SiteServiceUpdateS
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SiteResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTelemetryLogsGroupServiceListTelemetryLogsGroups3Response parses an HTTP response from a TelemetryLogsGroupServiceListTelemetryLogsGroups3WithResponse call
+func ParseTelemetryLogsGroupServiceListTelemetryLogsGroups3Response(rsp *http.Response) (*TelemetryLogsGroupServiceListTelemetryLogsGroups3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TelemetryLogsGroupServiceListTelemetryLogsGroups3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListTelemetryLogsGroupsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response parses an HTTP response from a TelemetryLogsGroupServiceCreateTelemetryLogsGroup3WithResponse call
+func ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response(rsp *http.Response) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TelemetryLogsGroupResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response parses an HTTP response from a TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3WithResponse call
+func ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response(rsp *http.Response) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteTelemetryLogsGroupResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup3Response parses an HTTP response from a TelemetryLogsGroupServiceGetTelemetryLogsGroup3WithResponse call
+func ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup3Response(rsp *http.Response) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TelemetryLogsGroupServiceGetTelemetryLogsGroup3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TelemetryLogsGroupResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response parses an HTTP response from a TelemetryMetricsGroupServiceListTelemetryMetricsGroups3WithResponse call
+func ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response(rsp *http.Response) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ListTelemetryMetricsGroupsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response parses an HTTP response from a TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3WithResponse call
+func ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response(rsp *http.Response) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TelemetryMetricsGroupResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response parses an HTTP response from a TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3WithResponse call
+func ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response(rsp *http.Response) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeleteTelemetryMetricsGroupResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response parses an HTTP response from a TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3WithResponse call
+func ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response(rsp *http.Response) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TelemetryMetricsGroupResource
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -35355,214 +36575,6 @@ func ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroupResponse(rsp *http
 	}
 
 	response := &TelemetryMetricsGroupServiceGetTelemetryMetricsGroupResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TelemetryMetricsGroupResource
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseTelemetryLogsGroupServiceListTelemetryLogsGroups2Response parses an HTTP response from a TelemetryLogsGroupServiceListTelemetryLogsGroups2WithResponse call
-func ParseTelemetryLogsGroupServiceListTelemetryLogsGroups2Response(rsp *http.Response) (*TelemetryLogsGroupServiceListTelemetryLogsGroups2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &TelemetryLogsGroupServiceListTelemetryLogsGroups2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListTelemetryLogsGroupsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response parses an HTTP response from a TelemetryLogsGroupServiceCreateTelemetryLogsGroup2WithResponse call
-func ParseTelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response(rsp *http.Response) (*TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TelemetryLogsGroupResource
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response parses an HTTP response from a TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2WithResponse call
-func ParseTelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response(rsp *http.Response) (*TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DeleteTelemetryLogsGroupResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup2Response parses an HTTP response from a TelemetryLogsGroupServiceGetTelemetryLogsGroup2WithResponse call
-func ParseTelemetryLogsGroupServiceGetTelemetryLogsGroup2Response(rsp *http.Response) (*TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &TelemetryLogsGroupServiceGetTelemetryLogsGroup2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TelemetryLogsGroupResource
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response parses an HTTP response from a TelemetryMetricsGroupServiceListTelemetryMetricsGroups2WithResponse call
-func ParseTelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response(rsp *http.Response) (*TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ListTelemetryMetricsGroupsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response parses an HTTP response from a TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2WithResponse call
-func ParseTelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response(rsp *http.Response) (*TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TelemetryMetricsGroupResource
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response parses an HTTP response from a TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2WithResponse call
-func ParseTelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response(rsp *http.Response) (*TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest DeleteTelemetryMetricsGroupResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response parses an HTTP response from a TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2WithResponse call
-func ParseTelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response(rsp *http.Response) (*TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -35996,15 +37008,15 @@ func ParseWorkloadMemberServiceGetWorkloadMemberResponse(rsp *http.Response) (*W
 	return response, nil
 }
 
-// ParseWorkloadServiceListWorkloadsResponse parses an HTTP response from a WorkloadServiceListWorkloadsWithResponse call
-func ParseWorkloadServiceListWorkloadsResponse(rsp *http.Response) (*WorkloadServiceListWorkloadsResponse, error) {
+// ParseWorkloadServiceListWorkloads3Response parses an HTTP response from a WorkloadServiceListWorkloads3WithResponse call
+func ParseWorkloadServiceListWorkloads3Response(rsp *http.Response) (*WorkloadServiceListWorkloads3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &WorkloadServiceListWorkloadsResponse{
+	response := &WorkloadServiceListWorkloads3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -36022,15 +37034,15 @@ func ParseWorkloadServiceListWorkloadsResponse(rsp *http.Response) (*WorkloadSer
 	return response, nil
 }
 
-// ParseWorkloadServiceCreateWorkloadResponse parses an HTTP response from a WorkloadServiceCreateWorkloadWithResponse call
-func ParseWorkloadServiceCreateWorkloadResponse(rsp *http.Response) (*WorkloadServiceCreateWorkloadResponse, error) {
+// ParseWorkloadServiceCreateWorkload3Response parses an HTTP response from a WorkloadServiceCreateWorkload3WithResponse call
+func ParseWorkloadServiceCreateWorkload3Response(rsp *http.Response) (*WorkloadServiceCreateWorkload3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &WorkloadServiceCreateWorkloadResponse{
+	response := &WorkloadServiceCreateWorkload3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -36048,15 +37060,15 @@ func ParseWorkloadServiceCreateWorkloadResponse(rsp *http.Response) (*WorkloadSe
 	return response, nil
 }
 
-// ParseWorkloadServiceDeleteWorkloadResponse parses an HTTP response from a WorkloadServiceDeleteWorkloadWithResponse call
-func ParseWorkloadServiceDeleteWorkloadResponse(rsp *http.Response) (*WorkloadServiceDeleteWorkloadResponse, error) {
+// ParseWorkloadServiceDeleteWorkload3Response parses an HTTP response from a WorkloadServiceDeleteWorkload3WithResponse call
+func ParseWorkloadServiceDeleteWorkload3Response(rsp *http.Response) (*WorkloadServiceDeleteWorkload3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &WorkloadServiceDeleteWorkloadResponse{
+	response := &WorkloadServiceDeleteWorkload3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -36074,15 +37086,15 @@ func ParseWorkloadServiceDeleteWorkloadResponse(rsp *http.Response) (*WorkloadSe
 	return response, nil
 }
 
-// ParseWorkloadServiceGetWorkloadResponse parses an HTTP response from a WorkloadServiceGetWorkloadWithResponse call
-func ParseWorkloadServiceGetWorkloadResponse(rsp *http.Response) (*WorkloadServiceGetWorkloadResponse, error) {
+// ParseWorkloadServiceGetWorkload3Response parses an HTTP response from a WorkloadServiceGetWorkload3WithResponse call
+func ParseWorkloadServiceGetWorkload3Response(rsp *http.Response) (*WorkloadServiceGetWorkload3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &WorkloadServiceGetWorkloadResponse{
+	response := &WorkloadServiceGetWorkload3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -36100,15 +37112,15 @@ func ParseWorkloadServiceGetWorkloadResponse(rsp *http.Response) (*WorkloadServi
 	return response, nil
 }
 
-// ParseWorkloadServicePatchWorkloadResponse parses an HTTP response from a WorkloadServicePatchWorkloadWithResponse call
-func ParseWorkloadServicePatchWorkloadResponse(rsp *http.Response) (*WorkloadServicePatchWorkloadResponse, error) {
+// ParseWorkloadServicePatchWorkload3Response parses an HTTP response from a WorkloadServicePatchWorkload3WithResponse call
+func ParseWorkloadServicePatchWorkload3Response(rsp *http.Response) (*WorkloadServicePatchWorkload3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &WorkloadServicePatchWorkloadResponse{
+	response := &WorkloadServicePatchWorkload3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -36126,15 +37138,15 @@ func ParseWorkloadServicePatchWorkloadResponse(rsp *http.Response) (*WorkloadSer
 	return response, nil
 }
 
-// ParseWorkloadServiceUpdateWorkloadResponse parses an HTTP response from a WorkloadServiceUpdateWorkloadWithResponse call
-func ParseWorkloadServiceUpdateWorkloadResponse(rsp *http.Response) (*WorkloadServiceUpdateWorkloadResponse, error) {
+// ParseWorkloadServiceUpdateWorkload3Response parses an HTTP response from a WorkloadServiceUpdateWorkload3WithResponse call
+func ParseWorkloadServiceUpdateWorkload3Response(rsp *http.Response) (*WorkloadServiceUpdateWorkload3Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &WorkloadServiceUpdateWorkloadResponse{
+	response := &WorkloadServiceUpdateWorkload3Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

@@ -1937,8 +1937,8 @@ type HostServiceGetHost2Params struct {
 
 // HostServicePatchHost2Params defines parameters for HostServicePatchHost2.
 type HostServicePatchHost2Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of host.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// ProjectName The project name from the URL path.
 	ProjectName string `form:"projectName" json:"projectName"`
@@ -1971,8 +1971,8 @@ type HostServicePatchRegisterHost2Params struct {
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// HostServiceGetHostsSummary3Params defines parameters for HostServiceGetHostsSummary3.
-type HostServiceGetHostsSummary3Params struct {
+// HostServiceGetHostsSummary2Params defines parameters for HostServiceGetHostsSummary2.
+type HostServiceGetHostsSummary2Params struct {
 	// Filter Optional filter to return only item of interest.
 	//  See https://google.aip.dev/160 for details.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
@@ -2022,8 +2022,8 @@ type InstanceServiceGetInstance2Params struct {
 
 // InstanceServicePatchInstance2Params defines parameters for InstanceServicePatchInstance2.
 type InstanceServicePatchInstance2Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of instance.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// ProjectName The project name from the URL path.
 	ProjectName string `form:"projectName" json:"projectName"`
@@ -2031,6 +2031,12 @@ type InstanceServicePatchInstance2Params struct {
 
 // InstanceServiceUpdateInstance2Params defines parameters for InstanceServiceUpdateInstance2.
 type InstanceServiceUpdateInstance2Params struct {
+	// ProjectName The project name from the URL path.
+	ProjectName string `form:"projectName" json:"projectName"`
+}
+
+// InstanceServiceInvalidateInstance2Params defines parameters for InstanceServiceInvalidateInstance2.
+type InstanceServiceInvalidateInstance2Params struct {
 	// ProjectName The project name from the URL path.
 	ProjectName string `form:"projectName" json:"projectName"`
 }
@@ -2089,8 +2095,8 @@ type LocationServiceListLocations2Params struct {
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// OperatingSystemServiceListOperatingSystems3Params defines parameters for OperatingSystemServiceListOperatingSystems3.
-type OperatingSystemServiceListOperatingSystems3Params struct {
+// OperatingSystemServiceListOperatingSystems2Params defines parameters for OperatingSystemServiceListOperatingSystems2.
+type OperatingSystemServiceListOperatingSystems2Params struct {
 	// OrderBy Optional comma separated list of fields to specify a sorting order.
 	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
@@ -2110,35 +2116,35 @@ type OperatingSystemServiceListOperatingSystems3Params struct {
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// OperatingSystemServiceCreateOperatingSystem3Params defines parameters for OperatingSystemServiceCreateOperatingSystem3.
-type OperatingSystemServiceCreateOperatingSystem3Params struct {
+// OperatingSystemServiceCreateOperatingSystem2Params defines parameters for OperatingSystemServiceCreateOperatingSystem2.
+type OperatingSystemServiceCreateOperatingSystem2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// OperatingSystemServiceDeleteOperatingSystem3Params defines parameters for OperatingSystemServiceDeleteOperatingSystem3.
-type OperatingSystemServiceDeleteOperatingSystem3Params struct {
+// OperatingSystemServiceDeleteOperatingSystem2Params defines parameters for OperatingSystemServiceDeleteOperatingSystem2.
+type OperatingSystemServiceDeleteOperatingSystem2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// OperatingSystemServiceGetOperatingSystem3Params defines parameters for OperatingSystemServiceGetOperatingSystem3.
-type OperatingSystemServiceGetOperatingSystem3Params struct {
+// OperatingSystemServiceGetOperatingSystem2Params defines parameters for OperatingSystemServiceGetOperatingSystem2.
+type OperatingSystemServiceGetOperatingSystem2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// OperatingSystemServicePatchOperatingSystem3Params defines parameters for OperatingSystemServicePatchOperatingSystem3.
-type OperatingSystemServicePatchOperatingSystem3Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+// OperatingSystemServicePatchOperatingSystem2Params defines parameters for OperatingSystemServicePatchOperatingSystem2.
+type OperatingSystemServicePatchOperatingSystem2Params struct {
+	// FieldMask Field mask to be applied on the patch of os.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// OperatingSystemServiceUpdateOperatingSystem3Params defines parameters for OperatingSystemServiceUpdateOperatingSystem3.
-type OperatingSystemServiceUpdateOperatingSystem3Params struct {
+// OperatingSystemServiceUpdateOperatingSystem2Params defines parameters for OperatingSystemServiceUpdateOperatingSystem2.
+type OperatingSystemServiceUpdateOperatingSystem2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
@@ -2298,8 +2304,8 @@ type RegionServiceGetRegion2Params struct {
 
 // RegionServicePatchRegion2Params defines parameters for RegionServicePatchRegion2.
 type RegionServicePatchRegion2Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of region.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
@@ -2311,8 +2317,8 @@ type RegionServiceUpdateRegion2Params struct {
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceListSchedules3Params defines parameters for ScheduleServiceListSchedules3.
-type ScheduleServiceListSchedules3Params struct {
+// ScheduleServiceListSchedules2Params defines parameters for ScheduleServiceListSchedules2.
+type ScheduleServiceListSchedules2Params struct {
 	// PageSize Defines the amount of items to be contained in a single page.
 	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
@@ -2346,8 +2352,8 @@ type ScheduleServiceListSchedules3Params struct {
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceListRepeatedSchedules3Params defines parameters for ScheduleServiceListRepeatedSchedules3.
-type ScheduleServiceListRepeatedSchedules3Params struct {
+// ScheduleServiceListRepeatedSchedules2Params defines parameters for ScheduleServiceListRepeatedSchedules2.
+type ScheduleServiceListRepeatedSchedules2Params struct {
 	// PageSize Defines the amount of items to be contained in a single page.
 	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
@@ -2381,41 +2387,41 @@ type ScheduleServiceListRepeatedSchedules3Params struct {
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceCreateRepeatedSchedule3Params defines parameters for ScheduleServiceCreateRepeatedSchedule3.
-type ScheduleServiceCreateRepeatedSchedule3Params struct {
+// ScheduleServiceCreateRepeatedSchedule2Params defines parameters for ScheduleServiceCreateRepeatedSchedule2.
+type ScheduleServiceCreateRepeatedSchedule2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceDeleteRepeatedSchedule3Params defines parameters for ScheduleServiceDeleteRepeatedSchedule3.
-type ScheduleServiceDeleteRepeatedSchedule3Params struct {
+// ScheduleServiceDeleteRepeatedSchedule2Params defines parameters for ScheduleServiceDeleteRepeatedSchedule2.
+type ScheduleServiceDeleteRepeatedSchedule2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceGetRepeatedSchedule3Params defines parameters for ScheduleServiceGetRepeatedSchedule3.
-type ScheduleServiceGetRepeatedSchedule3Params struct {
+// ScheduleServiceGetRepeatedSchedule2Params defines parameters for ScheduleServiceGetRepeatedSchedule2.
+type ScheduleServiceGetRepeatedSchedule2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServicePatchRepeatedSchedule3Params defines parameters for ScheduleServicePatchRepeatedSchedule3.
-type ScheduleServicePatchRepeatedSchedule3Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+// ScheduleServicePatchRepeatedSchedule2Params defines parameters for ScheduleServicePatchRepeatedSchedule2.
+type ScheduleServicePatchRepeatedSchedule2Params struct {
+	// FieldMask Field mask to be applied on the patch of repeated_schedule.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceUpdateRepeatedSchedule3Params defines parameters for ScheduleServiceUpdateRepeatedSchedule3.
-type ScheduleServiceUpdateRepeatedSchedule3Params struct {
+// ScheduleServiceUpdateRepeatedSchedule2Params defines parameters for ScheduleServiceUpdateRepeatedSchedule2.
+type ScheduleServiceUpdateRepeatedSchedule2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceListSingleSchedules3Params defines parameters for ScheduleServiceListSingleSchedules3.
-type ScheduleServiceListSingleSchedules3Params struct {
+// ScheduleServiceListSingleSchedules2Params defines parameters for ScheduleServiceListSingleSchedules2.
+type ScheduleServiceListSingleSchedules2Params struct {
 	// PageSize Defines the amount of items to be contained in a single page.
 	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
@@ -2449,41 +2455,41 @@ type ScheduleServiceListSingleSchedules3Params struct {
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceCreateSingleSchedule3Params defines parameters for ScheduleServiceCreateSingleSchedule3.
-type ScheduleServiceCreateSingleSchedule3Params struct {
+// ScheduleServiceCreateSingleSchedule2Params defines parameters for ScheduleServiceCreateSingleSchedule2.
+type ScheduleServiceCreateSingleSchedule2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceDeleteSingleSchedule3Params defines parameters for ScheduleServiceDeleteSingleSchedule3.
-type ScheduleServiceDeleteSingleSchedule3Params struct {
+// ScheduleServiceDeleteSingleSchedule2Params defines parameters for ScheduleServiceDeleteSingleSchedule2.
+type ScheduleServiceDeleteSingleSchedule2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceGetSingleSchedule3Params defines parameters for ScheduleServiceGetSingleSchedule3.
-type ScheduleServiceGetSingleSchedule3Params struct {
+// ScheduleServiceGetSingleSchedule2Params defines parameters for ScheduleServiceGetSingleSchedule2.
+type ScheduleServiceGetSingleSchedule2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServicePatchSingleSchedule3Params defines parameters for ScheduleServicePatchSingleSchedule3.
-type ScheduleServicePatchSingleSchedule3Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+// ScheduleServicePatchSingleSchedule2Params defines parameters for ScheduleServicePatchSingleSchedule2.
+type ScheduleServicePatchSingleSchedule2Params struct {
+	// FieldMask Field mask to be applied on the patch of single_schedule.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// ScheduleServiceUpdateSingleSchedule3Params defines parameters for ScheduleServiceUpdateSingleSchedule3.
-type ScheduleServiceUpdateSingleSchedule3Params struct {
+// ScheduleServiceUpdateSingleSchedule2Params defines parameters for ScheduleServiceUpdateSingleSchedule2.
+type ScheduleServiceUpdateSingleSchedule2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// SiteServiceListSites3Params defines parameters for SiteServiceListSites3.
-type SiteServiceListSites3Params struct {
+// SiteServiceListSites2Params defines parameters for SiteServiceListSites2.
+type SiteServiceListSites2Params struct {
 	// OrderBy Optional comma separated list of fields to specify a sorting order.
 	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
@@ -2506,8 +2512,8 @@ type SiteServiceListSites3Params struct {
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
 }
 
-// SiteServiceCreateSite3Params defines parameters for SiteServiceCreateSite3.
-type SiteServiceCreateSite3Params struct {
+// SiteServiceCreateSite2Params defines parameters for SiteServiceCreateSite2.
+type SiteServiceCreateSite2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 
@@ -2515,8 +2521,8 @@ type SiteServiceCreateSite3Params struct {
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
 }
 
-// SiteServiceDeleteSite3Params defines parameters for SiteServiceDeleteSite3.
-type SiteServiceDeleteSite3Params struct {
+// SiteServiceDeleteSite2Params defines parameters for SiteServiceDeleteSite2.
+type SiteServiceDeleteSite2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 
@@ -2524,8 +2530,8 @@ type SiteServiceDeleteSite3Params struct {
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
 }
 
-// SiteServiceGetSite3Params defines parameters for SiteServiceGetSite3.
-type SiteServiceGetSite3Params struct {
+// SiteServiceGetSite2Params defines parameters for SiteServiceGetSite2.
+type SiteServiceGetSite2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 
@@ -2533,10 +2539,10 @@ type SiteServiceGetSite3Params struct {
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
 }
 
-// SiteServicePatchSite3Params defines parameters for SiteServicePatchSite3.
-type SiteServicePatchSite3Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+// SiteServicePatchSite2Params defines parameters for SiteServicePatchSite2.
+type SiteServicePatchSite2Params struct {
+	// FieldMask Field mask to be applied on the patch of site.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// RegionId Optional region ID for hierarchical path support
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
@@ -2545,8 +2551,8 @@ type SiteServicePatchSite3Params struct {
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// SiteServiceUpdateSite3Params defines parameters for SiteServiceUpdateSite3.
-type SiteServiceUpdateSite3Params struct {
+// SiteServiceUpdateSite2Params defines parameters for SiteServiceUpdateSite2.
+type SiteServiceUpdateSite2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 
@@ -2554,8 +2560,8 @@ type SiteServiceUpdateSite3Params struct {
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
 }
 
-// TelemetryLogsGroupServiceListTelemetryLogsGroups3Params defines parameters for TelemetryLogsGroupServiceListTelemetryLogsGroups3.
-type TelemetryLogsGroupServiceListTelemetryLogsGroups3Params struct {
+// TelemetryLogsGroupServiceListTelemetryLogsGroups2Params defines parameters for TelemetryLogsGroupServiceListTelemetryLogsGroups2.
+type TelemetryLogsGroupServiceListTelemetryLogsGroups2Params struct {
 	// PageSize Defines the amount of items to be contained in a single page.
 	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
@@ -2571,26 +2577,26 @@ type TelemetryLogsGroupServiceListTelemetryLogsGroups3Params struct {
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params defines parameters for TelemetryLogsGroupServiceCreateTelemetryLogsGroup3.
-type TelemetryLogsGroupServiceCreateTelemetryLogsGroup3Params struct {
+// TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params defines parameters for TelemetryLogsGroupServiceCreateTelemetryLogsGroup2.
+type TelemetryLogsGroupServiceCreateTelemetryLogsGroup2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Params defines parameters for TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3.
-type TelemetryLogsGroupServiceDeleteTelemetryLogsGroup3Params struct {
+// TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Params defines parameters for TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2.
+type TelemetryLogsGroupServiceDeleteTelemetryLogsGroup2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// TelemetryLogsGroupServiceGetTelemetryLogsGroup3Params defines parameters for TelemetryLogsGroupServiceGetTelemetryLogsGroup3.
-type TelemetryLogsGroupServiceGetTelemetryLogsGroup3Params struct {
+// TelemetryLogsGroupServiceGetTelemetryLogsGroup2Params defines parameters for TelemetryLogsGroupServiceGetTelemetryLogsGroup2.
+type TelemetryLogsGroupServiceGetTelemetryLogsGroup2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params defines parameters for TelemetryMetricsGroupServiceListTelemetryMetricsGroups3.
-type TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params struct {
+// TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params defines parameters for TelemetryMetricsGroupServiceListTelemetryMetricsGroups2.
+type TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params struct {
 	// PageSize Defines the amount of items to be contained in a single page.
 	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
@@ -2606,20 +2612,20 @@ type TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params struct {
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params defines parameters for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3.
-type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3Params struct {
+// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params defines parameters for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2.
+type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Params defines parameters for TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3.
-type TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup3Params struct {
+// TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Params defines parameters for TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2.
+type TelemetryMetricsGroupServiceDeleteTelemetryMetricsGroup2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
 
-// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Params defines parameters for TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3.
-type TelemetryMetricsGroupServiceGetTelemetryMetricsGroup3Params struct {
+// TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Params defines parameters for TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2.
+type TelemetryMetricsGroupServiceGetTelemetryMetricsGroup2Params struct {
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
 }
@@ -2676,8 +2682,8 @@ type TelemetryLogsProfileServiceGetTelemetryLogsProfile2Params struct {
 
 // TelemetryLogsProfileServicePatchTelemetryLogsProfile2Params defines parameters for TelemetryLogsProfileServicePatchTelemetryLogsProfile2.
 type TelemetryLogsProfileServicePatchTelemetryLogsProfile2Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of telemetry_logs_profile.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
@@ -2741,8 +2747,8 @@ type TelemetryMetricsProfileServiceGetTelemetryMetricsProfile2Params struct {
 
 // TelemetryMetricsProfileServicePatchTelemetryMetricsProfile2Params defines parameters for TelemetryMetricsProfileServicePatchTelemetryMetricsProfile2.
 type TelemetryMetricsProfileServicePatchTelemetryMetricsProfile2Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of telemetry_metrics_profile.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
@@ -2834,8 +2840,8 @@ type WorkloadServiceGetWorkload2Params struct {
 
 // WorkloadServicePatchWorkload2Params defines parameters for WorkloadServicePatchWorkload2.
 type WorkloadServicePatchWorkload2Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of workload.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// ProjectName Project name
 	ProjectName string `form:"projectName" json:"projectName"`
@@ -2870,10 +2876,17 @@ type HostServiceRegisterHostParams struct {
 	ResourceId *string `form:"resourceId,omitempty" json:"resourceId,omitempty"`
 }
 
+// HostServiceGetHostsSummaryParams defines parameters for HostServiceGetHostsSummary.
+type HostServiceGetHostsSummaryParams struct {
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+}
+
 // HostServicePatchHostParams defines parameters for HostServicePatchHost.
 type HostServicePatchHostParams struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of host.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
 // HostServiceInvalidateHostParams defines parameters for HostServiceInvalidateHost.
@@ -2882,15 +2895,8 @@ type HostServiceInvalidateHostParams struct {
 	Note *string `form:"note,omitempty" json:"note,omitempty"`
 }
 
-// HostServiceGetHostsSummaryParams defines parameters for HostServiceGetHostsSummary.
-type HostServiceGetHostsSummaryParams struct {
-	// Filter Optional filter to return only item of interest.
-	//  See https://google.aip.dev/160 for details.
-	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
-}
-
-// HostServiceGetHostsSummary2Params defines parameters for HostServiceGetHostsSummary2.
-type HostServiceGetHostsSummary2Params struct {
+// HostServiceGetHostsSummary3Params defines parameters for HostServiceGetHostsSummary3.
+type HostServiceGetHostsSummary3Params struct {
 	// Filter Optional filter to return only item of interest.
 	//  See https://google.aip.dev/160 for details.
 	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
@@ -2916,8 +2922,32 @@ type InstanceServiceListInstancesParams struct {
 
 // InstanceServicePatchInstanceParams defines parameters for InstanceServicePatchInstance.
 type InstanceServicePatchInstanceParams struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of instance.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
+}
+
+// OperatingSystemServiceListOperatingSystems3Params defines parameters for OperatingSystemServiceListOperatingSystems3.
+type OperatingSystemServiceListOperatingSystems3Params struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// OperatingSystemServicePatchOperatingSystem3Params defines parameters for OperatingSystemServicePatchOperatingSystem3.
+type OperatingSystemServicePatchOperatingSystem3Params struct {
+	// FieldMask Field mask to be applied on the patch of os.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
 // OperatingSystemServiceListOperatingSystemsParams defines parameters for OperatingSystemServiceListOperatingSystems.
@@ -2940,12 +2970,120 @@ type OperatingSystemServiceListOperatingSystemsParams struct {
 
 // OperatingSystemServicePatchOperatingSystemParams defines parameters for OperatingSystemServicePatchOperatingSystem.
 type OperatingSystemServicePatchOperatingSystemParams struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of os.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
-// OperatingSystemServiceListOperatingSystems2Params defines parameters for OperatingSystemServiceListOperatingSystems2.
-type OperatingSystemServiceListOperatingSystems2Params struct {
+// ScheduleServiceListSchedulesParams defines parameters for ScheduleServiceListSchedules.
+type ScheduleServiceListSchedulesParams struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// HostId The host ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified host ID applied to them, i.e., target including the inherited ones
+	//  (parent site if not null). If null, returns all the schedules without a host ID as target.
+	HostId *string `form:"hostId,omitempty" json:"hostId,omitempty"`
+
+	// SiteId The site ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified site ID applied to them, i.e., target including the inherited ones.
+	//  If null, returns all the schedules without a site ID as target
+	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
+
+	// RegionId The region ID target of the schedules. If not specified,
+	//  returns all schedules (given the other query params).
+	//  If specified, returns the schedules that have the specified region ID applied to them,
+	//  i.e., target including the inherited ones (parent region if not null).
+	//  If null, returns all the schedules without a region ID as target.
+	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
+
+	// UnixEpoch Filter based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds.
+	UnixEpoch *string `form:"unixEpoch,omitempty" json:"unixEpoch,omitempty"`
+}
+
+// ScheduleServiceListRepeatedSchedules3Params defines parameters for ScheduleServiceListRepeatedSchedules3.
+type ScheduleServiceListRepeatedSchedules3Params struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// HostId The host ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified host ID applied to them, i.e., target including the inherited ones
+	//  (parent site if not null). If null, returns all the schedules without a host ID as target.
+	HostId *string `form:"hostId,omitempty" json:"hostId,omitempty"`
+
+	// SiteId The site ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified site ID applied to them, i.e., target including the inherited ones.
+	//  If null, returns all the schedules without a site ID as target
+	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
+
+	// RegionId The region ID target of the schedules. If not specified,
+	//  returns all schedules (given the other query params).
+	//  If specified, returns the schedules that have the specified region ID applied to them,
+	//  i.e., target including the inherited ones (parent region if not null).
+	//  If null, returns all the schedules without a region ID as target.
+	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
+
+	// UnixEpoch Filter based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds.
+	UnixEpoch *string `form:"unixEpoch,omitempty" json:"unixEpoch,omitempty"`
+}
+
+// ScheduleServicePatchRepeatedSchedule3Params defines parameters for ScheduleServicePatchRepeatedSchedule3.
+type ScheduleServicePatchRepeatedSchedule3Params struct {
+	// FieldMask Field mask to be applied on the patch of repeated_schedule.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
+}
+
+// ScheduleServiceListSingleSchedules3Params defines parameters for ScheduleServiceListSingleSchedules3.
+type ScheduleServiceListSingleSchedules3Params struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// HostId The host ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified host ID applied to them, i.e., target including the inherited ones
+	//  (parent site if not null). If null, returns all the schedules without a host ID as target.
+	HostId *string `form:"hostId,omitempty" json:"hostId,omitempty"`
+
+	// SiteId The site ID target of the schedules. If not specified, returns all schedules
+	//  (given the other query params). If specified, returns the schedules that have
+	//  the specified site ID applied to them, i.e., target including the inherited ones.
+	//  If null, returns all the schedules without a site ID as target
+	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
+
+	// RegionId The region ID target of the schedules. If not specified,
+	//  returns all schedules (given the other query params).
+	//  If specified, returns the schedules that have the specified region ID applied to them,
+	//  i.e., target including the inherited ones (parent region if not null).
+	//  If null, returns all the schedules without a region ID as target.
+	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
+
+	// UnixEpoch Filter based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds.
+	UnixEpoch *string `form:"unixEpoch,omitempty" json:"unixEpoch,omitempty"`
+}
+
+// ScheduleServicePatchSingleSchedule3Params defines parameters for ScheduleServicePatchSingleSchedule3.
+type ScheduleServicePatchSingleSchedule3Params struct {
+	// FieldMask Field mask to be applied on the patch of single_schedule.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
+}
+
+// WorkloadServiceListWorkloadsParams defines parameters for WorkloadServiceListWorkloads.
+type WorkloadServiceListWorkloadsParams struct {
 	// OrderBy Optional comma separated list of fields to specify a sorting order.
 	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
@@ -2962,118 +3100,10 @@ type OperatingSystemServiceListOperatingSystems2Params struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// OperatingSystemServicePatchOperatingSystem2Params defines parameters for OperatingSystemServicePatchOperatingSystem2.
-type OperatingSystemServicePatchOperatingSystem2Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
-}
-
-// ScheduleServiceListSchedules2Params defines parameters for ScheduleServiceListSchedules2.
-type ScheduleServiceListSchedules2Params struct {
-	// PageSize Defines the amount of items to be contained in a single page.
-	//  Default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Offset Index of the first item to return. This allows skipping items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// HostId The host ID target of the schedules. If not specified, returns all schedules
-	//  (given the other query params). If specified, returns the schedules that have
-	//  the specified host ID applied to them, i.e., target including the inherited ones
-	//  (parent site if not null). If null, returns all the schedules without a host ID as target.
-	HostId *string `form:"hostId,omitempty" json:"hostId,omitempty"`
-
-	// SiteId The site ID target of the schedules. If not specified, returns all schedules
-	//  (given the other query params). If specified, returns the schedules that have
-	//  the specified site ID applied to them, i.e., target including the inherited ones.
-	//  If null, returns all the schedules without a site ID as target
-	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
-
-	// RegionId The region ID target of the schedules. If not specified,
-	//  returns all schedules (given the other query params).
-	//  If specified, returns the schedules that have the specified region ID applied to them,
-	//  i.e., target including the inherited ones (parent region if not null).
-	//  If null, returns all the schedules without a region ID as target.
-	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
-
-	// UnixEpoch Filter based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds.
-	UnixEpoch *string `form:"unixEpoch,omitempty" json:"unixEpoch,omitempty"`
-}
-
-// ScheduleServiceListRepeatedSchedules2Params defines parameters for ScheduleServiceListRepeatedSchedules2.
-type ScheduleServiceListRepeatedSchedules2Params struct {
-	// PageSize Defines the amount of items to be contained in a single page.
-	//  Default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Offset Index of the first item to return. This allows skipping items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// HostId The host ID target of the schedules. If not specified, returns all schedules
-	//  (given the other query params). If specified, returns the schedules that have
-	//  the specified host ID applied to them, i.e., target including the inherited ones
-	//  (parent site if not null). If null, returns all the schedules without a host ID as target.
-	HostId *string `form:"hostId,omitempty" json:"hostId,omitempty"`
-
-	// SiteId The site ID target of the schedules. If not specified, returns all schedules
-	//  (given the other query params). If specified, returns the schedules that have
-	//  the specified site ID applied to them, i.e., target including the inherited ones.
-	//  If null, returns all the schedules without a site ID as target
-	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
-
-	// RegionId The region ID target of the schedules. If not specified,
-	//  returns all schedules (given the other query params).
-	//  If specified, returns the schedules that have the specified region ID applied to them,
-	//  i.e., target including the inherited ones (parent region if not null).
-	//  If null, returns all the schedules without a region ID as target.
-	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
-
-	// UnixEpoch Filter based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds.
-	UnixEpoch *string `form:"unixEpoch,omitempty" json:"unixEpoch,omitempty"`
-}
-
-// ScheduleServicePatchRepeatedSchedule2Params defines parameters for ScheduleServicePatchRepeatedSchedule2.
-type ScheduleServicePatchRepeatedSchedule2Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
-}
-
-// ScheduleServiceListSingleSchedules2Params defines parameters for ScheduleServiceListSingleSchedules2.
-type ScheduleServiceListSingleSchedules2Params struct {
-	// PageSize Defines the amount of items to be contained in a single page.
-	//  Default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Offset Index of the first item to return. This allows skipping items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// HostId The host ID target of the schedules. If not specified, returns all schedules
-	//  (given the other query params). If specified, returns the schedules that have
-	//  the specified host ID applied to them, i.e., target including the inherited ones
-	//  (parent site if not null). If null, returns all the schedules without a host ID as target.
-	HostId *string `form:"hostId,omitempty" json:"hostId,omitempty"`
-
-	// SiteId The site ID target of the schedules. If not specified, returns all schedules
-	//  (given the other query params). If specified, returns the schedules that have
-	//  the specified site ID applied to them, i.e., target including the inherited ones.
-	//  If null, returns all the schedules without a site ID as target
-	SiteId *string `form:"siteId,omitempty" json:"siteId,omitempty"`
-
-	// RegionId The region ID target of the schedules. If not specified,
-	//  returns all schedules (given the other query params).
-	//  If specified, returns the schedules that have the specified region ID applied to them,
-	//  i.e., target including the inherited ones (parent region if not null).
-	//  If null, returns all the schedules without a region ID as target.
-	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
-
-	// UnixEpoch Filter based on the timestamp, expected to be UNIX epoch UTC timestamp in seconds.
-	UnixEpoch *string `form:"unixEpoch,omitempty" json:"unixEpoch,omitempty"`
-}
-
-// ScheduleServicePatchSingleSchedule2Params defines parameters for ScheduleServicePatchSingleSchedule2.
-type ScheduleServicePatchSingleSchedule2Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+// WorkloadServicePatchWorkloadParams defines parameters for WorkloadServicePatchWorkload.
+type WorkloadServicePatchWorkloadParams struct {
+	// FieldMask Field mask to be applied on the patch of workload.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
 // CustomConfigServiceListCustomConfigsParams defines parameters for CustomConfigServiceListCustomConfigs.
@@ -3124,42 +3154,6 @@ type LocationServiceListLocationsParams struct {
 	ShowRegions *bool `form:"showRegions,omitempty" json:"showRegions,omitempty"`
 }
 
-// OSUpdatePolicyListOSUpdatePolicy3Params defines parameters for OSUpdatePolicyListOSUpdatePolicy3.
-type OSUpdatePolicyListOSUpdatePolicy3Params struct {
-	// OrderBy Optional comma separated list of fields to specify a sorting order.
-	//  See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
-
-	// Filter Optional filter to return only item of interest.
-	//  See https://google.aip.dev/160 for details.
-	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page.
-	//  Default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Offset Index of the first item to return. This allows skipping items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-}
-
-// OSUpdateRunListOSUpdateRun3Params defines parameters for OSUpdateRunListOSUpdateRun3.
-type OSUpdateRunListOSUpdateRun3Params struct {
-	// OrderBy Optional comma separated list of fields to specify a sorting order.
-	//  See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
-
-	// Filter Optional filter to return only item of interest.
-	//  See https://google.aip.dev/160 for details.
-	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
-
-	// PageSize Defines the amount of items to be contained in a single page.
-	//  Default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Offset Index of the first item to return. This allows skipping items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-}
-
 // OSUpdatePolicyListOSUpdatePolicyParams defines parameters for OSUpdatePolicyListOSUpdatePolicy.
 type OSUpdatePolicyListOSUpdatePolicyParams struct {
 	// OrderBy Optional comma separated list of fields to specify a sorting order.
@@ -3180,6 +3174,42 @@ type OSUpdatePolicyListOSUpdatePolicyParams struct {
 
 // OSUpdateRunListOSUpdateRunParams defines parameters for OSUpdateRunListOSUpdateRun.
 type OSUpdateRunListOSUpdateRunParams struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// OSUpdatePolicyListOSUpdatePolicy3Params defines parameters for OSUpdatePolicyListOSUpdatePolicy3.
+type OSUpdatePolicyListOSUpdatePolicy3Params struct {
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+
+	// Filter Optional filter to return only item of interest.
+	//  See https://google.aip.dev/160 for details.
+	Filter *string `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// OSUpdateRunListOSUpdateRun3Params defines parameters for OSUpdateRunListOSUpdateRun3.
+type OSUpdateRunListOSUpdateRun3Params struct {
 	// OrderBy Optional comma separated list of fields to specify a sorting order.
 	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
@@ -3235,8 +3265,8 @@ type RegionServiceListRegionsParams struct {
 	ShowTotalSites *bool `form:"showTotalSites,omitempty" json:"showTotalSites,omitempty"`
 }
 
-// SiteServiceListSites2Params defines parameters for SiteServiceListSites2.
-type SiteServiceListSites2Params struct {
+// SiteServiceListSitesParams defines parameters for SiteServiceListSites.
+type SiteServiceListSitesParams struct {
 	// OrderBy Optional comma separated list of fields to specify a sorting order.
 	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
@@ -3253,20 +3283,20 @@ type SiteServiceListSites2Params struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// SiteServicePatchSite2Params defines parameters for SiteServicePatchSite2.
-type SiteServicePatchSite2Params struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+// SiteServicePatchSiteParams defines parameters for SiteServicePatchSite.
+type SiteServicePatchSiteParams struct {
+	// FieldMask Field mask to be applied on the patch of site.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
 // RegionServicePatchRegionParams defines parameters for RegionServicePatchRegion.
 type RegionServicePatchRegionParams struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of region.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
-// ScheduleServiceListSchedulesParams defines parameters for ScheduleServiceListSchedules.
-type ScheduleServiceListSchedulesParams struct {
+// ScheduleServiceListSchedules3Params defines parameters for ScheduleServiceListSchedules3.
+type ScheduleServiceListSchedules3Params struct {
 	// PageSize Defines the amount of items to be contained in a single page.
 	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
@@ -3331,8 +3361,8 @@ type ScheduleServiceListRepeatedSchedulesParams struct {
 
 // ScheduleServicePatchRepeatedScheduleParams defines parameters for ScheduleServicePatchRepeatedSchedule.
 type ScheduleServicePatchRepeatedScheduleParams struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of repeated_schedule.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
 // ScheduleServiceListSingleSchedulesParams defines parameters for ScheduleServiceListSingleSchedules.
@@ -3369,12 +3399,12 @@ type ScheduleServiceListSingleSchedulesParams struct {
 
 // ScheduleServicePatchSingleScheduleParams defines parameters for ScheduleServicePatchSingleSchedule.
 type ScheduleServicePatchSingleScheduleParams struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of single_schedule.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
-// SiteServiceListSitesParams defines parameters for SiteServiceListSites.
-type SiteServiceListSitesParams struct {
+// SiteServiceListSites3Params defines parameters for SiteServiceListSites3.
+type SiteServiceListSites3Params struct {
 	// OrderBy Optional comma separated list of fields to specify a sorting order.
 	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
@@ -3394,37 +3424,65 @@ type SiteServiceListSitesParams struct {
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
 }
 
-// SiteServiceCreateSiteParams defines parameters for SiteServiceCreateSite.
-type SiteServiceCreateSiteParams struct {
+// SiteServiceCreateSite3Params defines parameters for SiteServiceCreateSite3.
+type SiteServiceCreateSite3Params struct {
 	// RegionId Optional region ID for hierarchical path support
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
 }
 
-// SiteServiceDeleteSiteParams defines parameters for SiteServiceDeleteSite.
-type SiteServiceDeleteSiteParams struct {
+// SiteServiceDeleteSite3Params defines parameters for SiteServiceDeleteSite3.
+type SiteServiceDeleteSite3Params struct {
 	// RegionId Optional region ID for hierarchical path support
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
 }
 
-// SiteServiceGetSiteParams defines parameters for SiteServiceGetSite.
-type SiteServiceGetSiteParams struct {
+// SiteServiceGetSite3Params defines parameters for SiteServiceGetSite3.
+type SiteServiceGetSite3Params struct {
 	// RegionId Optional region ID for hierarchical path support
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
 }
 
-// SiteServicePatchSiteParams defines parameters for SiteServicePatchSite.
-type SiteServicePatchSiteParams struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+// SiteServicePatchSite3Params defines parameters for SiteServicePatchSite3.
+type SiteServicePatchSite3Params struct {
+	// FieldMask Field mask to be applied on the patch of site.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 
 	// RegionId Optional region ID for hierarchical path support
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
 }
 
-// SiteServiceUpdateSiteParams defines parameters for SiteServiceUpdateSite.
-type SiteServiceUpdateSiteParams struct {
+// SiteServiceUpdateSite3Params defines parameters for SiteServiceUpdateSite3.
+type SiteServiceUpdateSite3Params struct {
 	// RegionId Optional region ID for hierarchical path support
 	RegionId *string `form:"regionId,omitempty" json:"regionId,omitempty"`
+}
+
+// TelemetryLogsGroupServiceListTelemetryLogsGroups3Params defines parameters for TelemetryLogsGroupServiceListTelemetryLogsGroups3.
+type TelemetryLogsGroupServiceListTelemetryLogsGroups3Params struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
+}
+
+// TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params defines parameters for TelemetryMetricsGroupServiceListTelemetryMetricsGroups3.
+type TelemetryMetricsGroupServiceListTelemetryMetricsGroups3Params struct {
+	// PageSize Defines the amount of items to be contained in a single page.
+	//  Default of 20.
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Offset Index of the first item to return. This allows skipping items.
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// OrderBy Optional comma separated list of fields to specify a sorting order.
+	//  See https://google.aip.dev/132 for details.
+	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
 }
 
 // TelemetryLogsGroupServiceListTelemetryLogsGroupsParams defines parameters for TelemetryLogsGroupServiceListTelemetryLogsGroups.
@@ -3443,34 +3501,6 @@ type TelemetryLogsGroupServiceListTelemetryLogsGroupsParams struct {
 
 // TelemetryMetricsGroupServiceListTelemetryMetricsGroupsParams defines parameters for TelemetryMetricsGroupServiceListTelemetryMetricsGroups.
 type TelemetryMetricsGroupServiceListTelemetryMetricsGroupsParams struct {
-	// PageSize Defines the amount of items to be contained in a single page.
-	//  Default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Offset Index of the first item to return. This allows skipping items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// OrderBy Optional comma separated list of fields to specify a sorting order.
-	//  See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
-}
-
-// TelemetryLogsGroupServiceListTelemetryLogsGroups2Params defines parameters for TelemetryLogsGroupServiceListTelemetryLogsGroups2.
-type TelemetryLogsGroupServiceListTelemetryLogsGroups2Params struct {
-	// PageSize Defines the amount of items to be contained in a single page.
-	//  Default of 20.
-	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
-
-	// Offset Index of the first item to return. This allows skipping items.
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
-
-	// OrderBy Optional comma separated list of fields to specify a sorting order.
-	//  See https://google.aip.dev/132 for details.
-	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
-}
-
-// TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params defines parameters for TelemetryMetricsGroupServiceListTelemetryMetricsGroups2.
-type TelemetryMetricsGroupServiceListTelemetryMetricsGroups2Params struct {
 	// PageSize Defines the amount of items to be contained in a single page.
 	//  Default of 20.
 	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty"`
@@ -3514,8 +3544,8 @@ type TelemetryLogsProfileServiceListTelemetryLogsProfilesParams struct {
 
 // TelemetryLogsProfileServicePatchTelemetryLogsProfileParams defines parameters for TelemetryLogsProfileServicePatchTelemetryLogsProfile.
 type TelemetryLogsProfileServicePatchTelemetryLogsProfileParams struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of telemetry_logs_profile.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
 // TelemetryMetricsProfileServiceListTelemetryMetricsProfilesParams defines parameters for TelemetryMetricsProfileServiceListTelemetryMetricsProfiles.
@@ -3549,8 +3579,8 @@ type TelemetryMetricsProfileServiceListTelemetryMetricsProfilesParams struct {
 
 // TelemetryMetricsProfileServicePatchTelemetryMetricsProfileParams defines parameters for TelemetryMetricsProfileServicePatchTelemetryMetricsProfile.
 type TelemetryMetricsProfileServicePatchTelemetryMetricsProfileParams struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+	// FieldMask Field mask to be applied on the patch of telemetry_metrics_profile.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
 // WorkloadMemberServiceListWorkloadMembersParams defines parameters for WorkloadMemberServiceListWorkloadMembers.
@@ -3571,8 +3601,8 @@ type WorkloadMemberServiceListWorkloadMembersParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// WorkloadServiceListWorkloadsParams defines parameters for WorkloadServiceListWorkloads.
-type WorkloadServiceListWorkloadsParams struct {
+// WorkloadServiceListWorkloads3Params defines parameters for WorkloadServiceListWorkloads3.
+type WorkloadServiceListWorkloads3Params struct {
 	// OrderBy Optional comma separated list of fields to specify a sorting order.
 	//  See https://google.aip.dev/132 for details.
 	OrderBy *string `form:"orderBy,omitempty" json:"orderBy,omitempty"`
@@ -3589,10 +3619,10 @@ type WorkloadServiceListWorkloadsParams struct {
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
-// WorkloadServicePatchWorkloadParams defines parameters for WorkloadServicePatchWorkload.
-type WorkloadServicePatchWorkloadParams struct {
-	// FieldMaskPaths The set of field mask paths.
-	FieldMaskPaths *[]string `form:"fieldMask.paths,omitempty" json:"fieldMask.paths,omitempty"`
+// WorkloadServicePatchWorkload3Params defines parameters for WorkloadServicePatchWorkload3.
+type WorkloadServicePatchWorkload3Params struct {
+	// FieldMask Field mask to be applied on the patch of workload.
+	FieldMask *string `form:"fieldMask,omitempty" json:"fieldMask,omitempty"`
 }
 
 // CustomConfigServiceCreateCustomConfig2JSONRequestBody defines body for CustomConfigServiceCreateCustomConfig2 for application/json ContentType.
@@ -3625,14 +3655,14 @@ type InstanceServiceUpdateInstance2JSONRequestBody = InstanceResource
 // LocalAccountServiceCreateLocalAccount2JSONRequestBody defines body for LocalAccountServiceCreateLocalAccount2 for application/json ContentType.
 type LocalAccountServiceCreateLocalAccount2JSONRequestBody = LocalAccountResource
 
-// OperatingSystemServiceCreateOperatingSystem3JSONRequestBody defines body for OperatingSystemServiceCreateOperatingSystem3 for application/json ContentType.
-type OperatingSystemServiceCreateOperatingSystem3JSONRequestBody = OperatingSystemResource
+// OperatingSystemServiceCreateOperatingSystem2JSONRequestBody defines body for OperatingSystemServiceCreateOperatingSystem2 for application/json ContentType.
+type OperatingSystemServiceCreateOperatingSystem2JSONRequestBody = OperatingSystemResource
 
-// OperatingSystemServicePatchOperatingSystem3JSONRequestBody defines body for OperatingSystemServicePatchOperatingSystem3 for application/json ContentType.
-type OperatingSystemServicePatchOperatingSystem3JSONRequestBody = OperatingSystemResource
+// OperatingSystemServicePatchOperatingSystem2JSONRequestBody defines body for OperatingSystemServicePatchOperatingSystem2 for application/json ContentType.
+type OperatingSystemServicePatchOperatingSystem2JSONRequestBody = OperatingSystemResource
 
-// OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody defines body for OperatingSystemServiceUpdateOperatingSystem3 for application/json ContentType.
-type OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody = OperatingSystemResource
+// OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody defines body for OperatingSystemServiceUpdateOperatingSystem2 for application/json ContentType.
+type OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody = OperatingSystemResource
 
 // OSUpdatePolicyCreateOSUpdatePolicy2JSONRequestBody defines body for OSUpdatePolicyCreateOSUpdatePolicy2 for application/json ContentType.
 type OSUpdatePolicyCreateOSUpdatePolicy2JSONRequestBody = OSUpdatePolicy
@@ -3649,38 +3679,38 @@ type RegionServicePatchRegion2JSONRequestBody = RegionResource
 // RegionServiceUpdateRegion2JSONRequestBody defines body for RegionServiceUpdateRegion2 for application/json ContentType.
 type RegionServiceUpdateRegion2JSONRequestBody = RegionResource
 
-// ScheduleServiceCreateRepeatedSchedule3JSONRequestBody defines body for ScheduleServiceCreateRepeatedSchedule3 for application/json ContentType.
-type ScheduleServiceCreateRepeatedSchedule3JSONRequestBody = RepeatedScheduleResource
+// ScheduleServiceCreateRepeatedSchedule2JSONRequestBody defines body for ScheduleServiceCreateRepeatedSchedule2 for application/json ContentType.
+type ScheduleServiceCreateRepeatedSchedule2JSONRequestBody = RepeatedScheduleResource
 
-// ScheduleServicePatchRepeatedSchedule3JSONRequestBody defines body for ScheduleServicePatchRepeatedSchedule3 for application/json ContentType.
-type ScheduleServicePatchRepeatedSchedule3JSONRequestBody = RepeatedScheduleResource
+// ScheduleServicePatchRepeatedSchedule2JSONRequestBody defines body for ScheduleServicePatchRepeatedSchedule2 for application/json ContentType.
+type ScheduleServicePatchRepeatedSchedule2JSONRequestBody = RepeatedScheduleResource
 
-// ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody defines body for ScheduleServiceUpdateRepeatedSchedule3 for application/json ContentType.
-type ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody = RepeatedScheduleResource
+// ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody defines body for ScheduleServiceUpdateRepeatedSchedule2 for application/json ContentType.
+type ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody = RepeatedScheduleResource
 
-// ScheduleServiceCreateSingleSchedule3JSONRequestBody defines body for ScheduleServiceCreateSingleSchedule3 for application/json ContentType.
-type ScheduleServiceCreateSingleSchedule3JSONRequestBody = SingleScheduleResource
+// ScheduleServiceCreateSingleSchedule2JSONRequestBody defines body for ScheduleServiceCreateSingleSchedule2 for application/json ContentType.
+type ScheduleServiceCreateSingleSchedule2JSONRequestBody = SingleScheduleResource
 
-// ScheduleServicePatchSingleSchedule3JSONRequestBody defines body for ScheduleServicePatchSingleSchedule3 for application/json ContentType.
-type ScheduleServicePatchSingleSchedule3JSONRequestBody = SingleScheduleResource
+// ScheduleServicePatchSingleSchedule2JSONRequestBody defines body for ScheduleServicePatchSingleSchedule2 for application/json ContentType.
+type ScheduleServicePatchSingleSchedule2JSONRequestBody = SingleScheduleResource
 
-// ScheduleServiceUpdateSingleSchedule3JSONRequestBody defines body for ScheduleServiceUpdateSingleSchedule3 for application/json ContentType.
-type ScheduleServiceUpdateSingleSchedule3JSONRequestBody = SingleScheduleResource
+// ScheduleServiceUpdateSingleSchedule2JSONRequestBody defines body for ScheduleServiceUpdateSingleSchedule2 for application/json ContentType.
+type ScheduleServiceUpdateSingleSchedule2JSONRequestBody = SingleScheduleResource
 
-// SiteServiceCreateSite3JSONRequestBody defines body for SiteServiceCreateSite3 for application/json ContentType.
-type SiteServiceCreateSite3JSONRequestBody = SiteResource
+// SiteServiceCreateSite2JSONRequestBody defines body for SiteServiceCreateSite2 for application/json ContentType.
+type SiteServiceCreateSite2JSONRequestBody = SiteResource
 
-// SiteServicePatchSite3JSONRequestBody defines body for SiteServicePatchSite3 for application/json ContentType.
-type SiteServicePatchSite3JSONRequestBody = SiteResource
+// SiteServicePatchSite2JSONRequestBody defines body for SiteServicePatchSite2 for application/json ContentType.
+type SiteServicePatchSite2JSONRequestBody = SiteResource
 
-// SiteServiceUpdateSite3JSONRequestBody defines body for SiteServiceUpdateSite3 for application/json ContentType.
-type SiteServiceUpdateSite3JSONRequestBody = SiteResource
+// SiteServiceUpdateSite2JSONRequestBody defines body for SiteServiceUpdateSite2 for application/json ContentType.
+type SiteServiceUpdateSite2JSONRequestBody = SiteResource
 
-// TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody defines body for TelemetryLogsGroupServiceCreateTelemetryLogsGroup3 for application/json ContentType.
-type TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody = TelemetryLogsGroupResource
+// TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody defines body for TelemetryLogsGroupServiceCreateTelemetryLogsGroup2 for application/json ContentType.
+type TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody = TelemetryLogsGroupResource
 
-// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody defines body for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3 for application/json ContentType.
-type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody = TelemetryMetricsGroupResource
+// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody defines body for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2 for application/json ContentType.
+type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody = TelemetryMetricsGroupResource
 
 // TelemetryLogsProfileServiceCreateTelemetryLogsProfile2JSONRequestBody defines body for TelemetryLogsProfileServiceCreateTelemetryLogsProfile2 for application/json ContentType.
 type TelemetryLogsProfileServiceCreateTelemetryLogsProfile2JSONRequestBody = TelemetryLogsProfileResource
@@ -3736,6 +3766,15 @@ type InstanceServicePatchInstanceJSONRequestBody = InstanceResource
 // InstanceServiceUpdateInstanceJSONRequestBody defines body for InstanceServiceUpdateInstance for application/json ContentType.
 type InstanceServiceUpdateInstanceJSONRequestBody = InstanceResource
 
+// OperatingSystemServiceCreateOperatingSystem3JSONRequestBody defines body for OperatingSystemServiceCreateOperatingSystem3 for application/json ContentType.
+type OperatingSystemServiceCreateOperatingSystem3JSONRequestBody = OperatingSystemResource
+
+// OperatingSystemServicePatchOperatingSystem3JSONRequestBody defines body for OperatingSystemServicePatchOperatingSystem3 for application/json ContentType.
+type OperatingSystemServicePatchOperatingSystem3JSONRequestBody = OperatingSystemResource
+
+// OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody defines body for OperatingSystemServiceUpdateOperatingSystem3 for application/json ContentType.
+type OperatingSystemServiceUpdateOperatingSystem3JSONRequestBody = OperatingSystemResource
+
 // OperatingSystemServiceCreateOperatingSystemJSONRequestBody defines body for OperatingSystemServiceCreateOperatingSystem for application/json ContentType.
 type OperatingSystemServiceCreateOperatingSystemJSONRequestBody = OperatingSystemResource
 
@@ -3745,32 +3784,32 @@ type OperatingSystemServicePatchOperatingSystemJSONRequestBody = OperatingSystem
 // OperatingSystemServiceUpdateOperatingSystemJSONRequestBody defines body for OperatingSystemServiceUpdateOperatingSystem for application/json ContentType.
 type OperatingSystemServiceUpdateOperatingSystemJSONRequestBody = OperatingSystemResource
 
-// OperatingSystemServiceCreateOperatingSystem2JSONRequestBody defines body for OperatingSystemServiceCreateOperatingSystem2 for application/json ContentType.
-type OperatingSystemServiceCreateOperatingSystem2JSONRequestBody = OperatingSystemResource
+// ScheduleServiceCreateRepeatedSchedule3JSONRequestBody defines body for ScheduleServiceCreateRepeatedSchedule3 for application/json ContentType.
+type ScheduleServiceCreateRepeatedSchedule3JSONRequestBody = RepeatedScheduleResource
 
-// OperatingSystemServicePatchOperatingSystem2JSONRequestBody defines body for OperatingSystemServicePatchOperatingSystem2 for application/json ContentType.
-type OperatingSystemServicePatchOperatingSystem2JSONRequestBody = OperatingSystemResource
+// ScheduleServicePatchRepeatedSchedule3JSONRequestBody defines body for ScheduleServicePatchRepeatedSchedule3 for application/json ContentType.
+type ScheduleServicePatchRepeatedSchedule3JSONRequestBody = RepeatedScheduleResource
 
-// OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody defines body for OperatingSystemServiceUpdateOperatingSystem2 for application/json ContentType.
-type OperatingSystemServiceUpdateOperatingSystem2JSONRequestBody = OperatingSystemResource
+// ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody defines body for ScheduleServiceUpdateRepeatedSchedule3 for application/json ContentType.
+type ScheduleServiceUpdateRepeatedSchedule3JSONRequestBody = RepeatedScheduleResource
 
-// ScheduleServiceCreateRepeatedSchedule2JSONRequestBody defines body for ScheduleServiceCreateRepeatedSchedule2 for application/json ContentType.
-type ScheduleServiceCreateRepeatedSchedule2JSONRequestBody = RepeatedScheduleResource
+// ScheduleServiceCreateSingleSchedule3JSONRequestBody defines body for ScheduleServiceCreateSingleSchedule3 for application/json ContentType.
+type ScheduleServiceCreateSingleSchedule3JSONRequestBody = SingleScheduleResource
 
-// ScheduleServicePatchRepeatedSchedule2JSONRequestBody defines body for ScheduleServicePatchRepeatedSchedule2 for application/json ContentType.
-type ScheduleServicePatchRepeatedSchedule2JSONRequestBody = RepeatedScheduleResource
+// ScheduleServicePatchSingleSchedule3JSONRequestBody defines body for ScheduleServicePatchSingleSchedule3 for application/json ContentType.
+type ScheduleServicePatchSingleSchedule3JSONRequestBody = SingleScheduleResource
 
-// ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody defines body for ScheduleServiceUpdateRepeatedSchedule2 for application/json ContentType.
-type ScheduleServiceUpdateRepeatedSchedule2JSONRequestBody = RepeatedScheduleResource
+// ScheduleServiceUpdateSingleSchedule3JSONRequestBody defines body for ScheduleServiceUpdateSingleSchedule3 for application/json ContentType.
+type ScheduleServiceUpdateSingleSchedule3JSONRequestBody = SingleScheduleResource
 
-// ScheduleServiceCreateSingleSchedule2JSONRequestBody defines body for ScheduleServiceCreateSingleSchedule2 for application/json ContentType.
-type ScheduleServiceCreateSingleSchedule2JSONRequestBody = SingleScheduleResource
+// WorkloadServiceCreateWorkloadJSONRequestBody defines body for WorkloadServiceCreateWorkload for application/json ContentType.
+type WorkloadServiceCreateWorkloadJSONRequestBody = WorkloadResource
 
-// ScheduleServicePatchSingleSchedule2JSONRequestBody defines body for ScheduleServicePatchSingleSchedule2 for application/json ContentType.
-type ScheduleServicePatchSingleSchedule2JSONRequestBody = SingleScheduleResource
+// WorkloadServicePatchWorkloadJSONRequestBody defines body for WorkloadServicePatchWorkload for application/json ContentType.
+type WorkloadServicePatchWorkloadJSONRequestBody = WorkloadResource
 
-// ScheduleServiceUpdateSingleSchedule2JSONRequestBody defines body for ScheduleServiceUpdateSingleSchedule2 for application/json ContentType.
-type ScheduleServiceUpdateSingleSchedule2JSONRequestBody = SingleScheduleResource
+// WorkloadServiceUpdateWorkloadJSONRequestBody defines body for WorkloadServiceUpdateWorkload for application/json ContentType.
+type WorkloadServiceUpdateWorkloadJSONRequestBody = WorkloadResource
 
 // CustomConfigServiceCreateCustomConfigJSONRequestBody defines body for CustomConfigServiceCreateCustomConfig for application/json ContentType.
 type CustomConfigServiceCreateCustomConfigJSONRequestBody = CustomConfigResource
@@ -3778,11 +3817,11 @@ type CustomConfigServiceCreateCustomConfigJSONRequestBody = CustomConfigResource
 // LocalAccountServiceCreateLocalAccountJSONRequestBody defines body for LocalAccountServiceCreateLocalAccount for application/json ContentType.
 type LocalAccountServiceCreateLocalAccountJSONRequestBody = LocalAccountResource
 
-// OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody defines body for OSUpdatePolicyCreateOSUpdatePolicy3 for application/json ContentType.
-type OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody = OSUpdatePolicy
-
 // OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody defines body for OSUpdatePolicyCreateOSUpdatePolicy for application/json ContentType.
 type OSUpdatePolicyCreateOSUpdatePolicyJSONRequestBody = OSUpdatePolicy
+
+// OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody defines body for OSUpdatePolicyCreateOSUpdatePolicy3 for application/json ContentType.
+type OSUpdatePolicyCreateOSUpdatePolicy3JSONRequestBody = OSUpdatePolicy
 
 // ProviderServiceCreateProviderJSONRequestBody defines body for ProviderServiceCreateProvider for application/json ContentType.
 type ProviderServiceCreateProviderJSONRequestBody = ProviderResource
@@ -3790,14 +3829,14 @@ type ProviderServiceCreateProviderJSONRequestBody = ProviderResource
 // RegionServiceCreateRegionJSONRequestBody defines body for RegionServiceCreateRegion for application/json ContentType.
 type RegionServiceCreateRegionJSONRequestBody = RegionResource
 
-// SiteServiceCreateSite2JSONRequestBody defines body for SiteServiceCreateSite2 for application/json ContentType.
-type SiteServiceCreateSite2JSONRequestBody = SiteResource
+// SiteServiceCreateSiteJSONRequestBody defines body for SiteServiceCreateSite for application/json ContentType.
+type SiteServiceCreateSiteJSONRequestBody = SiteResource
 
-// SiteServicePatchSite2JSONRequestBody defines body for SiteServicePatchSite2 for application/json ContentType.
-type SiteServicePatchSite2JSONRequestBody = SiteResource
+// SiteServicePatchSiteJSONRequestBody defines body for SiteServicePatchSite for application/json ContentType.
+type SiteServicePatchSiteJSONRequestBody = SiteResource
 
-// SiteServiceUpdateSite2JSONRequestBody defines body for SiteServiceUpdateSite2 for application/json ContentType.
-type SiteServiceUpdateSite2JSONRequestBody = SiteResource
+// SiteServiceUpdateSiteJSONRequestBody defines body for SiteServiceUpdateSite for application/json ContentType.
+type SiteServiceUpdateSiteJSONRequestBody = SiteResource
 
 // RegionServicePatchRegionJSONRequestBody defines body for RegionServicePatchRegion for application/json ContentType.
 type RegionServicePatchRegionJSONRequestBody = RegionResource
@@ -3823,26 +3862,26 @@ type ScheduleServicePatchSingleScheduleJSONRequestBody = SingleScheduleResource
 // ScheduleServiceUpdateSingleScheduleJSONRequestBody defines body for ScheduleServiceUpdateSingleSchedule for application/json ContentType.
 type ScheduleServiceUpdateSingleScheduleJSONRequestBody = SingleScheduleResource
 
-// SiteServiceCreateSiteJSONRequestBody defines body for SiteServiceCreateSite for application/json ContentType.
-type SiteServiceCreateSiteJSONRequestBody = SiteResource
+// SiteServiceCreateSite3JSONRequestBody defines body for SiteServiceCreateSite3 for application/json ContentType.
+type SiteServiceCreateSite3JSONRequestBody = SiteResource
 
-// SiteServicePatchSiteJSONRequestBody defines body for SiteServicePatchSite for application/json ContentType.
-type SiteServicePatchSiteJSONRequestBody = SiteResource
+// SiteServicePatchSite3JSONRequestBody defines body for SiteServicePatchSite3 for application/json ContentType.
+type SiteServicePatchSite3JSONRequestBody = SiteResource
 
-// SiteServiceUpdateSiteJSONRequestBody defines body for SiteServiceUpdateSite for application/json ContentType.
-type SiteServiceUpdateSiteJSONRequestBody = SiteResource
+// SiteServiceUpdateSite3JSONRequestBody defines body for SiteServiceUpdateSite3 for application/json ContentType.
+type SiteServiceUpdateSite3JSONRequestBody = SiteResource
+
+// TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody defines body for TelemetryLogsGroupServiceCreateTelemetryLogsGroup3 for application/json ContentType.
+type TelemetryLogsGroupServiceCreateTelemetryLogsGroup3JSONRequestBody = TelemetryLogsGroupResource
+
+// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody defines body for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3 for application/json ContentType.
+type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup3JSONRequestBody = TelemetryMetricsGroupResource
 
 // TelemetryLogsGroupServiceCreateTelemetryLogsGroupJSONRequestBody defines body for TelemetryLogsGroupServiceCreateTelemetryLogsGroup for application/json ContentType.
 type TelemetryLogsGroupServiceCreateTelemetryLogsGroupJSONRequestBody = TelemetryLogsGroupResource
 
 // TelemetryMetricsGroupServiceCreateTelemetryMetricsGroupJSONRequestBody defines body for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup for application/json ContentType.
 type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroupJSONRequestBody = TelemetryMetricsGroupResource
-
-// TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody defines body for TelemetryLogsGroupServiceCreateTelemetryLogsGroup2 for application/json ContentType.
-type TelemetryLogsGroupServiceCreateTelemetryLogsGroup2JSONRequestBody = TelemetryLogsGroupResource
-
-// TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody defines body for TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2 for application/json ContentType.
-type TelemetryMetricsGroupServiceCreateTelemetryMetricsGroup2JSONRequestBody = TelemetryMetricsGroupResource
 
 // TelemetryLogsProfileServiceCreateTelemetryLogsProfileJSONRequestBody defines body for TelemetryLogsProfileServiceCreateTelemetryLogsProfile for application/json ContentType.
 type TelemetryLogsProfileServiceCreateTelemetryLogsProfileJSONRequestBody = TelemetryLogsProfileResource
@@ -3865,11 +3904,11 @@ type TelemetryMetricsProfileServiceUpdateTelemetryMetricsProfileJSONRequestBody 
 // WorkloadMemberServiceCreateWorkloadMemberJSONRequestBody defines body for WorkloadMemberServiceCreateWorkloadMember for application/json ContentType.
 type WorkloadMemberServiceCreateWorkloadMemberJSONRequestBody = WorkloadMember
 
-// WorkloadServiceCreateWorkloadJSONRequestBody defines body for WorkloadServiceCreateWorkload for application/json ContentType.
-type WorkloadServiceCreateWorkloadJSONRequestBody = WorkloadResource
+// WorkloadServiceCreateWorkload3JSONRequestBody defines body for WorkloadServiceCreateWorkload3 for application/json ContentType.
+type WorkloadServiceCreateWorkload3JSONRequestBody = WorkloadResource
 
-// WorkloadServicePatchWorkloadJSONRequestBody defines body for WorkloadServicePatchWorkload for application/json ContentType.
-type WorkloadServicePatchWorkloadJSONRequestBody = WorkloadResource
+// WorkloadServicePatchWorkload3JSONRequestBody defines body for WorkloadServicePatchWorkload3 for application/json ContentType.
+type WorkloadServicePatchWorkload3JSONRequestBody = WorkloadResource
 
-// WorkloadServiceUpdateWorkloadJSONRequestBody defines body for WorkloadServiceUpdateWorkload for application/json ContentType.
-type WorkloadServiceUpdateWorkloadJSONRequestBody = WorkloadResource
+// WorkloadServiceUpdateWorkload3JSONRequestBody defines body for WorkloadServiceUpdateWorkload3 for application/json ContentType.
+type WorkloadServiceUpdateWorkload3JSONRequestBody = WorkloadResource
