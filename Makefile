@@ -98,7 +98,7 @@ fetch-cluster-openapi:
 
 fetch-infra-openapi:
 	@# Help: Fetch the Infra Manager OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-core/main/apiv2/api/openapi/openapi.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 
 fetch-rps-openapi:
 	@# Help: Fetch the OpenDMT RPS OpenAPI spec
