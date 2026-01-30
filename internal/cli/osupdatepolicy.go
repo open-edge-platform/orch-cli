@@ -108,13 +108,14 @@ func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy)
 
 	_, _ = fmt.Fprintf(writer, "Name:\t %s\n", OSUpdatePolicy.Name)
 	_, _ = fmt.Fprintf(writer, "Resource ID:\t %s\n", *OSUpdatePolicy.ResourceId)
-	_, _ = fmt.Fprintf(writer, "Target OS ID:\t %s\n", *OSUpdatePolicy.TargetOsId)
+	_, _ = fmt.Fprintf(writer, "Target OS ID:\t %s\n", *OSUpdatePolicy.TargetOs.OsResourceID)
+	_, _ = fmt.Fprintf(writer, "Target OS Name:\t %s\n", *OSUpdatePolicy.TargetOs.Name)
 	_, _ = fmt.Fprintf(writer, "Kernel Command:\t %s\n", *OSUpdatePolicy.UpdateKernelCommand)
 	_, _ = fmt.Fprintf(writer, "Description:\t %v\n", *OSUpdatePolicy.Description)
 	_, _ = fmt.Fprintf(writer, "Update Packages:\t %s\n", *OSUpdatePolicy.UpdatePackages)
 	_, _ = fmt.Fprintf(writer, "Update Policy:\t %s\n", *OSUpdatePolicy.UpdatePolicy)
 	_, _ = fmt.Fprintf(writer, "Create at:\t %v\n", *OSUpdatePolicy.Timestamps.CreatedAt)
-	_, _ = fmt.Fprintf(writer, "Updated at:\t %v\n", *OSUpdatePolicy.Timestamps.CreatedAt)
+	_, _ = fmt.Fprintf(writer, "Updated at:\t %v\n", *OSUpdatePolicy.Timestamps.UpdatedAt)
 
 }
 
