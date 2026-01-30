@@ -954,21 +954,21 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		).AnyTimes()
 
 		// Mock ListSites (used by list, get, create, delete commands)
-		mockInfraClient.EXPECT().SiteServiceListSites2WithResponse(
+		mockInfraClient.EXPECT().SiteServiceListSitesWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName, resourceId string, params *infra.SiteServiceListSites2Params, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceListSites2Response, error) {
+			func(ctx context.Context, projectName, resourceId string, params *infra.SiteServiceListSitesParams, reqEditors ...infra.RequestEditorFn) (*infra.SiteServiceListSitesResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
 				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				_ = resourceId // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
-					return &infra.SiteServiceListSites2Response{
+					return &infra.SiteServiceListSitesResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
 				case "nonexistent-site":
-					return &infra.SiteServiceListSites2Response{
+					return &infra.SiteServiceListSitesResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.ListSitesResponse{
 							Sites:         []infra.SiteResource{},
@@ -976,7 +976,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						},
 					}, nil
 				default:
-					return &infra.SiteServiceListSites2Response{
+					return &infra.SiteServiceListSitesResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.ListSitesResponse{
 							Sites: []infra.SiteResource{
