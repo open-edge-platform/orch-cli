@@ -113,7 +113,7 @@ func getRootCmd() *cobra.Command {
 		versionCommand(),
 	)
 
-	addCommandIfFeatureEnabled(rootCmd, getGenerateCommand(), OmxFeature)
+	addCommandIfFeatureEnabled(rootCmd, getGenerateCommand(), OxmFeature)
 
 	addCommandIfFeatureEnabled(rootCmd, getDeauthorizeCommand(), OnboardingFeature)
 

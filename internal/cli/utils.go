@@ -38,10 +38,10 @@ const (
 	OnboardingFeature    = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
 	ProvisioningFeature  = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"
 	Day2Feature          = "orchestrator.features.edge-infrastructure-manager.day2.installed"
-	OmxFeature           = "orchestrator.features.edge-infrastructure-manager.oxm-profile.installed"
+	OxmFeature           = "orchestrator.features.edge-infrastructure-manager.oxm-profile.installed"
 	AppOrchFeature       = "orchestrator.features.application-orchestration.installed"
 	ClusterOrchFeature   = "orchestrator.features.cluster-orchestration.installed"
-	ObservabilityFeature = "orchestrator.features.observability.installed"
+	ObservabilityFeature = "orchestrator.features.orchestrator-observability.installed"
 	MultitenancyFeature  = "orchestrator.features.multitenancy.installed"
 	OrchVersion          = "orchestrator.version"
 )
@@ -674,8 +674,8 @@ func isFeatureEnabled(feature string) bool {
 		return viper.GetBool(ProvisioningFeature)
 	case Day2Feature:
 		return viper.GetBool(Day2Feature)
-	case OmxFeature:
-		return viper.GetBool(OmxFeature)
+	case OxmFeature:
+		return viper.GetBool(OxmFeature)
 	case ObservabilityFeature:
 		return viper.GetBool(ObservabilityFeature)
 	case AppOrchFeature:

@@ -208,6 +208,7 @@ func logout(_ *cobra.Command, _ []string) error {
 
 		// Clean up orchestrator configuration
 		viper.Set(OobFeature, false)
+		viper.Set(OxmFeature, false)
 		viper.Set(OnboardingFeature, false)
 		viper.Set(ProvisioningFeature, false)
 		viper.Set(Day2Feature, false)
