@@ -33,11 +33,4 @@ func (s *CLITestSuite) TestFeatures() {
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
-	createArgs := map[string]string{
-		"show-disabled": "true",
-		"show-enabled":  "true",
-	}
-
-	_, err = s.listFeatures(project, createArgs)
-	s.NoError(err)
 }

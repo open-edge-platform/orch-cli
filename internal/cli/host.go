@@ -705,6 +705,13 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 				return
 			}
 		}
+	} else {
+		err = setHostName(ctx, hClient, projectName, hostID)
+		if err != nil {
+			rIn.Error = err.Error()
+			*erringRecords = append(*erringRecords, rIn)
+			return
+		}
 	}
 
 	// Print host_id from response if successful
@@ -2654,6 +2661,27 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientW
 	}
 
 	err = checkResponse(sresp.HTTPResponse, sresp.Body, "error while linking site and metadata\n\n")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setHostName(ctx context.Context, hClient infra.ClientWithResponsesInterface,
+	projectName, hostID string) error {
+
+	// Update host name
+	resp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+		infra.HostServicePatchHostJSONRequestBody{
+			Name: hostID,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		err := processError(err)
+		return err
+	}
+
+	err = checkResponse(resp.HTTPResponse, resp.Body, "error while setting host name\n\n")
 	if err != nil {
 		return err
 	}
