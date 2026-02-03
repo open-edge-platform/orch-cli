@@ -173,7 +173,11 @@ func runCreateRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating registry %s", name))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating registry %s", name)); err != nil {
+		return err
+	}
+	fmt.Printf("Registry '%s' created successfully\n", name)
+	return nil
 }
 
 func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
@@ -272,7 +276,11 @@ func runSetRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating registry %s", name))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating registry %s", name)); err != nil {
+		return err
+	}
+	fmt.Printf("Registry '%s' updated successfully\n", name)
+	return nil
 }
 
 func runDeleteRegistryCommand(cmd *cobra.Command, args []string) error {
@@ -295,7 +303,11 @@ func runDeleteRegistryCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting registry %s", name))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting registry %s", name)); err != nil {
+		return err
+	}
+	fmt.Printf("Registry '%s' deleted successfully\n", name)
+	return nil
 }
 
 func printRegistryEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {
