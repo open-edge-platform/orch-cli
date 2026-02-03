@@ -186,7 +186,7 @@ func login(cmd *cobra.Command, args []string) error {
 		if err := setDefaultFeatureFlags(); err != nil {
 			return err
 		}
-		return fmt.Errorf("failed to get orchestrator info - setting all the features to enabled by default for backward compatibility: %s", resp.Status())
+		return fmt.Errorf("the Edge Orchestrator Component Status service info not available - setting relevant features to enabled by default for backward compatibility")
 	}
 
 	if err := loadFeatureConfig(resp.JSON200); err != nil {
@@ -253,6 +253,7 @@ func setDefaultFeatureFlags() error {
 	viper.Set(OobFeature, true)
 	viper.Set(OnboardingFeature, true)
 	viper.Set(ProvisioningFeature, true)
+	viper.Set(OxmFeature, true)
 	viper.Set(Day2Feature, true)
 	viper.Set(AppOrchFeature, true)
 	viper.Set(ClusterOrchFeature, true)

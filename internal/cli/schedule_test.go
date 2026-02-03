@@ -159,14 +159,14 @@ func (s *CLITestSuite) TestSchedule() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Name":   name,
-			"Target": siteID,
-			"Type":   "Maintenance",
+			"Name":        name,
+			"Target":      siteID,
+			"Resource ID": sresourceID,
 		},
 		{
-			"Name":   name,
-			"Target": siteID,
-			"Type":   "Maintenance",
+			"Name":        name,
+			"Target":      siteID,
+			"Resource ID": rresourceID,
 		},
 	}
 
@@ -186,12 +186,14 @@ func (s *CLITestSuite) TestSchedule() {
 			"Name":        name,
 			"Target":      siteID,
 			"Resource ID": sresourceID,
+			"Status":      "Maintenance",
 			"Type":        "single",
 		},
 		{
 			"Name":        name,
 			"Target":      siteID,
 			"Resource ID": rresourceID,
+			"Status":      "Maintenance",
 			"Type":        "repeated",
 		},
 	}

@@ -19,7 +19,7 @@ import (
 	clustermock "github.com/open-edge-platform/cli/internal/cli/mocks/cluster"
 	deploymentmock "github.com/open-edge-platform/cli/internal/cli/mocks/deployment"
 	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
-	orchestratormock "github.com/open-edge-platform/cli/internal/cli/mocks/orchestrator"
+	orchutilsmock "github.com/open-edge-platform/cli/internal/cli/mocks/orchutilities"
 	rpsmock "github.com/open-edge-platform/cli/internal/cli/mocks/rps"
 	tenancymock "github.com/open-edge-platform/cli/internal/cli/mocks/tenancy"
 
@@ -67,7 +67,7 @@ func (s *CLITestSuite) SetupSuite() {
 	RpsFactory = rpsmock.CreateRpsMock(mctrl)
 	DeploymentFactory = deploymentmock.CreateDeploymentMock(mctrl)
 	TenancyFactory = tenancymock.CreateTenancyMock(mctrl)
-	OrchestratorFactory = orchestratormock.CreateOrchestratorMock(mctrl)
+	OrchestratorFactory = orchutilsmock.CreateOrchestratorMock(mctrl)
 }
 
 func (s *CLITestSuite) TearDownSuite() {

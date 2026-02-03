@@ -27,8 +27,9 @@ func (s *CLITestSuite) TestFeatures() {
 		"edge-infrastructure-manager.onboarding":   "enabled",
 		"edge-infrastructure-manager.oob":          "enabled",
 		"edge-infrastructure-manager.provisioning": "enabled",
+		"edge-infrastructure-manager.oxm-profile":  "enabled",
 		"multitenancy":                             "enabled",
-		"observability":                            "enabled",
+		"orchestrator-observability":               "enabled",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
