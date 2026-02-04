@@ -30,7 +30,7 @@ const createRegionExamples = `# Create specific region
 orch-cli create region name --project some-project --type country
 
 # Create specific region as a subregion to another region
-orch-cli create region name --project some-project --parent-region region-bbbb1111 --type country
+orch-cli create region name --project some-project --parent region-bbbb1111 --type country
 
 --type = country/state/county/region/city`
 
@@ -78,7 +78,7 @@ func getCreateRegionCommand() *cobra.Command {
 		Aliases: regionAliases,
 		RunE:    runCreateRegionCommand,
 	}
-	cmd.PersistentFlags().StringP("parent", "f", viper.GetString("parent"), "Optional parent region used ot create a sub region: --parent region-aaaa1111")
+	cmd.PersistentFlags().StringP("parent", "f", viper.GetString("parent"), "Optional parent region used to create a sub region: --parent region-aaaa1111")
 	cmd.PersistentFlags().StringP("type", "t", viper.GetString("type"), "Mandatory flag to provide a type of region: --type country/state/county/region/city")
 	return cmd
 }

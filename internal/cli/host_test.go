@@ -375,7 +375,7 @@ func (s *CLITestSuite) TestHost() {
 	expectedOutput := map[string]string{
 		"Detailed Host Information":       "",
 		"Host Info:":                      "",
-		"-   Host Resurce ID:":            "host-abc12345",
+		"-   Host Resource ID:":           "host-abc12345",
 		"-   Name:":                       "edge-host-001",
 		"-   OS Profile:":                 "Edge Microvisor Toolkit 3.0.20250504",
 		"-   Host Status Details:":        "INSTANCE_STATUS_RUNNING",

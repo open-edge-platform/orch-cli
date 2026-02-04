@@ -24,25 +24,6 @@ func printFeatures(cmd *cobra.Command) {
 
 }
 
-func printCommands(cmd *cobra.Command, ctype string) {
-	switch ctype {
-	case "disabled":
-		fmt.Fprintln(cmd.OutOrStdout(), "\nDisabled Commands:")
-		for _, c := range disabledCommands {
-			// Strip "orch-cli " prefix from root-level commands
-			displayCmd := strings.TrimPrefix(c, "orch-cli ")
-			fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", displayCmd)
-		}
-	case "enabled":
-		fmt.Fprintln(cmd.OutOrStdout(), "\nEnabled Commands:")
-		for _, c := range enabledCommands {
-			// Strip "orch-cli " prefix from root-level commands
-			displayCmd := strings.TrimPrefix(c, "orch-cli ")
-			fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", displayCmd)
-		}
-	}
-}
-
 func printFeaturesRecursive(cmd *cobra.Command, features map[string]interface{}, prefix string, depth int) {
 	// Sort keys for consistent output
 	keys := make([]string, 0, len(features))
@@ -61,13 +42,25 @@ func printFeaturesRecursive(cmd *cobra.Command, features map[string]interface{},
 			fullKey = prefix + ".installed"
 		}
 
-		if v, ok := installedValue.(bool); ok {
+		switch v := installedValue.(type) {
+		case bool:
 			status := "disabled"
 			if v {
 				status = "enabled"
 			}
 			displayKey := strings.TrimSuffix(fullKey, ".installed")
 			fmt.Fprintf(cmd.OutOrStdout(), "%s%s | %s\n", indent, displayKey, status)
+		case string:
+			// Handle string "true"/"false" as boolean values
+			lowerV := strings.ToLower(v)
+			if lowerV == "true" || lowerV == "false" {
+				status := "disabled"
+				if lowerV == "true" {
+					status = "enabled"
+				}
+				displayKey := strings.TrimSuffix(fullKey, ".installed")
+				fmt.Fprintf(cmd.OutOrStdout(), "%s%s | %s\n", indent, displayKey, status)
+			}
 		}
 	}
 
@@ -92,6 +85,21 @@ func printFeaturesRecursive(cmd *cobra.Command, features map[string]interface{},
 			// Remove .installed suffix from the display name
 			displayKey := strings.TrimSuffix(fullKey, ".installed")
 			fmt.Fprintf(cmd.OutOrStdout(), "%s%s | %s\n", indent, displayKey, status)
+		case string:
+			// Handle string "true"/"false" as boolean values
+			lowerV := strings.ToLower(v)
+			if lowerV == "true" || lowerV == "false" {
+				status := "disabled"
+				if lowerV == "true" {
+					status = "enabled"
+				}
+				displayKey := strings.TrimSuffix(fullKey, ".installed")
+				fmt.Fprintf(cmd.OutOrStdout(), "%s%s | %s\n", indent, displayKey, status)
+			} else {
+				// Other string values
+				displayKey := strings.TrimSuffix(fullKey, ".installed")
+				fmt.Fprintf(cmd.OutOrStdout(), "%s%s | %v\n", indent, displayKey, v)
+			}
 		case map[string]interface{}:
 			// Print nested features with increased depth
 			printFeaturesRecursive(cmd, v, fullKey, depth+1)
@@ -111,21 +119,10 @@ func getListFeaturesCommand() *cobra.Command {
 		Example: "orch-cli list features --project some-project",
 		RunE:    runListFeaturesCommand,
 	}
-	cmd.Flags().BoolP("show-disabled", "d", false, "Show the commands which are disabled for the target Edge Orchestrator deployment configuration")
-	cmd.Flags().BoolP("show-enabled", "e", false, "Show the commands which are exclusively enabled for the target Edge Orchestrator deployment configuration")
 	return cmd
 }
 
 func runListFeaturesCommand(cmd *cobra.Command, _ []string) error {
-	showDisabled, _ := cmd.Flags().GetBool("show-disabled")
-	showEnabled, _ := cmd.Flags().GetBool("show-enabled")
-
 	printFeatures(cmd)
-	if showDisabled {
-		printCommands(cmd, "disabled")
-	}
-	if showEnabled {
-		printCommands(cmd, "enabled")
-	}
 	return nil
 }

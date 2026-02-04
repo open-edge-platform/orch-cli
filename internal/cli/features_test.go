@@ -27,17 +27,11 @@ func (s *CLITestSuite) TestFeatures() {
 		"edge-infrastructure-manager.onboarding":   "enabled",
 		"edge-infrastructure-manager.oob":          "enabled",
 		"edge-infrastructure-manager.provisioning": "enabled",
+		"edge-infrastructure-manager.oxm-profile":  "enabled",
 		"multitenancy":                             "enabled",
-		"observability":                            "enabled",
+		"orchestrator-observability":               "enabled",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
-	createArgs := map[string]string{
-		"show-disabled": "true",
-		"show-enabled":  "true",
-	}
-
-	_, err = s.listFeatures(project, createArgs)
-	s.NoError(err)
 }

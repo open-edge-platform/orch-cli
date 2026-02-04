@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: (C) 2025 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-package orchestrator
+package orchutilities
 
 import (
 	"context"
@@ -54,12 +54,15 @@ func CreateOrchestratorMock(mctrl *gomock.Controller) interfaces.OrchestratorFac
 									"day2": {
 										Installed: boolPtr(true),
 									},
+									"oxm-profile": {
+										Installed: boolPtr(true),
+									},
 								},
 							},
 							"multitenancy": {
 								Installed: boolPtr(true),
 							},
-							"observability": {
+							"orchestrator-observability": {
 								Installed: boolPtr(true),
 							},
 						},
