@@ -185,7 +185,16 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating deployment for application %s:%s", appName, appVersion))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating deployment for application %s:%s", appName, appVersion)); err != nil {
+		return err
+	}
+	// Extract deployment ID from response if available
+	if resp.JSON200 != nil && resp.JSON200.DeploymentId != "" {
+		fmt.Printf("Deployment created successfully (ID: %s)\n", resp.JSON200.DeploymentId)
+	} else {
+		fmt.Printf("Deployment for '%s:%s' created successfully\n", appName, appVersion)
+	}
+	return nil
 }
 
 func getOverrideValues(cmd *cobra.Command) ([]depapi.OverrideValues, error) {
@@ -430,7 +439,11 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error updating deployment %s", deploymentID))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error updating deployment %s", deploymentID)); err != nil {
+		return err
+	}
+	fmt.Printf("Deployment '%s' updated successfully\n", deploymentID)
+	return nil
 }
 
 func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
@@ -472,7 +485,11 @@ func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error upgrading deployment %s to version %s", deploymentID, newPackageVersion))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error upgrading deployment %s to version %s", deploymentID, newPackageVersion)); err != nil {
+		return err
+	}
+	fmt.Printf("Deployment '%s' upgraded successfully to version '%s'\n", deploymentID, newPackageVersion)
+	return nil
 }
 
 func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
@@ -488,7 +505,11 @@ func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting deployment %s", deploymentID))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting deployment %s", deploymentID)); err != nil {
+		return err
+	}
+	fmt.Printf("Deployment '%s' deleted successfully\n", deploymentID)
+	return nil
 }
 
 // getValidApplicationNames fetches the deployment package and returns the list of valid application names
