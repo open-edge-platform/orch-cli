@@ -1981,7 +1981,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 	host := *iresp.JSON200
 
-	if (powerFlag != "" || policyFlag != "") && host.Instance != nil {
+	if powerFlag != "" || policyFlag != "" {
 		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
 			PowerCommandPolicy: policy,
 			DesiredPowerState:  power,
@@ -2007,7 +2007,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if amtState != nil && host.Instance != nil {
+	if amtState != nil {
 		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
 			DesiredAmtState: amtState,
 			Name:            host.Name,
