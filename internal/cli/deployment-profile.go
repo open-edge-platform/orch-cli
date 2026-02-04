@@ -155,7 +155,11 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating deployment profile %s", profileName))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating deployment profile %s", profileName)); err != nil {
+		return err
+	}
+	fmt.Printf("Deployment profile '%s' created successfully for deployment package '%s:%s'\n", profileName, name, version)
+	return nil
 }
 
 func runListDeploymentProfilesCommand(cmd *cobra.Command, args []string) error {
@@ -260,8 +264,12 @@ func runSetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating deployment profile %s for deployment package %s:%s",
-		profileName, name, version))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating deployment profile %s for deployment package %s:%s",
+		profileName, name, version)); err != nil {
+		return err
+	}
+	fmt.Printf("Deployment profile '%s' updated successfully for deployment package '%s:%s'\n", profileName, name, version)
+	return nil
 }
 
 func runDeleteDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
@@ -309,6 +317,10 @@ func runDeleteDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 	if err != nil {
 		return err
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting deployment profile %s for deployment package %s:%s",
-		profileName, name, version))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting deployment profile %s for deployment package %s:%s",
+		profileName, name, version)); err != nil {
+		return err
+	}
+	fmt.Printf("Deployment profile '%s' deleted successfully from deployment package '%s:%s'\n", profileName, name, version)
+	return nil
 }
