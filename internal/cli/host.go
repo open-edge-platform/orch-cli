@@ -2672,7 +2672,7 @@ func setHostName(ctx context.Context, hClient infra.ClientWithResponsesInterface
 	projectName, hostID string) error {
 
 	// Update host name
-	resp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+	resp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{},
 		infra.HostServicePatchHostJSONRequestBody{
 			Name: hostID,
 		}, auth.AddAuthHeader)
