@@ -45,13 +45,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project", "nonexistent-init":
 					return &infra.CustomConfigServiceListCustomConfigsResponse{
 						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.NotFound
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.CustomConfigServiceListCustomConfigsResponse{
@@ -88,24 +81,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.CustomConfigServiceCreateCustomConfigResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				case "duplicate-config-project":
 					return &infra.CustomConfigServiceCreateCustomConfigResponse{
 						HTTPResponse: &http.Response{StatusCode: 409, Status: "Conflict"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Custom config with same name already exists"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.AlreadyExists
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.CustomConfigServiceCreateCustomConfigResponse{
@@ -136,26 +115,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.CustomConfigServiceDeleteCustomConfigResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch configName {
 					case "nonexistent-config", "invalid-config-name":
 						return &infra.CustomConfigServiceDeleteCustomConfigResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("Custom config not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.CustomConfigServiceDeleteCustomConfigResponse{
@@ -222,13 +187,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project", "nonexistent-user":
 					return &infra.LocalAccountServiceListLocalAccountsResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.LocalAccountServiceListLocalAccountsResponse{
@@ -266,13 +224,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project":
 					return &infra.OperatingSystemServiceListOperatingSystemsResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.OperatingSystemServiceListOperatingSystemsResponse{
@@ -322,13 +273,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.OperatingSystemServiceCreateOperatingSystemResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 
 				default:
@@ -370,13 +314,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.OperatingSystemServiceDeleteOperatingSystemResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.OperatingSystemServiceDeleteOperatingSystemResponse{
@@ -398,13 +335,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project":
 					return &infra.HostServiceListHostsResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.HostServiceListHostsResponse{
@@ -499,9 +429,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		).AnyTimes()
 
 		mockInfraClient.EXPECT().InstanceServicePatchInstanceWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ string, _ infra.InstanceServicePatchInstanceJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.InstanceServicePatchInstanceResponse, error) {
+			func(_ context.Context, _ string, _ string, _ *infra.InstanceServicePatchInstanceParams, _ infra.InstanceServicePatchInstanceJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.InstanceServicePatchInstanceResponse, error) {
 				return &infra.InstanceServicePatchInstanceResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					// Add JSON200 or other fields if your code expects them
@@ -520,13 +450,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.HostServiceCreateHostResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.HostServiceCreateHostResponse{
@@ -587,13 +510,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.HostServiceDeleteHostResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.HostServiceDeleteHostResponse{
@@ -616,26 +532,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.HostServiceGetHostResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch hostId {
 					case "host-11111111", "non-existent-host", "invalid-host-id":
 						return &infra.HostServiceGetHostResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("Host not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					case "host-abcd1000":
 						return &infra.HostServiceGetHostResponse{
@@ -784,35 +686,22 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 
 		// Mock RegisterHost (used by create command)
 		mockInfraClient.EXPECT().HostServiceRegisterHostWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName string, body infra.HostServiceRegisterHostJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceRegisterHostResponse, error) {
+			func(ctx context.Context, projectName string, params *infra.HostServiceRegisterHostParams, body infra.HostServiceRegisterHostJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.HostServiceRegisterHostResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.HostServiceRegisterHostResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				case "duplicate-host-project":
 					// Simulate FailedPrecondition error for duplicate host registration
 					return &infra.HostServiceRegisterHostResponse{
 						HTTPResponse: &http.Response{StatusCode: 409, Status: "Conflict"},
 						Body:         []byte(`{"code":"FailedPrecondition","message":"Host with same serial number and UUID already exists"}`),
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Host with same serial number and UUID already exists"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.FailedPrecondition
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					// Generate a new host ID based on serial number or UUID
@@ -863,26 +752,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.HostServiceInvalidateHostResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch hostId {
 					case "host-11111111", "non-existent-host", "invalid-host-id":
 						return &infra.HostServiceInvalidateHostResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("Host not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.HostServiceInvalidateHostResponse{
@@ -895,33 +770,19 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 
 		// Mock PatchHost (used by patch command)
 		mockInfraClient.EXPECT().HostServicePatchHostWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName, hostId string, body infra.HostServicePatchHostJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.HostServicePatchHostResponse, error) {
+			func(ctx context.Context, projectName, hostId string, _ *infra.HostServicePatchHostParams, body infra.HostServicePatchHostJSONRequestBody, reqEditors ...infra.RequestEditorFn) (*infra.HostServicePatchHostResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "invalid-project":
 					return &infra.HostServicePatchHostResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				case "host-not-found-project":
 					return &infra.HostServicePatchHostResponse{
 						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Host not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.NotFound
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.HostServicePatchHostResponse{
@@ -1105,13 +966,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project":
 					return &infra.SiteServiceListSitesResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				case "nonexistent-site":
 					return &infra.SiteServiceListSitesResponse{
@@ -1173,26 +1027,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.SiteServiceDeleteSiteResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch siteId {
 					case "nonexistent-site", "invalid-site-id":
 						return &infra.SiteServiceDeleteSiteResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("Site not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.SiteServiceDeleteSiteResponse{
@@ -1216,13 +1056,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.SiteServiceCreateSiteResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.SiteServiceCreateSiteResponse{
@@ -1258,13 +1091,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.SiteServiceGetSiteResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.SiteServiceGetSiteResponse{
@@ -1312,24 +1138,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.RegionServiceCreateRegionResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				case "invalid-parent-project":
 					return &infra.RegionServiceCreateRegionResponse{
 						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Parent region not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.NotFound
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.RegionServiceCreateRegionResponse{
@@ -1376,13 +1188,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project":
 					return &infra.RegionServiceListRegionsResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				case "empty-regions-project":
 					return &infra.RegionServiceListRegionsResponse{
@@ -1503,26 +1308,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.RegionServiceGetRegionResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch regionId {
 					case "region-11111111", "invalid-region-id":
 						return &infra.RegionServiceGetRegionResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("Region not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.RegionServiceGetRegionResponse{
@@ -1567,26 +1358,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.RegionServiceDeleteRegionResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch regionId {
 					case "nonexistent-region", "invalid-region-id":
 						return &infra.RegionServiceDeleteRegionResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("Region not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.RegionServiceDeleteRegionResponse{
@@ -1608,24 +1385,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.InstanceServiceCreateInstanceResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				case "invalid-host-project":
 					return &infra.InstanceServiceCreateInstanceResponse{
 						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Host not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.NotFound
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.InstanceServiceCreateInstanceResponse{
@@ -1659,24 +1422,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.InstanceServiceDeleteInstanceResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				case "instance-not-found-project":
 					return &infra.InstanceServiceDeleteInstanceResponse{
 						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Instance not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.NotFound
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.InstanceServiceDeleteInstanceResponse{
@@ -1697,24 +1446,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project", "invalid-instance":
 					return &infra.InstanceServiceGetInstanceResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				case "instance-not-found-project":
 					return &infra.InstanceServiceGetInstanceResponse{
 						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Instance not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.NotFound
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.InstanceServiceGetInstanceResponse{
@@ -1765,13 +1500,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project":
 					return &infra.InstanceServiceListInstancesResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.InstanceServiceListInstancesResponse{
@@ -1860,13 +1588,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project":
 					return &infra.OSUpdateRunListOSUpdateRunResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.OSUpdateRunListOSUpdateRunResponse{
@@ -1911,26 +1632,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project":
 					return &infra.OSUpdateRunGetOSUpdateRunResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch osUpdateRunId {
 					case "nonexistent-run", "invalid-run-id":
 						return &infra.OSUpdateRunGetOSUpdateRunResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("OS Update Run not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.OSUpdateRunGetOSUpdateRunResponse{
@@ -1971,26 +1678,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.OSUpdateRunDeleteOSUpdateRunResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch osUpdateRunId {
 					case "nonexistent-run", "invalid-run-id":
 						return &infra.OSUpdateRunDeleteOSUpdateRunResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("OS Update Run not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.OSUpdateRunDeleteOSUpdateRunResponse{
@@ -2013,13 +1706,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project":
 					return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
@@ -2062,37 +1748,16 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "nonexistent-project":
 					return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch policyId {
 					case "nonexistent-policy", "invalid-policy-id":
 						return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("OS Update Policy not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					case "osupdatepolicy-ccccaaaa":
 						return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("OS Update Policy not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.OSUpdatePolicyGetOSUpdatePolicyResponse{
@@ -2132,13 +1797,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.OSUpdatePolicyCreateOSUpdatePolicyResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.OSUpdatePolicyCreateOSUpdatePolicyResponse{
@@ -2169,26 +1827,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.OSUpdatePolicyDeleteOSUpdatePolicyResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: stringPtr("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch policyId {
 					case "nonexistent-policy", "invalid-policy-id":
 						return &infra.OSUpdatePolicyDeleteOSUpdatePolicyResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: stringPtr("OS Update Policy not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.OSUpdatePolicyDeleteOSUpdatePolicyResponse{
@@ -2208,13 +1852,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ProviderServiceCreateProviderResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.ProviderServiceCreateProviderResponse{
@@ -2244,26 +1881,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ProviderServiceDeleteProviderResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch providerId {
 					case "nonexistent-provider", "invalid-provider-id":
 						return &infra.ProviderServiceDeleteProviderResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: func(s string) *string { return &s }("Provider not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.ProviderServiceDeleteProviderResponse{
@@ -2283,26 +1906,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ProviderServiceGetProviderResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch providerId {
 					case "nonexistent-provider", "invalid-provider-id":
 						return &infra.ProviderServiceGetProviderResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: func(s string) *string { return &s }("Provider not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.ProviderServiceGetProviderResponse{
@@ -2334,13 +1943,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ProviderServiceListProvidersResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.ProviderServiceListProvidersResponse{
@@ -2382,13 +1984,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ScheduleServiceListSchedulesResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.ScheduleServiceListSchedulesResponse{
@@ -2448,13 +2043,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ScheduleServiceCreateRepeatedScheduleResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.ScheduleServiceCreateRepeatedScheduleResponse{
@@ -2493,13 +2081,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ScheduleServiceCreateSingleScheduleResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					return &infra.ScheduleServiceCreateSingleScheduleResponse{
@@ -2531,26 +2112,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ScheduleServiceDeleteRepeatedScheduleResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch scheduleId {
 					case "nonexistent-provider", "invalid-provider-id":
 						return &infra.ScheduleServiceDeleteRepeatedScheduleResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: func(s string) *string { return &s }("Schedule not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.ScheduleServiceDeleteRepeatedScheduleResponse{
@@ -2570,26 +2137,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ScheduleServiceDeleteSingleScheduleResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch scheduleId {
 					case "nonexistent-provider", "invalid-provider-id":
 						return &infra.ScheduleServiceDeleteSingleScheduleResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: func(s string) *string { return &s }("Schedule not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.ScheduleServiceDeleteSingleScheduleResponse{
@@ -2609,13 +2162,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ScheduleServiceGetSingleScheduleResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					name := "schedule"
@@ -2624,13 +2170,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 					case "nonexistent-provider", "invalid-provider-id":
 						return &infra.ScheduleServiceGetSingleScheduleResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: func(s string) *string { return &s }("Provider not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.ScheduleServiceGetSingleScheduleResponse{
@@ -2659,13 +2198,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ScheduleServiceGetRepeatedScheduleResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					name := "schedule"
@@ -2674,13 +2206,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 					case "nonexistent-provider", "invalid-provider-id":
 						return &infra.ScheduleServiceGetRepeatedScheduleResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: func(s string) *string { return &s }("Provider not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.ScheduleServiceGetRepeatedScheduleResponse{
@@ -2707,33 +2232,19 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 
 		// Mock ScheduleServicePatchSingleScheduleWithResponse
 		mockInfraClient.EXPECT().ScheduleServicePatchSingleScheduleWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, projectName string, id string, body infra.ScheduleServicePatchSingleScheduleJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ScheduleServicePatchSingleScheduleResponse, error) {
+			func(_ context.Context, projectName string, id string, _ *infra.ScheduleServicePatchSingleScheduleParams, body infra.ScheduleServicePatchSingleScheduleJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ScheduleServicePatchSingleScheduleResponse, error) {
 				switch projectName {
 				case "invalid-project":
 					return &infra.ScheduleServicePatchSingleScheduleResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch id {
 					case "nonexistent-provider", "invalid-provider-id":
 						return &infra.ScheduleServicePatchSingleScheduleResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: func(s string) *string { return &s }("Provider not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.ScheduleServicePatchSingleScheduleResponse{
@@ -2751,33 +2262,19 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 
 		// Mock ScheduleServicePatchRepeatedScheduleWithResponse
 		mockInfraClient.EXPECT().ScheduleServicePatchRepeatedScheduleWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, projectName string, id string, body infra.ScheduleServicePatchRepeatedScheduleJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ScheduleServicePatchRepeatedScheduleResponse, error) {
+			func(_ context.Context, projectName string, id string, _ *infra.ScheduleServicePatchRepeatedScheduleParams, body infra.ScheduleServicePatchRepeatedScheduleJSONRequestBody, _ ...infra.RequestEditorFn) (*infra.ScheduleServicePatchRepeatedScheduleResponse, error) {
 				switch projectName {
 				case "invalid-project":
 					return &infra.ScheduleServicePatchRepeatedScheduleResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSONDefault: &infra.ConnectError{
-							Message: func(s string) *string { return &s }("Project not found"),
-							Code: func() *infra.ConnectErrorCode {
-								code := infra.Unknown
-								return &code
-							}(),
-						},
 					}, nil
 				default:
 					switch id {
 					case "nonexistent-provider", "invalid-provider-id":
 						return &infra.ScheduleServicePatchRepeatedScheduleResponse{
 							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSONDefault: &infra.ConnectError{
-								Message: func(s string) *string { return &s }("Provider not found"),
-								Code: func() *infra.ConnectErrorCode {
-									code := infra.NotFound
-									return &code
-								}(),
-							},
 						}, nil
 					default:
 						return &infra.ScheduleServicePatchRepeatedScheduleResponse{

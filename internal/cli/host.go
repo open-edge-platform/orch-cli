@@ -1905,7 +1905,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				fmt.Printf("InfraFactory error for host %s: %v\n", name, err)
 				continue
 			}
-			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, infra.HostServicePatchHostJSONRequestBody{
+			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 				DesiredAmtState: &amtState,
 			}, auth.AddAuthHeader)
 			if err != nil {
@@ -1982,7 +1982,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	host := *iresp.JSON200
 
 	if (powerFlag != "" || policyFlag != "") && host.Instance != nil {
-		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
+		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			PowerCommandPolicy: policy,
 			DesiredPowerState:  power,
 			Name:               host.Name,
@@ -1996,7 +1996,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if updatePolicy != nil && host.Instance != nil && host.Instance.InstanceID != nil && updFlag != "" {
-		resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
+		resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, &infra.InstanceServicePatchInstanceParams{}, infra.InstanceServicePatchInstanceJSONRequestBody{
 			OsUpdatePolicyID: updatePolicy,
 		}, auth.AddAuthHeader)
 		if err != nil {
@@ -2008,7 +2008,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if amtState != nil && host.Instance != nil {
-		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
+		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			DesiredAmtState: amtState,
 			Name:            host.Name,
 		}, auth.AddAuthHeader)
@@ -2364,7 +2364,7 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 		if host.Instance != nil && host.Instance.UpdatePolicy != nil && host.Instance.UpdatePolicy.ResourceId != nil && policyID == *host.Instance.UpdatePolicy.ResourceId {
 			continue
 		} else if host.Instance != nil {
-			iresp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
+			iresp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, &infra.InstanceServicePatchInstanceParams{}, infra.InstanceServicePatchInstanceJSONRequestBody{
 				OsUpdatePolicyID: &policyID,
 			}, auth.AddAuthHeader)
 			if err != nil {
@@ -2445,7 +2445,7 @@ func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterfac
 	// Register host
 
 	resp, err := hClient.HostServiceRegisterHostWithResponse(ctx, projectName,
-		infra.HostServiceRegisterHostJSONRequestBody{
+		&infra.HostServiceRegisterHostParams{}, infra.HostServiceRegisterHostJSONRequestBody{
 			Name:         &hostName,
 			SerialNumber: &sNo,
 			Uuid:         &uuid,
@@ -2649,7 +2649,7 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientW
 		}
 	}
 
-	sresp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+	sresp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{},
 		infra.HostServicePatchHostJSONRequestBody{
 			Name:     hostID,
 			Metadata: metadata,
@@ -2672,7 +2672,7 @@ func setHostName(ctx context.Context, hClient infra.ClientWithResponsesInterface
 	projectName, hostID string) error {
 
 	// Update host name
-	resp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+	resp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{},
 		infra.HostServicePatchHostJSONRequestBody{
 			Name: hostID,
 		}, auth.AddAuthHeader)
