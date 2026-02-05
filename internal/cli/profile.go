@@ -281,8 +281,12 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating profile %s of application %s:%s",
-		profileName, name, version))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error creating profile %s of application %s:%s",
+		profileName, name, version)); err != nil {
+		return err
+	}
+	fmt.Printf("Profile '%s' created successfully for application '%s:%s'\n", profileName, name, version)
+	return nil
 }
 
 func runListProfilesCommand(cmd *cobra.Command, args []string) error {
@@ -420,8 +424,12 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error updating profile %s of application %s:%s",
-		profileName, name, version))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error updating profile %s of application %s:%s",
+		profileName, name, version)); err != nil {
+		return err
+	}
+	fmt.Printf("Profile '%s' updated successfully for application '%s:%s'\n", profileName, name, version)
+	return nil
 }
 
 func runDeleteProfileCommand(cmd *cobra.Command, args []string) error {
@@ -477,8 +485,12 @@ func runDeleteProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting profile %s of application %s:%s",
-		profileName, name, version))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting profile %s of application %s:%s",
+		profileName, name, version)); err != nil {
+		return err
+	}
+	fmt.Printf("Profile '%s' deleted successfully from application '%s:%s'\n", profileName, name, version)
+	return nil
 }
 
 func validateValuesYAML(data []byte) error {

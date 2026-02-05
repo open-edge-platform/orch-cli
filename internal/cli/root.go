@@ -111,9 +111,9 @@ func getRootCmd() *cobra.Command {
 		getLogoutCommand(),
 
 		versionCommand(),
-
-		getGenerateCommand(),
 	)
+
+	addCommandIfFeatureEnabled(rootCmd, getGenerateCommand(), OxmFeature)
 
 	addCommandIfFeatureEnabled(rootCmd, getDeauthorizeCommand(), OnboardingFeature)
 

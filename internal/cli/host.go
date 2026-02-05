@@ -64,7 +64,7 @@ orch-cli create host --project some-project --generate-csv=myhosts.csv
 # Sample input csv file hosts.csv
 
 Serial - Serial Number of the machine - mandatory field (both or one of Serial or UUID must be provided)
-UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided), UUID must be provided if K8s cluster is going to be auto provisioned
+UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided)
 OSProfile - OS Profile to be used for provisioning of the host - name of the profile or it's resource ID - mandatory field
 Site - The resource ID of the site to which the host will be provisioned - mandatory field
 Secure - Optional security feature to configure for the host - must be supported by OS Profile if enabled
@@ -395,7 +395,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tHost Resurce ID:\t %s\n", *host.ResourceId)
+	_, _ = fmt.Fprintf(writer, "-\tHost Resource ID:\t %s\n", *host.ResourceId)
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
 	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
 	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n", ip)
@@ -704,6 +704,13 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 				*erringRecords = append(*erringRecords, rIn)
 				return
 			}
+		}
+	} else {
+		err = setHostName(ctx, hClient, projectName, hostID)
+		if err != nil {
+			rIn.Error = err.Error()
+			*erringRecords = append(*erringRecords, rIn)
+			return
 		}
 	}
 
@@ -1250,7 +1257,7 @@ func getDeauthorizeCommand() *cobra.Command {
 func getUpdateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "update-os",
-		Short:             "Update host",
+		Short:             "Update host OS",
 		PersistentPreRunE: auth.CheckAuth,
 		RunE: func(c *cobra.Command, args []string) error {
 			if len(args) > 0 {
@@ -2572,11 +2579,11 @@ func createCluster(ctx context.Context, cClient cluster.ClientWithResponsesInter
 	}
 
 	if clusterName == "" {
-		clusterName = hostID
+		clusterName = "cluster-" + hostID
 	}
 
 	node := cluster.NodeSpec{
-		Id:   rOut.UUID,
+		Id:   hostID,
 		Role: cluster.NodeSpecRole(clusterRole),
 	}
 
@@ -2654,6 +2661,27 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientW
 	}
 
 	err = checkResponse(sresp.HTTPResponse, sresp.Body, "error while linking site and metadata\n\n")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setHostName(ctx context.Context, hClient infra.ClientWithResponsesInterface,
+	projectName, hostID string) error {
+
+	// Update host name
+	resp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+		infra.HostServicePatchHostJSONRequestBody{
+			Name: hostID,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		err := processError(err)
+		return err
+	}
+
+	err = checkResponse(resp.HTTPResponse, resp.Body, "error while setting host name\n\n")
 	if err != nil {
 		return err
 	}

@@ -1723,6 +1723,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
 									},
+									TargetOs: &infra.OperatingSystemResource{
+										Name:         stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+										OsResourceID: stringPtr("os-1234abcd"),
+									},
 								},
 							},
 							TotalElements: 1,
@@ -1770,6 +1774,10 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								Timestamps: &infra.Timestamps{
 									CreatedAt: timestampPtr(timestamp),
 									UpdatedAt: timestampPtr(timestamp),
+								},
+								TargetOs: &infra.OperatingSystemResource{
+									Name:         stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+									OsResourceID: stringPtr("os-1234abcd"),
 								},
 							},
 						}, nil

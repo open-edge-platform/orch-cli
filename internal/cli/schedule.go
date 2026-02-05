@@ -48,7 +48,7 @@ orch-cli set schedules repeatedsche-abcd1234 --timezone GMT --maintenance-type o
 orch-cli set schedules singlesche-abcd1234 --timezone GMT --maintenance-type osupdate --start-time "2026-02-02 10:10" --end-time "2026-02-02 10:10" 
 `
 
-var ScheduleHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Target", "Type")
+var ScheduleHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Target", "Resource ID")
 
 const SINGLE = 0
 const REPEATED = 1
@@ -62,7 +62,7 @@ func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleReso
 	target := "Unspecified"
 
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\n", "Name", "Target", "Resource ID", "Type")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\n", "Name", "Target", "Resource ID", "Status", "Type")
 	}
 
 	for _, schedule := range singleSchedules {
@@ -84,9 +84,9 @@ func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleReso
 		maintenanceType = "single"
 
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, target, status)
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId)
 		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId, maintenanceType)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId, status, maintenanceType)
 		}
 	}
 	for _, schedule := range repeatedSchedules {
@@ -107,9 +107,9 @@ func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleReso
 		maintenanceType = "repeated"
 
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, target, status)
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId)
 		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId, maintenanceType)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId, status, maintenanceType)
 		}
 	}
 }
