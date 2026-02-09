@@ -671,7 +671,6 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 			powerOnTimeStr = powerOnTime.UTC().Format(time.RFC3339)
 		}
 
-		// Group all fprintf statements
 		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", currentPower)
 		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", desiredPower)
 		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", powerPolicy)
