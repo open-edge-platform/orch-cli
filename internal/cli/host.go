@@ -322,7 +322,7 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		}
 
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber, os, site, siteName, workload)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", safeString(h.ResourceId), h.Name, host, provStat, safeString(h.SerialNumber), os, site, siteName, workload)
 		} else {
 			avupdt := "No update"
 			tcomp := "Not compatible"
@@ -331,8 +331,8 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 				avupdt = "Available"
 			}
 
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber,
-				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", safeString(h.ResourceId), h.Name, host, provStat, safeString(h.SerialNumber),
+				os, site, siteName, workload, h.Name, safeString(h.Uuid), safeString(h.CpuModel), avupdt, tcomp)
 		}
 	}
 }
@@ -392,7 +392,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	if host.Instance != nil && host.Instance.UpdatePolicy != nil {
-		osupdatepolicy = *host.Instance.UpdatePolicy.ResourceId
+		osupdatepolicy = safeString(host.Instance.UpdatePolicy.ResourceId)
 	}
 
 	if host.HostNics != nil && len(*host.HostNics) > 0 {
@@ -410,7 +410,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tHost Resource ID:\t %s\n", *host.ResourceId)
+	_, _ = fmt.Fprintf(writer, "-\tHost Resource ID:\t %s\n", safeString(host.ResourceId))
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
 	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
 	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n", ip)
@@ -424,11 +424,11 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tOS Update Policy:\t %s\n\n", osupdatepolicy)
 
 	_, _ = fmt.Fprintf(writer, "Specification: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", *host.SerialNumber)
-	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", *host.Uuid)
+	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", safeString(host.SerialNumber))
+	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", safeString(host.Uuid))
 	_, _ = fmt.Fprintf(writer, "-\tOS:\t %v\n", currentOS)
-	_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", *host.BiosVendor)
-	_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", *host.ProductName)
+	_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", safeString(host.BiosVendor))
+	_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", safeString(host.ProductName))
 
 	_, _ = fmt.Fprintf(writer, "Customizations: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tCustom configs:\t %s\n\n", customcfg)
@@ -436,7 +436,12 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "CPU Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "Model", "Cores", "Architecture", "Threads", "Sockets")
 	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "-----", "-----", "------------", "-------", "-------")
-	_, _ = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n\n", *host.CpuModel, *host.CpuCores, *host.CpuArchitecture, *host.CpuThreads, *host.CpuSockets)
+	_, _ = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n\n",
+		safeString(host.CpuModel),
+		safeInt(host.CpuCores),
+		safeString(host.CpuArchitecture),
+		safeInt(host.CpuThreads),
+		safeInt(host.CpuSockets))
 
 	_, _ = fmt.Fprintf(writer, "Memory Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "%s\n", "Total (GB)")
@@ -625,16 +630,48 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 			_, _ = fmt.Fprintf(writer, "-\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
 		}
 	}
+	currentAmtState := "N/A"
+	if host.CurrentAmtState != nil {
+		currentAmtState = fmt.Sprintf("%v", *host.CurrentAmtState)
+	}
+	desiredAmtState := "N/A"
+	if host.DesiredAmtState != nil {
+		desiredAmtState = fmt.Sprintf("%v", *host.DesiredAmtState)
+	}
+	amtControlMode := "N/A"
+	if host.AmtControlMode != nil {
+		amtControlMode = fmt.Sprintf("%v", *host.AmtControlMode)
+	}
+	dnsSuffix := "N/A"
+	if host.AmtDnsSuffix != nil {
+		dnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
+	}
 	_, _ = fmt.Fprintf(writer, "AMT Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", *host.CurrentAmtState)
-	_, _ = fmt.Fprintf(writer, "-\tAMT Desired State :\t %v\n", *host.DesiredAmtState)
-	_, _ = fmt.Fprintf(writer, "-\tAMT Control Mode:\t %v\n", *host.AmtControlMode)
-	_, _ = fmt.Fprintf(writer, "-\tAMT DNS Suffix:\t %v\n", *host.AmtDnsSuffix)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", currentAmtState)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Desired State :\t %v\n", desiredAmtState)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Control Mode:\t %v\n", amtControlMode)
+	_, _ = fmt.Fprintf(writer, "-\tAMT DNS Suffix:\t %v\n", dnsSuffix)
 	if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
-		_, _ = fmt.Fprintf(writer, "-\tAMT SKU:\t %v\n", *host.AmtSku)
-		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", *host.CurrentPowerState)
-		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", *host.DesiredPowerState)
-		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", *host.PowerCommandPolicy)
+		amtSku := "N/A"
+		if host.AmtSku != nil {
+			amtSku = fmt.Sprintf("%v", *host.AmtSku)
+		}
+		currentPower := "N/A"
+		if host.CurrentPowerState != nil {
+			currentPower = fmt.Sprintf("%v", *host.CurrentPowerState)
+		}
+		desiredPower := "N/A"
+		if host.DesiredPowerState != nil {
+			desiredPower = fmt.Sprintf("%v", *host.DesiredPowerState)
+		}
+		powerPolicy := "N/A"
+		if host.PowerCommandPolicy != nil {
+			powerPolicy = fmt.Sprintf("%v", *host.PowerCommandPolicy)
+		}
+		_, _ = fmt.Fprintf(writer, "-\tAMT SKU:\t %v\n", amtSku)
+		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", currentPower)
+		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", desiredPower)
+		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", powerPolicy)
 		powerOnTimeStr := "N/A"
 		if host.PowerOnTime != nil {
 			powerOnTime := time.Unix(int64(*host.PowerOnTime), 0)
@@ -1921,7 +1958,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				continue
 			}
 			desiredControlMode := ""
-			desiredDnsSuffix := ""
+			desiredDNSSuffix := ""
 			name := strings.TrimSpace(fields[0])
 			resourceID := strings.TrimSpace(fields[1])
 			desiredAmtState := strings.TrimSpace(fields[2])
@@ -1929,7 +1966,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				desiredControlMode = strings.TrimSpace(fields[3])
 			}
 			if len(fields) >= 5 {
-				desiredDnsSuffix = strings.TrimSpace(fields[4])
+				desiredDNSSuffix = strings.TrimSpace(fields[4])
 			}
 			// Validate desiredAmtState
 			amtState, err := resolveAmtState(desiredAmtState)
@@ -1947,8 +1984,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				}
 				amtMode = &mode
 			}
-			if desiredDnsSuffix != "" {
-				dnsSuffix = &desiredDnsSuffix
+			if desiredDNSSuffix != "" {
+				dnsSuffix = &desiredDNSSuffix
 			}
 			// Patch host
 			ctx, hostClient, projectName, err := InfraFactory(cmd)
@@ -2062,7 +2099,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	} else if (powerFlag != "" || policyFlag != "") && host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
-		return fmt.Errorf("Host %s does not seem to have AMT enabled, power toggle and policy not supported\n", hostID)
+		return fmt.Errorf("host %s does not seem to have AMT enabled, power toggle and policy not supported", hostID)
 	}
 
 	if updatePolicy != nil && host.Instance != nil && host.Instance.InstanceID != nil && updFlag != "" {
