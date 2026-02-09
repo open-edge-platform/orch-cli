@@ -649,13 +649,10 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "AMT Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", currentAmtState)
 	_, _ = fmt.Fprintf(writer, "-\tAMT Desired State :\t %v\n", desiredAmtState)
-	_, _ = fmt.Fprintf(writer, "-\tAMT Control Mode:\t %v\n", amtControlMode)
-	_, _ = fmt.Fprintf(writer, "-\tAMT DNS Suffix:\t %v\n", dnsSuffix)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Desired Control Mode:\t %v\n", amtControlMode)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
+
 	if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
-		amtSku := "N/A"
-		if host.AmtSku != nil {
-			amtSku = fmt.Sprintf("%v", *host.AmtSku)
-		}
 		currentPower := "N/A"
 		if host.CurrentPowerState != nil {
 			currentPower = fmt.Sprintf("%v", *host.CurrentPowerState)
@@ -668,19 +665,35 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		if host.PowerCommandPolicy != nil {
 			powerPolicy = fmt.Sprintf("%v", *host.PowerCommandPolicy)
 		}
-		_, _ = fmt.Fprintf(writer, "-\tAMT SKU:\t %v\n", amtSku)
-		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", currentPower)
-		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", desiredPower)
-		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", powerPolicy)
 		powerOnTimeStr := "N/A"
 		if host.PowerOnTime != nil {
 			powerOnTime := time.Unix(int64(*host.PowerOnTime), 0)
 			powerOnTimeStr = powerOnTime.UTC().Format(time.RFC3339)
 		}
-		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", powerOnTimeStr)
-	}
 
-	if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
+		// Group all fprintf statements
+		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", currentPower)
+		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", desiredPower)
+		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", powerPolicy)
+		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", powerOnTimeStr)
+
+		if host.HostDevice != nil {
+			_, _ = fmt.Fprintf(writer, "-\tBuild Number:\t %v\n", safeString(host.HostDevice.BuildNumber))
+			_, _ = fmt.Fprintf(writer, "-\tControl Mode:\t %v\n", safeString(host.HostDevice.ControlMode))
+			_, _ = fmt.Fprintf(writer, "-\tDevice GUID:\t %v\n", safeString(host.HostDevice.DeviceGuid))
+			_, _ = fmt.Fprintf(writer, "-\tDevice DNS Suffix:\t %v\n", safeString(host.HostDevice.DnsSuffix))
+			_, _ = fmt.Fprintf(writer, "-\tFeatures:\t %v\n", safeString(host.HostDevice.Features))
+			_, _ = fmt.Fprintf(writer, "-\tHostname:\t %v\n", safeString(host.HostDevice.Hostname))
+			_, _ = fmt.Fprintf(writer, "-\tMPS Hostname:\t %v\n", safeString(host.HostDevice.MpsHostname))
+			_, _ = fmt.Fprintf(writer, "-\tNetwork Status:\t %v\n", safeString(host.HostDevice.NetworkStatus))
+			_, _ = fmt.Fprintf(writer, "-\tOperational State:\t %v\n", safeString(host.HostDevice.OperationalState))
+			_, _ = fmt.Fprintf(writer, "-\tRemote Status:\t %v\n", safeString(host.HostDevice.RemoteStatus))
+			_, _ = fmt.Fprintf(writer, "-\tRemote Trigger:\t %v\n", safeString(host.HostDevice.RemoteTrigger))
+			_, _ = fmt.Fprintf(writer, "-\tDevice SKU:\t %v\n", safeString(host.HostDevice.Sku))
+			_, _ = fmt.Fprintf(writer, "-\tVersion:\t %v\n", safeString(host.HostDevice.Version))
+		}
+
+	} else if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
 		_, _ = fmt.Fprintf(writer, "AMT not active and/or not supported: No info available \n\n")
 	}
 
