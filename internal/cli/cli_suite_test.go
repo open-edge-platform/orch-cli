@@ -223,9 +223,27 @@ func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
 	args = append(args, c.Server)
 	cmd.SetArgs(args)
 	stdout := new(bytes.Buffer)
+	stderr := new(bytes.Buffer)
 	cmd.SetOut(stdout)
+	cmd.SetErr(stderr)
 	err := cmd.Execute()
-	cmdOutput := stdout.String()
+	cmdOutput := stderr.String() + stdout.String()
+	
+	// Handle disabled top-level commands like Execute() does in root.go
+	if err != nil && strings.Contains(err.Error(), "unknown command") {
+		if start := strings.Index(err.Error(), "\""); start != -1 {
+			if end := strings.Index(err.Error()[start+1:], "\""); end != -1 {
+				cmdName := err.Error()[start+1 : start+1+end]
+				if isCommandDisabledWithParent(cmd, cmdName) {
+					// Replace error message for disabled commands
+					disabledMsg := fmt.Sprintf("Error: command %q is disabled in the current Edge Orchestrator configuration\n", cmdName)
+					cmdOutput = disabledMsg + cmdOutput
+					// Keep the error for test assertions
+				}
+			}
+		}
+	}
+	
 	return cmdOutput, err
 }
 
