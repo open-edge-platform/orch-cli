@@ -31,6 +31,13 @@ func CreateOrchestratorMock(mctrl *gomock.Controller) interfaces.OrchestratorFac
 				var info *orchapi.Info
 
 				// Check viper setting to determine which response to return
+				// Tests can set viper.Set("test_orchestrator_404", true) to simulate 404
+				if viper.GetBool("test_orchestrator_404") {
+					return &orchapi.InfoResponse{
+						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+					}, nil
+				}
+
 				// Tests can set viper.Set("test_orchestrator_features_disabled", true)
 				featuresDisabled := viper.GetBool("test_orchestrator_features_disabled")
 
