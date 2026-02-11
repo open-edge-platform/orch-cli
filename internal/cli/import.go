@@ -22,9 +22,9 @@ func getImportCommand() *cobra.Command {
 		RunE: func(c *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				if isCommandDisabledWithParent(c, args[0]) {
-					fmt.Fprintf(os.Stderr, "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+					fmt.Fprintf(c.ErrOrStderr(), "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
 				} else {
-					fmt.Fprintf(os.Stderr, "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+					fmt.Fprintf(c.ErrOrStderr(), "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
 				}
 			}
 			return c.Usage()
