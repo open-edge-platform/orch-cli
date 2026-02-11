@@ -19,6 +19,7 @@ import (
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
+	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
@@ -67,6 +68,10 @@ var CatalogFactory interfaces.CatalogFactoryFunc = func(cmd *cobra.Command) (con
 	return getCatalogServiceContext(cmd)
 }
 
+var CatalogUtilitiesFactory interfaces.CatalogUtilitiesFactoryFunc = func(cmd *cobra.Command) (context.Context, catutilapi.ClientWithResponsesInterface, string, error) {
+	return getCatalogUtilitiesServiceContext(cmd)
+}
+
 var RpsFactory interfaces.RpsFactoryFunc = func(cmd *cobra.Command) (context.Context, rpsapi.ClientWithResponsesInterface, string, error) {
 	return getRpsServiceContext(cmd)
 }
@@ -110,6 +115,23 @@ func getCatalogServiceContext(cmd *cobra.Command) (context.Context, *catapi.Clie
 		return nil, nil, "", err
 	}
 	return context.Background(), catalogClient, projectName, nil
+}
+
+// Get the new background context, REST client, and project name given the specified command.
+func getCatalogUtilitiesServiceContext(cmd *cobra.Command) (context.Context, *catutilapi.ClientWithResponses, string, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	projectName, err := getProjectName(cmd)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	catalogUtilitiesClient, err := catutilapi.NewClientWithResponses(serverAddress)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return context.Background(), catalogUtilitiesClient, projectName, nil
 }
 
 // Get the new background context, REST client, and project name given the specified command.

@@ -16,6 +16,7 @@ import (
 	restproxy "github.com/open-edge-platform/app-orch-catalog/pkg/restProxy"
 	authmock "github.com/open-edge-platform/cli/internal/cli/mocks/auth"
 	catalogmock "github.com/open-edge-platform/cli/internal/cli/mocks/catalog"
+	catalogutilitiesmock "github.com/open-edge-platform/cli/internal/cli/mocks/catalogutilities"
 	clustermock "github.com/open-edge-platform/cli/internal/cli/mocks/cluster"
 	deploymentmock "github.com/open-edge-platform/cli/internal/cli/mocks/deployment"
 	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
@@ -62,6 +63,7 @@ func (s *CLITestSuite) SetupSuite() {
 	auth.KeycloakFactory = authmock.CreateKeycloakMock(&s.Suite, mctrl)
 
 	CatalogFactory = catalogmock.CreateCatalogMock(mctrl)
+	CatalogUtilitiesFactory = catalogutilitiesmock.CreateCatalogUtilitiesMock(mctrl)
 	InfraFactory = inframock.CreateInfraMock(mctrl, timestamp)
 	ClusterFactory = clustermock.CreateClusterMock(mctrl)
 	RpsFactory = rpsmock.CreateRpsMock(mctrl)
@@ -73,6 +75,7 @@ func (s *CLITestSuite) SetupSuite() {
 func (s *CLITestSuite) TearDownSuite() {
 	auth.KeycloakFactory = nil
 	CatalogFactory = nil
+	CatalogUtilitiesFactory = nil
 	InfraFactory = nil
 	ClusterFactory = nil
 	RpsFactory = nil
@@ -228,7 +231,7 @@ func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
 	cmd.SetErr(stderr)
 	err := cmd.Execute()
 	cmdOutput := stderr.String() + stdout.String()
-	
+
 	// Handle disabled top-level commands like Execute() does in root.go
 	if err != nil && strings.Contains(err.Error(), "unknown command") {
 		if start := strings.Index(err.Error(), "\""); start != -1 {
@@ -243,7 +246,7 @@ func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
 			}
 		}
 	}
-	
+
 	return cmdOutput, err
 }
 
