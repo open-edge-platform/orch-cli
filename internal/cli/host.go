@@ -364,7 +364,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		osprofile = toJSON(host.Instance.Os.Name)
 	}
 
-	if *host.HostStatus != "" {
+	if safeString(host.HostStatus) != "" {
 		// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
 		if strings.EqualFold(*host.HostStatus, "error") && host.Instance != nil && host.Instance.InstanceStatusDetail != nil && strings.Contains(*host.Instance.InstanceStatusDetail, "of 10 components running") {
 			hoststatus = "Waiting on node agents"
@@ -2109,6 +2109,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set for AMT"); err != nil {
 			return err
+		} else if (powerFlag != "" || policyFlag != "") && host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
+			return fmt.Errorf("host %s does not seem to have AMT enabled, power toggle and policy not supported", hostID)
 		}
 	} else if (powerFlag != "" || policyFlag != "") && host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
 		return fmt.Errorf("host %s does not seem to have AMT enabled, power toggle and policy not supported", hostID)
