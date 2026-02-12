@@ -173,7 +173,7 @@ orch-cli set host --project some-project --generate-csv=myhosts.csv
 
 Name - Name of the machine - mandatory field
 ResourceID - Unique Identifier of host - mandatory field
-DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field
+DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field or AMT_STATE_PROVISIONED|AMT_STATE_UNPROVISIONED
 
 Name,ResourceID,DesiredAmtState
 host-1,host-1234abcd,provisioned
@@ -307,7 +307,7 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		}
 
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber, os, site, siteName, workload)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", safeString(h.ResourceId), h.Name, host, provStat, safeString(h.SerialNumber), os, site, siteName, workload)
 		} else {
 			avupdt := "No update"
 			tcomp := "Not compatible"
@@ -316,8 +316,8 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 				avupdt = "Available"
 			}
 
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber,
-				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", safeString(h.ResourceId), h.Name, host, provStat, safeString(h.SerialNumber),
+				os, site, siteName, workload, h.Name, safeString(h.Uuid), safeString(h.CpuModel), avupdt, tcomp)
 		}
 	}
 }
@@ -349,7 +349,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		osprofile = toJSON(host.Instance.Os.Name)
 	}
 
-	if *host.HostStatus != "" {
+	if safeString(host.HostStatus) != "" {
 		// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
 		if strings.EqualFold(*host.HostStatus, "error") && host.Instance != nil && host.Instance.InstanceStatusDetail != nil && strings.Contains(*host.Instance.InstanceStatusDetail, "of 10 components running") {
 			hoststatus = "Waiting on node agents"
@@ -377,7 +377,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	if host.Instance != nil && host.Instance.UpdatePolicy != nil {
-		osupdatepolicy = *host.Instance.UpdatePolicy.ResourceId
+		osupdatepolicy = safeString(host.Instance.UpdatePolicy.ResourceId)
 	}
 
 	if host.HostNics != nil && len(*host.HostNics) > 0 {
@@ -395,7 +395,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tHost Resource ID:\t %s\n", *host.ResourceId)
+	_, _ = fmt.Fprintf(writer, "-\tHost Resource ID:\t %s\n", safeString(host.ResourceId))
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
 	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
 	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n", ip)
@@ -409,11 +409,11 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "-\tOS Update Policy:\t %s\n\n", osupdatepolicy)
 
 	_, _ = fmt.Fprintf(writer, "Specification: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", *host.SerialNumber)
-	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", *host.Uuid)
+	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", safeString(host.SerialNumber))
+	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", safeString(host.Uuid))
 	_, _ = fmt.Fprintf(writer, "-\tOS:\t %v\n", currentOS)
-	_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", *host.BiosVendor)
-	_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", *host.ProductName)
+	_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", safeString(host.BiosVendor))
+	_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", safeString(host.ProductName))
 
 	_, _ = fmt.Fprintf(writer, "Customizations: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tCustom configs:\t %s\n\n", customcfg)
@@ -421,7 +421,12 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	_, _ = fmt.Fprintf(writer, "CPU Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "Model", "Cores", "Architecture", "Threads", "Sockets")
 	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "-----", "-----", "------------", "-------", "-------")
-	_, _ = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n\n", *host.CpuModel, *host.CpuCores, *host.CpuArchitecture, *host.CpuThreads, *host.CpuSockets)
+	_, _ = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n\n",
+		safeString(host.CpuModel),
+		safeInt(host.CpuCores),
+		safeString(host.CpuArchitecture),
+		safeInt(host.CpuThreads),
+		safeInt(host.CpuSockets))
 
 	_, _ = fmt.Fprintf(writer, "Memory Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "%s\n", "Total (GB)")
@@ -610,22 +615,44 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 			_, _ = fmt.Fprintf(writer, "-\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
 		}
 	}
+
+	currentAmtState := "N/A"
+	if host.CurrentAmtState != nil {
+		currentAmtState = fmt.Sprintf("%v", *host.CurrentAmtState)
+	}
+	desiredAmtState := "N/A"
+	if host.DesiredAmtState != nil {
+		desiredAmtState = fmt.Sprintf("%v", *host.DesiredAmtState)
+	}
+
+	_, _ = fmt.Fprintf(writer, "AMT Info: \n\n")
+	_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", currentAmtState)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Desired State :\t %v\n", desiredAmtState)
+
 	if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
-		_, _ = fmt.Fprintf(writer, "AMT Info: \n\n")
-		_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", *host.CurrentAmtState)
-		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", *host.CurrentPowerState)
-		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", *host.DesiredPowerState)
-		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", *host.PowerCommandPolicy)
+		currentPower := "N/A"
+		if host.CurrentPowerState != nil {
+			currentPower = fmt.Sprintf("%v", *host.CurrentPowerState)
+		}
+		desiredPower := "N/A"
+		if host.DesiredPowerState != nil {
+			desiredPower = fmt.Sprintf("%v", *host.DesiredPowerState)
+		}
+		powerPolicy := "N/A"
+		if host.PowerCommandPolicy != nil {
+			powerPolicy = fmt.Sprintf("%v", *host.PowerCommandPolicy)
+		}
 		powerOnTimeStr := "N/A"
 		if host.PowerOnTime != nil {
 			powerOnTime := time.Unix(int64(*host.PowerOnTime), 0)
 			powerOnTimeStr = powerOnTime.UTC().Format(time.RFC3339)
 		}
+		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", currentPower)
+		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", desiredPower)
+		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", powerPolicy)
 		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", powerOnTimeStr)
-		_, _ = fmt.Fprintf(writer, "-\tDesired AMT State :\t %v\n", *host.DesiredAmtState)
-	}
 
-	if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
+	} else if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
 		_, _ = fmt.Fprintf(writer, "AMT not active and/or not supported: No info available \n\n")
 	}
 
@@ -1981,7 +2008,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 	host := *iresp.JSON200
 
-	if (powerFlag != "" || policyFlag != "") && host.Instance != nil {
+	if (powerFlag != "" || policyFlag != "") && host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
 		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			PowerCommandPolicy: policy,
 			DesiredPowerState:  power,
@@ -1992,6 +2019,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set for AMT"); err != nil {
 			return err
+		} else if (powerFlag != "" || policyFlag != "") && host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
+			return fmt.Errorf("host %s does not seem to have AMT enabled, power toggle and policy not supported", hostID)
 		}
 	}
 
@@ -2007,7 +2036,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if amtState != nil && host.Instance != nil {
+	if amtState != nil {
 		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			DesiredAmtState: amtState,
 			Name:            host.Name,

@@ -746,3 +746,16 @@ func isCommandDisabledWithParent(parentCmd *cobra.Command, subCmd string) bool {
 
 	return false
 }
+
+func safeString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+func safeInt(s *int) int {
+	if s == nil {
+		return 0
+	}
+	return *s
+}
