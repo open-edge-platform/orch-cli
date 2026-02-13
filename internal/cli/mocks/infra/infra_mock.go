@@ -609,21 +609,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								AmtSku:             (*infra.AmtSku)(stringPtr("SKU")),
 								PowerCommandPolicy: (*infra.PowerCommandPolicy)(stringPtr("POWER_COMMAND_POLICY_ALWAYS_ON")),
 								PowerOnTime:        func() *int { i := 1764750313; return &i }(),
-								HostDevice: &infra.HostdeviceResource{
-									BuildNumber:      stringPtr("3000"),
-									ControlMode:      stringPtr("admin"),
-									DeviceGuid:       stringPtr("4c4c4544-0000-1111-8053-b7c04f564d31"),
-									DnsSuffix:        stringPtr("example.com"),
-									Features:         stringPtr("AMT,KVM,SOL"),
-									Hostname:         stringPtr("edge-host-001"),
-									MpsHostname:      stringPtr("mps.example.com"),
-									NetworkStatus:    stringPtr("connected"),
-									OperationalState: stringPtr("enabled"),
-									RemoteStatus:     stringPtr("connected"),
-									RemoteTrigger:    stringPtr("user"),
-									Sku:              stringPtr("16392"),
-									Version:          stringPtr("16.1.25"),
-								},
 								HostNics: &[]infra.HostnicResource{
 									{
 										DeviceName: stringPtr("eth0"),

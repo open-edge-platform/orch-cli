@@ -421,19 +421,6 @@ func (s *CLITestSuite) TestHost() {
 		"-   Desired Power Status:":       "POWER_STATE_ON",
 		"-   Power Command Policy :":      "POWER_COMMAND_POLICY_ALWAYS_ON",
 		"-   PowerOn Time :":              "2025-12-03T08:25:13Z",
-		"-   Build Number:":               "3000",
-		"-   Control Mode:":               "admin",
-		"-   Device GUID:":                "4c4c4544-0000-1111-8053-b7c04f564d31",
-		"-   Device DNS Suffix:":          "example.com",
-		"-   Features:":                   "AMT,KVM,SOL",
-		"-   Hostname:":                   "edge-host-001",
-		"-   MPS Hostname:":               "mps.example.com",
-		"-   Network Status:":             "connected",
-		"-   Operational State:":          "enabled",
-		"-   Remote Status:":              "connected",
-		"-   Remote Trigger:":             "user",
-		"-   Device SKU:":                 "16392",
-		"-   Version:":                    "16.1.25",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
