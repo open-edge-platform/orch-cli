@@ -67,7 +67,7 @@ func printFeaturesRecursive(cmd *cobra.Command, features map[string]interface{},
 	// Then print all other keys
 	for _, key := range keys {
 		if key == "installed" {
-			continue // Skip, already printed above
+			continue
 		}
 
 		value := features[key]
@@ -76,37 +76,8 @@ func printFeaturesRecursive(cmd *cobra.Command, features map[string]interface{},
 			fullKey = prefix + "." + key
 		}
 
-		switch v := value.(type) {
-		case bool:
-			status := "disabled"
-			if v {
-				status = "enabled"
-			}
-			// Remove .installed suffix from the display name
-			displayKey := strings.TrimSuffix(fullKey, ".installed")
-			fmt.Fprintf(cmd.OutOrStdout(), "%s%s | %s\n", indent, displayKey, status)
-		case string:
-			// Handle string "true"/"false" as boolean values
-			lowerV := strings.ToLower(v)
-			if lowerV == "true" || lowerV == "false" {
-				status := "disabled"
-				if lowerV == "true" {
-					status = "enabled"
-				}
-				displayKey := strings.TrimSuffix(fullKey, ".installed")
-				fmt.Fprintf(cmd.OutOrStdout(), "%s%s | %s\n", indent, displayKey, status)
-			} else {
-				// Other string values
-				displayKey := strings.TrimSuffix(fullKey, ".installed")
-				fmt.Fprintf(cmd.OutOrStdout(), "%s%s | %v\n", indent, displayKey, v)
-			}
-		case map[string]interface{}:
-			// Print nested features with increased depth
+		if v, ok := value.(map[string]interface{}); ok {
 			printFeaturesRecursive(cmd, v, fullKey, depth+1)
-		default:
-			// Handle other types if needed
-			displayKey := strings.TrimSuffix(fullKey, ".installed")
-			fmt.Fprintf(cmd.OutOrStdout(), "%s%s | %v\n", indent, displayKey, v)
 		}
 	}
 }
