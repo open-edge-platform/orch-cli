@@ -72,7 +72,7 @@ mdlint: ## lint all markdown README.md files
 
 test: mod-update
 	@# Help: Runs test stage
-	@trap 'rm -rf internal/cli/preflight_error* internal/cli/import_error*' EXIT; \
+	@trap 'rm -rf internal/cli/preflight_error* internal/cli/import_error* internal/cli/deployment-pkg-1.0.0.tar.gz' EXIT; \
 	go test -race -gcflags=-l `go list $(PKG)/cmd/... $(PKG)/internal/... $(PKG)/pkg/...`
 
 fuzz:
