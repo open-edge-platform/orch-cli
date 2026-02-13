@@ -16,7 +16,7 @@ import (
 
 // CreateOrchestratorMock creates a mock Orchestrator factory function
 func CreateOrchestratorMock(mctrl *gomock.Controller) interfaces.OrchestratorFactoryFunc {
-	return func(cmd *cobra.Command) (context.Context, orchapi.ClientWithResponsesInterface, error) {
+	return func(_ *cobra.Command) (context.Context, orchapi.ClientWithResponsesInterface, error) {
 		mockOrchClient := orchapi.NewMockClientWithResponsesInterface(mctrl)
 
 		// Helper function for string pointers

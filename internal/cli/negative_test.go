@@ -14,7 +14,7 @@ func (s *CLITestSuite) TestNegative() {
 	defer viper.Set("test_orchestrator_features_disabled", false) // Clean up
 
 	// Now call SetupTest which will trigger login with disabled features
-	s.logout()
+	_ = s.logout()
 	err := s.login("u", "p")
 	s.NoError(err)
 
@@ -810,9 +810,7 @@ func (s *CLITestSuite) TestNegative() {
 	s.Contains(output, expectedAliasOutput)
 
 	// Test deployment-profile (also AppOrchFeature)
-	feature = "deployment-profile"
 	featureAlias = "package-profile"
-	expectedOutput = "Error: command \"" + feature + "\" is disabled in the current Edge Orchestrator configuration"
 	expectedAliasOutput = "Error: command \"" + featureAlias + "\" is disabled in the current Edge Orchestrator configuration"
 
 	//CREATE
@@ -863,9 +861,7 @@ func (s *CLITestSuite) TestNegative() {
 	s.Contains(output, expectedAliasOutput)
 
 	// Test application-reference (also AppOrchFeature)
-	feature = "application-reference"
 	featureAlias = "app-reference"
-	expectedOutput = "Error: command \"" + feature + "\" is disabled in the current Edge Orchestrator configuration"
 	expectedAliasOutput = "Error: command \"" + featureAlias + "\" is disabled in the current Edge Orchestrator configuration"
 
 	//CREATE
@@ -1030,7 +1026,7 @@ func (s *CLITestSuite) TestNegative() {
 	s.Contains(output, expectedOutput)
 
 	//fail with non-existing top command
-	output, err = s.runCommand(featureAlias + " --project " + project)
+	_, err = s.runCommand(featureAlias + " --project " + project)
 	s.ErrorContains(err, "unknown command")
 }
 
@@ -1040,7 +1036,7 @@ func (s *CLITestSuite) TestNegativeLegacyOrch() {
 	defer viper.Set("test_orchestrator_404", false) // Clean up
 
 	// Logout and attempt login
-	s.logout()
+	_ = s.logout()
 	err := s.login("u", "p")
 
 	// Expect login to return an error about orchestrator info not being available
