@@ -415,6 +415,7 @@ func (s *CLITestSuite) TestHost() {
 		"AMT Info:":                       "",
 		"-   AMT Status:":                 "AMT_STATE_PROVISIONED",
 		"-   AMT Desired State :":         "AMT_STATE_PROVISIONED",
+		"-   AMT SKU :":                   "12345",
 		"-   Current Power Status:":       "POWER_STATE_ON",
 		"-   Desired Power Status:":       "POWER_STATE_ON",
 		"-   Power Command Policy :":      "POWER_COMMAND_POLICY_ALWAYS_ON",
