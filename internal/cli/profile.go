@@ -22,12 +22,13 @@ func getCreateProfileCommand() *cobra.Command {
 		Short:   "Create an application profile",
 		Args:    cobra.ExactArgs(3),
 		Aliases: profileAliases,
-		Example: "orch-cli create profile my-app 1.0.0 my-profile --display-name 'My Profile' --description 'This is my profile' --chart-values values.yaml --parameter-template env.HOST_IP=string:\"IP address of the target Edge Node\":\"\" --parameter-template env.MINIO_ACCESS_KEY=password:\"Minio access key\":\"\" --project my-project",
+		Example: "orch-cli create profile my-app 1.0.0 my-profile --display-name 'My Profile' --description 'This is my profile' --chart-values values.yaml --parameter-template env.HOST_IP=string:\"IP address of the target Edge Node\":\"\" --parameter-template env.MINIO_ACCESS_KEY=password:\"Minio access key\":\"\" --deployment-requirement dependent-package:0.2.1:default-profile --project my-project",
 		RunE:    runCreateProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
 	cmd.Flags().String("chart-values", "", "path to the values.yaml file; - for stdin (optional)")
 	cmd.Flags().StringSlice("parameter-template", []string{}, "parameter templates in format '<name>=<type>:<display-name>:<default-value>' (types: string, integer)")
+	cmd.Flags().StringSlice("deployment-requirement", []string{}, "deployment requirements in format '<package-name>:<version>:<profile-name>' (profile-name is optional)")
 	return cmd
 }
 
@@ -61,12 +62,13 @@ func getSetProfileCommand() *cobra.Command {
 		Short:   "Update an application profile",
 		Args:    cobra.ExactArgs(3),
 		Aliases: profileAliases,
-		Example: "orch-cli set profile my-app 1.0.0 my-profile --display-name 'Updated Profile' --description 'Updated description' --chart-values new-values.yaml --parameter-template env.HOST_IP=string:\"IP address\":\"127.0.0.1\" --project my-project",
+		Example: "orch-cli set profile my-app 1.0.0 my-profile --display-name 'Updated Profile' --description 'Updated description' --chart-values new-values.yaml --parameter-template env.HOST_IP=string:\"IP address\":\"127.0.0.1\" --deployment-requirement cert-manager:0.2.1:default-profile --project my-project",
 		RunE:    runSetProfileCommand,
 	}
 	addEntityFlags(cmd, "profile")
 	cmd.Flags().String("chart-values", "", "path to the values.yaml file; - for stdin")
 	cmd.Flags().StringSlice("parameter-template", []string{}, "parameter templates in format '<name>=<type>:<display-name>:<default-value>' (types: string, integer)")
+	cmd.Flags().StringSlice("deployment-requirement", []string{}, "deployment requirements in format '<package-name>:<version>:<profile-name>' (profile-name is optional)")
 	return cmd
 }
 
@@ -165,7 +167,11 @@ func printProfiles(writer io.Writer, profileList *[]catapi.CatalogV3Profile, ver
 			if len(*p.DeploymentRequirement) != 0 {
 				requirements := make([]string, 0, len(*p.DeploymentRequirement))
 				for _, dr := range *p.DeploymentRequirement {
-					requirements = append(requirements, fmt.Sprintf("%s:%s", dr.Name, dr.Version))
+					reqStr := fmt.Sprintf("%s:%s", dr.Name, dr.Version)
+					if dr.DeploymentProfileName != nil && *dr.DeploymentProfileName != "" {
+						reqStr += fmt.Sprintf(":%s", *dr.DeploymentProfileName)
+					}
+					requirements = append(requirements, reqStr)
 				}
 				_, _ = fmt.Fprintf(writer, "Deployment Requirements: %s\n", requirements)
 			}
@@ -237,6 +243,12 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Parse deployment requirements from CLI flags
+	deploymentRequirements, err := parseDeploymentRequirements(cmd)
+	if err != nil {
+		return err
+	}
+
 	gresp, err := catalogClient.CatalogServiceGetApplicationWithResponse(ctx, projectName, name, version,
 		auth.AddAuthHeader)
 	if err != nil {
@@ -250,10 +262,11 @@ func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
 
 	// Create profile with chart values only if provided
 	newProfile := catapi.CatalogV3Profile{
-		Name:               profileName,
-		DisplayName:        &displayName,
-		Description:        &description,
-		ParameterTemplates: parameterTemplates,
+		Name:                  profileName,
+		DisplayName:           &displayName,
+		Description:           &description,
+		ParameterTemplates:    parameterTemplates,
+		DeploymentRequirement: deploymentRequirements,
 	}
 	if chartValues != "" {
 		newProfile.ChartValues = &chartValues
@@ -394,6 +407,15 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 		profile.ParameterTemplates = parameterTemplates
 	}
 
+	// If deployment requirements were specified, update them
+	deploymentRequirements, err := parseDeploymentRequirements(cmd)
+	if err != nil {
+		return err
+	}
+	if deploymentRequirements != nil {
+		profile.DeploymentRequirement = deploymentRequirements
+	}
+
 	// If the chart-values flag was given, fetch the new content to replace the existing one
 	newChartValuesPath := *getFlag(cmd, "chart-values")
 	if len(newChartValuesPath) > 0 {
@@ -431,7 +453,47 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Profile '%s' updated successfully for application '%s:%s'\n", profileName, name, version)
 	return nil
 }
+// parseDeploymentRequirements parses deployment requirement flags from the command
+// Format: <package-name>:<version>:<profile-name> or <package-name>:<version>
+// Example: cert-manager:0.2.1:default-profile or cert-manager:0.2.1
+func parseDeploymentRequirements(cmd *cobra.Command) (*[]catapi.CatalogV3DeploymentRequirement, error) {
+	requirementStrs, _ := cmd.Flags().GetStringSlice("deployment-requirement")
+	if len(requirementStrs) == 0 {
+		return nil, nil
+	}
 
+	requirements := make([]catapi.CatalogV3DeploymentRequirement, 0, len(requirementStrs))
+	for _, reqStr := range requirementStrs {
+		parts := strings.Split(reqStr, ":")
+		if len(parts) < 2 || len(parts) > 3 {
+			return nil, fmt.Errorf("invalid deployment requirement format '%s': expected '<package-name>:<version>' or '<package-name>:<version>:<profile-name>'", reqStr)
+		}
+
+		packageName := strings.TrimSpace(parts[0])
+		version := strings.TrimSpace(parts[1])
+
+		if packageName == "" || version == "" {
+			return nil, fmt.Errorf("invalid deployment requirement '%s': package name and version cannot be empty", reqStr)
+		}
+
+		req := catapi.CatalogV3DeploymentRequirement{
+			Name:    packageName,
+			Version: version,
+		}
+
+		// Optional profile name
+		if len(parts) == 3 {
+			profileName := strings.TrimSpace(parts[2])
+			if profileName != "" {
+				req.DeploymentProfileName = &profileName
+			}
+		}
+
+		requirements = append(requirements, req)
+	}
+
+	return &requirements, nil
+}
 func runDeleteProfileCommand(cmd *cobra.Command, args []string) error {
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {

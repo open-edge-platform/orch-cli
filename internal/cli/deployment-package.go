@@ -25,13 +25,16 @@ func getCreateDeploymentPackageCommand() *cobra.Command {
 		Aliases: deploymentPackageAliases,
 		Short:   "Create a deployment package",
 		Args:    cobra.ExactArgs(2),
-		Example: "orch-cli create deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1",
+		Example: "orch-cli create deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --default-namespace app1=my-namespace --default-profile-name my-profile",
 		RunE:    runCreateDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
 	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references (required)")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
+	cmd.Flags().StringToString("default-namespace", map[string]string{},
+		"default namespaces for applications in format '<app-name>=<namespace>'")
+	cmd.Flags().String("default-profile-name", "", "default profile name for the deployment package (default: deployment-profile-1)")
 	cmd.Flags().String("kind", "normal", "deployment package kind: normal, addon, extension")
 	return cmd
 }
@@ -77,6 +80,8 @@ func getSetDeploymentPackageCommand() *cobra.Command {
 	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
+	cmd.Flags().StringToString("default-namespace", map[string]string{},
+		"default namespaces for applications in format '<app-name>=<namespace>'")
 	cmd.Flags().Bool("deployed", false, "mark deployment package as deployed or not")
 	return cmd
 }
@@ -142,6 +147,14 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3Deploym
 			}
 			_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
 			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n", *ca.DefaultProfileName)
+
+			if ca.DefaultNamespaces != nil && len(*ca.DefaultNamespaces) > 0 {
+				namespaces := make([]string, 0, len(*ca.DefaultNamespaces))
+				for app, ns := range *ca.DefaultNamespaces {
+					namespaces = append(namespaces, fmt.Sprintf("%s=%s", app, ns))
+				}
+				_, _ = fmt.Fprintf(writer, "Default Namespaces: %v\n", namespaces)
+			}
 
 			extensions := make([]string, 0, len(ca.Extensions))
 			for _, ext := range ca.Extensions {
@@ -231,6 +244,26 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		}
 	}
 
+	// Collect default namespaces
+	defaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
+	var defaultNamespacesPtr *map[string]string
+	if len(defaultNamespaces) > 0 {
+		defaultNamespacesPtr = &defaultNamespaces
+	}
+
+	// Set up default profile name - use "deployment-profile-1" to match UI behavior
+	defaultProfileName, _ := cmd.Flags().GetString("default-profile-name")
+	if defaultProfileName == "" {
+		defaultProfileName = "deployment-profile-1"
+	}
+
+	// Create an initial deployment profile to match UI behavior
+	initialProfile := catapi.CatalogV3DeploymentProfile{
+		Name:                defaultProfileName,
+		ApplicationProfiles: map[string]string{},
+	}
+	initialProfiles := []catapi.CatalogV3DeploymentProfile{initialProfile}
+
 	defaultKind := catapi.KINDNORMAL
 
 	resp, err := catalogClient.CatalogServiceCreateDeploymentPackageWithResponse(ctx, projectName,
@@ -242,6 +275,9 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 			Description:             &description,
 			ApplicationReferences:   applicationReferences,
 			ApplicationDependencies: &applicationDependencies,
+			DefaultNamespaces:       defaultNamespacesPtr,
+			DefaultProfileName:      &defaultProfileName,
+			Profiles:                &initialProfiles,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -427,6 +463,19 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Collect default namespaces; merge with existing if any
+	defaultNamespaces := deploymentPackage.DefaultNamespaces
+	newDefaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
+	if len(newDefaultNamespaces) > 0 {
+		if defaultNamespaces == nil {
+			defaultNamespaces = &newDefaultNamespaces
+		} else {
+			for k, v := range newDefaultNamespaces {
+				(*defaultNamespaces)[k] = v
+			}
+		}
+	}
+
 	resp, _ := catalogClient.CatalogServiceUpdateDeploymentPackageWithResponse(ctx, projectName, name, version,
 		catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody{
 			Name:                    name,
@@ -439,6 +488,7 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			Profiles:                deploymentPackage.Profiles,
 			ApplicationReferences:   applicationReferences,
 			ApplicationDependencies: &applicationDependencies,
+			DefaultNamespaces:       defaultNamespaces,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
