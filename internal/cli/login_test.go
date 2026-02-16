@@ -38,10 +38,11 @@ func (s *CLITestSuite) TestLogin() {
 	s.Error(err)
 	s.Contains(err.Error(), "username cannot be blank")
 
-	// Already a token present
+	// Already a token present - should auto-logout and allow re-login
 	viper.Set(auth.RefreshTokenField, "bogus")
+	// Should not return an error - auto-logout and continue
 	err = s.login("u", "p")
-	s.Contains(err.Error(), "already logged in - please logout first")
+	s.NoError(err)
 
 	// Attempt to log in - using mock should pass
 	viper.Set(auth.RefreshTokenField, "")
