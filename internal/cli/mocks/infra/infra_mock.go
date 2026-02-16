@@ -604,6 +604,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								CurrentAmtState:    (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
 								DesiredAmtState:    (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
 								DesiredPowerState:  (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
+								AmtSku:             (*infra.AmtSku)(stringPtr("12345")),
 								PowerCommandPolicy: (*infra.PowerCommandPolicy)(stringPtr("POWER_COMMAND_POLICY_ALWAYS_ON")),
 								PowerOnTime:        func() *int { i := 1764750313; return &i }(),
 								HostNics: &[]infra.HostnicResource{
