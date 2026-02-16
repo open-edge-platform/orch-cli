@@ -15,7 +15,6 @@ import (
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
-	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
 	"github.com/spf13/cobra"
 )
 
@@ -509,23 +508,13 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 }
 
 func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	ctx, _, projectName, err := CatalogFactory(cmd)
+	ctx, utilClient, projectName, err := CatalogUtilitiesFactory(cmd)
 	if err != nil {
 		return err
 	}
 
 	name := args[0]
 	version := args[1]
-
-	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
-	if err != nil {
-		return processError(err)
-	}
-
-	utilClient, err := catutilapi.NewClientWithResponses(serverAddress)
-	if err != nil {
-		return processError(err)
-	}
 
 	resp, err := utilClient.CatalogServiceDownloadDeploymentPackageWithResponse(ctx, projectName, name, version, auth.AddAuthHeader)
 	if err != nil {
