@@ -51,8 +51,12 @@ func getLogoutCommand() *cobra.Command {
 func login(cmd *cobra.Command, args []string) error {
 	existingRefreshToken := viper.GetString(auth.RefreshTokenField)
 	if existingRefreshToken != "" {
-		log.Warnf("Already logged in - please logout first")
-		return fmt.Errorf("already logged in - please logout first")
+		// Automatically logout before logging in again
+		log.Warnf("Existing token found, automatically logging out before re-login")
+		if logoutErr := performLogout(); logoutErr != nil {
+			log.Warnf("Failed to automatically logout: %v", logoutErr)
+		}
+		// Continue with login process
 	}
 
 	username := args[0]
@@ -197,6 +201,10 @@ func login(cmd *cobra.Command, args []string) error {
 }
 
 func logout(_ *cobra.Command, _ []string) error {
+	return performLogout()
+}
+
+func performLogout() error {
 	apiTokenIf := viper.Get(auth.RefreshTokenField)
 	username := viper.Get(auth.UserName)
 	if apiToken, ok := apiTokenIf.(string); ok && apiToken != "" {

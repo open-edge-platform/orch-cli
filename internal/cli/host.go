@@ -53,7 +53,8 @@ orch-cli list host --project some-project --workload NotAssigned
 const getHostExamples = `# Get detailed information about specific host using the host Resource ID
 orch-cli get host host-1234abcd --project some-project`
 
-const createHostExamples = `# Provision a host or a number of hosts from a CSV file
+func createHostExamples() string {
+	examples := `# Provision a host or a number of hosts from a CSV file
 
 # Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
 orch-cli create host --project some-project --generate-csv
@@ -63,7 +64,10 @@ orch-cli create host --project some-project --generate-csv=myhosts.csv
 
 # Sample input csv file hosts.csv
 
-Serial - Serial Number of the machine - mandatory field (both or one of Serial or UUID must be provided)
+`
+	if isFeatureEnabled(ProvisioningFeature) {
+		// Full provisioning examples when provisioning is enabled
+		examples += `Serial - Serial Number of the machine - mandatory field (both or one of Serial or UUID must be provided)
 UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided)
 OSProfile - OS Profile to be used for provisioning of the host - name of the profile or it's resource ID - mandatory field
 Site - The resource ID of the site to which the host will be provisioned - mandatory field
@@ -105,6 +109,29 @@ orch-cli create host --project some-project --import-from-csv test.csv
 # Create hosts from CSV and override provided values
 /orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
 `
+	} else {
+		// Simplified onboarding examples when provisioning is disabled
+		examples += `Provisioning disabled in the Edge Orchestrator - using simplified configuration to onboard Edge Nodes, only Serial and/or UUID must be provided
+
+Serial - Serial Number of the machine - mandatory field (both or one of Serial or UUID must be provided)
+UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided)
+All other fields and flag overrides not used.
+
+Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSize,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
+2500JF3,4c4c4544-2046-5310-8052-cac04f515233
+2500JF2,
+,4c4c4544-2046-5310-8052-cac04f515232
+
+# --dry-run allows for verification of the validity of the input csv file without creating hosts
+orch-cli create host --project some-project --import-from-csv test.csv --dry-run
+
+# Create hosts - --import-from-csv is a mandatory flag pointing to the input file. Successfully onboarded hosts indicated by output - errors provided in output file
+orch-cli create host --project some-project --import-from-csv test.csv
+`
+	}
+
+	return examples
+}
 
 const deleteHostExamples = `#Delete a host using it's host Resource ID
 orch-cli delete host host-1234abcd  --project itep`
@@ -147,8 +174,12 @@ host-2,host-2234abcd
 host-3,host-3234abcd,osupdatepolicy-1234abcd
 `
 
-const setHostExamples = `#Set an attribute of a host or execute an action - at least one flag must be specified
-
+func setHostExamples() string {
+	examples := `#Set an attribute of a host or execute an action - at least one flag must be specified
+`
+	// Add AMT and power-related examples only if OobFeature is enabled
+	if isFeatureEnabled(OobFeature) {
+		examples += `
 #Set host power state to on
 orch-cli set host host-1234abcd  --project itep --power on
 
@@ -198,12 +229,21 @@ orch-cli set host --project some-project --import-from-csv test.csv --dry-run
 
 # Set hosts - --import-from-csv is a mandatory flag pointing to the input file. Successfully provisioned host indicated by output - errors provided in output file
 orch-cli set host --project some-project --import-from-csv test.csv
+`
+	}
 
+	// Add OS Update policy examples only if Day2Feature is enabled
+	if isFeatureEnabled(Day2Feature) {
+		examples += `
 #Set host OS Update policy
 orch-cli set host host-1234abcd  --project itep --osupdatepolicy <resourceID>
 
 --osupdatepolicy - Set the OS Update policy for the host, must be a valid resource ID of an OS Update policy
 `
+	}
+
+	return examples
+}
 
 var hostHeaderGet = "\nDetailed Host Information\n"
 var filename = "test.csv"
@@ -667,12 +707,17 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	if host.AmtDnsSuffix != nil {
 		dnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
 	}
+	amtSKU := "N/A"
+	if host.AmtSku != nil {
+		amtSKU = fmt.Sprintf("%v", *host.AmtSku)
+	}
 
 	_, _ = fmt.Fprintf(writer, "\nAMT Info: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", currentAmtState)
 	_, _ = fmt.Fprintf(writer, "-\tAMT Desired State :\t %v\n", desiredAmtState)
 	_, _ = fmt.Fprintf(writer, "-\tAMT Desired Control Mode:\t %v\n", amtControlMode)
 	_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
+	_, _ = fmt.Fprintf(writer, "-\tAMT SKU :\t %v\n", amtSKU)
 
 	if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
 		currentPower := "N/A"
@@ -692,7 +737,6 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 			powerOnTime := time.Unix(int64(*host.PowerOnTime), 0)
 			powerOnTimeStr = powerOnTime.UTC().Format(time.RFC3339)
 		}
-
 		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", currentPower)
 		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", desiredPower)
 		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", powerPolicy)
@@ -1381,27 +1425,34 @@ func getCreateHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "host --import-from-csv]",
 		Short:   "Provisions a host or hosts",
-		Example: createHostExamples,
+		Example: createHostExamples(),
 		Aliases: hostAliases,
 		RunE:    runCreateHostCommand,
 	}
 
-	// Local persistent flags
+	// Local persistent flags - always available
 	cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about to be provisioned hosts")
 	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
 	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host import")
 	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
-	// Overrides
-	cmd.PersistentFlags().StringP("os-profile", "o", viper.GetString("os-profile"), "Override the OSProfile provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Override the site provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("metadata", "m", viper.GetString("metadata"), "Override the metadata provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("remote-user", "r", viper.GetString("remote-user"), "Override the metadata provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("cluster-deploy", "c", viper.GetString("cluster-deploy"), "Override the cluster deployment flag provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("cluster-template", "t", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("cluster-config", "f", viper.GetString("cluster-config"), "Override the cluster configuration provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("cloud-init", "j", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("lvm-size", "l", viper.GetString("lvm-size"), "Override the LVM size configuration provided in CSV file for all hosts")
+
+	// Provisioning-specific overrides - only when provisioning is enabled
+	if isFeatureEnabled(ProvisioningFeature) {
+		cmd.PersistentFlags().StringP("os-profile", "o", viper.GetString("os-profile"), "Override the OSProfile provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Override the site provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("metadata", "m", viper.GetString("metadata"), "Override the metadata provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("remote-user", "r", viper.GetString("remote-user"), "Override the remote user provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("cloud-init", "j", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("lvm-size", "l", viper.GetString("lvm-size"), "Override the LVM size configuration provided in CSV file for all hosts")
+	}
+
+	// Cluster-specific overrides - only when cluster orchestration is enabled
+	if isFeatureEnabled(ClusterOrchFeature) {
+		cmd.PersistentFlags().StringP("cluster-deploy", "c", viper.GetString("cluster-deploy"), "Override the cluster deployment flag provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("cluster-template", "t", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("cluster-config", "f", viper.GetString("cluster-config"), "Override the cluster configuration provided in CSV file for all hosts")
+	}
 
 	return cmd
 }
@@ -1422,7 +1473,7 @@ func getSetHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "host <resourceID> [flags]",
 		Short:   "Sets a host attribute or action",
-		Example: setHostExamples,
+		Example: setHostExamples(),
 		Args: func(cmd *cobra.Command, args []string) error {
 			generateCSV, _ := cmd.Flags().GetString("generate-csv")
 			if generateCSV == "" {
