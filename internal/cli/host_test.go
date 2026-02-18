@@ -410,15 +410,16 @@ func (s *CLITestSuite) TestHost() {
 		"Name":                            "Links State   |MTU      |MAC Address         |PCI Identifier   |SRIOV   |SRIOV VF Total   |SRIOV VF Number   |BMC Interface",
 		"eth0":                            "UNSPECIFIED   |1500     |30:d0:42:d9:02:7c   |0000:19:00.0     |true    |8                |4                 |true",
 		"AMT Info:":                       "",
-		"-   AMT Status:":                 "AMT_STATE_PROVISIONED",
-		"-   AMT Desired State :":         "AMT_STATE_PROVISIONED",
+		"-   AMT State:":                  "AMT_STATE_PROVISIONED",
+		"-   AMT Desired State:":          "AMT_STATE_PROVISIONED",
 		"-   AMT Desired Control Mode:":   "AMT_CONTROL_MODE_CCM",
 		"-   AMT Desired DNS Suffix:":     "example.com",
 		"-   AMT SKU :":                   "12345",
-		"-   Current Power Status:":       "POWER_STATE_ON",
-		"-   Desired Power Status:":       "POWER_STATE_ON",
-		"-   Power Command Policy :":      "POWER_COMMAND_POLICY_ALWAYS_ON",
-		"-   PowerOn Time :":              "2025-12-03T08:25:13Z",
+		"-   Current Power State:":        "POWER_STATE_ON",
+		"-   Desired Power State:":        "POWER_STATE_ON",
+		"-   Power Status:":               "Powered on",
+		"-   Power Command Policy:":       "POWER_COMMAND_POLICY_ALWAYS_ON",
+		"-   PowerOn Time:":               "2025-12-03T08:25:13Z",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)

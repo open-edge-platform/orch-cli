@@ -713,8 +713,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	_, _ = fmt.Fprintf(writer, "\nAMT Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", currentAmtState)
-	_, _ = fmt.Fprintf(writer, "-\tAMT Desired State :\t %v\n", desiredAmtState)
+	_, _ = fmt.Fprintf(writer, "-\tAMT State:\t %v\n", currentAmtState)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Desired State:\t %v\n", desiredAmtState)
 	_, _ = fmt.Fprintf(writer, "-\tAMT Desired Control Mode:\t %v\n", amtControlMode)
 	_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
 	_, _ = fmt.Fprintf(writer, "-\tAMT SKU :\t %v\n", amtSKU)
@@ -732,15 +732,20 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		if host.PowerCommandPolicy != nil {
 			powerPolicy = fmt.Sprintf("%v", *host.PowerCommandPolicy)
 		}
+		powerStatus := "N/A"
+		if host.PowerStatus != nil {
+			powerStatus = fmt.Sprintf("%v", *host.PowerStatus)
+		}
 		powerOnTimeStr := "N/A"
 		if host.PowerOnTime != nil {
 			powerOnTime := time.Unix(int64(*host.PowerOnTime), 0)
 			powerOnTimeStr = powerOnTime.UTC().Format(time.RFC3339)
 		}
-		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", currentPower)
-		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", desiredPower)
-		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", powerPolicy)
-		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", powerOnTimeStr)
+		_, _ = fmt.Fprintf(writer, "-\tCurrent Power State:\t %v\n", currentPower)
+		_, _ = fmt.Fprintf(writer, "-\tDesired Power State:\t %v\n", desiredPower)
+		_, _ = fmt.Fprintf(writer, "-\tPower Status:\t %v\n", powerStatus)
+		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy:\t %v\n", powerPolicy)
+		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time:\t %v\n", powerOnTimeStr)
 
 	} else if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
 		_, _ = fmt.Fprintf(writer, "AMT not active and/or not supported: No info available \n\n")
