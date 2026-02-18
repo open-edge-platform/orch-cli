@@ -79,10 +79,7 @@ func (s *CLITestSuite) testResolvePower() {
 	}{
 		{"on", infra.POWERSTATEON, false},
 		{"off", infra.POWERSTATEOFF, false},
-		{"cycle", infra.POWERSTATEPOWERCYCLE, false},
-		{"hibernate", infra.POWERSTATEHIBERNATE, false},
 		{"reset", infra.POWERSTATERESET, false},
-		{"sleep", infra.POWERSTATESLEEP, false},
 		{"invalid", "", true},
 		{"", "", true},
 	}

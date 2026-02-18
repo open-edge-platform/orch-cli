@@ -186,7 +186,7 @@ orch-cli set host host-1234abcd  --project itep --power on
 #Set host power command policy
 orch-cli set host host-1234abcd  --project itep --power-policy ordered
 
---power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
+--power - Set desired power state of host to on|off|reset
 --power-policy - Set the desired power command policy to ordered|immediate
 
 #Set host AMT state to provisioned
@@ -1497,7 +1497,7 @@ func getSetHostCommand() *cobra.Command {
 	if isFeatureEnabled(OobFeature) {
 		cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
 		cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
-		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
+		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|reset")
 		cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
 		cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
 		cmd.PersistentFlags().StringP("dns-suffix", "s", viper.GetString("dns-suffix"), "Set AMT DNS suffix <dnsSuffix>")
@@ -2884,16 +2884,10 @@ func resolvePower(power string) (infra.PowerState, error) {
 		return infra.POWERSTATEON, nil
 	case "off":
 		return infra.POWERSTATEOFF, nil
-	case "cycle":
-		return infra.POWERSTATEPOWERCYCLE, nil
-	case "hibernate":
-		return infra.POWERSTATEHIBERNATE, nil
 	case "reset":
 		return infra.POWERSTATERESET, nil
-	case "sleep":
-		return infra.POWERSTATESLEEP, nil
 	default:
-		return "", errors.New("incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep")
+		return "", errors.New("incorrect power action provided with --power flag use one of on|off|reset")
 	}
 }
 
