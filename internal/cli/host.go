@@ -186,7 +186,7 @@ orch-cli set host host-1234abcd  --project itep --power on
 #Set host power command policy
 orch-cli set host host-1234abcd  --project itep --power-policy ordered
 
---power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
+--power - Set desired power state of host to on|off|reset
 --power-policy - Set the desired power command policy to ordered|immediate
 
 #Set host AMT state to provisioned
@@ -713,8 +713,8 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	_, _ = fmt.Fprintf(writer, "\nAMT Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", currentAmtState)
-	_, _ = fmt.Fprintf(writer, "-\tAMT Desired State :\t %v\n", desiredAmtState)
+	_, _ = fmt.Fprintf(writer, "-\tAMT State:\t %v\n", currentAmtState)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Desired State:\t %v\n", desiredAmtState)
 	_, _ = fmt.Fprintf(writer, "-\tAMT Desired Control Mode:\t %v\n", amtControlMode)
 	_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
 	_, _ = fmt.Fprintf(writer, "-\tAMT SKU :\t %v\n", amtSKU)
@@ -732,15 +732,20 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		if host.PowerCommandPolicy != nil {
 			powerPolicy = fmt.Sprintf("%v", *host.PowerCommandPolicy)
 		}
+		powerStatus := "N/A"
+		if host.PowerStatus != nil {
+			powerStatus = fmt.Sprintf("%v", *host.PowerStatus)
+		}
 		powerOnTimeStr := "N/A"
 		if host.PowerOnTime != nil {
 			powerOnTime := time.Unix(int64(*host.PowerOnTime), 0)
 			powerOnTimeStr = powerOnTime.UTC().Format(time.RFC3339)
 		}
-		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", currentPower)
-		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", desiredPower)
-		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", powerPolicy)
-		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", powerOnTimeStr)
+		_, _ = fmt.Fprintf(writer, "-\tCurrent Power State:\t %v\n", currentPower)
+		_, _ = fmt.Fprintf(writer, "-\tDesired Power State:\t %v\n", desiredPower)
+		_, _ = fmt.Fprintf(writer, "-\tPower Status:\t %v\n", powerStatus)
+		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy:\t %v\n", powerPolicy)
+		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time:\t %v\n", powerOnTimeStr)
 
 	} else if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
 		_, _ = fmt.Fprintf(writer, "AMT not active and/or not supported: No info available \n\n")
@@ -1497,7 +1502,7 @@ func getSetHostCommand() *cobra.Command {
 	if isFeatureEnabled(OobFeature) {
 		cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
 		cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
-		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
+		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|reset")
 		cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
 		cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
 		cmd.PersistentFlags().StringP("dns-suffix", "s", viper.GetString("dns-suffix"), "Set AMT DNS suffix <dnsSuffix>")
@@ -2884,16 +2889,10 @@ func resolvePower(power string) (infra.PowerState, error) {
 		return infra.POWERSTATEON, nil
 	case "off":
 		return infra.POWERSTATEOFF, nil
-	case "cycle":
-		return infra.POWERSTATEPOWERCYCLE, nil
-	case "hibernate":
-		return infra.POWERSTATEHIBERNATE, nil
 	case "reset":
 		return infra.POWERSTATERESET, nil
-	case "sleep":
-		return infra.POWERSTATESLEEP, nil
 	default:
-		return "", errors.New("incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep")
+		return "", errors.New("incorrect power action provided with --power flag use one of on|off|reset")
 	}
 }
 
