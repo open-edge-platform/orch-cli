@@ -4,7 +4,7 @@
 
 module github.com/open-edge-platform/cli
 
-go 1.25.5
+go 1.25.7
 
 require (
 	github.com/atomix/dazl v1.1.4
