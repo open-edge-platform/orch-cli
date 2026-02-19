@@ -56,7 +56,7 @@ jobs:
         uses: open-edge-platform/orch-utils/.github/actions/setup-asdf@951ed4c7958311d2d5de1a920e7e6065fc03eef2
 
       - name: Checkout app-orch-catalog repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
           repository: open-edge-platform/app-orch-catalog
           path: app-orch-catalog
@@ -162,7 +162,7 @@ jobs:
 
       - name: Upload diagnostic artifacts
         if: always()
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: pods-apps-logs
           path: |
