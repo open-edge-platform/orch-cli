@@ -12,6 +12,59 @@ import (
 	"github.com/spf13/viper"
 )
 
+func TestDeriveAPIEndpointFromKeycloakEndpoint(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		input     string
+		expected  string
+		wantError bool
+	}{
+		{
+			name:     "https endpoint",
+			input:    "https://keycloak.orch.example.com/realms/master",
+			expected: "https://api.orch.example.com/",
+		},
+		{
+			name:     "http endpoint",
+			input:    "http://keycloak.orch.example.com/realms/master",
+			expected: "http://api.orch.example.com/",
+		},
+		{
+			name:      "invalid host",
+			input:     "https://keycloak/realms/master",
+			wantError: true,
+		},
+		{
+			name:      "invalid format",
+			input:     "://bad-url",
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := deriveAPIEndpointFromKeycloakEndpoint(tt.input)
+			if tt.wantError {
+				if err == nil {
+					t.Fatalf("expected error for input %q, got nil", tt.input)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error for input %q: %v", tt.input, err)
+			}
+			if got != tt.expected {
+				t.Fatalf("expected %q, got %q", tt.expected, got)
+			}
+		})
+	}
+}
+
 func (s *CLITestSuite) login(u string, p string) error {
 	cmd := getRootCmd()
 	args := []string{"login", u, p, "--keycloak", kcTest, "--quiet"}
