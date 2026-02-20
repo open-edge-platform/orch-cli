@@ -27,7 +27,14 @@ jobs:
   component-tests:
     name: Deploy Kind Orchestrator and Run Component Tests
     if: |
-      ${{ inputs.run-component-tests || github.event_name == 'schedule' || github.event.label.name == 'run-component-tests' }}
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' && inputs.run-component-tests) ||
+        (
+          github.event_name == 'pull_request' &&
+          github.actor != 'dependabot[bot]' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.event.label.name == 'run-component-tests'
+        )
     runs-on: ubuntu-24.04-16core-64GB  # ubuntu-24.04-4core-16GB ubuntu-22.04-32core-128GB & ubuntu-24.04-16core-64GB
     timeout-minutes: 60
     env:
@@ -56,7 +63,7 @@ jobs:
         uses: open-edge-platform/orch-utils/.github/actions/setup-asdf@951ed4c7958311d2d5de1a920e7e6065fc03eef2
 
       - name: Checkout app-orch-catalog repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
           repository: open-edge-platform/app-orch-catalog
           path: app-orch-catalog
@@ -162,7 +169,7 @@ jobs:
 
       - name: Upload diagnostic artifacts
         if: always()
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: pods-apps-logs
           path: |
