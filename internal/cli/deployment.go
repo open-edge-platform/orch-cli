@@ -23,7 +23,7 @@ func getCreateDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment <application-name> <version> [flags]",
 		Short:   "Create a deployment",
-		Example: "orch-cli create deployment my-package 1.0.0 --project sample-project --display-name my-deployment --profile sample-profile --application-label <app>.<label>=<label-value>",
+		Example: "orch-cli create deployment my-package 1.0.0 --project sample-project --display-name my-deployment --profile sample-profile --application-label <app>.<label>=<label-value>\n\n  # Deploy all apps in the package to clusters matching a label (auto-populated)\n  orch-cli create deployment my-package 1.0.0 --project sample-project --all-application-labels location=us-west",
 		Args:    cobra.ExactArgs(2),
 		Aliases: deploymentAliases,
 		RunE:    runCreateDeploymentCommand,
@@ -34,6 +34,8 @@ func getCreateDeploymentCommand() *cobra.Command {
 	cmd.Flags().StringToString("application-set", map[string]string{}, "application set value overrides in form of '<app>.<prop>=<prop-value>'")
 	cmd.Flags().StringToString("application-label", map[string]string{}, "automatic deployment of application to clusters in the form of '<app>.<label>=<label-value>'")
 	cmd.Flags().StringToString("application-cluster-id", map[string]string{}, "manual deployment of application to clusters in the form of '<app>=<cluster-id>'")
+	cmd.Flags().StringToString("all-application-labels", map[string]string{}, "apply labels to ALL applications in the package in format '<label>=<value>'")
+	cmd.Flags().String("all-application-namespace", "", "set the same target namespace for ALL applications in the package")
 	return cmd
 }
 
@@ -150,6 +152,41 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 	validAppNames, err := getValidApplicationNames(ctx, catalogClient, projectName, appName, appVersion)
 	if err != nil {
 		return err
+	}
+
+	// Expand --all-application-labels into per-app --application-label entries
+	allLabels, _ := cmd.Flags().GetStringToString("all-application-labels")
+	if len(allLabels) > 0 {
+		existingLabels, _ := cmd.Flags().GetStringToString("application-label")
+		if existingLabels == nil {
+			existingLabels = make(map[string]string)
+		}
+		for appName := range validAppNames {
+			for label, value := range allLabels {
+				key := fmt.Sprintf("%s.%s", appName, label)
+				// Don't override explicitly set per-app labels
+				if _, exists := existingLabels[key]; !exists {
+					existingLabels[key] = value
+				}
+			}
+		}
+		_ = cmd.Flags().Set("application-label", mapToFlagString(existingLabels))
+	}
+
+	// Expand --all-application-namespace into per-app --application-namespace entries
+	allNs, _ := cmd.Flags().GetString("all-application-namespace")
+	if allNs != "" {
+		existingNs, _ := cmd.Flags().GetStringToString("application-namespace")
+		if existingNs == nil {
+			existingNs = make(map[string]string)
+		}
+		for appName := range validAppNames {
+			// Don't override explicitly set per-app namespaces
+			if _, exists := existingNs[appName]; !exists {
+				existingNs[appName] = allNs
+			}
+		}
+		_ = cmd.Flags().Set("application-namespace", mapToFlagString(existingNs))
 	}
 
 	overrideValues, err := getOverrideValues(cmd)
@@ -593,4 +630,13 @@ func validateTargetClustersApplicationNames(targetClusters *[]depapi.TargetClust
 	}
 
 	return nil
+}
+
+// mapToFlagString converts a map to the StringToString flag format "k1=v1,k2=v2"
+func mapToFlagString(m map[string]string) string {
+	parts := make([]string, 0, len(m))
+	for k, v := range m {
+		parts = append(parts, fmt.Sprintf("%s=%s", k, v))
+	}
+	return strings.Join(parts, ",")
 }

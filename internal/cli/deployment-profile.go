@@ -144,7 +144,7 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 	profiles = append(profiles, profile)
 
 	// Set default profile name only if there isn't one already or if it's the implicit default
-	if pkg.DefaultProfileName == nil || *pkg.DefaultProfileName == "" || *pkg.DefaultProfileName == "implicit-default" {
+	if pkg.DefaultProfileName == nil || *pkg.DefaultProfileName == "" || *pkg.DefaultProfileName == "implicit-default" || *pkg.DefaultProfileName == "default-profile" {
 		pkg.DefaultProfileName = &profileName
 	}
 
