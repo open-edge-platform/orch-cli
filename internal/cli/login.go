@@ -176,6 +176,21 @@ func login(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	apiEpFromFlags, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return err
+	}
+	apiEndpointWasProvided := cmd.Flags().Changed(apiEndpoint)
+	if keycloakEpUser != "" && !apiEndpointWasProvided && (apiEpFromFlags == "" || apiEpFromFlags == apiDefaultEndpoint) {
+		derivedAPIEndpoint, err := deriveAPIEndpointFromKeycloakEndpoint(keycloakEp)
+		if err == nil {
+			if err := cmd.Flags().Set(apiEndpoint, derivedAPIEndpoint); err != nil {
+				return err
+			}
+			fmt.Printf("Determined api endpoint from keycloak endpoint: %s\n", derivedAPIEndpoint)
+		}
+	}
+
 	ctx, orchCLient, err := OrchestratorFactory(cmd)
 	if err != nil {
 		return err
@@ -285,4 +300,21 @@ func processFeature(prefix string, feature orchutilities.FeatureInfo) {
 	for nestedName, nestedFeature := range feature.Features {
 		processFeature(prefix+"."+nestedName, nestedFeature)
 	}
+}
+
+func deriveAPIEndpointFromKeycloakEndpoint(keycloakEndpoint string) (string, error) {
+	u, err := url.Parse(keycloakEndpoint)
+	if err != nil {
+		return "", err
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return "", fmt.Errorf("invalid keycloak endpoint %q", keycloakEndpoint)
+	}
+
+	parts := strings.SplitN(u.Host, ".", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("failed to determine api endpoint from keycloak endpoint %q", keycloakEndpoint)
+	}
+
+	return fmt.Sprintf("%s://api.%s/", u.Scheme, parts[1]), nil
 }
