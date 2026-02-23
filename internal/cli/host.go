@@ -1990,7 +1990,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			if h.DesiredAmtState != nil {
 				desiredAmtState = string(*h.DesiredAmtState)
 			}
-			if h.AmtControlMode != nil {
+			if h.AmtControlMode != nil && *h.AmtControlMode != infra.AMTCONTROLMODEUNSPECIFIED {
 				controlMode = string(*h.AmtControlMode)
 			}
 			fmt.Fprintf(f, "%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode)
