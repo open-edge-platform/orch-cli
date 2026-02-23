@@ -199,11 +199,6 @@ orch-cli set host host-1234abcd --project some-project --control-mode admin
 
 --control-mode - Set desired AMT control mode of host to admin|client
 
-#Set host AMT DNS suffix
-orch-cli set host host-1234abcd --project some-project --dns-suffix example.com
-
---dns-suffix - Set desired AMT DNS suffix of host
-
 # Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
 orch-cli set host --project some-project --generate-csv
 
@@ -216,13 +211,12 @@ Name - Name of the machine - mandatory field
 ResourceID - Unique Identifier of host - mandatory field
 DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field or AMT_STATE_PROVISIONED|AMT_STATE_UNPROVISIONED
 ControlMode - Desired AMT control mode of host - admin|client - optional field or AMT_CONTROL_MODE_ADMIN|AMT_CONTROL_MODE_CLIENT
-DnsSuffix - Desired AMT DNS suffix of host - optional field
 
-Name,ResourceID,DesiredAmtState,ControlMode,DnsSuffix
+Name,ResourceID,DesiredAmtState,ControlMode
 host-1,host-1234abcd,provisioned
 
-Name,ResourceID,DesiredAmtState,ControlMode,DnsSuffix
-host-1,host-1234abcd,provisioned,admin,example.com
+Name,ResourceID,DesiredAmtState,ControlMode
+host-1,host-1234abcd,provisioned,admin
 
 # --dry-run allows for verification of the validity of the input csv file without updating hosts
 orch-cli set host --project some-project --import-from-csv test.csv --dry-run
@@ -1505,7 +1499,6 @@ func getSetHostCommand() *cobra.Command {
 		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|reset")
 		cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
 		cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
-		cmd.PersistentFlags().StringP("dns-suffix", "s", viper.GetString("dns-suffix"), "Set AMT DNS suffix <dnsSuffix>")
 		cmd.PersistentFlags().StringP("control-mode", "m", viper.GetString("control-mode"), "Set AMT control mode client|admin")
 	}
 	if isFeatureEnabled(Day2Feature) {
@@ -1941,7 +1934,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	updFlag, _ := cmd.Flags().GetString("osupdatepolicy")
 	amtFlag, _ := cmd.Flags().GetString("amt-state")
 	amtModeFlag, _ := cmd.Flags().GetString("control-mode")
-	dnsSuffixFlag, _ := cmd.Flags().GetString("dns-suffix")
 
 	// Bulk CSV generation
 	if generateCSV != "" {
@@ -1986,26 +1978,22 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		defer f.Close()
-		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode,DnsSuffix")
+		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode")
 		for _, h := range hosts {
 			name := h.Name
 			resourceID := ""
 			desiredAmtState := ""
 			controlMode := ""
-			dnsSuffix := ""
 			if h.ResourceId != nil {
 				resourceID = *h.ResourceId
 			}
 			if h.DesiredAmtState != nil {
 				desiredAmtState = string(*h.DesiredAmtState)
 			}
-			if h.AmtControlMode != nil {
+			if h.AmtControlMode != nil && *h.AmtControlMode != infra.AMTCONTROLMODEUNSPECIFIED {
 				controlMode = string(*h.AmtControlMode)
 			}
-			if h.AmtDnsSuffix != nil {
-				dnsSuffix = *h.AmtDnsSuffix
-			}
-			fmt.Fprintf(f, "%s,%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode, dnsSuffix)
+			fmt.Fprintf(f, "%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode)
 		}
 		fmt.Printf("CSV template generated: %s\n", generateCSV)
 		return nil
@@ -2032,16 +2020,13 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				continue
 			}
 			desiredControlMode := ""
-			desiredDNSSuffix := ""
 			name := strings.TrimSpace(fields[0])
 			resourceID := strings.TrimSpace(fields[1])
 			desiredAmtState := strings.TrimSpace(fields[2])
 			if len(fields) >= 4 {
 				desiredControlMode = strings.TrimSpace(fields[3])
 			}
-			if len(fields) >= 5 {
-				desiredDNSSuffix = strings.TrimSpace(fields[4])
-			}
+
 			// Validate desiredAmtState
 			amtState, err := resolveAmtState(desiredAmtState)
 			if err != nil {
@@ -2049,7 +2034,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				continue
 			}
 			var amtMode *infra.AmtControlMode
-			var dnsSuffix *string
 			if desiredControlMode != "" {
 				mode, err := resolveAmtControlMode(desiredControlMode)
 				if err != nil {
@@ -2057,9 +2041,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 					continue
 				}
 				amtMode = &mode
-			}
-			if desiredDNSSuffix != "" {
-				dnsSuffix = &desiredDNSSuffix
 			}
 			// Patch host
 			ctx, hostClient, projectName, err := InfraFactory(cmd)
@@ -2070,7 +2051,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 				DesiredAmtState: &amtState,
 				AmtControlMode:  amtMode,
-				AmtDnsSuffix:    dnsSuffix,
 				Name:            name,
 			}, auth.AddAuthHeader)
 			if err != nil {
@@ -2094,7 +2074,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 	hostID := args[0]
 
-	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" && (amtFlag == "" || strings.HasPrefix(amtFlag, "--")) && (amtModeFlag == "" || strings.HasPrefix(amtModeFlag, "--")) && (dnsSuffixFlag == "" || strings.HasPrefix(dnsSuffixFlag, "--")) {
+	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" && (amtFlag == "" || strings.HasPrefix(amtFlag, "--")) && (amtModeFlag == "" || strings.HasPrefix(amtModeFlag, "--")) {
 		return errors.New("a flag must be provided with the set host command and value cannot be \"\"")
 	}
 
@@ -2103,7 +2083,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	var updatePolicy *string
 	var amtState *infra.AmtState
 	var amtMode *infra.AmtControlMode
-	var dnsSuffix *string
 
 	if policyFlag != "" {
 		pol, err := resolvePowerPolicy(policyFlag)
@@ -2139,10 +2118,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		amtMode = &mode
-	}
-
-	if dnsSuffixFlag != "" {
-		dnsSuffix = &dnsSuffixFlag
 	}
 
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
@@ -2188,11 +2163,10 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if amtState != nil || amtMode != nil || dnsSuffix != nil {
+	if amtState != nil || amtMode != nil {
 		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			DesiredAmtState: amtState,
 			AmtControlMode:  amtMode,
-			AmtDnsSuffix:    dnsSuffix,
 			Name:            host.Name,
 		}, auth.AddAuthHeader)
 		if err != nil {
