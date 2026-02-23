@@ -19,11 +19,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Context key types for passing expanded values
+type contextKey string
+
+const (
+	expandedLabelsKey     contextKey = "expandedLabels"
+	expandedClusterIDsKey contextKey = "expandedClusterIDs"
+)
+
 func getCreateDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deployment <package-name> <version> [flags]",
 		Short:   "Create a deployment",
-		Example: "orch-cli create deployment my-package 1.0.0 --project sample-project --display-name my-deployment --profile sample-profile --application-label location=us-west",
+		Example: "orch-cli create deployment my-package 1.0.0 --project sample-project --display-name my-deployment --profile sample-profile --application-label <label>=<label-value>",
 		Args:    cobra.ExactArgs(2),
 		Aliases: deploymentAliases,
 		RunE:    runCreateDeploymentCommand,
@@ -65,7 +73,7 @@ func getSetDeploymentCommand() *cobra.Command {
 		Use:     "deployment <deployment-id> [flags]",
 		Short:   "Update a deployment",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli set deployment 12345 --project some-project --name my-deployment --package-name my-package --package-version 1.0.0 --profile sample-profile --application-namespace <app>=<namespace> --application-set <app>.<prop>=<prop-value> --application-label location=us-west",
+		Example: "orch-cli set deployment 12345 --project some-project --name my-deployment --package-name my-package --package-version 1.0.0 --profile sample-profile --application-namespace <app>=<namespace> --application-set <app>.<prop>=<prop-value> --application-label <label>=<label-value>",
 		Aliases: deploymentAliases,
 		RunE:    runSetDeploymentCommand,
 	}
@@ -163,7 +171,7 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 				expandedLabels[key] = value
 			}
 		}
-		cmd.SetContext(context.WithValue(cmd.Context(), "expandedLabels", expandedLabels))
+		cmd.SetContext(context.WithValue(cmd.Context(), expandedLabelsKey, expandedLabels))
 	}
 
 	overrideValues, err := getOverrideValues(cmd)
@@ -314,7 +322,7 @@ func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.TargetClu
 func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
 	// Check for expanded labels from context (set during command preprocessing)
 	var labels map[string]string
-	if expandedLabels := cmd.Context().Value("expandedLabels"); expandedLabels != nil {
+	if expandedLabels := cmd.Context().Value(expandedLabelsKey); expandedLabels != nil {
 		labels = expandedLabels.(map[string]string)
 	} else {
 		// Fall back to flag value (for backward compatibility with old format)
@@ -352,7 +360,7 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
 	// Check for expanded cluster IDs from context (set during command preprocessing)
 	var clusterIDs map[string]string
-	if expandedIDs := cmd.Context().Value("expandedClusterIDs"); expandedIDs != nil {
+	if expandedIDs := cmd.Context().Value(expandedClusterIDsKey); expandedIDs != nil {
 		clusterIDs = expandedIDs.(map[string]string)
 	}
 
@@ -364,8 +372,8 @@ func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error)
 	targetClusters := make([]depapi.TargetClusters, 0, len(clusterIDs))
 	for app, clusterID := range clusterIDs {
 		appName := app
-		clusterId := clusterID
-		target := depapi.TargetClusters{AppName: &appName, ClusterId: &clusterId}
+		cID := clusterID
+		target := depapi.TargetClusters{AppName: &appName, ClusterId: &cID}
 		targetClusters = append(targetClusters, target)
 	}
 	return &targetClusters, nil
@@ -619,13 +627,4 @@ func validateTargetClustersApplicationNames(targetClusters *[]depapi.TargetClust
 	}
 
 	return nil
-}
-
-// mapToFlagString converts a map to the StringToString flag format "k1=v1,k2=v2"
-func mapToFlagString(m map[string]string) string {
-	parts := make([]string, 0, len(m))
-	for k, v := range m {
-		parts = append(parts, fmt.Sprintf("%s=%s", k, v))
-	}
-	return strings.Join(parts, ",")
 }

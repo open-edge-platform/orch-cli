@@ -453,6 +453,7 @@ func runSetProfileCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Profile '%s' updated successfully for application '%s:%s'\n", profileName, name, version)
 	return nil
 }
+
 // parseDeploymentRequirements parses deployment requirement flags from the command
 // Format: <package-name>:<version>:<profile-name> or <package-name>:<version>
 // Example: cert-manager:0.2.1:default-profile or cert-manager:0.2.1
