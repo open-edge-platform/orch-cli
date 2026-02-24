@@ -72,7 +72,7 @@ func (s *CLITestSuite) TestDeployment() {
 		"project":           project,
 		"display-name":      "Test",
 		"profile":           "test-profile",
-		"application-label": "app1.l1=l1value,app2.l2=l2value",
+		"application-label": "location=us-west",
 	})
 	s.NoError(err)
 
@@ -91,7 +91,7 @@ func (s *CLITestSuite) TestDeployment() {
 
 func FuzzDeployment(f *testing.F) {
 	// Seed with valid and invalid input combinations
-	f.Add("deployment-pkg", "1.0.0", "test-deployment", project, "test-profile", "Test", "app1.l1=l1value,app2.l2=l2value")
+	f.Add("deployment-pkg", "1.0.0", "test-deployment", project, "test-profile", "Test", "location=us-west")
 	f.Add("", "1.0.0", "test-deployment", project, "test-profile", "Test", "")
 	f.Add("deployment-pkg", "", "test-deployment", project, "test-profile", "Test", "")
 	f.Add("deployment-pkg", "1.0.0", "", project, "test-profile", "Test", "")

@@ -19,11 +19,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Context key types for passing expanded values
+type contextKey string
+
+const (
+	expandedLabelsKey     contextKey = "expandedLabels"
+	expandedClusterIDsKey contextKey = "expandedClusterIDs"
+)
+
 func getCreateDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <application-name> <version> [flags]",
+		Use:     "deployment <package-name> <version> [flags]",
 		Short:   "Create a deployment",
-		Example: "orch-cli create deployment my-package 1.0.0 --project sample-project --display-name my-deployment --profile sample-profile --application-label <app>.<label>=<label-value>",
+		Example: "orch-cli create deployment my-package 1.0.0 --project sample-project --display-name my-deployment --profile sample-profile --application-label <label>=<label-value>",
 		Args:    cobra.ExactArgs(2),
 		Aliases: deploymentAliases,
 		RunE:    runCreateDeploymentCommand,
@@ -32,8 +40,8 @@ func getCreateDeploymentCommand() *cobra.Command {
 	cmd.Flags().String("profile", "", "deployment profile to use")
 	cmd.Flags().StringToString("application-namespace", map[string]string{}, "application target namespaces in format '<app>=<namespace>'")
 	cmd.Flags().StringToString("application-set", map[string]string{}, "application set value overrides in form of '<app>.<prop>=<prop-value>'")
-	cmd.Flags().StringToString("application-label", map[string]string{}, "automatic deployment of application to clusters in the form of '<app>.<label>=<label-value>'")
-	cmd.Flags().StringToString("application-cluster-id", map[string]string{}, "manual deployment of application to clusters in the form of '<app>=<cluster-id>'")
+	cmd.Flags().StringToString("application-label", map[string]string{}, "labels to deploy ALL applications in the package to matching clusters in format '<label>=<value>'")
+	cmd.Flags().String("application-cluster-id", "", "cluster ID to deploy ALL applications in the package to")
 	return cmd
 }
 
@@ -65,7 +73,7 @@ func getSetDeploymentCommand() *cobra.Command {
 		Use:     "deployment <deployment-id> [flags]",
 		Short:   "Update a deployment",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli set deployment 12345 --project some-project --name my-deployment --package-name my-package --package-version 1.0.0 --profile sample-profile --application-namespace <app>=<namespace> --application-set <app>.<prop>=<prop-value> --application-label <app>.<label>=<label-value>",
+		Example: "orch-cli set deployment 12345 --project some-project --name my-deployment --package-name my-package --package-version 1.0.0 --profile sample-profile --application-namespace <app>=<namespace> --application-set <app>.<prop>=<prop-value> --application-label <label>=<label-value>",
 		Aliases: deploymentAliases,
 		RunE:    runSetDeploymentCommand,
 	}
@@ -75,8 +83,8 @@ func getSetDeploymentCommand() *cobra.Command {
 	cmd.Flags().String("profile", "", "deployment profile to use")
 	cmd.Flags().StringToString("application-namespace", map[string]string{}, "application target namespaces in format '<app>=<namespace>'")
 	cmd.Flags().StringToString("application-set", map[string]string{}, "application set value overrides in form of '<app>.<prop>=<prop-value>'")
-	cmd.Flags().StringToString("application-label", map[string]string{}, "automatic deployment of application to clusters in the form of '<app>.<label>=<label-value>'")
-	cmd.Flags().StringToString("application-cluster-id", map[string]string{}, "manual deployment of application to clusters in the form of '<app>=<cluster-id>'")
+	cmd.Flags().StringToString("application-label", map[string]string{}, "labels to deploy ALL applications in the package to matching clusters in format '<label>=<value>'")
+	cmd.Flags().String("application-cluster-id", "", "cluster ID to deploy ALL applications in the package to")
 	return cmd
 }
 
@@ -150,6 +158,20 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 	validAppNames, err := getValidApplicationNames(ctx, catalogClient, projectName, appName, appVersion)
 	if err != nil {
 		return err
+	}
+
+	// Expand --application-label to apply to ALL applications in the package
+	// Format: <label>=<value> applies the same label to all apps
+	labels, _ := cmd.Flags().GetStringToString("application-label")
+	if len(labels) > 0 {
+		expandedLabels := make(map[string]string)
+		for appName := range validAppNames {
+			for label, value := range labels {
+				key := fmt.Sprintf("%s.%s", appName, label)
+				expandedLabels[key] = value
+			}
+		}
+		cmd.SetContext(context.WithValue(cmd.Context(), expandedLabelsKey, expandedLabels))
 	}
 
 	overrideValues, err := getOverrideValues(cmd)
@@ -298,9 +320,17 @@ func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.TargetClu
 }
 
 func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
+	// Check for expanded labels from context (set during command preprocessing)
+	var labels map[string]string
+	if expandedLabels := cmd.Context().Value(expandedLabelsKey); expandedLabels != nil {
+		labels = expandedLabels.(map[string]string)
+	} else {
+		// Fall back to flag value (for backward compatibility with old format)
+		labels, _ = cmd.Flags().GetStringToString("application-label")
+	}
+
 	// Accumulate any app target cluster labels in format "<app-name>.<label-name>=<label-value>"
 	targets := make(map[string]depapi.TargetClusters, 0)
-	labels, _ := cmd.Flags().GetStringToString("application-label")
 	for appLabel, value := range labels {
 		fields := strings.SplitN(appLabel, ".", 2)
 		if len(fields) < 2 {
@@ -328,18 +358,22 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 }
 
 func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
-	// Accumulate any app target cluster IDs in format "<app-name>=<cluster-id>"
-	targets := make(map[string]depapi.TargetClusters, 0)
-	clusterIDs, _ := cmd.Flags().GetStringToString("application-cluster-id")
-	for app, clusterID := range clusterIDs {
-		// We know targets[app] does not exist because GetStringToString returns a map, and app is the key
-		target := depapi.TargetClusters{AppName: &app, ClusterId: &clusterID}
-		targets[app] = target
+	// Check for expanded cluster IDs from context (set during command preprocessing)
+	var clusterIDs map[string]string
+	if expandedIDs := cmd.Context().Value(expandedClusterIDsKey); expandedIDs != nil {
+		clusterIDs = expandedIDs.(map[string]string)
 	}
 
-	// Transform targets map into array
-	targetClusters := make([]depapi.TargetClusters, 0, len(targets))
-	for _, target := range targets {
+	if len(clusterIDs) == 0 {
+		return &[]depapi.TargetClusters{}, nil
+	}
+
+	// Transform to target clusters array
+	targetClusters := make([]depapi.TargetClusters, 0, len(clusterIDs))
+	for app, clusterID := range clusterIDs {
+		appName := app
+		cID := clusterID
+		target := depapi.TargetClusters{AppName: &appName, ClusterId: &cID}
 		targetClusters = append(targetClusters, target)
 	}
 	return &targetClusters, nil
