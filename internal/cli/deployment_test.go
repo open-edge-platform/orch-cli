@@ -61,6 +61,11 @@ func (s *CLITestSuite) setDeployment(publisher string, deployment string, args c
 	return s.runCommand(commandString)
 }
 
+func (s *CLITestSuite) upgradeDeployment(publisher string, deployment string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`upgrade deployment %s --project %s`, deployment, publisher))
+	return s.runCommand(commandString)
+}
+
 func (s *CLITestSuite) deleteDeployment(publisher string, deployment string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`delete deployment %s --project %s`, deployment, publisher))
 	return s.runCommand(commandString)
@@ -79,10 +84,20 @@ func (s *CLITestSuite) TestDeployment() {
 	_, err = s.listDeployment(project, make(map[string]string))
 	s.NoError(err)
 
+	_, err = s.listDeployment(project, map[string]string{
+		"verbose": "true",
+	})
+	s.NoError(err)
+
 	_, err = s.getDeployment(project, "test-deployment", make(map[string]string))
 	s.NoError(err)
 
 	_, err = s.setDeployment(project, "test-deployment", make(map[string]string))
+	s.NoError(err)
+
+	_, err = s.upgradeDeployment(project, "test-deployment", map[string]string{
+		"package-version": "1.1.0",
+	})
 	s.NoError(err)
 
 	_, err = s.deleteDeployment(project, "test-deployment", make(map[string]string))
@@ -140,6 +155,18 @@ func FuzzDeployment(f *testing.F) {
 
 		// --- Set Deployment ---
 		_, err = testSuite.setDeployment(publisher, deployment, make(map[string]string))
+		if isExpectedError(err) {
+			t.Log("Expected error:", err)
+		} else if !testSuite.NoError(err) {
+			t.Errorf("Unexpected error: %v", err)
+		}
+
+		args = map[string]string{
+			"package-version": "1.1.0",
+		}
+
+		// --- Upgrade Deployment ---
+		_, err = testSuite.upgradeDeployment(publisher, deployment, args)
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
