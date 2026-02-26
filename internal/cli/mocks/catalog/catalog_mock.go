@@ -184,6 +184,17 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			},
 		).AnyTimes()
 
+		// Mock Import Helm Chart
+		mockClient.EXPECT().CatalogServiceImportWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, _ string, _ *catapi.CatalogServiceImportParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceImportResponse, error) {
+				return &catapi.CatalogServiceImportResponse{
+					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+				}, nil
+			},
+		).AnyTimes()
+
 		mockClient.EXPECT().CatalogServiceGetApplicationWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
