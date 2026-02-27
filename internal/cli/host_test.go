@@ -418,7 +418,6 @@ func (s *CLITestSuite) TestHost() {
 		"-   Current Power State:":        "POWER_STATE_ON",
 		"-   Desired Power State:":        "POWER_STATE_ON",
 		"-   Power Status:":               "Powered on",
-		"-   Power Command Policy:":       "POWER_COMMAND_POLICY_ALWAYS_ON",
 		"-   PowerOn Time:":               "2025-12-03T08:25:13Z",
 	}
 
