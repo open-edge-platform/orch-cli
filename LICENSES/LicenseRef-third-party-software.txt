@@ -86,6 +86,117 @@ This file contains the list of third-party software included in or with the Inte
     │ limitations under the License.
     ────────────────────────────────────────
 
+    github.com/Masterminds/goutils
+    Copyright 2014 Alexander Okoli
+    ────────────────────────────────────────
+    │ Copyright 2014 Alexander Okoli
+    │
+    │ Licensed under the Apache License, Version 2.0 (the "License");
+    │ you may not use this file except in compliance with the License.
+    │ You may obtain a copy of the License at
+    │
+    │     http://www.apache.org/licenses/LICENSE-2.0
+    │
+    │ Unless required by applicable law or agreed to in writing, software
+    │ distributed under the License is distributed on an "AS IS" BASIS,
+    │ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    │ See the License for the specific language governing permissions and
+    │ limitations under the License.
+    ────────────────────────────────────────
+
+    github.com/xeipuuv/gojsonpointer
+    Copyright 2015 xeipuuv
+    ────────────────────────────────────────
+    │ Copyright 2015 xeipuuv
+    │
+    │ Licensed under the Apache License, Version 2.0 (the "License");
+    │ you may not use this file except in compliance with the License.
+    │ You may obtain a copy of the License at
+    │
+    │     http://www.apache.org/licenses/LICENSE-2.0
+    │
+    │ Unless required by applicable law or agreed to in writing, software
+    │ distributed under the License is distributed on an "AS IS" BASIS,
+    │ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    │ See the License for the specific language governing permissions and
+    │ limitations under the License.
+    ────────────────────────────────────────
+
+    github.com/xeipuuv/gojsonreference
+    Copyright 2015 xeipuuv
+    ────────────────────────────────────────
+    │ Copyright 2015 xeipuuv
+    │
+    │ Licensed under the Apache License, Version 2.0 (the "License");
+    │ you may not use this file except in compliance with the License.
+    │ You may obtain a copy of the License at
+    │
+    │     http://www.apache.org/licenses/LICENSE-2.0
+    │
+    │ Unless required by applicable law or agreed to in writing, software
+    │ distributed under the License is distributed on an "AS IS" BASIS,
+    │ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    │ See the License for the specific language governing permissions and
+    │ limitations under the License.
+    ────────────────────────────────────────
+
+    github.com/xeipuuv/gojsonschema
+    Copyright 2015 xeipuuv
+    ────────────────────────────────────────
+    │ Copyright 2015 xeipuuv
+    │
+    │ Licensed under the Apache License, Version 2.0 (the "License");
+    │ you may not use this file except in compliance with the License.
+    │ You may obtain a copy of the License at
+    │
+    │     http://www.apache.org/licenses/LICENSE-2.0
+    │
+    │ Unless required by applicable law or agreed to in writing, software
+    │ distributed under the License is distributed on an "AS IS" BASIS,
+    │ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    │ See the License for the specific language governing permissions and
+    │ limitations under the License.
+    ────────────────────────────────────────
+
+    go.yaml.in/yaml/v3 
+    (all apart from: apic.go emitterc.go parserc.go readerc.go scannerc.go
+    writerc.go yamlh.go yamlprivateh.go - see MIT license)
+    ────────────────────────────────────────
+    │ Copyright (c) 2011-2019 Canonical Ltd
+    │
+    │ Licensed under the Apache License, Version 2.0 (the "License");
+    │ you may not use this file except in compliance with the License.
+    │ You may obtain a copy of the License at
+    │
+    │     http://www.apache.org/licenses/LICENSE-2.0
+    │
+    │ Unless required by applicable law or agreed to in writing, software
+    │ distributed under the License is distributed on an "AS IS" BASIS,
+    │ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    │ See the License for the specific language governing permissions and
+    │ limitations under the License.
+    ────────────────────────────────────────
+
+    github.com/AdaLogics/go-fuzz-headers
+    Copyright 2023 The go-fuzz-headers Authors.
+    ────────────────────────────────────────
+    │ Copyright 2023 The go-fuzz-headers Authors.
+    │
+    │ Licensed under the Apache License, Version 2.0 (the "License");
+    │ you may not use this file except in compliance with the License.
+    │ You may obtain a copy of the License at
+    │
+    │     http://www.apache.org/licenses/LICENSE-2.0
+    │
+    │ Unless required by applicable law or agreed to in writing, software
+    │ distributed under the License is distributed on an "AS IS" BASIS,
+    │ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    │ See the License for the specific language governing permissions and
+    │ limitations under the License.
+    ────────────────────────────────────────
+
+    
+
 Apache License
 Version 2.0, January 2004
 http://www.apache.org/licenses/
@@ -278,6 +389,9 @@ limitations under the License.
     Copyright (c) 2015, Dave Cheney <dave@cheney.net>
     All rights reserved.
 
+    gopkg.in/check.v1
+    Copyright (c) 2010-2013 Gustavo Niemeyer <gustavo@niemeyer.net>
+
 2-Clause BSD License
 
 Redistribution and use in source and binary forms, with or without
@@ -347,6 +461,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
     google.golang.org/protobuf
     Copyright (c) 2018 The Go Authors. All rights reserved.
+
+    github.com/rogpeppe/go-internal
+    Copyright (c) 2018 The Go Authors. All rights reserved.
+
 
 3-Clause BSD License
 Redistribution and use in source and binary forms, with or without
@@ -434,6 +552,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
     github.com/subosito/gotenv
     Copyright (c) 2013 Alif Rachmawadi
+
+    github.com/Masterminds/semver
+    Copyright (C) 2014-2019, Matt Butcher and Matt Farina
+
+    github.com/go-viper/mapstructure/v2
+    Copyright (c) 2013 Mitchell Hashimoto
+
+    go.yaml.in/yaml/v3
+    | The following files were ported to Go from C files of libyaml, and thus
+    | are still covered by their original MIT license, with the additional
+    | copyright staring in 2011 when the project was ported over:
+    |
+    | apic.go emitterc.go parserc.go readerc.go scannerc.go
+    | writerc.go yamlh.go yamlprivateh.go
+    Copyright (c) 2006-2010 Kirill Simonov
+    Copyright (c) 2006-2011 Kirill Simonov
+    
 
 The MIT License (MIT)
 
