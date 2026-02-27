@@ -469,8 +469,9 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 	_, _ = fmt.Fprintf(writer, "\nStatus details: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
-	_, _ = fmt.Fprintf(writer, "-\tHost Status Details:\t %s\n", hostdetails)
+
 	if isFeatureEnabled(ProvisioningFeature) {
+		_, _ = fmt.Fprintf(writer, "-\tHost Status Details:\t %s\n", hostdetails)
 		_, _ = fmt.Fprintf(writer, "-\tProvisioning Status:\t %s\n", provstatus)
 		_, _ = fmt.Fprintf(writer, "-\tUpdate Status:\t %s\n", updatestatus)
 		_, _ = fmt.Fprintf(writer, "-\tOS Update Policy:\t %s\n", osupdatepolicy)
@@ -722,10 +723,6 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		if host.DesiredPowerState != nil {
 			desiredPower = fmt.Sprintf("%v", *host.DesiredPowerState)
 		}
-		powerPolicy := "N/A"
-		if host.PowerCommandPolicy != nil {
-			powerPolicy = fmt.Sprintf("%v", *host.PowerCommandPolicy)
-		}
 		powerStatus := "N/A"
 		if host.PowerStatus != nil {
 			powerStatus = fmt.Sprintf("%v", *host.PowerStatus)
@@ -738,7 +735,6 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		_, _ = fmt.Fprintf(writer, "-\tCurrent Power State:\t %v\n", currentPower)
 		_, _ = fmt.Fprintf(writer, "-\tDesired Power State:\t %v\n", desiredPower)
 		_, _ = fmt.Fprintf(writer, "-\tPower Status:\t %v\n", powerStatus)
-		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy:\t %v\n", powerPolicy)
 		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time:\t %v\n", powerOnTimeStr)
 
 	} else if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
