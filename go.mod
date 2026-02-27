@@ -12,7 +12,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.34
-	github.com/oapi-codegen/runtime v1.1.2
+	github.com/oapi-codegen/runtime v1.2.0
 	github.com/open-edge-platform/app-orch-catalog v0.16.0
 	github.com/open-edge-platform/orch-library/go v0.6.3
 	github.com/spf13/cobra v1.10.2
