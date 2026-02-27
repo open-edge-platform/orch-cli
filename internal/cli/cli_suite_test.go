@@ -12,8 +12,6 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/open-edge-platform/app-orch-catalog/pkg/restClient"
-	restproxy "github.com/open-edge-platform/app-orch-catalog/pkg/restProxy"
 	authmock "github.com/open-edge-platform/cli/internal/cli/mocks/auth"
 	catalogmock "github.com/open-edge-platform/cli/internal/cli/mocks/catalog"
 	catalogutilitiesmock "github.com/open-edge-platform/cli/internal/cli/mocks/catalogutilities"
@@ -35,6 +33,7 @@ const (
 	simpleOutput   = false
 	timestampRegex = `^[0-9-]*T[0-9:]*$`
 	kcTest         = "http://unit-test-keycloak/realms/master"
+	apiTest        = "http://unit-test-api"
 )
 
 type commandArgs map[string]string
@@ -44,7 +43,6 @@ type linesCommandOutput []string
 
 type CLITestSuite struct {
 	suite.Suite
-	proxy restproxy.MockRestProxy
 }
 
 func (s *CLITestSuite) SetupSuite() {
@@ -90,14 +88,11 @@ func (s *CLITestSuite) TearDownSuite() {
 }
 
 func (s *CLITestSuite) SetupTest() {
-	s.proxy = restproxy.NewMockRestProxy(s.T())
-	s.NotNil(s.proxy)
 	err := s.login("u", "p")
 	s.NoError(err)
 }
 
 func (s *CLITestSuite) TearDownTest() {
-	s.NoError(s.proxy.Close())
 	viper.Set(auth.UserName, "")
 	viper.Set(auth.RefreshTokenField, "")
 	viper.Set(auth.ClientIDField, "")
@@ -215,7 +210,6 @@ func parseArgs(input string) []string {
 }
 
 func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
-	c := s.proxy.RestClient().ClientInterface.(*restClient.Client)
 	cmd := getRootCmd()
 
 	// Use custom parser instead of strings.Fields
@@ -223,7 +217,7 @@ func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
 
 	args = append(args, "--debug-headers")
 	args = append(args, "--api-endpoint")
-	args = append(args, c.Server)
+	args = append(args, apiTest)
 	cmd.SetArgs(args)
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
