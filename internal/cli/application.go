@@ -106,12 +106,24 @@ func printApplications(writer io.Writer, appList *[]catapi.CatalogV3Application,
 			_, _ = fmt.Fprintf(writer, "Image Registry Name: %s\n", valueOrNone(app.ImageRegistryName))
 			_, _ = fmt.Fprintf(writer, "Chart Name: %s\n", app.ChartName)
 			_, _ = fmt.Fprintf(writer, "Chart Version: %s\n", app.ChartVersion)
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", app.CreateTime.Format(timeLayout))
-			_, _ = fmt.Fprintf(writer, "Update Time: %s\n", app.UpdateTime.Format(timeLayout))
+			createTime := ""
+			if app.CreateTime != nil {
+				createTime = app.CreateTime.Format(timeLayout)
+			}
+			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", createTime)
 
-			profiles := make([]string, 0, len(*app.Profiles))
-			for _, p := range *app.Profiles {
-				profiles = append(profiles, p.Name)
+			updateTime := ""
+			if app.UpdateTime != nil {
+				updateTime = app.UpdateTime.Format(timeLayout)
+			}
+			_, _ = fmt.Fprintf(writer, "Update Time: %s\n", updateTime)
+
+			profiles := make([]string, 0)
+			if app.Profiles != nil {
+				profiles = make([]string, 0, len(*app.Profiles))
+				for _, p := range *app.Profiles {
+					profiles = append(profiles, p.Name)
+				}
 			}
 			_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
 			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n\n", valueOrNone(app.DefaultProfileName))
