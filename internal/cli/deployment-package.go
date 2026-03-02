@@ -134,18 +134,24 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3Deploym
 			}
 			_, _ = fmt.Fprintf(writer, "Applications: %v\n", refs)
 
-			deps := make([]string, 0, len(*ca.ApplicationDependencies))
-			for _, dep := range *ca.ApplicationDependencies {
-				deps = append(deps, fmt.Sprintf("%s->%s", dep.Name, dep.Requires))
+			deps := make([]string, 0)
+			if ca.ApplicationDependencies != nil {
+				deps = make([]string, 0, len(*ca.ApplicationDependencies))
+				for _, dep := range *ca.ApplicationDependencies {
+					deps = append(deps, fmt.Sprintf("%s->%s", dep.Name, dep.Requires))
+				}
 			}
 			_, _ = fmt.Fprintf(writer, "Application Dependencies: %v\n", deps)
 
-			profiles := make([]string, 0, len(*ca.Profiles))
-			for _, p := range *ca.Profiles {
-				profiles = append(profiles, p.Name)
+			profiles := make([]string, 0)
+			if ca.Profiles != nil {
+				profiles = make([]string, 0, len(*ca.Profiles))
+				for _, p := range *ca.Profiles {
+					profiles = append(profiles, p.Name)
+				}
 			}
 			_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
-			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n", *ca.DefaultProfileName)
+			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n", valueOrNone(ca.DefaultProfileName))
 
 			if ca.DefaultNamespaces != nil && len(*ca.DefaultNamespaces) > 0 {
 				namespaces := make([]string, 0, len(*ca.DefaultNamespaces))
@@ -167,8 +173,17 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3Deploym
 			}
 			_, _ = fmt.Fprintf(writer, "Artifacts: %v\n", artifacts)
 
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", ca.CreateTime.Format(timeLayout))
-			_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", ca.UpdateTime.Format(timeLayout))
+			createTime := ""
+			if ca.CreateTime != nil {
+				createTime = ca.CreateTime.Format(timeLayout)
+			}
+			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", createTime)
+
+			updateTime := ""
+			if ca.UpdateTime != nil {
+				updateTime = ca.UpdateTime.Format(timeLayout)
+			}
+			_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", updateTime)
 		}
 	}
 }
