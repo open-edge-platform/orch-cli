@@ -119,17 +119,27 @@ var deploymentHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
 
 func printDeployments(writer *tabwriter.Writer, deployments *[]depapi.Deployment, verbose bool) {
 	for _, d := range *deployments {
+		state := ""
+		if d.Status != nil && d.Status.State != nil {
+			state = string(*d.Status.State)
+		}
+
+		createTime := ""
+		if d.CreateTime != nil {
+			createTime = d.CreateTime.Format(timeLayout)
+		}
+
 		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", *d.DeployId, *d.Name,
-				*d.DisplayName, *d.ProfileName, *d.Status.State)
+			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", safeString(d.DeployId), safeString(d.Name),
+				safeString(d.DisplayName), safeString(d.ProfileName), state)
 		} else {
-			_, _ = fmt.Fprintf(writer, "Deployment ID: %s\n", *d.DeployId)
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", *d.Name)
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", *d.DisplayName)
-			_, _ = fmt.Fprintf(writer, "Profile: %s\n", *d.ProfileName)
-			_, _ = fmt.Fprintf(writer, "State: %s\n", *d.Status.State)
+			_, _ = fmt.Fprintf(writer, "Deployment ID: %s\n", safeString(d.DeployId))
+			_, _ = fmt.Fprintf(writer, "Name: %s\n", safeString(d.Name))
+			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", safeString(d.DisplayName))
+			_, _ = fmt.Fprintf(writer, "Profile: %s\n", safeString(d.ProfileName))
+			_, _ = fmt.Fprintf(writer, "State: %s\n", state)
 			// FIXME: add the rest
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", d.CreateTime.Format(timeLayout))
+			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", createTime)
 		}
 	}
 }
