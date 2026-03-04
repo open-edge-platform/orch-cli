@@ -55,6 +55,12 @@ func (s *CLITestSuite) updateDeploymentPackage(project string, pkgName string, p
 	return err
 }
 
+func (s *CLITestSuite) exportDeploymentPackage(project string, pkgName string, pkgVersion string, args commandArgs) error {
+	commandString := addCommandArgs(args, fmt.Sprintf(`export deployment-package --project %s %s %s`, project, pkgName, pkgVersion))
+	_, err := s.runCommand(commandString)
+	return err
+}
+
 func (s *CLITestSuite) createTestDeploymentPackage(project string, pkgName string, pkgVersion string, appName string, appVersion string) error {
 	createArgs := map[string]string{
 		"application-reference": fmt.Sprintf("%s:%s", appName, appVersion),
@@ -103,7 +109,6 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 			"Display Name":      deploymentPackageDisplayName,
 			"Default Profile":   "default-profile",
 			"Is Deployed":       "false",
-			"Is Visible":        "true",
 			"Application Count": "2",
 		},
 	}
@@ -125,7 +130,6 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 			"Display Name":             deploymentPackageDisplayName,
 			"Description":              deploymentPackageDescription,
 			"Is Deployed":              "false",
-			"Is Visible":               "true",
 			"Applications":             `[app1:1.0.0 app2:1.0.0]`,
 			"Application Dependencies": `[]`,
 			"Profiles":                 ``,
@@ -143,6 +147,14 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	// Update the deployment package
 	updateArgs := map[string]string{
 		"display-name": "new.display-name",
+	}
+	err = s.updateDeploymentPackage(project, pkgName, pkgVersion, updateArgs)
+	s.NoError(err)
+
+	updateArgs = map[string]string{
+		"display-name":           "new.display-name",
+		"application-reference":  fmt.Sprintf("%s:%s", app1, pkgVersion),
+		"application-dependency": fmt.Sprintf("%s=%s", app1, app2),
 	}
 	err = s.updateDeploymentPackage(project, pkgName, pkgVersion, updateArgs)
 	s.NoError(err)
@@ -171,6 +183,10 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	// err = s.deleteDeploymentPackageNoVersion(project, pkgName)
 	// s.Error(err)
 	// s.Contains(err.Error(), fmt.Sprintf("deployment package versions %s: 404 Not Found", pkgName))
+
+	err = s.exportDeploymentPackage(project, pkgName, pkgVersion, make(map[string]string))
+	s.NoError(err)
+	// TODO not viable to mock at this time - just testing if command call works, not the actual export logic
 }
 
 func TestPrintDeploymentPackageEvent(t *testing.T) {

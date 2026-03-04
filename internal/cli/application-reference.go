@@ -73,7 +73,11 @@ func runCreateApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	if err != nil {
 		return err
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating application reference %s", args[2]))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating application reference %s", args[2])); err != nil {
+		return err
+	}
+	fmt.Printf("Application reference '%s' added successfully to deployment package '%s:%s'\n", args[2], pkgName, pkgVersion)
+	return nil
 }
 
 func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) error {
@@ -109,8 +113,12 @@ func runDeleteApplicationReferenceCommand(cmd *cobra.Command, args []string) err
 	if err != nil {
 		return err
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting application reference %s for deployment package %s:%s",
-		applicationName, pkgName, pkgVersion))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting application reference %s for deployment package %s:%s",
+		applicationName, pkgName, pkgVersion)); err != nil {
+		return err
+	}
+	fmt.Printf("Application reference '%s' deleted successfully from deployment package '%s:%s'\n", applicationName, pkgName, pkgVersion)
+	return nil
 }
 
 func updateDeploymentPackage(ctx context.Context, projectName string, client catapi.ClientWithResponsesInterface, pkg catapi.CatalogV3DeploymentPackage) (*catapi.CatalogServiceUpdateDeploymentPackageResponse, error) {

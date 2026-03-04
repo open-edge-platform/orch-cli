@@ -65,7 +65,6 @@ func (s *CLITestSuite) TestApplicationReference() {
 			"Display Name":             "deployment.package.display.name",
 			"Description":              "",
 			"Is Deployed":              "false",
-			"Is Visible":               "true",
 			"Applications":             `[app1:1.0.0 app2:1.0.0]`,
 			"Application Dependencies": `[]`,
 			"Profiles":                 ``,

@@ -4,7 +4,6 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,25 +15,25 @@ import (
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
-	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
-	"github.com/open-edge-platform/orch-library/go/pkg/loader"
 	"github.com/spf13/cobra"
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment-package {<name> <version>|<file-path>} [flags]",
+		Use:     "deployment-package <name> <version> [flags]",
 		Aliases: deploymentPackageAliases,
 		Short:   "Create a deployment package",
-		Args:    cobra.RangeArgs(1, 2),
-		Example: "orch-cli create deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1\norch-cli create deployment-package my-package.yaml --project sample-project",
+		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli create deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --default-namespace app1=my-namespace --default-profile-name my-profile",
 		RunE:    runCreateDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
-	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
+	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references (required)")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
-	cmd.Flags().Bool("visible", true, "mark deployment package as visible or not")
+	cmd.Flags().StringToString("default-namespace", map[string]string{},
+		"default namespaces for applications in format '<app-name>=<namespace>'")
+	cmd.Flags().String("default-profile-name", "", "default profile name for the deployment package (default: deployment-profile-1)")
 	cmd.Flags().String("kind", "normal", "deployment package kind: normal, addon, extension")
 	return cmd
 }
@@ -66,11 +65,11 @@ func getGetDeploymentPackageCommand() *cobra.Command {
 
 func getSetDeploymentPackageCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment-package {<name> <version>|<file-path>} [flags]",
+		Use:     "deployment-package <name> <version> [flags]",
 		Aliases: deploymentPackageAliases,
 		Short:   "Update a deployment package",
-		Args:    cobra.RangeArgs(1, 2),
-		Example: "orch-cli set deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --application-reference app3:1.1.1\norch-cli set deployment-package my-package.yaml --project sample-project",
+		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli set deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --application-reference app3:1.1.1",
 		RunE:    runSetDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
@@ -80,7 +79,8 @@ func getSetDeploymentPackageCommand() *cobra.Command {
 	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
-	cmd.Flags().Bool("visible", true, "mark deployment package as visible or not")
+	cmd.Flags().StringToString("default-namespace", map[string]string{},
+		"default namespaces for applications in format '<app-name>=<namespace>'")
 	cmd.Flags().Bool("deployed", false, "mark deployment package as deployed or not")
 	return cmd
 }
@@ -110,15 +110,15 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 	return cmd
 }
 
-var deploymentPackageHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-	"Name", "Display Name", "Version", "Kind", "Default Profile", "Is Deployed", "Is Visible", "Application Count")
+var deploymentPackageHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s",
+	"Name", "Display Name", "Version", "Kind", "Default Profile", "Is Deployed", "Application Count")
 
 func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, verbose bool) {
 	for _, ca := range *caList {
 		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%t\t%t\t%d\n", ca.Name,
+			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%t\t%d\n", ca.Name,
 				valueOrNone(ca.DisplayName), ca.Version, deploymentPackageKind2String(ca.Kind),
-				valueOrNone(ca.DefaultProfileName), safeBool(ca.IsDeployed), safeBool(ca.IsVisible),
+				valueOrNone(ca.DefaultProfileName), safeBool(ca.IsDeployed),
 				len(ca.ApplicationReferences))
 		} else {
 			_, _ = fmt.Fprintf(writer, "Name: %s\n", ca.Name)
@@ -127,7 +127,6 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3Deploym
 			_, _ = fmt.Fprintf(writer, "Version: %s\n", ca.Version)
 			_, _ = fmt.Fprintf(writer, "Kind: %s\n", deploymentPackageKind2String(ca.Kind))
 			_, _ = fmt.Fprintf(writer, "Is Deployed: %t\n", safeBool(ca.IsDeployed))
-			_, _ = fmt.Fprintf(writer, "Is Visible: %t\n", safeBool(ca.IsVisible))
 
 			refs := make([]string, 0, len(ca.ApplicationReferences))
 			for _, ref := range ca.ApplicationReferences {
@@ -135,18 +134,32 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3Deploym
 			}
 			_, _ = fmt.Fprintf(writer, "Applications: %v\n", refs)
 
-			deps := make([]string, 0, len(*ca.ApplicationDependencies))
-			for _, dep := range *ca.ApplicationDependencies {
-				deps = append(deps, fmt.Sprintf("%s->%s", dep.Name, dep.Requires))
+			deps := make([]string, 0)
+			if ca.ApplicationDependencies != nil {
+				deps = make([]string, 0, len(*ca.ApplicationDependencies))
+				for _, dep := range *ca.ApplicationDependencies {
+					deps = append(deps, fmt.Sprintf("%s->%s", dep.Name, dep.Requires))
+				}
 			}
 			_, _ = fmt.Fprintf(writer, "Application Dependencies: %v\n", deps)
 
-			profiles := make([]string, 0, len(*ca.Profiles))
-			for _, p := range *ca.Profiles {
-				profiles = append(profiles, p.Name)
+			profiles := make([]string, 0)
+			if ca.Profiles != nil {
+				profiles = make([]string, 0, len(*ca.Profiles))
+				for _, p := range *ca.Profiles {
+					profiles = append(profiles, p.Name)
+				}
 			}
 			_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
-			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n", *ca.DefaultProfileName)
+			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n", valueOrNone(ca.DefaultProfileName))
+
+			if ca.DefaultNamespaces != nil && len(*ca.DefaultNamespaces) > 0 {
+				namespaces := make([]string, 0, len(*ca.DefaultNamespaces))
+				for app, ns := range *ca.DefaultNamespaces {
+					namespaces = append(namespaces, fmt.Sprintf("%s=%s", app, ns))
+				}
+				_, _ = fmt.Fprintf(writer, "Default Namespaces: %v\n", namespaces)
+			}
 
 			extensions := make([]string, 0, len(ca.Extensions))
 			for _, ext := range ca.Extensions {
@@ -160,8 +173,17 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3Deploym
 			}
 			_, _ = fmt.Fprintf(writer, "Artifacts: %v\n", artifacts)
 
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", ca.CreateTime.Format(timeLayout))
-			_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", ca.UpdateTime.Format(timeLayout))
+			createTime := ""
+			if ca.CreateTime != nil {
+				createTime = ca.CreateTime.Format(timeLayout)
+			}
+			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", createTime)
+
+			updateTime := ""
+			if ca.UpdateTime != nil {
+				updateTime = ca.UpdateTime.Format(timeLayout)
+			}
+			_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", updateTime)
 		}
 	}
 }
@@ -182,16 +204,6 @@ func parseApplicationReference(refSpec string) (*catapi.CatalogV3ApplicationRefe
 }
 
 func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	// Check if a file path was provided (single argument ending with .yaml or .yml)
-	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
-		return uploadResourceFile(cmd, args[0])
-	}
-
-	// Validate we have name and version
-	if len(args) != 2 {
-		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
-	}
-
 	applicationName := args[0]
 	applicationVersion := args[1]
 
@@ -200,10 +212,10 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	// Validate required flags when not using YAML file
+	// Validate required flags
 	appRefs, _ := cmd.Flags().GetStringSlice("application-reference")
 	if len(appRefs) == 0 {
-		return fmt.Errorf("--application-reference is required when not using a YAML file (at least one application must be referenced)")
+		return fmt.Errorf("--application-reference is required (at least one application must be referenced)")
 	}
 
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
@@ -246,8 +258,27 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		}
 	}
 
+	// Collect default namespaces
+	defaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
+	var defaultNamespacesPtr *map[string]string
+	if len(defaultNamespaces) > 0 {
+		defaultNamespacesPtr = &defaultNamespaces
+	}
+
+	// Set up default profile name - use "deployment-profile-1" to match UI behavior
+	defaultProfileName, _ := cmd.Flags().GetString("default-profile-name")
+	if defaultProfileName == "" {
+		defaultProfileName = "deployment-profile-1"
+	}
+
+	// Create an initial deployment profile to match UI behavior
+	initialProfile := catapi.CatalogV3DeploymentProfile{
+		Name:                defaultProfileName,
+		ApplicationProfiles: map[string]string{},
+	}
+	initialProfiles := []catapi.CatalogV3DeploymentProfile{initialProfile}
+
 	defaultKind := catapi.KINDNORMAL
-	defaultVisible := true
 
 	resp, err := catalogClient.CatalogServiceCreateDeploymentPackageWithResponse(ctx, projectName,
 		catapi.CatalogServiceCreateDeploymentPackageJSONRequestBody{
@@ -258,12 +289,18 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 			Description:             &description,
 			ApplicationReferences:   applicationReferences,
 			ApplicationDependencies: &applicationDependencies,
-			IsVisible:               getBoolFlagOrDefault(cmd, "visible", &defaultVisible),
+			DefaultNamespaces:       defaultNamespacesPtr,
+			DefaultProfileName:      &defaultProfileName,
+			Profiles:                &initialProfiles,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating deployment package %s", applicationName))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating deployment package %s", applicationName)); err != nil {
+		return err
+	}
+	fmt.Printf("Deployment package '%s:%s' created successfully\n", applicationName, applicationVersion)
+	return nil
 }
 
 func deploymentPackageKind2String(kind *catapi.CatalogV3Kind) string {
@@ -384,16 +421,6 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	// Check if a file path was provided (single argument ending with .yaml or .yml)
-	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
-		return uploadResourceFile(cmd, args[0])
-	}
-
-	// Validate we have name and version
-	if len(args) != 2 {
-		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
-	}
-
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
@@ -450,6 +477,19 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Collect default namespaces; merge with existing if any
+	defaultNamespaces := deploymentPackage.DefaultNamespaces
+	newDefaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
+	if len(newDefaultNamespaces) > 0 {
+		if defaultNamespaces == nil {
+			defaultNamespaces = &newDefaultNamespaces
+		} else {
+			for k, v := range newDefaultNamespaces {
+				(*defaultNamespaces)[k] = v
+			}
+		}
+	}
+
 	resp, _ := catalogClient.CatalogServiceUpdateDeploymentPackageWithResponse(ctx, projectName, name, version,
 		catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody{
 			Name:                    name,
@@ -459,15 +499,19 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			Description:             getFlagOrDefault(cmd, "description", deploymentPackage.Description),
 			DefaultProfileName:      getFlagOrDefault(cmd, "default-profile", deploymentPackage.DefaultProfileName),
 			IsDeployed:              getBoolFlagOrDefault(cmd, "deployed", deploymentPackage.IsDeployed),
-			IsVisible:               getBoolFlagOrDefault(cmd, "visible", deploymentPackage.IsVisible),
 			Profiles:                deploymentPackage.Profiles,
 			ApplicationReferences:   applicationReferences,
 			ApplicationDependencies: &applicationDependencies,
+			DefaultNamespaces:       defaultNamespaces,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating deployment package %s:%s", name, version))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating deployment package %s:%s", name, version)); err != nil {
+		return err
+	}
+	fmt.Printf("Deployment package '%s:%s' updated successfully\n", name, version)
+	return nil
 }
 
 func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
@@ -493,7 +537,11 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		if err != nil {
 			return processError(err)
 		}
-		return checkResponse(deleteResp.HTTPResponse, deleteResp.Body, fmt.Sprintf("error deleting deployment package %s:%s", name, version))
+		if err := checkResponse(deleteResp.HTTPResponse, deleteResp.Body, fmt.Sprintf("error deleting deployment package %s:%s", name, version)); err != nil {
+			return err
+		}
+		fmt.Printf("Deployment package '%s:%s' deleted successfully\n", name, version)
+		return nil
 	}
 
 	// Otherwise delete all versions
@@ -520,27 +568,18 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 			return err
 		}
 	}
+	fmt.Printf("All versions of deployment package '%s' deleted successfully\n", name)
 	return nil
 }
 
 func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	ctx, _, projectName, err := CatalogFactory(cmd)
+	ctx, utilClient, projectName, err := CatalogUtilitiesFactory(cmd)
 	if err != nil {
 		return err
 	}
 
 	name := args[0]
 	version := args[1]
-
-	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
-	if err != nil {
-		return processError(err)
-	}
-
-	utilClient, err := catutilapi.NewClientWithResponses(serverAddress)
-	if err != nil {
-		return processError(err)
-	}
 
 	resp, err := utilClient.CatalogServiceDownloadDeploymentPackageWithResponse(ctx, projectName, name, version, auth.AddAuthHeader)
 	if err != nil {
@@ -604,32 +643,4 @@ func printDeploymentPackageEvent(writer io.Writer, _ string, payload []byte, ver
 	}
 	printDeploymentPackages(writer, &[]catapi.CatalogV3DeploymentPackage{item}, verbose)
 	return nil
-}
-
-// uploadResourceFile uploads a YAML file containing resource definitions
-func uploadResourceFile(cmd *cobra.Command, filePath string) error {
-	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
-	if err != nil {
-		return err
-	}
-
-	projectUUID, err := getProjectName(cmd)
-	if err != nil {
-		return err
-	}
-
-	ctx := cmd.Context()
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	// Get the access token
-	accessToken, err := auth.GetAccessToken(ctx)
-	if err != nil {
-		// Log warning but continue with empty token
-		accessToken = ""
-	}
-
-	loader := loader.NewLoader(serverAddress, projectUUID)
-	return loader.LoadResources(ctx, accessToken, []string{filePath})
 }

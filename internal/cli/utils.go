@@ -19,34 +19,57 @@ import (
 	"github.com/open-edge-platform/cli/internal/cli/interfaces"
 	"github.com/open-edge-platform/cli/pkg/auth"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
-	"github.com/open-edge-platform/cli/pkg/rest/cluster"
+	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
+	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
+	EIMFeature           = "orchestrator.features.edge-infrastructure-manager.installed"
+	OobFeature           = "orchestrator.features.edge-infrastructure-manager.oob.installed"
+	OnboardingFeature    = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
+	ProvisioningFeature  = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"
+	Day2Feature          = "orchestrator.features.edge-infrastructure-manager.day2.installed"
+	OxmFeature           = "orchestrator.features.edge-infrastructure-manager.oxm-profile.installed"
+	AppOrchFeature       = "orchestrator.features.application-orchestration.installed"
+	ClusterOrchFeature   = "orchestrator.features.cluster-orchestration.installed"
+	ObservabilityFeature = "orchestrator.features.orchestrator-observability.installed"
+	MultitenancyFeature  = "orchestrator.features.multitenancy.installed"
+	OrchVersion          = "orchestrator.version"
+)
+
+const (
 	REGION = 0
 	SITE   = 1
 )
+
+var disabledCommands = []string{}
+var enabledCommands = []string{}
 
 // Use the interface type instead of the concrete function type
 var InfraFactory interfaces.InfraFactoryFunc = func(cmd *cobra.Command) (context.Context, infraapi.ClientWithResponsesInterface, string, error) {
 	return getInfraServiceContext(cmd)
 }
 
-var ClusterFactory interfaces.ClusterFactoryFunc = func(cmd *cobra.Command) (context.Context, cluster.ClientWithResponsesInterface, string, error) {
+var ClusterFactory interfaces.ClusterFactoryFunc = func(cmd *cobra.Command) (context.Context, coapi.ClientWithResponsesInterface, string, error) {
 	return getClusterServiceContext(cmd)
 }
 
 var CatalogFactory interfaces.CatalogFactoryFunc = func(cmd *cobra.Command) (context.Context, catapi.ClientWithResponsesInterface, string, error) {
 	return getCatalogServiceContext(cmd)
+}
+
+var CatalogUtilitiesFactory interfaces.CatalogUtilitiesFactoryFunc = func(cmd *cobra.Command) (context.Context, catutilapi.ClientWithResponsesInterface, string, error) {
+	return getCatalogUtilitiesServiceContext(cmd)
 }
 
 var RpsFactory interfaces.RpsFactoryFunc = func(cmd *cobra.Command) (context.Context, rpsapi.ClientWithResponsesInterface, string, error) {
@@ -59,6 +82,10 @@ var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command
 
 var TenancyFactory interfaces.TenancyFactoryFunc = func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, error) {
 	return getTenancyServiceContext(cmd)
+}
+
+var OrchestratorFactory interfaces.OrchestratorFactoryFunc = func(cmd *cobra.Command) (context.Context, orchapi.ClientWithResponsesInterface, error) {
+	return getOrchestratorServiceContext(cmd)
 }
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
@@ -88,6 +115,23 @@ func getCatalogServiceContext(cmd *cobra.Command) (context.Context, *catapi.Clie
 		return nil, nil, "", err
 	}
 	return context.Background(), catalogClient, projectName, nil
+}
+
+// Get the new background context, REST client, and project name given the specified command.
+func getCatalogUtilitiesServiceContext(cmd *cobra.Command) (context.Context, *catutilapi.ClientWithResponses, string, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	projectName, err := getProjectName(cmd)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	catalogUtilitiesClient, err := catutilapi.NewClientWithResponses(serverAddress)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return context.Background(), catalogUtilitiesClient, projectName, nil
 }
 
 // Get the new background context, REST client, and project name given the specified command.
@@ -169,6 +213,19 @@ func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.C
 		return nil, nil, err
 	}
 	return context.Background(), tenancyClient, nil
+}
+
+// Get the new background context and REST client for orchestrator service.
+func getOrchestratorServiceContext(cmd *cobra.Command) (context.Context, *orchapi.Client, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return nil, nil, err
+	}
+	orchClient, err := orchapi.NewClient(serverAddress, TLS13OrchestratorClientOption())
+	if err != nil {
+		return nil, nil, err
+	}
+	return context.Background(), orchClient, nil
 }
 
 // Adds the mandatory project UUID, and the standard display-name, and description
@@ -399,12 +456,14 @@ func checkResponseGRPC(response *http.Response, message string) error {
 
 // Checks the status code and returns the appropriate error
 func checkStatus(statusCode int, message string, statusMessage string) (proceed bool, err error) {
-	if statusCode == http.StatusOK {
+	switch statusCode {
+	case http.StatusOK:
 		return true, nil
-	} else if statusCode == 403 {
+	case 403:
 		return false, fmt.Errorf("%s: %s. Unauthenticated. Please login", message, statusMessage)
+	default:
+		return false, fmt.Errorf("no response from backend - check api-endpoint and deployment-endpoint")
 	}
-	return false, fmt.Errorf("no response from backend - check api-endpoint and deployment-endpoint")
 }
 
 // Returns an error if the status is abnormal, i.e. status code is not OK and not merely NOT_FOUND
@@ -431,13 +490,15 @@ func statusForbidden(response *http.Response) bool {
 }
 
 func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer, verbose bool, header string, message string) (proceed bool, err error) {
-	if err = statusIsAbnormal(resp, message, resp.Status); err != nil {
-		return false, err
-	} else if statusIsNotFound(resp) {
+	abnormalErr := statusIsAbnormal(resp, message, resp.Status)
+	switch {
+	case abnormalErr != nil:
+		return false, abnormalErr
+	case statusIsNotFound(resp):
 		return false, getError(body, message)
-	} else if statusUnauthorized(resp) {
+	case statusUnauthorized(resp):
 		return false, getError(body, "Unauthorized. Please login")
-	} else if statusForbidden(resp) {
+	case statusForbidden(resp):
 		return false, getError(body, "Unauthorized (forbidden). Please login")
 	}
 
@@ -460,7 +521,7 @@ func getError(body []byte, prefixMessage string) error {
 
 func processError(err error) error {
 	if strings.Contains(err.Error(), "504 DNS look up failed") {
-		return fmt.Errorf("Unauthorized. Please login: token expired")
+		return fmt.Errorf("unauthorized. Please login: token expired")
 	}
 	return err
 }
@@ -579,6 +640,20 @@ func TLS13TenancyClientOption() func(*tenantapi.Client) error {
 	}
 }
 
+func TLS13OrchestratorClientOption() func(*orchapi.Client) error {
+	return func(c *orchapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+
 // Helper function for fuzz tests
 func isExpectedError(err error) bool {
 	if err == nil {
@@ -598,4 +673,77 @@ func isExpectedError(err error) bool {
 		}
 	}
 	return false
+}
+
+// addCommandIfFeatureEnabled conditionally adds a command to a parent command if the feature is enabled
+func addCommandIfFeatureEnabled(parent *cobra.Command, child *cobra.Command, feature string) {
+	commandPath := parent.Name() + " " + child.Name()
+	if isFeatureEnabled(feature) {
+		enabledCommands = append(enabledCommands, commandPath)
+		parent.AddCommand(child)
+	} else {
+		// Add the canonical command name
+		disabledCommands = append(disabledCommands, commandPath)
+		// Also add all aliases so they're recognized as disabled
+		for _, alias := range child.Aliases {
+			aliasPath := parent.Name() + " " + alias
+			disabledCommands = append(disabledCommands, aliasPath)
+		}
+	}
+}
+
+func isFeatureEnabled(feature string) bool {
+	switch feature {
+	case OobFeature:
+		return viper.GetBool(OobFeature)
+	case OnboardingFeature:
+		return viper.GetBool(OnboardingFeature)
+	case ProvisioningFeature:
+		return viper.GetBool(ProvisioningFeature)
+	case Day2Feature:
+		return viper.GetBool(Day2Feature)
+	case OxmFeature:
+		return viper.GetBool(OxmFeature)
+	case ObservabilityFeature:
+		return viper.GetBool(ObservabilityFeature)
+	case AppOrchFeature:
+		return viper.GetBool(AppOrchFeature)
+	case ClusterOrchFeature:
+		return viper.GetBool(ClusterOrchFeature)
+	case MultitenancyFeature:
+		return viper.GetBool(MultitenancyFeature)
+	default:
+		return true // Default to enabled for unknown features
+	}
+}
+
+// isCommandDisabled checks if a command is in the disabled commands list
+func isCommandDisabled(parentCmd string, subCmd string) bool {
+	commandPath := parentCmd + " " + subCmd
+	for _, dc := range disabledCommands {
+		if dc == commandPath {
+			return true
+		}
+	}
+	return false
+}
+
+// isCommandDisabledWithParent checks if a command or any of its aliases is in the disabled commands list
+// It takes the parent cobra command to resolve aliases
+func isCommandDisabledWithParent(parentCmd *cobra.Command, subCmd string) bool {
+	parentName := parentCmd.Name()
+	return isCommandDisabled(parentName, subCmd)
+}
+
+func safeString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+func safeInt(s *int) int {
+	if s == nil {
+		return 0
+	}
+	return *s
 }

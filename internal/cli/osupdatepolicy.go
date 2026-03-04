@@ -95,26 +95,64 @@ func printOSUpdatePolicies(writer io.Writer, OSUpdatePolicies []infra.OSUpdatePo
 		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\n", "Name", "Resource ID", "Target OS ID", "Description", "Created", "Updated")
 	}
 	for _, osup := range OSUpdatePolicies {
+		createdAt := ""
+		updatedAt := ""
+		if osup.Timestamps != nil {
+			if osup.Timestamps.CreatedAt != nil {
+				createdAt = fmt.Sprint(osup.Timestamps.CreatedAt)
+			}
+			if osup.Timestamps.UpdatedAt != nil {
+				updatedAt = fmt.Sprint(osup.Timestamps.UpdatedAt)
+			}
+		}
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", osup.Name, *osup.ResourceId, *osup.Description)
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", osup.Name, safeString(osup.ResourceId), safeString(osup.Description))
 		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", osup.Name, *osup.ResourceId, *osup.TargetOsId, *osup.Description, *osup.Timestamps.CreatedAt, *osup.Timestamps.UpdatedAt)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", osup.Name, safeString(osup.ResourceId), safeString(osup.TargetOsId), safeString(osup.Description), createdAt, updatedAt)
 		}
 	}
 }
 
 // Prints output details of OS Profiles
 func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy) {
+	if OSUpdatePolicy == nil {
+		_, _ = fmt.Fprintf(writer, "OS Update Policy not found\n")
+		return
+	}
+
+	targetOSID := ""
+	targetOSName := ""
+	if OSUpdatePolicy.TargetOs != nil {
+		targetOSID = safeString(OSUpdatePolicy.TargetOs.OsResourceID)
+		targetOSName = safeString(OSUpdatePolicy.TargetOs.Name)
+	}
+
+	createdAt := ""
+	updatedAt := ""
+	if OSUpdatePolicy.Timestamps != nil {
+		if OSUpdatePolicy.Timestamps.CreatedAt != nil {
+			createdAt = fmt.Sprint(OSUpdatePolicy.Timestamps.CreatedAt)
+		}
+		if OSUpdatePolicy.Timestamps.UpdatedAt != nil {
+			updatedAt = fmt.Sprint(OSUpdatePolicy.Timestamps.UpdatedAt)
+		}
+	}
 
 	_, _ = fmt.Fprintf(writer, "Name:\t %s\n", OSUpdatePolicy.Name)
-	_, _ = fmt.Fprintf(writer, "Resource ID:\t %s\n", *OSUpdatePolicy.ResourceId)
-	_, _ = fmt.Fprintf(writer, "Target OS ID:\t %s\n", *OSUpdatePolicy.TargetOsId)
-	_, _ = fmt.Fprintf(writer, "Kernel Command:\t %s\n", *OSUpdatePolicy.UpdateKernelCommand)
-	_, _ = fmt.Fprintf(writer, "Description:\t %v\n", *OSUpdatePolicy.Description)
-	_, _ = fmt.Fprintf(writer, "Update Packages:\t %s\n", *OSUpdatePolicy.UpdatePackages)
-	_, _ = fmt.Fprintf(writer, "Update Policy:\t %s\n", *OSUpdatePolicy.UpdatePolicy)
-	_, _ = fmt.Fprintf(writer, "Create at:\t %v\n", *OSUpdatePolicy.Timestamps.CreatedAt)
-	_, _ = fmt.Fprintf(writer, "Updated at:\t %v\n", *OSUpdatePolicy.Timestamps.CreatedAt)
+	_, _ = fmt.Fprintf(writer, "Resource ID:\t %s\n", safeString(OSUpdatePolicy.ResourceId))
+	_, _ = fmt.Fprintf(writer, "Target OS ID:\t %s\n", targetOSID)
+	_, _ = fmt.Fprintf(writer, "Target OS Name:\t %s\n", targetOSName)
+	_, _ = fmt.Fprintf(writer, "Kernel Command:\t %s\n", safeString(OSUpdatePolicy.UpdateKernelCommand))
+	_, _ = fmt.Fprintf(writer, "Description:\t %v\n", safeString(OSUpdatePolicy.Description))
+	_, _ = fmt.Fprintf(writer, "Update Packages:\t %s\n", safeString(OSUpdatePolicy.UpdatePackages))
+	_, _ = fmt.Fprintf(writer, "Update Policy:\t %s\n", func() string {
+		if OSUpdatePolicy.UpdatePolicy == nil {
+			return ""
+		}
+		return string(*OSUpdatePolicy.UpdatePolicy)
+	}())
+	_, _ = fmt.Fprintf(writer, "Create at:\t %v\n", createdAt)
+	_, _ = fmt.Fprintf(writer, "Updated at:\t %v\n", updatedAt)
 
 }
 

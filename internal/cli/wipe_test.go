@@ -32,5 +32,5 @@ func (s *CLITestSuite) TestWipe() {
 
 	//Missing flag test
 	_, err = s.wipeData(project, map[string]string{})
-	s.EqualError(err, "You have to say yes")
+	s.EqualError(err, "you have to say yes")
 }
