@@ -53,7 +53,8 @@ orch-cli list host --project some-project --workload NotAssigned
 const getHostExamples = `# Get detailed information about specific host using the host Resource ID
 orch-cli get host host-1234abcd --project some-project`
 
-const createHostExamples = `# Provision a host or a number of hosts from a CSV file
+func createHostExamples() string {
+	examples := `# Provision a host or a number of hosts from a CSV file
 
 # Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
 orch-cli create host --project some-project --generate-csv
@@ -63,8 +64,11 @@ orch-cli create host --project some-project --generate-csv=myhosts.csv
 
 # Sample input csv file hosts.csv
 
-Serial - Serial Number of the machine - mandatory field (both or one of Serial or UUID must be provided)
-UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided), UUID must be provided if K8s cluster is going to be auto provisioned
+`
+	if isFeatureEnabled(ProvisioningFeature) {
+		// Full provisioning examples when provisioning is enabled
+		examples += `Serial - Serial Number of the machine - mandatory field (both or one of Serial or UUID must be provided)
+UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided)
 OSProfile - OS Profile to be used for provisioning of the host - name of the profile or it's resource ID - mandatory field
 Site - The resource ID of the site to which the host will be provisioned - mandatory field
 Secure - Optional security feature to configure for the host - must be supported by OS Profile if enabled
@@ -72,7 +76,7 @@ Remote User - Optional remote user name or resource ID to configure for the host
 Metadata - Optional metadata to configure for the host
 LVMSize - Optional LVM size to be configured for the host
 CloudInitMeta - Optional Cloud Init Metadata to be configured for the host
-K8sEnable - Optional command to enable cluster deployment
+K8sEnable - Optional command to enable cluster deployment (only used if Cluster Orchestration feature is enabled in the Edge Orchestrator)
 K8sClusterTemplate - Optional Cluster template to be used for K8s deployment on the host, must be provided if K8sEnable is true
 K8sClusterConfig - Optional Cluster config to be used to specify role and cluster name and/or cluster labels
 
@@ -105,6 +109,29 @@ orch-cli create host --project some-project --import-from-csv test.csv
 # Create hosts from CSV and override provided values
 /orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
 `
+	} else {
+		// Simplified onboarding examples when provisioning is disabled
+		examples += `Provisioning disabled in the Edge Orchestrator - using simplified configuration to onboard Edge Nodes, only Serial and/or UUID must be provided
+
+Serial - Serial Number of the machine - mandatory field (both or one of Serial or UUID must be provided)
+UUID - UUID of the machine - mandatory field (both or one of Serial or UUID must be provided)
+All other fields and flag overrides not used.
+
+Serial,UUID,OSProfile,Site,Secure,RemoteUser,Metadata,LVMSize,CloudInitMeta,K8sEnable,K8sClusterTemplate,K8sConfig,Error - do not fill
+2500JF3,4c4c4544-2046-5310-8052-cac04f515233
+2500JF2,
+,4c4c4544-2046-5310-8052-cac04f515232
+
+# --dry-run allows for verification of the validity of the input csv file without creating hosts
+orch-cli create host --project some-project --import-from-csv test.csv --dry-run
+
+# Create hosts - --import-from-csv is a mandatory flag pointing to the input file. Successfully onboarded hosts indicated by output - errors provided in output file
+orch-cli create host --project some-project --import-from-csv test.csv
+`
+	}
+
+	return examples
+}
 
 const deleteHostExamples = `#Delete a host using it's host Resource ID
 orch-cli delete host host-1234abcd  --project itep`
@@ -147,21 +174,30 @@ host-2,host-2234abcd
 host-3,host-3234abcd,osupdatepolicy-1234abcd
 `
 
-const setHostExamples = `#Set an attribute of a host or execute an action - at least one flag must be specified
-
+func setHostExamples() string {
+	examples := `#Set an attribute of a host or execute an action - at least one flag must be specified
+`
+	// Add AMT and power-related examples only if OobFeature is enabled
+	if isFeatureEnabled(OobFeature) {
+		examples += `
 #Set host power state to on
 orch-cli set host host-1234abcd  --project itep --power on
 
 #Set host power command policy
 orch-cli set host host-1234abcd  --project itep --power-policy ordered
 
---power - Set desired power state of host to on|off|cycle|hibernate|reset|sleep
+--power - Set desired power state of host to on|off|reset
 --power-policy - Set the desired power command policy to ordered|immediate
 
 #Set host AMT state to provisioned
 orch-cli set host host-1234abcd --project some-project --amt-state provisioned
 
 --amt-state - Set desired AMT state of host to provisioned|unprovisioned
+
+#Set host AMT Control Mode to admin control mode
+orch-cli set host host-1234abcd --project some-project --control-mode admin
+
+--control-mode - Set desired AMT control mode of host to admin|client
 
 # Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
 orch-cli set host --project some-project --generate-csv
@@ -173,22 +209,35 @@ orch-cli set host --project some-project --generate-csv=myhosts.csv
 
 Name - Name of the machine - mandatory field
 ResourceID - Unique Identifier of host - mandatory field
-DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field
+DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field or AMT_STATE_PROVISIONED|AMT_STATE_UNPROVISIONED
+ControlMode - Desired AMT control mode of host - admin|client - optional field or AMT_CONTROL_MODE_ADMIN|AMT_CONTROL_MODE_CLIENT
 
-Name,ResourceID,DesiredAmtState
+Name,ResourceID,DesiredAmtState,ControlMode
 host-1,host-1234abcd,provisioned
+
+Name,ResourceID,DesiredAmtState,ControlMode
+host-1,host-1234abcd,provisioned,admin
 
 # --dry-run allows for verification of the validity of the input csv file without updating hosts
 orch-cli set host --project some-project --import-from-csv test.csv --dry-run
 
 # Set hosts - --import-from-csv is a mandatory flag pointing to the input file. Successfully provisioned host indicated by output - errors provided in output file
 orch-cli set host --project some-project --import-from-csv test.csv
+`
+	}
 
+	// Add OS Update policy examples only if Day2Feature is enabled
+	if isFeatureEnabled(Day2Feature) {
+		examples += `
 #Set host OS Update policy
 orch-cli set host host-1234abcd  --project itep --osupdatepolicy <resourceID>
 
 --osupdatepolicy - Set the OS Update policy for the host, must be a valid resource ID of an OS Update policy
 `
+	}
+
+	return examples
+}
 
 var hostHeaderGet = "\nDetailed Host Information\n"
 var filename = "test.csv"
@@ -265,12 +314,21 @@ func filterRegionsHelper(r string) (*string, error) {
 
 // Prints Host list in tabular format
 func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
-	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status", "Provisioning Status",
-			"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
+	if isFeatureEnabled(ProvisioningFeature) {
+		if verbose {
+			fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status", "Provisioning Status",
+				"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
+		} else {
+			var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Provisioning Status", "Serial Number", "Operating System", "Site ID", "Site Name", "Workload")
+			fmt.Fprintf(writer, "%s\n", shortHeader)
+		}
 	} else {
-		var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Provisioning Status", "Serial Number", "Operating System", "Site ID", "Site Name", "Workload")
-		fmt.Fprintf(writer, "%s\n", shortHeader)
+		if verbose {
+			fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status", "Serial Number", "Host ID", "UUID")
+		} else {
+			var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number")
+			fmt.Fprintf(writer, "%s\n", shortHeader)
+		}
 	}
 	for _, h := range *hosts {
 		//TODO clean this up
@@ -305,19 +363,26 @@ func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
 		if h.Instance != nil && h.Instance.ProvisioningStatus != nil {
 			provStat = *h.Instance.ProvisioningStatus
 		}
+		if isFeatureEnabled(ProvisioningFeature) {
+			if !verbose {
+				fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", safeString(h.ResourceId), h.Name, host, provStat, safeString(h.SerialNumber), os, site, siteName, workload)
+			} else {
+				avupdt := "No update"
+				tcomp := "Not compatible"
 
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber, os, site, siteName, workload)
-		} else {
-			avupdt := "No update"
-			tcomp := "Not compatible"
+				if h.Instance != nil && h.Instance.OsUpdateAvailable != nil && *h.Instance.OsUpdateAvailable != "" {
+					avupdt = "Available"
+				}
 
-			if h.Instance != nil && h.Instance.OsUpdateAvailable != nil && *h.Instance.OsUpdateAvailable != "" {
-				avupdt = "Available"
+				fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", safeString(h.ResourceId), h.Name, host, provStat, safeString(h.SerialNumber),
+					os, site, siteName, workload, h.Name, safeString(h.Uuid), safeString(h.CpuModel), avupdt, tcomp)
 			}
-
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", *h.ResourceId, h.Name, host, provStat, *h.SerialNumber,
-				os, site, siteName, workload, h.Name, *h.Uuid, *h.CpuModel, avupdt, tcomp)
+		} else {
+			if !verbose {
+				fmt.Fprintf(writer, "%s\t%s\t%s\t%v\n", safeString(h.ResourceId), h.Name, host, safeString(h.SerialNumber))
+			} else {
+				fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\n", safeString(h.ResourceId), h.Name, host, safeString(h.SerialNumber), h.Name, safeString(h.Uuid))
+			}
 		}
 	}
 }
@@ -349,7 +414,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		osprofile = toJSON(host.Instance.Os.Name)
 	}
 
-	if *host.HostStatus != "" {
+	if safeString(host.HostStatus) != "" {
 		// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
 		if strings.EqualFold(*host.HostStatus, "error") && host.Instance != nil && host.Instance.InstanceStatusDetail != nil && strings.Contains(*host.Instance.InstanceStatusDetail, "of 10 components running") {
 			hoststatus = "Waiting on node agents"
@@ -377,7 +442,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	if host.Instance != nil && host.Instance.UpdatePolicy != nil {
-		osupdatepolicy = *host.Instance.UpdatePolicy.ResourceId
+		osupdatepolicy = safeString(host.Instance.UpdatePolicy.ResourceId)
 	}
 
 	if host.HostNics != nil && len(*host.HostNics) > 0 {
@@ -395,237 +460,284 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	}
 
 	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tHost Resurce ID:\t %s\n", *host.ResourceId)
+	_, _ = fmt.Fprintf(writer, "-\tHost Resource ID:\t %s\n", safeString(host.ResourceId))
 	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
-	_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
-	_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n", ip)
-	_, _ = fmt.Fprintf(writer, "-\tLVM Size:\t %v\n\n", lvmsize)
-
-	_, _ = fmt.Fprintf(writer, "Status details: \n\n")
+	if isFeatureEnabled(ProvisioningFeature) {
+		_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
+		_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n", ip)
+		_, _ = fmt.Fprintf(writer, "-\tLVM Size:\t %v\n", lvmsize)
+	}
+	_, _ = fmt.Fprintf(writer, "\nStatus details: \n\n")
 	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
-	_, _ = fmt.Fprintf(writer, "-\tHost Status Details:\t %s\n", hostdetails)
-	_, _ = fmt.Fprintf(writer, "-\tProvisioning Status:\t %s\n", provstatus)
-	_, _ = fmt.Fprintf(writer, "-\tUpdate Status:\t %s\n", updatestatus)
-	_, _ = fmt.Fprintf(writer, "-\tOS Update Policy:\t %s\n\n", osupdatepolicy)
 
-	_, _ = fmt.Fprintf(writer, "Specification: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", *host.SerialNumber)
-	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", *host.Uuid)
-	_, _ = fmt.Fprintf(writer, "-\tOS:\t %v\n", currentOS)
-	_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", *host.BiosVendor)
-	_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", *host.ProductName)
-
-	_, _ = fmt.Fprintf(writer, "Customizations: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tCustom configs:\t %s\n\n", customcfg)
-
-	_, _ = fmt.Fprintf(writer, "CPU Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "Model", "Cores", "Architecture", "Threads", "Sockets")
-	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "-----", "-----", "------------", "-------", "-------")
-	_, _ = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n\n", *host.CpuModel, *host.CpuCores, *host.CpuArchitecture, *host.CpuThreads, *host.CpuSockets)
-
-	_, _ = fmt.Fprintf(writer, "Memory Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "%s\n", "Total (GB)")
-	_, _ = fmt.Fprintf(writer, "%s\n", "-------------")
-	if host.MemoryBytes != nil {
-		memoryBytes, err := strconv.ParseInt(*host.MemoryBytes, 10, 64)
-		if err != nil {
-			_, _ = fmt.Fprintf(writer, "%v\n\n", "Error parsing memory")
-		} else {
-			memoryGB := float64(memoryBytes) / (1024 * 1024 * 1024)
-			memoryGBRounded := int(memoryGB + 0.5) // Round up to nearest integer
-			_, _ = fmt.Fprintf(writer, "%d\n\n", memoryGBRounded)
-		}
+	if isFeatureEnabled(ProvisioningFeature) {
+		_, _ = fmt.Fprintf(writer, "-\tHost Status Details:\t %s\n", hostdetails)
+		_, _ = fmt.Fprintf(writer, "-\tProvisioning Status:\t %s\n", provstatus)
+		_, _ = fmt.Fprintf(writer, "-\tUpdate Status:\t %s\n", updatestatus)
+		_, _ = fmt.Fprintf(writer, "-\tOS Update Policy:\t %s\n", osupdatepolicy)
 	}
+	_, _ = fmt.Fprintf(writer, "\nSpecification: \n\n")
+	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", safeString(host.SerialNumber))
+	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", safeString(host.Uuid))
+	if isFeatureEnabled(ProvisioningFeature) {
+		_, _ = fmt.Fprintf(writer, "-\tOS:\t %v\n", currentOS)
+		_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", safeString(host.BiosVendor))
+		_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", safeString(host.ProductName))
 
-	_, _ = fmt.Fprintf(writer, "Storage Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "WWID", "Capacity", "Model", "Serial", "Vendor")
-	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "----", "--------", "-----", "------", "------")
-	if host.HostStorages != nil {
-		for _, storage := range *host.HostStorages {
-			wwid := "N/A"
-			capacity := "N/A"
-			model := "N/A"
-			serial := "N/A"
-			vendor := "N/A"
+		_, _ = fmt.Fprintf(writer, "Customizations: \n\n")
+		_, _ = fmt.Fprintf(writer, "-\tCustom configs:\t %s\n\n", customcfg)
 
-			if storage.Wwid != nil {
-				wwid = *storage.Wwid
-			}
-			if storage.CapacityBytes != nil {
-				capacityBytes, err := strconv.ParseInt(*storage.CapacityBytes, 10, 64)
-				if err != nil {
-					capacity = "Parse Error"
-				} else {
-					capacityGB := capacityBytes / (1024 * 1024 * 1024)
-					capacity = fmt.Sprintf("%d GB", capacityGB)
-				}
-			}
-			if storage.Model != nil {
-				model = *storage.Model
-			}
-			if storage.Serial != nil {
-				serial = *storage.Serial
-			}
-			if storage.Vendor != nil {
-				vendor = *storage.Vendor
-			}
+		_, _ = fmt.Fprintf(writer, "CPU Info: \n\n")
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "Model", "Cores", "Architecture", "Threads", "Sockets")
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "-----", "-----", "------------", "-------", "-------")
+		_, _ = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n\n",
+			safeString(host.CpuModel),
+			safeInt(host.CpuCores),
+			safeString(host.CpuArchitecture),
+			safeInt(host.CpuThreads),
+			safeInt(host.CpuSockets))
 
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", wwid, capacity, model, serial, vendor)
-		}
-		_, _ = fmt.Fprintf(writer, "\n")
-	}
-
-	_, _ = fmt.Fprintf(writer, "GPU Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", "Device", "Vendor", "Capabilities", "PCI Address")
-	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", "------", "------", "------------", "-----------")
-
-	if host.HostGpus != nil {
-		for _, gpu := range *host.HostGpus {
-			model := "N/A"
-			vendor := "N/A"
-			capabilities := "N/A"
-			pciAddress := "N/A"
-
-			if gpu.DeviceName != nil {
-				model = *gpu.DeviceName
-			}
-			if gpu.Vendor != nil {
-				vendor = *gpu.Vendor
-			}
-			if gpu.Capabilities != nil {
-				capabilities = strings.Join(*gpu.Capabilities, ",")
-			}
-			if gpu.PciId != nil {
-				pciAddress = *gpu.PciId
-			}
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", model, vendor, capabilities, pciAddress)
-		}
-		_, _ = fmt.Fprintf(writer, "\n")
-	}
-	_, _ = fmt.Fprintf(writer, "USB Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", "Class", "Serial", "Vendor ID", "Product ID", "Bus", "Address")
-	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", "-----", "------", "---------", "----------", "---", "-------")
-	if host.HostUsbs != nil {
-		for _, usb := range *host.HostUsbs {
-			class := "N/A"
-			serial := "N/A"
-			vendorID := "N/A"
-			productID := "N/A"
-			bus := "N/A"
-			address := "N/A"
-
-			if usb.Class != nil && *usb.Class != "" {
-				class = *usb.Class
-			}
-			if usb.Serial != nil {
-				serial = *usb.Serial
-			}
-			if usb.IdVendor != nil {
-				vendorID = *usb.IdVendor
-			}
-			if usb.IdProduct != nil {
-				productID = *usb.IdProduct
-			}
-			if usb.Bus != nil {
-				bus = strconv.Itoa(*usb.Bus)
-			}
-			if usb.Addr != nil {
-				address = strconv.Itoa(*usb.Addr)
-			}
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", class, serial, vendorID, productID, bus, address)
-		}
-		_, _ = fmt.Fprintf(writer, "\n")
-	}
-
-	_, _ = fmt.Fprintf(writer, "Interfaces Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Name", "Links State", "MTU", "MAC Address", "PCI Identifier", "SRIOV", "SRIOV VF Total", "SRIOV VF Number", "BMC Interface ")
-	_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "----", "-----", "------", "---------", "----------", "---", "-------", "------------", "--------------")
-
-	if host.HostNics != nil {
-		for _, nic := range *host.HostNics {
-			name := "N/A"
-			linksStatus := "N/A"
-			mtu := "N/A"
-			macAddress := "N/A"
-			pciID := "N/A"
-			sriov := "N/A"
-			sriovVFTotal := "N/A"
-			sriovVFNum := "N/A"
-			bmcInterface := "N/A"
-
-			if nic.DeviceName != nil {
-				name = *nic.DeviceName
-			}
-			if nic.LinkState != nil {
-				if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_DOWN" {
-					linksStatus = "DOWN"
-				}
-				if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_UP" {
-					linksStatus = "UP"
-				}
-				if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_UNSPECIFIED" {
-					linksStatus = "UNSPECIFIED"
-				}
-			}
-			if nic.Mtu != nil {
-				mtu = strconv.Itoa(*nic.Mtu)
-			}
-			if nic.MacAddr != nil {
-				macAddress = *nic.MacAddr
-			}
-			if nic.PciIdentifier != nil {
-				pciID = *nic.PciIdentifier
-			}
-			if nic.SriovEnabled != nil {
-				sriov = strconv.FormatBool(*nic.SriovEnabled)
-			}
-			if nic.SriovVfsTotal != nil && nic.SriovEnabled != nil && *nic.SriovEnabled {
-				sriovVFTotal = strconv.Itoa(*nic.SriovVfsTotal)
-			}
-			if nic.SriovVfsNum != nil && nic.SriovEnabled != nil && *nic.SriovEnabled {
-				sriovVFNum = strconv.Itoa(*nic.SriovVfsNum)
-			}
-			if nic.BmcInterface != nil {
-				bmcInterface = strconv.FormatBool(*nic.BmcInterface)
-			}
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", name, linksStatus, mtu, macAddress, pciID, sriov, sriovVFTotal, sriovVFNum, bmcInterface)
-		}
-		_, _ = fmt.Fprintf(writer, "\n")
-	}
-
-	if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.Os != nil && host.Instance.Os.FixedCves != nil {
-
-		if *host.Instance.ExistingCves != "" {
-			err := json.Unmarshal([]byte(*host.Instance.ExistingCves), &cveEntries)
+		_, _ = fmt.Fprintf(writer, "Memory Info: \n\n")
+		_, _ = fmt.Fprintf(writer, "%s\n", "Total (GB)")
+		_, _ = fmt.Fprintf(writer, "%s\n", "-------------")
+		if host.MemoryBytes != nil {
+			memoryBytes, err := strconv.ParseInt(*host.MemoryBytes, 10, 64)
 			if err != nil {
-				fmt.Println("Error unmarshaling JSON: existing CVE entries:", err)
-				return
+				_, _ = fmt.Fprintf(writer, "%v\n\n", "Error parsing memory")
+			} else {
+				memoryGB := float64(memoryBytes) / (1024 * 1024 * 1024)
+				memoryGBRounded := int(memoryGB + 0.5) // Round up to nearest integer
+				_, _ = fmt.Fprintf(writer, "%d\n\n", memoryGBRounded)
 			}
 		}
 
-		_, _ = fmt.Fprintf(writer, "CVE Info (existing CVEs): \n\n")
-		for _, cve := range cveEntries {
-			_, _ = fmt.Fprintf(writer, "-\tCVE ID:\t %v\n", cve.CVEID)
-			_, _ = fmt.Fprintf(writer, "-\tPriority:\t %v\n", cve.Priority)
-			_, _ = fmt.Fprintf(writer, "-\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
+		_, _ = fmt.Fprintf(writer, "Storage Info: \n\n")
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "WWID", "Capacity", "Model", "Serial", "Vendor")
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "----", "--------", "-----", "------", "------")
+		if host.HostStorages != nil {
+			for _, storage := range *host.HostStorages {
+				wwid := "N/A"
+				capacity := "N/A"
+				model := "N/A"
+				serial := "N/A"
+				vendor := "N/A"
+
+				if storage.Wwid != nil {
+					wwid = *storage.Wwid
+				}
+				if storage.CapacityBytes != nil {
+					capacityBytes, err := strconv.ParseInt(*storage.CapacityBytes, 10, 64)
+					if err != nil {
+						capacity = "Parse Error"
+					} else {
+						capacityGB := capacityBytes / (1024 * 1024 * 1024)
+						capacity = fmt.Sprintf("%d GB", capacityGB)
+					}
+				}
+				if storage.Model != nil {
+					model = *storage.Model
+				}
+				if storage.Serial != nil {
+					serial = *storage.Serial
+				}
+				if storage.Vendor != nil {
+					vendor = *storage.Vendor
+				}
+
+				_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", wwid, capacity, model, serial, vendor)
+			}
+			_, _ = fmt.Fprintf(writer, "\n")
+		}
+
+		_, _ = fmt.Fprintf(writer, "GPU Info: \n\n")
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", "Device", "Vendor", "Capabilities", "PCI Address")
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", "------", "------", "------------", "-----------")
+
+		if host.HostGpus != nil {
+			for _, gpu := range *host.HostGpus {
+				model := "N/A"
+				vendor := "N/A"
+				capabilities := "N/A"
+				pciAddress := "N/A"
+
+				if gpu.DeviceName != nil {
+					model = *gpu.DeviceName
+				}
+				if gpu.Vendor != nil {
+					vendor = *gpu.Vendor
+				}
+				if gpu.Capabilities != nil {
+					capabilities = strings.Join(*gpu.Capabilities, ",")
+				}
+				if gpu.PciId != nil {
+					pciAddress = *gpu.PciId
+				}
+				_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", model, vendor, capabilities, pciAddress)
+			}
+			_, _ = fmt.Fprintf(writer, "\n")
+		}
+		_, _ = fmt.Fprintf(writer, "USB Info: \n\n")
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", "Class", "Serial", "Vendor ID", "Product ID", "Bus", "Address")
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", "-----", "------", "---------", "----------", "---", "-------")
+		if host.HostUsbs != nil {
+			for _, usb := range *host.HostUsbs {
+				class := "N/A"
+				serial := "N/A"
+				vendorID := "N/A"
+				productID := "N/A"
+				bus := "N/A"
+				address := "N/A"
+
+				if usb.Class != nil && *usb.Class != "" {
+					class = *usb.Class
+				}
+				if usb.Serial != nil {
+					serial = *usb.Serial
+				}
+				if usb.IdVendor != nil {
+					vendorID = *usb.IdVendor
+				}
+				if usb.IdProduct != nil {
+					productID = *usb.IdProduct
+				}
+				if usb.Bus != nil {
+					bus = strconv.Itoa(*usb.Bus)
+				}
+				if usb.Addr != nil {
+					address = strconv.Itoa(*usb.Addr)
+				}
+				_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", class, serial, vendorID, productID, bus, address)
+			}
+			_, _ = fmt.Fprintf(writer, "\n")
+		}
+
+		_, _ = fmt.Fprintf(writer, "Interfaces Info: \n\n")
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Name", "Links State", "MTU", "MAC Address", "PCI Identifier", "SRIOV", "SRIOV VF Total", "SRIOV VF Number", "BMC Interface ")
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "----", "-----", "------", "---------", "----------", "---", "-------", "------------", "--------------")
+
+		if host.HostNics != nil {
+			for _, nic := range *host.HostNics {
+				name := "N/A"
+				linksStatus := "N/A"
+				mtu := "N/A"
+				macAddress := "N/A"
+				pciID := "N/A"
+				sriov := "N/A"
+				sriovVFTotal := "N/A"
+				sriovVFNum := "N/A"
+				bmcInterface := "N/A"
+
+				if nic.DeviceName != nil {
+					name = *nic.DeviceName
+				}
+				if nic.LinkState != nil {
+					if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_DOWN" {
+						linksStatus = "DOWN"
+					}
+					if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_UP" {
+						linksStatus = "UP"
+					}
+					if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_UNSPECIFIED" {
+						linksStatus = "UNSPECIFIED"
+					}
+				}
+				if nic.Mtu != nil {
+					mtu = strconv.Itoa(*nic.Mtu)
+				}
+				if nic.MacAddr != nil {
+					macAddress = *nic.MacAddr
+				}
+				if nic.PciIdentifier != nil {
+					pciID = *nic.PciIdentifier
+				}
+				if nic.SriovEnabled != nil {
+					sriov = strconv.FormatBool(*nic.SriovEnabled)
+				}
+				if nic.SriovVfsTotal != nil && nic.SriovEnabled != nil && *nic.SriovEnabled {
+					sriovVFTotal = strconv.Itoa(*nic.SriovVfsTotal)
+				}
+				if nic.SriovVfsNum != nil && nic.SriovEnabled != nil && *nic.SriovEnabled {
+					sriovVFNum = strconv.Itoa(*nic.SriovVfsNum)
+				}
+				if nic.BmcInterface != nil {
+					bmcInterface = strconv.FormatBool(*nic.BmcInterface)
+				}
+				_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", name, linksStatus, mtu, macAddress, pciID, sriov, sriovVFTotal, sriovVFNum, bmcInterface)
+			}
+			_, _ = fmt.Fprintf(writer, "\n")
+		}
+
+		if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.Os != nil && host.Instance.Os.FixedCves != nil {
+
+			if *host.Instance.ExistingCves != "" {
+				err := json.Unmarshal([]byte(*host.Instance.ExistingCves), &cveEntries)
+				if err != nil {
+					fmt.Println("Error unmarshaling JSON: existing CVE entries:", err)
+					return
+				}
+			}
+
+			_, _ = fmt.Fprintf(writer, "CVE Info (existing CVEs): \n\n")
+			for _, cve := range cveEntries {
+				_, _ = fmt.Fprintf(writer, "-\tCVE ID:\t %v\n", cve.CVEID)
+				_, _ = fmt.Fprintf(writer, "-\tPriority:\t %v\n", cve.Priority)
+				_, _ = fmt.Fprintf(writer, "-\tAffected Packages:\t %v\n", cve.AffectedPackages)
+			}
 		}
 	}
+	currentAmtState := "N/A"
+	if host.CurrentAmtState != nil {
+		currentAmtState = fmt.Sprintf("%v", *host.CurrentAmtState)
+	}
+	desiredAmtState := "N/A"
+	if host.DesiredAmtState != nil {
+		desiredAmtState = fmt.Sprintf("%v", *host.DesiredAmtState)
+	}
+
+	amtControlMode := "N/A"
+	if host.AmtControlMode != nil {
+		amtControlMode = fmt.Sprintf("%v", *host.AmtControlMode)
+	}
+	dnsSuffix := "N/A"
+	if host.AmtDnsSuffix != nil {
+		dnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
+	}
+	amtSKU := "N/A"
+	if host.AmtSku != nil {
+		amtSKU = fmt.Sprintf("%v", *host.AmtSku)
+	}
+
+	_, _ = fmt.Fprintf(writer, "\nAMT Info: \n\n")
+	_, _ = fmt.Fprintf(writer, "-\tAMT State:\t %v\n", currentAmtState)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Desired State:\t %v\n", desiredAmtState)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Desired Control Mode:\t %v\n", amtControlMode)
+	_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
+	_, _ = fmt.Fprintf(writer, "-\tAMT SKU :\t %v\n", amtSKU)
+
 	if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
-		_, _ = fmt.Fprintf(writer, "AMT Info: \n\n")
-		_, _ = fmt.Fprintf(writer, "-\tAMT Status:\t %v\n", *host.CurrentAmtState)
-		_, _ = fmt.Fprintf(writer, "-\tCurrent Power Status:\t %v\n", *host.CurrentPowerState)
-		_, _ = fmt.Fprintf(writer, "-\tDesired Power Status:\t %v\n", *host.DesiredPowerState)
-		_, _ = fmt.Fprintf(writer, "-\tPower Command Policy :\t %v\n", *host.PowerCommandPolicy)
+		currentPower := "N/A"
+		if host.CurrentPowerState != nil {
+			currentPower = fmt.Sprintf("%v", *host.CurrentPowerState)
+		}
+		desiredPower := "N/A"
+		if host.DesiredPowerState != nil {
+			desiredPower = fmt.Sprintf("%v", *host.DesiredPowerState)
+		}
+		powerStatus := "N/A"
+		if host.PowerStatus != nil {
+			powerStatus = fmt.Sprintf("%v", *host.PowerStatus)
+		}
 		powerOnTimeStr := "N/A"
 		if host.PowerOnTime != nil {
 			powerOnTime := time.Unix(int64(*host.PowerOnTime), 0)
-			powerOnTimeStr = powerOnTime.Format(time.RFC3339)
+			powerOnTimeStr = powerOnTime.UTC().Format(time.RFC3339)
 		}
-		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time :\t %v\n", powerOnTimeStr)
-		_, _ = fmt.Fprintf(writer, "-\tDesired AMT State :\t %v\n", *host.DesiredAmtState)
-	}
+		_, _ = fmt.Fprintf(writer, "-\tCurrent Power State:\t %v\n", currentPower)
+		_, _ = fmt.Fprintf(writer, "-\tDesired Power State:\t %v\n", desiredPower)
+		_, _ = fmt.Fprintf(writer, "-\tPower Status:\t %v\n", powerStatus)
+		_, _ = fmt.Fprintf(writer, "-\tPowerOn Time:\t %v\n", powerOnTimeStr)
 
-	if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
+	} else if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
 		_, _ = fmt.Fprintf(writer, "AMT not active and/or not supported: No info available \n\n")
 	}
 
@@ -682,22 +794,31 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 		return
 	}
 
-	err = createInstance(ctx, hClient, respCache, projectName, hostID, rOut, rIn, globalAttr)
-	if err != nil {
-		rIn.Error = err.Error()
-		*erringRecords = append(*erringRecords, rIn)
-		return
-	}
+	if isFeatureEnabled(ProvisioningFeature) {
+		err = createInstance(ctx, hClient, respCache, projectName, hostID, rOut, rIn, globalAttr)
+		if err != nil {
+			rIn.Error = err.Error()
+			*erringRecords = append(*erringRecords, rIn)
+			return
+		}
 
-	err = allocateHostToSiteAndAddMetadata(ctx, hClient, projectName, hostID, rOut)
-	if err != nil {
-		rIn.Error = err.Error()
-		*erringRecords = append(*erringRecords, rIn)
-		return
-	}
+		err = allocateHostToSiteAndAddMetadata(ctx, hClient, projectName, hostID, rOut)
+		if err != nil {
+			rIn.Error = err.Error()
+			*erringRecords = append(*erringRecords, rIn)
+			return
+		}
 
-	if rOut.K8sEnable == "true" {
-		err = createCluster(ctx2, cClient, respCache, projectName, hostID, rOut)
+		if rOut.K8sEnable == "true" && isFeatureEnabled(ClusterOrchFeature) {
+			err = createCluster(ctx2, cClient, respCache, projectName, hostID, rOut)
+			if err != nil {
+				rIn.Error = err.Error()
+				*erringRecords = append(*erringRecords, rIn)
+				return
+			}
+		}
+	} else {
+		err = setHostName(ctx, hClient, projectName, hostID)
 		if err != nil {
 			rIn.Error = err.Error()
 			*erringRecords = append(*erringRecords, rIn)
@@ -826,51 +947,59 @@ func resolveSecure(recordSecure, globalSecure types.RecordSecure) types.RecordSe
 // Sanitize fields, convert named resources to resource IDs
 func sanitizeProvisioningFields(ctx context.Context, ctx2 context.Context, hClient infra.ClientWithResponsesInterface, projectName string, record types.HostRecord, respCache ResponseCache, globalAttr *types.HostRecord, erringRecords *[]types.HostRecord, cClient cluster.ClientWithResponsesInterface) (*types.HostRecord, error) {
 
-	isSecure := resolveSecure(record.Secure, globalAttr.Secure)
+	var osProfileID, siteID, laID, metadataToUse, cloudInitIDs string
+	var isSecure types.RecordSecure
+	err := error(nil)
 
-	osProfileID, err := resolveOSProfile(ctx, hClient, projectName, record.OSProfile, globalAttr.OSProfile, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
+	if isFeatureEnabled(ProvisioningFeature) {
+		isSecure = resolveSecure(record.Secure, globalAttr.Secure)
 
-	if valErr := validateSecurityFeature(record.OSProfile, globalAttr.OSProfile, isSecure, record, respCache, erringRecords); valErr != nil {
-		return nil, valErr
-	}
-
-	siteID, err := resolveSite(ctx, hClient, projectName, record.Site, globalAttr.Site, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
-
-	laID, err := resolveRemoteUser(ctx, hClient, projectName, record.RemoteUser, globalAttr.RemoteUser, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
-
-	metadataToUse := resolveMetadata(record.Metadata, globalAttr.Metadata)
-
-	cloudInitIDs, err := resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, globalAttr.CloudInitMeta, record, respCache, erringRecords)
-	if err != nil {
-		return nil, err
-	}
-
-	lvmSize := resolveLVMSize(record.LVMSize, globalAttr.LVMSize)
-
-	isK8s := resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
-	k8sConfig := record.K8sConfig
-	k8sTmplID := record.K8sClusterTemplate
-	if isK8s == "true" {
-		if record.K8sConfig != "" || globalAttr.K8sConfig != "" {
-			k8sConfig, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig)
-			if err != nil {
-				return nil, err
-			}
+		osProfileID, err = resolveOSProfile(ctx, hClient, projectName, record.OSProfile, globalAttr.OSProfile, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
 		}
 
-		if record.K8sClusterTemplate != "" || globalAttr.K8sClusterTemplate != "" {
-			k8sTmplID, err = resolveClusterTemplate(ctx2, cClient, projectName, record.K8sClusterTemplate, globalAttr.K8sClusterTemplate, record, respCache, erringRecords)
-			if err != nil {
-				return nil, err
+		if valErr := validateSecurityFeature(record.OSProfile, globalAttr.OSProfile, isSecure, record, respCache, erringRecords); valErr != nil {
+			return nil, valErr
+		}
+
+		siteID, err = resolveSite(ctx, hClient, projectName, record.Site, globalAttr.Site, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
+
+		laID, err = resolveRemoteUser(ctx, hClient, projectName, record.RemoteUser, globalAttr.RemoteUser, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
+
+		metadataToUse = resolveMetadata(record.Metadata, globalAttr.Metadata)
+
+		cloudInitIDs, err = resolveCloudInit(ctx, hClient, projectName, record.CloudInitMeta, globalAttr.CloudInitMeta, record, respCache, erringRecords)
+		if err != nil {
+			return nil, err
+		}
+	}
+	lvmSize := resolveLVMSize(record.LVMSize, globalAttr.LVMSize)
+
+	var isK8s, k8sConfig, k8sTmplID string
+	if isFeatureEnabled(ClusterOrchFeature) {
+		isK8s = resolveCluster(record.K8sEnable, globalAttr.K8sEnable)
+		k8sConfig = record.K8sConfig
+		k8sTmplID = record.K8sClusterTemplate
+		if isK8s == "true" {
+			if record.K8sConfig != "" || globalAttr.K8sConfig != "" {
+				k8sConfig, err = resolveClusterConfig(record.K8sConfig, globalAttr.K8sConfig)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if record.K8sClusterTemplate != "" || globalAttr.K8sClusterTemplate != "" {
+				k8sTmplID, err = resolveClusterTemplate(ctx2, cClient, projectName, record.K8sClusterTemplate, globalAttr.K8sClusterTemplate, record, respCache, erringRecords)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -1221,24 +1350,40 @@ func getDeauthorizeCommand() *cobra.Command {
 		Args:              cobra.MinimumNArgs(1),
 		Short:             "Deauthorize host",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(c.ErrOrStderr(), "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(c.ErrOrStderr(), "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 
-	cmd.AddCommand(
-		getDeauthorizeHostCommand(),
-	)
+	addCommandIfFeatureEnabled(cmd, getDeauthorizeHostCommand(), OnboardingFeature)
 	return cmd
 }
 
 func getUpdateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "update-os",
-		Short:             "Update host",
+		Short:             "Update host OS",
 		PersistentPreRunE: auth.CheckAuth,
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(c.ErrOrStderr(), "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(c.ErrOrStderr(), "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 
-	cmd.AddCommand(
-		getUpdateHostCommand(),
-	)
+	addCommandIfFeatureEnabled(cmd, getUpdateHostCommand(), Day2Feature)
 	return cmd
 }
 
@@ -1275,27 +1420,34 @@ func getCreateHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "host --import-from-csv]",
 		Short:   "Provisions a host or hosts",
-		Example: createHostExamples,
+		Example: createHostExamples(),
 		Aliases: hostAliases,
 		RunE:    runCreateHostCommand,
 	}
 
-	// Local persistent flags
+	// Local persistent flags - always available
 	cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about to be provisioned hosts")
 	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
 	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host import")
 	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
-	// Overrides
-	cmd.PersistentFlags().StringP("os-profile", "o", viper.GetString("os-profile"), "Override the OSProfile provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Override the site provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("metadata", "m", viper.GetString("metadata"), "Override the metadata provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("remote-user", "r", viper.GetString("remote-user"), "Override the metadata provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("cluster-deploy", "c", viper.GetString("cluster-deploy"), "Override the cluster deployment flag provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("cluster-template", "t", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("cluster-config", "f", viper.GetString("cluster-config"), "Override the cluster configuration provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("cloud-init", "j", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
-	cmd.PersistentFlags().StringP("lvm-size", "l", viper.GetString("lvm-size"), "Override the LVM size configuration provided in CSV file for all hosts")
+
+	// Provisioning-specific overrides - only when provisioning is enabled
+	if isFeatureEnabled(ProvisioningFeature) {
+		cmd.PersistentFlags().StringP("os-profile", "o", viper.GetString("os-profile"), "Override the OSProfile provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Override the site provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("metadata", "m", viper.GetString("metadata"), "Override the metadata provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("remote-user", "r", viper.GetString("remote-user"), "Override the remote user provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("cloud-init", "j", viper.GetString("cloud-init"), "Override the cloud init metadata provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("secure", "x", viper.GetString("secure"), "Override the security feature configuration provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("lvm-size", "l", viper.GetString("lvm-size"), "Override the LVM size configuration provided in CSV file for all hosts")
+	}
+
+	// Cluster-specific overrides - only when cluster orchestration is enabled
+	if isFeatureEnabled(ClusterOrchFeature) {
+		cmd.PersistentFlags().StringP("cluster-deploy", "c", viper.GetString("cluster-deploy"), "Override the cluster deployment flag provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("cluster-template", "t", viper.GetString("cluster-template"), "Override the cluster template provided in CSV file for all hosts")
+		cmd.PersistentFlags().StringP("cluster-config", "f", viper.GetString("cluster-config"), "Override the cluster configuration provided in CSV file for all hosts")
+	}
 
 	return cmd
 }
@@ -1316,7 +1468,7 @@ func getSetHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "host <resourceID> [flags]",
 		Short:   "Sets a host attribute or action",
-		Example: setHostExamples,
+		Example: setHostExamples(),
 		Args: func(cmd *cobra.Command, args []string) error {
 			generateCSV, _ := cmd.Flags().GetString("generate-csv")
 			if generateCSV == "" {
@@ -1335,14 +1487,19 @@ func getSetHostCommand() *cobra.Command {
 		Aliases: hostAliases,
 		RunE:    runSetHostCommand,
 	}
-	cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
-	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
 	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host import")
 	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
-	cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|cycle|hibernate|reset|sleep")
-	cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
-	cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
-	cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
+	if isFeatureEnabled(OobFeature) {
+		cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
+		cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
+		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|reset")
+		cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
+		cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
+		cmd.PersistentFlags().StringP("control-mode", "m", viper.GetString("control-mode"), "Set AMT control mode client|admin")
+	}
+	if isFeatureEnabled(Day2Feature) {
+		cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
+	}
 
 	return cmd
 }
@@ -1489,54 +1646,57 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	// Get instances in order to map additional host details
-	instances := make([]infra.InstanceResource, 0)
-	for offset := 0; ; offset += pageSize {
-		iresp, err := hostClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
-			&infra.InstanceServiceListInstancesParams{
-				PageSize: &pageSize,
-				Offset:   &offset,
-			}, auth.AddAuthHeader)
-		if err != nil {
-			return processError(err)
-		}
-		if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving instance"); err != nil {
-			return err
-		}
-		instances = append(instances, iresp.JSON200.Instances...)
-		if !iresp.JSON200.HasNext {
-			break // No more instances to process
-		}
-	}
-	matchedHosts := make([]infra.HostResource, 0)
-	notMatchedHosts := make([]infra.HostResource, 0)
+	if isFeatureEnabled(ProvisioningFeature) {
 
-	//Map workloads to hosts
-	for _, host := range hosts {
-		for _, instance := range instances {
-			if instance.WorkloadMembers != nil && instance.InstanceID != nil && host.Instance != nil && host.Instance.InstanceID != nil && *instance.InstanceID == *host.Instance.InstanceID {
-				host.Instance.WorkloadMembers = instance.WorkloadMembers
-				if workload != "" && len(*host.Instance.WorkloadMembers) > 0 {
-					if *(*host.Instance.WorkloadMembers)[0].Workload.Name == workload {
-						matchedHosts = append(matchedHosts, host)
+		// Get instances in order to map additional host details
+		instances := make([]infra.InstanceResource, 0)
+		for offset := 0; ; offset += pageSize {
+			iresp, err := hostClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
+				&infra.InstanceServiceListInstancesParams{
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving instance"); err != nil {
+				return err
+			}
+			instances = append(instances, iresp.JSON200.Instances...)
+			if !iresp.JSON200.HasNext {
+				break // No more instances to process
+			}
+		}
+		matchedHosts := make([]infra.HostResource, 0)
+		notMatchedHosts := make([]infra.HostResource, 0)
+
+		//Map workloads to hosts
+		for _, host := range hosts {
+			for _, instance := range instances {
+				if instance.WorkloadMembers != nil && instance.InstanceID != nil && host.Instance != nil && host.Instance.InstanceID != nil && *instance.InstanceID == *host.Instance.InstanceID {
+					host.Instance.WorkloadMembers = instance.WorkloadMembers
+					if workload != "" && len(*host.Instance.WorkloadMembers) > 0 {
+						if *(*host.Instance.WorkloadMembers)[0].Workload.Name == workload {
+							matchedHosts = append(matchedHosts, host)
+						}
 					}
+					break
 				}
-				break
+			}
+			if workload == "NotAssigned" {
+				if (host.Instance != nil && len(*host.Instance.WorkloadMembers) == 0) || host.Instance == nil {
+					notMatchedHosts = append(notMatchedHosts, host)
+				}
 			}
 		}
+
+		if workload != "" {
+			hosts = matchedHosts
+		}
+
 		if workload == "NotAssigned" {
-			if (host.Instance != nil && len(*host.Instance.WorkloadMembers) == 0) || host.Instance == nil {
-				notMatchedHosts = append(notMatchedHosts, host)
-			}
+			hosts = notMatchedHosts
 		}
-	}
-
-	if workload != "" {
-		hosts = matchedHosts
-	}
-
-	if workload == "NotAssigned" {
-		hosts = notMatchedHosts
 	}
 
 	printHosts(writer, &hosts, verbose)
@@ -1659,7 +1819,8 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 
 	if dryRun {
 		fmt.Println("--dry-run flag provided, validating input, hosts will not be imported")
-		_, err := validator.CheckCSV(csvFilePath, *globalAttr)
+		provisioningSupported := viper.GetBool(ProvisioningFeature)
+		_, err := validator.CheckCSV(csvFilePath, *globalAttr, provisioningSupported)
 		if err != nil {
 			return err
 		}
@@ -1667,7 +1828,8 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	validated, err := validator.CheckCSV(csvFilePath, *globalAttr)
+	provisioningSupported := viper.GetBool(ProvisioningFeature)
+	validated, err := validator.CheckCSV(csvFilePath, *globalAttr, provisioningSupported)
 	if err != nil {
 		return err
 	}
@@ -1767,6 +1929,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	powerFlag, _ := cmd.Flags().GetString("power")
 	updFlag, _ := cmd.Flags().GetString("osupdatepolicy")
 	amtFlag, _ := cmd.Flags().GetString("amt-state")
+	amtModeFlag, _ := cmd.Flags().GetString("control-mode")
 
 	// Bulk CSV generation
 	if generateCSV != "" {
@@ -1811,18 +1974,22 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		defer f.Close()
-		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState")
+		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode")
 		for _, h := range hosts {
 			name := h.Name
 			resourceID := ""
 			desiredAmtState := ""
+			controlMode := ""
 			if h.ResourceId != nil {
 				resourceID = *h.ResourceId
 			}
 			if h.DesiredAmtState != nil {
 				desiredAmtState = string(*h.DesiredAmtState)
 			}
-			fmt.Fprintf(f, "%s,%s,%s\n", name, resourceID, desiredAmtState)
+			if h.AmtControlMode != nil && *h.AmtControlMode != infra.AMTCONTROLMODEUNSPECIFIED {
+				controlMode = string(*h.AmtControlMode)
+			}
+			fmt.Fprintf(f, "%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode)
 		}
 		fmt.Printf("CSV template generated: %s\n", generateCSV)
 		return nil
@@ -1848,14 +2015,28 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				fmt.Printf("Skipping invalid line %d: %s\n", lineNum, line)
 				continue
 			}
+			desiredControlMode := ""
 			name := strings.TrimSpace(fields[0])
 			resourceID := strings.TrimSpace(fields[1])
 			desiredAmtState := strings.TrimSpace(fields[2])
+			if len(fields) >= 4 {
+				desiredControlMode = strings.TrimSpace(fields[3])
+			}
+
 			// Validate desiredAmtState
 			amtState, err := resolveAmtState(desiredAmtState)
 			if err != nil {
 				fmt.Printf("Invalid AMT state for host %s: %s\n", name, desiredAmtState)
 				continue
+			}
+			var amtMode *infra.AmtControlMode
+			if desiredControlMode != "" {
+				mode, err := resolveAmtControlMode(desiredControlMode)
+				if err != nil {
+					fmt.Printf("Invalid control mode for host %s: %s\n", name, desiredControlMode)
+					continue
+				}
+				amtMode = &mode
 			}
 			// Patch host
 			ctx, hostClient, projectName, err := InfraFactory(cmd)
@@ -1863,8 +2044,10 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				fmt.Printf("InfraFactory error for host %s: %v\n", name, err)
 				continue
 			}
-			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, infra.HostServicePatchHostJSONRequestBody{
+			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 				DesiredAmtState: &amtState,
+				AmtControlMode:  amtMode,
+				Name:            name,
 			}, auth.AddAuthHeader)
 			if err != nil {
 				fmt.Printf("Failed to patch host %s: %v\n", name, err)
@@ -1887,7 +2070,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 	hostID := args[0]
 
-	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" && (amtFlag == "" || strings.HasPrefix(amtFlag, "--")) {
+	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" && (amtFlag == "" || strings.HasPrefix(amtFlag, "--")) && (amtModeFlag == "" || strings.HasPrefix(amtModeFlag, "--")) {
 		return errors.New("a flag must be provided with the set host command and value cannot be \"\"")
 	}
 
@@ -1895,6 +2078,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	var policy *infra.PowerCommandPolicy
 	var updatePolicy *string
 	var amtState *infra.AmtState
+	var amtMode *infra.AmtControlMode
 
 	if policyFlag != "" {
 		pol, err := resolvePowerPolicy(policyFlag)
@@ -1924,6 +2108,14 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		amtState = &amt
 	}
 
+	if amtModeFlag != "" {
+		mode, err := resolveAmtControlMode(amtModeFlag)
+		if err != nil {
+			return err
+		}
+		amtMode = &mode
+	}
+
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
@@ -1939,8 +2131,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 	host := *iresp.JSON200
 
-	if (powerFlag != "" || policyFlag != "") && host.Instance != nil {
-		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
+	if (powerFlag != "" || policyFlag != "") && host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
+		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			PowerCommandPolicy: policy,
 			DesiredPowerState:  power,
 			Name:               host.Name,
@@ -1951,10 +2143,12 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set for AMT"); err != nil {
 			return err
 		}
+	} else if (powerFlag != "" || policyFlag != "") && host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
+		return fmt.Errorf("host %s does not seem to have AMT enabled, power toggle and policy not supported", hostID)
 	}
 
 	if updatePolicy != nil && host.Instance != nil && host.Instance.InstanceID != nil && updFlag != "" {
-		resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
+		resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, &infra.InstanceServicePatchInstanceParams{}, infra.InstanceServicePatchInstanceJSONRequestBody{
 			OsUpdatePolicyID: updatePolicy,
 		}, auth.AddAuthHeader)
 		if err != nil {
@@ -1965,9 +2159,10 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if amtState != nil && host.Instance != nil {
-		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, infra.HostServicePatchHostJSONRequestBody{
+	if amtState != nil || amtMode != nil {
+		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			DesiredAmtState: amtState,
+			AmtControlMode:  amtMode,
 			Name:            host.Name,
 		}, auth.AddAuthHeader)
 		if err != nil {
@@ -2322,7 +2517,7 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 		if host.Instance != nil && host.Instance.UpdatePolicy != nil && host.Instance.UpdatePolicy.ResourceId != nil && policyID == *host.Instance.UpdatePolicy.ResourceId {
 			continue
 		} else if host.Instance != nil {
-			iresp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, infra.InstanceServicePatchInstanceJSONRequestBody{
+			iresp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *host.Instance.InstanceID, &infra.InstanceServicePatchInstanceParams{}, infra.InstanceServicePatchInstanceJSONRequestBody{
 				OsUpdatePolicyID: &policyID,
 			}, auth.AddAuthHeader)
 			if err != nil {
@@ -2403,7 +2598,7 @@ func registerHost(ctx context.Context, hClient infra.ClientWithResponsesInterfac
 	// Register host
 
 	resp, err := hClient.HostServiceRegisterHostWithResponse(ctx, projectName,
-		infra.HostServiceRegisterHostJSONRequestBody{
+		&infra.HostServiceRegisterHostParams{}, infra.HostServiceRegisterHostJSONRequestBody{
 			Name:         &hostName,
 			SerialNumber: &sNo,
 			Uuid:         &uuid,
@@ -2537,11 +2732,11 @@ func createCluster(ctx context.Context, cClient cluster.ClientWithResponsesInter
 	}
 
 	if clusterName == "" {
-		clusterName = hostID
+		clusterName = "cluster-" + hostID
 	}
 
 	node := cluster.NodeSpec{
-		Id:   rOut.UUID,
+		Id:   hostID,
 		Role: cluster.NodeSpecRole(clusterRole),
 	}
 
@@ -2607,7 +2802,7 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientW
 		}
 	}
 
-	sresp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+	sresp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{},
 		infra.HostServicePatchHostJSONRequestBody{
 			Name:     hostID,
 			Metadata: metadata,
@@ -2619,6 +2814,27 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientW
 	}
 
 	err = checkResponse(sresp.HTTPResponse, sresp.Body, "error while linking site and metadata\n\n")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setHostName(ctx context.Context, hClient infra.ClientWithResponsesInterface,
+	projectName, hostID string) error {
+
+	// Update host name
+	resp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{},
+		infra.HostServicePatchHostJSONRequestBody{
+			Name: hostID,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		err := processError(err)
+		return err
+	}
+
+	err = checkResponse(resp.HTTPResponse, resp.Body, "error while setting host name\n\n")
 	if err != nil {
 		return err
 	}
@@ -2643,16 +2859,10 @@ func resolvePower(power string) (infra.PowerState, error) {
 		return infra.POWERSTATEON, nil
 	case "off":
 		return infra.POWERSTATEOFF, nil
-	case "cycle":
-		return infra.POWERSTATEPOWERCYCLE, nil
-	case "hibernate":
-		return infra.POWERSTATEHIBERNATE, nil
 	case "reset":
 		return infra.POWERSTATERESET, nil
-	case "sleep":
-		return infra.POWERSTATESLEEP, nil
 	default:
-		return "", errors.New("incorrect power action provided with --power flag use one of on|off|cycle|hibernate|reset|sleep")
+		return "", errors.New("incorrect power action provided with --power flag use one of on|off|reset")
 	}
 }
 
@@ -2664,5 +2874,16 @@ func resolveAmtState(amt string) (infra.AmtState, error) {
 		return infra.AMTSTATEUNPROVISIONED, nil
 	default:
 		return "", errors.New("incorrect AMT state provided with --amt-state flag use one of provisioned|unprovisioned")
+	}
+}
+
+func resolveAmtControlMode(mode string) (infra.AmtControlMode, error) {
+	switch mode {
+	case "admin", "AMT_CONTROL_MODE_ACM":
+		return infra.AMTCONTROLMODEACM, nil
+	case "client", "AMT_CONTROL_MODE_CCM":
+		return infra.AMTCONTROLMODECCM, nil
+	default:
+		return "", errors.New("incorrect AMT control mode provided with --control-mode flag use one of admin|client")
 	}
 }

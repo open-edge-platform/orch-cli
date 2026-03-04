@@ -122,7 +122,11 @@ func runCreateArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating artifact %s", name))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating artifact %s", name)); err != nil {
+		return err
+	}
+	fmt.Printf("Artifact '%s' created successfully\n", name)
+	return nil
 }
 
 func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
@@ -213,7 +217,11 @@ func runSetArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating artifact %s", name))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating artifact %s", name)); err != nil {
+		return err
+	}
+	fmt.Printf("Artifact '%s' updated successfully\n", name)
+	return nil
 }
 
 func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
@@ -235,7 +243,11 @@ func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting artifact %s", name))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting artifact %s", name)); err != nil {
+		return err
+	}
+	fmt.Printf("Artifact '%s' deleted successfully\n", name)
+	return nil
 }
 
 func printArtifactEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {

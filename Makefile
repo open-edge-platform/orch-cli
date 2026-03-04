@@ -72,7 +72,7 @@ mdlint: ## lint all markdown README.md files
 
 test: mod-update
 	@# Help: Runs test stage
-	@trap 'rm -rf internal/cli/preflight_error* internal/cli/import_error*' EXIT; \
+	@trap 'rm -rf internal/cli/preflight_error* internal/cli/import_error* internal/cli/deployment-pkg-1.0.0.tar.gz' EXIT; \
 	go test -race -gcflags=-l `go list $(PKG)/cmd/... $(PKG)/internal/... $(PKG)/pkg/...`
 
 fuzz:
@@ -98,7 +98,7 @@ fetch-cluster-openapi:
 
 fetch-infra-openapi:
 	@# Help: Fetch the Infra Manager OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-core/main/apiv2/api/openapi/openapi.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 
 fetch-rps-openapi:
 	@# Help: Fetch the OpenDMT RPS OpenAPI spec

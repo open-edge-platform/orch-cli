@@ -27,7 +27,14 @@ jobs:
   component-tests:
     name: Deploy Kind Orchestrator and Run Component Tests
     if: |
-      ${{ inputs.run-component-tests || github.event_name == 'schedule' || github.event.label.name == 'run-component-tests' }}
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' && inputs.run-component-tests) ||
+        (
+          github.event_name == 'pull_request' &&
+          github.actor != 'dependabot[bot]' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.event.label.name == 'run-component-tests'
+        )
     runs-on: ubuntu-24.04-16core-64GB  # ubuntu-24.04-4core-16GB ubuntu-22.04-32core-128GB & ubuntu-24.04-16core-64GB
     timeout-minutes: 60
     env:
@@ -36,10 +43,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           repository: open-edge-platform/edge-manageability-framework
-          token: ${{ secrets.SYS_ORCH_GITHUB }}
+          token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           ref: main
           persist-credentials: false
 
@@ -50,17 +57,17 @@ jobs:
         shell: bash
         run: |
           echo "GOPRIVATE=github.com/open-edge-platform" >> $GITHUB_ENV
-          git config --global url."https://${{ secrets.SYS_ORCH_GITHUB }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ secrets.SYS_EMF_GH_TOKEN }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
       - name: Setup asdf and install dependencies
         uses: open-edge-platform/orch-utils/.github/actions/setup-asdf@951ed4c7958311d2d5de1a920e7e6065fc03eef2
 
       - name: Checkout app-orch-catalog repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
         with:
           repository: open-edge-platform/app-orch-catalog
           path: app-orch-catalog
-          token: ${{ secrets.SYS_ORCH_GITHUB }}
+          token: ${{ secrets.SYS_EMF_GH_TOKEN }}
           persist-credentials: false
 
       - name: Get current git hash of the app-orch-catalog PR
@@ -77,7 +84,7 @@ jobs:
       - name: Deploy External Orchestrator
         env:
           GIT_USER: "git"
-          GIT_TOKEN: ${{ secrets.SYS_ORCH_GITHUB }}
+          GIT_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
           ORCH_DEPLOY_REV: ${{ env.GIT_HASH_DEPLOY }}
           DOCKERHUB_TOKEN: ${{ secrets.SYS_DOCKERHUB_RO }}
           DOCKERHUB_USERNAME: ${{ secrets.SYS_DOCKERHUB_USERNAME }}
@@ -162,7 +169,7 @@ jobs:
 
       - name: Upload diagnostic artifacts
         if: always()
-        uses: actions/upload-artifact@v5.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: pods-apps-logs
           path: |

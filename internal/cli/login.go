@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -50,8 +51,12 @@ func getLogoutCommand() *cobra.Command {
 func login(cmd *cobra.Command, args []string) error {
 	existingRefreshToken := viper.GetString(auth.RefreshTokenField)
 	if existingRefreshToken != "" {
-		log.Warnf("Already logged in - please logout first")
-		return fmt.Errorf("already logged in - please logout first")
+		// Automatically logout before logging in again
+		log.Warnf("Existing token found, automatically logging out before re-login")
+		if logoutErr := performLogout(); logoutErr != nil {
+			log.Warnf("Failed to automatically logout: %v", logoutErr)
+		}
+		// Continue with login process
 	}
 
 	username := args[0]
@@ -82,7 +87,7 @@ func login(cmd *cobra.Command, args []string) error {
 		}
 		parts := strings.SplitN(u.Host, ".", 2)
 		if len(parts) != 2 {
-			return fmt.Errorf("Failed to determine keycloak enpoint from api endpoint. Consider using --keycloak flag")
+			return fmt.Errorf("failed to determine keycloak enpoint from api endpoint. Consider using --keycloak flag")
 		}
 		keycloakEp = fmt.Sprintf("https://keycloak.%s/realms/master", parts[1])
 		fmt.Printf("Determined keycloak endpoint from api endpoint: %s\n", keycloakEp)
@@ -171,10 +176,50 @@ func login(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	apiEpFromFlags, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return err
+	}
+	apiEndpointWasProvided := cmd.Flags().Changed(apiEndpoint)
+	if keycloakEpUser != "" && !apiEndpointWasProvided && (apiEpFromFlags == "" || apiEpFromFlags == apiDefaultEndpoint) {
+		derivedAPIEndpoint, err := deriveAPIEndpointFromKeycloakEndpoint(keycloakEp)
+		if err == nil {
+			if err := cmd.Flags().Set(apiEndpoint, derivedAPIEndpoint); err != nil {
+				return err
+			}
+			fmt.Printf("Determined api endpoint from keycloak endpoint: %s\n", derivedAPIEndpoint)
+		}
+	}
+
+	ctx, orchCLient, err := OrchestratorFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	resp, err := orchCLient.GetOrchestratorInfoWithResponse(ctx, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if resp.StatusCode() != 200 {
+		// Set default feature flags for backward compatibility with older orchestrators
+		if err := setDefaultFeatureFlags(); err != nil {
+			return err
+		}
+		return fmt.Errorf("the Edge Orchestrator Component Status service info not available - setting relevant features to enabled by default for backward compatibility")
+	}
+
+	if err := loadFeatureConfig(resp.JSON200); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func logout(_ *cobra.Command, _ []string) error {
+	return performLogout()
+}
+
+func performLogout() error {
 	apiTokenIf := viper.Get(auth.RefreshTokenField)
 	username := viper.Get(auth.UserName)
 	if apiToken, ok := apiTokenIf.(string); ok && apiToken != "" {
@@ -184,8 +229,92 @@ func logout(_ *cobra.Command, _ []string) error {
 		viper.Set(auth.ClientIDField, "")
 		viper.Set(auth.KeycloakEndpointField, "")
 
+		// Clean up orchestrator configuration
+		viper.Set(OobFeature, false)
+		viper.Set(OxmFeature, false)
+		viper.Set(OnboardingFeature, false)
+		viper.Set(ProvisioningFeature, false)
+		viper.Set(Day2Feature, false)
+		viper.Set(AppOrchFeature, false)
+		viper.Set(ClusterOrchFeature, false)
+		viper.Set(ObservabilityFeature, false)
+		viper.Set(MultitenancyFeature, false)
+		viper.Set(EIMFeature, false)
+
 		return viper.WriteConfig()
 	}
 	log.Info("Was not logged in - no-op")
 	return nil
+}
+
+func loadFeatureConfig(info *orchutilities.Info) error {
+	if info == nil || info.Orchestrator == nil {
+		return fmt.Errorf("invalid orchestrator info")
+	}
+
+	// Set version
+	if info.Orchestrator.Version != nil {
+		viper.Set("orchestrator.version", *info.Orchestrator.Version)
+	}
+
+	// Process features recursively
+	if info.Orchestrator.Features != nil {
+		for featureName, featureInfo := range info.Orchestrator.Features {
+			processFeature("orchestrator.features."+featureName, featureInfo)
+		}
+	}
+
+	if err := viper.WriteConfig(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// setDefaultFeatureFlags sets all feature flags to true by default for backward compatibility
+func setDefaultFeatureFlags() error {
+	viper.Set(OobFeature, true)
+	viper.Set(OnboardingFeature, true)
+	viper.Set(ProvisioningFeature, true)
+	viper.Set(OxmFeature, true)
+	viper.Set(Day2Feature, true)
+	viper.Set(AppOrchFeature, true)
+	viper.Set(ClusterOrchFeature, true)
+	viper.Set(ObservabilityFeature, true)
+	viper.Set(MultitenancyFeature, true)
+	viper.Set(EIMFeature, true)
+	if err := viper.WriteConfig(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// processFeature recursively processes features and sets viper config
+func processFeature(prefix string, feature orchutilities.FeatureInfo) {
+	// Set the installed status for this feature
+	if feature.Installed != nil {
+		viper.Set(prefix+".installed", *feature.Installed)
+	}
+
+	// Process nested features
+	for nestedName, nestedFeature := range feature.Features {
+		processFeature(prefix+"."+nestedName, nestedFeature)
+	}
+}
+
+func deriveAPIEndpointFromKeycloakEndpoint(keycloakEndpoint string) (string, error) {
+	u, err := url.Parse(keycloakEndpoint)
+	if err != nil {
+		return "", err
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return "", fmt.Errorf("invalid keycloak endpoint %q", keycloakEndpoint)
+	}
+
+	parts := strings.SplitN(u.Host, ".", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("failed to determine api endpoint from keycloak endpoint %q", keycloakEndpoint)
+	}
+
+	return fmt.Sprintf("%s://api.%s/", u.Scheme, parts[1]), nil
 }

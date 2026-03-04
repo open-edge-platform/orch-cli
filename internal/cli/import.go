@@ -19,6 +19,16 @@ func getImportCommand() *cobra.Command {
 		Short:             "Create orchestrator resources by importing from an external source",
 		PersistentPreRunE: auth.CheckAuth,
 		Example:           "orch-cli import helm-chart oci:/path/to/chart:1.0.0 --project some-project",
+		RunE: func(c *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if isCommandDisabledWithParent(c, args[0]) {
+					fmt.Fprintf(c.ErrOrStderr(), "Error: command %q is disabled in the current Edge Orchestrator configuration\n\n", args[0])
+				} else {
+					fmt.Fprintf(c.ErrOrStderr(), "Error: unknown command %q for %q\n\n", args[0], c.CommandPath())
+				}
+			}
+			return c.Usage()
+		},
 	}
 	cmd.AddCommand(
 		getImportHelmChartCommand(),
@@ -51,7 +61,7 @@ func getImportHelmChartCommand() *cobra.Command {
 }
 
 func runImportHelmChartCommand(cmd *cobra.Command, args []string) error {
-	ctx, catalogClient, projectName, err := getCatalogServiceContext(cmd)
+	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return processError(err)
 	}
@@ -68,7 +78,7 @@ func runImportHelmChartCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	ociURL := args[0]
-	resp, err := catalogClient.CatalogServiceImport(ctx, projectName,
+	resp, err := catalogClient.CatalogServiceImportWithResponse(ctx, projectName,
 		&catapi.CatalogServiceImportParams{
 			Url:                       ociURL,
 			Username:                  getFlag(cmd, "username"),
@@ -82,7 +92,10 @@ func runImportHelmChartCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
+	if resp == nil {
+		return fmt.Errorf("no response while importing helm chart %s", ociURL)
+	}
 
 	// Print the gRPC error message to the user as it might have insight into the failure.
-	return checkResponseGRPC(resp, fmt.Sprintf("error while importing helm chart %s", ociURL))
+	return checkResponseGRPC(resp.HTTPResponse, fmt.Sprintf("error while importing helm chart %s", ociURL))
 }
