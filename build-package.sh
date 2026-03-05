@@ -5,7 +5,7 @@ set -e
 export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
 PACKAGE_DIR="package"
 TARGET_DIR="dependencies-src"
-RELEASE_VERSION="release-2025.2"
+RELEASE_VERSION="release-2026.0"
 REPO_URL="https://github.com/open-edge-platform/orch-cli/archive/refs/heads/${RELEASE_VERSION}.zip"
 REPO_NAME="orch-cli"
 CLONE_DIR="source-$REPO_NAME"
@@ -68,13 +68,14 @@ done
 echo "All sources and repo archive are in $PACKAGE_DIR/"
 mv "$TARGET_DIR" $PACKAGE_DIR
 
-cd $PACKAGE_DIR
-echo "Creating package archive..."
-tar -czf "../orch-cli-package.tar.gz" \
-    "orch-cli" \
-    "$CLONE_DIR" \
-    "$(basename "$TARGET_DIR")"
+## TODO for now comment out the tar.gz creation to avoid confusion as we do not want the binary from the dev branch
+# cd $PACKAGE_DIR
+# echo "Creating package archive..."
+# tar -czf "../orch-cli-package.tar.gz" \
+#     "orch-cli" \
+#     "$CLONE_DIR" \
+#     "$(basename "$TARGET_DIR")"
 
-cd ..
+# cd ..
 
-echo "Package created at .$PACKAGE_DIR/orch-cli-package.tar.gz"
+# echo "Package created at .$PACKAGE_DIR/orch-cli-package.tar.gz"
