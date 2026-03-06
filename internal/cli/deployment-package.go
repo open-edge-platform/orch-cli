@@ -245,7 +245,6 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 			return fmt.Errorf("application %s:%s does not exist. Please create the application before referencing it in the deployment package", ref.Name, ref.Version)
 		}
 
-
 		// Store the application's default profile name (fallback to "default" if not set)
 		if appResp.JSON200 != nil && appResp.JSON200.Application.DefaultProfileName != nil {
 			appDefaultProfiles[ref.Name] = *appResp.JSON200.Application.DefaultProfileName
