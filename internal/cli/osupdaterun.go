@@ -32,28 +32,54 @@ func printOSUpdateRuns(writer io.Writer, OSUpdateRuns []infra.OSUpdateRun, verbo
 	}
 
 	for _, run := range OSUpdateRuns {
+		appliedPolicyName := ""
+		if run.AppliedPolicy != nil {
+			appliedPolicyName = run.AppliedPolicy.Name
+		}
+
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status)
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", safeString(run.Name), safeString(run.ResourceId), safeString(run.Status))
 		} else {
-			startTime := time.Unix(int64(*run.StartTime), 0).UTC().Format(time.RFC3339)
-			endTime := time.Unix(int64(*run.EndTime), 0).UTC().Format(time.RFC3339)
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%s\t%s\n", *run.Name, *run.ResourceId, *run.Status, run.AppliedPolicy.Name, startTime, endTime)
+			startTime := ""
+			if run.StartTime != nil {
+				startTime = time.Unix(int64(*run.StartTime), 0).UTC().Format(time.RFC3339)
+			}
+			endTime := ""
+			if run.EndTime != nil {
+				endTime = time.Unix(int64(*run.EndTime), 0).UTC().Format(time.RFC3339)
+			}
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%s\t%s\n", safeString(run.Name), safeString(run.ResourceId), safeString(run.Status), appliedPolicyName, startTime, endTime)
 		}
 	}
 }
 
 // Prints output details of OS Profiles
 func printOSUpdateRun(writer io.Writer, OSUpdateRun *infra.OSUpdateRun) {
+	if OSUpdateRun == nil {
+		_, _ = fmt.Fprintf(writer, "OS Update Run not found\n")
+		return
+	}
 
-	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSUpdateRun.Name)
-	_, _ = fmt.Fprintf(writer, "ResourceID: \t%s\n", *OSUpdateRun.ResourceId)
-	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", *OSUpdateRun.Status)
-	_, _ = fmt.Fprintf(writer, "Status Detail: \t%s\n", *OSUpdateRun.StatusDetails)
-	_, _ = fmt.Fprintf(writer, "Applied Policy: \t%v\n", OSUpdateRun.AppliedPolicy.Name)
-	_, _ = fmt.Fprintf(writer, "Description: \t%v\n", *OSUpdateRun.Description)
+	appliedPolicyName := ""
+	if OSUpdateRun.AppliedPolicy != nil {
+		appliedPolicyName = OSUpdateRun.AppliedPolicy.Name
+	}
 
-	startTime := time.Unix(int64(*OSUpdateRun.StartTime), 0).UTC().Format(time.RFC3339)
-	endTime := time.Unix(int64(*OSUpdateRun.EndTime), 0).UTC().Format(time.RFC3339)
+	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", safeString(OSUpdateRun.Name))
+	_, _ = fmt.Fprintf(writer, "ResourceID: \t%s\n", safeString(OSUpdateRun.ResourceId))
+	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", safeString(OSUpdateRun.Status))
+	_, _ = fmt.Fprintf(writer, "Status Detail: \t%s\n", safeString(OSUpdateRun.StatusDetails))
+	_, _ = fmt.Fprintf(writer, "Applied Policy: \t%v\n", appliedPolicyName)
+	_, _ = fmt.Fprintf(writer, "Description: \t%v\n", safeString(OSUpdateRun.Description))
+
+	startTime := ""
+	if OSUpdateRun.StartTime != nil {
+		startTime = time.Unix(int64(*OSUpdateRun.StartTime), 0).UTC().Format(time.RFC3339)
+	}
+	endTime := ""
+	if OSUpdateRun.EndTime != nil {
+		endTime = time.Unix(int64(*OSUpdateRun.EndTime), 0).UTC().Format(time.RFC3339)
+	}
 
 	_, _ = fmt.Fprintf(writer, "Start Time: \t%s\n", startTime)
 	_, _ = fmt.Fprintf(writer, "End Time: \t%s\n", endTime)
