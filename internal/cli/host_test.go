@@ -422,6 +422,14 @@ func (s *CLITestSuite) TestHost() {
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
+	_, amtInfoPresent := parsedOutput["AMT Info:"]
+	s.True(amtInfoPresent, "AMT section should be shown when AMT SKU is specified")
+	s.Equal("12345", parsedOutput["-   AMT SKU :"], "AMT SKU should match expected value")
+
+	// Test get host output with missing/unspecified AMT SKU should not print AMT section
+	getOutputNoAMT, err := s.getHost(project, "host-abcd1002", make(map[string]string))
+	s.NoError(err)
+	s.False(strings.Contains(getOutputNoAMT, "AMT Info:"), "AMT section should be hidden when AMT SKU is missing or unspecified")
 
 	// Test get host with invalid project
 	_, err = s.getHost("invalid-project", hostID, make(map[string]string))
