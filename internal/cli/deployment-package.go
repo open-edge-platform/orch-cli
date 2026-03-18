@@ -111,7 +111,7 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 }
 
 var deploymentPackageHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s",
-	"Name", "Display Name", "Version", "Kind", "Default Profile", "Is Deployed", "Application Count")
+	"Name", "Display Name", "Version", "Kind", "Default Profile", "In Use", "Application Count")
 
 func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, verbose bool) {
 	for _, ca := range *caList {
@@ -126,7 +126,7 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3Deploym
 			_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(ca.Description))
 			_, _ = fmt.Fprintf(writer, "Version: %s\n", ca.Version)
 			_, _ = fmt.Fprintf(writer, "Kind: %s\n", deploymentPackageKind2String(ca.Kind))
-			_, _ = fmt.Fprintf(writer, "Is Deployed: %t\n", safeBool(ca.IsDeployed))
+			_, _ = fmt.Fprintf(writer, "In Use: %t\n", safeBool(ca.IsDeployed))
 
 			refs := make([]string, 0, len(ca.ApplicationReferences))
 			for _, ref := range ca.ApplicationReferences {
@@ -229,6 +229,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 
 	// Collect application references and validate they exist
 	applicationReferences := make([]catapi.CatalogV3ApplicationReference, 0)
+	appDefaultProfiles := make(map[string]string)
 	for _, refSpec := range appRefs {
 		ref, err := parseApplicationReference(refSpec)
 		if err != nil {
@@ -242,6 +243,13 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		}
 		if appResp.StatusCode() != 200 {
 			return fmt.Errorf("application %s:%s does not exist. Please create the application before referencing it in the deployment package", ref.Name, ref.Version)
+		}
+
+		// Store the application's default profile name (fallback to "default" if not set)
+		if appResp.JSON200 != nil && appResp.JSON200.Application.DefaultProfileName != nil {
+			appDefaultProfiles[ref.Name] = *appResp.JSON200.Application.DefaultProfileName
+		} else {
+			appDefaultProfiles[ref.Name] = "default"
 		}
 
 		applicationReferences = append(applicationReferences, *ref)
@@ -274,7 +282,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	// Create an initial deployment profile to match UI behavior
 	initialProfile := catapi.CatalogV3DeploymentProfile{
 		Name:                defaultProfileName,
-		ApplicationProfiles: map[string]string{},
+		ApplicationProfiles: appDefaultProfiles,
 	}
 	initialProfiles := []catapi.CatalogV3DeploymentProfile{initialProfile}
 
