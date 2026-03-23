@@ -52,9 +52,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						JSON200: &infra.ListCustomConfigsResponse{
 							CustomConfigs: []infra.CustomConfigResource{
 								{
-									Name:        "nginx-config",
+									Name:        "haproxy-config",
 									Config:      "test:",
-									Description: stringPtr("Nginx configuration for web services"),
+									Description: stringPtr("haproxy configuration for web services"),
 									ResourceId:  stringPtr("config-abc12345"),
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
@@ -405,9 +405,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 										},
 										CustomConfig: &[]infra.CustomConfigResource{
 											{
-												Name:        "nginx-config",
+												Name:        "haproxy-config",
 												Config:      "server {\n    listen 80;\n    server_name example.com;\n    location / {\n        proxy_pass http://backend;\n    }\n}",
-												Description: stringPtr("Nginx configuration for web services"),
+												Description: stringPtr("haproxy configuration for web services"),
 												ResourceId:  stringPtr("config-abc12345"),
 												Timestamps: &infra.Timestamps{
 													CreatedAt: timestampPtr(timestamp),
@@ -1471,9 +1471,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							},
 							CustomConfig: &[]infra.CustomConfigResource{
 								{
-									Name:        "nginx-config",
+									Name:        "haproxy-config",
 									Config:      "server {\n    listen 80;\n    server_name example.com;\n    location / {\n        proxy_pass http://backend;\n    }\n}",
-									Description: stringPtr("Nginx configuration for web services"),
+									Description: stringPtr("haproxy configuration for web services"),
 									ResourceId:  stringPtr("config-abc12345"),
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
@@ -1547,9 +1547,9 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									},
 									CustomConfig: &[]infra.CustomConfigResource{
 										{
-											Name:        "nginx-config",
+											Name:        "haproxy-config",
 											Config:      "server {\n    listen 80;\n    server_name example.com;\n    location / {\n        proxy_pass http://backend;\n    }\n}",
-											Description: stringPtr("Nginx configuration for web services"),
+											Description: stringPtr("haproxy configuration for web services"),
 											ResourceId:  stringPtr("config-abc12345"),
 											Timestamps: &infra.Timestamps{
 												CreatedAt: timestampPtr(timestamp),

@@ -82,7 +82,7 @@ write_files:
 runcmd:
   - |
     mkdir -p /opt/user-apps
-    curl --noproxy '*' -k {{ .NginxFQDN }}/tink-stack/user-apps.tar.gz -o /tmp/user-apps.tar.gz
+    curl --noproxy '*' -k {{ .haproxyFQDN }}/tink-stack/user-apps.tar.gz -o /tmp/user-apps.tar.gz
     tar -xzvf /tmp/user-apps.tar.gz -C /opt
   - |
     grep -qF "http_proxy" /etc/environment || echo http_proxy={{ .http_proxy }} >> /etc/environment
@@ -181,15 +181,15 @@ func getConfigFileInput(cmd *cobra.Command) (string, error) {
 	return configFilePath, nil
 }
 
-func getNginxFQDNFromAPIEndpoint(cmd *cobra.Command) (string, error) {
+func getHaproxyFQDNFromAPIEndpoint(cmd *cobra.Command) (string, error) {
 	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
 	if err != nil {
 		return "", err
 	}
 
-	nginxFQDN := strings.Replace(serverAddress, "api.", "tinkerbell-nginx.", 1)
+	haproxyFQDN := strings.Replace(serverAddress, "api.", "tinkerbell-haproxy.", 1)
 
-	return nginxFQDN, nil
+	return haproxyFQDN, nil
 }
 
 func hashPassword(password string) (string, error) {
@@ -271,9 +271,9 @@ func getPasswordFromUserInput() (string, error) {
 	return password, nil
 }
 
-func loadConfig(path string, nginxFQDN, emtsRepoID string) (map[string]interface{}, error) {
+func loadConfig(path string, haproxyFQDN, emtsRepoID string) (map[string]interface{}, error) {
 	config := make(map[string]interface{})
-	config["NginxFQDN"] = nginxFQDN
+	config["haproxyFQDN"] = haproxyFQDN
 
 	cloudInit, err := extractYamlBlock(path)
 	if err != nil {
@@ -401,12 +401,12 @@ func runGenerateStandaloneConfigCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	nginxFQDN, err := getNginxFQDNFromAPIEndpoint(cmd)
+	haproxyFQDN, err := getHaproxyFQDNFromAPIEndpoint(cmd)
 	if err != nil {
 		return err
 	}
 
-	config, err := loadConfig(configFilePath, nginxFQDN, emtsRepoID)
+	config, err := loadConfig(configFilePath, haproxyFQDN, emtsRepoID)
 	if err != nil {
 		return err
 	}
