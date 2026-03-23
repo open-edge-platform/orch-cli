@@ -60,7 +60,7 @@ jobs:
           git config --global url."https://${{ secrets.SYS_EMF_GH_TOKEN }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
       - name: Setup asdf and install dependencies
-        uses: open-edge-platform/orch-utils/.github/actions/setup-asdf@951ed4c7958311d2d5de1a920e7e6065fc03eef2
+        uses: open-edge-platform/orch-ci/.github/actions/setup-asdf@main  # zizmor: ignore[unpinned-uses]
 
       - name: Checkout app-orch-catalog repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
