@@ -389,7 +389,7 @@ func checkResponse(response *http.Response, body []byte, message string) error {
 // and status details.
 func checkResponseCode(responseCode int, message string, responseMessage string, body []byte) error {
 	if responseCode == 401 {
-		return fmt.Errorf("%s. Unauthorized. Please Login. %s", message, responseMessage)
+		return fmt.Errorf("%s. Unauthorized. Please login with a user that has the required permissions. %s", message, responseMessage)
 	} else if responseCode != 200 && responseCode != 201 && responseCode != 204 {
 		// Try to parse the JSON body to extract just the message
 		var errorResponse struct {
@@ -460,7 +460,7 @@ func checkStatus(statusCode int, message string, statusMessage string) (proceed 
 	case http.StatusOK:
 		return true, nil
 	case 403:
-		return false, fmt.Errorf("%s: %s. Unauthenticated. Please login", message, statusMessage)
+		return false, fmt.Errorf("%s: %s. Unauthenticated. Please login with a user that has the required permissions", message, statusMessage)
 	default:
 		return false, fmt.Errorf("no response from backend - check api-endpoint and deployment-endpoint")
 	}
@@ -497,9 +497,9 @@ func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer,
 	case statusIsNotFound(resp):
 		return false, getError(body, message)
 	case statusUnauthorized(resp):
-		return false, getError(body, "Unauthorized. Please login")
+		return false, getError(body, "Unauthorized. Please login with a user that has the required permissions")
 	case statusForbidden(resp):
-		return false, getError(body, "Unauthorized (forbidden). Please login")
+		return false, getError(body, "Unauthorized (forbidden). Please login with a user that has the required permissions")
 	}
 
 	if !verbose {
