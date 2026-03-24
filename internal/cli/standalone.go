@@ -21,13 +21,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const defaultEmtsRepoCommitID = "standalone-node/3.1.0"
+// Version taken from https://github.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/tags
+const defaultEmtsRepoCommitID = "standalone-node/3.1.41"
 
 var (
-	CollectLogsScriptSource   = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/collect-logs.sh"
-	K3sConfigureScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/k3s-configure.sh"
-	K3sInstallerScriptSource  = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/sen-k3s-installer.sh"
-	K3sPostRebootScriptSource = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/k3s-setup-post-reboot.sh"
+	provisioningScriptsRepoURL = "https://raw.githubusercontent.com/open-edge-platform/edge-microvisor-toolkit-standalone-node/%s/standalone-node/provisioning_scripts/%s"
+	collectLogsScript          = "collect-logs.sh"
+	k3sConfigureScript         = "k3s-configure.sh"
+	k3sInstallerScript         = "sen-k3s-installer.sh"
+	k3sPostRebootScript        = "k3s-setup-post-reboot.sh"
 )
 
 var getPasswordFromUser = getPasswordFromUserInput
@@ -216,7 +218,7 @@ func downloadFileFromURL(url string) (string, error) {
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read body: %s", err)
+		return "", fmt.Errorf("failed to read body: %w", err)
 	}
 	return string(data), nil
 }
@@ -254,7 +256,7 @@ func extractYamlBlock(path string) (CloudInitSection, error) {
 }
 
 func getPasswordFromUserInput() (string, error) {
-	fmt.Printf("Please Set the Password")
+	fmt.Printf("Please Set the Password:")
 	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return "", err
@@ -277,7 +279,7 @@ func loadConfig(path string, haproxyFQDN, emtsRepoID string) (map[string]interfa
 
 	cloudInit, err := extractYamlBlock(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse YAML block: %s", err)
+		return nil, fmt.Errorf("failed to parse YAML block: %w", err)
 	}
 
 	tmpFile, err := os.CreateTemp("", "tmp_*")
@@ -337,27 +339,27 @@ func loadConfig(path string, haproxyFQDN, emtsRepoID string) (map[string]interfa
 
 	config["passwd"] = hashed
 
-	CollectLogsScriptSourceURL := fmt.Sprintf(CollectLogsScriptSource, emtsRepoID)
-	K3sConfigureScriptSourceURL := fmt.Sprintf(K3sConfigureScriptSource, emtsRepoID)
-	K3sInstallerScriptSourceURL := fmt.Sprintf(K3sInstallerScriptSource, emtsRepoID)
-	K3sPostRebootScriptSourceURL := fmt.Sprintf(K3sPostRebootScriptSource, emtsRepoID)
+	collectLogsScriptSourceURL := fmt.Sprintf(provisioningScriptsRepoURL, emtsRepoID, collectLogsScript)
+	k3sConfigureScriptSourceURL := fmt.Sprintf(provisioningScriptsRepoURL, emtsRepoID, k3sConfigureScript)
+	k3sInstallerScriptSourceURL := fmt.Sprintf(provisioningScriptsRepoURL, emtsRepoID, k3sInstallerScript)
+	k3sPostRebootScriptSourceURL := fmt.Sprintf(provisioningScriptsRepoURL, emtsRepoID, k3sPostRebootScript)
 
-	collectLogsScript, err := downloadFileFromURL(CollectLogsScriptSourceURL)
+	collectLogsScript, err := downloadFileFromURL(collectLogsScriptSourceURL)
 	if err != nil {
 		return nil, err
 	}
 
-	k3sConfigureScript, err := downloadFileFromURL(K3sConfigureScriptSourceURL)
+	k3sConfigureScript, err := downloadFileFromURL(k3sConfigureScriptSourceURL)
 	if err != nil {
 		return nil, err
 	}
 
-	k3sInstallerScript, err := downloadFileFromURL(K3sInstallerScriptSourceURL)
+	k3sInstallerScript, err := downloadFileFromURL(k3sInstallerScriptSourceURL)
 	if err != nil {
 		return nil, err
 	}
 
-	k3sPostRebootScript, err := downloadFileFromURL(K3sPostRebootScriptSourceURL)
+	k3sPostRebootScript, err := downloadFileFromURL(k3sPostRebootScriptSourceURL)
 	if err != nil {
 		return nil, err
 	}
