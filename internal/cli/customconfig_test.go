@@ -30,11 +30,11 @@ func (s *CLITestSuite) deleteCustomConfig(project string, name string, args comm
 
 func (s *CLITestSuite) TestCustomConfig() {
 
-	name := "nginx-config"
+	name := "haproxy-config"
 	path := "./testdata/cloudinit.yaml"
 	resourceID := "config-abc12345"
 	timestamp := "2025-01-15 10:30:00 +0000 UTC"
-	description := "Nginx configuration for web services"
+	description := "haproxy configuration for web services"
 	CArgs := map[string]string{}
 
 	/////////////////////////////
@@ -110,9 +110,9 @@ func (s *CLITestSuite) TestCustomConfig() {
 
 	parsedOutput := mapGetOutput(getOutput)
 	expectedOutput := map[string]string{
-		"Name:":        "nginx-config",
+		"Name:":        "haproxy-config",
 		"Resource ID:": "config-abc12345",
-		"Description:": "Nginx configuration for web services",
+		"Description:": "haproxy configuration for web services",
 		"Cloud Init:":  "",
 		"test:":        "",
 	}
