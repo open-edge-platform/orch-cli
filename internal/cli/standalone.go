@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -53,7 +53,7 @@ users:
     lock_passwd: false
     passwd: "{{ .passwd }}"
 {{- if .ssh_key }}
-	ssh_authorized_keys:
+    ssh_authorized_keys:
       - {{ .ssh_key }}
 {{- end }}
 
@@ -98,7 +98,7 @@ runcmd:
     echo "alias k='KUBECONFIG=/etc/rancher/k3s/k3s.yaml /var/lib/rancher/k3s/bin/k3s kubectl'" >> /home/{{ .user_name }}/.bashrc
 {{- if eq .host_type "kubernetes" }}
 {{- if .huge_page_config }}
-    echo .huge_page_config | tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
+    echo {{ .huge_page_config }} | tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 {{- end }}
     chmod +x /etc/cloud/k3s-configure.sh
     bash /etc/cloud/k3s-configure.sh
@@ -131,7 +131,7 @@ type WriteFile struct {
 }
 
 const commandHelp = `# Generate cloud-init config for EMT-Standalone nodes (config-file must be populated before)
-orch-cli generate standalone-config -c config-file 
+orch-cli generate standalone-config -c config-file
 
 # Generate cloud-init config for EMT-Standalone nodes, specify output file
 orch-cli generate standalone-config -c config-file -o /tmp/cloud-init.cfg
