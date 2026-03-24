@@ -106,7 +106,7 @@ runcmd:
     bash /etc/cloud/k3s-configure.sh
 {{- end }}
 {{- range .CloudInitServicesEnable }}
-  - systemctl enable {{ . }}
+  - systemctl enable --now {{ . }}
 {{- end }}
 {{- range .CloudInitServicesDisable }}
   - systemctl disable {{ . }}
