@@ -390,7 +390,7 @@ func (s *CLITestSuite) TestHost() {
 		"-   BIOS Vendor:":                "Lenovo",
 		"-   Product Name:":               "ThinkSystem SR650",
 		"Customizations:":                 "",
-		"-   Custom configs:":             "nginx-config",
+		"-   Custom configs:":             "haproxy-config",
 		"CPU Info:":                       "",
 		"Model":                           "Cores   |Architecture   |Threads   |Sockets",
 		"Intel(R) Xeon(R) CPU E5-2670 v3": "8       |x86_64         |32        |2",
