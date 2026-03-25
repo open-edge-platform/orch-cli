@@ -85,7 +85,7 @@ runcmd:
   - |
     mkdir -p /opt/user-apps
     curl --noproxy '*' -k {{ .haproxyFQDN }}/tink-stack/user-apps.tar.gz -o /tmp/user-apps.tar.gz
-    tar -xzvf /tmp/user-apps.tar.gz -C /opt
+    sudo tar -xzvf /tmp/user-apps.tar.gz -C /opt
   - |
     grep -qF "http_proxy" /etc/environment || echo http_proxy={{ .http_proxy }} >> /etc/environment
     grep -qF "https_proxy" /etc/environment || echo https_proxy={{ .https_proxy }} >> /etc/environment
@@ -102,8 +102,8 @@ runcmd:
 {{- if .huge_page_config }}
     echo {{ .huge_page_config }} | tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages
 {{- end }}
-    chmod +x /etc/cloud/k3s-configure.sh
-    bash /etc/cloud/k3s-configure.sh
+    sudo chmod +x /etc/cloud/k3s-configure.sh
+    sudo bash /etc/cloud/k3s-configure.sh
 {{- end }}
 {{- range .CloudInitServicesEnable }}
   - systemctl enable --now {{ . }}
