@@ -85,7 +85,7 @@ runcmd:
   - |
     mkdir -p /opt/user-apps
     curl --noproxy '*' -k {{ .haproxyFQDN }}/tink-stack/user-apps.tar.gz -o /tmp/user-apps.tar.gz
-    sudo tar -xzvf /tmp/user-apps.tar.gz -C /opt
+    sudo tar -xzf /tmp/user-apps.tar.gz -C /opt
   - |
     grep -qF "http_proxy" /etc/environment || echo http_proxy={{ .http_proxy }} >> /etc/environment
     grep -qF "https_proxy" /etc/environment || echo https_proxy={{ .https_proxy }} >> /etc/environment
