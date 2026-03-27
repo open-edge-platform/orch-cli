@@ -28,6 +28,7 @@ jobs:
     uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@b5930c48c1fcdb6b34ffbcd465cff96dabfbde70  # v2026.0.17
     with:
       bootstrap_tools: "go,gotools,golangci-lint2,nodejs,buf,hadolint,opa"
+      orch_ci_repo_ref: ec19d9d4f47ec4817d001867e5b32c90212ddbd7
       run_version_check: true
       run_dep_version_check: false
       run_build: true
