@@ -31,7 +31,7 @@ all:  build lint test
 rel_os    = $(word 2, $(subst -, ,$(notdir $@)))
 rel_arch  = $(word 3, $(subst -, ,$(notdir $@)))
 
-linux_opts = -trimpath -gcflags="all=-spectre=all -N -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w"
+linux_opts = -trimpath -gcflags="$(PKG)/...=-spectre=all -N -l" -asmflags="$(PKG)/...=-spectre=all" -ldflags="all=-s -w"
 
 $(RELEASE_BINS):
 	export GOOS=$(rel_os) ;\
@@ -53,7 +53,7 @@ mod-update:
 build: mod-update
 	@# Help: Runs build stage
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
-	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w -extldflags=-static -X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
+	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="$(PKG)/...=-spectre=all -l" -asmflags="$(PKG)/...=-spectre=all" -ldflags="all=-s -w -extldflags=-static -X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
 
 install: build
 	@# Help: Installs client tool
