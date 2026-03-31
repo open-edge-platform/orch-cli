@@ -250,7 +250,7 @@ func getKeycloakAdminServiceContext(cmd *cobra.Command) (context.Context, *kcapi
 
 	// Validate realm contains only safe characters (alphanumeric, hyphens, underscores)
 	for _, r := range realm {
-		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_') {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') && r != '-' && r != '_' {
 			return nil, nil, "", fmt.Errorf("invalid realm name %q: must contain only alphanumeric characters, hyphens, or underscores", realm)
 		}
 	}
