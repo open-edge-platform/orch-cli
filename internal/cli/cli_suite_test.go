@@ -18,6 +18,7 @@ import (
 	clustermock "github.com/open-edge-platform/cli/internal/cli/mocks/cluster"
 	deploymentmock "github.com/open-edge-platform/cli/internal/cli/mocks/deployment"
 	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
+	keycloakmock "github.com/open-edge-platform/cli/internal/cli/mocks/keycloak"
 	orchutilsmock "github.com/open-edge-platform/cli/internal/cli/mocks/orchutilities"
 	rpsmock "github.com/open-edge-platform/cli/internal/cli/mocks/rps"
 	tenancymock "github.com/open-edge-platform/cli/internal/cli/mocks/tenancy"
@@ -68,6 +69,7 @@ func (s *CLITestSuite) SetupSuite() {
 	DeploymentFactory = deploymentmock.CreateDeploymentMock(mctrl)
 	TenancyFactory = tenancymock.CreateTenancyMock(mctrl)
 	OrchestratorFactory = orchutilsmock.CreateOrchestratorMock(mctrl)
+	KeycloakAdminFactory = keycloakmock.CreateKeycloakAdminMock(mctrl)
 }
 
 func (s *CLITestSuite) TearDownSuite() {
@@ -80,6 +82,7 @@ func (s *CLITestSuite) TearDownSuite() {
 	DeploymentFactory = nil
 	TenancyFactory = nil
 	OrchestratorFactory = nil
+	KeycloakAdminFactory = nil
 
 	viper.Set(auth.UserName, "")
 	viper.Set(auth.RefreshTokenField, "")

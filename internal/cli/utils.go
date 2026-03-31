@@ -23,6 +23,7 @@ import (
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
+	kcapi "github.com/open-edge-platform/cli/pkg/rest/keycloak"
 	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
@@ -86,6 +87,10 @@ var TenancyFactory interfaces.TenancyFactoryFunc = func(cmd *cobra.Command) (con
 
 var OrchestratorFactory interfaces.OrchestratorFactoryFunc = func(cmd *cobra.Command) (context.Context, orchapi.ClientWithResponsesInterface, error) {
 	return getOrchestratorServiceContext(cmd)
+}
+
+var KeycloakAdminFactory interfaces.KeycloakAdminFactoryFunc = func(cmd *cobra.Command) (context.Context, kcapi.ClientInterface, string, error) {
+	return getKeycloakAdminServiceContext(cmd)
 }
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
@@ -213,6 +218,45 @@ func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.C
 		return nil, nil, err
 	}
 	return context.Background(), tenancyClient, nil
+}
+
+// Get the new background context, Keycloak Admin client, and realm given the specified command.
+func getKeycloakAdminServiceContext(cmd *cobra.Command) (context.Context, *kcapi.Client, string, error) {
+	keycloakEp := viper.GetString(auth.KeycloakEndpointField)
+	if keycloakEp == "" {
+		return nil, nil, "", fmt.Errorf("keycloak endpoint not configured. Please login first")
+	}
+
+	// Derive base URL by stripping /realms/<realm> suffix
+	// e.g. "https://keycloak.example.com/realms/master" -> "https://keycloak.example.com"
+	baseURL := keycloakEp
+	if idx := strings.Index(keycloakEp, "/realms/"); idx != -1 {
+		baseURL = keycloakEp[:idx]
+	}
+
+	// Extract realm from the endpoint, default to "master"
+	realm := "master"
+	if idx := strings.LastIndex(keycloakEp, "/realms/"); idx != -1 {
+		realm = keycloakEp[idx+len("/realms/"):]
+	}
+
+	// Allow --realm flag to override
+	if cmd.Flags().Changed("realm") {
+		realmFlag, err := cmd.Flags().GetString("realm")
+		if err == nil && realmFlag != "" {
+			realm = realmFlag
+		}
+	}
+
+	// Validate realm contains only safe characters (alphanumeric, hyphens, underscores)
+	for _, r := range realm {
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_') {
+			return nil, nil, "", fmt.Errorf("invalid realm name %q: must contain only alphanumeric characters, hyphens, or underscores", realm)
+		}
+	}
+
+	client := kcapi.NewClient(baseURL, auth.AddAuthHeader)
+	return context.Background(), client, realm, nil
 }
 
 // Get the new background context and REST client for orchestrator service.

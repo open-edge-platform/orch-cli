@@ -35,6 +35,8 @@ var (
 	siteAliases              = []string{"site", "sites", "st", "sts"}
 	scheduleAliases          = []string{"schedule", "schedules", "sch", "schs"}
 	sshKeyAliases            = []string{"sshkey", "sshkeys", "ssh", "sshs"}
+	userAliases              = []string{"user", "users", "usr", "usrs"}
+	groupAliases             = []string{"group", "groups", "grp", "grps"}
 )
 
 func getCreateCommand() *cobra.Command {
@@ -91,6 +93,9 @@ func getCreateCommand() *cobra.Command {
 	// Multitenancy related commands
 	addCommandIfFeatureEnabled(cmd, getCreateProjectCommand(), MultitenancyFeature)
 	addCommandIfFeatureEnabled(cmd, getCreateOrganizationCommand(), MultitenancyFeature)
+
+	// IAM user management commands
+	addCommandIfFeatureEnabled(cmd, getCreateUserCommand(), MultitenancyFeature)
 	return cmd
 }
 
@@ -153,6 +158,10 @@ func getListCommand() *cobra.Command {
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListProjectCommand(), MultitenancyFeature)
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListOrganizationCommand(), MultitenancyFeature)
 
+	// IAM user management commands
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListUsersCommand(), MultitenancyFeature)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListGroupsCommand(), MultitenancyFeature)
+
 	return catalogListRootCmd
 }
 
@@ -209,6 +218,9 @@ func getGetCommand() *cobra.Command {
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetProjectCommand(), MultitenancyFeature)
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetOrganizationCommand(), MultitenancyFeature)
 
+	// IAM user management commands
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetUserCommand(), MultitenancyFeature)
+
 	return catalogGetRootCmd
 }
 
@@ -245,6 +257,9 @@ func getSetCommand() *cobra.Command {
 
 	// Day2 related commands
 	addCommandIfFeatureEnabled(cmd, getSetScheduleCommand(), Day2Feature)
+
+	// IAM user management commands
+	addCommandIfFeatureEnabled(cmd, getSetUserCommand(), MultitenancyFeature)
 	return cmd
 }
 
@@ -323,6 +338,9 @@ func getDeleteCommand() *cobra.Command {
 	// Multitenancy related commands
 	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteProjectCommand(), MultitenancyFeature)
 	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteOrganizationCommand(), MultitenancyFeature)
+
+	// IAM user management commands
+	addCommandIfFeatureEnabled(catalogDeleteRootCmd, getDeleteUserCommand(), MultitenancyFeature)
 
 	return catalogDeleteRootCmd
 }
