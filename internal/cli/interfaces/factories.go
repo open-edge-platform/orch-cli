@@ -11,6 +11,7 @@ import (
 	cluster "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
+	kcapi "github.com/open-edge-platform/cli/pkg/rest/keycloak"
 	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
@@ -27,3 +28,4 @@ type RpsFactoryFunc func(cmd *cobra.Command) (context.Context, rpsapi.ClientWith
 type DeploymentFactoryFunc func(cmd *cobra.Command) (context.Context, depapi.ClientWithResponsesInterface, string, error)
 type TenancyFactoryFunc func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, error)
 type OrchestratorFactoryFunc func(cmd *cobra.Command) (context.Context, orchapi.ClientWithResponsesInterface, error)
+type KeycloakAdminFactoryFunc func(cmd *cobra.Command) (context.Context, kcapi.ClientInterface, string, error)
