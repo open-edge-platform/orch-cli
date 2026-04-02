@@ -184,6 +184,17 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 		cmd.SetContext(context.WithValue(cmd.Context(), expandedLabelsKey, expandedLabels))
 	}
 
+	// Expand --application-cluster-id to apply to ALL applications in the package
+	// Format: <cluster-id> applies the same cluster to all apps
+	clusterID, _ := cmd.Flags().GetString("application-cluster-id")
+	if clusterID != "" {
+		expandedClusterIDs := make(map[string]string)
+		for appName := range validAppNames {
+			expandedClusterIDs[appName] = clusterID
+		}
+		cmd.SetContext(context.WithValue(cmd.Context(), expandedClusterIDsKey, expandedClusterIDs))
+	}
+
 	overrideValues, err := getOverrideValues(cmd)
 	if err != nil {
 		return err
