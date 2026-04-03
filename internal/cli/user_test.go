@@ -134,6 +134,58 @@ func (s *CLITestSuite) TestCreateUser() {
 	s.Contains(output, "created successfully")
 }
 
+func (s *CLITestSuite) TestCreateUserWithInlinePassword() {
+	CArgs := map[string]string{
+		"password": "s3cret",
+	}
+	// Use "sample-user" because the mock's GetUserByUsername only
+	// knows pre-seeded users (needed to look up the ID for SetPassword).
+	output, err := s.createUser("sample-user", CArgs)
+	s.NoError(err)
+	s.Contains(output, "created successfully")
+}
+
+func (s *CLITestSuite) TestCreateUserWithEnvPassword() {
+	s.T().Setenv(passwordEnvVar, "env-s3cret")
+	CArgs := map[string]string{
+		"password": "",
+	}
+	output, err := s.createUser("sample-user", CArgs)
+	s.NoError(err)
+	s.Contains(output, "created successfully")
+}
+
+func (s *CLITestSuite) TestSetUserPasswordPromptFailsWithoutTerminal() {
+	// When --password is passed with no value and no env var is set,
+	// resolvePassword falls through to the interactive prompt which
+	// fails because tests don't run in a terminal.
+	s.T().Setenv(passwordEnvVar, "")
+	CArgs := map[string]string{
+		"password": "",
+	}
+	_, err := s.setUser("sample-user", CArgs)
+	s.Error(err)
+}
+
+func (s *CLITestSuite) TestSetUserWithInlinePassword() {
+	CArgs := map[string]string{
+		"password": "new-s3cret",
+	}
+	output, err := s.setUser("sample-user", CArgs)
+	s.NoError(err)
+	s.Contains(output, "Password updated")
+}
+
+func (s *CLITestSuite) TestSetUserWithEnvPassword() {
+	s.T().Setenv(passwordEnvVar, "env-s3cret")
+	CArgs := map[string]string{
+		"password": "",
+	}
+	output, err := s.setUser("sample-user", CArgs)
+	s.NoError(err)
+	s.Contains(output, "Password updated")
+}
+
 func (s *CLITestSuite) TestDeleteUser() {
 	output, err := s.deleteUser("sample-user", make(map[string]string))
 	s.NoError(err)

@@ -15,6 +15,10 @@ import (
 )
 
 const (
+	// passwordPromptSentinel is the NoOptDefVal for --password, allowing
+	// Cobra to accept the flag without a value (e.g. --password).
+	// A non-empty string is required because Cobra treats NoOptDefVal=""
+	// the same as unset, causing --password without =value to error.
 	passwordPromptSentinel = "__prompt__"
 	passwordEnvVar         = "ORCH_PASSWORD"
 )
