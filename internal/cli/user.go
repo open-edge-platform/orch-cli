@@ -14,6 +14,15 @@ import (
 	"golang.org/x/term"
 )
 
+const (
+	// passwordPromptSentinel is the NoOptDefVal for --password, allowing
+	// Cobra to accept the flag without a value (e.g. --password).
+	// A non-empty string is required because Cobra treats NoOptDefVal=""
+	// the same as unset, causing --password without =value to error.
+	passwordPromptSentinel = "__prompt__"
+	passwordEnvVar         = "ORCH_PASSWORD"
+)
+
 const listUsersExamples = `# List all users
 orch-cli list users
 
@@ -34,16 +43,28 @@ orch-cli create user sample-user
 # Create a user with all details
 orch-cli create user sample-user --email sample@example.com --first-name Sample --last-name User
 
-# Create a user and set a password (will prompt)
+# Create a user and set a password (will prompt interactively)
 orch-cli create user sample-user --password
+
+# Create a user with an inline password (caution: visible in shell history)
+orch-cli create user sample-user --password="s3cret"
+
+# Create a user with password from environment variable
+ORCH_PASSWORD=s3cret orch-cli create user sample-user --password
 `
 
 const deleteUserExamples = `# Delete a user by username
 orch-cli delete user sample-user
 `
 
-const setUserExamples = `# Set a user's password (will prompt)
+const setUserExamples = `# Set a user's password (will prompt interactively)
 orch-cli set user sample-user --password
+
+# Set a user's password inline (caution: visible in shell history)
+orch-cli set user sample-user --password="s3cret"
+
+# Set a user's password from environment variable
+ORCH_PASSWORD=s3cret orch-cli set user sample-user --password
 
 # Add a user to a group
 orch-cli set user sample-user --add-group org-admin-group
@@ -152,7 +173,8 @@ func getCreateUserCommand() *cobra.Command {
 	cmd.Flags().String("first-name", "", "User first name")
 	cmd.Flags().String("last-name", "", "User last name")
 	cmd.Flags().Bool("disabled", false, "Create user in disabled state")
-	cmd.Flags().Bool("password", false, "Set password for the user (will prompt)")
+	cmd.Flags().String("password", "", "Set password for the user (prompts if no value given, also reads ORCH_PASSWORD env var)")
+	cmd.Flag("password").NoOptDefVal = passwordPromptSentinel
 	cmd.Flags().Bool("temporary-password", false, "If set, user must change password on first login")
 	cmd.Flags().String("realm", "master", "Keycloak realm")
 	return cmd
@@ -180,7 +202,8 @@ func getSetUserCommand() *cobra.Command {
 		Aliases: userAliases,
 		RunE:    runSetUserCommand,
 	}
-	cmd.Flags().Bool("password", false, "Set password for the user (will prompt)")
+	cmd.Flags().String("password", "", "Set password for the user (prompts if no value given, also reads ORCH_PASSWORD env var)")
+	cmd.Flag("password").NoOptDefVal = passwordPromptSentinel
 	cmd.Flags().Bool("temporary-password", false, "If set, user must change password on first login")
 	cmd.Flags().StringSlice("add-group", nil, "Group name(s) to add the user to")
 	cmd.Flags().StringSlice("remove-group", nil, "Group name(s) to remove the user from")
@@ -262,9 +285,8 @@ func runCreateUserCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error creating user: %w", err)
 	}
 
-	setPassword, _ := cmd.Flags().GetBool("password")
-	if setPassword {
-		password, err := promptPassword(cmd)
+	if cmd.Flags().Changed("password") {
+		password, err := resolvePassword(cmd)
 		if err != nil {
 			return err
 		}
@@ -319,9 +341,8 @@ func runSetUserCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// Handle password change
-	setPassword, _ := cmd.Flags().GetBool("password")
-	if setPassword {
-		password, err := promptPassword(cmd)
+	if cmd.Flags().Changed("password") {
+		password, err := resolvePassword(cmd)
 		if err != nil {
 			return err
 		}
@@ -373,7 +394,24 @@ func runSetUserCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func promptPassword(cmd *cobra.Command) (string, error) {
+// resolvePassword determines the password from three sources in priority order:
+//  1. Inline flag value (--password="value")
+//  2. Environment variable (ORCH_PASSWORD)
+//  3. Interactive terminal prompt
+func resolvePassword(cmd *cobra.Command) (string, error) {
+	flagVal, _ := cmd.Flags().GetString("password")
+
+	// If an explicit value was provided inline (not the sentinel), use it
+	if flagVal != passwordPromptSentinel && flagVal != "" {
+		return flagVal, nil
+	}
+
+	// Check environment variable
+	if envVal := os.Getenv(passwordEnvVar); envVal != "" {
+		return envVal, nil
+	}
+
+	// Fall back to interactive prompt
 	fmt.Fprint(cmd.OutOrStdout(), "Enter Password: ")
 	bytePassword, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
