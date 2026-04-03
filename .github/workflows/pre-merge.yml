@@ -25,7 +25,7 @@ jobs:
         uses: open-edge-platform/orch-ci/verify-branch-name@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # v2026.1.1
   pre-merge-pipeline:
     needs: pre-checks
-    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@d40dfda9598df896aa20cb1dc2c950d6444e8fa7  # v2026.0.19
+    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # v2026.1.1
     with:
       bootstrap_tools: "go,gotools,golangci-lint2,nodejs,buf,hadolint,opa"
       run_version_check: true
