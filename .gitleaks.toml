@@ -4,15 +4,9 @@
 # Gitleaks config to allowlist test PKCS12 file
 ###############################
 # Robust gitleaks allowlist for test PKCS12 file
-[allowlist]
-files = [
-  "internal/cli/testdata/sample.pfx"
-]
+[[allowlists]]
+description = "Ignore test PKCS12 file"
 paths = [
-  "internal/cli/testdata/sample.pfx"
+  '''internal/cli/testdata/sample\.pfx'''
 ]
-commits = []
-
-[[rules]]
-description = "pkcs12-file"
-allowlist = { paths = ["internal/cli/testdata/sample.pfx"] }
+rules = ["pkcs12-file"]
