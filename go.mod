@@ -11,7 +11,7 @@ require (
 	github.com/go-task/slim-sprig v2.20.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/joho/godotenv v1.5.1
-	github.com/mattn/go-sqlite3 v1.14.38
+	github.com/mattn/go-sqlite3 v1.14.41
 	github.com/oapi-codegen/runtime v1.3.1
 	github.com/open-edge-platform/orch-library/go v0.6.3
 	github.com/spf13/cobra v1.10.2
