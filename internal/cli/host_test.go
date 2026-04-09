@@ -118,6 +118,29 @@ func (s *CLITestSuite) testResolveAmtState() {
 	}
 }
 
+func (s *CLITestSuite) testResolveKvmState() {
+	tests := []struct {
+		input    string
+		expected infra.KvmState
+		wantErr  bool
+	}{
+		{"start", infra.KVMSTATESTART, false},
+		{"stop", infra.KVMSTATESTOP, false},
+		{"invalid", "", true},
+		{"", "", true},
+	}
+
+	for _, tc := range tests {
+		result, err := resolveKvmState(tc.input)
+		if tc.wantErr {
+			s.Error(err, "expected error for input %q", tc.input)
+		} else {
+			s.NoError(err, "unexpected error for input %q", tc.input)
+			s.Equal(tc.expected, result, "unexpected result for input %q", tc.input)
+		}
+	}
+}
+
 // Helper function to create string pointers
 func stringPtr(s string) *string {
 	return &s
@@ -277,6 +300,8 @@ func (s *CLITestSuite) TestHost() {
 
 	s.testResolveAmtState()
 
+	s.testResolveKvmState()
+
 	// Test list hosts with no filters
 	listOutput, err := s.listHost(project, make(map[string]string))
 	s.NoError(err)
@@ -415,6 +440,7 @@ func (s *CLITestSuite) TestHost() {
 		"-   AMT Desired Control Mode:":   "AMT_CONTROL_MODE_CCM",
 		"-   AMT Desired DNS Suffix:":     "example.com",
 		"-   AMT SKU :":                   "12345",
+		"-   KVM Desired State:":          "KVM_STATE_STOP",
 		"-   Current Power State:":        "POWER_STATE_ON",
 		"-   Desired Power State:":        "POWER_STATE_ON",
 		"-   Power Status:":               "Powered on",
@@ -477,6 +503,24 @@ func (s *CLITestSuite) TestHost() {
 	// Test AMT State set
 	HostArgs = map[string]string{
 		"amt-state": "unprovisioned",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	// Test KVM State set to start
+	HostArgs = map[string]string{
+		"kvm-state": "start",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	// Test KVM State set to stop
+	HostArgs = map[string]string{
+		"kvm-state": "stop",
 	}
 
 	// Test set host with host

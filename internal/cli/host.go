@@ -708,7 +708,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	if host.DesiredKvmState != nil {
 		desiredKvmState = fmt.Sprintf("%v", *host.DesiredKvmState)
 	}
-	
+
 	dnsSuffix := "N/A"
 	if host.AmtDnsSuffix != nil {
 		dnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)

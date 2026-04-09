@@ -479,6 +479,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_OFF")),
 							CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
 							DesiredAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
+							CurrentKvmState:             (*infra.KvmState)(stringPtr("KVM_STATE_UNSPECIFIED")),
+							DesiredKvmState:             (*infra.KvmState)(stringPtr("KVM_STATE_UNSPECIFIED")),
 							HostStatus:                  stringPtr("Provisioning"),
 							HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_WORKING")),
 							OnboardingStatus:            stringPtr("Onboarding in progress"),
@@ -603,6 +605,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								CurrentPowerState:  (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
 								CurrentAmtState:    (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
 								DesiredAmtState:    (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+								CurrentKvmState:    (*infra.KvmState)(stringPtr("KVM_STATE_STOP")),
+								DesiredKvmState:    (*infra.KvmState)(stringPtr("KVM_STATE_STOP")),
 								DesiredPowerState:  (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
 								AmtControlMode:     (*infra.AmtControlMode)(stringPtr("AMT_CONTROL_MODE_CCM")),
 								AmtDnsSuffix:       stringPtr("example.com"),
@@ -733,6 +737,8 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							CurrentPowerState:           (*infra.PowerState)(stringPtr("POWER_STATE_UNKNOWN")),
 							CurrentAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
 							DesiredAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
+							CurrentKvmState:             (*infra.KvmState)(stringPtr("KVM_STATE_UNSPECIFIED")),
+							DesiredKvmState:             (*infra.KvmState)(stringPtr("KVM_STATE_UNSPECIFIED")),
 							Timestamps: &infra.Timestamps{
 								CreatedAt: timestampPtr(timestamp),
 								UpdatedAt: timestampPtr(timestamp),
@@ -904,6 +910,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							CurrentState:      (*infra.HostState)(stringPtr("HOST_STATE_ONBOARDED")),
 							CurrentPowerState: (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
 							CurrentAmtState:   (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+							CurrentKvmState:   (*infra.KvmState)(stringPtr("KVM_STATE_STOP")),
 
 							// User-controlled desired states
 							DesiredState: func() *infra.HostState {
@@ -923,6 +930,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									return body.DesiredAmtState
 								}
 								return (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED"))
+							}(),
+							DesiredKvmState: func() *infra.KvmState {
+								if body.DesiredKvmState != nil {
+									return body.DesiredKvmState
+								}
+								return (*infra.KvmState)(stringPtr("KVM_STATE_STOP"))
 							}(),
 
 							// Status fields (system-managed)
