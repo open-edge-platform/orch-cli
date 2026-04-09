@@ -5,14 +5,13 @@
 version: 2
 updates:
   - package-ecosystem: "gomod"
-    directory: "/"
+    directories:
+      - "/"
     schedule:
       interval: daily
     open-pull-requests-limit: 3
     commit-message:
       prefix: "[gomod] "
-    cooldown:
-      default-days: 7
     groups:
       dependencies:
         patterns:
@@ -22,8 +21,11 @@ updates:
       internal-dependencies:
         patterns:
           - "*open-edge-platform*"
+    cooldown:
+      default-days: 7
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directories:
+      - "/"  # this enables searching only in /.github/workflows directory
     schedule:
       interval: daily
     open-pull-requests-limit: 10
