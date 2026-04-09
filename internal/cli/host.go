@@ -199,6 +199,10 @@ orch-cli set host host-1234abcd --project some-project --control-mode admin
 
 --control-mode - Set desired AMT control mode of host to admin|client
 
+#Start KVM
+orch-cli set host host-1234abcd --project some-project --kvm-state start
+--kvm-state - Set desired KVM state of host to start|stop
+
 # Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
 orch-cli set host --project some-project --generate-csv
 
@@ -211,12 +215,13 @@ Name - Name of the machine - mandatory field
 ResourceID - Unique Identifier of host - mandatory field
 DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field or AMT_STATE_PROVISIONED|AMT_STATE_UNPROVISIONED
 ControlMode - Desired AMT control mode of host - admin|client - optional field or AMT_CONTROL_MODE_ADMIN|AMT_CONTROL_MODE_CLIENT
+DesiredKvmState - Desired KVM state of host - start|stop - optional field or KVM_STATE_START|KVM_STATE_STOP
 
-Name,ResourceID,DesiredAmtState,ControlMode
-host-1,host-1234abcd,provisioned
+Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState
+host-1,host-1234abcd,provisioned,
 
-Name,ResourceID,DesiredAmtState,ControlMode
-host-1,host-1234abcd,provisioned,admin
+Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState
+host-1,host-1234abcd,provisioned,admin,start
 
 # --dry-run allows for verification of the validity of the input csv file without updating hosts
 orch-cli set host --project some-project --import-from-csv test.csv --dry-run
@@ -698,6 +703,12 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	if host.AmtControlMode != nil {
 		amtControlMode = fmt.Sprintf("%v", *host.AmtControlMode)
 	}
+
+	desiredKvmState := "N/A"
+	if host.DesiredKvmState != nil {
+		desiredKvmState = fmt.Sprintf("%v", *host.DesiredKvmState)
+	}
+	
 	dnsSuffix := "N/A"
 	if host.AmtDnsSuffix != nil {
 		dnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
@@ -714,7 +725,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		_, _ = fmt.Fprintf(writer, "-\tAMT Desired Control Mode:\t %v\n", amtControlMode)
 		_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
 		_, _ = fmt.Fprintf(writer, "-\tAMT SKU :\t %v\n", amtSKU)
-
+		_, _ = fmt.Fprintf(writer, "-\tKVM Desired State:\t %v\n", desiredKvmState)
 		if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
 			currentPower := "N/A"
 			if host.CurrentPowerState != nil {
@@ -1498,6 +1509,7 @@ func getSetHostCommand() *cobra.Command {
 		cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
 		cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
 		cmd.PersistentFlags().StringP("control-mode", "m", viper.GetString("control-mode"), "Set AMT control mode client|admin")
+		cmd.PersistentFlags().StringP("kvm-state", "k", viper.GetString("kvm-state"), "Set KVM state start|stop")
 	}
 	if isFeatureEnabled(Day2Feature) {
 		cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
@@ -1932,6 +1944,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	updFlag, _ := cmd.Flags().GetString("osupdatepolicy")
 	amtFlag, _ := cmd.Flags().GetString("amt-state")
 	amtModeFlag, _ := cmd.Flags().GetString("control-mode")
+	kvmFlag, _ := cmd.Flags().GetString("kvm-state")
 
 	// Bulk CSV generation
 	if generateCSV != "" {
@@ -1976,12 +1989,14 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		defer f.Close()
-		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode")
+		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState")
 		for _, h := range hosts {
 			name := h.Name
 			resourceID := ""
 			desiredAmtState := ""
 			controlMode := ""
+			desiredKvmState := ""
+
 			if h.ResourceId != nil {
 				resourceID = *h.ResourceId
 			}
@@ -1991,7 +2006,10 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			if h.AmtControlMode != nil && *h.AmtControlMode != infra.AMTCONTROLMODEUNSPECIFIED {
 				controlMode = string(*h.AmtControlMode)
 			}
-			fmt.Fprintf(f, "%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode)
+			if h.DesiredKvmState != nil {
+				desiredKvmState = string(*h.DesiredKvmState)
+			}
+			fmt.Fprintf(f, "%s,%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode, desiredKvmState)
 		}
 		fmt.Printf("CSV template generated: %s\n", generateCSV)
 		return nil
@@ -2021,8 +2039,12 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			name := strings.TrimSpace(fields[0])
 			resourceID := strings.TrimSpace(fields[1])
 			desiredAmtState := strings.TrimSpace(fields[2])
+			desiredKvmState := ""
 			if len(fields) >= 4 {
 				desiredControlMode = strings.TrimSpace(fields[3])
+			}
+			if len(fields) >= 5 {
+				desiredKvmState = strings.TrimSpace(fields[4])
 			}
 
 			// Validate desiredAmtState
@@ -2040,6 +2062,15 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				}
 				amtMode = &mode
 			}
+			var kvmState *infra.KvmState
+			if desiredKvmState != "" {
+				ks, err := resolveKvmState(desiredKvmState)
+				if err != nil {
+					fmt.Printf("Invalid KVM state for host %s: %s\n", name, desiredKvmState)
+					continue
+				}
+				kvmState = &ks
+			}
 			// Patch host
 			ctx, hostClient, projectName, err := InfraFactory(cmd)
 			if err != nil {
@@ -2049,6 +2080,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 				DesiredAmtState: &amtState,
 				AmtControlMode:  amtMode,
+				DesiredKvmState: kvmState,
 				Name:            name,
 			}, auth.AddAuthHeader)
 			if err != nil {
@@ -2059,7 +2091,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				fmt.Printf("Failed to patch host %s: %v\n", name, err)
 				continue
 			}
-			fmt.Printf("Host %s (%s) AMT state updated to %s\n", name, resourceID, desiredAmtState)
+			fmt.Printf("Host %s (%s) AMT state updated to %s, KVM state updated to %s\n", name, resourceID, desiredAmtState, desiredKvmState)
 		}
 		if err := scanner.Err(); err != nil {
 			return err
@@ -2072,7 +2104,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 	hostID := args[0]
 
-	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" && (amtFlag == "" || strings.HasPrefix(amtFlag, "--")) && (amtModeFlag == "" || strings.HasPrefix(amtModeFlag, "--")) {
+	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" && (amtFlag == "" || strings.HasPrefix(amtFlag, "--")) && (amtModeFlag == "" || strings.HasPrefix(amtModeFlag, "--")) && (kvmFlag == "" || strings.HasPrefix(kvmFlag, "--")) {
 		return errors.New("a flag must be provided with the set host command and value cannot be \"\"")
 	}
 
@@ -2081,6 +2113,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	var updatePolicy *string
 	var amtState *infra.AmtState
 	var amtMode *infra.AmtControlMode
+	var kvmState *infra.KvmState
 
 	if policyFlag != "" {
 		pol, err := resolvePowerPolicy(policyFlag)
@@ -2116,6 +2149,14 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		amtMode = &mode
+	}
+
+	if kvmFlag != "" {
+		kvm, err := resolveKvmState(kvmFlag)
+		if err != nil {
+			return err
+		}
+		kvmState = &kvm
 	}
 
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
@@ -2161,10 +2202,11 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if amtState != nil || amtMode != nil {
+	if amtState != nil || amtMode != nil || kvmState != nil {
 		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			DesiredAmtState: amtState,
 			AmtControlMode:  amtMode,
+			DesiredKvmState: kvmState,
 			Name:            host.Name,
 		}, auth.AddAuthHeader)
 		if err != nil {
@@ -2887,5 +2929,16 @@ func resolveAmtControlMode(mode string) (infra.AmtControlMode, error) {
 		return infra.AMTCONTROLMODECCM, nil
 	default:
 		return "", errors.New("incorrect AMT control mode provided with --control-mode flag use one of admin|client")
+	}
+}
+
+func resolveKvmState(kvm string) (infra.KvmState, error) {
+	switch kvm {
+	case "start", "KVM_STATE_START":
+		return infra.KVMSTATESTART, nil
+	case "stop", "KVM_STATE_STOP":
+		return infra.KVMSTATESTOP, nil
+	default:
+		return "", errors.New("incorrect KVM state provided with --kvm-state flag use one of start|stop")
 	}
 }

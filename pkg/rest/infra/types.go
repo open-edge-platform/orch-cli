@@ -29,6 +29,15 @@ const (
 	AMTSTATEUNSPECIFIED   AmtState = "AMT_STATE_UNSPECIFIED"
 )
 
+// Defines values for KvmState.
+const (
+	KVMSTATEAWAITINGCONSENT KvmState = "KVM_STATE_AWAITING_CONSENT"
+	KVMSTATEERROR           KvmState = "KVM_STATE_ERROR"
+	KVMSTATESTART           KvmState = "KVM_STATE_START"
+	KVMSTATESTOP            KvmState = "KVM_STATE_STOP"
+	KVMSTATEUNSPECIFIED     KvmState = "KVM_STATE_UNSPECIFIED"
+)
+
 // Defines values for BaremetalControllerKind.
 const (
 	BAREMETALCONTROLLERKINDIPMI        BaremetalControllerKind = "BAREMETAL_CONTROLLER_KIND_IPMI"
@@ -371,6 +380,9 @@ type HostResource struct {
 	// CurrentAmtState The state of the AMT (Active Management Technology) component.
 	CurrentAmtState *AmtState `json:"currentAmtState,omitempty"`
 
+	// CurrentKvmState The current KVM state of the host.
+	CurrentKvmState *KvmState `json:"currentKvmState,omitempty"`
+
 	// CurrentPowerState The host power state.
 	CurrentPowerState *PowerState `json:"currentPowerState,omitempty"`
 
@@ -379,6 +391,9 @@ type HostResource struct {
 
 	// DesiredAmtState The state of the AMT (Active Management Technology) component.
 	DesiredAmtState *AmtState `json:"desiredAmtState,omitempty"`
+
+	// DesiredKvmState The desired KVM state of the host.
+	DesiredKvmState *KvmState `json:"desiredKvmState,omitempty"`
 
 	// DesiredPowerState The host power state.
 	DesiredPowerState *PowerState `json:"desiredPowerState,omitempty"`
@@ -490,6 +505,9 @@ type HostResource struct {
 
 // HostState States of the host.
 type HostState string
+
+// KvmState The KVM state of the host.
+type KvmState string
 
 // HostgpuResource The set of available host GPU cards.
 type HostgpuResource struct {
