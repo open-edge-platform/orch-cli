@@ -3074,8 +3074,7 @@ func pollForRemoteSessionConsent(ctx context.Context, hostClient infra.ClientWit
 	fmt.Printf("Waiting for %s session to reach consent state...\n", strings.ToUpper(sessionType))
 
 	var consentSubmitted bool
-	var desiredStateReached bool
-	
+
 	for i := 0; i < maxPollAttempts; i++ {
 		select {
 		case <-ctx.Done():
@@ -3096,14 +3095,15 @@ func pollForRemoteSessionConsent(ctx context.Context, hostClient infra.ClientWit
 			// Check current state based on session type
 			var currentState string
 			var sessionURL *string
-			if sessionType == "kvm" {
+			switch sessionType {
+			case "kvm":
 				if hostStatus.CurrentKvmState != nil {
 					currentState = string(*hostStatus.CurrentKvmState)
 				}
 				if hostStatus.KvmSessionUrl != nil {
 					sessionURL = hostStatus.KvmSessionUrl
 				}
-			} else if sessionType == "sol" {
+			case "sol":
 				if hostStatus.CurrentSolState != nil {
 					currentState = string(*hostStatus.CurrentSolState)
 				}
@@ -3158,14 +3158,14 @@ func pollForRemoteSessionConsent(ctx context.Context, hostClient infra.ClientWit
 
 				fmt.Println("Consent code submitted successfully.")
 				consentSubmitted = true
-				
+
 				// Continue polling for the session to reach desired state
 				fmt.Printf("Waiting for %s session to start...\n", strings.ToUpper(sessionType))
 				continue
 			}
 
 			// After consent is submitted, poll until session reaches desired state and URL is available
-			if consentSubmitted && !desiredStateReached {
+			if consentSubmitted {
 				// Determine the expected state based on the desired state
 				var expectedState string
 				if sessionType == "kvm" && kvmState != nil {
@@ -3176,8 +3176,6 @@ func pollForRemoteSessionConsent(ctx context.Context, hostClient infra.ClientWit
 
 				// Check if we've reached the desired state
 				if currentState == expectedState {
-					desiredStateReached = true
-					
 					// For START operations, wait for session URL
 					if expectedState == string(infra.KVMSTATESTART) || expectedState == string(infra.SOLSTATESTART) {
 						if sessionURL != nil && *sessionURL != "" {
@@ -3187,13 +3185,11 @@ func pollForRemoteSessionConsent(ctx context.Context, hostClient infra.ClientWit
 						}
 						// State is correct but URL not yet available, continue polling
 						fmt.Printf(".")
-						desiredStateReached = false
 						continue
-					} else {
-						// For STOP operations, no URL is expected
-						fmt.Printf("\n%s session stopped successfully.\n", strings.ToUpper(sessionType))
-						return nil
 					}
+					// For STOP operations, no URL is expected
+					fmt.Printf("\n%s session stopped successfully.\n", strings.ToUpper(sessionType))
+					return nil
 				}
 				// Continue polling...
 				fmt.Printf(".")
