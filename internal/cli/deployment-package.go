@@ -27,18 +27,32 @@ Version: {{.Version}}
 Kind: {{.Kind}}
 Is Deployed: {{.IsDeployed}}
 Applications:
-{{- range .ApplicationReferences}}
+	{{- range .ApplicationReferences}}
   {{.Name}}:{{.Version}}
-{{end -}}
-Dependencies:
-{{- range .ApplicationDependencies}}
-  {{.Name}} {{.Requires}}
-{{end -}}
+	{{- end}}
+Application Dependencies:
+	{{- range .ApplicationDependencies}}
+	{{.Name}}:{{.Requires}}
+	{{- end}}
 Profiles:
-{{- range .Profiles}}
+	{{- range .Profiles}}
   {{.Name}}
-{{end -}}
+	{{- end}}
 Default Profile: {{.DefaultProfileName}}
+Default Namespaces:
+	{{- range $app, $ns := .DefaultNamespaces}}
+  {{$app}}:{{$ns}}
+	{{- end}}
+Extensions:
+	{{- range .Extensions}}
+  {{.Name}}:{{.Version}}
+	{{- end}}
+Artifacts:
+	{{- range .Artifacts}}
+  {{.Name}} ({{.Type}})
+	{{- end}}
+Create Time: {{.CreateTime}}
+Update Time: {{.UpdateTime}}
 `
 )
 
