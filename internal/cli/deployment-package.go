@@ -4,7 +4,6 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"mime"
@@ -16,8 +15,6 @@ import (
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/format"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
-	catutilapi "github.com/open-edge-platform/cli/pkg/rest/catalogutilities"
-	"github.com/open-edge-platform/orch-library/go/pkg/loader"
 	"github.com/spf13/cobra"
 )
 
@@ -47,18 +44,20 @@ Default Profile: {{.DefaultProfileName}}
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment-package {<name> <version>|<file-path>} [flags]",
+		Use:     "deployment-package <name> <version> [flags]",
 		Aliases: deploymentPackageAliases,
 		Short:   "Create a deployment package",
-		Args:    cobra.RangeArgs(1, 2),
-		Example: "orch-cli create deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1\norch-cli create deployment-package my-package.yaml --project sample-project",
+		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli create deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --default-namespace app1=my-namespace --default-profile-name my-profile",
 		RunE:    runCreateDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
-	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
+	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references (required)")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
-	cmd.Flags().Bool("visible", true, "mark deployment package as visible or not")
+	cmd.Flags().StringToString("default-namespace", map[string]string{},
+		"default namespaces for applications in format '<app-name>=<namespace>'")
+	cmd.Flags().String("default-profile-name", "", "default profile name for the deployment package (default: deployment-profile-1)")
 	cmd.Flags().String("kind", "normal", "deployment package kind: normal, addon, extension")
 	return cmd
 }
@@ -91,11 +90,11 @@ func getGetDeploymentPackageCommand() *cobra.Command {
 
 func getSetDeploymentPackageCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment-package {<name> <version>|<file-path>} [flags]",
+		Use:     "deployment-package <name> <version> [flags]",
 		Aliases: deploymentPackageAliases,
 		Short:   "Update a deployment package",
-		Args:    cobra.RangeArgs(1, 2),
-		Example: "orch-cli set deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --application-reference app3:1.1.1\norch-cli set deployment-package my-package.yaml --project sample-project",
+		Args:    cobra.ExactArgs(2),
+		Example: "orch-cli set deployment-package my-package 1.0.0 --project sample-project --application-reference app1:2.1.0 --application-reference app2:3.17.1 --application-reference app3:1.1.1",
 		RunE:    runSetDeploymentPackageCommand,
 	}
 	addEntityFlags(cmd, "deployment-package")
@@ -105,7 +104,8 @@ func getSetDeploymentPackageCommand() *cobra.Command {
 	cmd.Flags().StringSlice("application-reference", []string{}, "<name>:<version> constituent application references")
 	cmd.Flags().StringToString("application-dependency", map[string]string{},
 		"application dependencies expresssed as <app-name>=<required-app-name>,<required-app-name,...")
-	cmd.Flags().Bool("visible", true, "mark deployment package as visible or not")
+	cmd.Flags().StringToString("default-namespace", map[string]string{},
+		"default namespaces for applications in format '<app-name>=<namespace>'")
 	cmd.Flags().Bool("deployed", false, "mark deployment package as deployed or not")
 	return cmd
 }
@@ -173,16 +173,6 @@ func parseApplicationReference(refSpec string) (*catapi.CatalogV3ApplicationRefe
 }
 
 func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	// Check if a file path was provided (single argument ending with .yaml or .yml)
-	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
-		return uploadResourceFile(cmd, args[0])
-	}
-
-	// Validate we have name and version
-	if len(args) != 2 {
-		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
-	}
-
 	applicationName := args[0]
 	applicationVersion := args[1]
 
@@ -191,10 +181,10 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	// Validate required flags when not using YAML file
+	// Validate required flags
 	appRefs, _ := cmd.Flags().GetStringSlice("application-reference")
 	if len(appRefs) == 0 {
-		return fmt.Errorf("--application-reference is required when not using a YAML file (at least one application must be referenced)")
+		return fmt.Errorf("--application-reference is required (at least one application must be referenced)")
 	}
 
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
@@ -208,6 +198,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 
 	// Collect application references and validate they exist
 	applicationReferences := make([]catapi.CatalogV3ApplicationReference, 0)
+	appDefaultProfiles := make(map[string]string)
 	for _, refSpec := range appRefs {
 		ref, err := parseApplicationReference(refSpec)
 		if err != nil {
@@ -221,6 +212,13 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		}
 		if appResp.StatusCode() != 200 {
 			return fmt.Errorf("application %s:%s does not exist. Please create the application before referencing it in the deployment package", ref.Name, ref.Version)
+		}
+
+		// Store the application's default profile name (fallback to "default" if not set)
+		if appResp.JSON200 != nil && appResp.JSON200.Application.DefaultProfileName != nil {
+			appDefaultProfiles[ref.Name] = *appResp.JSON200.Application.DefaultProfileName
+		} else {
+			appDefaultProfiles[ref.Name] = "default"
 		}
 
 		applicationReferences = append(applicationReferences, *ref)
@@ -237,8 +235,27 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		}
 	}
 
+	// Collect default namespaces
+	defaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
+	var defaultNamespacesPtr *map[string]string
+	if len(defaultNamespaces) > 0 {
+		defaultNamespacesPtr = &defaultNamespaces
+	}
+
+	// Set up default profile name - use "deployment-profile-1" to match UI behavior
+	defaultProfileName, _ := cmd.Flags().GetString("default-profile-name")
+	if defaultProfileName == "" {
+		defaultProfileName = "deployment-profile-1"
+	}
+
+	// Create an initial deployment profile to match UI behavior
+	initialProfile := catapi.CatalogV3DeploymentProfile{
+		Name:                defaultProfileName,
+		ApplicationProfiles: appDefaultProfiles,
+	}
+	initialProfiles := []catapi.CatalogV3DeploymentProfile{initialProfile}
+
 	defaultKind := catapi.KINDNORMAL
-	defaultVisible := true
 
 	resp, err := catalogClient.CatalogServiceCreateDeploymentPackageWithResponse(ctx, projectName,
 		catapi.CatalogServiceCreateDeploymentPackageJSONRequestBody{
@@ -249,12 +266,18 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 			Description:             &description,
 			ApplicationReferences:   applicationReferences,
 			ApplicationDependencies: &applicationDependencies,
-			IsVisible:               getBoolFlagOrDefault(cmd, "visible", &defaultVisible),
+			DefaultNamespaces:       defaultNamespacesPtr,
+			DefaultProfileName:      &defaultProfileName,
+			Profiles:                &initialProfiles,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating deployment package %s", applicationName))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating deployment package %s", applicationName)); err != nil {
+		return err
+	}
+	fmt.Printf("Deployment package '%s:%s' created successfully\n", applicationName, applicationVersion)
+	return nil
 }
 
 func deploymentPackageKind2String(kind *catapi.CatalogV3Kind) string {
@@ -375,16 +398,6 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	// Check if a file path was provided (single argument ending with .yaml or .yml)
-	if len(args) == 1 && (strings.HasSuffix(args[0], ".yaml") || strings.HasSuffix(args[0], ".yml")) {
-		return uploadResourceFile(cmd, args[0])
-	}
-
-	// Validate we have name and version
-	if len(args) != 2 {
-		return fmt.Errorf("requires either a YAML file path or <name> <version> arguments")
-	}
-
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
@@ -441,6 +454,19 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Collect default namespaces; merge with existing if any
+	defaultNamespaces := deploymentPackage.DefaultNamespaces
+	newDefaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
+	if len(newDefaultNamespaces) > 0 {
+		if defaultNamespaces == nil {
+			defaultNamespaces = &newDefaultNamespaces
+		} else {
+			for k, v := range newDefaultNamespaces {
+				(*defaultNamespaces)[k] = v
+			}
+		}
+	}
+
 	resp, _ := catalogClient.CatalogServiceUpdateDeploymentPackageWithResponse(ctx, projectName, name, version,
 		catapi.CatalogServiceUpdateDeploymentPackageJSONRequestBody{
 			Name:                    name,
@@ -450,15 +476,19 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			Description:             getFlagOrDefault(cmd, "description", deploymentPackage.Description),
 			DefaultProfileName:      getFlagOrDefault(cmd, "default-profile", deploymentPackage.DefaultProfileName),
 			IsDeployed:              getBoolFlagOrDefault(cmd, "deployed", deploymentPackage.IsDeployed),
-			IsVisible:               getBoolFlagOrDefault(cmd, "visible", deploymentPackage.IsVisible),
 			Profiles:                deploymentPackage.Profiles,
 			ApplicationReferences:   applicationReferences,
 			ApplicationDependencies: &applicationDependencies,
+			DefaultNamespaces:       defaultNamespaces,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating deployment package %s:%s", name, version))
+	if err := checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while updating deployment package %s:%s", name, version)); err != nil {
+		return err
+	}
+	fmt.Printf("Deployment package '%s:%s' updated successfully\n", name, version)
+	return nil
 }
 
 func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
@@ -484,7 +514,11 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 		if err != nil {
 			return processError(err)
 		}
-		return checkResponse(deleteResp.HTTPResponse, deleteResp.Body, fmt.Sprintf("error deleting deployment package %s:%s", name, version))
+		if err := checkResponse(deleteResp.HTTPResponse, deleteResp.Body, fmt.Sprintf("error deleting deployment package %s:%s", name, version)); err != nil {
+			return err
+		}
+		fmt.Printf("Deployment package '%s:%s' deleted successfully\n", name, version)
+		return nil
 	}
 
 	// Otherwise delete all versions
@@ -511,27 +545,18 @@ func runDeleteDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 			return err
 		}
 	}
+	fmt.Printf("All versions of deployment package '%s' deleted successfully\n", name)
 	return nil
 }
 
 func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
-	ctx, _, projectName, err := CatalogFactory(cmd)
+	ctx, utilClient, projectName, err := CatalogUtilitiesFactory(cmd)
 	if err != nil {
 		return err
 	}
 
 	name := args[0]
 	version := args[1]
-
-	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
-	if err != nil {
-		return processError(err)
-	}
-
-	utilClient, err := catutilapi.NewClientWithResponses(serverAddress)
-	if err != nil {
-		return processError(err)
-	}
 
 	resp, err := utilClient.CatalogServiceDownloadDeploymentPackageWithResponse(ctx, projectName, name, version, auth.AddAuthHeader)
 	if err != nil {
@@ -586,32 +611,4 @@ func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	fmt.Printf("Deployment package exported to %s\n", filename)
 
 	return nil
-}
-
-// uploadResourceFile uploads a YAML file containing resource definitions
-func uploadResourceFile(cmd *cobra.Command, filePath string) error {
-	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
-	if err != nil {
-		return err
-	}
-
-	projectUUID, err := getProjectName(cmd)
-	if err != nil {
-		return err
-	}
-
-	ctx := cmd.Context()
-	if ctx == nil {
-		ctx = context.Background()
-	}
-
-	// Get the access token
-	accessToken, err := auth.GetAccessToken(ctx)
-	if err != nil {
-		// Log warning but continue with empty token
-		accessToken = ""
-	}
-
-	loader := loader.NewLoader(serverAddress, projectUUID)
-	return loader.LoadResources(ctx, accessToken, []string{filePath})
 }

@@ -48,7 +48,7 @@ orch-cli set schedules repeatedsche-abcd1234 --timezone GMT --maintenance-type o
 orch-cli set schedules singlesche-abcd1234 --timezone GMT --maintenance-type osupdate --start-time "2026-02-02 10:10" --end-time "2026-02-02 10:10" 
 `
 
-var ScheduleHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Target", "Type")
+var ScheduleHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Target", "Resource ID")
 
 const SINGLE = 0
 const REPEATED = 1
@@ -62,50 +62,54 @@ func printSchedules(writer io.Writer, singleSchedules []infra.SingleScheduleReso
 	target := "Unspecified"
 
 	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\n", "Name", "Target", "Resource ID", "Type")
+		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\n", "Name", "Target", "Resource ID", "Status", "Type")
 	}
 
 	for _, schedule := range singleSchedules {
 
-		if schedule.TargetHostId != nil && *schedule.TargetHostId != "" {
+		switch {
+		case schedule.TargetHostId != nil && *schedule.TargetHostId != "":
 			target = *schedule.TargetHostId
-		} else if schedule.TargetRegionId != nil && *schedule.TargetRegionId != "" {
+		case schedule.TargetRegionId != nil && *schedule.TargetRegionId != "":
 			target = *schedule.TargetRegionId
-		} else if schedule.TargetSiteId != nil && *schedule.TargetSiteId != "" {
+		case schedule.TargetSiteId != nil && *schedule.TargetSiteId != "":
 			target = *schedule.TargetSiteId
 		}
-		if schedule.ScheduleStatus == infra.SCHEDULESTATUSMAINTENANCE {
+		switch schedule.ScheduleStatus {
+		case infra.SCHEDULESTATUSMAINTENANCE:
 			status = "Maintenance"
-		} else if schedule.ScheduleStatus == infra.SCHEDULESTATUSOSUPDATE {
+		case infra.SCHEDULESTATUSOSUPDATE:
 			status = "OS Update"
 		}
 		maintenanceType = "single"
 
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, target, status)
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId)
 		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId, maintenanceType)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId, status, maintenanceType)
 		}
 	}
 	for _, schedule := range repeatedSchedules {
-		if schedule.TargetHostId != nil && *schedule.TargetHostId != "" {
+		switch {
+		case schedule.TargetHostId != nil && *schedule.TargetHostId != "":
 			target = *schedule.TargetHostId
-		} else if schedule.TargetRegionId != nil && *schedule.TargetRegionId != "" {
+		case schedule.TargetRegionId != nil && *schedule.TargetRegionId != "":
 			target = *schedule.TargetRegionId
-		} else if schedule.TargetSiteId != nil && *schedule.TargetSiteId != "" {
+		case schedule.TargetSiteId != nil && *schedule.TargetSiteId != "":
 			target = *schedule.TargetSiteId
 		}
-		if schedule.ScheduleStatus == infra.SCHEDULESTATUSMAINTENANCE {
+		switch schedule.ScheduleStatus {
+		case infra.SCHEDULESTATUSMAINTENANCE:
 			status = "Maintenance"
-		} else if schedule.ScheduleStatus == infra.SCHEDULESTATUSOSUPDATE {
+		case infra.SCHEDULESTATUSOSUPDATE:
 			status = "OS Update"
 		}
 		maintenanceType = "repeated"
 
 		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, target, status)
+			fmt.Fprintf(writer, "%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId)
 		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId, maintenanceType)
+			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", *schedule.Name, target, *schedule.ResourceId, status, maintenanceType)
 		}
 	}
 }
@@ -236,11 +240,12 @@ func parseTargetResource(target string) (hostname, region, site *string, err err
 
 	targetType := parts[0]
 
-	if targetType == "host" {
+	switch targetType {
+	case "host":
 		return &target, nil, nil, nil
-	} else if targetType == "region" {
+	case "region":
 		return nil, &target, nil, nil
-	} else if targetType == "site" {
+	case "site":
 		return nil, nil, &target, nil
 	}
 	return nil, nil, nil, fmt.Errorf("invalid target type '%s', must be one of: host, region, site", targetType)
@@ -1020,6 +1025,7 @@ func runSetScheduleCommand(cmd *cobra.Command, args []string) error {
 		}
 
 		resp, err := scheduleClient.ScheduleServicePatchRepeatedScheduleWithResponse(ctx, projectName, id,
+			&infra.ScheduleServicePatchRepeatedScheduleParams{},
 			infra.ScheduleServicePatchRepeatedScheduleJSONRequestBody{
 				Name:            &name,
 				ScheduleStatus:  infra.ScheduleStatus(maintenanceType),
@@ -1078,6 +1084,7 @@ func runSetScheduleCommand(cmd *cobra.Command, args []string) error {
 		}
 
 		resp, err := scheduleClient.ScheduleServicePatchSingleScheduleWithResponse(ctx, projectName, id,
+			&infra.ScheduleServicePatchSingleScheduleParams{},
 			infra.ScheduleServicePatchSingleScheduleJSONRequestBody{
 				Name:           &name,
 				ScheduleStatus: infra.ScheduleStatus(maintenanceType),

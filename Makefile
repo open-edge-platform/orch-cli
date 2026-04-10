@@ -31,7 +31,7 @@ all:  build lint test
 rel_os    = $(word 2, $(subst -, ,$(notdir $@)))
 rel_arch  = $(word 3, $(subst -, ,$(notdir $@)))
 
-linux_opts = -trimpath -gcflags="all=-spectre=all -N -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w"
+linux_opts = -trimpath -gcflags="$(PKG)/...=-spectre=all -N -l" -asmflags="$(PKG)/...=-spectre=all" -ldflags="all=-s -w"
 
 $(RELEASE_BINS):
 	export GOOS=$(rel_os) ;\
@@ -53,7 +53,7 @@ mod-update:
 build: mod-update
 	@# Help: Runs build stage
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
-	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="all=-spectre=all -l" -asmflags="all=-spectre=all" -ldflags="all=-s -w -extldflags=-static -X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
+	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="$(PKG)/...=-spectre=all -l" -asmflags="$(PKG)/...=-spectre=all" -ldflags="all=-s -w -extldflags=-static -X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
 
 install: build
 	@# Help: Installs client tool
@@ -72,7 +72,7 @@ mdlint: ## lint all markdown README.md files
 
 test: mod-update
 	@# Help: Runs test stage
-	@trap 'rm -rf internal/cli/preflight_error* internal/cli/import_error*' EXIT; \
+	@trap 'rm -rf internal/cli/preflight_error* internal/cli/import_error* internal/cli/deployment-pkg-1.0.0.tar.gz' EXIT; \
 	go test -race -gcflags=-l `go list $(PKG)/cmd/... $(PKG)/internal/... $(PKG)/pkg/...`
 
 fuzz:
@@ -98,7 +98,7 @@ fetch-cluster-openapi:
 
 fetch-infra-openapi:
 	@# Help: Fetch the Infra Manager OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-core/main/apiv2/api/openapi/openapi.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 
 fetch-rps-openapi:
 	@# Help: Fetch the OpenDMT RPS OpenAPI spec

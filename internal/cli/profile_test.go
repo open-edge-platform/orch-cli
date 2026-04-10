@@ -158,9 +158,10 @@ func FuzzProfile(f *testing.F) {
 		defer testSuite.TearDownTest()
 
 		createArgs := map[string]string{
-			"chart-values": valueFile,
-			"display-name": displayName,
-			"description":  description,
+			"chart-values":       valueFile,
+			"display-name":       displayName,
+			"description":        description,
+			"parameter-template": "name=type:name:value",
 		}
 
 		// Create profile

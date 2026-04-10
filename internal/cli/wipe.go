@@ -36,7 +36,7 @@ func runWipeProjectCommand(cmd *cobra.Command, _ []string) error {
 
 	yes, _ := cmd.Flags().GetBool("yes")
 	if !yes {
-		return fmt.Errorf("You have to say yes")
+		return fmt.Errorf("you have to say yes")
 	}
 
 	errors := w.wipe(ctx, projectName)

@@ -31,7 +31,7 @@ func TestCheckStatus(t *testing.T) {
 			statusMessage:   "un-authenticated",
 			message:         "test message",
 			expectedProceed: false,
-			expectedErr:     "test message: un-authenticated. Unauthenticated. Please login",
+			expectedErr:     "test message: un-authenticated. Unauthenticated. Please login with a user that has the required permissions",
 		},
 		{
 			statusCode:      200,
@@ -102,7 +102,7 @@ func TestProcessResponse(t *testing.T) {
 			verbose:         true,
 			header:          "test-header",
 			message:         "test-message",
-			expectedError:   "Unauthorized. Please login",
+			expectedError:   "Unauthorized. Please login with a user that has the required permissions",
 			expectedProceed: false,
 		},
 		{
@@ -165,6 +165,16 @@ func TestGetServiceContexts(t *testing.T) {
 	// Deployment
 	//nolint:dogsled
 	_, _, _, err = getDeploymentServiceContext(cmd)
+	assert.NoError(t, err)
+
+	// Tenancy
+	//nolint:dogsled
+	_, _, err = getTenancyServiceContext(cmd)
+	assert.NoError(t, err)
+
+	// Tenancy
+	//nolint:dogsled
+	_, _, err = getOrchestratorServiceContext(cmd)
 	assert.NoError(t, err)
 }
 

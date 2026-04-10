@@ -19,7 +19,7 @@ func (s *CLITestSuite) TestImport() {
 	}
 	//TODO import needs refactoring to be more testable with mock
 	_, err := s.importHelmChart(project, "oci://url", IArgs)
-	s.Error(err)
+	s.NoError(err)
 
 }
 

@@ -79,10 +79,7 @@ func (s *CLITestSuite) testResolvePower() {
 	}{
 		{"on", infra.POWERSTATEON, false},
 		{"off", infra.POWERSTATEOFF, false},
-		{"cycle", infra.POWERSTATEPOWERCYCLE, false},
-		{"hibernate", infra.POWERSTATEHIBERNATE, false},
 		{"reset", infra.POWERSTATERESET, false},
-		{"sleep", infra.POWERSTATESLEEP, false},
 		{"invalid", "", true},
 		{"", "", true},
 	}
@@ -375,7 +372,7 @@ func (s *CLITestSuite) TestHost() {
 	expectedOutput := map[string]string{
 		"Detailed Host Information":       "",
 		"Host Info:":                      "",
-		"-   Host Resurce ID:":            "host-abc12345",
+		"-   Host Resource ID:":           "host-abc12345",
 		"-   Name:":                       "edge-host-001",
 		"-   OS Profile:":                 "Edge Microvisor Toolkit 3.0.20250504",
 		"-   Host Status Details:":        "INSTANCE_STATUS_RUNNING",
@@ -393,7 +390,7 @@ func (s *CLITestSuite) TestHost() {
 		"-   BIOS Vendor:":                "Lenovo",
 		"-   Product Name:":               "ThinkSystem SR650",
 		"Customizations:":                 "",
-		"-   Custom configs:":             "nginx-config",
+		"-   Custom configs:":             "haproxy-config",
 		"CPU Info:":                       "",
 		"Model":                           "Cores   |Architecture   |Threads   |Sockets",
 		"Intel(R) Xeon(R) CPU E5-2670 v3": "8       |x86_64         |32        |2",
@@ -413,15 +410,26 @@ func (s *CLITestSuite) TestHost() {
 		"Name":                            "Links State   |MTU      |MAC Address         |PCI Identifier   |SRIOV   |SRIOV VF Total   |SRIOV VF Number   |BMC Interface",
 		"eth0":                            "UNSPECIFIED   |1500     |30:d0:42:d9:02:7c   |0000:19:00.0     |true    |8                |4                 |true",
 		"AMT Info:":                       "",
-		"-   AMT Status:":                 "AMT_STATE_PROVISIONED",
-		"-   Current Power Status:":       "POWER_STATE_ON",
-		"-   Desired Power Status:":       "POWER_STATE_ON",
-		"-   Power Command Policy :":      "POWER_COMMAND_POLICY_ALWAYS_ON",
-		"-   PowerOn Time :":              "2025-12-03T08:25:13Z",
-		"-   Desired AMT State :":         "AMT_STATE_PROVISIONED",
+		"-   AMT State:":                  "AMT_STATE_PROVISIONED",
+		"-   AMT Desired State:":          "AMT_STATE_PROVISIONED",
+		"-   AMT Desired Control Mode:":   "AMT_CONTROL_MODE_CCM",
+		"-   AMT Desired DNS Suffix:":     "example.com",
+		"-   AMT SKU :":                   "12345",
+		"-   Current Power State:":        "POWER_STATE_ON",
+		"-   Desired Power State:":        "POWER_STATE_ON",
+		"-   Power Status:":               "Powered on",
+		"-   PowerOn Time:":               "2025-12-03T08:25:13Z",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
+	_, amtInfoPresent := parsedOutput["AMT Info:"]
+	s.True(amtInfoPresent, "AMT section should be shown when AMT SKU is specified")
+	s.Equal("12345", parsedOutput["-   AMT SKU :"], "AMT SKU should match expected value")
+
+	// Test get host output with missing/unspecified AMT SKU should not print AMT section
+	getOutputNoAMT, err := s.getHost(project, "host-abcd1002", make(map[string]string))
+	s.NoError(err)
+	s.False(strings.Contains(getOutputNoAMT, "AMT Info:"), "AMT section should be hidden when AMT SKU is missing or unspecified")
 
 	// Test get host with invalid project
 	_, err = s.getHost("invalid-project", hostID, make(map[string]string))

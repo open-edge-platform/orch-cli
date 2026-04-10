@@ -6,21 +6,20 @@ package cli
 import (
 	"bytes"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/open-edge-platform/app-orch-catalog/pkg/restClient"
-	restproxy "github.com/open-edge-platform/app-orch-catalog/pkg/restProxy"
 	authmock "github.com/open-edge-platform/cli/internal/cli/mocks/auth"
 	catalogmock "github.com/open-edge-platform/cli/internal/cli/mocks/catalog"
+	catalogutilitiesmock "github.com/open-edge-platform/cli/internal/cli/mocks/catalogutilities"
 	clustermock "github.com/open-edge-platform/cli/internal/cli/mocks/cluster"
 	deploymentmock "github.com/open-edge-platform/cli/internal/cli/mocks/deployment"
 	inframock "github.com/open-edge-platform/cli/internal/cli/mocks/infra"
+	keycloakmock "github.com/open-edge-platform/cli/internal/cli/mocks/keycloak"
+	orchutilsmock "github.com/open-edge-platform/cli/internal/cli/mocks/orchutilities"
 	rpsmock "github.com/open-edge-platform/cli/internal/cli/mocks/rps"
 	tenancymock "github.com/open-edge-platform/cli/internal/cli/mocks/tenancy"
 
@@ -35,6 +34,7 @@ const (
 	simpleOutput   = false
 	timestampRegex = `^[0-9-]*T[0-9:]*$`
 	kcTest         = "http://unit-test-keycloak/realms/master"
+	apiTest        = "http://unit-test-api"
 )
 
 type commandArgs map[string]string
@@ -44,8 +44,6 @@ type linesCommandOutput []string
 
 type CLITestSuite struct {
 	suite.Suite
-	proxy      restproxy.MockRestProxy
-	testServer *httptest.Server
 }
 
 func (s *CLITestSuite) SetupSuite() {
@@ -64,44 +62,27 @@ func (s *CLITestSuite) SetupSuite() {
 	auth.KeycloakFactory = authmock.CreateKeycloakMock(&s.Suite, mctrl)
 
 	CatalogFactory = catalogmock.CreateCatalogMock(mctrl)
+	CatalogUtilitiesFactory = catalogutilitiesmock.CreateCatalogUtilitiesMock(mctrl)
 	InfraFactory = inframock.CreateInfraMock(mctrl, timestamp)
 	ClusterFactory = clustermock.CreateClusterMock(mctrl)
 	RpsFactory = rpsmock.CreateRpsMock(mctrl)
 	DeploymentFactory = deploymentmock.CreateDeploymentMock(mctrl)
 	TenancyFactory = tenancymock.CreateTenancyMock(mctrl)
-
-	//Mock server for network tests - TODO rework network
-	s.testServer = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/networks") && r.Method == "GET" {
-			// List networks
-			w.WriteHeader(http.StatusOK)
-			if _, err := w.Write([]byte(`[{"name":"test-net","spec":{"type":"application-mesh","description":"desc"}}]`)); err != nil {
-				return
-			}
-			return
-		}
-		if strings.Contains(r.URL.Path, "/networks/") && r.Method == "GET" {
-			// Get network
-			w.WriteHeader(http.StatusOK)
-			if _, err := w.Write([]byte(`{"type":"application-mesh","description":"desc"}`)); err != nil {
-				return
-			}
-			return
-		}
-		// ...add more as needed...
-		w.WriteHeader(http.StatusOK)
-	}))
-	httpClient = s.testServer.Client()
+	OrchestratorFactory = orchutilsmock.CreateOrchestratorMock(mctrl)
+	KeycloakAdminFactory = keycloakmock.CreateKeycloakAdminMock(mctrl)
 }
 
 func (s *CLITestSuite) TearDownSuite() {
 	auth.KeycloakFactory = nil
 	CatalogFactory = nil
+	CatalogUtilitiesFactory = nil
 	InfraFactory = nil
 	ClusterFactory = nil
 	RpsFactory = nil
 	DeploymentFactory = nil
 	TenancyFactory = nil
+	OrchestratorFactory = nil
+	KeycloakAdminFactory = nil
 
 	viper.Set(auth.UserName, "")
 	viper.Set(auth.RefreshTokenField, "")
@@ -110,14 +91,11 @@ func (s *CLITestSuite) TearDownSuite() {
 }
 
 func (s *CLITestSuite) SetupTest() {
-	s.proxy = restproxy.NewMockRestProxy(s.T())
-	s.NotNil(s.proxy)
 	err := s.login("u", "p")
 	s.NoError(err)
 }
 
 func (s *CLITestSuite) TearDownTest() {
-	s.NoError(s.proxy.Close())
 	viper.Set(auth.UserName, "")
 	viper.Set(auth.RefreshTokenField, "")
 	viper.Set(auth.ClientIDField, "")
@@ -235,25 +213,37 @@ func parseArgs(input string) []string {
 }
 
 func (s *CLITestSuite) runCommand(commandArgs string) (string, error) {
-	c := s.proxy.RestClient().ClientInterface.(*restClient.Client)
 	cmd := getRootCmd()
 
 	// Use custom parser instead of strings.Fields
 	args := parseArgs(commandArgs)
 
 	args = append(args, "--debug-headers")
-	if strings.Contains(commandArgs, "network") {
-		args = append(args, "--api-endpoint")
-		args = append(args, s.testServer.URL)
-	} else {
-		args = append(args, "--api-endpoint")
-		args = append(args, c.Server)
-	}
+	args = append(args, "--api-endpoint")
+	args = append(args, apiTest)
 	cmd.SetArgs(args)
 	stdout := new(bytes.Buffer)
+	stderr := new(bytes.Buffer)
 	cmd.SetOut(stdout)
+	cmd.SetErr(stderr)
 	err := cmd.Execute()
-	cmdOutput := stdout.String()
+	cmdOutput := stderr.String() + stdout.String()
+
+	// Handle disabled top-level commands like Execute() does in root.go
+	if err != nil && strings.Contains(err.Error(), "unknown command") {
+		if start := strings.Index(err.Error(), "\""); start != -1 {
+			if end := strings.Index(err.Error()[start+1:], "\""); end != -1 {
+				cmdName := err.Error()[start+1 : start+1+end]
+				if isCommandDisabledWithParent(cmd, cmdName) {
+					// Replace error message for disabled commands
+					disabledMsg := fmt.Sprintf("Error: command %q is disabled in the current Edge Orchestrator configuration\n", cmdName)
+					cmdOutput = disabledMsg + cmdOutput
+					// Keep the error for test assertions
+				}
+			}
+		}
+	}
+
 	return cmdOutput, err
 }
 

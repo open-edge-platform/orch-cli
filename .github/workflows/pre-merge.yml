@@ -18,16 +18,16 @@ jobs:
   pre-checks:
     runs-on: 'ubuntu-latest'
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           persist-credentials: false
       - name: "Verify Branch Name"
-        uses: open-edge-platform/orch-ci/verify-branch-name@15fa19e8760a1d7954de69b7059433f3855bbd92  # v0.1.58
+        uses: open-edge-platform/orch-ci/verify-branch-name@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # v2026.1.1
   pre-merge-pipeline:
     needs: pre-checks
-    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@15fa19e8760a1d7954de69b7059433f3855bbd92  # v0.1.58
+    uses: open-edge-platform/orch-ci/.github/workflows/pre-merge.yml@bf82f7924caaac6ba2f388b6ec6ac4edd65f48ee  # v2026.1.1
     with:
-      bootstrap_tools: "go,gotools,golang-lint,nodejs,buf,hadolint,opa"
+      bootstrap_tools: "go,gotools,golangci-lint2,nodejs,buf,hadolint,opa"
       run_version_check: true
       run_dep_version_check: false
       run_build: true
