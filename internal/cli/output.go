@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/open-edge-platform/cli/pkg/filter"
@@ -46,7 +47,11 @@ func toOutputType(in string) OutputType {
 	}
 }
 
-func GenerateOutput(result *CommandResult) {
+func GenerateOutput(writer io.Writer, result *CommandResult) {
+	if writer == nil {
+		writer = os.Stdout
+	}
+
 	if result != nil && result.Data != nil {
 		data := result.Data
 		if result.Filter != "" {
@@ -71,7 +76,7 @@ func GenerateOutput(result *CommandResult) {
 		}
 		if result.OutputAs == OUTPUT_TABLE {
 			tableFormat := format.Format(result.Format)
-			if err := tableFormat.Execute(os.Stdout, true, result.NameLimit, data); err != nil {
+			if err := tableFormat.Execute(writer, true, result.NameLimit, data); err != nil {
 				Fatalf("Unexpected error while attempting to format results as table : %s", err.Error())
 			}
 		} else if result.OutputAs == OUTPUT_JSON {
@@ -85,13 +90,17 @@ func GenerateOutput(result *CommandResult) {
 			}
 			asJson := string(asJsonB)
 			//}
-			fmt.Printf("%s", asJson)
+			if _, err = fmt.Fprintf(writer, "%s", asJson); err != nil {
+				Fatalf("Unexpected error while writing JSON output: %s", err.Error())
+			}
 		} else if result.OutputAs == OUTPUT_YAML {
 			asYaml, err := yaml.Marshal(&data)
 			if err != nil {
 				Fatalf("Unexpected error while processing command results to YAML: %s", err.Error())
 			}
-			fmt.Printf("%s", asYaml)
+			if _, err = fmt.Fprintf(writer, "%s", asYaml); err != nil {
+				Fatalf("Unexpected error while writing YAML output: %s", err.Error())
+			}
 		}
 	}
 }

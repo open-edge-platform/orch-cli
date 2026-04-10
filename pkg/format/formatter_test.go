@@ -153,3 +153,53 @@ func TestBadFormat(t *testing.T) {
 		t.Errorf("%s: expected error (bad format) got none", t.Name())
 	}
 }
+
+type NilSafeTemplateData struct {
+	DisplayName      *string
+	Dependencies     *[]string
+	DefaultNamespace *map[string]string
+}
+
+func TestNilSafeTemplateHelpers(t *testing.T) {
+	format := Format("Display Name: {{str .DisplayName}}|Deps:{{range deref .Dependencies}} {{.}}{{end}}|NS:{{range $k, $v := deref .DefaultNamespace}} {{$k}}={{$v}}{{end}}")
+	got := &strings.Builder{}
+
+	data := NilSafeTemplateData{}
+	err := format.Execute(got, false, 0, data)
+	if err != nil {
+		t.Fatalf("%s: unexpected error result: %s", t.Name(), err)
+	}
+
+	expected := "Display Name: |Deps:|NS:\n"
+	if got.String() != expected {
+		t.Logf("RECEIVED:\n%s\n", got.String())
+		t.Logf("EXPECTED:\n%s\n", expected)
+		t.Errorf("%s: expected and received did not match", t.Name())
+	}
+}
+
+func TestNilSafeTemplateHelpersWithValues(t *testing.T) {
+	name := "dp-name"
+	deps := []string{"dep-a", "dep-b"}
+	ns := map[string]string{"app": "namespace"}
+
+	format := Format("Display Name: {{str .DisplayName}}|Deps:{{range deref .Dependencies}} {{.}}{{end}}|NS:{{range $k, $v := deref .DefaultNamespace}} {{$k}}={{$v}}{{end}}")
+	got := &strings.Builder{}
+
+	data := NilSafeTemplateData{
+		DisplayName:      &name,
+		Dependencies:     &deps,
+		DefaultNamespace: &ns,
+	}
+	err := format.Execute(got, false, 0, data)
+	if err != nil {
+		t.Fatalf("%s: unexpected error result: %s", t.Name(), err)
+	}
+
+	expected := "Display Name: dp-name|Deps: dep-a dep-b|NS: app=namespace\n"
+	if got.String() != expected {
+		t.Logf("RECEIVED:\n%s\n", got.String())
+		t.Logf("EXPECTED:\n%s\n", expected)
+		t.Errorf("%s: expected and received did not match", t.Name())
+	}
+}

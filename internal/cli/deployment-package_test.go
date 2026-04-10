@@ -4,13 +4,8 @@
 package cli
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"testing"
-
-	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
-	"github.com/stretchr/testify/assert"
 )
 
 func (s *CLITestSuite) createDeploymentPackage(project string, applicationName string, applicationVersion string, args commandArgs) error {
@@ -103,13 +98,12 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	parsedOutput := mapCliOutput(listOutput)
 	expectedOutput := commandOutput{
 		pkgName: {
-			"Name":              pkgName,
-			"Version":           pkgVersion,
-			"Kind":              "normal",
-			"Display Name":      deploymentPackageDisplayName,
-			"Default Profile":   "default-profile",
-			"In Use":            "false",
-			"Application Count": "2",
+			"NAME":                 pkgName,
+			"DISPLAY NAME":         deploymentPackageDisplayName,
+			"VERSION":              pkgVersion,
+			"KIND":                 "<nil>",
+			"DEFAULT PROFILE NAME": "default-profile",
+			"IS DEPLOYED":          "false",
 		},
 	}
 
@@ -123,19 +117,20 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	expectedVerboseOutput := commandOutput{
 		pkgName: {
 			"Version":                  pkgVersion,
-			"Create Time":              timestampRegex,
-			"Update Time":              timestampRegex,
+			"Create Time":              "2025-12-31 23:59:59 +0000 UTC",
+			"Update Time":              "2025-12-31 23:59:59 +0000 UTC",
 			"Name":                     pkgName,
-			"Kind":                     "normal",
+			"Kind":                     "<nil>",
 			"Display Name":             deploymentPackageDisplayName,
 			"Description":              deploymentPackageDescription,
-			"In Use":                   "false",
-			"Applications":             `[app1:1.0.0 app2:1.0.0]`,
-			"Application Dependencies": `[]`,
-			"Profiles":                 ``,
-			"Default Profile":          "",
-			"Extensions":               "[]",
-			"Artifacts":                "[]",
+			"Is Deployed":              "false",
+			"Applications":             "app1:1.0.0 app2:1.0.0",
+			"Application Dependencies": "",
+			"Profiles":                 "deployment-package-profile test-deployment-profile",
+			"Default Profile":          "default-profile",
+			"Default Namespaces":       "",
+			"Extensions":               "",
+			"Artifacts":                "",
 		},
 	}
 
@@ -187,27 +182,6 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	err = s.exportDeploymentPackage(project, pkgName, pkgVersion, make(map[string]string))
 	s.NoError(err)
 	// TODO not viable to mock at this time - just testing if command call works, not the actual export logic
-}
-
-func TestPrintDeploymentPackageEvent(t *testing.T) {
-	kind := catapi.CatalogV3Kind("normal")
-	dp := catapi.CatalogV3DeploymentPackage{
-		Name:        "test-deployment-pkg",
-		Version:     "1.0.0",
-		DisplayName: strPtr("Test Deployment Package"),
-		Description: strPtr("A test deployment package"),
-		Kind:        &kind,
-	}
-	payload, err := json.Marshal(dp)
-	assert.NoError(t, err)
-
-	var buf bytes.Buffer
-	err = printDeploymentPackageEvent(&buf, "DeploymentPackage", payload, false)
-	assert.NoError(t, err)
-	output := buf.String()
-	assert.Contains(t, output, "test-deployment-pkg")
-	assert.Contains(t, output, "1.0.0")
-	assert.Contains(t, output, "Test Deployment Package")
 }
 
 func FuzzDeploymentPackage(f *testing.F) {

@@ -262,17 +262,24 @@ func mapCliOutput(output string) map[string]map[string]string {
 	retval := make(map[string]map[string]string)
 	lines := strings.Split(output, "\n")
 	var headers []string
+	headersParsed := false
 
-	for i, line := range lines {
-		if i == 0 {
-			// First line is the headers
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			if headersParsed {
+				break
+			}
+			continue
+		}
+
+		if !headersParsed {
+			// First non-empty line is the header line.
 			headers = strings.Split(line, "|")
 			// Clean up headers
 			for j := range headers {
 				headers[j] = strings.TrimSpace(headers[j])
 			}
-		} else if line == "" {
-			break
+			headersParsed = true
 		} else {
 			// Split data line by | instead of whitespace to match headers
 			fields := strings.Split(line, "|")
@@ -518,20 +525,55 @@ func mapVerboseCliOutput(output string) map[string]map[string]string {
 
 	newOne := true
 	key := ""
+	lastField := ""
 
 	for _, line := range lines {
 		if line == "" {
 			newOne = true
+			lastField = ""
 			continue
 		}
+
+		if strings.HasPrefix(line, " ") || strings.HasPrefix(line, "\t") {
+			// Continuation rows from multiline formatter sections.
+			if !newOne && key != "" && lastField != "" {
+				cont := strings.TrimSpace(line)
+				if cont != "" {
+					if retval[key][lastField] == "" {
+						retval[key][lastField] = cont
+					} else {
+						retval[key][lastField] = retval[key][lastField] + " " + cont
+					}
+				}
+			}
+			continue
+		}
+
 		fields := strings.SplitN(line, ":", 2)
+		if len(fields) < 2 {
+			// Continuation lines from multiline formatter sections (e.g. Applications list)
+			// are not key-value rows; keep parser tolerant.
+			if !newOne && key != "" && lastField != "" {
+				cont := strings.TrimSpace(line)
+				if cont != "" {
+					if retval[key][lastField] == "" {
+						retval[key][lastField] = cont
+					} else {
+						retval[key][lastField] = retval[key][lastField] + " " + cont
+					}
+				}
+			}
+			continue
+		}
 		value := strings.TrimSpace(fields[1])
 		if newOne {
 			newOne = false
 			key = value
 			retval[key] = make(map[string]string)
 		}
-		retval[key][fields[0]] = value
+		fieldName := fields[0]
+		retval[key][fieldName] = value
+		lastField = fieldName
 	}
 	return retval
 }

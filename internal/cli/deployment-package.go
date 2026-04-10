@@ -21,8 +21,8 @@ import (
 const (
 	DEFAULT_DEPLOYMENT_PACKAGE_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Version}}\t{{.Kind}}\t{{.DefaultProfileName}}\t{{.IsDeployed}}"
 	DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT = `Name: {{.Name}}
-Display Name: {{.DisplayName}}
-Description: {{.Description}}
+Display Name: {{str .DisplayName}}
+Description: {{str .Description}}
 Version: {{.Version}}
 Kind: {{.Kind}}
 Is Deployed: {{.IsDeployed}}
@@ -31,16 +31,16 @@ Applications:
   {{.Name}}:{{.Version}}
 	{{- end}}
 Application Dependencies:
-	{{- range .ApplicationDependencies}}
+	{{- range deref .ApplicationDependencies}}
 	{{.Name}}:{{.Requires}}
 	{{- end}}
 Profiles:
-	{{- range .Profiles}}
+	{{- range deref .Profiles}}
   {{.Name}}
 	{{- end}}
-Default Profile: {{.DefaultProfileName}}
+Default Profile: {{str .DefaultProfileName}}
 Default Namespaces:
-	{{- range $app, $ns := .DefaultNamespaces}}
+	{{- range $app, $ns := deref .DefaultNamespaces}}
   {{$app}}:{{$ns}}
 	{{- end}}
 Extensions:
@@ -99,6 +99,7 @@ func getGetDeploymentPackageCommand() *cobra.Command {
 		Example: "orch-cli get deployment-package my-package --project some-project",
 		RunE:    runGetDeploymentPackageCommand,
 	}
+	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
 	return cmd
 }
 
@@ -168,7 +169,7 @@ func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]cat
 		Data:      *caList,
 	}
 
-	GenerateOutput(&result)
+	GenerateOutput(writer, &result)
 }
 
 // Produces an application reference from the specified <name>:<version> string

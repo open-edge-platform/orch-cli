@@ -99,14 +99,21 @@ func (f Format) Execute(writer io.Writer, withHeaders bool, nameLimit int, data 
 	format := f
 
 	if f.IsTable() {
-		tabWriter = tabwriter.NewWriter(writer, 0, 4, 4, ' ', 0)
+		if existingTabWriter, ok := writer.(*tabwriter.Writer); ok {
+			tabWriter = existingTabWriter
+		} else {
+			tabWriter = tabwriter.NewWriter(writer, 0, 4, 4, ' ', 0)
+		}
 		format = Format(strings.TrimPrefix(string(f), "table"))
 	}
 
 	funcmap := template.FuncMap{
 		"timestamp": formatTimestamp,
 		"since":     formatSince,
-		"gosince":   formatGoSince}
+		"gosince":   formatGoSince,
+		"deref":     formatDeref,
+		"str":       formatString,
+	}
 
 	tmpl, err := template.New("output").Funcs(funcmap).Parse(string(format))
 	if err != nil {

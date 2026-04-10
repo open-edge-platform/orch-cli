@@ -16,6 +16,7 @@
 package format
 
 import (
+	"reflect"
 	"time"
 
 	timestamppb "github.com/golang/protobuf/ptypes/timestamp"
@@ -40,4 +41,30 @@ func formatSince(tsproto *timestamppb.Timestamp) (string, error) {
 		return "", nil
 	}
 	return time.Since(tsproto.AsTime()).Truncate(time.Second).String(), nil
+}
+
+// Dereferences pointers recursively for safer template rendering.
+// If a nil pointer is encountered, returns the zero value of the pointed-to type.
+func formatDeref(v interface{}) interface{} {
+	if v == nil {
+		return nil
+	}
+
+	rv := reflect.ValueOf(v)
+	for rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return reflect.Zero(rv.Type().Elem()).Interface()
+		}
+		rv = rv.Elem()
+	}
+
+	return rv.Interface()
+}
+
+// Renders a string pointer safely for templates.
+func formatString(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
 }
