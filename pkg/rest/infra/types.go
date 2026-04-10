@@ -38,6 +38,15 @@ const (
 	KVMSTATEUNSPECIFIED     KvmState = "KVM_STATE_UNSPECIFIED"
 )
 
+// Defines values for SolState.
+const (
+	SOLSTATEAWAITINGCONSENT SolState = "SOL_STATE_AWAITING_CONSENT"
+	SOLSTATEERROR           SolState = "SOL_STATE_ERROR"
+	SOLSTATESTART           SolState = "SOL_STATE_START"
+	SOLSTATESTOP            SolState = "SOL_STATE_STOP"
+	SOLSTATEUNSPECIFIED     SolState = "SOL_STATE_UNSPECIFIED"
+)
+
 // Defines values for BaremetalControllerKind.
 const (
 	BAREMETALCONTROLLERKINDIPMI        BaremetalControllerKind = "BAREMETAL_CONTROLLER_KIND_IPMI"
@@ -383,6 +392,9 @@ type HostResource struct {
 	// CurrentKvmState The current KVM state of the host.
 	CurrentKvmState *KvmState `json:"currentKvmState,omitempty"`
 
+	// CurrentSolState The current SOL state of the host.
+	CurrentSolState *SolState `json:"currentSolState,omitempty"`
+
 	// CurrentPowerState The host power state.
 	CurrentPowerState *PowerState `json:"currentPowerState,omitempty"`
 
@@ -394,6 +406,18 @@ type HostResource struct {
 
 	// DesiredKvmState The desired KVM state of the host.
 	DesiredKvmState *KvmState `json:"desiredKvmState,omitempty"`
+
+	// DesiredSolState The desired SOL state of the host.
+	DesiredSolState *SolState `json:"desiredSolState,omitempty"`
+
+	// DesiredConsentCode (OPTIONAL) Six-digit user-consent code entered by the operator. Write-only; consumed by kvm-manager.
+	DesiredConsentCode *string `json:"desiredConsentCode,omitempty"`
+
+	// KvmSessionUrl The URL for the KVM session when active.
+	KvmSessionUrl *string `json:"kvmSessionUrl,omitempty"`
+
+	// SolSessionUrl The URL for the SOL session when active.
+	SolSessionUrl *string `json:"solSessionUrl,omitempty"`
 
 	// DesiredPowerState The host power state.
 	DesiredPowerState *PowerState `json:"desiredPowerState,omitempty"`
@@ -508,6 +532,9 @@ type HostState string
 
 // KvmState The KVM state of the host.
 type KvmState string
+
+// SolState The SOL state of the host.
+type SolState string
 
 // HostgpuResource The set of available host GPU cards.
 type HostgpuResource struct {
