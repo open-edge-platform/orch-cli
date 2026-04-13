@@ -352,6 +352,29 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListDeploymentPackagesParams{
+				Kinds:    getDeploymentPackageKinds(cmd),
+				OrderBy:  getFlag(cmd, "order-by"),
+				Filter:   getFlag(cmd, "filter"),
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing deployment packages"); !proceed {
+			return err
+		}
+		printDeploymentPackages(cmd, writer, &resp.JSON200.DeploymentPackages, verbose)
+		return writer.Flush()
+	}
+
+	allDeploymentPackages := make([]catapi.CatalogV3DeploymentPackage, 0)
+
 	resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListDeploymentPackagesParams{
 			Kinds:    getDeploymentPackageKinds(cmd),
@@ -363,11 +386,48 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, "",
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		"error listing deployment packages"); !proceed {
 		return err
 	}
-	printDeploymentPackages(cmd, writer, &resp.JSON200.DeploymentPackages, verbose)
+
+	allDeploymentPackages = append(allDeploymentPackages, resp.JSON200.DeploymentPackages...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = int32(len(resp.JSON200.DeploymentPackages))
+	}
+
+	for len(allDeploymentPackages) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+
+		offset += pageSize
+		resp, err = catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListDeploymentPackagesParams{
+				Kinds:    getDeploymentPackageKinds(cmd),
+				OrderBy:  getFlag(cmd, "order-by"),
+				Filter:   getFlag(cmd, "filter"),
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing deployment packages"); !proceed {
+			return err
+		}
+
+		if len(resp.JSON200.DeploymentPackages) == 0 {
+			break
+		}
+		allDeploymentPackages = append(allDeploymentPackages, resp.JSON200.DeploymentPackages...)
+	}
+
+	printDeploymentPackages(cmd, writer, &allDeploymentPackages, verbose)
 	return writer.Flush()
 }
 
