@@ -141,6 +141,32 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		resp, err := catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListArtifactsParams{
+				OrderBy:  getFlag(cmd, "order-by"),
+				Filter:   getFlag(cmd, "filter"),
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, artifactHeader,
+			"error listing artifacts"); !proceed {
+			return err
+		}
+		printArtifacts(writer, &resp.JSON200.Artifacts, verbose)
+		return writer.Flush()
+	}
+
+	allArtifacts := make([]catapi.CatalogV3Artifact, 0)
+
+	if !verbose {
+		_, _ = fmt.Fprintf(writer, "%s\n", artifactHeader)
+	}
+
 	resp, err := catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListArtifactsParams{
 			OrderBy:  getFlag(cmd, "order-by"),
@@ -151,11 +177,47 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, artifactHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		"error listing artifacts"); !proceed {
 		return err
 	}
-	printArtifacts(writer, &resp.JSON200.Artifacts, verbose)
+
+	allArtifacts = append(allArtifacts, resp.JSON200.Artifacts...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = int32(len(resp.JSON200.Artifacts))
+	}
+
+	for len(allArtifacts) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+
+		offset += pageSize
+		resp, err = catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListArtifactsParams{
+				OrderBy:  getFlag(cmd, "order-by"),
+				Filter:   getFlag(cmd, "filter"),
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing artifacts"); !proceed {
+			return err
+		}
+
+		if len(resp.JSON200.Artifacts) == 0 {
+			break
+		}
+		allArtifacts = append(allArtifacts, resp.JSON200.Artifacts...)
+	}
+
+	printArtifacts(writer, &allArtifacts, verbose)
 	return writer.Flush()
 }
 

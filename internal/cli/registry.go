@@ -193,6 +193,34 @@ func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	showSensitive, _ := cmd.Flags().GetBool("show-sensitive-info")
+
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		resp, err := catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListRegistriesParams{
+				OrderBy:           getFlag(cmd, "order-by"),
+				Filter:            getFlag(cmd, "filter"),
+				PageSize:          &pageSize,
+				Offset:            &offset,
+				ShowSensitiveInfo: &showSensitive,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, registryHeader,
+			"error listing registries"); !proceed {
+			return err
+		}
+		printRegistries(writer, &resp.JSON200.Registries, verbose, showSensitive)
+		return writer.Flush()
+	}
+
+	allRegistries := make([]catapi.CatalogV3Registry, 0)
+
+	if !verbose {
+		_, _ = fmt.Fprintf(writer, "%s\n", registryHeader)
+	}
+
 	resp, err := catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListRegistriesParams{
 			OrderBy:           getFlag(cmd, "order-by"),
@@ -204,11 +232,48 @@ func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, registryHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		"error listing registries"); !proceed {
 		return err
 	}
-	printRegistries(writer, &resp.JSON200.Registries, verbose, showSensitive)
+
+	allRegistries = append(allRegistries, resp.JSON200.Registries...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = int32(len(resp.JSON200.Registries))
+	}
+
+	for len(allRegistries) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+
+		offset += pageSize
+		resp, err = catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListRegistriesParams{
+				OrderBy:           getFlag(cmd, "order-by"),
+				Filter:            getFlag(cmd, "filter"),
+				PageSize:          &pageSize,
+				Offset:            &offset,
+				ShowSensitiveInfo: &showSensitive,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing registries"); !proceed {
+			return err
+		}
+
+		if len(resp.JSON200.Registries) == 0 {
+			break
+		}
+		allRegistries = append(allRegistries, resp.JSON200.Registries...)
+	}
+
+	printRegistries(writer, &allRegistries, verbose, showSensitive)
 	return writer.Flush()
 }
 

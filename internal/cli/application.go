@@ -244,6 +244,33 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		resp, err := catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListApplicationsParams{
+				Kinds:    getApplicationKinds(cmd),
+				OrderBy:  getFlag(cmd, "order-by"),
+				Filter:   getFlag(cmd, "filter"),
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, applicationHeader,
+			"error listing applications"); !proceed {
+			return err
+		}
+		printApplications(writer, &resp.JSON200.Applications, verbose)
+		return writer.Flush()
+	}
+
+	allApplications := make([]catapi.CatalogV3Application, 0)
+
+	if !verbose {
+		_, _ = fmt.Fprintf(writer, "%s\n", applicationHeader)
+	}
+
 	resp, err := catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListApplicationsParams{
 			Kinds:    getApplicationKinds(cmd),
@@ -255,11 +282,48 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, applicationHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		"error listing applications"); !proceed {
 		return err
 	}
-	printApplications(writer, &resp.JSON200.Applications, verbose)
+
+	allApplications = append(allApplications, resp.JSON200.Applications...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = int32(len(resp.JSON200.Applications))
+	}
+
+	for len(allApplications) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+
+		offset += pageSize
+		resp, err = catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListApplicationsParams{
+				Kinds:    getApplicationKinds(cmd),
+				OrderBy:  getFlag(cmd, "order-by"),
+				Filter:   getFlag(cmd, "filter"),
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing applications"); !proceed {
+			return err
+		}
+
+		if len(resp.JSON200.Applications) == 0 {
+			break
+		}
+		allApplications = append(allApplications, resp.JSON200.Applications...)
+	}
+
+	printApplications(writer, &allApplications, verbose)
 	return writer.Flush()
 }
 
