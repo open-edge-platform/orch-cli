@@ -4,9 +4,11 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"mime"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -150,7 +152,7 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 	return cmd
 }
 
-func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, verbose bool) {
+func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, orderBy *string, verbose bool) {
 	var outputFormat string
 	if verbose {
 		outputFormat = DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT
@@ -159,11 +161,15 @@ func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]cat
 	}
 
 	outputType, _ := cmd.Flags().GetString("output-type")
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
 
 	result := CommandResult{
 		Format:    format.Format(outputFormat),
 		Filter:    "",
-		OrderBy:   "",
+		OrderBy:   sortSpec,
 		OutputAs:  toOutputType(outputType),
 		NameLimit: -1,
 		Data:      *caList,
@@ -340,11 +346,66 @@ func getDeploymentPackageKinds(cmd *cobra.Command) *[]catapi.CatalogV3Kind {
 	return &list
 }
 
+func getValidatedDeploymentPackageOrderBy(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, catapi.CatalogV3DeploymentPackage{})
+	}
+
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	return normalizeOrderByWithAPIProbe(raw, "deployment-packages", catapi.CatalogV3DeploymentPackage{}, func(orderBy string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListDeploymentPackagesParams{
+				Kinds:    getDeploymentPackageKinds(cmd),
+				OrderBy:  &orderBy,
+				Filter:   getFlag(cmd, "filter"),
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment package order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	validatedOrderBy, err := getValidatedDeploymentPackageOrderBy(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
 	}
 
 	pageSize, offset, err := getPageSizeOffset(cmd)
@@ -357,7 +418,7 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListDeploymentPackagesParams{
 				Kinds:    getDeploymentPackageKinds(cmd),
-				OrderBy:  getFlag(cmd, "order-by"),
+				OrderBy:  apiOrderBy,
 				Filter:   getFlag(cmd, "filter"),
 				PageSize: &pageSize,
 				Offset:   &offset,
@@ -369,7 +430,8 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 			"error listing deployment packages"); !proceed {
 			return err
 		}
-		printDeploymentPackages(cmd, writer, &resp.JSON200.DeploymentPackages, verbose)
+
+		printDeploymentPackages(cmd, writer, &resp.JSON200.DeploymentPackages, validatedOrderBy, verbose)
 		return writer.Flush()
 	}
 
@@ -378,7 +440,7 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 	resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListDeploymentPackagesParams{
 			Kinds:    getDeploymentPackageKinds(cmd),
-			OrderBy:  getFlag(cmd, "order-by"),
+			OrderBy:  apiOrderBy,
 			Filter:   getFlag(cmd, "filter"),
 			PageSize: &pageSize,
 			Offset:   &offset,
@@ -408,7 +470,7 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 		resp, err = catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListDeploymentPackagesParams{
 				Kinds:    getDeploymentPackageKinds(cmd),
-				OrderBy:  getFlag(cmd, "order-by"),
+				OrderBy:  apiOrderBy,
 				Filter:   getFlag(cmd, "filter"),
 				PageSize: &pageSize,
 				Offset:   &offset,
@@ -427,7 +489,7 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 		allDeploymentPackages = append(allDeploymentPackages, resp.JSON200.DeploymentPackages...)
 	}
 
-	printDeploymentPackages(cmd, writer, &allDeploymentPackages, verbose)
+	printDeploymentPackages(cmd, writer, &allDeploymentPackages, validatedOrderBy, verbose)
 	return writer.Flush()
 }
 
@@ -468,7 +530,7 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("no versions of deployment package %s found", name)
 		}
 	}
-	printDeploymentPackages(cmd, writer, &deploymentPkgs, verbose)
+	printDeploymentPackages(cmd, writer, &deploymentPkgs, nil, verbose)
 	return writer.Flush()
 }
 
