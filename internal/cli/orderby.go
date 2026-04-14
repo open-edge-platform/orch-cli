@@ -117,18 +117,10 @@ func normalizeOrderByWithAPIProbe(raw string, resourceKey string, sample any, pr
 	}
 
 	aliases, canonical := buildOrderByAliases(sample)
-	supported, supportedSet, err := getSupportedOrderByFields(resourceKey, sample, probe)
-	if err != nil {
-		return nil, err
-	}
-
-	hintFields := supported
-	if len(hintFields) == 0 {
-		hintFields = canonical
-	}
 
 	terms := strings.Split(raw, ",")
 	normalized := make([]string, 0, len(terms))
+	apiFields := make([]string, 0, len(terms))
 
 	for _, rawTerm := range terms {
 		term := strings.TrimSpace(rawTerm)
@@ -136,27 +128,48 @@ func normalizeOrderByWithAPIProbe(raw string, resourceKey string, sample any, pr
 			continue
 		}
 
-		prefix := ""
 		field := term
+		direction := ""
 		switch term[0] {
-		case '+', '-', '>', '<':
-			return nil, fmt.Errorf("invalid --order-by term %q for API sorting: direction prefixes are not supported for json/yaml outputs; use plain field names", term)
+		case '+':
+			direction = "asc"
+			field = strings.TrimSpace(term[1:])
+		case '-':
+			direction = "desc"
+			field = strings.TrimSpace(term[1:])
+		case '>', '<':
+			return nil, fmt.Errorf("invalid --order-by term %q for API sorting: use plain field names or +/- prefixes", term)
+		}
+
+		if len(strings.Fields(field)) != 1 {
+			return nil, fmt.Errorf("invalid --order-by term %q; use <field>, +<field>, or -<field>", term)
 		}
 
 		if field == "" {
-			return nil, fmt.Errorf("invalid --order-by term %q; available fields: %s", term, strings.Join(hintFields, ", "))
+			return nil, fmt.Errorf("invalid --order-by term %q; available fields: %s", term, strings.Join(canonical, ", "))
 		}
 
 		apiField, ok := aliases[field]
 		if !ok {
+			// Field not in model at all — fetch supported fields for accurate hints.
+			supported, _, err := getSupportedOrderByFields(resourceKey, sample, probe)
+			if err != nil {
+				return nil, err
+			}
+			hintFields := supported
+			if len(hintFields) == 0 {
+				hintFields = canonical
+			}
 			return nil, fmt.Errorf("invalid --order-by field %q; available fields: %s", field, strings.Join(hintFields, ", "))
 		}
 
-		if _, ok := supportedSet[apiField]; !ok {
-			return nil, fmt.Errorf("invalid --order-by field %q; available fields: %s", field, strings.Join(hintFields, ", "))
-		}
+		apiFields = append(apiFields, apiField)
 
-		normalized = append(normalized, prefix+apiField)
+		if direction != "" {
+			normalized = append(normalized, apiField+" "+direction)
+		} else {
+			normalized = append(normalized, apiField)
+		}
 	}
 
 	if len(normalized) == 0 {
@@ -168,11 +181,28 @@ func normalizeOrderByWithAPIProbe(raw string, resourceKey string, sample any, pr
 	if err != nil {
 		return nil, err
 	}
-	if !accepted {
-		return nil, fmt.Errorf("invalid --order-by expression %q; available fields: %s", raw, strings.Join(hintFields, ", "))
+	if accepted {
+		return &normalizedOrderBy, nil
 	}
 
-	return &normalizedOrderBy, nil
+	// Probe failed: build/consult cache only now to provide precise hints.
+	supported, supportedSet, err := getSupportedOrderByFields(resourceKey, sample, probe)
+	if err != nil {
+		return nil, err
+	}
+
+	hintFields := supported
+	if len(hintFields) == 0 {
+		hintFields = canonical
+	}
+
+	for _, apiField := range apiFields {
+		if _, ok := supportedSet[apiField]; !ok {
+			return nil, fmt.Errorf("invalid --order-by field %q; available fields: %s", apiField, strings.Join(hintFields, ", "))
+		}
+	}
+
+	return nil, fmt.Errorf("invalid --order-by expression %q; available fields: %s", raw, strings.Join(hintFields, ", "))
 }
 
 // buildClientSortAliases builds an alias map for client-side sorting.
