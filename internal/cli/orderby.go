@@ -140,8 +140,7 @@ func normalizeOrderByWithAPIProbe(raw string, resourceKey string, sample any, pr
 		field := term
 		switch term[0] {
 		case '+', '-', '>', '<':
-			prefix = term[:1]
-			field = strings.TrimSpace(term[1:])
+			return nil, fmt.Errorf("invalid --order-by term %q for API sorting: direction prefixes are not supported for json/yaml outputs; use plain field names", term)
 		}
 
 		if field == "" {
