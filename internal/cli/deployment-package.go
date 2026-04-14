@@ -89,6 +89,7 @@ func getListDeploymentPackagesCommand() *cobra.Command {
 	addListOrderingFilteringPaginationFlags(cmd, "deployment package")
 	cmd.Flags().StringSlice("kind", []string{}, "deployment package kind: normal, addon, extension")
 	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	cmd.Flags().String("output-filter", "", "Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML")
 	return cmd
 }
 
@@ -152,7 +153,7 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 	return cmd
 }
 
-func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, orderBy *string, verbose bool) {
+func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, orderBy *string, outputFilter *string, verbose bool) {
 	var outputFormat string
 	if verbose {
 		outputFormat = DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT
@@ -166,9 +167,14 @@ func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]cat
 		sortSpec = *orderBy
 	}
 
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
 	result := CommandResult{
 		Format:    format.Format(outputFormat),
-		Filter:    "",
+		Filter:    filterSpec,
 		OrderBy:   sortSpec,
 		OutputAs:  toOutputType(outputType),
 		NameLimit: -1,
@@ -368,11 +374,13 @@ func getValidatedDeploymentPackageOrderBy(
 	return normalizeOrderByWithAPIProbe(raw, "deployment-packages", catapi.CatalogV3DeploymentPackage{}, func(orderBy string) (bool, error) {
 		pageSize := int32(1)
 		offset := int32(0)
+		// Validate ordering in isolation. Reusing the caller's --filter here can turn
+		// filter errors into misleading "invalid --order-by field" errors.
 		resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListDeploymentPackagesParams{
 				Kinds:    getDeploymentPackageKinds(cmd),
 				OrderBy:  &orderBy,
-				Filter:   getFlag(cmd, "filter"),
+				Filter:   nil,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -431,7 +439,8 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 			return err
 		}
 
-		printDeploymentPackages(cmd, writer, &resp.JSON200.DeploymentPackages, validatedOrderBy, verbose)
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		printDeploymentPackages(cmd, writer, &resp.JSON200.DeploymentPackages, validatedOrderBy, &outputFilter, verbose)
 		return writer.Flush()
 	}
 
@@ -489,7 +498,8 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 		allDeploymentPackages = append(allDeploymentPackages, resp.JSON200.DeploymentPackages...)
 	}
 
-	printDeploymentPackages(cmd, writer, &allDeploymentPackages, validatedOrderBy, verbose)
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	printDeploymentPackages(cmd, writer, &allDeploymentPackages, validatedOrderBy, &outputFilter, verbose)
 	return writer.Flush()
 }
 
@@ -530,7 +540,7 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("no versions of deployment package %s found", name)
 		}
 	}
-	printDeploymentPackages(cmd, writer, &deploymentPkgs, nil, verbose)
+	printDeploymentPackages(cmd, writer, &deploymentPkgs, nil, nil, verbose)
 	return writer.Flush()
 }
 

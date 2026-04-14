@@ -17,8 +17,9 @@
 package filter
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type TestFilterIncludedStruct struct {
@@ -344,4 +345,75 @@ func TestBadRE(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected RE parse error, got none")
 	}
+}
+
+func TestQuoteStripping(t *testing.T) {
+	tests := []struct {
+		name  string
+		spec  string
+		field string
+		want  string
+	}{
+		{"single quotes stripped", "One='hello'", "One", "hello"},
+		{"double quotes stripped", `One="hello"`, "One", "hello"},
+		{"no quotes unchanged", "One=hello", "One", "hello"},
+		{"single quotes on NE op", "One!='hello'", "One", "hello"},
+		{"single quotes on regex op", "One~'he.*'", "One", "he.*"},
+		{"unmatched left quote not stripped", "One='hello", "One", "'hello"},
+		{"unmatched right quote not stripped", "One=hello'", "One", "hello'"},
+		{"mismatched quotes not stripped", `One='hello"`, "One", `'hello"`},
+		{"empty quoted string", "One=''", "One", ""},
+		{"value with spaces inside quotes", "One='hello world'", "One", "hello world"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f, err := Parse(tt.spec)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, f[tt.field].Value)
+		})
+	}
+}
+
+func TestQuoteStrippingFilterMatch(t *testing.T) {
+	data := []interface{}{
+		TestFilterStruct{One: "hello", Two: "b", Three: "c"},
+		TestFilterStruct{One: "world", Two: "b", Three: "c"},
+	}
+
+	// With quotes — should behave exactly like without quotes.
+	fQuoted, err := Parse("One='hello'")
+	assert.NoError(t, err)
+	fUnquoted, err := Parse("One=hello")
+	assert.NoError(t, err)
+
+	rQuoted, err := fQuoted.Process(data)
+	assert.NoError(t, err)
+	rUnquoted, err := fUnquoted.Process(data)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 1, len(rQuoted.([]interface{})))
+	assert.Equal(t, rUnquoted.([]interface{})[0], rQuoted.([]interface{})[0])
+}
+
+func TestQuoteStrippingRegexMatch(t *testing.T) {
+	data := []interface{}{
+		TestFilterStruct{One: "pg-test-40", Two: "b", Three: "c"},
+		TestFilterStruct{One: "pg-test-41", Two: "b", Three: "c"},
+		TestFilterStruct{One: "pg-other-40", Two: "b", Three: "c"},
+	}
+
+	// Quoted regex should match same items as unquoted.
+	fQuoted, err := Parse("One~'pg-test-4.'")
+	assert.NoError(t, err)
+	fUnquoted, err := Parse("One~pg-test-4.")
+	assert.NoError(t, err)
+
+	rQuoted, err := fQuoted.Process(data)
+	assert.NoError(t, err)
+	rUnquoted, err := fUnquoted.Process(data)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 2, len(rQuoted.([]interface{})))
+	assert.Equal(t, len(rUnquoted.([]interface{})), len(rQuoted.([]interface{})))
 }

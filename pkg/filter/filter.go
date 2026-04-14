@@ -78,9 +78,16 @@ func Parse(spec string) (Filter, error) {
 		if parts == nil {
 			return nil, fmt.Errorf("Unable to parse filter term '%s'", term)
 		}
+		value := parts[0][3]
+		// Strip surrounding single or double quotes so that Name='foo' and Name=foo behave identically.
+		if len(value) >= 2 &&
+			((value[0] == '\'' && value[len(value)-1] == '\'') ||
+				(value[0] == '"' && value[len(value)-1] == '"')) {
+			value = value[1 : len(value)-1]
+		}
 		ft := FilterTerm{
 			Op:    toOp(parts[0][2]),
-			Value: parts[0][3],
+			Value: value,
 		}
 		if ft.Op == RE {
 			ft.re, err = regexp.Compile(ft.Value)

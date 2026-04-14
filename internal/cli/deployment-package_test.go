@@ -14,7 +14,7 @@ func (s *CLITestSuite) createDeploymentPackage(project string, applicationName s
 	return err
 }
 
-func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orderBy string, filter string) (string, error) {
+func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orderBy string, filter string, outputFilter string) (string, error) {
 	args := `list deployment-packages --project ` + project
 	if verbose {
 		args = args + " -v"
@@ -24,6 +24,9 @@ func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orde
 	}
 	if filter != "" {
 		args = args + " filter=" + filter
+	}
+	if outputFilter != "" {
+		args = args + " --output-filter " + outputFilter
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -92,7 +95,7 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	s.NoError(err)
 
 	// list deployment packages to make sure it was created properly
-	listOutput, err := s.listDeploymentPackages(project, simpleOutput, "display_name", "display_name="+deploymentPackageDisplayName)
+	listOutput, err := s.listDeploymentPackages(project, simpleOutput, "display_name", "display_name="+deploymentPackageDisplayName, "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
@@ -110,7 +113,7 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list deployment packages
-	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "")
+	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
@@ -216,7 +219,7 @@ func FuzzDeploymentPackage(f *testing.F) {
 		}
 
 		// --- List Deployment Packages ---
-		_, err = testSuite.listDeploymentPackages(project, false, "", "")
+		_, err = testSuite.listDeploymentPackages(project, false, "", "", "")
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
