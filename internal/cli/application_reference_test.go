@@ -51,7 +51,7 @@ func (s *CLITestSuite) TestApplicationReference() {
 	s.NoError(err)
 
 	// verbose list deployment packages to make sure it was created properly
-	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "", "")
+	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "", "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)

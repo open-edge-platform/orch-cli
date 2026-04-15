@@ -156,16 +156,19 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 	return cmd
 }
 
-func getDeploymentPackageOutputFormat(cmd *cobra.Command, verbose bool) string {
+func getDeploymentPackageOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT
+		return DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT, nil
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_PACKAGE_FORMAT, DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR)
 }
 
-func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, orderBy *string, outputFilter *string, verbose bool) {
-	outputFormat := getDeploymentPackageOutputFormat(cmd, verbose)
+func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, orderBy *string, outputFilter *string, verbose bool) error {
+	outputFormat, err := getDeploymentPackageOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
 
 	outputType, _ := cmd.Flags().GetString("output-type")
 	sortSpec := ""
@@ -188,6 +191,7 @@ func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]cat
 	}
 
 	GenerateOutput(writer, &result)
+	return nil
 }
 
 // Produces an application reference from the specified <name>:<version> string
@@ -446,7 +450,9 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 		}
 
 		outputFilter, _ := cmd.Flags().GetString("output-filter")
-		printDeploymentPackages(cmd, writer, &resp.JSON200.DeploymentPackages, validatedOrderBy, &outputFilter, verbose)
+		if err := printDeploymentPackages(cmd, writer, &resp.JSON200.DeploymentPackages, validatedOrderBy, &outputFilter, verbose); err != nil {
+			return err
+		}
 		return writer.Flush()
 	}
 
@@ -505,7 +511,9 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	outputFilter, _ := cmd.Flags().GetString("output-filter")
-	printDeploymentPackages(cmd, writer, &allDeploymentPackages, validatedOrderBy, &outputFilter, verbose)
+	if err := printDeploymentPackages(cmd, writer, &allDeploymentPackages, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -546,7 +554,9 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("no versions of deployment package %s found", name)
 		}
 	}
-	printDeploymentPackages(cmd, writer, &deploymentPkgs, nil, nil, verbose)
+	if err := printDeploymentPackages(cmd, writer, &deploymentPkgs, nil, nil, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 

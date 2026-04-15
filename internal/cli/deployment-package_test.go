@@ -14,7 +14,7 @@ func (s *CLITestSuite) createDeploymentPackage(project string, applicationName s
 	return err
 }
 
-func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orderBy string, filter string, outputFilter string) (string, error) {
+func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orderBy string, filter string, outputFilter string, outputTemplate string, outputTemplateFile string) (string, error) {
 	args := `list deployment-packages --project ` + project
 	if verbose {
 		args = args + " -v"
@@ -27,6 +27,12 @@ func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orde
 	}
 	if outputFilter != "" {
 		args = args + " --output-filter " + outputFilter
+	}
+	if outputTemplate != "" {
+		args = args + " --output-template " + outputTemplate
+	}
+	if outputTemplateFile != "" {
+		args = args + " --output-template-file " + outputTemplateFile
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -95,7 +101,7 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	s.NoError(err)
 
 	// list deployment packages to make sure it was created properly
-	listOutput, err := s.listDeploymentPackages(project, simpleOutput, "display_name", "display_name="+deploymentPackageDisplayName, "")
+	listOutput, err := s.listDeploymentPackages(project, simpleOutput, "display_name", "display_name="+deploymentPackageDisplayName, "", "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
@@ -113,7 +119,7 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list deployment packages
-	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "", "")
+	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "", "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
@@ -182,6 +188,16 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	// s.Error(err)
 	// s.Contains(err.Error(), fmt.Sprintf("deployment package versions %s: 404 Not Found", pkgName))
 
+	// Test error handling for dual template flags (--output-template and --output-template-file both set)
+	_, err = s.listDeploymentPackages(project, simpleOutput, "", "", "", "table{{.Name}}", "/tmp/invalid.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "only one of")
+
+	// Test error handling for missing template file
+	_, err = s.listDeploymentPackages(project, simpleOutput, "", "", "", "", "/nonexistent/path/template.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "unable to read")
+
 	err = s.exportDeploymentPackage(project, pkgName, pkgVersion, make(map[string]string))
 	s.NoError(err)
 	// TODO not viable to mock at this time - just testing if command call works, not the actual export logic
@@ -219,7 +235,7 @@ func FuzzDeploymentPackage(f *testing.F) {
 		}
 
 		// --- List Deployment Packages ---
-		_, err = testSuite.listDeploymentPackages(project, false, "", "", "")
+		_, err = testSuite.listDeploymentPackages(project, false, "", "", "", "", "")
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

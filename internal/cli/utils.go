@@ -298,7 +298,8 @@ func normalizeEscapedOutputTemplate(in string) string {
 
 // Resolves a table output template from command flags and optional environment variable.
 // Precedence is: --output-template > --output-template-file > environment variable > defaultTemplate.
-func resolveTableOutputTemplate(cmd *cobra.Command, defaultTemplate string, envVar string) string {
+// Returns the resolved template string and any error (e.g., file not found, conflicting flags).
+func resolveTableOutputTemplate(cmd *cobra.Command, defaultTemplate string, envVar string) (string, error) {
 	flagName := "output-template"
 	fileFlagName := "output-template-file"
 	selectedEnvVar := envVar
@@ -313,13 +314,13 @@ func resolveTableOutputTemplate(cmd *cobra.Command, defaultTemplate string, envV
 	}
 
 	if outputTemplate != "" && outputTemplateFile != "" {
-		Fatalf("only one of --%s and --%s can be specified", flagName, fileFlagName)
+		return "", fmt.Errorf("only one of --%s and --%s can be specified", flagName, fileFlagName)
 	}
 
 	if outputTemplateFile != "" {
 		tmplBytes, err := readInput(outputTemplateFile)
 		if err != nil {
-			Fatalf("unable to read output template file %q: %s", outputTemplateFile, err.Error())
+			return "", fmt.Errorf("unable to read output template file %q: %w", outputTemplateFile, err)
 		}
 		outputTemplate = normalizeEscapedOutputTemplate(string(tmplBytes))
 	} else if outputTemplate != "" {
@@ -332,10 +333,10 @@ func resolveTableOutputTemplate(cmd *cobra.Command, defaultTemplate string, envV
 	}
 
 	if strings.TrimSpace(outputTemplate) == "" {
-		return defaultTemplate
+		return defaultTemplate, nil
 	}
 
-	return outputTemplate
+	return outputTemplate, nil
 }
 
 // Gets the standard display-name, and description
