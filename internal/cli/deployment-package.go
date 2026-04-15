@@ -56,6 +56,7 @@ Artifacts:
 Create Time: {{.CreateTime}}
 Update Time: {{.UpdateTime}}
 `
+	DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE"
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
@@ -90,6 +91,7 @@ func getListDeploymentPackagesCommand() *cobra.Command {
 	cmd.Flags().StringSlice("kind", []string{}, "deployment package kind: normal, addon, extension")
 	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
 	cmd.Flags().String("output-filter", "", "Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML")
+	addTableOutputTemplateFlags(cmd)
 	return cmd
 }
 
@@ -103,6 +105,7 @@ func getGetDeploymentPackageCommand() *cobra.Command {
 		RunE:    runGetDeploymentPackageCommand,
 	}
 	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	addTableOutputTemplateFlags(cmd)
 	return cmd
 }
 
@@ -153,13 +156,16 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 	return cmd
 }
 
-func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, orderBy *string, outputFilter *string, verbose bool) {
-	var outputFormat string
+func getDeploymentPackageOutputFormat(cmd *cobra.Command, verbose bool) string {
 	if verbose {
-		outputFormat = DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT
-	} else {
-		outputFormat = DEFAULT_DEPLOYMENT_PACKAGE_FORMAT
+		return DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT
 	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_PACKAGE_FORMAT, DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, orderBy *string, outputFilter *string, verbose bool) {
+	outputFormat := getDeploymentPackageOutputFormat(cmd, verbose)
 
 	outputType, _ := cmd.Flags().GetString("output-type")
 	sortSpec := ""

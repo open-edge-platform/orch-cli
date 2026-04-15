@@ -286,6 +286,58 @@ func addListOrderingFilteringPaginationFlags(cmd *cobra.Command, entity string) 
 	cmd.Flags().Int32("offset", 0, fmt.Sprintf("%s list starting offset", entity))
 }
 
+// Adds standard table output template override flags for commands with table rendering.
+func addTableOutputTemplateFlags(cmd *cobra.Command) {
+	cmd.Flags().String("output-template", "", "Optional custom output template (Go text/template) for table output")
+	cmd.Flags().String("output-template-file", "", "Optional path to a file containing a custom template for table output")
+}
+
+func normalizeEscapedOutputTemplate(in string) string {
+	return strings.NewReplacer(`\t`, "\t", `\n`, "\n", `\r`, "\r").Replace(in)
+}
+
+// Resolves a table output template from command flags and optional environment variable.
+// Precedence is: --output-template > --output-template-file > environment variable > defaultTemplate.
+func resolveTableOutputTemplate(cmd *cobra.Command, defaultTemplate string, envVar string) string {
+	flagName := "output-template"
+	fileFlagName := "output-template-file"
+	selectedEnvVar := envVar
+
+	outputTemplate, errTemplate := cmd.Flags().GetString(flagName)
+	if errTemplate != nil {
+		outputTemplate = ""
+	}
+	outputTemplateFile, errTemplateFile := cmd.Flags().GetString(fileFlagName)
+	if errTemplateFile != nil {
+		outputTemplateFile = ""
+	}
+
+	if outputTemplate != "" && outputTemplateFile != "" {
+		Fatalf("only one of --%s and --%s can be specified", flagName, fileFlagName)
+	}
+
+	if outputTemplateFile != "" {
+		tmplBytes, err := readInput(outputTemplateFile)
+		if err != nil {
+			Fatalf("unable to read output template file %q: %s", outputTemplateFile, err.Error())
+		}
+		outputTemplate = normalizeEscapedOutputTemplate(string(tmplBytes))
+	} else if outputTemplate != "" {
+		outputTemplate = normalizeEscapedOutputTemplate(outputTemplate)
+	}
+
+	if outputTemplate == "" && selectedEnvVar != "" {
+		outputTemplate = os.Getenv(selectedEnvVar)
+		outputTemplate = normalizeEscapedOutputTemplate(outputTemplate)
+	}
+
+	if strings.TrimSpace(outputTemplate) == "" {
+		return defaultTemplate
+	}
+
+	return outputTemplate
+}
+
 // Gets the standard display-name, and description
 func getEntityFlags(cmd *cobra.Command) (string, string, error) {
 	displayName, err := cmd.Flags().GetString("display-name")
