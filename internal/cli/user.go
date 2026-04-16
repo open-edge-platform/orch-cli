@@ -432,7 +432,7 @@ func runSetUserCommand(cmd *cobra.Command, args []string) error {
 	for _, roleName := range addRoles {
 		role, err := kcClient.GetRealmRoleByName(ctx, realm, roleName)
 		if err != nil {
-			return fmt.Errorf("realm role %q not found: %w", roleName, err)
+			return fmt.Errorf("error looking up realm role %q: %w", roleName, err)
 		}
 		if err := kcClient.AddRealmRolesToUser(ctx, realm, user.ID, []keycloak.RoleRepresentation{*role}); err != nil {
 			return fmt.Errorf("error assigning realm role %q: %w", roleName, err)
@@ -443,7 +443,7 @@ func runSetUserCommand(cmd *cobra.Command, args []string) error {
 	for _, roleName := range removeRoles {
 		role, err := kcClient.GetRealmRoleByName(ctx, realm, roleName)
 		if err != nil {
-			return fmt.Errorf("realm role %q not found: %w", roleName, err)
+			return fmt.Errorf("error looking up realm role %q: %w", roleName, err)
 		}
 		if err := kcClient.RemoveRealmRolesFromUser(ctx, realm, user.ID, []keycloak.RoleRepresentation{*role}); err != nil {
 			return fmt.Errorf("error removing realm role %q: %w", roleName, err)
