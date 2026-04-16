@@ -7,6 +7,7 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"sync"
@@ -167,6 +169,171 @@ func (s *SOLSession) sendToBrowser(data string) {
 	}
 }
 
+// handleMPSFrame processes a single AMT frame from the given data slice
+// and returns the number of bytes consumed.  This allows the caller to
+// iterate through multiple concatenated frames in one WebSocket message.
+func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
+	if len(data) == 0 {
+		return 0
+	}
+	cmd := data[0]
+
+	switch cmd {
+	case 0x11: // StartRedirectionSessionReply
+		if len(data) < 13 {
+			return len(data)
+		}
+		status := data[1]
+		if status != 0 {
+			fmt.Fprintf(os.Stderr, "\nSOL session start failed (status=%d)\n", status)
+			return len(data)
+		}
+		oemLen := int(data[12])
+		frameSize := 13 + oemLen
+		if frameSize > len(data) {
+			frameSize = len(data)
+		}
+		if debug {
+			fmt.Fprintf(os.Stderr, "[SOL] StartRedirectionSessionReply OK (frame=%d)\n", frameSize)
+		}
+		authQuery := []byte{0x13, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+		_ = s.sendBinary(authQuery)
+		return frameSize
+
+	case 0x14: // AuthenticateSessionReply
+		if len(data) < 9 {
+			return len(data)
+		}
+		status := data[1]
+		authType := data[4]
+		authDataLen := int(binary.LittleEndian.Uint32(data[5:9]))
+		frameSize := 9 + authDataLen
+		if frameSize > len(data) {
+			frameSize = len(data)
+		}
+		if debug {
+			fmt.Fprintf(os.Stderr, "[SOL] AuthReply: status=%d authType=%d dataLen=%d frame=%d\n", status, authType, authDataLen, frameSize)
+		}
+
+		if status == 0 && authType == 0 {
+			var authMethods []byte
+			if len(data) >= 9+authDataLen {
+				authMethods = data[9 : 9+authDataLen]
+			}
+			hasDigest := false
+			for _, m := range authMethods {
+				if m == 4 {
+					hasDigest = true
+					break
+				}
+			}
+			if hasDigest {
+				_ = s.sendDigestAuthInitial()
+			} else {
+				_ = s.sendSOLSettings()
+			}
+		} else if status == 0 {
+			if debug {
+				fmt.Fprintf(os.Stderr, "[SOL] Authentication successful!\n")
+			}
+			_ = s.sendSOLSettings()
+		} else if status == 1 && (authType == 3 || authType == 4) {
+			if len(data) < 9+authDataLen {
+				return frameSize
+			}
+			authData := data[9 : 9+authDataLen]
+			ptr := 0
+			realmLen := int(authData[ptr])
+			ptr++
+			realm := string(authData[ptr : ptr+realmLen])
+			ptr += realmLen
+			nonceLen := int(authData[ptr])
+			ptr++
+			nonce := string(authData[ptr : ptr+nonceLen])
+			ptr += nonceLen
+			qop := ""
+			if authType == 4 && ptr < len(authData) {
+				qopLen := int(authData[ptr])
+				ptr++
+				if ptr+qopLen <= len(authData) {
+					qop = string(authData[ptr : ptr+qopLen])
+				}
+			}
+			if debug {
+				fmt.Fprintf(os.Stderr, "[SOL] Digest challenge: realm=%q nonce=%q qop=%q\n", realm, nonce, qop)
+			}
+			_ = s.sendDigestAuthResponse(realm, nonce, qop)
+		} else {
+			fmt.Fprintf(os.Stderr, "\nSOL authentication failed (status=%d)\n", status)
+		}
+		return frameSize
+
+	case 0x21: // SOL settings response (24 bytes)
+		frameSize := 24
+		if frameSize > len(data) {
+			frameSize = len(data)
+		}
+		if debug {
+			fmt.Fprintf(os.Stderr, "[SOL] SOL Settings Response, sending finalize\n")
+		}
+		seq := s.nextSequence()
+		finalizeMsg := []byte{0x27, 0x00, 0x00, 0x00}
+		finalizeMsg = append(finalizeMsg, intToLE(seq)...)
+		finalizeMsg = append(finalizeMsg, 0x00, 0x00, 0x1B, 0x00, 0x00, 0x00)
+		_ = s.sendBinary(finalizeMsg)
+
+		// Signal SOL is ready
+		select {
+		case <-s.solReady:
+		default:
+			close(s.solReady)
+		}
+		return frameSize
+
+	case 0x29: // Serial settings (10 bytes)
+		frameSize := 10
+		if frameSize > len(data) {
+			frameSize = len(data)
+		}
+		return frameSize
+
+	case 0x2A: // Incoming terminal data → relay to browser/wssh3
+		if len(data) < 10 {
+			return len(data)
+		}
+		dataLen := int(data[8]) | int(data[9])<<8
+		frameSize := 10 + dataLen
+		if frameSize > len(data) {
+			dataLen = len(data) - 10
+			frameSize = len(data)
+		}
+		termData := string(data[10 : 10+dataLen])
+		s.sendToBrowser(termData)
+		return frameSize
+
+	case 0x2B: // Keep alive (8 bytes) — respond with pong
+		frameSize := 8
+		if frameSize > len(data) {
+			frameSize = len(data)
+		}
+		if len(data) >= 8 {
+			pong := []byte{0x2B, 0x00, 0x00, 0x00}
+			pong = append(pong, data[4:8]...)
+			_ = s.sendBinary(pong)
+		}
+		return frameSize
+
+	default:
+		if cmd == 0x00 {
+			return 1 // skip NUL padding
+		}
+		if debug {
+			fmt.Fprintf(os.Stderr, "[SOL] Unknown cmd 0x%02X (%d bytes remaining)\n", cmd, len(data))
+		}
+		return len(data) // consume rest to avoid infinite loop
+	}
+}
+
 // readFromBrowser reads keystrokes from the wssh3/browser WebSocket and
 // sends them as AMT SOL data frames to the MPS connection.
 func (s *SOLSession) readFromBrowser(conn *websocket.Conn) {
@@ -184,7 +351,9 @@ func (s *SOLSession) readFromBrowser(conn *websocket.Conn) {
 // connectSOLSession connects to the MPS relay, runs the AMT SOL protocol
 // handshake, then starts a local WebSocket proxy server on a random port.
 // Users connect via:  wssh3 ws://localhost:<port>/ws/terminal
-func connectSOLSession(sessionURL, jwtToken, amtPass string) error {
+// If readyCh is non-nil, the local port is sent on it once the proxy server
+// is listening.  The function blocks until Ctrl-C or the MPS connection drops.
+func connectSOLSession(sessionURL, jwtToken, amtPass string, readyCh chan<- int) error {
 	// Parse the session URL to extract host, token, guid
 	parsed, err := url.Parse(sessionURL)
 	if err != nil {
@@ -263,7 +432,6 @@ func connectSOLSession(sessionURL, jwtToken, amtPass string) error {
 	// Reader goroutine: handles AMT SOL protocol + relays terminal data to browser
 	go func() {
 		defer close(done)
-		msgCount := 0
 		if debug {
 			fmt.Fprintf(os.Stderr, "[SOL] Waiting for AMT protocol messages...\n")
 		}
@@ -276,123 +444,19 @@ func connectSOLSession(sessionURL, jwtToken, amtPass string) error {
 				}
 				return
 			}
-			msgCount++
 			if len(message) == 0 {
 				continue
 			}
 
-			if debug {
-				if len(message) <= 64 {
-					fmt.Fprintf(os.Stderr, "[SOL] msg#%d cmd=0x%02X len=%d hex=%s\n", msgCount, message[0], len(message), hex.EncodeToString(message))
-				} else {
-					fmt.Fprintf(os.Stderr, "[SOL] msg#%d cmd=0x%02X len=%d hex=%s...\n", msgCount, message[0], len(message), hex.EncodeToString(message[:64]))
+			// Process all AMT frames within this WebSocket message.
+			// A single WS message can contain multiple concatenated AMT frames.
+			offset := 0
+			for offset < len(message) {
+				consumed := sol.handleMPSFrame(message[offset:], debug)
+				if consumed <= 0 {
+					break
 				}
-			}
-
-			switch message[0] {
-			case 0x11: // StartRedirectionSessionReply
-				if len(message) < 4 || message[1] != 0 {
-					fmt.Fprintf(os.Stderr, "\nSOL session start failed (status=%d)\n", message[1])
-					return
-				}
-				if debug {
-					fmt.Fprintf(os.Stderr, "[SOL] StartRedirectionSessionReply OK\n")
-				}
-				authQuery := []byte{0x13, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-				_ = sol.sendBinary(authQuery)
-
-			case 0x14: // AuthenticateSessionReply
-				if len(message) < 9 {
-					continue
-				}
-				status := message[1]
-				authType := message[4]
-				authDataLen := int(binary.LittleEndian.Uint32(message[5:9]))
-				if debug {
-					fmt.Fprintf(os.Stderr, "[SOL] AuthReply: status=%d authType=%d dataLen=%d\n", status, authType, authDataLen)
-				}
-
-				if status == 0 && authType == 0 {
-					var authMethods []byte
-					if len(message) >= 9+authDataLen {
-						authMethods = message[9 : 9+authDataLen]
-					}
-					hasDigest := false
-					for _, m := range authMethods {
-						if m == 4 {
-							hasDigest = true
-							break
-						}
-					}
-					if hasDigest {
-						_ = sol.sendDigestAuthInitial()
-					} else {
-						_ = sol.sendSOLSettings()
-					}
-				} else if status == 0 {
-					_ = sol.sendSOLSettings()
-				} else if status == 1 && (authType == 3 || authType == 4) {
-					if len(message) < 9+authDataLen {
-						continue
-					}
-					authData := message[9 : 9+authDataLen]
-					ptr := 0
-					realmLen := int(authData[ptr])
-					ptr++
-					realm := string(authData[ptr : ptr+realmLen])
-					ptr += realmLen
-					nonceLen := int(authData[ptr])
-					ptr++
-					nonce := string(authData[ptr : ptr+nonceLen])
-					ptr += nonceLen
-					qop := ""
-					if authType == 4 && ptr < len(authData) {
-						qopLen := int(authData[ptr])
-						ptr++
-						if ptr+qopLen <= len(authData) {
-							qop = string(authData[ptr : ptr+qopLen])
-						}
-					}
-					_ = sol.sendDigestAuthResponse(realm, nonce, qop)
-				} else {
-					fmt.Fprintf(os.Stderr, "\nSOL authentication failed (status=%d)\n", status)
-					return
-				}
-
-			case 0x21: // SOL settings response — finalize session
-				if debug {
-					fmt.Fprintf(os.Stderr, "[SOL] SOL Settings Response, sending finalize\n")
-				}
-				seq := sol.nextSequence()
-				finalizeMsg := []byte{0x27, 0x00, 0x00, 0x00}
-				finalizeMsg = append(finalizeMsg, intToLE(seq)...)
-				finalizeMsg = append(finalizeMsg, 0x00, 0x00, 0x1B, 0x00, 0x00, 0x00)
-				_ = sol.sendBinary(finalizeMsg)
-
-				// Signal SOL is ready
-				select {
-				case <-sol.solReady:
-				default:
-					close(sol.solReady)
-				}
-
-			case 0x2A: // Incoming terminal data → relay to browser/wssh3
-				if len(message) < 10 {
-					continue
-				}
-				dataLen := int(message[8]) | int(message[9])<<8
-				if len(message) < 10+dataLen {
-					dataLen = len(message) - 10
-				}
-				termData := string(message[10 : 10+dataLen])
-				sol.sendToBrowser(termData)
-
-			case 0x29: // Serial settings — ignore
-			case 0x2B: // Keep alive — ignore
-			default:
-				if debug {
-					fmt.Fprintf(os.Stderr, "[SOL] Unknown cmd 0x%02X (%d bytes)\n", message[0], len(message))
-				}
+				offset += consumed
 			}
 		}
 	}()
@@ -519,6 +583,11 @@ func connectSOLSession(sessionURL, jwtToken, amtPass string) error {
 		}
 	}()
 
+	// Signal readiness to the caller so it can print session info.
+	if readyCh != nil {
+		readyCh <- localPort
+	}
+
 	// Print connection info
 	fmt.Printf("\n========================================\n")
 	fmt.Printf("  SOL SESSION ACTIVE\n")
@@ -543,15 +612,51 @@ func connectSOLSession(sessionURL, jwtToken, amtPass string) error {
 	return nil
 }
 
-// getAMTPassword retrieves the AMT password. It checks the AMT_PASSWORD
-// environment variable first, then uses a hardcoded fallback for development.
+// getAMTPassword retrieves the AMT password.  Priority:
+//  1. AMT_PASSWORD env var
+//  2. Vault secret (via kubectl exec)
+//  3. K8s secret dm-manager-amt-password
 func getAMTPassword() string {
 	if pass := os.Getenv("AMT_PASSWORD"); pass != "" {
 		return pass
 	}
-	// Try to read from common secret locations
-	// In production, this would come from Vault or K8s secret
+
+	// Try Vault: kubectl exec -n orch-platform vault-0 -- vault kv get -field=password secret/amt-password
+	if out, err := execCommand("kubectl", "exec", "-n", "orch-platform", "vault-0", "--",
+		"vault", "kv", "get", "-field=password", "secret/amt-password"); err == nil && out != "" {
+		fmt.Fprintf(os.Stderr, "[SOL] AMT password obtained from Vault.\n")
+		return out
+	}
+
+	// Try K8s secret: kubectl get secret -n orch-infra dm-manager-amt-password -o jsonpath='{.data.password}'
+	if out, err := execCommand("kubectl", "get", "secret", "-n", "orch-infra",
+		"dm-manager-amt-password", "-o", "jsonpath={.data.password}"); err == nil && out != "" {
+		if decoded, decErr := base64Decode(out); decErr == nil && decoded != "" {
+			fmt.Fprintf(os.Stderr, "[SOL] AMT password obtained from K8s secret.\n")
+			return decoded
+		}
+	}
+
 	return ""
+}
+
+// execCommand runs a command and returns its trimmed stdout.
+func execCommand(name string, args ...string) (string, error) {
+	cmd := exec.Command(name, args...)
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// base64Decode decodes a base64 string.
+func base64Decode(s string) (string, error) {
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 // getJWTToken retrieves the current JWT access token from the auth store.

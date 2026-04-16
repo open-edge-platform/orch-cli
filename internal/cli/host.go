@@ -3308,7 +3308,27 @@ func pollForSessionURL(ctx context.Context, hostClient infra.ClientWithResponses
 						fmt.Printf("Set JWT_TOKEN env var or run 'orch-cli login' first.\n")
 						return nil
 					}
-					return connectSOLSession(*sessionURL, jwtToken, amtPass)
+					// Launch SOL session in a background goroutine.
+					// Once the local proxy server is ready, we print
+					// the connection info and let orch-cli keep running
+					// in background until Ctrl-C or MPS disconnects.
+					readyCh := make(chan int, 1)
+					errCh := make(chan error, 1)
+					go func() {
+						errCh <- connectSOLSession(*sessionURL, jwtToken, amtPass, readyCh)
+					}()
+
+					// Wait for the local server to be ready or an early error.
+					select {
+					case port := <-readyCh:
+						// Session is active and proxy is listening.
+						fmt.Printf("\nSOL session running in background on port %d.\n", port)
+						fmt.Printf("Run: wssh3 ws://localhost:%d/ws/terminal\n", port)
+						// Block here until the background session ends.
+						return <-errCh
+					case err := <-errCh:
+						return err
+					}
 				}
 
 				fmt.Printf("%s Session URL: %s\n", strings.ToUpper(sessionType), *sessionURL)
