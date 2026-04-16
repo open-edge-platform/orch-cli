@@ -58,6 +58,14 @@ func CamelCaseToSpaces(s string) string {
 	return result.String()
 }
 
+func headerLabelForField(field string) string {
+	if field == "ApplicationReferences" {
+		return "APPLICATION COUNT"
+	}
+
+	return strings.ToUpper(CamelCaseToSpaces(field))
+}
+
 /* GetHeaderString
  *
  * From a template, extract the set of column names.
@@ -80,9 +88,9 @@ func GetHeaderString(tmpl *template.Template, nameLimit int) string {
 					if start < 0 {
 						start = 0
 					}
-					header += strings.ToUpper(CamelCaseToSpaces(strings.Join(parts[start:], ".")))
+					header += headerLabelForField(strings.Join(parts[start:], "."))
 				} else {
-					header += strings.ToUpper(CamelCaseToSpaces(found[1]))
+					header += headerLabelForField(found[1])
 				}
 			}
 		}

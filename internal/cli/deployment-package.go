@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	DEFAULT_DEPLOYMENT_PACKAGE_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Version}}\t{{.Kind}}\t{{.DefaultProfileName}}\t{{.IsDeployed}}"
+	DEFAULT_DEPLOYMENT_PACKAGE_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Version}}\t{{.Kind}}\t{{.DefaultProfileName}}\t{{.IsDeployed}}\t{{len .ApplicationReferences}}"
 	DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT = `Name: {{.Name}}
 Display Name: {{str .DisplayName}}
 Description: {{str .Description}}

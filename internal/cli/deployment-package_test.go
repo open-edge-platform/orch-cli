@@ -113,6 +113,7 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 			"KIND":                 "<nil>",
 			"DEFAULT PROFILE NAME": "default-profile",
 			"IS DEPLOYED":          "false",
+			"APPLICATION COUNT":    "2",
 		},
 	}
 
