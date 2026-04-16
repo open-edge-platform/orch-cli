@@ -35,6 +35,12 @@ orch-cli get user sample-user
 
 # Get user details including group memberships
 orch-cli get user sample-user --groups
+
+# Get user details including realm role assignments
+orch-cli get user sample-user --roles
+
+# Get user details with both groups and roles
+orch-cli get user sample-user --groups --roles
 `
 
 const createUserExamples = `# Create a user with just a username
@@ -74,6 +80,15 @@ orch-cli set user sample-user --remove-group org-admin-group
 
 # Add and remove groups in one command
 orch-cli set user sample-user --add-group edge-manager-group --remove-group edge-operator-group
+
+# Assign a realm role to a user
+orch-cli set user sample-user --add-realm-role "${ORG_UID}_${PROJ_UID}_m"
+
+# Remove a realm role from a user
+orch-cli set user sample-user --remove-realm-role "${ORG_UID}_${PROJ_UID}_m"
+
+# Combine group and realm role changes
+orch-cli set user sample-user --add-group edge-manager-group --add-realm-role "${ORG_UID}_${PROJ_UID}_m"
 `
 
 func printUsers(writer io.Writer, users []keycloak.UserRepresentation, verbose bool) {
@@ -100,7 +115,7 @@ func printUsers(writer io.Writer, users []keycloak.UserRepresentation, verbose b
 	}
 }
 
-func printUser(writer io.Writer, user *keycloak.UserRepresentation, groups []keycloak.GroupRepresentation) {
+func printUser(writer io.Writer, user *keycloak.UserRepresentation, groups []keycloak.GroupRepresentation, roles []keycloak.RoleRepresentation) {
 	if user == nil {
 		fmt.Fprintf(writer, "User not found\n")
 		return
@@ -124,6 +139,14 @@ func printUser(writer io.Writer, user *keycloak.UserRepresentation, groups []key
 			groupNames = append(groupNames, g.Name)
 		}
 		_, _ = fmt.Fprintf(writer, "Groups: \t%s\n", strings.Join(groupNames, ", "))
+	}
+
+	if roles != nil {
+		roleNames := make([]string, 0, len(roles))
+		for _, r := range roles {
+			roleNames = append(roleNames, r.Name)
+		}
+		_, _ = fmt.Fprintf(writer, "Realm Roles: \t%s\n", strings.Join(roleNames, ", "))
 	}
 }
 
@@ -156,6 +179,7 @@ func getGetUserCommand() *cobra.Command {
 		RunE:    runGetUserCommand,
 	}
 	cmd.Flags().Bool("groups", false, "Also list the user's group memberships")
+	cmd.Flags().Bool("roles", false, "Also list the user's realm role assignments")
 	cmd.Flags().String("realm", "master", "Keycloak realm")
 	return cmd
 }
@@ -196,7 +220,7 @@ func getDeleteUserCommand() *cobra.Command {
 func getSetUserCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "user <username> [flags]",
-		Short:   "Update a user (password, group membership)",
+		Short:   "Update a user (password, group membership, realm roles)",
 		Example: setUserExamples,
 		Args:    cobra.ExactArgs(1),
 		Aliases: userAliases,
@@ -207,6 +231,8 @@ func getSetUserCommand() *cobra.Command {
 	cmd.Flags().Bool("temporary-password", false, "If set, user must change password on first login")
 	cmd.Flags().StringSlice("add-group", nil, "Group name(s) to add the user to")
 	cmd.Flags().StringSlice("remove-group", nil, "Group name(s) to remove the user from")
+	cmd.Flags().StringSlice("add-realm-role", nil, "Realm role name(s) to assign to the user")
+	cmd.Flags().StringSlice("remove-realm-role", nil, "Realm role name(s) to remove from the user")
 	cmd.Flags().String("realm", "master", "Keycloak realm")
 	return cmd
 }
@@ -255,7 +281,16 @@ func runGetUserCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	printUser(writer, user, groups)
+	var roles []keycloak.RoleRepresentation
+	showRoles, _ := cmd.Flags().GetBool("roles")
+	if showRoles {
+		roles, err = kcClient.ListUserRealmRoles(ctx, realm, user.ID)
+		if err != nil {
+			return fmt.Errorf("error getting user realm roles: %w", err)
+		}
+	}
+
+	printUser(writer, user, groups, roles)
 	return writer.Flush()
 }
 
@@ -389,6 +424,31 @@ func runSetUserCommand(cmd *cobra.Command, args []string) error {
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Removed user %q from group %q\n", username, groupName)
 		}
+	}
+
+	addRoles, _ := cmd.Flags().GetStringSlice("add-realm-role")
+	removeRoles, _ := cmd.Flags().GetStringSlice("remove-realm-role")
+
+	for _, roleName := range addRoles {
+		role, err := kcClient.GetRealmRoleByName(ctx, realm, roleName)
+		if err != nil {
+			return fmt.Errorf("realm role %q not found: %w", roleName, err)
+		}
+		if err := kcClient.AddRealmRolesToUser(ctx, realm, user.ID, []keycloak.RoleRepresentation{*role}); err != nil {
+			return fmt.Errorf("error assigning realm role %q: %w", roleName, err)
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Assigned realm role %q to user %q\n", roleName, username)
+	}
+
+	for _, roleName := range removeRoles {
+		role, err := kcClient.GetRealmRoleByName(ctx, realm, roleName)
+		if err != nil {
+			return fmt.Errorf("realm role %q not found: %w", roleName, err)
+		}
+		if err := kcClient.RemoveRealmRolesFromUser(ctx, realm, user.ID, []keycloak.RoleRepresentation{*role}); err != nil {
+			return fmt.Errorf("error removing realm role %q: %w", roleName, err)
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Removed realm role %q from user %q\n", roleName, username)
 	}
 
 	return nil

@@ -27,6 +27,10 @@ type ClientInterface interface {
 	AddUserToGroup(ctx context.Context, realm, userID, groupID string) error
 	RemoveUserFromGroup(ctx context.Context, realm, userID, groupID string) error
 	ListGroups(ctx context.Context, realm string) ([]GroupRepresentation, error)
+	GetRealmRoleByName(ctx context.Context, realm, roleName string) (*RoleRepresentation, error)
+	ListUserRealmRoles(ctx context.Context, realm, userID string) ([]RoleRepresentation, error)
+	AddRealmRolesToUser(ctx context.Context, realm, userID string, roles []RoleRepresentation) error
+	RemoveRealmRolesFromUser(ctx context.Context, realm, userID string, roles []RoleRepresentation) error
 }
 
 // AuthHeaderFunc is a function that injects auth headers into a request.
@@ -260,4 +264,60 @@ func (c *Client) ListGroups(ctx context.Context, realm string) ([]GroupRepresent
 		return nil, fmt.Errorf("failed to decode groups response: %w", err)
 	}
 	return groups, nil
+}
+
+func (c *Client) GetRealmRoleByName(ctx context.Context, realm, roleName string) (*RoleRepresentation, error) {
+	path := fmt.Sprintf("%s/roles/%s", c.adminPath(realm), url.PathEscape(roleName))
+	body, status, err := c.doRequest(ctx, http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	if status != http.StatusOK {
+		return nil, fmt.Errorf("get realm role %q failed (%d): %s", roleName, status, truncateBody(body, 256))
+	}
+	var role RoleRepresentation
+	if err := json.Unmarshal(body, &role); err != nil {
+		return nil, fmt.Errorf("failed to decode role response: %w", err)
+	}
+	return &role, nil
+}
+
+func (c *Client) ListUserRealmRoles(ctx context.Context, realm, userID string) ([]RoleRepresentation, error) {
+	path := fmt.Sprintf("%s/users/%s/role-mappings/realm", c.adminPath(realm), url.PathEscape(userID))
+	body, status, err := c.doRequest(ctx, http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
+	if status != http.StatusOK {
+		return nil, fmt.Errorf("list user realm roles failed (%d): %s", status, truncateBody(body, 256))
+	}
+	var roles []RoleRepresentation
+	if err := json.Unmarshal(body, &roles); err != nil {
+		return nil, fmt.Errorf("failed to decode roles response: %w", err)
+	}
+	return roles, nil
+}
+
+func (c *Client) AddRealmRolesToUser(ctx context.Context, realm, userID string, roles []RoleRepresentation) error {
+	path := fmt.Sprintf("%s/users/%s/role-mappings/realm", c.adminPath(realm), url.PathEscape(userID))
+	body, status, err := c.doRequest(ctx, http.MethodPost, path, roles)
+	if err != nil {
+		return err
+	}
+	if status != http.StatusNoContent {
+		return fmt.Errorf("add realm roles to user failed (%d): %s", status, truncateBody(body, 256))
+	}
+	return nil
+}
+
+func (c *Client) RemoveRealmRolesFromUser(ctx context.Context, realm, userID string, roles []RoleRepresentation) error {
+	path := fmt.Sprintf("%s/users/%s/role-mappings/realm", c.adminPath(realm), url.PathEscape(userID))
+	body, status, err := c.doRequest(ctx, http.MethodDelete, path, roles)
+	if err != nil {
+		return err
+	}
+	if status != http.StatusNoContent {
+		return fmt.Errorf("remove realm roles from user failed (%d): %s", status, truncateBody(body, 256))
+	}
+	return nil
 }

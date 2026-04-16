@@ -20,6 +20,11 @@ type GroupRepresentation struct {
 	Path string `json:"path,omitempty"`
 }
 
+type RoleRepresentation struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
 // CredentialRepresentation is used for password reset requests.
 type CredentialRepresentation struct {
 	Type      string `json:"type"`

@@ -145,6 +145,41 @@ func CreateKeycloakAdminMock(mctrl *gomock.Controller) interfaces.KeycloakAdminF
 			gomock.Any(), gomock.Any(),
 		).Return(allGroups, nil).AnyTimes()
 
+		allRealmRoles := map[string]kcapi.RoleRepresentation{
+			"org1_proj1_m": {ID: "role-uuid-1", Name: "org1_proj1_m"},
+			"org1_proj2_m": {ID: "role-uuid-2", Name: "org1_proj2_m"},
+		}
+
+		mockClient.EXPECT().GetRealmRoleByName(
+			gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, _ string, roleName string) (*kcapi.RoleRepresentation, error) {
+				if role, ok := allRealmRoles[roleName]; ok {
+					return &role, nil
+				}
+				return nil, fmt.Errorf("realm role %q not found", roleName)
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().ListUserRealmRoles(
+			gomock.Any(), gomock.Any(), gomock.Any(),
+		).DoAndReturn(
+			func(_ context.Context, _ string, userID string) ([]kcapi.RoleRepresentation, error) {
+				if userID == sampleUserID {
+					return []kcapi.RoleRepresentation{allRealmRoles["org1_proj1_m"]}, nil
+				}
+				return []kcapi.RoleRepresentation{}, nil
+			},
+		).AnyTimes()
+
+		mockClient.EXPECT().AddRealmRolesToUser(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(nil).AnyTimes()
+
+		mockClient.EXPECT().RemoveRealmRolesFromUser(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(nil).AnyTimes()
+
 		ctx := context.Background()
 		return ctx, mockClient, "master", nil
 	}

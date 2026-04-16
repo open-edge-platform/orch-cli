@@ -226,3 +226,71 @@ func (s *CLITestSuite) TestSetUserGroupNotFound() {
 	s.Error(err)
 	s.Contains(err.Error(), "not found")
 }
+
+func (s *CLITestSuite) TestSetUserAddRealmRole() {
+	CArgs := map[string]string{
+		"add-realm-role": "org1_proj1_m",
+	}
+	output, err := s.setUser("sample-user", CArgs)
+	s.NoError(err)
+	s.Contains(output, "Assigned realm role")
+	s.Contains(output, "org1_proj1_m")
+}
+
+func (s *CLITestSuite) TestSetUserRemoveRealmRole() {
+	CArgs := map[string]string{
+		"remove-realm-role": "org1_proj1_m",
+	}
+	output, err := s.setUser("sample-user", CArgs)
+	s.NoError(err)
+	s.Contains(output, "Removed realm role")
+	s.Contains(output, "org1_proj1_m")
+}
+
+func (s *CLITestSuite) TestSetUserRealmRoleNotFound() {
+	CArgs := map[string]string{
+		"add-realm-role": "nonexistent-role",
+	}
+	_, err := s.setUser("sample-user", CArgs)
+	s.Error(err)
+	s.Contains(err.Error(), "not found")
+}
+
+func (s *CLITestSuite) TestSetUserAddGroupAndRealmRole() {
+	CArgs := map[string]string{
+		"add-group":      "edge-manager-group",
+		"add-realm-role": "org1_proj1_m",
+	}
+	output, err := s.setUser("sample-user", CArgs)
+	s.NoError(err)
+	s.Contains(output, "Added user")
+	s.Contains(output, "edge-manager-group")
+	s.Contains(output, "Assigned realm role")
+	s.Contains(output, "org1_proj1_m")
+}
+
+func (s *CLITestSuite) TestGetUserWithRoles() {
+	CArgs := map[string]string{
+		"roles": "true",
+	}
+	getOutput, err := s.getUser("sample-user", CArgs)
+	s.NoError(err)
+
+	parsedOutput := mapGetOutput(getOutput)
+	s.Equal("sample-user", parsedOutput["Username:"])
+	s.Contains(parsedOutput["Realm Roles:"], "org1_proj1_m")
+}
+
+func (s *CLITestSuite) TestGetUserWithGroupsAndRoles() {
+	CArgs := map[string]string{
+		"groups": "true",
+		"roles":  "true",
+	}
+	getOutput, err := s.getUser("sample-user", CArgs)
+	s.NoError(err)
+
+	parsedOutput := mapGetOutput(getOutput)
+	s.Equal("sample-user", parsedOutput["Username:"])
+	s.Contains(parsedOutput["Groups:"], "org-admin-group")
+	s.Contains(parsedOutput["Realm Roles:"], "org1_proj1_m")
+}
