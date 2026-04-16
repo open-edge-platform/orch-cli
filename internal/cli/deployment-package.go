@@ -89,9 +89,7 @@ func getListDeploymentPackagesCommand() *cobra.Command {
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "deployment package")
 	cmd.Flags().StringSlice("kind", []string{}, "deployment package kind: normal, addon, extension")
-	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
-	cmd.Flags().String("output-filter", "", "Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML")
-	addTableOutputTemplateFlags(cmd)
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -104,8 +102,7 @@ func getGetDeploymentPackageCommand() *cobra.Command {
 		Example: "orch-cli get deployment-package my-package --project some-project",
 		RunE:    runGetDeploymentPackageCommand,
 	}
-	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
-	addTableOutputTemplateFlags(cmd)
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

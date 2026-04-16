@@ -292,6 +292,21 @@ func addTableOutputTemplateFlags(cmd *cobra.Command) {
 	cmd.Flags().String("output-template-file", "", "Optional path to a file containing a custom template for table output")
 }
 
+// Adds standard output flags for list commands supporting table/json/yaml output,
+// optional client-side table filtering, and table template overrides.
+func addStandardListOutputFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	cmd.Flags().String("output-filter", "", "Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML")
+	addTableOutputTemplateFlags(cmd)
+}
+
+// Adds standard output flags for get commands supporting table/json/yaml output
+// and table template overrides.
+func addStandardGetOutputFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	addTableOutputTemplateFlags(cmd)
+}
+
 func normalizeEscapedOutputTemplate(in string) string {
 	return strings.NewReplacer(`\t`, "\t", `\n`, "\n", `\r`, "\r").Replace(in)
 }
