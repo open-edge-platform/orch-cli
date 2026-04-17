@@ -22,7 +22,7 @@ MOCKGEN_VERSION = v0.5.2
 
 FUZZ_TIME ?= 30m
 
-.PHONY: build test
+.PHONY: build test fetch-infra-openapi rest-client-gen-infra
 
 all:  build lint test
 	@# Help: Runs build, lint, test stages
@@ -97,8 +97,8 @@ fetch-cluster-openapi:
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-cluster-manager-openapi.yaml -o pkg/rest/cluster/amc-cluster-manager-openapi.yaml
 
 fetch-infra-openapi:
-	@# Help: Fetch the Infra Manager OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-core/main/apiv2/api/openapi/openapi.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
+	@# Help: Fetch the Infra Manager OpenAPI spec (KVM-support branch)
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-core/enable-kvm-support-apiv2/apiv2/api/openapi/openapi.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 
 fetch-rps-openapi:
 	@# Help: Fetch the OpenDMT RPS OpenAPI spec
@@ -132,6 +132,11 @@ mockgen-dependency:
 
 # Supported oapi-codegen version v2.4.1
 # install command: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.4.1
+rest-client-gen-infra: oapi-codegen-dependency
+	@# Help: Regenerate only the Infra REST client (KVM branch)
+	oapi-codegen -generate client -old-config-style -package infra -o pkg/rest/infra/client.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
+	oapi-codegen -generate types -old-config-style -package infra -o pkg/rest/infra/types.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
+
 rest-client-gen: oapi-codegen-dependency
 	@# Help: Generate Rest client from the MT GW openapi spec.
 	oapi-codegen -generate client -old-config-style -package catalog -o pkg/rest/catalog/client.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml

@@ -481,8 +481,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							DesiredAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
 							CurrentKvmState:             (*infra.KvmState)(stringPtr("KVM_STATE_UNSPECIFIED")),
 							DesiredKvmState:             (*infra.KvmState)(stringPtr("KVM_STATE_UNSPECIFIED")),
-							CurrentSolState:             (*infra.SolState)(stringPtr("SOL_STATE_UNSPECIFIED")),
-							DesiredSolState:             (*infra.SolState)(stringPtr("SOL_STATE_UNSPECIFIED")),
 							HostStatus:                  stringPtr("Provisioning"),
 							HostStatusIndicator:         (*infra.StatusIndication)(stringPtr("STATUS_INDICATION_WORKING")),
 							OnboardingStatus:            stringPtr("Onboarding in progress"),
@@ -610,9 +608,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								CurrentKvmState:    (*infra.KvmState)(stringPtr("KVM_STATE_START")),
 								DesiredKvmState:    (*infra.KvmState)(stringPtr("KVM_STATE_START")),
 								KvmSessionUrl:      stringPtr("https://kvm.example.com/session/12345"),
-								CurrentSolState:    (*infra.SolState)(stringPtr("SOL_STATE_START")),
-								DesiredSolState:    (*infra.SolState)(stringPtr("SOL_STATE_START")),
-								SolSessionUrl:      stringPtr("https://sol.example.com/session/67890"),
 								DesiredPowerState:  (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
 								AmtControlMode:     (*infra.AmtControlMode)(stringPtr("AMT_CONTROL_MODE_ACM")),
 								AmtDnsSuffix:       stringPtr("example.com"),
@@ -745,8 +740,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							DesiredAmtState:             (*infra.AmtState)(stringPtr("AMT_STATE_UNKNOWN")),
 							CurrentKvmState:             (*infra.KvmState)(stringPtr("KVM_STATE_UNSPECIFIED")),
 							DesiredKvmState:             (*infra.KvmState)(stringPtr("KVM_STATE_UNSPECIFIED")),
-							CurrentSolState:             (*infra.SolState)(stringPtr("SOL_STATE_UNSPECIFIED")),
-							DesiredSolState:             (*infra.SolState)(stringPtr("SOL_STATE_UNSPECIFIED")),
 							Timestamps: &infra.Timestamps{
 								CreatedAt: timestampPtr(timestamp),
 								UpdatedAt: timestampPtr(timestamp),
@@ -920,8 +913,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							CurrentAmtState:   (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
 							CurrentKvmState:   (*infra.KvmState)(stringPtr("KVM_STATE_START")),
 							KvmSessionUrl:     stringPtr("https://kvm.example.com/session/12345"),
-							CurrentSolState:   (*infra.SolState)(stringPtr("SOL_STATE_START")),
-							SolSessionUrl:     stringPtr("https://sol.example.com/session/67890"),
 
 							// User-controlled desired states
 							DesiredState: func() *infra.HostState {
