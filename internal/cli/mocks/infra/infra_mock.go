@@ -1,4 +1,5 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+//
 // SPDX-License-Identifier: Apache-2.0
 
 package infra
@@ -680,6 +681,12 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									CreatedAt: timestampPtr(timestamp),
 									UpdatedAt: timestampPtr(timestamp),
 								},
+								Metadata: &[]infra.MetadataItem{
+									{
+										Key:   "environment",
+										Value: "production",
+									},
+								},
 							},
 						}, nil
 					}
@@ -943,8 +950,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								}
 								return stringPtr("site-abc123")
 							}(),
-							Metadata: body.Metadata,
-
 							// Timestamps
 							Timestamps: &infra.Timestamps{
 								CreatedAt: timestampPtr(timestamp),

@@ -1,4 +1,5 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+//
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -391,6 +392,8 @@ func (s *CLITestSuite) TestHost() {
 		"-   Product Name:":               "ThinkSystem SR650",
 		"Customizations:":                 "",
 		"-   Custom configs:":             "haproxy-config",
+		"Metadata:":                       "",
+		"-   environment:":                "production",
 		"CPU Info:":                       "",
 		"Model":                           "Cores   |Architecture   |Threads   |Sockets",
 		"Intel(R) Xeon(R) CPU E5-2670 v3": "8       |x86_64         |32        |2",
