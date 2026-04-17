@@ -63,7 +63,29 @@ func headerLabelForField(field string) string {
 		return "APPLICATION COUNT"
 	}
 
-	return strings.ToUpper(CamelCaseToSpaces(field))
+	// Special case for DeployId to match legacy header
+	if field == "DeployId" {
+		return "DEPLOYMENT ID"
+	}
+
+	// Handle nested fields (e.g., "Status.State") by processing each part
+	parts := strings.Split(field, ".")
+	var processedParts []string
+	for _, part := range parts {
+		// Convert camelCase to spaces
+		spaced := CamelCaseToSpaces(part)
+
+		// Special handling for common ID patterns to avoid "I D" in headers
+		// Replace " Id" at the end with " ID"
+		if strings.HasSuffix(spaced, " Id") {
+			spaced = strings.TrimSuffix(spaced, " Id") + " ID"
+		}
+
+		processedParts = append(processedParts, strings.ToUpper(spaced))
+	}
+
+	// Join with space instead of dot for better readability
+	return strings.Join(processedParts, " ")
 }
 
 /* GetHeaderString
@@ -121,6 +143,8 @@ func (f Format) Execute(writer io.Writer, withHeaders bool, nameLimit int, data 
 		"gosince":   formatGoSince,
 		"deref":     formatDeref,
 		"str":       formatString,
+		"none":      formatStringOrNone,
+		"fmttime":   formatTimeSimple,
 	}
 
 	tmpl, err := template.New("output").Funcs(funcmap).Parse(string(format))

@@ -10,8 +10,29 @@ import (
 
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
+)
+
+const (
+	DEFAULT_APPLICATION_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Version}}\t{{.Kind}}\t{{.ChartName}}\t{{.ChartVersion}}\t{{.HelmRegistryName}}\t{{.DefaultProfileName}}"
+	DEFAULT_APPLICATION_INSPECT_FORMAT = `Name: {{.Name}}
+Display Name: {{str .DisplayName}}
+Description: {{str .Description}}
+Version: {{.Version}}
+Kind: {{.Kind}}
+Helm Registry Name: {{.HelmRegistryName}}
+Image Registry Name: {{str .ImageRegistryName}}
+Chart Name: {{.ChartName}}
+Chart Version: {{.ChartVersion}}
+Create Time: {{.CreateTime}}
+Update Time: {{.UpdateTime}}
+Profiles:{{- range deref .Profiles}}
+  {{.Name}}{{- end}}
+Default Profile: {{str .DefaultProfileName}}
+`
+	APPLICATION_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_APPLICATION_OUTPUT_TEMPLATE"
 )
 
 func getCreateApplicationCommand() *cobra.Command {
@@ -42,6 +63,7 @@ func getListApplicationsCommand() *cobra.Command {
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "application")
 	cmd.Flags().StringSlice("kind", []string{}, "application kind: normal, addon, extension")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -54,6 +76,7 @@ func getGetApplicationCommand() *cobra.Command {
 		Example: "orch-cli get application my-app --project some-project",
 		RunE:    runGetApplicationCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -85,50 +108,6 @@ func getDeleteApplicationCommand() *cobra.Command {
 		RunE:    runDeleteApplicationCommand,
 	}
 	return cmd
-}
-
-var applicationHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-	"Name", "Display Name", "Version", "Kind", "Chart Name", "Chart Version", "Helm Registry Name", "Default Profile")
-
-func printApplications(writer io.Writer, appList *[]catapi.CatalogV3Application, verbose bool) {
-	for _, app := range *appList {
-		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", app.Name,
-				valueOrNone(app.DisplayName), app.Version, applicationKind2String(app.Kind),
-				app.ChartName, app.ChartVersion, app.HelmRegistryName, valueOrNone(app.DefaultProfileName))
-		} else {
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", app.Name)
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(app.DisplayName))
-			_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(app.Description))
-			_, _ = fmt.Fprintf(writer, "Version: %s\n", app.Version)
-			_, _ = fmt.Fprintf(writer, "Kind: %s\n", applicationKind2String(app.Kind))
-			_, _ = fmt.Fprintf(writer, "Helm Registry Name: %s\n", app.HelmRegistryName)
-			_, _ = fmt.Fprintf(writer, "Image Registry Name: %s\n", valueOrNone(app.ImageRegistryName))
-			_, _ = fmt.Fprintf(writer, "Chart Name: %s\n", app.ChartName)
-			_, _ = fmt.Fprintf(writer, "Chart Version: %s\n", app.ChartVersion)
-			createTime := ""
-			if app.CreateTime != nil {
-				createTime = app.CreateTime.Format(timeLayout)
-			}
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", createTime)
-
-			updateTime := ""
-			if app.UpdateTime != nil {
-				updateTime = app.UpdateTime.Format(timeLayout)
-			}
-			_, _ = fmt.Fprintf(writer, "Update Time: %s\n", updateTime)
-
-			profiles := make([]string, 0)
-			if app.Profiles != nil {
-				profiles = make([]string, 0, len(*app.Profiles))
-				for _, p := range *app.Profiles {
-					profiles = append(profiles, p.Name)
-				}
-			}
-			_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
-			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n\n", valueOrNone(app.DefaultProfileName))
-		}
-	}
 }
 
 func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
@@ -232,11 +211,65 @@ func getApplicationKinds(cmd *cobra.Command) *[]catapi.CatalogV3Kind {
 	return &list
 }
 
+func getApplicationOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_APPLICATION_INSPECT_FORMAT, nil
+	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_APPLICATION_FORMAT, APPLICATION_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func printApplications(cmd *cobra.Command, writer io.Writer, appList *[]catapi.CatalogV3Application, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getApplicationOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *appList,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
+}
+
 func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := getFlag(cmd, "order-by")
+	var clientOrderBy *string
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		// Validate client-side ordering fields.
+		if apiOrderBy != nil {
+			var sampleApp catapi.CatalogV3Application
+			clientOrderBy, err = normalizeOrderByForClientSorting(*apiOrderBy, sampleApp)
+			if err != nil {
+				return err
+			}
+		}
+		apiOrderBy = nil
 	}
 
 	pageSize, offset, err := getPageSizeOffset(cmd)
@@ -249,7 +282,7 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListApplicationsParams{
 				Kinds:    getApplicationKinds(cmd),
-				OrderBy:  getFlag(cmd, "order-by"),
+				OrderBy:  apiOrderBy,
 				Filter:   getFlag(cmd, "filter"),
 				PageSize: &pageSize,
 				Offset:   &offset,
@@ -257,24 +290,23 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, applicationHeader,
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 			"error listing applications"); !proceed {
 			return err
 		}
-		printApplications(writer, &resp.JSON200.Applications, verbose)
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printApplications(cmd, writer, &resp.JSON200.Applications, clientOrderBy, &outputFilter, verbose); err != nil {
+			return err
+		}
 		return writer.Flush()
 	}
 
 	allApplications := make([]catapi.CatalogV3Application, 0)
 
-	if !verbose {
-		_, _ = fmt.Fprintf(writer, "%s\n", applicationHeader)
-	}
-
 	resp, err := catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListApplicationsParams{
 			Kinds:    getApplicationKinds(cmd),
-			OrderBy:  getFlag(cmd, "order-by"),
+			OrderBy:  apiOrderBy,
 			Filter:   getFlag(cmd, "filter"),
 			PageSize: &pageSize,
 			Offset:   &offset,
@@ -304,7 +336,7 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 		resp, err = catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListApplicationsParams{
 				Kinds:    getApplicationKinds(cmd),
-				OrderBy:  getFlag(cmd, "order-by"),
+				OrderBy:  apiOrderBy,
 				Filter:   getFlag(cmd, "filter"),
 				PageSize: &pageSize,
 				Offset:   &offset,
@@ -323,7 +355,10 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 		allApplications = append(allApplications, resp.JSON200.Applications...)
 	}
 
-	printApplications(writer, &allApplications, verbose)
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printApplications(cmd, writer, &allApplications, clientOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -343,7 +378,7 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, applicationHeader,
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 			fmt.Sprintf("error getting application %s:%s", name, version)); !proceed {
 			return err
 		}
@@ -354,7 +389,7 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, applicationHeader,
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 			fmt.Sprintf("error getting application %s versions", name)); !proceed {
 			return err
 		}
@@ -363,7 +398,9 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("no versions of application %s found", name)
 		}
 	}
-	printApplications(writer, &appList, verbose)
+	if err := printApplications(cmd, writer, &appList, nil, nil, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -474,6 +511,39 @@ func printApplicationEvent(writer io.Writer, _ string, payload []byte, verbose b
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printApplications(writer, &[]catapi.CatalogV3Application{item}, verbose)
+	if !verbose {
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", item.Name,
+			valueOrNone(item.DisplayName), item.Version, applicationKind2String(item.Kind),
+			item.ChartName, item.ChartVersion, item.HelmRegistryName, valueOrNone(item.DefaultProfileName))
+	} else {
+		_, _ = fmt.Fprintf(writer, "Name: %s\n", item.Name)
+		_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(item.DisplayName))
+		_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(item.Description))
+		_, _ = fmt.Fprintf(writer, "Version: %s\n", item.Version)
+		_, _ = fmt.Fprintf(writer, "Kind: %s\n", applicationKind2String(item.Kind))
+		_, _ = fmt.Fprintf(writer, "Helm Registry Name: %s\n", item.HelmRegistryName)
+		_, _ = fmt.Fprintf(writer, "Image Registry Name: %s\n", valueOrNone(item.ImageRegistryName))
+		_, _ = fmt.Fprintf(writer, "Chart Name: %s\n", item.ChartName)
+		_, _ = fmt.Fprintf(writer, "Chart Version: %s\n", item.ChartVersion)
+		creatTime := ""
+		if item.CreateTime != nil {
+			creatTime = item.CreateTime.Format(timeLayout)
+		}
+		_, _ = fmt.Fprintf(writer, "Create Time: %s\n", creatTime)
+		updateTime := ""
+		if item.UpdateTime != nil {
+			updateTime = item.UpdateTime.Format(timeLayout)
+		}
+		_, _ = fmt.Fprintf(writer, "Update Time: %s\n", updateTime)
+		profiles := make([]string, 0)
+		if item.Profiles != nil {
+			profiles = make([]string, 0, len(*item.Profiles))
+			for _, p := range *item.Profiles {
+				profiles = append(profiles, p.Name)
+			}
+		}
+		_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
+		_, _ = fmt.Fprintf(writer, "Default Profile: %s\n\n", valueOrNone(item.DefaultProfileName))
+	}
 	return nil
 }

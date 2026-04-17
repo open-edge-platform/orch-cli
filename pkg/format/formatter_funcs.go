@@ -68,3 +68,16 @@ func formatString(v *string) string {
 	}
 	return *v
 }
+
+// Renders a string pointer as "<none>" if nil or empty.
+func formatStringOrNone(v *string) string {
+	if v == nil || *v == "" {
+		return "<none>"
+	}
+	return *v
+}
+
+// Formats a time.Time using ISO-8601 format without timezone.
+func formatTimeSimple(t time.Time) string {
+	return t.Format("2006-01-02T15:04:05")
+}

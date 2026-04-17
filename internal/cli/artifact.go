@@ -9,8 +9,19 @@ import (
 	"io"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
+)
+
+const (
+	DEFAULT_ARTIFACT_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Description}}"
+	DEFAULT_ARTIFACT_INSPECT_FORMAT = `Name: {{.Name}}
+Display Name: {{str .DisplayName}}
+Description: {{str .Description}}
+Mime Type: {{.MimeType}}
+`
+	ARTIFACT_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_ARTIFACT_OUTPUT_TEMPLATE"
 )
 
 func getCreateArtifactCommand() *cobra.Command {
@@ -38,6 +49,7 @@ func getListArtifactsCommand() *cobra.Command {
 		RunE:    runListArtifactsCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "artifact")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -50,6 +62,7 @@ func getGetArtifactCommand() *cobra.Command {
 		Aliases: artifactAliases,
 		RunE:    runGetArtifactCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -80,19 +93,42 @@ func getDeleteArtifactCommand() *cobra.Command {
 	return cmd
 }
 
-var artifactHeader = fmt.Sprintf("%s\t%s\t%s", "Name", "Display Name", "Description")
-
-func printArtifacts(writer io.Writer, artifactList *[]catapi.CatalogV3Artifact, verbose bool) {
-	for _, a := range *artifactList {
-		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\n", a.Name, valueOrNone(a.DisplayName), valueOrNone(a.Description))
-		} else {
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", a.Name)
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(a.DisplayName))
-			_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(a.Description))
-			_, _ = fmt.Fprintf(writer, "Mime Type: %s\n\n", a.MimeType)
-		}
+func getArtifactOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_ARTIFACT_INSPECT_FORMAT, nil
 	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_ARTIFACT_FORMAT, ARTIFACT_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func printArtifacts(cmd *cobra.Command, writer io.Writer, artifactList *[]catapi.CatalogV3Artifact, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getArtifactOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *artifactList,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 func runCreateArtifactCommand(cmd *cobra.Command, args []string) error {
@@ -136,6 +172,22 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := getFlag(cmd, "order-by")
+	var clientOrderBy *string
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		// Validate client-side ordering fields.
+		if apiOrderBy != nil {
+			var sampleArtifact catapi.CatalogV3Artifact
+			clientOrderBy, err = normalizeOrderByForClientSorting(*apiOrderBy, sampleArtifact)
+			if err != nil {
+				return err
+			}
+		}
+		apiOrderBy = nil
+	}
+
 	pageSize, offset, err := getPageSizeOffset(cmd)
 	if err != nil {
 		return err
@@ -145,7 +197,7 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
 		resp, err := catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListArtifactsParams{
-				OrderBy:  getFlag(cmd, "order-by"),
+				OrderBy:  apiOrderBy,
 				Filter:   getFlag(cmd, "filter"),
 				PageSize: &pageSize,
 				Offset:   &offset,
@@ -153,23 +205,22 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, artifactHeader,
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 			"error listing artifacts"); !proceed {
 			return err
 		}
-		printArtifacts(writer, &resp.JSON200.Artifacts, verbose)
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printArtifacts(cmd, writer, &resp.JSON200.Artifacts, clientOrderBy, &outputFilter, verbose); err != nil {
+			return err
+		}
 		return writer.Flush()
 	}
 
 	allArtifacts := make([]catapi.CatalogV3Artifact, 0)
 
-	if !verbose {
-		_, _ = fmt.Fprintf(writer, "%s\n", artifactHeader)
-	}
-
 	resp, err := catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListArtifactsParams{
-			OrderBy:  getFlag(cmd, "order-by"),
+			OrderBy:  apiOrderBy,
 			Filter:   getFlag(cmd, "filter"),
 			PageSize: &pageSize,
 			Offset:   &offset,
@@ -198,7 +249,7 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 		offset += pageSize
 		resp, err = catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListArtifactsParams{
-				OrderBy:  getFlag(cmd, "order-by"),
+				OrderBy:  apiOrderBy,
 				Filter:   getFlag(cmd, "filter"),
 				PageSize: &pageSize,
 				Offset:   &offset,
@@ -217,7 +268,10 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 		allArtifacts = append(allArtifacts, resp.JSON200.Artifacts...)
 	}
 
-	printArtifacts(writer, &allArtifacts, verbose)
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printArtifacts(cmd, writer, &allArtifacts, clientOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -233,11 +287,13 @@ func runGetArtifactCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, artifactHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		fmt.Sprintf("error getting artifact %s", name)); !proceed {
 		return err
 	}
-	printArtifacts(writer, &[]catapi.CatalogV3Artifact{resp.JSON200.Artifact}, verbose)
+	if err := printArtifacts(cmd, writer, &[]catapi.CatalogV3Artifact{resp.JSON200.Artifact}, nil, nil, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -317,6 +373,13 @@ func printArtifactEvent(writer io.Writer, _ string, payload []byte, verbose bool
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printArtifacts(writer, &[]catapi.CatalogV3Artifact{item}, verbose)
+	if !verbose {
+		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\n", item.Name, valueOrNone(item.DisplayName), valueOrNone(item.Description))
+	} else {
+		_, _ = fmt.Fprintf(writer, "Name: %s\n", item.Name)
+		_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(item.DisplayName))
+		_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(item.Description))
+		_, _ = fmt.Fprintf(writer, "Mime Type: %s\n\n", item.MimeType)
+	}
 	return nil
 }

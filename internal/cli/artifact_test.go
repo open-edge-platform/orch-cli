@@ -19,7 +19,7 @@ func (s *CLITestSuite) createArtifact(project string, artifactName string, args 
 	return err
 }
 
-func (s *CLITestSuite) listArtifacts(project string, verbose bool, orderBy string, filter string) (string, error) {
+func (s *CLITestSuite) listArtifacts(project string, verbose bool, orderBy string, filter string, outputFilter string, outputTemplate string, outputTemplateFile string) (string, error) {
 	args := `list artifacts --project ` + project
 	if verbose {
 		args = args + " -v"
@@ -29,6 +29,15 @@ func (s *CLITestSuite) listArtifacts(project string, verbose bool, orderBy strin
 	}
 	if filter != "" {
 		args = args + " filter=" + filter
+	}
+	if outputFilter != "" {
+		args = args + " --output-filter " + outputFilter
+	}
+	if outputTemplate != "" {
+		args = args + " --output-template " + outputTemplate
+	}
+	if outputTemplateFile != "" {
+		args = args + " --output-template-file " + outputTemplateFile
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -70,22 +79,22 @@ func (s *CLITestSuite) TestArtifact() {
 	s.NoError(err)
 
 	// list artifacts to make sure it was created properly
-	listOutput, err := s.listArtifacts(project, simpleOutput, "", "")
+	listOutput, err := s.listArtifacts(project, simpleOutput, "", "", "", "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
 	expectedOutput := commandOutput{
 		artifactName: {
-			"Name":         artifactName,
-			"Description":  artifactDescription,
-			"Display Name": artifactName,
+			"NAME":         artifactName,
+			"DESCRIPTION":  artifactDescription,
+			"DISPLAY NAME": artifactDisplayName,
 		},
 	}
 
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list artifact
-	listVerboseOutput, err := s.listArtifacts(project, verboseOutput, "name", "description="+artifactDescription)
+	listVerboseOutput, err := s.listArtifacts(project, verboseOutput, "name", "description="+artifactDescription, "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
@@ -119,6 +128,16 @@ func (s *CLITestSuite) TestArtifact() {
 	// delete the artifact
 	err = s.deleteArtifact(project, artifactName)
 	s.NoError(err)
+
+	// Test error handling for dual template flags (--output-template and --output-template-file both set)
+	_, err = s.listArtifacts(project, simpleOutput, "", "", "", "table{{.Name}}", "/tmp/invalid.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "only one of")
+
+	// Test error handling for missing template file
+	_, err = s.listArtifacts(project, simpleOutput, "", "", "", "", "/nonexistent/path/template.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "unable to read")
 
 	// Not viable to test via mock
 	// // Make sure artifact is gone
@@ -179,7 +198,7 @@ func FuzzArtifact(f *testing.F) {
 			t.Errorf("Unexpected error: %v", err)
 		}
 		// --- List ---
-		_, err = testSuite.listArtifacts(project, false, "", "")
+		_, err = testSuite.listArtifacts(project, false, "", "", "", "", "")
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
