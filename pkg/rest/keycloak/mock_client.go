@@ -179,3 +179,61 @@ func (mr *MockClientInterfaceMockRecorder) ListGroups(ctx, realm interface{}) *g
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGroups", reflect.TypeOf((*MockClientInterface)(nil).ListGroups), ctx, realm)
 }
+
+// GetRealmRoleByName mocks base method.
+func (m *MockClientInterface) GetRealmRoleByName(ctx context.Context, realm, roleName string) (*RoleRepresentation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRealmRoleByName", ctx, realm, roleName)
+	ret0, _ := ret[0].(*RoleRepresentation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRealmRoleByName indicates an expected call of GetRealmRoleByName.
+func (mr *MockClientInterfaceMockRecorder) GetRealmRoleByName(ctx, realm, roleName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRealmRoleByName", reflect.TypeOf((*MockClientInterface)(nil).GetRealmRoleByName), ctx, realm, roleName)
+}
+
+// ListUserRealmRoles mocks base method.
+func (m *MockClientInterface) ListUserRealmRoles(ctx context.Context, realm, userID string) ([]RoleRepresentation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUserRealmRoles", ctx, realm, userID)
+	ret0, _ := ret[0].([]RoleRepresentation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUserRealmRoles indicates an expected call of ListUserRealmRoles.
+func (mr *MockClientInterfaceMockRecorder) ListUserRealmRoles(ctx, realm, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserRealmRoles", reflect.TypeOf((*MockClientInterface)(nil).ListUserRealmRoles), ctx, realm, userID)
+}
+
+// AddRealmRolesToUser mocks base method.
+func (m *MockClientInterface) AddRealmRolesToUser(ctx context.Context, realm, userID string, roles []RoleRepresentation) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddRealmRolesToUser", ctx, realm, userID, roles)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddRealmRolesToUser indicates an expected call of AddRealmRolesToUser.
+func (mr *MockClientInterfaceMockRecorder) AddRealmRolesToUser(ctx, realm, userID, roles interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRealmRolesToUser", reflect.TypeOf((*MockClientInterface)(nil).AddRealmRolesToUser), ctx, realm, userID, roles)
+}
+
+// RemoveRealmRolesFromUser mocks base method.
+func (m *MockClientInterface) RemoveRealmRolesFromUser(ctx context.Context, realm, userID string, roles []RoleRepresentation) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveRealmRolesFromUser", ctx, realm, userID, roles)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveRealmRolesFromUser indicates an expected call of RemoveRealmRolesFromUser.
+func (mr *MockClientInterfaceMockRecorder) RemoveRealmRolesFromUser(ctx, realm, userID, roles interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRealmRolesFromUser", reflect.TypeOf((*MockClientInterface)(nil).RemoveRealmRolesFromUser), ctx, realm, userID, roles)
+}
