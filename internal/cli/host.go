@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/term"
+
 	e "github.com/open-edge-platform/cli/internal/errors"
 	"github.com/open-edge-platform/cli/internal/files"
 	"github.com/open-edge-platform/cli/internal/types"
@@ -219,12 +221,13 @@ ResourceID - Unique Identifier of host - mandatory field
 DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field or AMT_STATE_PROVISIONED|AMT_STATE_UNPROVISIONED
 ControlMode - Desired AMT control mode of host - admin|client - optional field or AMT_CONTROL_MODE_ADMIN|AMT_CONTROL_MODE_CLIENT
 DesiredKvmState - Desired KVM state of host - start|stop - optional field or KVM_STATE_START|KVM_STATE_STOP
+DesiredSolState - Desired SOL state of host - start|stop - optional field or SOL_STATE_START|SOL_STATE_STOP
 
-Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState
-host-1,host-1234abcd,provisioned,
+Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState,DesiredSolState
+host-1,host-1234abcd,provisioned,,,
 
-Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState
-host-1,host-1234abcd,provisioned,admin,start
+Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState,DesiredSolState
+host-1,host-1234abcd,provisioned,admin,start,start
 
 # --dry-run allows for verification of the validity of the input csv file without updating hosts
 orch-cli set host --project some-project --import-from-csv test.csv --dry-run
@@ -712,6 +715,19 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		desiredKvmState = fmt.Sprintf("%v", *host.DesiredKvmState)
 	}
 
+	desiredSolState := "N/A"
+	if host.DesiredSolState != nil {
+		desiredSolState = fmt.Sprintf("%v", *host.DesiredSolState)
+	}
+	currentSolState := "N/A"
+	if host.CurrentSolState != nil {
+		currentSolState = fmt.Sprintf("%v", *host.CurrentSolState)
+	}
+	solSessionUrl := "N/A"
+	if host.SolSessionUrl != nil && *host.SolSessionUrl != "" {
+		solSessionUrl = *host.SolSessionUrl
+	}
+
 	dnsSuffix := "N/A"
 	if host.AmtDnsSuffix != nil {
 		dnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
@@ -729,6 +745,9 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
 		_, _ = fmt.Fprintf(writer, "-\tAMT SKU :\t %v\n", amtSKU)
 		_, _ = fmt.Fprintf(writer, "-\tKVM Desired State:\t %v\n", desiredKvmState)
+		_, _ = fmt.Fprintf(writer, "-\tSOL Desired State:\t %v\n", desiredSolState)
+		_, _ = fmt.Fprintf(writer, "-\tSOL Current State:\t %v\n", currentSolState)
+		_, _ = fmt.Fprintf(writer, "-\tSOL Session URL:\t %v\n", solSessionUrl)
 		if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
 			currentPower := "N/A"
 			if host.CurrentPowerState != nil {
@@ -3054,10 +3073,15 @@ func pollForRemoteSessionConsent(ctx context.Context, hostClient infra.ClientWit
 		return nil
 	}
 
-	// For ACM mode, no consent needed - just return
+	// For ACM mode, no consent needed - poll directly for session URL
 	if host.AmtControlMode == nil || *host.AmtControlMode != infra.AMTCONTROLMODECCM {
-		fmt.Printf("%s session command sent.\n", strings.ToUpper(sessionType))
-		return nil
+		if !isStartOperation {
+			fmt.Printf("%s session command sent.\n", strings.ToUpper(sessionType))
+			return nil
+		}
+		// ACM START: poll until session URL is available
+		fmt.Printf("Waiting for %s session URL...\n", strings.ToUpper(sessionType))
+		return pollForSessionURL(ctx, hostClient, projectName, hostID, sessionType, kvmState, solState)
 	}
 
 	// For STOP operations in CCM mode, no consent is needed
@@ -3208,4 +3232,101 @@ func pollForRemoteSessionConsent(ctx context.Context, hostClient infra.ClientWit
 		return fmt.Errorf("timeout waiting for %s session consent", sessionType)
 	}
 	return fmt.Errorf("timeout waiting for %s session to reach desired state", sessionType)
+}
+
+// pollForSessionURL polls inventory until the session URL is populated for a
+// START operation. Used for ACM hosts where no consent flow is needed.
+func pollForSessionURL(ctx context.Context, hostClient infra.ClientWithResponsesInterface, projectName, hostID, sessionType string, kvmState *infra.KvmState, solState *infra.SolState) error {
+	const maxAttempts = 60 // up to 120 seconds
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	for i := 0; i < maxAttempts; i++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if resp.JSON200 == nil {
+				continue
+			}
+			h := resp.JSON200
+
+			var currentState string
+			var sessionURL *string
+			switch sessionType {
+			case "kvm":
+				if h.CurrentKvmState != nil {
+					currentState = string(*h.CurrentKvmState)
+				}
+				if h.KvmSessionUrl != nil {
+					sessionURL = h.KvmSessionUrl
+				}
+			case "sol":
+				if h.CurrentSolState != nil {
+					currentState = string(*h.CurrentSolState)
+				}
+				if h.SolSessionUrl != nil {
+					sessionURL = h.SolSessionUrl
+				}
+			}
+
+			// Check for error state
+			if currentState == string(infra.SOLSTATEERROR) || currentState == string(infra.KVMSTATEERROR) {
+				return fmt.Errorf("%s session failed (state=%s)", strings.ToUpper(sessionType), currentState)
+			}
+
+			// Determine expected state
+			var expectedState string
+			if sessionType == "kvm" && kvmState != nil {
+				expectedState = string(*kvmState)
+			} else if sessionType == "sol" && solState != nil {
+				expectedState = string(*solState)
+			}
+
+			if currentState == expectedState && sessionURL != nil && *sessionURL != "" {
+				fmt.Printf("\n%s session started successfully.\n", strings.ToUpper(sessionType))
+
+				// For SOL sessions, connect directly to MPS relay
+				if sessionType == "sol" && isSOLSessionURL(*sessionURL) {
+					// Prompt user for AMT password
+					fmt.Print("\nEnter AMT password: ")
+					amtPassBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
+					fmt.Println() // newline after password input
+					if err != nil {
+						return fmt.Errorf("failed to read AMT password: %w", err)
+					}
+					amtPass := string(amtPassBytes)
+					if amtPass == "" {
+						return fmt.Errorf("AMT password cannot be empty")
+					}
+
+					fmt.Println("\n✓ Password received")
+
+					jwtToken := getJWTTokenFromEnv()
+					if jwtToken == "" {
+						accessToken, tokenErr := auth.GetAccessToken(ctx)
+						if tokenErr == nil && accessToken != "" {
+							jwtToken = accessToken
+						}
+					}
+					if jwtToken == "" {
+						fmt.Printf("\nWarning: No JWT token available for WebSocket auth.\n")
+						fmt.Printf("Set JWT_TOKEN env var or run 'orch-cli login' first.\n")
+						return nil
+					}
+					// Connect to SOL session directly
+					return connectSOLSession(*sessionURL, jwtToken, amtPass, nil)
+				}
+
+				fmt.Printf("%s Session URL: %s\n", strings.ToUpper(sessionType), *sessionURL)
+				return nil
+			}
+			fmt.Printf(".")
+		}
+	}
+	return fmt.Errorf("timeout waiting for %s session URL", strings.ToUpper(sessionType))
 }
