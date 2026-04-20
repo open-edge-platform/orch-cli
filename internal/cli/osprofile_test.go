@@ -116,7 +116,7 @@ func (s *CLITestSuite) TestOSProfile() {
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
 	_, err = s.listOSProfile("nonexistent-project", OSPArgs)
-	s.EqualError(err, "error getting OS Profiles:[Internal Server Error]")
+	s.EqualError(err, "error getting OS Profiles: Internal Server Error")
 
 	// Test Getting OSProfile
 
@@ -173,7 +173,7 @@ func (s *CLITestSuite) TestOSProfile() {
 
 	//Server error sim
 	_, err = s.getOSProfile("nonexistent-project", name, OSPArgs)
-	s.EqualError(err, "error getting OS Profile:[Internal Server Error]")
+	s.EqualError(err, "error getting OS Profile: Internal Server Error")
 
 	//Test deleting OSProfile
 

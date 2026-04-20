@@ -59,6 +59,8 @@ func GenerateOutput(writer io.Writer, result *CommandResult) {
 			if err != nil {
 				Fatalf("Unable to parse specified output filter '%s': %s", result.Filter, err.Error())
 			}
+			// Normalize filter field names to match struct fields (case-insensitive)
+			f = f.Normalize(result.Data)
 			data, err = f.Process(data)
 			if err != nil {
 				Fatalf("Unexpected error while filtering command results: %s", err.Error())

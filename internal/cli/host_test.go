@@ -441,7 +441,7 @@ func (s *CLITestSuite) TestHost() {
 
 	// Test get host with non-existent instance
 	_, err = s.getHost("invalid-instance", hostID, make(map[string]string))
-	s.EqualError(err, "error getting instance of a host:[Internal Server Error]")
+	s.EqualError(err, "error getting instance of a host: Internal Server Error")
 
 	HostArgs = map[string]string{
 		"power-policy": "ordered",

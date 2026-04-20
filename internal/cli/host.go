@@ -267,6 +267,20 @@ type CVEEntry struct {
 	AffectedPackages []string `json:"affected_packages"`
 }
 
+// toJSON is a helper function to format a value into a JSON string
+// Returns "nil" for nil pointers, otherwise returns the JSON representation
+func toJSON(v interface{}) string {
+	if v == nil {
+		return "nil"
+	}
+	// Convert to JSON format
+	jsonBytes, err := json.Marshal(v)
+	if err != nil {
+		return fmt.Sprintf("%v", v)
+	}
+	return string(jsonBytes)
+}
+
 func filterHelper(f string) *string {
 	if f != "" {
 		switch f {

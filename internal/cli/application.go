@@ -4,9 +4,11 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
@@ -249,6 +251,51 @@ func printApplications(cmd *cobra.Command, writer io.Writer, appList *[]catapi.C
 	return nil
 }
 
+func getValidatedApplicationOrderBy(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, catapi.CatalogV3Application{})
+	}
+
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	return normalizeOrderByWithAPIProbe(raw, "applications", catapi.CatalogV3Application{}, func(orderBy string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		// Validate ordering in isolation. Reusing the caller's --filter here can turn
+		// filter errors into misleading "invalid --order-by field" errors.
+		resp, err := catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListApplicationsParams{
+				Kinds:    getApplicationKinds(cmd),
+				OrderBy:  &orderBy,
+				Filter:   nil,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating application order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
@@ -256,19 +303,15 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	validatedOrderBy, err := getValidatedApplicationOrderBy(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	outputType, _ := cmd.Flags().GetString("output-type")
-	apiOrderBy := getFlag(cmd, "order-by")
-	var clientOrderBy *string
+	apiOrderBy := validatedOrderBy
 	if outputType == "table" {
 		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
-		// Validate client-side ordering fields.
-		if apiOrderBy != nil {
-			var sampleApp catapi.CatalogV3Application
-			clientOrderBy, err = normalizeOrderByForClientSorting(*apiOrderBy, sampleApp)
-			if err != nil {
-				return err
-			}
-		}
 		apiOrderBy = nil
 	}
 
@@ -295,7 +338,7 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 			return err
 		}
 		outputFilter, _ := cmd.Flags().GetString("output-filter")
-		if err := printApplications(cmd, writer, &resp.JSON200.Applications, clientOrderBy, &outputFilter, verbose); err != nil {
+		if err := printApplications(cmd, writer, &resp.JSON200.Applications, validatedOrderBy, &outputFilter, verbose); err != nil {
 			return err
 		}
 		return writer.Flush()
@@ -356,7 +399,7 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	outputFilter, _ := cmd.Flags().GetString("output-filter")
-	if err := printApplications(cmd, writer, &allApplications, clientOrderBy, &outputFilter, verbose); err != nil {
+	if err := printApplications(cmd, writer, &allApplications, validatedOrderBy, &outputFilter, verbose); err != nil {
 		return err
 	}
 	return writer.Flush()

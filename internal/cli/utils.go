@@ -420,6 +420,16 @@ func getFlag(cmd *cobra.Command, flag string) *string {
 	return &value
 }
 
+// Get the named flag as an optional string reference, returning nil for empty strings.
+// This is useful for APIs that reject empty strings (e.g., cluster API filter parameter).
+func getNonEmptyFlag(cmd *cobra.Command, flag string) *string {
+	value, err := cmd.Flags().GetString(flag)
+	if err != nil || value == "" {
+		return nil
+	}
+	return &value
+}
+
 // Get the named flag or a default value as a string reference
 func getFlagOrDefault(cmd *cobra.Command, flag string, defaultValue *string) *string {
 	value, err := cmd.Flags().GetString(flag)
@@ -586,6 +596,32 @@ func statusIsAbnormal(response *http.Response, message string, args ...string) e
 	return nil
 }
 
+// Returns an error if the status is abnormal, extracting error details from the response body
+func statusIsAbnormalWithBody(response *http.Response, body []byte, message string) error {
+	if response == nil || (response.StatusCode != 200 && response.StatusCode != 404 && response.StatusCode != 401) {
+		// Extract error message from response body
+		var errorResponse struct {
+			Message string `json:"message"`
+		}
+
+		var bodyMessage string
+		if len(body) > 0 {
+			if err := json.Unmarshal(body, &errorResponse); err == nil && errorResponse.Message != "" {
+				bodyMessage = errorResponse.Message
+			} else {
+				// Fallback to raw body if JSON parsing fails
+				bodyMessage = string(body)
+			}
+		}
+
+		if bodyMessage != "" {
+			return fmt.Errorf("%s: %s\n%s", message, response.Status, bodyMessage)
+		}
+		return fmt.Errorf("%s: %s", message, response.Status)
+	}
+	return nil
+}
+
 // Returns true of the code is NOT_FOUND
 func statusIsNotFound(response *http.Response) bool {
 	return response.StatusCode == 404
@@ -602,7 +638,7 @@ func statusForbidden(response *http.Response) bool {
 }
 
 func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer, verbose bool, header string, message string) (proceed bool, err error) {
-	abnormalErr := statusIsAbnormal(resp, message, resp.Status)
+	abnormalErr := statusIsAbnormalWithBody(resp, body, message)
 	switch {
 	case abnormalErr != nil:
 		return false, abnormalErr

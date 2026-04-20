@@ -64,6 +64,97 @@ type FilterTerm struct {
 
 type Filter map[string]FilterTerm
 
+// buildFilterAliases creates a case-insensitive field name lookup map for a struct type.
+// Returns a map from lowercase/snake_case/camelCase variants to the canonical Go struct field name.
+func buildFilterAliases(sample interface{}) map[string]string {
+	t := reflect.TypeOf(sample)
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	// If it's a slice, get the element type
+	if t.Kind() == reflect.Slice || t.Kind() == reflect.Array {
+		t = t.Elem()
+		for t.Kind() == reflect.Ptr {
+			t = t.Elem()
+		}
+	}
+
+	if t.Kind() != reflect.Struct {
+		return make(map[string]string)
+	}
+
+	aliases := make(map[string]string)
+
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		fieldName := f.Name
+
+		// Map various forms to the canonical struct field name
+		aliases[fieldName] = fieldName                  // Name -> Name
+		aliases[strings.ToLower(fieldName)] = fieldName // name -> Name
+		aliases[camelToSnake(fieldName)] = fieldName    // helm_registry_name -> HelmRegistryName
+
+		// Also map from JSON tag if present
+		tag := f.Tag.Get("json")
+		if tag != "" && tag != "-" {
+			jsonName := strings.Split(tag, ",")[0]
+			if jsonName != "" && jsonName != "-" {
+				aliases[jsonName] = fieldName                  // helmRegistryName -> HelmRegistryName
+				aliases[strings.ToLower(jsonName)] = fieldName // helmregistryname -> HelmRegistryName
+				aliases[camelToSnake(jsonName)] = fieldName    // helm_registry_name -> HelmRegistryName
+			}
+		}
+	}
+
+	return aliases
+}
+
+// camelToSnake converts camelCase or PascalCase to snake_case
+func camelToSnake(s string) string {
+	var result strings.Builder
+	for i, r := range s {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			result.WriteRune('_')
+		}
+		result.WriteRune(r)
+	}
+	return strings.ToLower(result.String())
+}
+
+// Normalize converts filter field names to canonical struct field names based on the sample struct.
+// This allows case-insensitive field matching (e.g., "name" -> "Name", "display_name" -> "DisplayName").
+func (f Filter) Normalize(sample interface{}) Filter {
+	aliases := buildFilterAliases(sample)
+	normalized := make(Filter)
+
+	for k, v := range f {
+		// Handle dotted field names (e.g., "status.state" or "Status.State")
+		if strings.Contains(k, ".") {
+			parts := strings.Split(k, ".")
+			normalizedParts := make([]string, len(parts))
+			for i, part := range parts {
+				if canonical, ok := aliases[part]; ok {
+					normalizedParts[i] = canonical
+				} else {
+					normalizedParts[i] = part
+				}
+			}
+			normalized[strings.Join(normalizedParts, ".")] = v
+		} else {
+			// Single field name
+			if canonical, ok := aliases[k]; ok {
+				normalized[canonical] = v
+			} else {
+				// Keep original if no alias found
+				normalized[k] = v
+			}
+		}
+	}
+
+	return normalized
+}
+
 var termRE = regexp.MustCompile(`^\s*([a-zA-Z_][.a-zA-Z0-9_]*)\s*(~|<=|>=|<|>|!=|=)\s*(.+)\s*$`)
 
 // Parse parses a comma separated list of filter terms

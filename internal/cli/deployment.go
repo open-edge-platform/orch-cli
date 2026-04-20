@@ -165,6 +165,50 @@ func printDeployments(cmd *cobra.Command, writer *tabwriter.Writer, deployments 
 	return nil
 }
 
+func getValidatedDeploymentOrderBy(
+	ctx context.Context,
+	cmd *cobra.Command,
+	deploymentClient depapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, depapi.Deployment{})
+	}
+
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	return normalizeOrderByWithAPIProbe(raw, "deployments", depapi.Deployment{}, func(orderBy string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		// Validate ordering in isolation. Reusing the caller's --filter here can turn
+		// filter errors into misleading "invalid --order-by field" errors.
+		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentServiceListDeploymentsParams{
+				OrderBy:  &orderBy,
+				Filter:   nil,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 	ctx, deploymentClient, projectName, err := DeploymentFactory(cmd)
 	if err != nil {
@@ -428,19 +472,15 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	validatedOrderBy, err := getValidatedDeploymentOrderBy(ctx, cmd, deploymentClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	outputType, _ := cmd.Flags().GetString("output-type")
-	apiOrderBy := getFlag(cmd, "order-by")
-	var clientOrderBy *string
+	apiOrderBy := validatedOrderBy
 	if outputType == "table" {
 		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
-		// Validate client-side ordering fields.
-		if apiOrderBy != nil {
-			var sampleDeployment depapi.Deployment
-			clientOrderBy, err = normalizeOrderByForClientSorting(*apiOrderBy, sampleDeployment)
-			if err != nil {
-				return err
-			}
-		}
 		apiOrderBy = nil
 	}
 
@@ -466,7 +506,7 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 			return err
 		}
 		outputFilter, _ := cmd.Flags().GetString("output-filter")
-		if err := printDeployments(cmd, writer, &resp.JSON200.Deployments, clientOrderBy, &outputFilter, verbose); err != nil {
+		if err := printDeployments(cmd, writer, &resp.JSON200.Deployments, validatedOrderBy, &outputFilter, verbose); err != nil {
 			return err
 		}
 		return writer.Flush()
@@ -525,7 +565,7 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	outputFilter, _ := cmd.Flags().GetString("output-filter")
-	if err := printDeployments(cmd, writer, &allDeployments, clientOrderBy, &outputFilter, verbose); err != nil {
+	if err := printDeployments(cmd, writer, &allDeployments, validatedOrderBy, &outputFilter, verbose); err != nil {
 		return err
 	}
 	return writer.Flush()

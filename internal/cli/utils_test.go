@@ -112,7 +112,7 @@ func TestProcessResponse(t *testing.T) {
 			verbose:         true,
 			header:          "test-header",
 			message:         "test-message",
-			expectedError:   "test-message:[Forbidden]",
+			expectedError:   "test-message: Forbidden",
 			expectedProceed: false,
 		},
 	}
