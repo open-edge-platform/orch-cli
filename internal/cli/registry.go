@@ -22,12 +22,30 @@ const (
 Display Name: {{str .DisplayName}}
 Description: {{str .Description}}
 Root URL: {{.RootUrl}}
-Inventory URL: {{str .InventoryUrl}}
+Inventory URL: {{none .InventoryUrl}}
 Type: {{.Type}}
-API Type: {{str .ApiType}}
-Username: {{str .Username}}
+API Type: {{none .ApiType}}
+Username: {{none .Username}}{{if .AuthToken}}
+AuthToken: ********{{else}}
+AuthToken: <none>{{end}}{{if .Cacerts}}
+CA Certs: ********{{else}}
+CA Certs: <none>{{end}}
 Create Time: {{fmttime .CreateTime}}
-Update Time: {{fmttime .UpdateTime}}`
+Update Time: {{fmttime .UpdateTime}}
+`
+	DEFAULT_REGISTRY_INSPECT_FORMAT_SENSITIVE = `Name: {{.Name}}
+Display Name: {{str .DisplayName}}
+Description: {{str .Description}}
+Root URL: {{.RootUrl}}
+Inventory URL: {{none .InventoryUrl}}
+Type: {{.Type}}
+API Type: {{none .ApiType}}
+Username: {{none .Username}}
+AuthToken: {{none .AuthToken}}
+CA Certs: {{none .Cacerts}}
+Create Time: {{fmttime .CreateTime}}
+Update Time: {{fmttime .UpdateTime}}
+`
 	REGISTRY_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_REGISTRY_OUTPUT_TEMPLATE"
 )
 
@@ -113,11 +131,6 @@ func getDeleteRegistryCommand() *cobra.Command {
 
 func printRegistries(cmd *cobra.Command, writer io.Writer, registryList *[]catapi.CatalogV3Registry, orderBy *string, outputFilter *string, verbose bool, showSensitive bool) error {
 	outputType, _ := cmd.Flags().GetString("output-type")
-	
-	// For verbose output, we need custom handling to show/hide sensitive info
-	if verbose {
-		return printRegistriesVerboseWithSensitive(writer, registryList, showSensitive)
-	}
 
 	outputFormat, err := getRegistryOutputFormat(cmd, verbose, showSensitive)
 	if err != nil {
@@ -147,31 +160,11 @@ func printRegistries(cmd *cobra.Command, writer io.Writer, registryList *[]catap
 	return nil
 }
 
-func printRegistriesVerboseWithSensitive(writer io.Writer, registryList *[]catapi.CatalogV3Registry, showSensitive bool) error {
-	for _, r := range *registryList {
-		_, _ = fmt.Fprintf(writer, "Name: %s\n", r.Name)
-		_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(r.DisplayName))
-		_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(r.Description))
-		_, _ = fmt.Fprintf(writer, "Root URL: %s\n", r.RootUrl)
-		_, _ = fmt.Fprintf(writer, "Inventory URL: %s\n", valueOrNone(r.InventoryUrl))
-		_, _ = fmt.Fprintf(writer, "Type: %s\n", r.Type)
-		_, _ = fmt.Fprintf(writer, "API Type: %s\n", valueOrNone(r.ApiType))
-		_, _ = fmt.Fprintf(writer, "Username: %s\n", valueOrNone(r.Username))
-		if showSensitive {
-			_, _ = fmt.Fprintf(writer, "AuthToken: %s\n", valueOrNone(r.AuthToken))
-			_, _ = fmt.Fprintf(writer, "CA Certs: %s\n", valueOrNone(r.Cacerts))
-		} else {
-			_, _ = fmt.Fprintf(writer, "AuthToken: %s\n", obscureValue(r.AuthToken))
-			_, _ = fmt.Fprintf(writer, "CA Certs: %s\n", obscureValue(r.Cacerts))
-		}
-		_, _ = fmt.Fprintf(writer, "Create Time: %s\n", r.CreateTime.Format(timeLayout))
-		_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", r.UpdateTime.Format(timeLayout))
-	}
-	return nil
-}
-
 func getRegistryOutputFormat(cmd *cobra.Command, verbose bool, showSensitive bool) (string, error) {
 	if verbose {
+		if showSensitive {
+			return DEFAULT_REGISTRY_INSPECT_FORMAT_SENSITIVE, nil
+		}
 		return DEFAULT_REGISTRY_INSPECT_FORMAT, nil
 	}
 
@@ -412,7 +405,7 @@ func runGetRegistryCommand(cmd *cobra.Command, args []string) error {
 		"", fmt.Sprintf("error getting registry %s", name)); !proceed {
 		return err
 	}
-	
+
 	var emptyFilter string
 	if err := printRegistries(cmd, writer, &[]catapi.CatalogV3Registry{resp.JSON200.Registry}, nil, &emptyFilter, verbose, showSensitive); err != nil {
 		return err
