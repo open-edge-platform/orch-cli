@@ -53,7 +53,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							CustomConfigs: []infra.CustomConfigResource{
 								{
 									Name:        "haproxy-config",
-									Config:      "test:",
+									Config:      "#cloud-config\nwrite_files:\n- path: /tmp/testfile\n  content: TEST",
 									Description: stringPtr("haproxy configuration for web services"),
 									ResourceId:  stringPtr("config-abc12345"),
 									Timestamps: &infra.Timestamps{

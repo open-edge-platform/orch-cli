@@ -160,7 +160,7 @@ func normalizeOrderByWithAPIProbe(raw string, resourceKey string, sample any, pr
 			if len(hintFields) == 0 {
 				hintFields = canonical
 			}
-			return nil, fmt.Errorf("invalid --order-by field %q; available fields: %s", field, strings.Join(hintFields, ", "))
+			return nil, fmt.Errorf("invalid --order-by field %q; available fields: %s (note: not all fields may support API-side sorting for JSON/YAML output)", field, strings.Join(hintFields, ", "))
 		}
 
 		apiFields = append(apiFields, apiField)
@@ -198,11 +198,11 @@ func normalizeOrderByWithAPIProbe(raw string, resourceKey string, sample any, pr
 
 	for _, apiField := range apiFields {
 		if _, ok := supportedSet[apiField]; !ok {
-			return nil, fmt.Errorf("invalid --order-by field %q; available fields: %s", apiField, strings.Join(hintFields, ", "))
+			return nil, fmt.Errorf("invalid --order-by field %q; available fields: %s (note: not all fields may support API-side sorting for JSON/YAML output)", apiField, strings.Join(hintFields, ", "))
 		}
 	}
 
-	return nil, fmt.Errorf("invalid --order-by expression %q; available fields: %s", raw, strings.Join(hintFields, ", "))
+	return nil, fmt.Errorf("invalid --order-by expression %q; available fields: %s (note: not all fields may support API-side sorting for JSON/YAML output)", raw, strings.Join(hintFields, ", "))
 }
 
 // buildClientSortAliases builds an alias map for client-side sorting.

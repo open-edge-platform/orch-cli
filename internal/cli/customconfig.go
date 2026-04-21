@@ -7,15 +7,24 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
+)
+
+const (
+	DEFAULT_CUSTOMCONFIG_FORMAT              = "table{{.Name}}\t{{str .ResourceId}}\t{{str .Description}}"
+	DEFAULT_CUSTOMCONFIG_LIST_VERBOSE_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{str .Description}}\t{{.Timestamps.CreatedAt}}\t{{.Timestamps.UpdatedAt}}"
+	DEFAULT_CUSTOMCONFIG_GET_FORMAT          = "Name: \t{{.Name}}\nResource ID: \t{{str .ResourceId}}\nDescription: \t{{str .Description}}\nCloud Init: \t{{.Config}}\n"
+	CUSTOMCONFIG_OUTPUT_TEMPLATE_ENVVAR      = "ORCH_CLI_CUSTOMCONFIG_OUTPUT_TEMPLATE"
 )
 
 const listCustomConfigExamples = `# List all custom config (Cloud Init) resources
@@ -34,30 +43,47 @@ orch-cli create customconfig myconfig /path/to/cloudinit.yaml  --project some-pr
 const deleteCustomConfigExamples = `#Delete a custom config (Cloud Init) resource using it's name
 orch-cli delete customconfig myconfig --project some-project`
 
-var CustomConfigHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Description")
+func printCustomConfigs(cmd *cobra.Command, writer io.Writer, customConfigs *[]infra.CustomConfigResource, orderBy *string, outputFilter *string, verbose bool, forList bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
 
-// Prints OS Profiles in tabular format
-func printCustomConfigs(writer io.Writer, CustomConfig []infra.CustomConfigResource, verbose bool) {
-	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\n", "Name", "Resource ID", "Description", "Creation Timestamp", "Updated Timestamp")
+	outputFormat, err := getCustomConfigOutputFormat(cmd, verbose, forList)
+	if err != nil {
+		return err
 	}
-	for _, cinit := range CustomConfig {
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", cinit.Name, *cinit.ResourceId, *cinit.Description)
-		} else {
 
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", cinit.Name, *cinit.ResourceId, *cinit.Description, cinit.Timestamps.CreatedAt, cinit.Timestamps.UpdatedAt)
-		}
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
 	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *customConfigs,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
 }
 
-// Prints output details of OS Profiles
-func printCustomConfig(writer io.Writer, CustomConfig *infra.CustomConfigResource) {
+func getCustomConfigOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string, error) {
+	if verbose && forList {
+		return DEFAULT_CUSTOMCONFIG_LIST_VERBOSE_FORMAT, nil
+	}
+	if !forList {
+		// Get command always shows full details
+		return DEFAULT_CUSTOMCONFIG_GET_FORMAT, nil
+	}
 
-	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", CustomConfig.Name)
-	_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *CustomConfig.ResourceId)
-	_, _ = fmt.Fprintf(writer, "Description: \t%s\n\n", *CustomConfig.Description)
-	_, _ = fmt.Fprintf(writer, "Cloud Init:\n%s\n", CustomConfig.Config)
+	return resolveTableOutputTemplate(cmd, DEFAULT_CUSTOMCONFIG_FORMAT, CUSTOMCONFIG_OUTPUT_TEMPLATE_ENVVAR)
 }
 
 // Helper function to verify that the input file exists and is of right format
@@ -128,7 +154,8 @@ func getListCustomConfigCommand() *cobra.Command {
 		Aliases: customConfigAliases,
 		RunE:    runListCustomConfigCommand,
 	}
-	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of cloud init list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter <filter> see https://google.aip.dev/160 and API spec.")
+	addListOrderingFilteringPaginationFlags(cmd, "customconfig")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -159,20 +186,11 @@ func getDeleteCustomConfigCommand() *cobra.Command {
 
 // Gets specific Cloud Init configuration bu resource ID
 func runGetCustomConfigCommand(cmd *cobra.Command, args []string) error {
-
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 	ctx, customConfigClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
-
-	//Leaving this as an example to get by resource ID instead of name
-	//CIID := args[0]
-	// resp, err := customConfigClient.CustomConfigServiceGetCustomConfigWithResponse(ctx, projectName,
-	// 	CIID, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
 
 	resp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
 		&infra.CustomConfigServiceListCustomConfigsParams{}, auth.AddAuthHeader)
@@ -180,7 +198,7 @@ func runGetCustomConfigCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
 		"", "error getting Cloud Init config"); !proceed {
 		return err
 	}
@@ -191,12 +209,13 @@ func runGetCustomConfigCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		"", "error getting Cloud Init configuration"); !proceed {
+	customConfigs := []infra.CustomConfigResource{*cConfig}
+	var emptyFilter string
+	// Get command always shows full details (forList=false)
+	if err := printCustomConfigs(cmd, writer, &customConfigs, nil, &emptyFilter, false, false); err != nil {
 		return err
 	}
 
-	printCustomConfig(writer, cConfig)
 	return writer.Flush()
 }
 
@@ -204,28 +223,84 @@ func runGetCustomConfigCommand(cmd *cobra.Command, args []string) error {
 func runListCustomConfigCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
-	filtflag, _ := cmd.Flags().GetString("filter")
-	filter := filterHelper(filtflag)
-
 	ctx, customConfigClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
-		&infra.CustomConfigServiceListCustomConfigsParams{
-			Filter: filter,
-		}, auth.AddAuthHeader)
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	var validatedOrderBy *string
+	if outputType == "table" {
+		validatedOrderBy, err = normalizeOrderByForClientSorting(raw, infra.CustomConfigResource{})
+	} else {
+		validatedOrderBy, err = normalizeOrderByWithAPIProbe(raw, "customconfig", infra.CustomConfigResource{}, func(orderBy string) (bool, error) {
+			pageSize := 1
+			resp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
+				&infra.CustomConfigServiceListCustomConfigsParams{
+					OrderBy:  &orderBy,
+					PageSize: &pageSize,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return false, processError(err)
+			}
+			if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+				return false, nil
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating customconfig order-by"); err != nil {
+				return false, err
+			}
+			return true, nil
+		})
+	}
+	if err != nil {
+		return err
+	}
+
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
+	}
+
+	pageSize32, offset32, err := getPageSizeOffset(cmd)
+	if err != nil {
+		return err
+	}
+
+	params := &infra.CustomConfigServiceListCustomConfigsParams{
+		OrderBy: apiOrderBy,
+		Filter:  getNonEmptyFlag(cmd, "filter"),
+	}
+	if pageSize32 > 0 {
+		pageSize := int(pageSize32)
+		params.PageSize = &pageSize
+	}
+	if offset32 > 0 {
+		offset := int(offset32)
+		params.Offset = &offset
+	}
+
+	resp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName, params, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		CustomConfigHeader, "error getting Cloud Init configurations"); !proceed {
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+		"", "error getting Cloud Init configurations"); !proceed {
 		return err
 	}
 
-	printCustomConfigs(writer, resp.JSON200.CustomConfigs, verbose)
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	// List command (forList=true)
+	if err := printCustomConfigs(cmd, writer, &resp.JSON200.CustomConfigs, validatedOrderBy, &outputFilter, verbose, true); err != nil {
+		return err
+	}
 
 	return writer.Flush()
 }

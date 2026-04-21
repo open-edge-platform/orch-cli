@@ -16,6 +16,7 @@
 package format
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
@@ -80,4 +81,94 @@ func formatStringOrNone(v *string) string {
 // Formats a time.Time using ISO-8601 format without timezone.
 func formatTimeSimple(t time.Time) string {
 	return t.Format("2006-01-02T15:04:05")
+}
+
+// Extracts status indicator from GenericStatus-like objects.
+// Returns a short indicator string (✓, ⨯, ?, ⏳) based on the indicator field.
+func formatStatusIndicator(status interface{}) string {
+	if status == nil {
+		return "?"
+	}
+
+	// Use reflection to access Indicator field
+	v := reflect.ValueOf(status)
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return "?"
+		}
+		v = v.Elem()
+	}
+
+	indicatorField := v.FieldByName("Indicator")
+	if !indicatorField.IsValid() {
+		return "?"
+	}
+
+	// Dereference if pointer
+	if indicatorField.Kind() == reflect.Ptr {
+		if indicatorField.IsNil() {
+			return "?"
+		}
+		indicatorField = indicatorField.Elem()
+	}
+
+	// Get the string value of the indicator
+	indicator := fmt.Sprintf("%v", indicatorField.Interface())
+
+	switch indicator {
+	case "STATUS_INDICATION_IDLE":
+		return "✓"
+	case "STATUS_INDICATION_ERROR":
+		return "⨯"
+	case "STATUS_INDICATION_IN_PROGRESS":
+		return "⏳"
+	case "STATUS_INDICATION_UNSPECIFIED":
+		return "-"
+	default:
+		return "?"
+	}
+}
+
+// Extracts status message from GenericStatus-like objects.
+// Returns the message string or "<unknown>" if not available.
+func formatStatusMessage(status interface{}) string {
+	if status == nil {
+		return "<unknown>"
+	}
+
+	// Use reflection to access Message field
+	v := reflect.ValueOf(status)
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return "<unknown>"
+		}
+		v = v.Elem()
+	}
+
+	messageField := v.FieldByName("Message")
+	if !messageField.IsValid() {
+		return "<unknown>"
+	}
+
+	// Dereference if pointer
+	if messageField.Kind() == reflect.Ptr {
+		if messageField.IsNil() {
+			return "<unknown>"
+		}
+		messageField = messageField.Elem()
+	}
+
+	message := fmt.Sprintf("%v", messageField.Interface())
+	if message == "" {
+		return "<unknown>"
+	}
+	return message
+}
+
+// Formats a node count, returning the count or "-" if nil.
+func formatNodeCount(count *int) string {
+	if count == nil {
+		return "-"
+	}
+	return fmt.Sprintf("%d", *count)
 }

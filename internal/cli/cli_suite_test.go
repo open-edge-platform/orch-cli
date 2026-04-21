@@ -462,59 +462,96 @@ func mapGetOutput(output string) map[string]string {
 	result := make(map[string]string)
 	lines := strings.Split(output, "\n")
 
+	var currentKey string
+	var currentValue strings.Builder
+
+	// Helper to save the current key-value pair
+	saveCurrentPair := func() {
+		if currentKey != "" {
+			result[currentKey] = currentValue.String()
+			currentKey = ""
+			currentValue.Reset()
+		}
+	}
+
 	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
+		trimmedLine := strings.TrimSpace(line)
+
+		// Skip empty lines and separator lines
+		if trimmedLine == "" || strings.HasPrefix(trimmedLine, "---") {
 			continue
 		}
 
-		// Ignore lines that start with more than 2 dashes
-		if strings.HasPrefix(line, "---") {
-			continue
+		// Check if this line is a new field (contains ":" and tab after it)
+		// Format: "Label: \tValue" or "Label: \t"
+		// Important: Field labels start at the beginning of the line (no leading whitespace)
+		colonIdx := strings.Index(line, ":")
+		if colonIdx > 0 && !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") {
+			// Check if there's a tab after the colon
+			afterColon := line[colonIdx+1:]
+			if strings.HasPrefix(afterColon, " \t") || strings.HasPrefix(afterColon, "\t") {
+				// This is a new field
+				saveCurrentPair()
+
+				// Extract the label (everything before the colon plus the colon)
+				currentKey = strings.TrimSpace(line[:colonIdx+1])
+
+				// Extract the value (everything after the tab)
+				valueStart := colonIdx + 1
+				for valueStart < len(line) && (line[valueStart] == ' ' || line[valueStart] == '\t') {
+					valueStart++
+				}
+				if valueStart < len(line) {
+					currentValue.WriteString(line[valueStart:])
+				}
+				continue
+			}
 		}
 
-		// Handle lines that contain pipe separators
+		// Handle lines that contain pipe separators (for other output formats)
 		if strings.Contains(line, "|") {
+			saveCurrentPair()
+
 			parts := strings.Split(line, "|")
 			if len(parts) >= 2 {
 				key := strings.TrimSpace(parts[0])
-				value := strings.TrimSpace(strings.Join(parts[1:], "|")) // Join all remaining parts
-
-				// Remove quotes from value if present
+				value := strings.TrimSpace(strings.Join(parts[1:], "|"))
 				value = strings.Trim(value, `"`)
 
-				// Handle host format lines that start with "-   |"
 				if strings.HasPrefix(line, "-   |") {
-					// For host format: "-   |Host Resurce ID:   | host-abc12345"
-					// Remove the "-   |" prefix from the line, then extract key
 					content := strings.TrimPrefix(line, "-   |")
 					contentParts := strings.Split(content, "|")
 					if len(contentParts) >= 2 {
 						hostKey := strings.TrimSpace(contentParts[0])
-						hostValue := strings.TrimSpace(strings.Join(contentParts[1:], "|")) // Join all remaining parts
+						hostValue := strings.TrimSpace(strings.Join(contentParts[1:], "|"))
 						hostValue = strings.Trim(hostValue, `"`)
 						result["-   "+hostKey] = hostValue
 					}
 				} else {
-					// Handle OS profile format and other formats
-					// For OS profile format: "Name:               | Edge Microvisor Toolkit"
 					result[key] = value
 				}
 			}
+			continue
+		}
+
+		// If we're in the middle of collecting a multi-line value, append this line
+		if currentKey != "" {
+			if currentValue.Len() > 0 {
+				currentValue.WriteString("\n")
+			}
+			currentValue.WriteString(trimmedLine)
 		} else {
-			// Handle section headers (lines ending with ":")
-			if strings.HasSuffix(line, ":") && !strings.Contains(line, "|") {
-				result[line] = ""
-			} else {
-				// Handle standalone values (like memory values or table data)
-				// Check if this looks like a numeric value or table data
-				if strings.TrimSpace(line) != "" {
-					// For cases like "Total (GB)" or "16" - treat as key with empty value
-					result[line] = ""
-				}
+			// Standalone line (section header or value)
+			if strings.HasSuffix(trimmedLine, ":") {
+				result[trimmedLine] = ""
+			} else if trimmedLine != "" {
+				result[trimmedLine] = ""
 			}
 		}
 	}
+
+	// Save the last field if any
+	saveCurrentPair()
 
 	return result
 }

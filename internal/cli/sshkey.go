@@ -7,14 +7,30 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 )
+
+const (
+	DEFAULT_SSHKEY_FORMAT              = "table{{.Username}}\t{{str .ResourceId}}"
+	DEFAULT_SSHKEY_LIST_VERBOSE_FORMAT = "table{{.Username}}\t{{str .ResourceId}}\t{{.InUse}}"
+	DEFAULT_SSHKEY_GET_FORMAT          = "Remote User Name: \t{{.Username}}\nResource ID: \t{{str .ResourceId}}\nKey: \t{{.SshKey}}\nIn use by: \t{{.UseHosts}}\n"
+	SSHKEY_OUTPUT_TEMPLATE_ENVVAR      = "ORCH_CLI_SSHKEY_OUTPUT_TEMPLATE"
+)
+
+// SSHKeyWithUsage wraps LocalAccountResource with usage information
+type SSHKeyWithUsage struct {
+	infra.LocalAccountResource
+	InUse    string
+	UseHosts string
+}
 
 const listSSHKeyExamples = `# List all SSH key resources
 orch-cli list sshkey --project some-project
@@ -29,44 +45,76 @@ orch-cli create sshkey mysshkey /path/to/publickey.pub --project some-project`
 const deleteSSHKeyExamples = `# Delete a SSH key resource using it's name
 orch-cli delete sshkey mysshkey --project some-project`
 
-var SSHKeyHeader = fmt.Sprintf("\n%s\t%s", "Remote User", "Resource ID")
+func printSSHKeys(cmd *cobra.Command, writer io.Writer, sshKeys *[]infra.LocalAccountResource, instances *[]infra.InstanceResource, orderBy *string, outputFilter *string, verbose bool, forList bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
 
-// Prints SSH keys in tabular format
-func printSSHKeys(writer io.Writer, SSHKeys []infra.LocalAccountResource, instances []infra.InstanceResource, verbose bool) {
-	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\n", "Remote User", "Resource ID", "In use")
+	outputFormat, err := getSSHKeyOutputFormat(cmd, verbose, forList)
+	if err != nil {
+		return err
 	}
 
-	for _, sshKey := range SSHKeys {
-		inUse := "No"
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\n", sshKey.Username, *sshKey.ResourceId)
-		} else {
-			for _, instance := range instances {
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	// Create wrapper with usage information if instances are provided
+	var data interface{}
+	if instances != nil && len(*instances) > 0 {
+		keysWithUsage := make([]SSHKeyWithUsage, 0, len(*sshKeys))
+		for _, sshKey := range *sshKeys {
+			inUse := "No"
+			useHosts := ""
+			for _, instance := range *instances {
 				if instance.Localaccount != nil && *instance.Localaccount.ResourceId == *sshKey.ResourceId {
 					inUse = "Yes"
-					break
+					if instance.HostID != nil {
+						if useHosts != "" {
+							useHosts += " "
+						}
+						useHosts += *instance.HostID
+					}
 				}
 			}
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", sshKey.Username, *sshKey.ResourceId, inUse)
+			keysWithUsage = append(keysWithUsage, SSHKeyWithUsage{
+				LocalAccountResource: sshKey,
+				InUse:                inUse,
+				UseHosts:             useHosts,
+			})
 		}
+		data = keysWithUsage
+	} else {
+		data = *sshKeys
 	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      data,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
 }
 
-// Prints output details of SSH key
-func printSSHKey(writer io.Writer, SSHKey *infra.LocalAccountResource, instances []infra.InstanceResource) {
-
-	useHosts := ""
-	for _, instance := range instances {
-		if instance.Localaccount != nil && *instance.Localaccount.ResourceId == *SSHKey.ResourceId {
-			useHosts = useHosts + *instance.HostID + " "
-		}
+func getSSHKeyOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string, error) {
+	if verbose && forList {
+		return DEFAULT_SSHKEY_LIST_VERBOSE_FORMAT, nil
+	}
+	if !forList {
+		// Get command always shows full details
+		return DEFAULT_SSHKEY_GET_FORMAT, nil
 	}
 
-	_, _ = fmt.Fprintf(writer, "Remote User Name: \t%s\n", SSHKey.Username)
-	_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *SSHKey.ResourceId)
-	_, _ = fmt.Fprintf(writer, "Key: \t%s\n", SSHKey.SshKey)
-	_, _ = fmt.Fprintf(writer, "In use by: \t%s\n\n", useHosts)
+	return resolveTableOutputTemplate(cmd, DEFAULT_SSHKEY_FORMAT, SSHKEY_OUTPUT_TEMPLATE_ENVVAR)
 }
 
 // Filters list of SSH keys to find one with specific name
@@ -146,6 +194,8 @@ func getListSSHKeyCommand() *cobra.Command {
 		Aliases: sshKeyAliases,
 		RunE:    runListSSHKeyCommand,
 	}
+	addListOrderingFilteringPaginationFlags(cmd, "sshkey")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -175,8 +225,7 @@ func getDeleteSSHKeyCommand() *cobra.Command {
 
 // Gets specific SSH key configuration by resource ID
 func runGetSSHKeyCommand(cmd *cobra.Command, args []string) error {
-
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 	ctx, sshKeyClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
@@ -188,7 +237,7 @@ func runGetSSHKeyCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
 		"", "error getting SSH key configuration"); !proceed {
 		return err
 	}
@@ -199,75 +248,142 @@ func runGetSSHKeyCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving ssh key"); err != nil {
-		return err
-	}
-
-	pageSize := 20
-	instances := make([]infra.InstanceResource, 0)
+	// Fetch instances to determine SSH key usage (always for get command)
+	var instances []infra.InstanceResource
+	pageSize := 100
 	for offset := 0; ; offset += pageSize {
 		iresp, err := sshKeyClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
-			&infra.InstanceServiceListInstancesParams{}, auth.AddAuthHeader)
+			&infra.InstanceServiceListInstancesParams{
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
 		}
-		if err := checkResponse(iresp.HTTPResponse, iresp.Body, "error while retrieving instances"); err != nil {
-			return err
-		}
-
-		instances = append(instances, iresp.JSON200.Instances...)
-		if !iresp.JSON200.HasNext {
-			break // No more instances to process
+		if iresp.JSON200 != nil {
+			instances = append(instances, iresp.JSON200.Instances...)
+			if !iresp.JSON200.HasNext {
+				break
+			}
+		} else {
+			break
 		}
 	}
 
-	printSSHKey(writer, sshKey, instances)
+	sshKeys := []infra.LocalAccountResource{*sshKey}
+	var emptyFilter string
+	// Get command always shows full details (forList=false)
+	if err := printSSHKeys(cmd, writer, &sshKeys, &instances, nil, &emptyFilter, false, false); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
 // Lists all SSH keys - retrieves all keys and displays selected information in tabular format
 func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
-
 	writer, verbose := getOutputContext(cmd)
-	pageSize := 20
-
 	ctx, sshKeyClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := sshKeyClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName,
-		&infra.LocalAccountServiceListLocalAccountsParams{}, auth.AddAuthHeader)
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	var validatedOrderBy *string
+	if outputType == "table" {
+		validatedOrderBy, err = normalizeOrderByForClientSorting(raw, infra.LocalAccountResource{})
+	} else {
+		validatedOrderBy, err = normalizeOrderByWithAPIProbe(raw, "sshkey", infra.LocalAccountResource{}, func(orderBy string) (bool, error) {
+			pageSize := 1
+			resp, err := sshKeyClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName,
+				&infra.LocalAccountServiceListLocalAccountsParams{
+					OrderBy:  &orderBy,
+					PageSize: &pageSize,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return false, processError(err)
+			}
+			if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+				return false, nil
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating sshkey order-by"); err != nil {
+				return false, err
+			}
+			return true, nil
+		})
+	}
+	if err != nil {
+		return err
+	}
+
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
+	}
+
+	pageSize32, offset32, err := getPageSizeOffset(cmd)
+	if err != nil {
+		return err
+	}
+
+	params := &infra.LocalAccountServiceListLocalAccountsParams{
+		OrderBy: apiOrderBy,
+		Filter:  getNonEmptyFlag(cmd, "filter"),
+	}
+	if pageSize32 > 0 {
+		pageSize := int(pageSize32)
+		params.PageSize = &pageSize
+	}
+	if offset32 > 0 {
+		offset := int(offset32)
+		params.Offset = &offset
+	}
+
+	resp, err := sshKeyClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName, params, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		SSHKeyHeader, "error getting SSH key configurations"); !proceed {
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+		"", "error getting SSH key configurations"); !proceed {
 		return err
 	}
 
-	instances := make([]infra.InstanceResource, 0)
+	// Fetch instances to determine SSH key usage if in verbose mode
+	var instances []infra.InstanceResource
 	if verbose {
+		pageSize := 100
 		for offset := 0; ; offset += pageSize {
 			iresp, err := sshKeyClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
-				&infra.InstanceServiceListInstancesParams{}, auth.AddAuthHeader)
+				&infra.InstanceServiceListInstancesParams{
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
 			if err != nil {
 				return processError(err)
 			}
-			if proceed, err := processResponse(resp.HTTPResponse, iresp.Body, writer, verbose,
-				SSHKeyHeader, "error getting instances"); !proceed {
-				return err
-			}
-
-			instances = append(instances, iresp.JSON200.Instances...)
-			if !iresp.JSON200.HasNext {
-				break // No more instances to process
+			if iresp.JSON200 != nil {
+				instances = append(instances, iresp.JSON200.Instances...)
+				if !iresp.JSON200.HasNext {
+					break
+				}
+			} else {
+				break
 			}
 		}
 	}
 
-	printSSHKeys(writer, resp.JSON200.LocalAccounts, instances, verbose)
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	// List command (forList=true)
+	if err := printSSHKeys(cmd, writer, &resp.JSON200.LocalAccounts, &instances, validatedOrderBy, &outputFilter, verbose, true); err != nil {
+		return err
+	}
 
 	return writer.Flush()
 }

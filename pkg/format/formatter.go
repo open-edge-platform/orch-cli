@@ -138,13 +138,16 @@ func (f Format) Execute(writer io.Writer, withHeaders bool, nameLimit int, data 
 	}
 
 	funcmap := template.FuncMap{
-		"timestamp": formatTimestamp,
-		"since":     formatSince,
-		"gosince":   formatGoSince,
-		"deref":     formatDeref,
-		"str":       formatString,
-		"none":      formatStringOrNone,
-		"fmttime":   formatTimeSimple,
+		"timestamp":       formatTimestamp,
+		"since":           formatSince,
+		"gosince":         formatGoSince,
+		"deref":           formatDeref,
+		"str":             formatString,
+		"none":            formatStringOrNone,
+		"fmttime":         formatTimeSimple,
+		"statusIndicator": formatStatusIndicator,
+		"statusMessage":   formatStatusMessage,
+		"nodeCount":       formatNodeCount,
 	}
 
 	tmpl, err := template.New("output").Funcs(funcmap).Parse(string(format))

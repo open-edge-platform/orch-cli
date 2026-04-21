@@ -83,10 +83,10 @@ func (s *CLITestSuite) TestProvider() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Name":        name,
-			"Resource ID": resourceID,
-			"Kind":        kind,
-			"Vendor":      vendor,
+			"NAME":            name,
+			"RESOURCE ID":     resourceID,
+			"PROVIDER KIND":   kind,
+			"PROVIDER VENDOR": vendor,
 		},
 	}
 
@@ -103,13 +103,13 @@ func (s *CLITestSuite) TestProvider() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Name":         name,
-			"Resource ID":  resourceID,
-			"Kind":         kind,
-			"Vendor":       vendor,
-			"API Endpoint": api,
-			"Created At":   "2025-01-15 10:30:00 +0000 UTC",
-			"Updated At":   "2025-01-15 10:30:00 +0000 UTC",
+			"NAME":                  name,
+			"RESOURCE ID":           resourceID,
+			"PROVIDER KIND":         kind,
+			"PROVIDER VENDOR":       vendor,
+			"API ENDPOINT":          api,
+			"TIMESTAMPS CREATED AT": "2025-01-15 10:30:00 +0000 UTC",
+			"TIMESTAMPS UPDATED AT": "2025-01-15 10:30:00 +0000 UTC",
 		},
 	}
 
@@ -124,14 +124,14 @@ func (s *CLITestSuite) TestProvider() {
 
 	parsedOutput := mapGetOutput(getOutput)
 	expectedOutput := map[string]string{
-		"Name:":         name,
-		"Resource ID:":  resourceID,
-		"Kind:":         kind,
-		"Vendor:":       vendor,
-		"API Endpoint:": api,
-		"Config:":       "{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}",
-		"Created At:":   "2025-01-15 10:30:00 +0000 UTC",
-		"Updated At:":   "2025-01-15 10:30:00 +0000 UTC",
+		"Name:":               name,
+		"Resource ID:":        resourceID,
+		"Kind:":               kind,
+		"Vendor:":             vendor,
+		"API Endpoint:":       api,
+		"Config:":             "{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}",
+		"Creation Timestamp:": "2025-01-15 10:30:00 +0000 UTC",
+		"Updated Timestamp:":  "2025-01-15 10:30:00 +0000 UTC",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
