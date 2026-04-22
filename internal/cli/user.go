@@ -24,8 +24,8 @@ const (
 	passwordEnvVar         = "ORCH_PASSWORD"
 
 	DEFAULT_USER_FORMAT         = "table{{.Username}}\t{{.Enabled}}"
-	DEFAULT_USER_VERBOSE_FORMAT = "table{{.Username}}\t{{none .Email}}\t{{none .FirstName}}\t{{.Enabled}}"
-	DEFAULT_USER_INSPECT_FORMAT = "Username: \t{{.Username}}\nID: \t{{.ID}}\nEmail: \t{{none .Email}}\nFirst Name: \t{{none .FirstName}}\nLast Name: \t{{none .LastName}}\nEnabled: \t{{.Enabled}}{{if .Groups}}\nGroups: \t{{.Groups}}{{end}}{{if .RealmRoles}}\nRealm Roles: \t{{.RealmRoles}}{{end}}"
+	DEFAULT_USER_VERBOSE_FORMAT = "table{{.Username}}\t{{.Email}}\t{{.FirstName}}\t{{.Enabled}}"
+	DEFAULT_USER_INSPECT_FORMAT = "Username: \t{{.Username}}\nID: \t{{.ID}}\nEmail: \t{{.Email}}\nFirst Name: \t{{.FirstName}}\nLast Name: \t{{.LastName}}\nEnabled: \t{{.Enabled}}{{if .Groups}}\nGroups: \t{{.Groups}}{{end}}{{if .RealmRoles}}\nRealm Roles: \t{{.RealmRoles}}{{end}}"
 	USER_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_USER_OUTPUT_TEMPLATE"
 )
 
@@ -97,64 +97,26 @@ orch-cli set user sample-user --remove-realm-role "${ORG_UID}_${PROJ_UID}_m"
 orch-cli set user sample-user --add-group edge-manager-group --add-realm-role "${ORG_UID}_${PROJ_UID}_m"
 `
 
-// UserListItem is a flattened view for template output
-type UserListItem struct {
+// UserInspectItem is used for get/inspect command to show user with aggregated groups and roles
+type UserInspectItem struct {
 	Username   string  `json:"username,omitempty"`
-	Email      *string `json:"email,omitempty"`
-	FirstName  *string `json:"firstName,omitempty"`
-	LastName   *string `json:"lastName,omitempty"`
+	Email      string  `json:"email,omitempty"`
+	FirstName  string  `json:"firstName,omitempty"`
+	LastName   string  `json:"lastName,omitempty"`
 	ID         string  `json:"id,omitempty"`
-	Enabled    string  `json:"enabled,omitempty"`
+	Enabled    *bool   `json:"enabled,omitempty"`
 	Groups     *string `json:"groups,omitempty"`
 	RealmRoles *string `json:"realmRoles,omitempty"`
 }
 
-func flattenUsers(users []keycloak.UserRepresentation) []UserListItem {
-	items := make([]UserListItem, 0, len(users))
-	for _, user := range users {
-		enabled := "true"
-		if user.Enabled != nil && !*user.Enabled {
-			enabled = "false"
-		}
-		item := UserListItem{
-			Username: user.Username,
-			ID:       user.ID,
-			Enabled:  enabled,
-		}
-		if user.Email != "" {
-			item.Email = &user.Email
-		}
-		if user.FirstName != "" {
-			item.FirstName = &user.FirstName
-		}
-		if user.LastName != "" {
-			item.LastName = &user.LastName
-		}
-		items = append(items, item)
-	}
-	return items
-}
-
-func flattenUser(user *keycloak.UserRepresentation, groups []keycloak.GroupRepresentation, roles []keycloak.RoleRepresentation) UserListItem {
-	enabled := "true"
-	if user.Enabled != nil && !*user.Enabled {
-		enabled = "false"
-	}
-
-	item := UserListItem{
-		Username: user.Username,
-		ID:       user.ID,
-		Enabled:  enabled,
-	}
-
-	if user.Email != "" {
-		item.Email = &user.Email
-	}
-	if user.FirstName != "" {
-		item.FirstName = &user.FirstName
-	}
-	if user.LastName != "" {
-		item.LastName = &user.LastName
+func flattenUser(user *keycloak.UserRepresentation, groups []keycloak.GroupRepresentation, roles []keycloak.RoleRepresentation) UserInspectItem {
+	item := UserInspectItem{
+		Username:  user.Username,
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		ID:        user.ID,
+		Enabled:   user.Enabled,
 	}
 
 	if groups != nil && len(groups) > 0 {
@@ -210,15 +172,13 @@ func printUsers(cmd *cobra.Command, writer io.Writer, users []keycloak.UserRepre
 		filterSpec = *outputFilter
 	}
 
-	items := flattenUsers(users)
-
 	result := CommandResult{
 		Format:    format.Format(outputFormat),
 		Filter:    filterSpec,
 		OrderBy:   sortSpec,
 		OutputAs:  toOutputType(outputType),
 		NameLimit: -1,
-		Data:      items,
+		Data:      users,
 	}
 
 	GenerateOutput(writer, &result)
@@ -350,7 +310,7 @@ func runListUsersCommand(cmd *cobra.Command, _ []string) error {
 
 	var validatedOrderBy *string
 	if outputType == "table" {
-		validatedOrderBy, err = normalizeOrderByForClientSorting(raw, UserListItem{})
+		validatedOrderBy, err = normalizeOrderByForClientSorting(raw, keycloak.UserRepresentation{})
 	} else {
 		// JSON/YAML: no API support, but allow any field for consistency
 		if raw != "" {

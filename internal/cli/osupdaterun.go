@@ -138,7 +138,7 @@ func runGetOSUpdateRunCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		OSProfileHeaderGet, "error getting OS Update run"); !proceed {
+		"", "error getting OS Update run"); !proceed {
 		return err
 	}
 

@@ -380,7 +380,7 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 		}
 
 		if proceed, err := processResponse(oresp.HTTPResponse, oresp.Body, writer, verbose,
-			OSProfileHeaderGet, "error getting OS Profile"); !proceed {
+			"", "error getting OS Profile"); !proceed {
 			return err
 		}
 

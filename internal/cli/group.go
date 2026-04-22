@@ -25,25 +25,6 @@ orch-cli list groups
 orch-cli list groups --realm master
 `
 
-// GroupListItem is a flattened view for template output (same as GroupRepresentation)
-type GroupListItem struct {
-	ID   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
-	Path string `json:"path,omitempty"`
-}
-
-func flattenGroups(groups []keycloak.GroupRepresentation) []GroupListItem {
-	items := make([]GroupListItem, 0, len(groups))
-	for _, group := range groups {
-		items = append(items, GroupListItem{
-			ID:   group.ID,
-			Name: group.Name,
-			Path: group.Path,
-		})
-	}
-	return items
-}
-
 func getGroupOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
 		return DEFAULT_GROUP_VERBOSE_FORMAT, nil
@@ -69,15 +50,13 @@ func printGroups(cmd *cobra.Command, writer io.Writer, groups []keycloak.GroupRe
 		filterSpec = *outputFilter
 	}
 
-	items := flattenGroups(groups)
-
 	result := CommandResult{
 		Format:    format.Format(outputFormat),
 		Filter:    filterSpec,
 		OrderBy:   sortSpec,
 		OutputAs:  toOutputType(outputType),
 		NameLimit: -1,
-		Data:      items,
+		Data:      groups,
 	}
 
 	GenerateOutput(writer, &result)
@@ -116,7 +95,7 @@ func runListGroupsCommand(cmd *cobra.Command, _ []string) error {
 
 	var validatedOrderBy *string
 	if outputType == "table" {
-		validatedOrderBy, err = normalizeOrderByForClientSorting(raw, GroupListItem{})
+		validatedOrderBy, err = normalizeOrderByForClientSorting(raw, keycloak.GroupRepresentation{})
 	} else {
 		// JSON/YAML: no API support, but allow any field for consistency
 		if raw != "" {
