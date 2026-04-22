@@ -25,14 +25,7 @@ const (
 
 	DEFAULT_USER_FORMAT         = "table{{.Username}}\t{{.Enabled}}"
 	DEFAULT_USER_VERBOSE_FORMAT = "table{{.Username}}\t{{none .Email}}\t{{none .FirstName}}\t{{.Enabled}}"
-	DEFAULT_USER_INSPECT_FORMAT = `Username: {{.Username}}
-ID: {{.ID}}
-Email: {{none .Email}}
-First Name: {{none .FirstName}}
-Last Name: {{none .LastName}}
-Enabled: {{.Enabled}}{{if .Groups}}
-Groups: {{.Groups}}{{end}}{{if .RealmRoles}}
-Realm Roles: {{.RealmRoles}}{{end}}`
+	DEFAULT_USER_INSPECT_FORMAT = "Username: \t{{.Username}}\nID: \t{{.ID}}\nEmail: \t{{none .Email}}\nFirst Name: \t{{none .FirstName}}\nLast Name: \t{{none .LastName}}\nEnabled: \t{{.Enabled}}{{if .Groups}}\nGroups: \t{{.Groups}}{{end}}{{if .RealmRoles}}\nRealm Roles: \t{{.RealmRoles}}{{end}}"
 	USER_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_USER_OUTPUT_TEMPLATE"
 )
 

@@ -16,11 +16,8 @@ import (
 
 const (
 	DEFAULT_PROJECT_FORMAT         = "table{{none .Name}}\t{{.StatusIndicator}}"
-	DEFAULT_PROJECT_INSPECT_FORMAT = `Name: {{none .Name}}
-Description: {{none .Description}}
-Status: {{none .StatusIndicator}}
-Status Message: {{none .StatusMessage}}
-UID: {{none .UID}}`
+	DEFAULT_PROJECT_VERBOSE_FORMAT = "table{{none .Name}}\t{{.StatusIndicator}}\t{{none .Description}}"
+	DEFAULT_PROJECT_INSPECT_FORMAT = "Name: \t{{none .Name}}\nDescription: \t{{none .Description}}\nStatus: \t{{none .StatusIndicator}}\nStatus Message: \t{{none .StatusMessage}}\nUID: \t{{none .UID}}"
 	PROJECT_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_PROJECT_OUTPUT_TEMPLATE"
 )
 
@@ -76,7 +73,7 @@ func flattenProjects(projects *tenancy.ProjectProjectList) []ProjectListItem {
 
 func getProjectOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_PROJECT_INSPECT_FORMAT, nil
+		return DEFAULT_PROJECT_VERBOSE_FORMAT, nil
 	}
 	return resolveTableOutputTemplate(cmd, DEFAULT_PROJECT_FORMAT, PROJECT_OUTPUT_TEMPLATE_ENVVAR)
 }
