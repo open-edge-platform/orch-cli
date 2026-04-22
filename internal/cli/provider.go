@@ -188,20 +188,54 @@ func runListProviderCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	params := &infra.ProviderServiceListProvidersParams{
-		OrderBy: apiOrderBy,
-		Filter:  getNonEmptyFlag(cmd, "filter"),
-	}
-	if pageSize32 > 0 {
-		pageSize := int(pageSize32)
-		params.PageSize = &pageSize
-	}
-	if offset32 > 0 {
-		offset := int(offset32)
-		params.Offset = &offset
+	pageSize := int(pageSize32)
+	offset := int(offset32)
+	if pageSize <= 0 {
+		pageSize = 100
 	}
 
-	resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName, params, auth.AddAuthHeader)
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		params := &infra.ProviderServiceListProvidersParams{
+			OrderBy:  apiOrderBy,
+			Filter:   getNonEmptyFlag(cmd, "filter"),
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}
+
+		resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName, params, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting provider"); !proceed {
+			return err
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.Providers == nil {
+			return fmt.Errorf("error listing providers: unexpected response format")
+		}
+
+		providers := resp.JSON200.Providers
+
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printProviders(cmd, writer, &providers, validatedOrderBy, &outputFilter, verbose, true); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	// Automatic pagination: fetch all pages
+	allProviders := make([]infra.ProviderResource, 0)
+
+	resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
+		&infra.ProviderServiceListProvidersParams{
+			OrderBy:  apiOrderBy,
+			Filter:   getNonEmptyFlag(cmd, "filter"),
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -211,9 +245,50 @@ func runListProviderCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if resp.JSON200 == nil || resp.JSON200.Providers == nil {
+		return fmt.Errorf("error listing providers: unexpected response format")
+	}
+
+	allProviders = append(allProviders, resp.JSON200.Providers...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = len(resp.JSON200.Providers)
+	}
+
+	for len(allProviders) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+		offset += pageSize
+		resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
+			&infra.ProviderServiceListProvidersParams{
+				OrderBy:  apiOrderBy,
+				Filter:   getNonEmptyFlag(cmd, "filter"),
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting provider"); !proceed {
+			return err
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.Providers == nil {
+			return fmt.Errorf("error listing providers: unexpected response format")
+		}
+
+		if len(resp.JSON200.Providers) == 0 {
+			break
+		}
+		allProviders = append(allProviders, resp.JSON200.Providers...)
+	}
+
 	outputFilter, _ := cmd.Flags().GetString("output-filter")
-	// List command (forList=true)
-	if err := printProviders(cmd, writer, &resp.JSON200.Providers, validatedOrderBy, &outputFilter, verbose, true); err != nil {
+	if err := printProviders(cmd, writer, &allProviders, validatedOrderBy, &outputFilter, verbose, true); err != nil {
 		return err
 	}
 

@@ -332,20 +332,78 @@ func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	params := &infra.LocalAccountServiceListLocalAccountsParams{
-		OrderBy: apiOrderBy,
-		Filter:  getNonEmptyFlag(cmd, "filter"),
-	}
-	if pageSize32 > 0 {
-		pageSize := int(pageSize32)
-		params.PageSize = &pageSize
-	}
-	if offset32 > 0 {
-		offset := int(offset32)
-		params.Offset = &offset
+	pageSize := int(pageSize32)
+	offset := int(offset32)
+	if pageSize <= 0 {
+		pageSize = 100
 	}
 
-	resp, err := sshKeyClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName, params, auth.AddAuthHeader)
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		params := &infra.LocalAccountServiceListLocalAccountsParams{
+			OrderBy:  apiOrderBy,
+			Filter:   getNonEmptyFlag(cmd, "filter"),
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}
+
+		resp, err := sshKeyClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName, params, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting SSH key configurations"); !proceed {
+			return err
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.LocalAccounts == nil {
+			return fmt.Errorf("error listing SSH keys: unexpected response format")
+		}
+
+		sshKeys := resp.JSON200.LocalAccounts
+
+		// Fetch instances to determine SSH key usage if in verbose mode
+		var instances []infra.InstanceResource
+		if verbose {
+			instancePageSize := 100
+			for instanceOffset := 0; ; instanceOffset += instancePageSize {
+				iresp, err := sshKeyClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
+					&infra.InstanceServiceListInstancesParams{
+						PageSize: &instancePageSize,
+						Offset:   &instanceOffset,
+					}, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+				if iresp.JSON200 != nil {
+					instances = append(instances, iresp.JSON200.Instances...)
+					if !iresp.JSON200.HasNext {
+						break
+					}
+				} else {
+					break
+				}
+			}
+		}
+
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printSSHKeys(cmd, writer, &sshKeys, &instances, validatedOrderBy, &outputFilter, verbose, true); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	// Automatic pagination: fetch all pages
+	allSSHKeys := make([]infra.LocalAccountResource, 0)
+
+	resp, err := sshKeyClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName,
+		&infra.LocalAccountServiceListLocalAccountsParams{
+			OrderBy:  apiOrderBy,
+			Filter:   getNonEmptyFlag(cmd, "filter"),
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -355,15 +413,57 @@ func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if resp.JSON200 == nil || resp.JSON200.LocalAccounts == nil {
+		return fmt.Errorf("error listing SSH keys: unexpected response format")
+	}
+
+	allSSHKeys = append(allSSHKeys, resp.JSON200.LocalAccounts...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = len(resp.JSON200.LocalAccounts)
+	}
+
+	for len(allSSHKeys) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+		offset += pageSize
+		resp, err := sshKeyClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName,
+			&infra.LocalAccountServiceListLocalAccountsParams{
+				OrderBy:  apiOrderBy,
+				Filter:   getNonEmptyFlag(cmd, "filter"),
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting SSH key configurations"); !proceed {
+			return err
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.LocalAccounts == nil {
+			return fmt.Errorf("error listing SSH keys: unexpected response format")
+		}
+
+		if len(resp.JSON200.LocalAccounts) == 0 {
+			break
+		}
+		allSSHKeys = append(allSSHKeys, resp.JSON200.LocalAccounts...)
+	}
+
 	// Fetch instances to determine SSH key usage if in verbose mode
 	var instances []infra.InstanceResource
 	if verbose {
-		pageSize := 100
-		for offset := 0; ; offset += pageSize {
+		instancePageSize := 100
+		for instanceOffset := 0; ; instanceOffset += instancePageSize {
 			iresp, err := sshKeyClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
 				&infra.InstanceServiceListInstancesParams{
-					PageSize: &pageSize,
-					Offset:   &offset,
+					PageSize: &instancePageSize,
+					Offset:   &instanceOffset,
 				}, auth.AddAuthHeader)
 			if err != nil {
 				return processError(err)
@@ -380,8 +480,7 @@ func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	outputFilter, _ := cmd.Flags().GetString("output-filter")
-	// List command (forList=true)
-	if err := printSSHKeys(cmd, writer, &resp.JSON200.LocalAccounts, &instances, validatedOrderBy, &outputFilter, verbose, true); err != nil {
+	if err := printSSHKeys(cmd, writer, &allSSHKeys, &instances, validatedOrderBy, &outputFilter, verbose, true); err != nil {
 		return err
 	}
 

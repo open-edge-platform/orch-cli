@@ -273,20 +273,54 @@ func runListCustomConfigCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	params := &infra.CustomConfigServiceListCustomConfigsParams{
-		OrderBy: apiOrderBy,
-		Filter:  getNonEmptyFlag(cmd, "filter"),
-	}
-	if pageSize32 > 0 {
-		pageSize := int(pageSize32)
-		params.PageSize = &pageSize
-	}
-	if offset32 > 0 {
-		offset := int(offset32)
-		params.Offset = &offset
+	pageSize := int(pageSize32)
+	offset := int(offset32)
+	if pageSize <= 0 {
+		pageSize = 100
 	}
 
-	resp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName, params, auth.AddAuthHeader)
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		params := &infra.CustomConfigServiceListCustomConfigsParams{
+			OrderBy:  apiOrderBy,
+			Filter:   getNonEmptyFlag(cmd, "filter"),
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}
+
+		resp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName, params, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting Cloud Init configurations"); !proceed {
+			return err
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.CustomConfigs == nil {
+			return fmt.Errorf("error listing custom configs: unexpected response format")
+		}
+
+		customConfigs := resp.JSON200.CustomConfigs
+
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printCustomConfigs(cmd, writer, &customConfigs, validatedOrderBy, &outputFilter, verbose, true); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	// Automatic pagination: fetch all pages
+	allCustomConfigs := make([]infra.CustomConfigResource, 0)
+
+	resp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
+		&infra.CustomConfigServiceListCustomConfigsParams{
+			OrderBy:  apiOrderBy,
+			Filter:   getNonEmptyFlag(cmd, "filter"),
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -296,9 +330,50 @@ func runListCustomConfigCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if resp.JSON200 == nil || resp.JSON200.CustomConfigs == nil {
+		return fmt.Errorf("error listing custom configs: unexpected response format")
+	}
+
+	allCustomConfigs = append(allCustomConfigs, resp.JSON200.CustomConfigs...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = len(resp.JSON200.CustomConfigs)
+	}
+
+	for len(allCustomConfigs) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+		offset += pageSize
+		resp, err := customConfigClient.CustomConfigServiceListCustomConfigsWithResponse(ctx, projectName,
+			&infra.CustomConfigServiceListCustomConfigsParams{
+				OrderBy:  apiOrderBy,
+				Filter:   getNonEmptyFlag(cmd, "filter"),
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting Cloud Init configurations"); !proceed {
+			return err
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.CustomConfigs == nil {
+			return fmt.Errorf("error listing custom configs: unexpected response format")
+		}
+
+		if len(resp.JSON200.CustomConfigs) == 0 {
+			break
+		}
+		allCustomConfigs = append(allCustomConfigs, resp.JSON200.CustomConfigs...)
+	}
+
 	outputFilter, _ := cmd.Flags().GetString("output-filter")
-	// List command (forList=true)
-	if err := printCustomConfigs(cmd, writer, &resp.JSON200.CustomConfigs, validatedOrderBy, &outputFilter, verbose, true); err != nil {
+	if err := printCustomConfigs(cmd, writer, &allCustomConfigs, validatedOrderBy, &outputFilter, verbose, true); err != nil {
 		return err
 	}
 
