@@ -8,9 +8,20 @@ import (
 	"io"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+)
+
+const (
+	DEFAULT_PROJECT_FORMAT         = "table{{none .Name}}\t{{.StatusIndicator}}"
+	DEFAULT_PROJECT_INSPECT_FORMAT = `Name: {{none .Name}}
+Description: {{none .Description}}
+Status: {{none .StatusIndicator}}
+Status Message: {{none .StatusMessage}}
+UID: {{none .UID}}`
+	PROJECT_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_PROJECT_OUTPUT_TEMPLATE"
 )
 
 const listProjectExamples = `# List all projects in the organization
@@ -31,76 +42,106 @@ orch-cli create project myproject --description "my description"
 const deleteProjectExamples = `#Delete a project using it's name
 orch-cli delete project myproject`
 
-var ProjectHeader = fmt.Sprintf("\n%s\t%s", "Name", "Status")
-
-// Prints projects in tabular format
-func printProjects(writer io.Writer, projects *tenancy.ProjectProjectList, verbose bool) {
-	if projects == nil {
-		fmt.Fprintf(writer, "No projects found\n")
-		return
-	}
-
-	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\n", "Name", "Status", "Description")
-	}
-
-	for _, project := range *projects {
-		name := "N/A"
-		if project.Name != nil {
-			name = *project.Name
-		}
-
-		status := "Unknown"
-		if project.Status != nil && project.Status.ProjectStatus != nil && project.Status.ProjectStatus.StatusIndicator != nil {
-			status = *project.Status.ProjectStatus.StatusIndicator
-		}
-
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\n", name, status)
-		} else {
-			description := "N/A"
-			if project.Spec != nil && project.Spec.Description != nil {
-				description = *project.Spec.Description
-			}
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", name, status, description)
-		}
-	}
+// ProjectListItem is a flattened view for template output
+type ProjectListItem struct {
+	Name            *string `json:"name,omitempty"`
+	Description     *string `json:"description,omitempty"`
+	StatusIndicator *string `json:"statusIndicator,omitempty"`
+	StatusMessage   *string `json:"statusMessage,omitempty"`
+	UID             *string `json:"uid,omitempty"`
 }
 
-// Prints output details of projects
-func printProject(writer io.Writer, name string, project *tenancy.GetprojectProject) {
-	if project == nil {
-		fmt.Fprintf(writer, "Project %s not found\n", name)
-		return
+func flattenProjects(projects *tenancy.ProjectProjectList) []ProjectListItem {
+	if projects == nil {
+		return []ProjectListItem{}
 	}
 
-	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", name)
-
-	description := "N/A"
-	if project.Spec != nil && project.Spec.Description != nil {
-		description = *project.Spec.Description
+	items := make([]ProjectListItem, 0, len(*projects))
+	for _, proj := range *projects {
+		item := ProjectListItem{
+			Name: proj.Name,
+		}
+		if proj.Spec != nil {
+			item.Description = proj.Spec.Description
+		}
+		if proj.Status != nil && proj.Status.ProjectStatus != nil {
+			item.StatusIndicator = proj.Status.ProjectStatus.StatusIndicator
+			item.StatusMessage = proj.Status.ProjectStatus.Message
+			item.UID = proj.Status.ProjectStatus.UID
+		}
+		items = append(items, item)
 	}
-	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", description)
+	return items
+}
 
-	status := "Unknown"
-	message := "N/A"
-	uid := "N/A"
+func getProjectOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_PROJECT_INSPECT_FORMAT, nil
+	}
+	return resolveTableOutputTemplate(cmd, DEFAULT_PROJECT_FORMAT, PROJECT_OUTPUT_TEMPLATE_ENVVAR)
+}
 
-	if project.Status != nil && project.Status.ProjectStatus != nil {
-		if project.Status.ProjectStatus.StatusIndicator != nil {
-			status = *project.Status.ProjectStatus.StatusIndicator
+func printProjects(cmd *cobra.Command, writer io.Writer, projects *tenancy.ProjectProjectList, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	outputFormat, err := getProjectOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	items := flattenProjects(projects)
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      items,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
+}
+
+func printProject(cmd *cobra.Command, writer io.Writer, name string, project *tenancy.GetprojectProject) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	item := ProjectListItem{
+		Name: &name,
+	}
+	if project != nil {
+		if project.Spec != nil {
+			item.Description = project.Spec.Description
 		}
-		if project.Status.ProjectStatus.Message != nil {
-			message = *project.Status.ProjectStatus.Message
-		}
-		if project.Status.ProjectStatus.UID != nil {
-			uid = *project.Status.ProjectStatus.UID
+		if project.Status != nil && project.Status.ProjectStatus != nil {
+			item.StatusIndicator = project.Status.ProjectStatus.StatusIndicator
+			item.StatusMessage = project.Status.ProjectStatus.Message
+			item.UID = project.Status.ProjectStatus.UID
 		}
 	}
 
-	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", status)
-	_, _ = fmt.Fprintf(writer, "Status message: \t%s\n", message)
-	_, _ = fmt.Fprintf(writer, "UID: \t%s\n\n", uid)
+	outputFormat := DEFAULT_PROJECT_INSPECT_FORMAT
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      []ProjectListItem{item},
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 func getGetProjectCommand() *cobra.Command {
@@ -112,6 +153,7 @@ func getGetProjectCommand() *cobra.Command {
 		Aliases: projectAliases,
 		RunE:    runGetProjectCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -123,6 +165,8 @@ func getListProjectCommand() *cobra.Command {
 		Aliases: projectAliases,
 		RunE:    runListProjectCommand,
 	}
+	cmd.Flags().String("order-by", "", "order results by field (table output only)")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -151,11 +195,10 @@ func getDeleteProjectCommand() *cobra.Command {
 	return cmd
 }
 
-// Gets specific Cloud Init configuration bu resource ID
+// Gets specific project by name
 func runGetProjectCommand(cmd *cobra.Command, args []string) error {
-
 	name := args[0]
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 	ctx, projectClient, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
@@ -166,20 +209,42 @@ func runGetProjectCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
 		"", "error getting projects"); !proceed {
 		return err
 	}
 
-	printProject(writer, name, resp.JSON200)
+	if err := printProject(cmd, writer, name, resp.JSON200); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
-// Lists all Cloud Init configurations - retrieves all configurations and displays selected information in tabular format
+// Lists all projects
 func runListProjectCommand(cmd *cobra.Command, _ []string) error {
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 
 	ctx, projectClient, err := TenancyFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	var validatedOrderBy *string
+	if outputType == "table" {
+		validatedOrderBy, err = normalizeOrderByForClientSorting(raw, ProjectListItem{})
+	} else {
+		// JSON/YAML: no API support, but allow any field for consistency
+		if raw != "" {
+			validatedOrderBy = &raw
+		}
+	}
 	if err != nil {
 		return err
 	}
@@ -189,12 +254,16 @@ func runListProjectCommand(cmd *cobra.Command, _ []string) error {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		ProjectHeader, "error getting projects"); !proceed {
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+		"", "error getting projects"); !proceed {
 		return err
 	}
 
-	printProjects(writer, resp.JSON200, verbose)
+	verbose, _ := cmd.Flags().GetBool("verbose")
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printProjects(cmd, writer, resp.JSON200, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 
 	return writer.Flush()
 }
