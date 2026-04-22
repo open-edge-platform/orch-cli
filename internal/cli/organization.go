@@ -137,7 +137,7 @@ func printOrganization(cmd *cobra.Command, writer io.Writer, name string, organi
 		Format:    format.Format(outputFormat),
 		OutputAs:  toOutputType(outputType),
 		NameLimit: -1,
-		Data:      []OrganizationListItem{item},
+		Data:      item,
 	}
 
 	GenerateOutput(writer, &result)

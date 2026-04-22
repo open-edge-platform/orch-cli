@@ -68,6 +68,11 @@ func headerLabelForField(field string) string {
 		return "DEPLOYMENT ID"
 	}
 
+	// Special case for ID field (avoid "I D" splitting)
+	if field == "ID" {
+		return "ID"
+	}
+
 	// Handle nested fields (e.g., "Status.State") by processing each part
 	parts := strings.Split(field, ".")
 	var processedParts []string

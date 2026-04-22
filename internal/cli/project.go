@@ -137,7 +137,7 @@ func printProject(cmd *cobra.Command, writer io.Writer, name string, project *te
 		Format:    format.Format(outputFormat),
 		OutputAs:  toOutputType(outputType),
 		NameLimit: -1,
-		Data:      []ProjectListItem{item},
+		Data:      item,
 	}
 
 	GenerateOutput(writer, &result)

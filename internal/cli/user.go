@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/keycloak"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -21,6 +22,18 @@ const (
 	// the same as unset, causing --password without =value to error.
 	passwordPromptSentinel = "__prompt__"
 	passwordEnvVar         = "ORCH_PASSWORD"
+
+	DEFAULT_USER_FORMAT         = "table{{.Username}}\t{{.Enabled}}"
+	DEFAULT_USER_VERBOSE_FORMAT = "table{{.Username}}\t{{none .Email}}\t{{none .FirstName}}\t{{.Enabled}}"
+	DEFAULT_USER_INSPECT_FORMAT = `Username: {{.Username}}
+ID: {{.ID}}
+Email: {{none .Email}}
+First Name: {{none .FirstName}}
+Last Name: {{none .LastName}}
+Enabled: {{.Enabled}}{{if .Groups}}
+Groups: {{.Groups}}{{end}}{{if .RealmRoles}}
+Realm Roles: {{.RealmRoles}}{{end}}`
+	USER_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_USER_OUTPUT_TEMPLATE"
 )
 
 const listUsersExamples = `# List all users
@@ -91,63 +104,149 @@ orch-cli set user sample-user --remove-realm-role "${ORG_UID}_${PROJ_UID}_m"
 orch-cli set user sample-user --add-group edge-manager-group --add-realm-role "${ORG_UID}_${PROJ_UID}_m"
 `
 
-func printUsers(writer io.Writer, users []keycloak.UserRepresentation, verbose bool) {
-	if len(users) == 0 {
-		fmt.Fprintf(writer, "No users found\n")
-		return
-	}
+// UserListItem is a flattened view for template output
+type UserListItem struct {
+	Username   string  `json:"username,omitempty"`
+	Email      *string `json:"email,omitempty"`
+	FirstName  *string `json:"firstName,omitempty"`
+	LastName   *string `json:"lastName,omitempty"`
+	ID         string  `json:"id,omitempty"`
+	Enabled    string  `json:"enabled,omitempty"`
+	Groups     *string `json:"groups,omitempty"`
+	RealmRoles *string `json:"realmRoles,omitempty"`
+}
 
-	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\n", "Username", "Email", "First Name", "Enabled")
-	}
-
+func flattenUsers(users []keycloak.UserRepresentation) []UserListItem {
+	items := make([]UserListItem, 0, len(users))
 	for _, user := range users {
 		enabled := "true"
 		if user.Enabled != nil && !*user.Enabled {
 			enabled = "false"
 		}
-
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\n", user.Username, enabled)
-		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", user.Username, user.Email, user.FirstName, enabled)
+		item := UserListItem{
+			Username: user.Username,
+			ID:       user.ID,
+			Enabled:  enabled,
 		}
+		if user.Email != "" {
+			item.Email = &user.Email
+		}
+		if user.FirstName != "" {
+			item.FirstName = &user.FirstName
+		}
+		if user.LastName != "" {
+			item.LastName = &user.LastName
+		}
+		items = append(items, item)
 	}
+	return items
 }
 
-func printUser(writer io.Writer, user *keycloak.UserRepresentation, groups []keycloak.GroupRepresentation, roles []keycloak.RoleRepresentation) {
-	if user == nil {
-		fmt.Fprintf(writer, "User not found\n")
-		return
-	}
-
-	_, _ = fmt.Fprintf(writer, "Username: \t%s\n", user.Username)
-	_, _ = fmt.Fprintf(writer, "ID: \t%s\n", user.ID)
-	_, _ = fmt.Fprintf(writer, "Email: \t%s\n", valueOrDefault(user.Email))
-	_, _ = fmt.Fprintf(writer, "First Name: \t%s\n", valueOrDefault(user.FirstName))
-	_, _ = fmt.Fprintf(writer, "Last Name: \t%s\n", valueOrDefault(user.LastName))
-
+func flattenUser(user *keycloak.UserRepresentation, groups []keycloak.GroupRepresentation, roles []keycloak.RoleRepresentation) UserListItem {
 	enabled := "true"
 	if user.Enabled != nil && !*user.Enabled {
 		enabled = "false"
 	}
-	_, _ = fmt.Fprintf(writer, "Enabled: \t%s\n", enabled)
 
-	if groups != nil {
+	item := UserListItem{
+		Username: user.Username,
+		ID:       user.ID,
+		Enabled:  enabled,
+	}
+
+	if user.Email != "" {
+		item.Email = &user.Email
+	}
+	if user.FirstName != "" {
+		item.FirstName = &user.FirstName
+	}
+	if user.LastName != "" {
+		item.LastName = &user.LastName
+	}
+
+	if groups != nil && len(groups) > 0 {
 		groupNames := make([]string, 0, len(groups))
 		for _, g := range groups {
 			groupNames = append(groupNames, g.Name)
 		}
-		_, _ = fmt.Fprintf(writer, "Groups: \t%s\n", strings.Join(groupNames, ", "))
+		groupsStr := strings.Join(groupNames, ", ")
+		item.Groups = &groupsStr
 	}
 
-	if roles != nil {
+	if roles != nil && len(roles) > 0 {
 		roleNames := make([]string, 0, len(roles))
 		for _, r := range roles {
 			roleNames = append(roleNames, r.Name)
 		}
-		_, _ = fmt.Fprintf(writer, "Realm Roles: \t%s\n", strings.Join(roleNames, ", "))
+		rolesStr := strings.Join(roleNames, ", ")
+		item.RealmRoles = &rolesStr
 	}
+
+	return item
+}
+
+func getUserOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	// Check if we're in get command context (has --groups or --roles flags)
+	showGroups, _ := cmd.Flags().GetBool("groups")
+	showRoles, _ := cmd.Flags().GetBool("roles")
+	if showGroups || showRoles {
+		return DEFAULT_USER_INSPECT_FORMAT, nil
+	}
+
+	if verbose {
+		return DEFAULT_USER_VERBOSE_FORMAT, nil
+	}
+	return resolveTableOutputTemplate(cmd, DEFAULT_USER_FORMAT, USER_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func printUsers(cmd *cobra.Command, writer io.Writer, users []keycloak.UserRepresentation, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	outputFormat, err := getUserOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	items := flattenUsers(users)
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      items,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
+}
+
+func printUser(cmd *cobra.Command, writer io.Writer, user *keycloak.UserRepresentation, groups []keycloak.GroupRepresentation, roles []keycloak.RoleRepresentation) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	item := flattenUser(user, groups, roles)
+	outputFormat := DEFAULT_USER_INSPECT_FORMAT
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      item,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 func valueOrDefault(s string) string {
@@ -166,6 +265,8 @@ func getListUsersCommand() *cobra.Command {
 		RunE:    runListUsersCommand,
 	}
 	cmd.Flags().String("realm", "master", "Keycloak realm")
+	cmd.Flags().String("order-by", "", "order results by field (table output only)")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -181,6 +282,7 @@ func getGetUserCommand() *cobra.Command {
 	cmd.Flags().Bool("groups", false, "Also list the user's group memberships")
 	cmd.Flags().Bool("roles", false, "Also list the user's realm role assignments")
 	cmd.Flags().String("realm", "master", "Keycloak realm")
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -238,9 +340,30 @@ func getSetUserCommand() *cobra.Command {
 }
 
 func runListUsersCommand(cmd *cobra.Command, _ []string) error {
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 
 	ctx, kcClient, realm, err := KeycloakAdminFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	verbose, _ := cmd.Flags().GetBool("verbose")
+
+	var validatedOrderBy *string
+	if outputType == "table" {
+		validatedOrderBy, err = normalizeOrderByForClientSorting(raw, UserListItem{})
+	} else {
+		// JSON/YAML: no API support, but allow any field for consistency
+		if raw != "" {
+			validatedOrderBy = &raw
+		}
+	}
 	if err != nil {
 		return err
 	}
@@ -250,11 +373,11 @@ func runListUsersCommand(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error listing users: %w", err)
 	}
 
-	if !verbose {
-		_, _ = fmt.Fprintf(writer, "\n%s\t%s\n", "Username", "Enabled")
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printUsers(cmd, writer, users, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
 	}
 
-	printUsers(writer, users, verbose)
 	return writer.Flush()
 }
 
@@ -290,7 +413,9 @@ func runGetUserCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	printUser(writer, user, groups, roles)
+	if err := printUser(cmd, writer, user, groups, roles); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
