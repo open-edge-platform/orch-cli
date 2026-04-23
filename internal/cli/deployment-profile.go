@@ -84,12 +84,12 @@ func printDeploymentProfiles(writer io.Writer, profileList *[]catapi.CatalogV3De
 	for _, p := range *profileList {
 		if !verbose {
 			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%d\n", p.Name,
-				valueOrNone(p.DisplayName), valueOrNone(p.Description), len(p.ApplicationProfiles))
+				valueOrNone(p.DisplayName), valueOrNone(p.Description), len(p.ApplicationProfiles.AdditionalProperties))
 		} else {
 			_, _ = fmt.Fprintf(writer, "Name: %s\n", p.Name)
 			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(p.DisplayName))
 			_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(p.Description))
-			_, _ = fmt.Fprintf(writer, "Profiles: %s\n", p.ApplicationProfiles)
+			_, _ = fmt.Fprintf(writer, "Profiles: %v\n", p.ApplicationProfiles.AdditionalProperties)
 			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", p.CreateTime.Format(timeLayout))
 			_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", p.UpdateTime.Format(timeLayout))
 		}
@@ -129,7 +129,7 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 		Name:                profileName,
 		DisplayName:         &displayName,
 		Description:         &description,
-		ApplicationProfiles: applicationProfiles,
+		ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: applicationProfiles},
 	}
 	profiles := *pkg.Profiles
 
@@ -247,7 +247,7 @@ func runSetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 			profile.Description = getFlagOrDefault(cmd, "description", profile.Description)
 			newApplicationProfiles, _ := cmd.Flags().GetStringToString("application-profile")
 			if len(newApplicationProfiles) > 0 {
-				profile.ApplicationProfiles = newApplicationProfiles
+				profile.ApplicationProfiles = catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: newApplicationProfiles}
 			}
 			profiles[i] = profile
 			ok = true

@@ -40,7 +40,7 @@ type SOLSession struct {
 	// Shutdown coordination
 	done     chan struct{}
 	doneOnce sync.Once
-	
+
 	// Error channel
 	errChan chan error
 }
@@ -336,28 +336,22 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 
 // connectSOLSession connects to the MPS relay and runs the AMT SOL protocol
 // handshake. The function blocks until Ctrl-C or the MPS connection drops.
-func connectSOLSession(sessionURL, jwtToken, amtPass string, readyCh chan<- int) error {
-	// Parse the session URL to extract host, token, guid
-	parsed, err := url.Parse(sessionURL)
-	if err != nil {
-		return fmt.Errorf("invalid session URL: %w", err)
-	}
-
-	redirectToken := parsed.Query().Get("token")
-	hostGUID := parsed.Query().Get("host")
-
-	if redirectToken == "" || hostGUID == "" {
-		return fmt.Errorf("invalid session URL: missing token or host GUID")
-	}
-
-	// Use the redirect token from the session URL provided by sol-manager.
+// connectSOLSession connects to the MPS relay and runs the AMT SOL protocol
+// handshake. The function blocks until Ctrl-C or the MPS connection drops.
+// Parameters:
+//   - mpsHost: the MPS relay hostname (e.g. "api.orch-xxx.pid.infra-host.com")
+//   - hostGUID: the AMT device GUID
+//   - redirectToken: the MPS redirect token from GET /oob/authorize/redirection/{guid}
+//   - jwtToken: the Keycloak JWT for MPS auth
+//   - amtPass: the AMT device password for digest auth
+//   - readyCh: optional channel to signal when SOL session is ready
+func connectSOLSession(mpsHost, hostGUID, redirectToken, jwtToken, amtPass string, readyCh chan<- int) error {
 	fmt.Printf("\nConnecting to MPS relay...\n")
-	fmt.Printf("  Host: %s\n", parsed.Host)
+	fmt.Printf("  Host: %s\n", mpsHost)
 	fmt.Printf("  GUID: %s\n", hostGUID)
-	fmt.Printf("  Using redirect token from sol-manager session URL.\n")
 
 	wsURL := fmt.Sprintf("wss://%s/relay/webrelay.ashx?p=2&host=%s&port=16994&tls=0&tls1only=0&mode=sol",
-		parsed.Host, hostGUID)
+		mpsHost, hostGUID)
 
 	// Setup WebSocket dialer with timeout
 	dialer := websocket.Dialer{
@@ -422,7 +416,7 @@ func connectSOLSession(sessionURL, jwtToken, amtPass string, readyCh chan<- int)
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(interrupt)
-	
+
 	done := make(chan struct{})
 	debug := os.Getenv("SOL_DEBUG") != ""
 
@@ -438,15 +432,15 @@ func connectSOLSession(sessionURL, jwtToken, amtPass string, readyCh chan<- int)
 				return
 			default:
 			}
-			
+
 			readDeadlineMu.Lock()
 			conn.SetReadDeadline(time.Now().Add(300 * time.Second)) //nolint:errcheck
 			readDeadlineMu.Unlock()
-			
+
 			_, message, readErr := conn.ReadMessage()
 			if readErr != nil {
-				if !websocket.IsCloseError(readErr, 
-					websocket.CloseNormalClosure, 
+				if !websocket.IsCloseError(readErr,
+					websocket.CloseNormalClosure,
 					websocket.CloseGoingAway,
 					websocket.CloseNoStatusReceived) {
 					select {
@@ -540,7 +534,7 @@ func connectSOLSession(sessionURL, jwtToken, amtPass string, readyCh chan<- int)
 	if err != nil {
 		return fmt.Errorf("failed to set terminal to raw mode: %w", err)
 	}
-	
+
 	// Ensure terminal is always restored, even on panic
 	defer func() {
 		if err := term.Restore(int(os.Stdin.Fd()), oldState); err != nil {
@@ -559,7 +553,7 @@ func connectSOLSession(sessionURL, jwtToken, amtPass string, readyCh chan<- int)
 				return
 			default:
 			}
-			
+
 			n, readErr := os.Stdin.Read(buffer)
 			if readErr != nil {
 				if readErr != io.EOF {
@@ -570,7 +564,7 @@ func connectSOLSession(sessionURL, jwtToken, amtPass string, readyCh chan<- int)
 				}
 				return
 			}
-			
+
 			if n > 0 {
 				// Check for Ctrl+C (0x03) in raw mode
 				for i := 0; i < n; i++ {
@@ -620,14 +614,14 @@ func connectSOLSession(sessionURL, jwtToken, amtPass string, readyCh chan<- int)
 	closeMsg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
 	_ = conn.WriteMessage(websocket.CloseMessage, closeMsg)
 	sol.connMu.Unlock()
-	
+
 	// Wait a moment for graceful close
 	time.Sleep(100 * time.Millisecond)
-	
+
 	conn.Close()
-	
+
 	fmt.Printf("\nSOL session ended.\n")
-	
+
 	return sessionErr
 }
 

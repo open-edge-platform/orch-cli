@@ -363,11 +363,12 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 		target, alreadyExists := targets[app]
 
 		if !alreadyExists {
-			lbls := make(map[string]string, 1)
+			lbls := depapi.TargetClusters_Labels{AdditionalProperties: make(map[string]string, 1)}
 			target = depapi.TargetClusters{AppName: &app, Labels: &lbls}
 			targets[app] = target
 		}
-		(*target.Labels)[label] = value
+		target.Labels.AdditionalProperties[label] = value
+		targets[app] = target
 	}
 
 	// Transform targets map into array

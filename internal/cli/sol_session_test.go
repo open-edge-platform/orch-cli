@@ -354,46 +354,31 @@ func TestSOLWebSocketConnection(t *testing.T) {
 	assert.Equal(t, testMsg, msg)
 }
 
-// TestConnectSOLSessionURLValidation tests URL validation
-func TestConnectSOLSessionURLValidation(t *testing.T) {
+// TestConnectSOLSessionParamValidation tests parameter validation
+func TestConnectSOLSessionParamValidation(t *testing.T) {
 	tests := []struct {
-		name        string
-		sessionURL  string
-		expectError bool
-		errorMsg    string
+		name          string
+		mpsHost       string
+		hostGUID      string
+		redirectToken string
+		expectError   bool
+		errorMsg      string
 	}{
 		{
-			name:        "invalid URL format",
-			sessionURL:  "not a valid url",
-			expectError: true,
-			errorMsg:    "invalid session URL",
-		},
-		{
-			name:        "missing token parameter",
-			sessionURL:  "wss://mps.example.com/relay/webrelay.ashx?host=123",
-			expectError: true,
-			errorMsg:    "missing token",
-		},
-		{
-			name:        "missing host parameter",
-			sessionURL:  "wss://mps.example.com/relay/webrelay.ashx?token=abc",
-			expectError: true,
-			errorMsg:    "missing",
-		},
-		{
-			name:        "empty parameters",
-			sessionURL:  "wss://mps.example.com/relay/webrelay.ashx?token=&host=",
-			expectError: true,
-			errorMsg:    "missing",
+			name:          "valid params but unreachable host",
+			mpsHost:       "mps.example.com",
+			hostGUID:      "test-guid-123",
+			redirectToken: "abc-token",
+			expectError:   true,
+			errorMsg:      "WebSocket connection failed",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a channel to prevent blocking
 			readyCh := make(chan int, 1)
 
-			err := connectSOLSession(tt.sessionURL, "fake-jwt", "fake-pass", readyCh)
+			err := connectSOLSession(tt.mpsHost, tt.hostGUID, tt.redirectToken, "fake-jwt", "fake-pass", readyCh)
 
 			if tt.expectError {
 				assert.Error(t, err)
