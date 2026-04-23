@@ -3109,15 +3109,21 @@ func runKVMSession(
 		return fmt.Errorf("device UUID not available on host %s", hostID)
 	}
 
-	isCCM := host.AmtControlMode != nil && *host.AmtControlMode == infra.AMTCONTROLMODECCM
+	if host.AmtControlMode == nil || *host.AmtControlMode == infra.AMTCONTROLMODEUNSPECIFIED {
+		return fmt.Errorf("AMT control mode is not set on host %s; cannot determine KVM flow", hostID)
+	}
 
+	// ACM: no consent required — fetch relay token directly.
+	if *host.AmtControlMode == infra.AMTCONTROLMODEACM {
+		return kvmAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, "")
+	}
+
+	// CCM: poll for kvm-manager to signal AWAITING_CONSENT, then prompt operator.
 	const maxPoll = 30 // 60 s total
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
-	fmt.Println("Waiting for KVM session state from kvm-manager...")
-
-	consentSubmitted := false
+	fmt.Println("Waiting for kvm-manager to trigger consent display...")
 
 	for i := 0; i < maxPoll; i++ {
 		select {
@@ -3133,21 +3139,19 @@ func runKVMSession(
 			}
 			h := resp.JSON200
 
-			var currentState infra.KvmState
-			if h.CurrentKvmState != nil {
-				currentState = *h.CurrentKvmState
+			if h.CurrentKvmState == nil {
+				fmt.Print(".")
+				continue
 			}
 
-			if currentState == infra.KVMSTATEERROR {
+			switch *h.CurrentKvmState {
+			case infra.KVMSTATEERROR:
 				statusMsg := ""
 				if h.KvmSessionStatus != nil {
 					statusMsg = *h.KvmSessionStatus
 				}
 				return fmt.Errorf("KVM session error: %s", statusMsg)
-			}
-
-			// CCM: kvm-manager set AWAITING_CONSENT — prompt operator and submit to MPS.
-			if isCCM && currentState == infra.KVMSTATEAWAITINGCONSENT && !consentSubmitted {
+			case infra.KVMSTATEAWAITINGCONSENT:
 				codeInt, err := readConsentCode()
 				if err != nil {
 					return err
@@ -3178,51 +3182,47 @@ func runKVMSession(
 				if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching KVM consent received"); err != nil {
 					return err
 				}
-				consentSubmitted = true
-				fmt.Println("Waiting for KVM session to activate...")
-				continue
+				// Consent submitted — fetch token and activate.
+				return kvmAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, h.Name)
 			}
-
-			// ACM: kvm-manager signals ready via AWAITING_CONSENT.
-			// CCM: proceed after consent submitted.
-			readyForToken := (!isCCM && currentState == infra.KVMSTATEAWAITINGCONSENT) ||
-				(consentSubmitted && currentState != infra.KVMSTATEERROR && currentState != infra.KVMSTATESTOP)
-			// Safety net: manager already advanced to START.
-			if currentState == infra.KVMSTATESTART {
-				readyForToken = true
-			}
-
-			if readyForToken {
-				token, mpsDomain, err := acquireRelayToken(ctx, mpsClient, projectName, deviceGUID, apiEndpointStr)
-				if err != nil {
-					return err
-				}
-
-				redirState := infra.KVMREDIRECTIONRECEIVED
-				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
-					&infra.HostServicePatchHostParams{},
-					infra.HostServicePatchHostJSONRequestBody{
-						DesiredKvmState: &redirState,
-						Name:            h.Name,
-					}, auth.AddAuthHeader)
-				if err != nil {
-					return processError(err)
-				}
-				if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching KVM redirection received"); err != nil {
-					return err
-				}
-
-				fmt.Println("Waiting for kvm-manager to confirm session start...")
-				if err := waitForKVMStart(ctx, hostClient, projectName, hostID); err != nil {
-					return err
-				}
-				return startKVMViewer(ctx, token, mpsDomain, deviceGUID, hostClient, projectName, hostID)
-			}
-
 			fmt.Print(".")
 		}
 	}
-	return fmt.Errorf("timeout waiting for KVM session to reach active state")
+	return fmt.Errorf("timeout waiting for kvm-manager to signal consent display")
+}
+
+// kvmAcquireAndActivate fetches the relay token from MPS, signals kvm-manager,
+// waits for confirmation, then launches the KVM viewer.
+func kvmAcquireAndActivate(
+	ctx context.Context,
+	hostClient infra.ClientWithResponsesInterface,
+	mpsClient mpsapi.ClientWithResponsesInterface,
+	projectName, hostID, apiEndpointStr, deviceGUID, hostName string,
+) error {
+	token, mpsDomain, err := acquireRelayToken(ctx, mpsClient, projectName, deviceGUID, apiEndpointStr)
+	if err != nil {
+		return err
+	}
+
+	redirState := infra.KVMREDIRECTIONRECEIVED
+	patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+		&infra.HostServicePatchHostParams{},
+		infra.HostServicePatchHostJSONRequestBody{
+			DesiredKvmState: &redirState,
+			Name:            hostName,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching KVM redirection received"); err != nil {
+		return err
+	}
+
+	fmt.Println("Waiting for kvm-manager to confirm session start...")
+	if err := waitForKVMStart(ctx, hostClient, projectName, hostID); err != nil {
+		return err
+	}
+	return startKVMViewer(ctx, token, mpsDomain, deviceGUID, hostClient, projectName, hostID)
 }
 
 // runSOLSession drives the SOL session state machine (ACM and CCM).
@@ -3241,15 +3241,21 @@ func runSOLSession(
 		return fmt.Errorf("device UUID not available on host %s", hostID)
 	}
 
-	isCCM := host.AmtControlMode != nil && *host.AmtControlMode == infra.AMTCONTROLMODECCM
+	if host.AmtControlMode == nil || *host.AmtControlMode == infra.AMTCONTROLMODEUNSPECIFIED {
+		return fmt.Errorf("AMT control mode is not set on host %s; cannot determine SOL flow", hostID)
+	}
 
+	// ACM: no consent required — fetch relay token directly.
+	if *host.AmtControlMode == infra.AMTCONTROLMODEACM {
+		return solAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, "")
+	}
+
+	// CCM: poll for sol-manager to signal AWAITING_CONSENT, then prompt operator.
 	const maxPoll = 30 // 60 s total
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
-	fmt.Println("Waiting for SOL session state from sol-manager...")
-
-	consentSubmitted := false
+	fmt.Println("Waiting for sol-manager to trigger consent display...")
 
 	for i := 0; i < maxPoll; i++ {
 		select {
@@ -3265,21 +3271,19 @@ func runSOLSession(
 			}
 			h := resp.JSON200
 
-			var currentState infra.SolState
-			if h.CurrentSolState != nil {
-				currentState = *h.CurrentSolState
+			if h.CurrentSolState == nil {
+				fmt.Print(".")
+				continue
 			}
 
-			if currentState == infra.SOLSTATEERROR {
+			switch *h.CurrentSolState {
+			case infra.SOLSTATEERROR:
 				statusMsg := ""
 				if h.SolSessionStatus != nil {
 					statusMsg = *h.SolSessionStatus
 				}
 				return fmt.Errorf("SOL session error: %s", statusMsg)
-			}
-
-			// CCM: sol-manager set AWAITING_CONSENT — prompt operator and submit to MPS.
-			if isCCM && currentState == infra.SOLSTATEAWAITINGCONSENT && !consentSubmitted {
+			case infra.SOLSTATEAWAITINGCONSENT:
 				codeInt, err := readConsentCode()
 				if err != nil {
 					return err
@@ -3310,53 +3314,49 @@ func runSOLSession(
 				if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching SOL consent received"); err != nil {
 					return err
 				}
-				consentSubmitted = true
-				fmt.Println("Waiting for SOL session to activate...")
-				continue
+				// Consent submitted — fetch token and activate.
+				return solAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, h.Name)
 			}
-
-			// ACM: sol-manager signals ready via AWAITING_CONSENT.
-			// CCM: proceed after consent submitted.
-			readyForToken := (!isCCM && currentState == infra.SOLSTATEAWAITINGCONSENT) ||
-				(consentSubmitted && currentState != infra.SOLSTATEERROR && currentState != infra.SOLSTATESTOP)
-			// Safety net: manager already advanced to START.
-			if currentState == infra.SOLSTATESTART {
-				readyForToken = true
-			}
-
-			if readyForToken {
-				token, mpsDomain, err := acquireRelayToken(ctx, mpsClient, projectName, deviceGUID, apiEndpointStr)
-				if err != nil {
-					return err
-				}
-
-				redirState := infra.SOLSTATEREDIRECTIONRECEIVED
-				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
-					&infra.HostServicePatchHostParams{},
-					infra.HostServicePatchHostJSONRequestBody{
-						DesiredSolState: &redirState,
-						Name:            h.Name,
-					}, auth.AddAuthHeader)
-				if err != nil {
-					return processError(err)
-				}
-				if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching SOL redirection received"); err != nil {
-					return err
-				}
-
-				fmt.Println("Waiting for sol-manager to confirm session start...")
-				if err := waitForSOLStart(ctx, hostClient, projectName, hostID); err != nil {
-					return err
-				}
-				jwtToken, _ := auth.GetAccessToken(ctx)
-				amtPassword := os.Getenv("AMT_PASSWORD")
-				return connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPassword, nil)
-			}
-
 			fmt.Print(".")
 		}
 	}
-	return fmt.Errorf("timeout waiting for SOL session to reach active state")
+	return fmt.Errorf("timeout waiting for sol-manager to signal consent display")
+}
+
+// solAcquireAndActivate fetches the relay token from MPS, signals sol-manager,
+// waits for confirmation, then connects the SOL terminal.
+func solAcquireAndActivate(
+	ctx context.Context,
+	hostClient infra.ClientWithResponsesInterface,
+	mpsClient mpsapi.ClientWithResponsesInterface,
+	projectName, hostID, apiEndpointStr, deviceGUID, hostName string,
+) error {
+	token, mpsDomain, err := acquireRelayToken(ctx, mpsClient, projectName, deviceGUID, apiEndpointStr)
+	if err != nil {
+		return err
+	}
+
+	redirState := infra.SOLSTATEREDIRECTIONRECEIVED
+	patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+		&infra.HostServicePatchHostParams{},
+		infra.HostServicePatchHostJSONRequestBody{
+			DesiredSolState: &redirState,
+			Name:            hostName,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching SOL redirection received"); err != nil {
+		return err
+	}
+
+	fmt.Println("Waiting for sol-manager to confirm session start...")
+	if err := waitForSOLStart(ctx, hostClient, projectName, hostID); err != nil {
+		return err
+	}
+	jwtToken, _ := auth.GetAccessToken(ctx)
+	amtPassword := os.Getenv("AMT_PASSWORD")
+	return connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPassword, nil)
 }
 
 // readConsentCode prompts the operator for the 6-digit on-screen consent code.
