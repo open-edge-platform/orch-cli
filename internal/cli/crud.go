@@ -213,6 +213,7 @@ func getGetCommand() *cobra.Command {
 
 	// Out of Band Management related commands
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetAmtProfileCommand(), OobFeature)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetRedirectionTokenCommand(), OobFeature)
 
 	// Multitenancy related commands
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetProjectCommand(), MultitenancyFeature)

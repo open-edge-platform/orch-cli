@@ -18,6 +18,11 @@ import (
 	"golang.org/x/term"
 )
 
+const getRedirectionTokenExamples = `
+# Get a redirection token for a device GUID (used for SOL/KVM sessions)
+orch-cli get redirectiontoken <device-guid> --project some-project
+`
+
 const listAmtProfileExamples = `
 # List all AMT domain profiles
 orch-cli list amtprofile --project some-project
@@ -272,4 +277,43 @@ func readCert(certPath string) ([]byte, error) {
 	}
 
 	return certData, nil
+}
+
+func getGetRedirectionTokenCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "redirectiontoken <device-guid> [flags]",
+		Short:   "Get a redirection token for a device (SOL/KVM)",
+		Example: getRedirectionTokenExamples,
+		Aliases: []string{"redirectiontoken", "redirection-token"},
+		Args:    cobra.ExactArgs(1),
+		RunE:    runGetRedirectionTokenCommand,
+	}
+	return cmd
+}
+
+func runGetRedirectionTokenCommand(cmd *cobra.Command, args []string) error {
+	writer, _ := getOutputContext(cmd)
+	guid := args[0]
+
+	ctx, mpsClient, projectName, err := MpsFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	resp, err := mpsClient.GetV1ProjectsProjectNameOobAuthorizeRedirectionGuidWithResponse(ctx, projectName, guid, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while getting redirection token"); err != nil {
+		return err
+	}
+
+	if resp.JSON200 != nil && resp.JSON200.Token != nil {
+		fmt.Fprintf(writer, "Redirection Token: \t%s\n", *resp.JSON200.Token)
+	} else {
+		fmt.Fprintf(writer, "No token returned for device GUID %s\n", guid)
+	}
+
+	return writer.Flush()
 }

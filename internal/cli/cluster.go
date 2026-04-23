@@ -129,7 +129,8 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	request.Labels = &labels
+	clusterLabels := coapi.ClusterSpec_Labels{AdditionalProperties: labels}
+	request.Labels = &clusterLabels
 
 	if verbose {
 		fmt.Printf("Creating cluster with the following details:\n")
@@ -140,8 +141,8 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 		if len(nodes) > 0 {
 			fmt.Printf("- Nodes: %+v\n", nodes)
 		}
-		if request.Labels != nil && len(*request.Labels) > 0 {
-			fmt.Printf("- Labels: %v\n", *request.Labels)
+		if request.Labels != nil && len(request.Labels.AdditionalProperties) > 0 {
+			fmt.Printf("- Labels: %v\n", request.Labels.AdditionalProperties)
 		}
 	}
 

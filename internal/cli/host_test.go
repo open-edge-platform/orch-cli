@@ -119,6 +119,82 @@ func (s *CLITestSuite) testResolveAmtState() {
 	}
 }
 
+func (s *CLITestSuite) testResolveKvmState() {
+	tests := []struct {
+		input    string
+		expected infra.KvmState
+		wantErr  bool
+	}{
+		{"start", infra.KVMSTATESTART, false},
+		{"stop", infra.KVMSTATESTOP, false},
+		{"invalid", "", true},
+		{"", "", true},
+	}
+
+	for _, tc := range tests {
+		result, err := resolveKvmState(tc.input)
+		if tc.wantErr {
+			s.Error(err, "expected error for input %q", tc.input)
+		} else {
+			s.NoError(err, "unexpected error for input %q", tc.input)
+			s.Equal(tc.expected, result, "unexpected result for input %q", tc.input)
+		}
+	}
+}
+
+func (s *CLITestSuite) testResolveSolState() {
+	tests := []struct {
+		input    string
+		expected infra.SolState
+		wantErr  bool
+	}{
+		{"start", infra.SOLSTATESTART, false},
+		{"stop", infra.SOLSTATESTOP, false},
+		{"SOL_STATE_START", infra.SOLSTATESTART, false},
+		{"SOL_STATE_STOP", infra.SOLSTATESTOP, false},
+		{"invalid", "", true},
+		{"", "", true},
+	}
+
+	for _, tc := range tests {
+		result, err := resolveSolState(tc.input)
+		if tc.wantErr {
+			s.Error(err, "expected error for input %q", tc.input)
+		} else {
+			s.NoError(err, "unexpected error for input %q", tc.input)
+			s.Equal(tc.expected, result, "unexpected result for input %q", tc.input)
+		}
+	}
+}
+
+func (s *CLITestSuite) testResolveRemoteSessionState() {
+	tests := []struct {
+		state       string
+		sessionType string
+		expected    string
+		wantErr     bool
+	}{
+		{"start", "kvm", string(infra.KVMSTATESTART), false},
+		{"stop", "kvm", string(infra.KVMSTATESTOP), false},
+		{"start", "sol", string(infra.SOLSTATESTART), false},
+		{"stop", "sol", string(infra.SOLSTATESTOP), false},
+		{"invalid", "kvm", "", true},
+		{"start", "invalid", "", true},
+		{"", "kvm", "", true},
+		{"start", "", "", true},
+	}
+
+	for _, tc := range tests {
+		result, err := resolveRemoteSessionState(tc.state, tc.sessionType)
+		if tc.wantErr {
+			s.Error(err, "expected error for state=%q, sessionType=%q", tc.state, tc.sessionType)
+		} else {
+			s.NoError(err, "unexpected error for state=%q, sessionType=%q", tc.state, tc.sessionType)
+			s.Equal(tc.expected, result, "unexpected result for state=%q, sessionType=%q", tc.state, tc.sessionType)
+		}
+	}
+}
+
 // Helper function to create string pointers
 func stringPtr(s string) *string {
 	return &s
@@ -278,6 +354,12 @@ func (s *CLITestSuite) TestHost() {
 
 	s.testResolveAmtState()
 
+	s.testResolveKvmState()
+
+	s.testResolveSolState()
+
+	s.testResolveRemoteSessionState()
+
 	// Test list hosts with no filters
 	listOutput, err := s.listHost(project, make(map[string]string))
 	s.NoError(err)
@@ -415,9 +497,10 @@ func (s *CLITestSuite) TestHost() {
 		"AMT Info:":                       "",
 		"-   AMT State:":                  "AMT_STATE_PROVISIONED",
 		"-   AMT Desired State:":          "AMT_STATE_PROVISIONED",
-		"-   AMT Desired Control Mode:":   "AMT_CONTROL_MODE_CCM",
+		"-   AMT Desired Control Mode:":   "AMT_CONTROL_MODE_ACM",
 		"-   AMT Desired DNS Suffix:":     "example.com",
 		"-   AMT SKU :":                   "12345",
+		"-   KVM Desired State:":          "KVM_STATE_START",
 		"-   Current Power State:":        "POWER_STATE_ON",
 		"-   Desired Power State:":        "POWER_STATE_ON",
 		"-   Power Status:":               "Powered on",
@@ -483,6 +566,46 @@ func (s *CLITestSuite) TestHost() {
 	}
 
 	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	// Test KVM Session State set to start
+	HostArgs = map[string]string{
+		"session-type":  "kvm",
+		"session-state": "start",
+	}
+
+	// Test set host with KVM session
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	// Test KVM Session State set to stop
+	HostArgs = map[string]string{
+		"session-type":  "kvm",
+		"session-state": "stop",
+	}
+
+	// Test set host with KVM session
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	// Test SOL Session State set to start
+	HostArgs = map[string]string{
+		"session-type":  "sol",
+		"session-state": "start",
+	}
+
+	// Test set host with SOL session
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	// Test SOL Session State set to stop
+	HostArgs = map[string]string{
+		"session-type":  "sol",
+		"session-state": "stop",
+	}
+
+	// Test set host with SOL session
 	_, err = s.setHost(project, hostID, HostArgs)
 	s.NoError(err)
 

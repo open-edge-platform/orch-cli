@@ -153,9 +153,9 @@ func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3Deploym
 			_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
 			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n", valueOrNone(ca.DefaultProfileName))
 
-			if ca.DefaultNamespaces != nil && len(*ca.DefaultNamespaces) > 0 {
-				namespaces := make([]string, 0, len(*ca.DefaultNamespaces))
-				for app, ns := range *ca.DefaultNamespaces {
+			if ca.DefaultNamespaces != nil && len(ca.DefaultNamespaces.AdditionalProperties) > 0 {
+				namespaces := make([]string, 0, len(ca.DefaultNamespaces.AdditionalProperties))
+				for app, ns := range ca.DefaultNamespaces.AdditionalProperties {
 					namespaces = append(namespaces, fmt.Sprintf("%s=%s", app, ns))
 				}
 				_, _ = fmt.Fprintf(writer, "Default Namespaces: %v\n", namespaces)
@@ -268,9 +268,9 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 
 	// Collect default namespaces
 	defaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
-	var defaultNamespacesPtr *map[string]string
+	var defaultNamespacesPtr *catapi.CatalogV3DeploymentPackage_DefaultNamespaces
 	if len(defaultNamespaces) > 0 {
-		defaultNamespacesPtr = &defaultNamespaces
+		defaultNamespacesPtr = &catapi.CatalogV3DeploymentPackage_DefaultNamespaces{AdditionalProperties: defaultNamespaces}
 	}
 
 	// Set up default profile name - use "deployment-profile-1" to match UI behavior
@@ -282,7 +282,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	// Create an initial deployment profile to match UI behavior
 	initialProfile := catapi.CatalogV3DeploymentProfile{
 		Name:                defaultProfileName,
-		ApplicationProfiles: appDefaultProfiles,
+		ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: appDefaultProfiles},
 	}
 	initialProfiles := []catapi.CatalogV3DeploymentProfile{initialProfile}
 
@@ -490,10 +490,13 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 	newDefaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
 	if len(newDefaultNamespaces) > 0 {
 		if defaultNamespaces == nil {
-			defaultNamespaces = &newDefaultNamespaces
+			defaultNamespaces = &catapi.CatalogV3DeploymentPackage_DefaultNamespaces{AdditionalProperties: newDefaultNamespaces}
 		} else {
+			if defaultNamespaces.AdditionalProperties == nil {
+				defaultNamespaces.AdditionalProperties = make(map[string]string)
+			}
 			for k, v := range newDefaultNamespaces {
-				(*defaultNamespaces)[k] = v
+				defaultNamespaces.AdditionalProperties[k] = v
 			}
 		}
 	}

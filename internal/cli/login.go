@@ -275,7 +275,7 @@ func loadFeatureConfig(info *orchutilities.Info) error {
 func setDefaultFeatureFlags() error {
 	viper.Set(OobFeature, true)
 	viper.Set(OnboardingFeature, true)
-	viper.Set(ProvisioningFeature, true)
+	viper.Set(ProvisioningFeature, false)
 	viper.Set(OxmFeature, true)
 	viper.Set(Day2Feature, true)
 	viper.Set(AppOrchFeature, true)

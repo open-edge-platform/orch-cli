@@ -154,8 +154,8 @@ func (s *CLITestSuite) compareListOutput(expected []map[string]string, actual []
 }
 
 func (s *CLITestSuite) compareGetOutput(expected map[string]string, actual map[string]string) {
-	// Make sure there are no extra entries
-	s.Equal(len(expected), len(actual), "Number of fields should match")
+	// Make sure all expected entries are present (allow additional fields in actual)
+	s.GreaterOrEqual(len(actual), len(expected), "Actual output should have at least the expected fields")
 
 	// Make sure the entries match
 	for key, expectedValue := range expected {

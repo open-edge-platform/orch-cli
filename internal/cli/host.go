@@ -25,6 +25,7 @@ import (
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
+	mpsapi "github.com/open-edge-platform/cli/pkg/rest/mps"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -200,6 +201,13 @@ orch-cli set host host-1234abcd --project some-project --control-mode admin
 
 --control-mode - Set desired AMT control mode of host to admin|client
 
+#Set KVM session
+orch-cli set host host-1234abcd --project some-project --session-type kvm --session-state start
+#Set SOL session
+orch-cli set host host-1234abcd --project some-project --session-type sol --session-state stop
+--session-type - Set session type (kvm|sol)
+--session-state - Set desired session state (start|stop)
+
 # Generate CSV input file using the --generate-csv flag - the default output will be a base test.csv file.
 orch-cli set host --project some-project --generate-csv
 
@@ -212,12 +220,14 @@ Name - Name of the machine - mandatory field
 ResourceID - Unique Identifier of host - mandatory field
 DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field or AMT_STATE_PROVISIONED|AMT_STATE_UNPROVISIONED
 ControlMode - Desired AMT control mode of host - admin|client - optional field or AMT_CONTROL_MODE_ADMIN|AMT_CONTROL_MODE_CLIENT
+DesiredKvmState - Desired KVM state of host - start|stop - optional field or KVM_STATE_START|KVM_STATE_STOP
+DesiredSolState - Desired SOL state of host - start|stop - optional field or SOL_STATE_START|SOL_STATE_STOP
 
-Name,ResourceID,DesiredAmtState,ControlMode
-host-1,host-1234abcd,provisioned
+Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState,DesiredSolState
+host-1,host-1234abcd,provisioned,,,
 
-Name,ResourceID,DesiredAmtState,ControlMode
-host-1,host-1234abcd,provisioned,admin
+Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState,DesiredSolState
+host-1,host-1234abcd,provisioned,admin,start,start
 
 # --dry-run allows for verification of the validity of the input csv file without updating hosts
 orch-cli set host --project some-project --import-from-csv test.csv --dry-run
@@ -707,6 +717,25 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	if host.AmtControlMode != nil {
 		amtControlMode = fmt.Sprintf("%v", *host.AmtControlMode)
 	}
+
+	desiredKvmState := "N/A"
+	if host.DesiredKvmState != nil {
+		desiredKvmState = fmt.Sprintf("%v", *host.DesiredKvmState)
+	}
+
+	desiredSolState := "N/A"
+	if host.DesiredSolState != nil {
+		desiredSolState = fmt.Sprintf("%v", *host.DesiredSolState)
+	}
+	currentSolState := "N/A"
+	if host.CurrentSolState != nil {
+		currentSolState = fmt.Sprintf("%v", *host.CurrentSolState)
+	}
+	solSessionUrl := "N/A"
+	if host.SolSessionStatus != nil && *host.SolSessionStatus != "" {
+		solSessionUrl = *host.SolSessionStatus
+	}
+
 	dnsSuffix := "N/A"
 	if host.AmtDnsSuffix != nil {
 		dnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
@@ -723,7 +752,10 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		_, _ = fmt.Fprintf(writer, "-\tAMT Desired Control Mode:\t %v\n", amtControlMode)
 		_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
 		_, _ = fmt.Fprintf(writer, "-\tAMT SKU :\t %v\n", amtSKU)
-
+		_, _ = fmt.Fprintf(writer, "-\tKVM Desired State:\t %v\n", desiredKvmState)
+		_, _ = fmt.Fprintf(writer, "-\tSOL Desired State:\t %v\n", desiredSolState)
+		_, _ = fmt.Fprintf(writer, "-\tSOL Current State:\t %v\n", currentSolState)
+		_, _ = fmt.Fprintf(writer, "-\tSOL Session URL:\t %v\n", solSessionUrl)
 		if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
 			currentPower := "N/A"
 			if host.CurrentPowerState != nil {
@@ -1507,6 +1539,8 @@ func getSetHostCommand() *cobra.Command {
 		cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
 		cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
 		cmd.PersistentFlags().StringP("control-mode", "m", viper.GetString("control-mode"), "Set AMT control mode client|admin")
+		cmd.PersistentFlags().String("session-type", viper.GetString("session-type"), "Set remote session type <kvm|sol>")
+		cmd.PersistentFlags().String("session-state", viper.GetString("session-state"), "Set remote session state <start|stop>")
 	}
 	if isFeatureEnabled(Day2Feature) {
 		cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
@@ -1941,6 +1975,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	updFlag, _ := cmd.Flags().GetString("osupdatepolicy")
 	amtFlag, _ := cmd.Flags().GetString("amt-state")
 	amtModeFlag, _ := cmd.Flags().GetString("control-mode")
+	sessionType, _ := cmd.Flags().GetString("session-type")
+	sessionState, _ := cmd.Flags().GetString("session-state")
 
 	// Bulk CSV generation
 	if generateCSV != "" {
@@ -1985,12 +2021,15 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		defer f.Close()
-		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode")
+		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState")
 		for _, h := range hosts {
 			name := h.Name
 			resourceID := ""
 			desiredAmtState := ""
 			controlMode := ""
+			desiredKvmState := ""
+			desiredSolState := ""
+
 			if h.ResourceId != nil {
 				resourceID = *h.ResourceId
 			}
@@ -2000,7 +2039,13 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			if h.AmtControlMode != nil && *h.AmtControlMode != infra.AMTCONTROLMODEUNSPECIFIED {
 				controlMode = string(*h.AmtControlMode)
 			}
-			fmt.Fprintf(f, "%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode)
+			if h.DesiredKvmState != nil {
+				desiredKvmState = string(*h.DesiredKvmState)
+			}
+			if h.DesiredSolState != nil {
+				desiredSolState = string(*h.DesiredSolState)
+			}
+			fmt.Fprintf(f, "%s,%s,%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode, desiredKvmState, desiredSolState)
 		}
 		fmt.Printf("CSV template generated: %s\n", generateCSV)
 		return nil
@@ -2030,8 +2075,16 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			name := strings.TrimSpace(fields[0])
 			resourceID := strings.TrimSpace(fields[1])
 			desiredAmtState := strings.TrimSpace(fields[2])
+			desiredKvmState := ""
+			desiredSolState := ""
 			if len(fields) >= 4 {
 				desiredControlMode = strings.TrimSpace(fields[3])
+			}
+			if len(fields) >= 5 {
+				desiredKvmState = strings.TrimSpace(fields[4])
+			}
+			if len(fields) >= 6 {
+				desiredSolState = strings.TrimSpace(fields[5])
 			}
 
 			// Validate desiredAmtState
@@ -2049,6 +2102,24 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				}
 				amtMode = &mode
 			}
+			var kvmState *infra.KvmState
+			if desiredKvmState != "" {
+				ks, err := resolveKvmState(desiredKvmState)
+				if err != nil {
+					fmt.Printf("Invalid KVM state for host %s: %s\n", name, desiredKvmState)
+					continue
+				}
+				kvmState = &ks
+			}
+			var solState *infra.SolState
+			if desiredSolState != "" {
+				ss, err := resolveSolState(desiredSolState)
+				if err != nil {
+					fmt.Printf("Invalid SOL state for host %s: %s\n", name, desiredSolState)
+					continue
+				}
+				solState = &ss
+			}
 			// Patch host
 			ctx, hostClient, projectName, err := InfraFactory(cmd)
 			if err != nil {
@@ -2058,6 +2129,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 				DesiredAmtState: &amtState,
 				AmtControlMode:  amtMode,
+				DesiredKvmState: kvmState,
+				DesiredSolState: solState,
 				Name:            name,
 			}, auth.AddAuthHeader)
 			if err != nil {
@@ -2068,7 +2141,11 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				fmt.Printf("Failed to patch host %s: %v\n", name, err)
 				continue
 			}
-			fmt.Printf("Host %s (%s) AMT state updated to %s\n", name, resourceID, desiredAmtState)
+			if desiredSolState != "" {
+				fmt.Printf("Host %s (%s) AMT state updated to %s, KVM state updated to %s, SOL state updated to %s\n", name, resourceID, desiredAmtState, desiredKvmState, desiredSolState)
+			} else {
+				fmt.Printf("Host %s (%s) AMT state updated to %s, KVM state updated to %s\n", name, resourceID, desiredAmtState, desiredKvmState)
+			}
 		}
 		if err := scanner.Err(); err != nil {
 			return err
@@ -2081,7 +2158,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 	hostID := args[0]
 
-	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" && (amtFlag == "" || strings.HasPrefix(amtFlag, "--")) && (amtModeFlag == "" || strings.HasPrefix(amtModeFlag, "--")) {
+	if (policyFlag == "" || strings.HasPrefix(policyFlag, "--")) && (powerFlag == "" || strings.HasPrefix(powerFlag, "--")) && updFlag == "" && (amtFlag == "" || strings.HasPrefix(amtFlag, "--")) && (amtModeFlag == "" || strings.HasPrefix(amtModeFlag, "--")) && (sessionType == "" || strings.HasPrefix(sessionType, "--")) && (sessionState == "" || strings.HasPrefix(sessionState, "--")) {
 		return errors.New("a flag must be provided with the set host command and value cannot be \"\"")
 	}
 
@@ -2090,6 +2167,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	var updatePolicy *string
 	var amtState *infra.AmtState
 	var amtMode *infra.AmtControlMode
+	var kvmState *infra.KvmState
+	var solState *infra.SolState
 
 	if policyFlag != "" {
 		pol, err := resolvePowerPolicy(policyFlag)
@@ -2125,6 +2204,33 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		amtMode = &mode
+	}
+
+	// Handle remote session type and state
+	if sessionType != "" || sessionState != "" {
+		if sessionType == "" || sessionState == "" {
+			return errors.New("both --session-type and --session-state must be provided together")
+		}
+
+		sessionType = strings.ToLower(sessionType)
+		sessionState = strings.ToLower(sessionState)
+
+		switch sessionType {
+		case "kvm":
+			kvm, err := resolveRemoteSessionState(sessionState, "kvm")
+			if err != nil {
+				return err
+			}
+			kvmState = (*infra.KvmState)(&kvm)
+		case "sol":
+			sol, err := resolveRemoteSessionState(sessionState, "sol")
+			if err != nil {
+				return err
+			}
+			solState = (*infra.SolState)(&sol)
+		default:
+			return fmt.Errorf("invalid session type '%s': must be 'kvm' or 'sol'", sessionType)
+		}
 	}
 
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
@@ -2180,6 +2286,13 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return processError(err)
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set for AMT"); err != nil {
+			return err
+		}
+	}
+
+	// Handle KVM/SOL session start/stop flow
+	if kvmState != nil || solState != nil {
+		if err := runHostSessionCommand(cmd, ctx, hostClient, projectName, hostID, &host, sessionType, sessionState); err != nil {
 			return err
 		}
 	}
@@ -2764,7 +2877,7 @@ func createCluster(ctx context.Context, cClient cluster.ClientWithResponsesInter
 			Name:     &clusterName,
 			Nodes:    nodes,
 			Template: &template,
-			Labels:   &clusterLabels,
+			Labels:   &cluster.ClusterSpec_Labels{AdditionalProperties: clusterLabels},
 		}, auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
@@ -2897,4 +3010,442 @@ func resolveAmtControlMode(mode string) (infra.AmtControlMode, error) {
 	default:
 		return "", errors.New("incorrect AMT control mode provided with --control-mode flag use one of admin|client")
 	}
+}
+
+// resolveRemoteSessionState resolves the session state for KVM or SOL
+func resolveRemoteSessionState(state, sessionType string) (string, error) {
+	switch state {
+	case "start":
+		switch sessionType {
+		case "kvm":
+			return string(infra.KVMSTATESTART), nil
+		case "sol":
+			return string(infra.SOLSTATESTART), nil
+		}
+	case "stop":
+		switch sessionType {
+		case "kvm":
+			return string(infra.KVMSTATESTOP), nil
+		case "sol":
+			return string(infra.SOLSTATESTOP), nil
+		}
+	}
+	return "", fmt.Errorf("incorrect session state '%s' for %s: use 'start' or 'stop'", state, sessionType)
+}
+
+// resolveKvmState is kept for backward compatibility with CSV import
+func resolveKvmState(kvm string) (infra.KvmState, error) {
+	switch kvm {
+	case "start", "KVM_STATE_START":
+		return infra.KVMSTATESTART, nil
+	case "stop", "KVM_STATE_STOP":
+		return infra.KVMSTATESTOP, nil
+	default:
+		return "", errors.New("incorrect KVM state provided use one of start|stop")
+	}
+}
+
+// resolveSolState is kept for backward compatibility with CSV import
+func resolveSolState(sol string) (infra.SolState, error) {
+	switch sol {
+	case "start", "SOL_STATE_START":
+		return infra.SOLSTATESTART, nil
+	case "stop", "SOL_STATE_STOP":
+		return infra.SOLSTATESTOP, nil
+	default:
+		return "", errors.New("incorrect SOL state provided use one of start|stop")
+	}
+}
+
+// runHostSessionCommand handles the KVM/SOL session start/stop flow.
+// It patches the desired state, then drives the full state machine:
+//   - For CCM: polls for AWAITING_CONSENT, prompts consent code, POSTs to MPS,
+//     patches CONSENT_RECEIVED, gets redirect token, patches REDIRECTION_RECEIVED,
+//     waits for manager to confirm START, then connects.
+//   - For ACM: gets redirect token, patches REDIRECTION_RECEIVED,
+//     waits for manager to confirm START, then connects.
+func runHostSessionCommand(
+	cmd *cobra.Command,
+	ctx context.Context,
+	hostClient infra.ClientWithResponsesInterface,
+	projectName, hostID string,
+	host *infra.HostResource,
+	sessionType, sessionState string,
+) error {
+	if sessionType == "" || sessionState == "" {
+		return errors.New("both --session-type and --session-state must be provided together")
+	}
+
+	sessionType = strings.ToLower(sessionType)
+	sessionState = strings.ToLower(sessionState)
+
+	var kvmState *infra.KvmState
+	var solState *infra.SolState
+
+	switch sessionType {
+	case "kvm":
+		kvm, err := resolveRemoteSessionState(sessionState, "kvm")
+		if err != nil {
+			return err
+		}
+		kvmState = (*infra.KvmState)(&kvm)
+	case "sol":
+		sol, err := resolveRemoteSessionState(sessionState, "sol")
+		if err != nil {
+			return err
+		}
+		solState = (*infra.SolState)(&sol)
+	default:
+		return fmt.Errorf("invalid session type '%s': must be 'kvm' or 'sol'", sessionType)
+	}
+
+	// Acquire MPS client for start operations.
+	var mpsClient mpsapi.ClientWithResponsesInterface
+	apiEndpointStr := ""
+	if (kvmState != nil && *kvmState == infra.KVMSTATESTART) ||
+		(solState != nil && *solState == infra.SOLSTATESTART) {
+		_, mc, _, merr := MpsFactory(cmd)
+		if merr != nil {
+			return fmt.Errorf("failed to create MPS client: %w", merr)
+		}
+		mpsClient = mc
+		apiEndpointStr, _ = cmd.Flags().GetString("api-endpoint")
+	}
+
+	// Patch desired session state.
+	patchBody := infra.HostServicePatchHostJSONRequestBody{
+		DesiredKvmState: kvmState,
+		DesiredSolState: solState,
+		Name:            host.Name,
+	}
+	resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+		&infra.HostServicePatchHostParams{}, patchBody, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting remote session state"); err != nil {
+		return err
+	}
+
+	// Drive state machine.
+	if kvmState != nil {
+		return runRemoteSession(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, host, "kvm", kvmState, nil)
+	}
+	if solState != nil {
+		return runRemoteSession(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, host, "sol", nil, solState)
+	}
+	return nil
+}
+
+// runRemoteSession drives the KVM/SOL session state machine (ACM and CCM).
+func runRemoteSession(
+	ctx context.Context,
+	hostClient infra.ClientWithResponsesInterface,
+	mpsClient mpsapi.ClientWithResponsesInterface,
+	projectName, hostID, apiEndpointStr string,
+	host *infra.HostResource,
+	sessionType string,
+	kvmState *infra.KvmState,
+	solState *infra.SolState,
+) error {
+	isStartOperation := (sessionType == "kvm" && kvmState != nil &&
+		*kvmState == infra.KVMSTATESTART) ||
+		(sessionType == "sol" && solState != nil && *solState == infra.SOLSTATESTART)
+
+	// STOP: patch was already sent, nothing more to do.
+	if !isStartOperation {
+		fmt.Printf("%s session STOP command sent.\n", strings.ToUpper(sessionType))
+		return nil
+	}
+
+	// Device GUID is required for direct MPS calls.
+	deviceGUID := ""
+	if host.Uuid != nil {
+		deviceGUID = *host.Uuid
+	}
+	if deviceGUID == "" {
+		return fmt.Errorf(
+			"device UUID not available on host %s: cannot drive MPS consent/token flow",
+			hostID,
+		)
+	}
+
+	// Initial CCM hint from the host object (may be nil if API doesn't populate it).
+	isCCM := host.AmtControlMode != nil && *host.AmtControlMode == infra.AMTCONTROLMODECCM
+
+	const maxPoll = 60 // 120 s total; consent flow needs more time
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	fmt.Printf("Waiting for %s session state from sol-manager...\n", strings.ToUpper(sessionType))
+
+	consentSubmitted := false
+
+	for i := 0; i < maxPoll; i++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if resp.JSON200 == nil {
+				continue
+			}
+			h := resp.JSON200
+
+			// Refresh CCM status from the polled host data (the initial host object
+			// may not have AmtControlMode populated).
+			if h.AmtControlMode != nil && *h.AmtControlMode == infra.AMTCONTROLMODECCM {
+				isCCM = true
+			}
+
+			var currentState string
+			switch sessionType {
+			case "kvm":
+				if h.CurrentKvmState != nil {
+					currentState = string(*h.CurrentKvmState)
+				}
+			case "sol":
+				if h.CurrentSolState != nil {
+					currentState = string(*h.CurrentSolState)
+				}
+			}
+
+			fmt.Printf("\n[poll %d] currentState=%q isCCM=%v consentSubmitted=%v\n", i+1, currentState, isCCM, consentSubmitted)
+
+			// Surface error state and abort.
+			if currentState == string(infra.KVMSTATEERROR) || currentState == string(infra.SOLSTATEERROR) {
+				statusMsg := ""
+				if sessionType == "kvm" && h.KvmSessionStatus != nil {
+					statusMsg = *h.KvmSessionStatus
+				} else if sessionType == "sol" && h.SolSessionStatus != nil {
+					statusMsg = *h.SolSessionStatus
+				}
+				return fmt.Errorf("%s session error: %s", strings.ToUpper(sessionType), statusMsg)
+			}
+
+			// CCM: prompt for on-screen consent code and submit directly to MPS.
+			// Also detect CCM from the AWAITING_CONSENT state itself (sol-manager
+			// only sets this for CCM devices).
+			awaitingConsent := currentState == string(infra.KVMSTATEAWAITINGCONSENT) ||
+				currentState == string(infra.SOLSTATEAWAITINGCONSENT)
+			if awaitingConsent {
+				isCCM = true // AWAITING_CONSENT is only set for CCM devices
+			}
+
+			if isCCM && awaitingConsent && !consentSubmitted {
+				fmt.Printf("\n%s session requires operator consent.\n", strings.ToUpper(sessionType))
+				fmt.Println("Please read the 6-digit code shown on the device screen.")
+				fmt.Print("Enter consent code: ")
+
+				reader := bufio.NewReader(os.Stdin)
+				line, err := reader.ReadString('\n')
+				if err != nil {
+					return fmt.Errorf("failed to read consent code: %w", err)
+				}
+				code := strings.TrimSpace(line)
+				if len(code) != 6 {
+					return errors.New("consent code must be exactly 6 digits")
+				}
+				for _, c := range code {
+					if c < '0' || c > '9' {
+						return errors.New("consent code must contain only digits (0-9)")
+					}
+				}
+				codeInt, _ := strconv.Atoi(code)
+
+				// Submit consent code directly to MPS.
+				postResp, err := mpsClient.PostV1ProjectsProjectNameOobAmtUserConsentCodeGuidWithResponse(
+					ctx, projectName, deviceGUID,
+					mpsapi.PostV1ProjectsProjectNameOobAmtUserConsentCodeGuidJSONRequestBody{
+						ConsentCode: codeInt,
+					},
+					auth.AddAuthHeader,
+				)
+				if err != nil {
+					return fmt.Errorf("failed to submit consent code to MPS: %w", err)
+				}
+				if postResp.HTTPResponse.StatusCode < 200 || postResp.HTTPResponse.StatusCode >= 300 {
+					return fmt.Errorf("MPS rejected consent code (HTTP %d)", postResp.HTTPResponse.StatusCode)
+				}
+				fmt.Println("Consent code accepted by MPS.")
+
+				// Signal that consent was received.
+				consentReceivedState := infra.KVMCONSENTRECEIVED
+				solConsentReceivedState := infra.SOLSTATECONSENTRECEIVED
+				var patchBody infra.HostServicePatchHostJSONRequestBody
+				switch sessionType {
+				case "kvm":
+					patchBody = infra.HostServicePatchHostJSONRequestBody{
+						DesiredKvmState: &consentReceivedState,
+						Name:            h.Name,
+					}
+				case "sol":
+					patchBody = infra.HostServicePatchHostJSONRequestBody{
+						DesiredSolState: &solConsentReceivedState,
+						Name:            h.Name,
+					}
+				}
+				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+					&infra.HostServicePatchHostParams{}, patchBody, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+				if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching consent received state"); err != nil {
+					return err
+				}
+
+				consentSubmitted = true
+				fmt.Printf("Waiting for %s session to activate...\n", strings.ToUpper(sessionType))
+				continue
+			}
+
+			// ACM path or after CCM consent: get relay token from MPS and signal managers.
+			// IMPORTANT: Do NOT trigger on currentState=="" — wait for sol-manager to
+			// set a real state. For ACM, sol-manager sets current=START directly.
+			// For CCM after consent, sol-manager ACKs CONSENT_RECEIVED.
+			readyForToken := false
+			switch sessionType {
+			case "kvm":
+				if !isCCM && currentState == string(infra.KVMSTATESTART) {
+					// ACM: sol-manager confirmed START
+					readyForToken = true
+				} else if consentSubmitted && currentState != string(infra.KVMSTATEAWAITINGCONSENT) &&
+					currentState != string(infra.KVMSTATEERROR) && currentState != string(infra.KVMSTATESTOP) && currentState != "" {
+					// CCM after consent: manager moved past AWAITING_CONSENT
+					readyForToken = true
+				}
+			case "sol":
+				if !isCCM && currentState == string(infra.SOLSTATESTART) {
+					// ACM: sol-manager confirmed START
+					readyForToken = true
+				} else if consentSubmitted && currentState != string(infra.SOLSTATEAWAITINGCONSENT) &&
+					currentState != string(infra.SOLSTATEERROR) && currentState != string(infra.SOLSTATESTOP) && currentState != "" {
+					// CCM after consent: manager moved past AWAITING_CONSENT
+					readyForToken = true
+				}
+			}
+
+			if readyForToken && mpsClient != nil {
+				fmt.Println("Obtaining relay token from MPS...")
+				tokenResp, err := mpsClient.GetV1ProjectsProjectNameOobAuthorizeRedirectionGuidWithResponse(
+					ctx, projectName, deviceGUID, auth.AddAuthHeader,
+				)
+				if err != nil {
+					return fmt.Errorf("failed to get redirect token from MPS: %w", err)
+				}
+				if tokenResp.HTTPResponse.StatusCode < 200 || tokenResp.HTTPResponse.StatusCode >= 300 {
+					return fmt.Errorf("MPS returned HTTP %d for redirect token", tokenResp.HTTPResponse.StatusCode)
+				}
+				if tokenResp.JSON200 == nil ||
+					tokenResp.JSON200.Token == nil ||
+					*tokenResp.JSON200.Token == "" {
+					return fmt.Errorf("MPS returned empty redirect token")
+				}
+				token := *tokenResp.JSON200.Token
+
+				// Derive mps-wss domain from api endpoint: https://api.<domain> → mps-wss.<domain>.
+				mpsDomain := strings.Replace(strings.TrimPrefix(apiEndpointStr, "https://"), "api.", "mps-wss.", 1)
+
+				// Signal manager that relay token was received.
+				kvmRedirState := infra.KVMREDIRECTIONRECEIVED
+				solRedirState := infra.SOLSTATEREDIRECTIONRECEIVED
+				var patchBody infra.HostServicePatchHostJSONRequestBody
+				switch sessionType {
+				case "kvm":
+					patchBody = infra.HostServicePatchHostJSONRequestBody{
+						DesiredKvmState: &kvmRedirState,
+						Name:            h.Name,
+					}
+				case "sol":
+					patchBody = infra.HostServicePatchHostJSONRequestBody{
+						DesiredSolState: &solRedirState,
+						Name:            h.Name,
+					}
+				}
+				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+					&infra.HostServicePatchHostParams{}, patchBody, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+				if err := checkResponse(
+					patchResp.HTTPResponse,
+					patchResp.Body,
+					"error patching redirection received state",
+				); err != nil {
+					return err
+				}
+
+				// Poll until manager confirms session start.
+				fmt.Println("Waiting for manager to confirm session start...")
+				if err := waitForSessionStart(ctx, hostClient, projectName, hostID, sessionType); err != nil {
+					return err
+				}
+
+				// KVM: print connection info (KVM viewer is in orch-cli-test)
+				if sessionType == "kvm" {
+					fmt.Printf("\nKVM redirection token obtained for device %s.\n", deviceGUID)
+					fmt.Printf("Redirect Token: %s\n", token)
+					fmt.Printf("MPS Host: %s\n", mpsDomain)
+					return nil
+				}
+
+				// SOL: connect terminal
+				if sessionType == "sol" {
+					jwtToken, _ := auth.GetAccessToken(ctx)
+					amtPassword := os.Getenv("AMT_PASSWORD")
+					return connectSOLSession(mpsDomain, deviceGUID, token, jwtToken, amtPassword, nil)
+				}
+				return nil
+			}
+
+			fmt.Printf(".")
+		}
+	}
+	return fmt.Errorf("timeout waiting for %s session to reach active state", strings.ToUpper(sessionType))
+}
+
+// waitForSessionStart polls until currentKvmState/SolState reaches START.
+func waitForSessionStart(
+	ctx context.Context,
+	hostClient infra.ClientWithResponsesInterface,
+	projectName, hostID, sessionType string,
+) error {
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+	for i := 0; i < 60; i++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+			if err != nil || resp.JSON200 == nil {
+				continue
+			}
+			h := resp.JSON200
+			switch sessionType {
+			case "kvm":
+				if h.CurrentKvmState != nil {
+					switch *h.CurrentKvmState {
+					case infra.KVMSTATESTART:
+						return nil
+					case infra.KVMSTATEERROR:
+						return fmt.Errorf("KVM session error: kvm-manager reported error")
+					}
+				}
+			case "sol":
+				if h.CurrentSolState != nil {
+					switch *h.CurrentSolState {
+					case infra.SOLSTATESTART:
+						return nil
+					case infra.SOLSTATEERROR:
+						return fmt.Errorf("SOL session error: sol-manager reported error")
+					}
+				}
+			}
+		}
+	}
+	return fmt.Errorf("timeout waiting for %s session to reach active state", strings.ToUpper(sessionType))
 }
