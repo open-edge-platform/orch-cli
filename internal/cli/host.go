@@ -17,8 +17,6 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/term"
-
 	e "github.com/open-edge-platform/cli/internal/errors"
 	"github.com/open-edge-platform/cli/internal/files"
 	"github.com/open-edge-platform/cli/internal/types"
@@ -26,6 +24,7 @@ import (
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
+	mpsapi "github.com/open-edge-platform/cli/pkg/rest/mps"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -723,9 +722,9 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 	if host.CurrentSolState != nil {
 		currentSolState = fmt.Sprintf("%v", *host.CurrentSolState)
 	}
-	solSessionUrl := "N/A"
-	if host.SolSessionUrl != nil && *host.SolSessionUrl != "" {
-		solSessionUrl = *host.SolSessionUrl
+	solSessionStatus := "N/A"
+	if host.SolSessionStatus != nil && *host.SolSessionStatus != "" {
+		solSessionStatus = *host.SolSessionStatus
 	}
 
 	dnsSuffix := "N/A"
@@ -747,7 +746,7 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		_, _ = fmt.Fprintf(writer, "-\tKVM Desired State:\t %v\n", desiredKvmState)
 		_, _ = fmt.Fprintf(writer, "-\tSOL Desired State:\t %v\n", desiredSolState)
 		_, _ = fmt.Fprintf(writer, "-\tSOL Current State:\t %v\n", currentSolState)
-		_, _ = fmt.Fprintf(writer, "-\tSOL Session URL:\t %v\n", solSessionUrl)
+		_, _ = fmt.Fprintf(writer, "-\tSOL Session Status:\t %v\n", solSessionStatus)
 		if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
 			currentPower := "N/A"
 			if host.CurrentPowerState != nil {
@@ -2159,8 +2158,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	var updatePolicy *string
 	var amtState *infra.AmtState
 	var amtMode *infra.AmtControlMode
-	var kvmState *infra.KvmState
-	var solState *infra.SolState
 
 	if policyFlag != "" {
 		pol, err := resolvePowerPolicy(policyFlag)
@@ -2196,33 +2193,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		amtMode = &mode
-	}
-
-	// Handle remote session type and state
-	if sessionType != "" || sessionState != "" {
-		if sessionType == "" || sessionState == "" {
-			return errors.New("both --session-type and --session-state must be provided together")
-		}
-
-		sessionType = strings.ToLower(sessionType)
-		sessionState = strings.ToLower(sessionState)
-
-		switch sessionType {
-		case "kvm":
-			kvm, err := resolveRemoteSessionState(sessionState, "kvm")
-			if err != nil {
-				return err
-			}
-			kvmState = (*infra.KvmState)(&kvm)
-		case "sol":
-			sol, err := resolveRemoteSessionState(sessionState, "sol")
-			if err != nil {
-				return err
-			}
-			solState = (*infra.SolState)(&sol)
-		default:
-			return fmt.Errorf("invalid session type '%s': must be 'kvm' or 'sol'", sessionType)
-		}
 	}
 
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
@@ -2268,12 +2238,10 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if amtState != nil || amtMode != nil || kvmState != nil || solState != nil {
+	if amtState != nil || amtMode != nil {
 		resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 			DesiredAmtState: amtState,
 			AmtControlMode:  amtMode,
-			DesiredKvmState: kvmState,
-			DesiredSolState: solState,
 			Name:            host.Name,
 		}, auth.AddAuthHeader)
 		if err != nil {
@@ -2282,22 +2250,91 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set for AMT/remote session"); err != nil {
 			return err
 		}
+	}
 
-		// Poll for remote session consent code
-		if kvmState != nil {
-			if err := pollForRemoteSessionConsent(ctx, hostClient, projectName, hostID, &host, "kvm", kvmState, nil); err != nil {
-				return err
-			}
-		}
-		if solState != nil {
-			if err := pollForRemoteSessionConsent(ctx, hostClient, projectName, hostID, &host, "sol", nil, solState); err != nil {
-				return err
-			}
+	// Handle KVM/SOL session start/stop flow
+	if sessionType != "" || sessionState != "" {
+		if err := runHostSessionCommand(cmd, ctx, hostClient, projectName, hostID, &host, sessionType, sessionState); err != nil {
+			return err
 		}
 	}
 
 	fmt.Printf("Host %s updated successfully\n", hostID)
 
+	return nil
+}
+
+// runHostSessionCommand handles the KVM/SOL session start/stop flow.
+func runHostSessionCommand(
+	cmd *cobra.Command,
+	ctx context.Context,
+	hostClient infra.ClientWithResponsesInterface,
+	projectName, hostID string,
+	host *infra.HostResource,
+	sessionType, sessionState string,
+) error {
+	if sessionType == "" || sessionState == "" {
+		return errors.New("both --session-type and --session-state must be provided together")
+	}
+
+	sessionType = strings.ToLower(sessionType)
+	sessionState = strings.ToLower(sessionState)
+
+	var kvmState *infra.KvmState
+	var solState *infra.SolState
+
+	switch sessionType {
+	case "kvm":
+		kvm, err := resolveRemoteSessionState(sessionState, "kvm")
+		if err != nil {
+			return err
+		}
+		kvmState = (*infra.KvmState)(&kvm)
+	case "sol":
+		sol, err := resolveRemoteSessionState(sessionState, "sol")
+		if err != nil {
+			return err
+		}
+		solState = (*infra.SolState)(&sol)
+	default:
+		return fmt.Errorf("invalid session type '%s': must be 'kvm' or 'sol'", sessionType)
+	}
+
+	// Acquire MPS client for start operations.
+	var mpsClient mpsapi.ClientWithResponsesInterface
+	apiEndpointStr := ""
+	if (kvmState != nil && *kvmState == infra.KVMSTATESTART) ||
+		(solState != nil && *solState == infra.SOLSTATESTART) {
+		_, mc, _, merr := MpsFactory(cmd)
+		if merr != nil {
+			return fmt.Errorf("failed to create MPS client: %w", merr)
+		}
+		mpsClient = mc
+		apiEndpointStr, _ = cmd.Flags().GetString(apiEndpoint)
+	}
+
+	// Patch desired session state.
+	patchBody := infra.HostServicePatchHostJSONRequestBody{
+		DesiredKvmState: kvmState,
+		DesiredSolState: solState,
+		Name:            host.Name,
+	}
+	resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+		&infra.HostServicePatchHostParams{}, patchBody, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting remote session state"); err != nil {
+		return err
+	}
+
+	// Drive state machine.
+	if kvmState != nil && *kvmState == infra.KVMSTATESTART {
+		return runKVMSession(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, host)
+	}
+	if solState != nil && *solState == infra.SOLSTATESTART {
+		return runSOLSession(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, host)
+	}
 	return nil
 }
 
@@ -3056,192 +3093,33 @@ func resolveSolState(sol string) (infra.SolState, error) {
 	}
 }
 
-// pollForRemoteSessionConsent polls the host status and prompts for consent code when remote session is awaiting consent
-// Works for both KVM and SOL sessions - only polls if AMT state is provisioned and AMT control mode is CCM
-func pollForRemoteSessionConsent(ctx context.Context, hostClient infra.ClientWithResponsesInterface, projectName, hostID string, host *infra.HostResource, sessionType string, kvmState *infra.KvmState, solState *infra.SolState) error {
-	// Determine if this is a START operation
-	isStartOperation := false
-	if sessionType == "kvm" && kvmState != nil && *kvmState == infra.KVMSTATESTART {
-		isStartOperation = true
-	} else if sessionType == "sol" && solState != nil && *solState == infra.SOLSTATESTART {
-		isStartOperation = true
+// runKVMSession drives the KVM session state machine (ACM and CCM).
+func runKVMSession(
+	ctx context.Context,
+	hostClient infra.ClientWithResponsesInterface,
+	mpsClient mpsapi.ClientWithResponsesInterface,
+	projectName, hostID, apiEndpointStr string,
+	host *infra.HostResource,
+) error {
+	deviceGUID := ""
+	if host.Uuid != nil {
+		deviceGUID = *host.Uuid
+	}
+	if deviceGUID == "" {
+		return fmt.Errorf("device UUID not available on host %s", hostID)
 	}
 
-	// Check if AMT is provisioned
-	if host.CurrentAmtState == nil || *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
-		fmt.Printf("%s session command sent.\n", strings.ToUpper(sessionType))
-		return nil
-	}
+	isCCM := host.AmtControlMode != nil && *host.AmtControlMode == infra.AMTCONTROLMODECCM
 
-	// For ACM mode, no consent needed - poll directly for session URL
-	if host.AmtControlMode == nil || *host.AmtControlMode != infra.AMTCONTROLMODECCM {
-		if !isStartOperation {
-			fmt.Printf("%s session command sent.\n", strings.ToUpper(sessionType))
-			return nil
-		}
-		// ACM START: poll until session URL is available
-		fmt.Printf("Waiting for %s session URL...\n", strings.ToUpper(sessionType))
-		return pollForSessionURL(ctx, hostClient, projectName, hostID, sessionType, kvmState, solState)
-	}
-
-	// For STOP operations in CCM mode, no consent is needed
-	if !isStartOperation {
-		fmt.Printf("%s session STOP command sent.\n", strings.ToUpper(sessionType))
-		return nil
-	}
-
-	// For CCM mode START operations: poll for consent, submit it, then poll for session URL
-	const maxPollAttempts = 150 // Poll for up to 150 seconds (300 seconds total)
+	const maxPoll = 30 // 60 s total
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
-	fmt.Printf("Waiting for %s session to reach consent state...\n", strings.ToUpper(sessionType))
+	fmt.Println("Waiting for KVM session state from kvm-manager...")
 
-	var consentSubmitted bool
+	consentSubmitted := false
 
-	for i := 0; i < maxPollAttempts; i++ {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			// Get current host state
-			resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
-			if err != nil {
-				return processError(err)
-			}
-
-			if resp.JSON200 == nil {
-				continue
-			}
-
-			hostStatus := resp.JSON200
-
-			// Check current state based on session type
-			var currentState string
-			var sessionURL *string
-			switch sessionType {
-			case "kvm":
-				if hostStatus.CurrentKvmState != nil {
-					currentState = string(*hostStatus.CurrentKvmState)
-				}
-				if hostStatus.KvmSessionUrl != nil {
-					sessionURL = hostStatus.KvmSessionUrl
-				}
-			case "sol":
-				if hostStatus.CurrentSolState != nil {
-					currentState = string(*hostStatus.CurrentSolState)
-				}
-				if hostStatus.SolSessionUrl != nil {
-					sessionURL = hostStatus.SolSessionUrl
-				}
-			}
-
-			// Check if session is awaiting consent
-			awaitingConsent := (sessionType == "kvm" && currentState == string(infra.KVMSTATEAWAITINGCONSENT)) ||
-				(sessionType == "sol" && currentState == string(infra.SOLSTATEAWAITINGCONSENT))
-
-			if awaitingConsent && !consentSubmitted {
-				fmt.Printf("\n%s session is awaiting consent.\n", strings.ToUpper(sessionType))
-				fmt.Println("Please check the device screen for the 6-digit consent code.")
-				fmt.Print("Enter the 6-digit consent code: ")
-
-				reader := bufio.NewReader(os.Stdin)
-				consentCode, err := reader.ReadString('\n')
-				if err != nil {
-					return fmt.Errorf("failed to read consent code: %w", err)
-				}
-
-				consentCode = strings.TrimSpace(consentCode)
-
-				// Validate that it's exactly 6 digits
-				if len(consentCode) != 6 {
-					return errors.New("consent code must be exactly 6 digits")
-				}
-
-				// Validate that it contains only digits
-				for _, char := range consentCode {
-					if char < '0' || char > '9' {
-						return errors.New("consent code must contain only digits (0-9)")
-					}
-				}
-
-				// Submit consent code to backend along with desired session state
-				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
-					DesiredConsentCode: &consentCode,
-					DesiredKvmState:    kvmState,
-					DesiredSolState:    solState,
-					Name:               hostStatus.Name,
-				}, auth.AddAuthHeader)
-				if err != nil {
-					return processError(err)
-				}
-
-				if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error while submitting consent code"); err != nil {
-					return err
-				}
-
-				fmt.Println("Consent code submitted successfully.")
-				consentSubmitted = true
-
-				// Continue polling for the session to reach desired state
-				fmt.Printf("Waiting for %s session to start...\n", strings.ToUpper(sessionType))
-				continue
-			}
-
-			// After consent is submitted, poll until session reaches desired state and URL is available
-			if consentSubmitted {
-				// Determine the expected state based on the desired state
-				var expectedState string
-				if sessionType == "kvm" && kvmState != nil {
-					expectedState = string(*kvmState)
-				} else if sessionType == "sol" && solState != nil {
-					expectedState = string(*solState)
-				}
-
-				// Check if we've reached the desired state
-				if currentState == expectedState {
-					// For START operations, wait for session URL
-					if expectedState == string(infra.KVMSTATESTART) || expectedState == string(infra.SOLSTATESTART) {
-						if sessionURL != nil && *sessionURL != "" {
-							fmt.Printf("\n%s session started successfully.\n", strings.ToUpper(sessionType))
-							fmt.Printf("%s Session URL: %s\n", strings.ToUpper(sessionType), *sessionURL)
-							return nil
-						}
-						// State is correct but URL not yet available, continue polling
-						fmt.Printf(".")
-						continue
-					}
-					// For STOP operations, no URL is expected
-					fmt.Printf("\n%s session stopped successfully.\n", strings.ToUpper(sessionType))
-					return nil
-				}
-				// Continue polling...
-				fmt.Printf(".")
-				continue
-			}
-
-			// Initial polling (before consent) - just print dots
-			if !consentSubmitted {
-				fmt.Printf(".")
-			}
-		}
-	}
-
-	// Timeout
-	if !consentSubmitted {
-		return fmt.Errorf("timeout waiting for %s session consent", sessionType)
-	}
-	return fmt.Errorf("timeout waiting for %s session to reach desired state", sessionType)
-}
-
-// pollForSessionURL polls inventory until the session URL is populated for a
-// START operation. Used for ACM hosts where no consent flow is needed.
-func pollForSessionURL(ctx context.Context, hostClient infra.ClientWithResponsesInterface, projectName, hostID, sessionType string, kvmState *infra.KvmState, solState *infra.SolState) error {
-	const maxAttempts = 60 // up to 120 seconds
-	ticker := time.NewTicker(2 * time.Second)
-	defer ticker.Stop()
-
-	for i := 0; i < maxAttempts; i++ {
+	for i := 0; i < maxPoll; i++ {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -3255,78 +3133,337 @@ func pollForSessionURL(ctx context.Context, hostClient infra.ClientWithResponses
 			}
 			h := resp.JSON200
 
-			var currentState string
-			var sessionURL *string
-			switch sessionType {
-			case "kvm":
-				if h.CurrentKvmState != nil {
-					currentState = string(*h.CurrentKvmState)
-				}
-				if h.KvmSessionUrl != nil {
-					sessionURL = h.KvmSessionUrl
-				}
-			case "sol":
-				if h.CurrentSolState != nil {
-					currentState = string(*h.CurrentSolState)
-				}
-				if h.SolSessionUrl != nil {
-					sessionURL = h.SolSessionUrl
-				}
+			var currentState infra.KvmState
+			if h.CurrentKvmState != nil {
+				currentState = *h.CurrentKvmState
 			}
 
-			// Check for error state
-			if currentState == string(infra.SOLSTATEERROR) || currentState == string(infra.KVMSTATEERROR) {
-				return fmt.Errorf("%s session failed (state=%s)", strings.ToUpper(sessionType), currentState)
+			if currentState == infra.KVMSTATEERROR {
+				statusMsg := ""
+				if h.KvmSessionStatus != nil {
+					statusMsg = *h.KvmSessionStatus
+				}
+				return fmt.Errorf("KVM session error: %s", statusMsg)
 			}
 
-			// Determine expected state
-			var expectedState string
-			if sessionType == "kvm" && kvmState != nil {
-				expectedState = string(*kvmState)
-			} else if sessionType == "sol" && solState != nil {
-				expectedState = string(*solState)
+			// CCM: kvm-manager set AWAITING_CONSENT — prompt operator and submit to MPS.
+			if isCCM && currentState == infra.KVMSTATEAWAITINGCONSENT && !consentSubmitted {
+				codeInt, err := readConsentCode()
+				if err != nil {
+					return err
+				}
+				postResp, err := mpsClient.PostV1ProjectsProjectNameOobAmtUserConsentCodeGuidWithResponse(
+					ctx, projectName, deviceGUID,
+					mpsapi.UserConsentRequest{ConsentCode: codeInt},
+					auth.AddAuthHeader,
+				)
+				if err != nil {
+					return fmt.Errorf("failed to submit consent code to MPS: %w", err)
+				}
+				if postResp.HTTPResponse.StatusCode < 200 || postResp.HTTPResponse.StatusCode >= 300 {
+					return fmt.Errorf("MPS rejected consent code (HTTP %d)", postResp.HTTPResponse.StatusCode)
+				}
+				fmt.Println("Consent code accepted by MPS.")
+
+				consentState := infra.KVMCONSENTRECEIVED
+				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+					&infra.HostServicePatchHostParams{},
+					infra.HostServicePatchHostJSONRequestBody{
+						DesiredKvmState: &consentState,
+						Name:            h.Name,
+					}, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+				if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching KVM consent received"); err != nil {
+					return err
+				}
+				consentSubmitted = true
+				fmt.Println("Waiting for KVM session to activate...")
+				continue
 			}
 
-			if currentState == expectedState && sessionURL != nil && *sessionURL != "" {
-				fmt.Printf("\n%s session started successfully.\n", strings.ToUpper(sessionType))
+			// ACM: kvm-manager signals ready via AWAITING_CONSENT.
+			// CCM: proceed after consent submitted.
+			readyForToken := (!isCCM && currentState == infra.KVMSTATEAWAITINGCONSENT) ||
+				(consentSubmitted && currentState != infra.KVMSTATEERROR && currentState != infra.KVMSTATESTOP)
+			// Safety net: manager already advanced to START.
+			if currentState == infra.KVMSTATESTART {
+				readyForToken = true
+			}
 
-				// For SOL sessions, connect directly to MPS relay
-				if sessionType == "sol" && isSOLSessionURL(*sessionURL) {
-					// Prompt user for AMT password
-					fmt.Print("\nEnter AMT password: ")
-					amtPassBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
-					fmt.Println() // newline after password input
-					if err != nil {
-						return fmt.Errorf("failed to read AMT password: %w", err)
-					}
-					amtPass := string(amtPassBytes)
-					if amtPass == "" {
-						return fmt.Errorf("AMT password cannot be empty")
-					}
-
-					fmt.Println("\n✓ Password received")
-
-					jwtToken := getJWTTokenFromEnv()
-					if jwtToken == "" {
-						accessToken, tokenErr := auth.GetAccessToken(ctx)
-						if tokenErr == nil && accessToken != "" {
-							jwtToken = accessToken
-						}
-					}
-					if jwtToken == "" {
-						fmt.Printf("\nWarning: No JWT token available for WebSocket auth.\n")
-						fmt.Printf("Set JWT_TOKEN env var or run 'orch-cli login' first.\n")
-						return nil
-					}
-					// Connect to SOL session directly
-					return connectSOLSession(*sessionURL, jwtToken, amtPass, nil)
+			if readyForToken {
+				token, mpsDomain, err := acquireRelayToken(ctx, mpsClient, projectName, deviceGUID, apiEndpointStr)
+				if err != nil {
+					return err
 				}
 
-				fmt.Printf("%s Session URL: %s\n", strings.ToUpper(sessionType), *sessionURL)
-				return nil
+				redirState := infra.KVMREDIRECTIONRECEIVED
+				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+					&infra.HostServicePatchHostParams{},
+					infra.HostServicePatchHostJSONRequestBody{
+						DesiredKvmState: &redirState,
+						Name:            h.Name,
+					}, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+				if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching KVM redirection received"); err != nil {
+					return err
+				}
+
+				fmt.Println("Waiting for kvm-manager to confirm session start...")
+				if err := waitForKVMStart(ctx, hostClient, projectName, hostID); err != nil {
+					return err
+				}
+				return startKVMViewer(ctx, token, mpsDomain, deviceGUID, hostClient, projectName, hostID)
 			}
-			fmt.Printf(".")
+
+			fmt.Print(".")
 		}
 	}
-	return fmt.Errorf("timeout waiting for %s session URL", strings.ToUpper(sessionType))
+	return fmt.Errorf("timeout waiting for KVM session to reach active state")
+}
+
+// runSOLSession drives the SOL session state machine (ACM and CCM).
+func runSOLSession(
+	ctx context.Context,
+	hostClient infra.ClientWithResponsesInterface,
+	mpsClient mpsapi.ClientWithResponsesInterface,
+	projectName, hostID, apiEndpointStr string,
+	host *infra.HostResource,
+) error {
+	deviceGUID := ""
+	if host.Uuid != nil {
+		deviceGUID = *host.Uuid
+	}
+	if deviceGUID == "" {
+		return fmt.Errorf("device UUID not available on host %s", hostID)
+	}
+
+	isCCM := host.AmtControlMode != nil && *host.AmtControlMode == infra.AMTCONTROLMODECCM
+
+	const maxPoll = 30 // 60 s total
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	fmt.Println("Waiting for SOL session state from sol-manager...")
+
+	consentSubmitted := false
+
+	for i := 0; i < maxPoll; i++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if resp.JSON200 == nil {
+				continue
+			}
+			h := resp.JSON200
+
+			var currentState infra.SolState
+			if h.CurrentSolState != nil {
+				currentState = *h.CurrentSolState
+			}
+
+			if currentState == infra.SOLSTATEERROR {
+				statusMsg := ""
+				if h.SolSessionStatus != nil {
+					statusMsg = *h.SolSessionStatus
+				}
+				return fmt.Errorf("SOL session error: %s", statusMsg)
+			}
+
+			// CCM: sol-manager set AWAITING_CONSENT — prompt operator and submit to MPS.
+			if isCCM && currentState == infra.SOLSTATEAWAITINGCONSENT && !consentSubmitted {
+				codeInt, err := readConsentCode()
+				if err != nil {
+					return err
+				}
+				postResp, err := mpsClient.PostV1ProjectsProjectNameOobAmtUserConsentCodeGuidWithResponse(
+					ctx, projectName, deviceGUID,
+					mpsapi.UserConsentRequest{ConsentCode: codeInt},
+					auth.AddAuthHeader,
+				)
+				if err != nil {
+					return fmt.Errorf("failed to submit consent code to MPS: %w", err)
+				}
+				if postResp.HTTPResponse.StatusCode < 200 || postResp.HTTPResponse.StatusCode >= 300 {
+					return fmt.Errorf("MPS rejected consent code (HTTP %d)", postResp.HTTPResponse.StatusCode)
+				}
+				fmt.Println("Consent code accepted by MPS.")
+
+				consentState := infra.SOLSTATECONSENTRECEIVED
+				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+					&infra.HostServicePatchHostParams{},
+					infra.HostServicePatchHostJSONRequestBody{
+						DesiredSolState: &consentState,
+						Name:            h.Name,
+					}, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+				if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching SOL consent received"); err != nil {
+					return err
+				}
+				consentSubmitted = true
+				fmt.Println("Waiting for SOL session to activate...")
+				continue
+			}
+
+			// ACM: sol-manager signals ready via AWAITING_CONSENT.
+			// CCM: proceed after consent submitted.
+			readyForToken := (!isCCM && currentState == infra.SOLSTATEAWAITINGCONSENT) ||
+				(consentSubmitted && currentState != infra.SOLSTATEERROR && currentState != infra.SOLSTATESTOP)
+			// Safety net: manager already advanced to START.
+			if currentState == infra.SOLSTATESTART {
+				readyForToken = true
+			}
+
+			if readyForToken {
+				token, mpsDomain, err := acquireRelayToken(ctx, mpsClient, projectName, deviceGUID, apiEndpointStr)
+				if err != nil {
+					return err
+				}
+
+				redirState := infra.SOLSTATEREDIRECTIONRECEIVED
+				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+					&infra.HostServicePatchHostParams{},
+					infra.HostServicePatchHostJSONRequestBody{
+						DesiredSolState: &redirState,
+						Name:            h.Name,
+					}, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+				if err := checkResponse(patchResp.HTTPResponse, patchResp.Body, "error patching SOL redirection received"); err != nil {
+					return err
+				}
+
+				fmt.Println("Waiting for sol-manager to confirm session start...")
+				if err := waitForSOLStart(ctx, hostClient, projectName, hostID); err != nil {
+					return err
+				}
+				jwtToken, _ := auth.GetAccessToken(ctx)
+				amtPassword := os.Getenv("AMT_PASSWORD")
+				return connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPassword, nil)
+			}
+
+			fmt.Print(".")
+		}
+	}
+	return fmt.Errorf("timeout waiting for SOL session to reach active state")
+}
+
+// readConsentCode prompts the operator for the 6-digit on-screen consent code.
+func readConsentCode() (int, error) {
+	fmt.Println("\nKVM/SOL session requires operator consent.")
+	fmt.Println("Please read the 6-digit code shown on the device screen.")
+	fmt.Print("Enter consent code: ")
+	reader := bufio.NewReader(os.Stdin)
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		return 0, fmt.Errorf("failed to read consent code: %w", err)
+	}
+	code := strings.TrimSpace(line)
+	if len(code) != 6 {
+		return 0, errors.New("consent code must be exactly 6 digits")
+	}
+	for _, c := range code {
+		if c < '0' || c > '9' {
+			return 0, errors.New("consent code must contain only digits (0-9)")
+		}
+	}
+	codeInt, _ := strconv.Atoi(code)
+	return codeInt, nil
+}
+
+// acquireRelayToken calls MPS GET /authorize/redirection and returns the token and mps-wss domain.
+func acquireRelayToken(
+	ctx context.Context,
+	mpsClient mpsapi.ClientWithResponsesInterface,
+	projectName, deviceGUID, apiEndpointStr string,
+) (token, mpsDomain string, err error) {
+	fmt.Println("Obtaining relay token from MPS...")
+	tokenResp, err := mpsClient.GetV1ProjectsProjectNameOobAuthorizeRedirectionGuidWithResponse(
+		ctx, projectName, deviceGUID, auth.AddAuthHeader,
+	)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get relay token from MPS: %w", err)
+	}
+	if tokenResp.HTTPResponse.StatusCode < 200 || tokenResp.HTTPResponse.StatusCode >= 300 {
+		return "", "", fmt.Errorf("MPS returned HTTP %d for relay token", tokenResp.HTTPResponse.StatusCode)
+	}
+	if tokenResp.JSON200 == nil || tokenResp.JSON200.Token == nil || *tokenResp.JSON200.Token == "" {
+		return "", "", fmt.Errorf("MPS returned empty relay token")
+	}
+	// Derive mps-wss domain: https://api.<domain> → mps-wss.<domain>
+	mpsDomain = strings.Replace(strings.TrimPrefix(apiEndpointStr, "https://"), "api.", "mps-wss.", 1)
+	return *tokenResp.JSON200.Token, mpsDomain, nil
+}
+
+// waitForKVMStart polls until currentKvmState reaches KVM_STATE_START.
+func waitForKVMStart(
+	ctx context.Context,
+	hostClient infra.ClientWithResponsesInterface,
+	projectName, hostID string,
+) error {
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+	for i := 0; i < 60; i++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+			if err != nil || resp.JSON200 == nil {
+				continue
+			}
+			if resp.JSON200.CurrentKvmState == nil {
+				continue
+			}
+			switch *resp.JSON200.CurrentKvmState {
+			case infra.KVMSTATESTART:
+				return nil
+			case infra.KVMSTATEERROR:
+				return fmt.Errorf("kvm-manager reported error")
+			}
+		}
+	}
+	return fmt.Errorf("timeout waiting for KVM session to reach KVM_STATE_START")
+}
+
+// waitForSOLStart polls until currentSolState reaches SOL_STATE_START.
+func waitForSOLStart(
+	ctx context.Context,
+	hostClient infra.ClientWithResponsesInterface,
+	projectName, hostID string,
+) error {
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+	for i := 0; i < 60; i++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+			if err != nil || resp.JSON200 == nil {
+				continue
+			}
+			if resp.JSON200.CurrentSolState == nil {
+				continue
+			}
+			switch *resp.JSON200.CurrentSolState {
+			case infra.SOLSTATESTART:
+				return nil
+			case infra.SOLSTATEERROR:
+				return fmt.Errorf("sol-manager reported error")
+			}
+		}
+	}
+	return fmt.Errorf("timeout waiting for SOL session to reach SOL_STATE_START")
 }
