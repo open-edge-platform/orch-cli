@@ -650,7 +650,7 @@ func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer,
 		return false, getError(body, "Unauthorized (forbidden). Please login with a user that has the required permissions")
 	}
 
-	if !verbose {
+	if !verbose && header != "" {
 		_, _ = fmt.Fprintf(writer, "%s\n", header)
 	}
 	return true, nil

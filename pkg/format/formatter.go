@@ -150,6 +150,7 @@ func (f Format) Execute(writer io.Writer, withHeaders bool, nameLimit int, data 
 		"str":             formatString,
 		"none":            formatStringOrNone,
 		"fmttime":         formatTimeSimple,
+		"formatTime":      formatTime,
 		"statusIndicator": formatStatusIndicator,
 		"statusMessage":   formatStatusMessage,
 		"nodeCount":       formatNodeCount,

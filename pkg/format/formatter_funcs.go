@@ -172,3 +172,35 @@ func formatNodeCount(count *int) string {
 	}
 	return fmt.Sprintf("%d", *count)
 }
+
+// formatTime accepts various timestamp representations (unix int seconds, time.Time,
+// protobuf Timestamp) and returns an ISO-like string. Returns empty string for nil.
+func formatTime(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+
+	switch t := v.(type) {
+	case *int:
+		if t == nil {
+			return ""
+		}
+		return time.Unix(int64(*t), 0).UTC().Format(time.RFC3339)
+	case int:
+		return time.Unix(int64(t), 0).UTC().Format(time.RFC3339)
+	case *time.Time:
+		if t == nil {
+			return ""
+		}
+		return t.UTC().Format("2006-01-02T15:04:05")
+	case time.Time:
+		return t.UTC().Format("2006-01-02T15:04:05")
+	case *timestamppb.Timestamp:
+		if t == nil {
+			return ""
+		}
+		return t.AsTime().Truncate(time.Second).Format(time.RFC3339)
+	default:
+		return fmt.Sprint(v)
+	}
+}
