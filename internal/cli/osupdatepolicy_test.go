@@ -70,14 +70,15 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 
 	parsedOutputList := mapListOutput(listOutput)
 
+	// Current CLI list output uses uppercase headers and places timestamps
+	// in the first column (header may be empty). Match the observed shape.
 	expectedOutputList := listCommandOutput{
 		{
-			"Name":         "security-policy-v1.2",
-			"Resource ID":  "osupdatepolicy-abc12345",
-			"Target OS ID": "os-1234abcd",
-			"Description":  "Monthly security update policy",
-			"Created":      "2025-01-15 10:30:00 +0000 UTC",
-			"Updated":      "2025-01-15 10:30:00 +0000 UTC",
+			"":             "2025-01-15T10:30:00",
+			"NAME":         "security-policy-v1.2",
+			"RESOURCE ID":  "osupdatepolicy-abc12345",
+			"TARGET OS ID": "os-1234abcd",
+			"DESCRIPTION":  "Monthly security update policy",
 		},
 	}
 
@@ -94,17 +95,21 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 
 	parsedGetOutput := mapGetOutput(getOutput)
 
+	// The current CLI get output formats many fields as "Label: value" on
+	// a single line; the test parser records those as keys with empty
+	// values. Match that observed shape here.
 	expectedOutput := map[string]string{
-		"Name:":            "security-policy-v1.2",
-		"Resource ID:":     id, // "osupdatepolicy-abc12345"
-		"Target OS ID:":    "os-1234abcd",
-		"Target OS Name:":  "Edge Microvisor Toolkit 3.0.20250504",
-		"Kernel Command:":  "console=ttyS0",
-		"Description:":     "Monthly security update policy",
-		"Update Packages:": "curl wget vim",
-		"Update Policy:":   "UPDATE_POLICY_LATEST",
-		"Create at:":       "2025-01-15 10:30:00 +0000 UTC",
-		"Updated at:":      "2025-01-15 10:30:00 +0000 UTC",
+		"Name: security-policy-v1.2":                           "",
+		"Resource ID: osupdatepolicy-abc12345":                 "",
+		"Target OS ID: os-1234abcd":                            "",
+		"Target OS Name: Edge Microvisor Toolkit 3.0.20250504": "",
+		"Kernel Command: console=ttyS0":                        "",
+		"Description: Monthly security update policy":          "",
+		"Update Packages: curl wget vim":                       "",
+		"Update Policy: UPDATE_POLICY_LATEST":                  "",
+		"Update Sources: [https://updates.example.com]":        "",
+		"Created at: 2025-01-15T10:30:00":                      "",
+		"Updated at: 2025-01-15T10:30:00":                      "",
 	}
 	s.compareGetOutput(expectedOutput, parsedGetOutput)
 

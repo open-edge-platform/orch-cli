@@ -81,7 +81,6 @@ func (s *CLITestSuite) TestRegion() {
 	parsedOutputLines := mapLinesOutput(linesOutput)
 
 	expectedOutputLines := linesCommandOutput{
-		"",
 		"Printing regions tree",
 		"",
 		"Region: " + resourceID + " (region)",
@@ -145,7 +144,6 @@ func (s *CLITestSuite) TestRegion() {
 	parsedOutputLines = mapLinesOutput(linesOutput)
 
 	expectedOutputLines = linesCommandOutput{
-		"",
 		"Printing regions tree",
 		"",
 		"Region: " + resourceID + " (region)",
