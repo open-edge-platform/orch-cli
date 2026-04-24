@@ -18,6 +18,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -202,7 +204,6 @@ func (s *kvmSession) readFromMPS() {
 		if s.browserConn != nil {
 			// Send a clean close frame (1001 = going away) so Angular's onclose
 			// handler treats this as a server-initiated end-of-session and does
-			// NOT schedule an auto-reconnect (isCleanClose check in kvm.service.ts).
 			_ = s.browserConn.WriteControl(
 				websocket.CloseMessage,
 				websocket.FormatCloseMessage(websocket.CloseGoingAway, "MPS session ended"),
@@ -299,7 +300,7 @@ func (s *kvmSession) handleAMTMessage(msg []byte) {
 			s.amtState = "channel"
 			s.setState("active")
 			go func() {
-				// KVM_08: If the browser never opens (e.g. no port-forward, closed tab),
+				// If the browser never opens (e.g. no port-forward, closed tab),
 				// abort after 10 minutes so the AMT KVM module is not held indefinitely.
 				select {
 				case <-s.browserReady:
@@ -501,7 +502,7 @@ func (s *kvmSession) close() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HTTP/WebSocket server
+// Local HTTP/WebSocket server
 // ─────────────────────────────────────────────────────────────────────────────
 
 type kvmServer struct {
@@ -631,9 +632,6 @@ func (srv *kvmServer) serveKVMWebSocket(w http.ResponseWriter, r *http.Request) 
 
 // ─────────────────────────────────────────────────────────────────────────────
 // connectToMPSRelay — dials the MPS WSS relay and starts the AMT handshake.
-// relayURL is the full URL from inventory, e.g.:
-//
-//	wss://mps-wss.<domain>/relay/webrelay.ashx?token=<token>&host=<guid>
 // ─────────────────────────────────────────────────────────────────────────────
 
 func connectToMPSRelay(token, mpsDomain, deviceGUID, jwtToken string, logf func(string, ...interface{})) (*kvmSession, error) {
@@ -658,9 +656,6 @@ func connectToMPSRelay(token, mpsDomain, deviceGUID, jwtToken string, logf func(
 		extra := ""
 		if resp != nil {
 			extra = fmt.Sprintf(" (HTTP %d)", resp.StatusCode)
-			// MPS returns 401/403 when a KVM session is already active on the
-			// device (kvmConnect=true). Surface a user-friendly message so the operator
-			// knows to wait for the existing session to end or use --session-state stop.
 			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fmt.Errorf("MPS relay rejected the connection (HTTP %d): a KVM session may already be active on this device.\nStop the existing session first: orch-cli set host <id> --session-state stop", resp.StatusCode)
 			}
@@ -698,7 +693,7 @@ func connectToMPSRelay(token, mpsDomain, deviceGUID, jwtToken string, logf func(
 // Flow:
 //  1. Connect to MPS relay (AMT handshake starts immediately, frames buffered)
 //  2. Start local HTTP server on a random OS-assigned port
-//  3. Open browser at http://localhost:{port}/
+//  3. Open browser at http://localhost:{port}
 //  4. Block until the session ends (browser disconnect, context cancel, or error)
 //  5. Close MPS relay
 //  6. PATCH desiredKvmState=KVM_STATE_STOP via inventory API
@@ -733,7 +728,7 @@ func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID string, ho
 	}
 	sess.amtPassword = amtPassword
 
-	// Step 2 — start local HTTP server on random port
+	// Step 2 — start local HTTP server on a random OS-assigned port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		sess.close()
@@ -775,8 +770,13 @@ func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID string, ho
 		}
 	}()
 
-	// Step 3 — print URL for the operator to open manually in their browser.
-	fmt.Printf("\nKVM session ready. Open this URL in your browser:\n  %s\n\nPress Ctrl+C to stop.\n", viewerURL)
+	// Step 3 — print URL and open browser.
+	fmt.Printf("\n╔══════════════════════════════════════════════════════╗\n")
+	fmt.Printf("║  KVM session is LIVE — open this URL in your browser ║\n")
+	fmt.Printf("╚══════════════════════════════════════════════════════╝\n")
+	fmt.Printf("\n  %s\n\n", viewerURL)
+	fmt.Println("Press Ctrl+C to stop the KVM session.")
+	go openBrowser(viewerURL)
 
 	// Step 4 — wait for session to end (MPS disconnect, ctx cancel, or browser disconnect)
 	select {
@@ -792,7 +792,7 @@ func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID string, ho
 	defer cancel()
 	_ = httpSrv.Shutdown(shutdownCtx)
 
-	// Step 5+6 — send KVM_STATE_STOP to inventory
+	// send KVM_STATE_STOP to inventory
 	fmt.Println("Sending KVM_STATE_STOP to inventory...")
 	stopState := infra.KVMSTATESTOP
 	stopKvmState := stopState
@@ -849,4 +849,22 @@ func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID string, ho
 			}
 		}
 	}
+}
+
+// openBrowser opens the given URL in the default system browser.
+// Supports Linux (xdg-open), macOS (open), and Windows (cmd /c start).
+// Errors are silently ignored — the URL is always printed to stdout as fallback.
+func openBrowser(url string) {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "linux":
+		cmd = exec.Command("xdg-open", url)
+	case "darwin":
+		cmd = exec.Command("open", url)
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", url)
+	default:
+		return
+	}
+	_ = cmd.Start()
 }
