@@ -6,7 +6,6 @@ package cli
 import (
 	"crypto/md5"
 	"crypto/rand"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
@@ -336,7 +335,7 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 
 // connectSOLSession connects to the MPS relay and runs the AMT SOL protocol
 // handshake. The function blocks until Ctrl-C or the MPS connection drops.
-func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, readyCh chan<- int) error {
+func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA string, readyCh chan<- int) error {
 	// Construct carrier URL so parsed.Host, token and GUID are available below
 	sessionURL := fmt.Sprintf("wss://%s/relay/webrelay.ashx?token=%s&host=%s", mpsDomain, token, deviceGUID)
 	parsed, err := url.Parse(sessionURL)
@@ -361,12 +360,15 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, r
 		parsed.Host, hostGUID)
 
 	// Setup WebSocket dialer with timeout
+	tlsConfig, err := mpsRelayTLSConfig(orchCA, func(format string, args ...interface{}) {
+		fmt.Printf(format+"\n", args...)
+	})
+	if err != nil {
+		return err
+	}
 	dialer := websocket.Dialer{
 		HandshakeTimeout: 30 * time.Second,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true, //nolint:gosec
-			MinVersion:         tls.VersionTLS12,
-		},
+		TLSClientConfig:  tlsConfig,
 	}
 
 	headers := http.Header{}

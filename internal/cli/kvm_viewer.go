@@ -9,6 +9,7 @@ import (
 	"crypto/md5" //nolint:gosec // MD5 required by AMT Digest auth protocol
 	"crypto/rand"
 	"crypto/tls"
+	"crypto/x509"
 	"embed"
 	"encoding/binary"
 	"encoding/hex"
@@ -631,18 +632,41 @@ func (srv *kvmServer) serveKVMWebSocket(w http.ResponseWriter, r *http.Request) 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// mpsRelayTLSConfig builds a tls.Config for the MPS WebSocket dial.
+// ─────────────────────────────────────────────────────────────────────────────
+
+func mpsRelayTLSConfig(caPath string, logf func(string, ...interface{})) (*tls.Config, error) {
+	if caPath == "" {
+		return nil, fmt.Errorf("--orch-ca is required: provide the path to the cluster CA certificate (e.g. orch-ca.crt)")
+	}
+	caPEM, err := os.ReadFile(caPath) //nolint:gosec // path supplied by operator
+	if err != nil {
+		return nil, fmt.Errorf("cannot read CA certificate %q: %w", caPath, err)
+	}
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM(caPEM) {
+		return nil, fmt.Errorf("no valid certificates found in %q — ensure it is a valid .crt file", caPath)
+	}
+	logf("[KVM] TLS: using CA certificate from %q", caPath)
+	return &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: pool}, nil
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // connectToMPSRelay — dials the MPS WSS relay and starts the AMT handshake.
 // ─────────────────────────────────────────────────────────────────────────────
 
-func connectToMPSRelay(token, mpsDomain, deviceGUID, jwtToken string, logf func(string, ...interface{})) (*kvmSession, error) {
+func connectToMPSRelay(token, mpsDomain, deviceGUID, jwtToken, orchCA string, logf func(string, ...interface{})) (*kvmSession, error) {
 	dialURL := fmt.Sprintf("wss://%s/relay/webrelay.ashx?p=2&host=%s&port=16994&tls=0&tls1only=0&mode=kvm",
 		mpsDomain, deviceGUID)
 
 	logf("[KVM] Connecting to MPS relay: %s", dialURL)
 
-	// TODO: load orch.ca certificate and pass it as RootCAs in TLSClientConfig instead of InsecureSkipVerify
+	tlsConfig, err := mpsRelayTLSConfig(orchCA, logf)
+	if err != nil {
+		return nil, err
+	}
 	dialer := websocket.Dialer{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec // temporary: replace with orch.ca RootCAs
+		TLSClientConfig: tlsConfig,
 	}
 	headers := http.Header{}
 	headers.Set("Sec-WebSocket-Protocol", token)
@@ -700,7 +724,7 @@ func connectToMPSRelay(token, mpsDomain, deviceGUID, jwtToken string, logf func(
 //  7. Poll until currentKvmState=KVM_STATE_STOP (or timeout)
 // ─────────────────────────────────────────────────────────────────────────────
 
-func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID string, hostClient infra.ClientWithResponsesInterface, projectName, hostID string) error {
+func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID, orchCA string, hostClient infra.ClientWithResponsesInterface, projectName, hostID string) error {
 	logf := func(format string, args ...interface{}) {
 		fmt.Printf(format+"\n", args...)
 	}
@@ -722,7 +746,7 @@ func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID string, ho
 	}
 
 	// relayURL carries token+host so connectToMPSRelay can extract them
-	sess, err := connectToMPSRelay(token, mpsDomain, deviceGUID, jwtToken, logf)
+	sess, err := connectToMPSRelay(token, mpsDomain, deviceGUID, jwtToken, orchCA, logf)
 	if err != nil {
 		return fmt.Errorf("failed to connect to MPS relay: %w", err)
 	}

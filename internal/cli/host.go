@@ -1532,6 +1532,7 @@ func getSetHostCommand() *cobra.Command {
 		cmd.PersistentFlags().StringP("control-mode", "m", viper.GetString("control-mode"), "Set AMT control mode client|admin")
 		cmd.PersistentFlags().String("session-type", viper.GetString("session-type"), "Set remote session type <kvm|sol>")
 		cmd.PersistentFlags().String("session-state", viper.GetString("session-state"), "Set remote session state <start|stop>")
+		cmd.PersistentFlags().String("orch-ca", "", "Path to the cluster CA certificate (e.g. orch-ca.crt)")
 	}
 	if isFeatureEnabled(Day2Feature) {
 		cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
@@ -2254,7 +2255,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 
 	// Handle KVM/SOL session start/stop flow
 	if sessionType != "" || sessionState != "" {
-		if err := runHostSessionCommand(cmd, ctx, hostClient, projectName, hostID, &host, sessionType, sessionState); err != nil {
+		orchCA, _ := cmd.Flags().GetString("orch-ca")
+		if err := runHostSessionCommand(cmd, ctx, hostClient, projectName, hostID, &host, sessionType, sessionState, orchCA); err != nil {
 			return err
 		}
 	}
@@ -2271,7 +2273,7 @@ func runHostSessionCommand(
 	hostClient infra.ClientWithResponsesInterface,
 	projectName, hostID string,
 	host *infra.HostResource,
-	sessionType, sessionState string,
+	sessionType, sessionState, orchCA string,
 ) error {
 	if sessionType == "" || sessionState == "" {
 		return errors.New("both --session-type and --session-state must be provided together")
@@ -2330,10 +2332,10 @@ func runHostSessionCommand(
 
 	// Drive state machine.
 	if kvmState != nil && *kvmState == infra.KVMSTATESTART {
-		return runKVMSession(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, host)
+		return runKVMSession(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, host, orchCA)
 	}
 	if solState != nil && *solState == infra.SOLSTATESTART {
-		return runSOLSession(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, host)
+		return runSOLSession(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, host, orchCA)
 	}
 	return nil
 }
@@ -3100,6 +3102,7 @@ func runKVMSession(
 	mpsClient mpsapi.ClientWithResponsesInterface,
 	projectName, hostID, apiEndpointStr string,
 	host *infra.HostResource,
+	orchCA string,
 ) error {
 	deviceGUID := ""
 	if host.Uuid != nil {
@@ -3115,7 +3118,7 @@ func runKVMSession(
 
 	// ACM: no consent required — fetch relay token directly.
 	if *host.AmtControlMode == infra.AMTCONTROLMODEACM {
-		return kvmAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, "")
+		return kvmAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, "", orchCA)
 	}
 
 	// CCM: poll for kvm-manager to signal AWAITING_CONSENT, then prompt operator.
@@ -3191,7 +3194,7 @@ func runKVMSession(
 					return err
 				}
 				// Consent submitted — fetch token and activate.
-				return kvmAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, h.Name)
+				return kvmAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, h.Name, orchCA)
 			}
 			fmt.Print(".")
 		}
@@ -3205,7 +3208,7 @@ func kvmAcquireAndActivate(
 	ctx context.Context,
 	hostClient infra.ClientWithResponsesInterface,
 	mpsClient mpsapi.ClientWithResponsesInterface,
-	projectName, hostID, apiEndpointStr, deviceGUID, hostName string,
+	projectName, hostID, apiEndpointStr, deviceGUID, hostName, orchCA string,
 ) error {
 	token, mpsDomain, err := acquireRelayToken(ctx, mpsClient, projectName, deviceGUID, apiEndpointStr)
 	if err != nil {
@@ -3230,7 +3233,7 @@ func kvmAcquireAndActivate(
 	if err := waitForKVMStart(ctx, hostClient, projectName, hostID); err != nil {
 		return err
 	}
-	return startKVMViewer(ctx, token, mpsDomain, deviceGUID, hostClient, projectName, hostID)
+	return startKVMViewer(ctx, token, mpsDomain, deviceGUID, orchCA, hostClient, projectName, hostID)
 }
 
 // runSOLSession drives the SOL session state machine (ACM and CCM).
@@ -3240,6 +3243,7 @@ func runSOLSession(
 	mpsClient mpsapi.ClientWithResponsesInterface,
 	projectName, hostID, apiEndpointStr string,
 	host *infra.HostResource,
+	orchCA string,
 ) error {
 	deviceGUID := ""
 	if host.Uuid != nil {
@@ -3255,7 +3259,7 @@ func runSOLSession(
 
 	// ACM: no consent required — fetch relay token directly.
 	if *host.AmtControlMode == infra.AMTCONTROLMODEACM {
-		return solAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, "")
+		return solAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, "", orchCA)
 	}
 
 	// CCM: poll for sol-manager to signal AWAITING_CONSENT, then prompt operator.
@@ -3331,7 +3335,7 @@ func runSOLSession(
 					return err
 				}
 				// Consent submitted — fetch token and activate.
-				return solAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, h.Name)
+				return solAcquireAndActivate(ctx, hostClient, mpsClient, projectName, hostID, apiEndpointStr, deviceGUID, h.Name, orchCA)
 			}
 			fmt.Print(".")
 		}
@@ -3345,7 +3349,7 @@ func solAcquireAndActivate(
 	ctx context.Context,
 	hostClient infra.ClientWithResponsesInterface,
 	mpsClient mpsapi.ClientWithResponsesInterface,
-	projectName, hostID, apiEndpointStr, deviceGUID, hostName string,
+	projectName, hostID, apiEndpointStr, deviceGUID, hostName, orchCA string,
 ) error {
 	token, mpsDomain, err := acquireRelayToken(ctx, mpsClient, projectName, deviceGUID, apiEndpointStr)
 	if err != nil {
@@ -3372,7 +3376,7 @@ func solAcquireAndActivate(
 	}
 	jwtToken, _ := auth.GetAccessToken(ctx)
 	amtPassword := os.Getenv("AMT_PASSWORD")
-	return connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPassword, nil)
+	return connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPassword, orchCA, nil)
 }
 
 // readConsentCode prompts the operator for the 6-digit on-screen consent code.
