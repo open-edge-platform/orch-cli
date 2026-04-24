@@ -24,6 +24,7 @@ import (
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
 	kcapi "github.com/open-edge-platform/cli/pkg/rest/keycloak"
+	mpsapi "github.com/open-edge-platform/cli/pkg/rest/mps"
 	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
@@ -75,6 +76,11 @@ var CatalogUtilitiesFactory interfaces.CatalogUtilitiesFactoryFunc = func(cmd *c
 
 var RpsFactory interfaces.RpsFactoryFunc = func(cmd *cobra.Command) (context.Context, rpsapi.ClientWithResponsesInterface, string, error) {
 	return getRpsServiceContext(cmd)
+}
+
+var MpsFactory interfaces.MpsFactoryFunc = func(cmd *cobra.Command) (context.Context, mpsapi.ClientWithResponsesInterface, string, error) {
+	ctx, client, projectName, err := getMpsServiceContext(cmd)
+	return ctx, mpsapi.ClientWithResponsesInterface(client), projectName, err
 }
 
 var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command) (context.Context, depapi.ClientWithResponsesInterface, string, error) {
@@ -205,6 +211,23 @@ func getRpsServiceContext(cmd *cobra.Command) (context.Context, *rpsapi.ClientWi
 		return nil, nil, "", err
 	}
 	return context.Background(), rpsClient, projectName, nil
+}
+
+// Get the new background context, MPS REST client, and project name given the specified command.
+func getMpsServiceContext(cmd *cobra.Command) (context.Context, mpsapi.ClientWithResponsesInterface, string, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	projectName, err := getProjectName(cmd)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	mpsClient, err := mpsapi.NewClientWithResponses(serverAddress, TLS13MPSClientOption())
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return context.Background(), mpsClient, projectName, nil
 }
 
 // Get the new background context, REST client, and project name given the specified command.
@@ -658,6 +681,20 @@ func TLS13ClusterClientOption() func(*coapi.Client) error {
 
 func TLS13RPSClientOption() func(*rpsapi.Client) error {
 	return func(c *rpsapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+
+func TLS13MPSClientOption() func(*mpsapi.Client) error {
+	return func(c *mpsapi.Client) error {
 		c.Client = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
