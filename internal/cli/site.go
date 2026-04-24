@@ -4,14 +4,15 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
-	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,6 +49,8 @@ func getListSiteCommand() *cobra.Command {
 		RunE:    runListSiteCommand,
 	}
 	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of site list to filter sites by parent region")
+	addListOrderingFilteringPaginationFlags(cmd, "site")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -93,10 +96,38 @@ func getDeleteSiteCommand() *cobra.Command {
 // Lists all sites - retrieves all sites and displays selected information in tabular format
 func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
+	ctx, siteClient, projectName, err := InfraFactory(cmd)
+	if err != nil {
+		return err
+	}
 
-	var regFilter *string
+	// Validate order-by flag
+	validatedOrderBy, err := getValidatedSiteOrderBy(ctx, cmd, siteClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	// Paging
+	pageSize32, offset32, err := getPageSizeOffset(cmd)
+	if err != nil {
+		return err
+	}
+	var pageSize *int
+	var offset *int
+	if pageSize32 > 0 {
+		v := int(pageSize32)
+		pageSize = &v
+	}
+	if offset32 > 0 {
+		v := int(offset32)
+		offset = &v
+	}
+
+	// Filtering
+	filterSpec := getNonEmptyFlag(cmd, "filter")
 	regFlag, _ := cmd.Flags().GetString("region")
 	region, err := filterRegionsHelper(regFlag)
+	var regFilter *string
 	if err != nil {
 		return err
 	}
@@ -104,36 +135,56 @@ func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 		filterString := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
 		regFilter = &filterString
 	}
-
-	ctx, siteClient, projectName, err := InfraFactory(cmd)
-	if err != nil {
-		return err
+	// Combine region filter and user filter if both present
+	var combinedFilter *string
+	if regFilter != nil && filterSpec != nil {
+		combined := fmt.Sprintf("(%s) AND (%s)", *regFilter, *filterSpec)
+		combinedFilter = &combined
+	} else if regFilter != nil {
+		combinedFilter = regFilter
+	} else if filterSpec != nil {
+		combinedFilter = filterSpec
 	}
 
-	pageSize := 20
 	sites := make([]infra.SiteResource, 0)
-
-	for offset := 0; ; offset += pageSize {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// For table output, do not send order-by to API (client-side sort)
+		apiOrderBy = nil
+	}
+	for {
 		resp, err := siteClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
 			&infra.SiteServiceListSitesParams{
-				Filter: regFilter,
-				Offset: &offset,
+				Filter:   combinedFilter,
+				OrderBy:  apiOrderBy,
+				PageSize: pageSize,
+				Offset:   offset,
 			}, auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
 		}
-
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving sites"); err != nil {
 			return err
 		}
-
 		sites = append(sites, resp.JSON200.Sites...)
 		if !resp.JSON200.HasNext {
-			break // No more hosts to process
+			break
+		}
+		// Advance offset for next page
+		if offset == nil {
+			v := len(sites)
+			offset = &v
+		} else {
+			v := *offset + len(resp.JSON200.Sites)
+			offset = &v
 		}
 	}
-	printSites(writer, &sites, verbose, regFlag)
 
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printSites(cmd, writer, &sites, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -197,7 +248,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runGetSiteCommand(cmd *cobra.Command, args []string) error {
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 	ctx, siteClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
@@ -211,12 +262,14 @@ func runGetSiteCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, false,
 		"", "error getting site"); !proceed {
 		return err
 	}
 
-	printSite(writer, resp.JSON200)
+	if err := printSite(cmd, writer, resp.JSON200); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -243,66 +296,65 @@ func runDeleteSiteCommand(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func printSites(writer io.Writer, sites *[]infra.SiteResource, verbose bool, region string) {
-	if verbose {
-		fmt.Fprintf(writer, "%-20s %-20s %-30s %-10s %-10s\n", "Site ID", "Site Name", "Region (Name)", "Longitude", "Latitude")
-	} else {
-		fmt.Fprintf(writer, "%-20s %-20s %-30s\n", "Site ID", "Site Name", "Region (Name)")
+func printSites(cmd *cobra.Command, writer io.Writer, sites *[]infra.SiteResource, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getSiteOutputFormat(cmd, verbose, true)
+	if err != nil {
+		return err
 	}
 
-	sitesSlice := *sites
-	// Sort sites by RegionId
-	sort.Slice(sitesSlice, func(i, j int) bool {
-		if *sitesSlice[i].RegionId == region {
-			return true
-		}
-		if *sitesSlice[j].RegionId == region {
-			return false
-		}
-		return *sitesSlice[i].RegionId < *sitesSlice[j].RegionId
-	})
-
-	isSubregion := 0
-	for _, s := range sitesSlice {
-		regionDisplay := fmt.Sprintf("%s (%s)", *s.RegionId, *s.Region.Name)
-
-		if !verbose {
-			if region == "" {
-				fmt.Fprintf(writer, "%-20s %-20v %-30s\n", *s.ResourceId, *s.Name, regionDisplay)
-			} else {
-				if *s.RegionId != region {
-					isSubregion++
-				}
-				if isSubregion == 1 {
-					fmt.Fprintf(writer, "\nSites in sub-regions:\n\n")
-				}
-				fmt.Fprintf(writer, "%-20s %-20v %-30s\n", *s.ResourceId, *s.Name, regionDisplay)
-			}
-		} else {
-			if region == "" {
-				fmt.Fprintf(writer, "%-20s %-20v %-30s %-10v %-10v\n", *s.ResourceId, *s.Name, regionDisplay, float64(*s.SiteLng)/10000000, float64(*s.SiteLat)/10000000)
-			} else {
-				if *s.RegionId != region {
-					isSubregion++
-				}
-				if isSubregion == 1 {
-					fmt.Fprintf(writer, "\nSites in sub-regions:\n\n")
-				}
-				fmt.Fprintf(writer, "%-20s %-20v %-30s %-10v %-10v\n", *s.ResourceId, *s.Name, regionDisplay, float64(*s.SiteLng)/10000000, float64(*s.SiteLat)/10000000)
-			}
-		}
+	sortSpec := ""
+	filterSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
 	}
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *sites,
+	}
+	GenerateOutput(writer, &result)
+	return nil
 }
 
-// Prints output details of site
-func printSite(writer io.Writer, site *infra.SiteResource) {
+func getSiteOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string, error) {
+	const DEFAULT_SITE_FORMAT = "table{{.ResourceId}}\t{{.Name}}\t{{.RegionId}}\t{{.Region.Name}}"
+	const DEFAULT_SITE_VERBOSE_FORMAT = "table{{.ResourceId}}\t{{.Name}}\t{{.RegionId}}\t{{.Region.Name}}\t{{.SiteLng}}\t{{.SiteLat}}"
+	const DEFAULT_SITE_INSPECT_FORMAT = "Name:\t{{.Name}}\nResource ID:\t{{.ResourceId}}\nRegion Name:\t{{.Region.Name}}\nRegion ID:\t{{.RegionId}}\nLongitude:\t{{.SiteLng}}\nLatitude:\t{{.SiteLat}}\n"
 
-	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *site.Name)
-	_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *site.ResourceId)
-	_, _ = fmt.Fprintf(writer, "Region: \t%s %s\n", *site.Region.Name, *site.RegionId)
-	_, _ = fmt.Fprintf(writer, "Longitude: \t%v\n", float64(*site.SiteLng)/10000000)
-	_, _ = fmt.Fprintf(writer, "Latitude: \t%v\n", float64(*site.SiteLat)/10000000)
+	if verbose && forList {
+		return DEFAULT_SITE_VERBOSE_FORMAT, nil
+	}
+	if !forList {
+		return DEFAULT_SITE_INSPECT_FORMAT, nil
+	}
+	return resolveTableOutputTemplate(cmd, DEFAULT_SITE_FORMAT, "ORCH_CLI_SITE_OUTPUT_TEMPLATE")
+}
 
+// Prints output details of site using template-based output
+func printSite(cmd *cobra.Command, writer io.Writer, site *infra.SiteResource) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getSiteOutputFormat(cmd, true, false)
+	if err != nil {
+		return err
+	}
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    "",
+		OrderBy:   "",
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *site,
+	}
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 func resolveLatitude(value string) (*int32, error) {
@@ -335,4 +387,50 @@ func resolveLongitude(value string) (*int32, error) {
 	scaling := 10000000
 	int32Value := int32(parsedValue * float64(scaling))
 	return &int32Value, nil
+}
+
+// Returns a validated order-by string for the site resource, with hints for valid fields
+func getValidatedSiteOrderBy(ctx interface{}, cmd *cobra.Command, siteClient infra.ClientWithResponsesInterface, projectName string) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+	outputType, _ := cmd.Flags().GetString("output-type")
+	// For table output, allow any struct field (client-side sort)
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, infra.SiteResource{})
+	}
+	// For JSON/YAML, normalize and validate with API probe
+	if strings.TrimSpace(raw) == "" {
+		return nil, nil
+	}
+	// Normalize order direction for API: -field -> 'field desc', +field -> 'field asc', field -> 'field'
+	normalized := raw
+	if len(normalized) > 0 {
+		if normalized[0] == '-' {
+			normalized = normalized[1:] + " desc"
+		} else if normalized[0] == '+' {
+			normalized = normalized[1:] + " asc"
+		}
+	}
+	pageSize := 1
+	offset := 0
+	resp, err := siteClient.SiteServiceListSitesWithResponse(context.Background(), projectName, queryRegion,
+		&infra.SiteServiceListSitesParams{
+			OrderBy:  &normalized,
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		return nil, processError(err)
+	}
+	if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == 400 {
+		// Try to extract error message and provide a hint
+		msg := string(resp.Body)
+		return nil, fmt.Errorf("invalid --order-by field '%s': %s\nValid fields: name, resourceId, regionId, region.name", raw, msg)
+	}
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating site order-by"); err != nil {
+		return nil, err
+	}
+	return &normalized, nil
 }
