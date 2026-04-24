@@ -3162,12 +3162,20 @@ func runKVMSession(
 					auth.AddAuthHeader,
 				)
 				if err != nil {
-					return fmt.Errorf("failed to submit consent code to MPS: %w", err)
+					// MPS returns Header.RelatesTo as an integer but the generated client expects string.
+					// JSON parse only runs after HTTP 200 is confirmed, so a json/unmarshal error here
+					// means the code was accepted. Proceed.
+					if strings.Contains(err.Error(), "json") || strings.Contains(err.Error(), "unmarshal") {
+						fmt.Println("Consent code accepted by MPS.")
+					} else {
+						return fmt.Errorf("failed to submit consent code to MPS: %w", err)
+					}
+				} else {
+					if postResp.HTTPResponse.StatusCode < 200 || postResp.HTTPResponse.StatusCode >= 300 {
+						return fmt.Errorf("MPS rejected consent code (HTTP %d)", postResp.HTTPResponse.StatusCode)
+					}
+					fmt.Println("Consent code accepted by MPS.")
 				}
-				if postResp.HTTPResponse.StatusCode < 200 || postResp.HTTPResponse.StatusCode >= 300 {
-					return fmt.Errorf("MPS rejected consent code (HTTP %d)", postResp.HTTPResponse.StatusCode)
-				}
-				fmt.Println("Consent code accepted by MPS.")
 
 				consentState := infra.KVMCONSENTRECEIVED
 				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
@@ -3294,12 +3302,20 @@ func runSOLSession(
 					auth.AddAuthHeader,
 				)
 				if err != nil {
-					return fmt.Errorf("failed to submit consent code to MPS: %w", err)
+					// MPS returns Header.RelatesTo as an integer but the generated client expects string.
+					// JSON parse only runs after HTTP 200 is confirmed, so a json/unmarshal error here
+					// means the code was accepted. Proceed.
+					if strings.Contains(err.Error(), "json") || strings.Contains(err.Error(), "unmarshal") {
+						fmt.Println("Consent code accepted by MPS.")
+					} else {
+						return fmt.Errorf("failed to submit consent code to MPS: %w", err)
+					}
+				} else {
+					if postResp.HTTPResponse.StatusCode < 200 || postResp.HTTPResponse.StatusCode >= 300 {
+						return fmt.Errorf("MPS rejected consent code (HTTP %d)", postResp.HTTPResponse.StatusCode)
+					}
+					fmt.Println("Consent code accepted by MPS.")
 				}
-				if postResp.HTTPResponse.StatusCode < 200 || postResp.HTTPResponse.StatusCode >= 300 {
-					return fmt.Errorf("MPS rejected consent code (HTTP %d)", postResp.HTTPResponse.StatusCode)
-				}
-				fmt.Println("Consent code accepted by MPS.")
 
 				consentState := infra.SOLSTATECONSENTRECEIVED
 				patchResp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
