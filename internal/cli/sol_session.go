@@ -4,8 +4,8 @@
 package cli
 
 import (
-	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
@@ -91,7 +91,7 @@ func (s *SOLSession) sendSOLData(data string) error {
 }
 
 func hexMD5(str string) string {
-	h := md5.Sum([]byte(str))
+	h := sha256.Sum256([]byte(str))
 	return hex.EncodeToString(h[:])
 }
 
