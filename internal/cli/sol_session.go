@@ -4,15 +4,8 @@
 package cli
 
 import (
-<<<<<<< HEAD
-	"crypto/md5" //nolint:gosec // required by AMT digest authentication protocol
-	"crypto/rand"
-	"crypto/tls"
-=======
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
->>>>>>> d0943cb414f5078782ec7bf13c5e22036e8f4e33
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -95,11 +88,7 @@ func (s *SOLSession) sendSOLData(data string) error {
 }
 
 func hexMD5(str string) string {
-<<<<<<< HEAD
-	h := md5.Sum([]byte(str)) //nolint:gosec // required by AMT digest authentication protocol
-=======
 	h := sha256.Sum256([]byte(str))
->>>>>>> d0943cb414f5078782ec7bf13c5e22036e8f4e33
 	return hex.EncodeToString(h[:])
 }
 
@@ -343,11 +332,7 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 
 // connectSOLSession connects to the MPS relay and runs the AMT SOL protocol
 // handshake. The function blocks until Ctrl-C or the MPS connection drops.
-<<<<<<< HEAD
-func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, _ chan<- int) error {
-=======
-func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA string, readyCh chan<- int) error {
->>>>>>> d0943cb414f5078782ec7bf13c5e22036e8f4e33
+func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA string, _ chan<- int) error {
 	// Construct carrier URL so parsed.Host, token and GUID are available below
 	sessionURL := fmt.Sprintf("wss://%s/relay/webrelay.ashx?token=%s&host=%s", mpsDomain, token, deviceGUID)
 	parsed, err := url.Parse(sessionURL)
