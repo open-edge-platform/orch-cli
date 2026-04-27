@@ -497,6 +497,14 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		_, _ = fmt.Fprintf(writer, "Customizations: \n\n")
 		_, _ = fmt.Fprintf(writer, "-\tCustom configs:\t %s\n\n", customcfg)
 
+		if host.Metadata != nil && len(*host.Metadata) > 0 {
+			_, _ = fmt.Fprintf(writer, "Metadata: \n\n")
+			for _, item := range *host.Metadata {
+				_, _ = fmt.Fprintf(writer, "-\t%s:\t %s\n", item.Key, item.Value)
+			}
+			_, _ = fmt.Fprintf(writer, "\n")
+		}
+
 		_, _ = fmt.Fprintf(writer, "CPU Info: \n\n")
 		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "Model", "Cores", "Architecture", "Threads", "Sockets")
 		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "-----", "-----", "------------", "-------", "-------")
