@@ -121,9 +121,13 @@ func decodeUTF8Binary(src []byte) []byte {
 func encodeUTF8Binary(src []byte) []byte {
 	n := len(src)
 	extra := n / 4
+	// Overflow-safe capacity hint: if n+extra would overflow int,
+	// fall back to n (safe — append grows the slice as needed).
 	capHint := n
-	if extra > 0 && n <= math.MaxInt-extra {
-		capHint = n + extra
+	if extra > 0 {
+		if n <= math.MaxInt-extra {
+			capHint = n + extra
+		}
 	}
 	dst := make([]byte, 0, capHint)
 	for _, b := range src {
