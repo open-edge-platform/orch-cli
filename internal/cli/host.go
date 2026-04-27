@@ -534,370 +534,489 @@ func getValidatedHostOrderBy(ctx context.Context, cmd *cobra.Command, hostClient
 	})
 }
 
-func printHost(writer io.Writer, host *infra.HostResource) {
+// ---------------------------------------------------------------------------
+// Host inspect (get) templating support
+// ---------------------------------------------------------------------------
 
-	updatestatus := ""
-	hoststatus := "Not connected"
-	currentOS := ""
-	osprofile := ""
-	customcfg := ""
-	ip := ""
-	var cveEntries []CVEEntry
-	provstatus := "Not Provisioned"
-	hostdetails := ""
-	lvmsize := ""
-	osupdatepolicy := ""
+// Sub-row types used in HostInspectItem for range loops in the inspect template.
 
-	//TODO Build out the host information
-	if host != nil && host.Instance != nil && host.Instance.UpdateStatus != nil {
-		updatestatus = toJSON(host.Instance.UpdateStatus)
+type HostStorageRow struct {
+	Wwid     string `json:"wwid"`
+	Capacity string `json:"capacity"`
+	Model    string `json:"model"`
+	Serial   string `json:"serial"`
+	Vendor   string `json:"vendor"`
+}
+
+type HostNicRow struct {
+	Name         string `json:"name"`
+	LinkState    string `json:"linkState"`
+	Mtu          string `json:"mtu"`
+	MacAddress   string `json:"macAddress"`
+	PciId        string `json:"pciId"`
+	Sriov        string `json:"sriov"`
+	SriovVFTotal string `json:"sriovVFTotal"`
+	SriovVFNum   string `json:"sriovVFNum"`
+	BmcInterface string `json:"bmcInterface"`
+}
+
+type HostGpuRow struct {
+	DeviceName   string `json:"deviceName"`
+	Vendor       string `json:"vendor"`
+	Capabilities string `json:"capabilities"`
+	PciId        string `json:"pciId"`
+}
+
+type HostUsbRow struct {
+	Class     string `json:"class"`
+	Serial    string `json:"serial"`
+	VendorId  string `json:"vendorId"`
+	ProductId string `json:"productId"`
+	Bus       string `json:"bus"`
+	Address   string `json:"address"`
+}
+
+type HostCveRow struct {
+	CveId            string `json:"cveId"`
+	Priority         string `json:"priority"`
+	AffectedPackages string `json:"affectedPackages"`
+}
+
+type HostMetadataRow struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+// HostInspectItem is the flat struct fed to the inspect template.
+// All complex conditional logic (feature-gating, nil chains, unit conversions,
+// "Waiting on node agents" special case) is resolved in toHostInspectItem so
+// the template only needs simple field references and range loops.
+type HostInspectItem struct {
+	// Identity
+	ResourceId string `json:"resourceId"`
+	Name       string `json:"name"`
+
+	// Status
+	HostStatus         string `json:"hostStatus"`
+	HostStatusDetails  string `json:"hostStatusDetails"`
+	ProvisioningStatus string `json:"provisioningStatus"`
+	UpdateStatus       string `json:"updateStatus"`
+	OsUpdatePolicy     string `json:"osUpdatePolicy"`
+
+	// Specification
+	SerialNumber    string `json:"serialNumber"`
+	Uuid            string `json:"uuid"`
+	OperatingSystem string `json:"operatingSystem"`
+	BiosVendor      string `json:"biosVendor"`
+	BiosVersion     string `json:"biosVersion"`
+	ProductName     string `json:"productName"`
+
+	// Provisioning-specific identity
+	OsProfile string `json:"osProfile"`
+	NicIps    string `json:"nicIps"`
+	LvmSize   string `json:"lvmSize"`
+
+	// Customizations
+	CustomConfigs string            `json:"customConfigs"`
+	Metadata      []HostMetadataRow `json:"metadata"`
+
+	// CPU
+	CpuModel        string `json:"cpuModel"`
+	CpuCores        string `json:"cpuCores"`
+	CpuArchitecture string `json:"cpuArchitecture"`
+	CpuThreads      string `json:"cpuThreads"`
+	CpuSockets      string `json:"cpuSockets"`
+
+	// Memory
+	MemoryGB string `json:"memoryGB"`
+
+	// Hardware sub-tables
+	Storage []HostStorageRow `json:"storage"`
+	Gpus    []HostGpuRow     `json:"gpus"`
+	Usbs    []HostUsbRow     `json:"usbs"`
+	Nics    []HostNicRow     `json:"nics"`
+	Cves    []HostCveRow     `json:"cves"`
+
+	// AMT
+	AmtEnabled      bool   `json:"amtEnabled"`
+	AmtProvisioned  bool   `json:"amtProvisioned"`
+	AmtSku          string `json:"amtSku"`
+	CurrentAmtState string `json:"currentAmtState"`
+	DesiredAmtState string `json:"desiredAmtState"`
+	AmtControlMode  string `json:"amtControlMode"`
+	AmtDnsSuffix    string `json:"amtDnsSuffix"`
+	CurrentPower    string `json:"currentPower"`
+	DesiredPower    string `json:"desiredPower"`
+	PowerStatus     string `json:"powerStatus"`
+	PowerOnTime     string `json:"powerOnTime"`
+}
+
+// toHostInspectItem converts a HostResource into a fully pre-computed HostInspectItem.
+func toHostInspectItem(host *infra.HostResource) HostInspectItem {
+	item := HostInspectItem{
+		ResourceId:      safeString(host.ResourceId),
+		Name:            host.Name,
+		HostStatus:      hostStatusDisplay(*host),
+		SerialNumber:    safeString(host.SerialNumber),
+		Uuid:            safeString(host.Uuid),
+		BiosVendor:      safeString(host.BiosVendor),
+		BiosVersion:     safeString(host.BiosVersion),
+		ProductName:     safeString(host.ProductName),
+		CpuModel:        safeString(host.CpuModel),
+		CpuCores:        strconv.Itoa(safeInt(host.CpuCores)),
+		CpuArchitecture: safeString(host.CpuArchitecture),
+		CpuThreads:      strconv.Itoa(safeInt(host.CpuThreads)),
+		CpuSockets:      strconv.Itoa(safeInt(host.CpuSockets)),
 	}
 
-	if host != nil && host.Instance != nil && host.Instance.Os != nil && host.Instance.Os.Name != nil {
-		currentOS = toJSON(host.Instance.Os.Name)
-	}
-
-	if host != nil && host.Instance != nil && host.Instance.Os != nil && host.Instance.Os.Name != nil {
-		osprofile = toJSON(host.Instance.Os.Name)
-	}
-
-	if safeString(host.HostStatus) != "" {
-		// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
-		if strings.EqualFold(*host.HostStatus, "error") && host.Instance != nil && host.Instance.InstanceStatusDetail != nil && strings.Contains(*host.Instance.InstanceStatusDetail, "of 10 components running") {
-			hoststatus = "Waiting on node agents"
-		} else {
-			hoststatus = *host.HostStatus
+	// Instance-derived fields
+	if host.Instance != nil {
+		if host.Instance.ProvisioningStatus != nil {
+			item.ProvisioningStatus = *host.Instance.ProvisioningStatus
 		}
-	}
-
-	if host.Instance != nil && host.Instance.ProvisioningStatus != nil && *host.Instance.ProvisioningStatus != "" {
-		provstatus = *host.Instance.ProvisioningStatus
-	}
-
-	if host.Instance != nil && host.Instance.InstanceStatusDetail != nil && *host.Instance.InstanceStatusDetail != "" {
-		hostdetails = *host.Instance.InstanceStatusDetail
-	}
-
-	if host.Instance != nil && host.Instance.CustomConfig != nil {
-		if len(*host.Instance.CustomConfig) > 0 {
+		if host.Instance.InstanceStatusDetail != nil {
+			item.HostStatusDetails = *host.Instance.InstanceStatusDetail
+		}
+		if host.Instance.UpdateStatus != nil {
+			item.UpdateStatus = toJSON(host.Instance.UpdateStatus)
+		}
+		if host.Instance.UpdatePolicy != nil {
+			item.OsUpdatePolicy = safeString(host.Instance.UpdatePolicy.ResourceId)
+		}
+		if host.Instance.Os != nil && host.Instance.Os.Name != nil {
+			item.OperatingSystem = *host.Instance.Os.Name
+			item.OsProfile = *host.Instance.Os.Name
+		}
+		if host.Instance.CustomConfig != nil && len(*host.Instance.CustomConfig) > 0 {
 			configs := ""
 			for _, ccfg := range *host.Instance.CustomConfig {
-				configs = configs + ccfg.Name + " "
+				configs += ccfg.Name + " "
 			}
-			customcfg = configs
+			item.CustomConfigs = strings.TrimSpace(configs)
+		}
+		// CVEs
+		if host.Instance.ExistingCves != nil && *host.Instance.ExistingCves != "" {
+			var cveEntries []CVEEntry
+			if err := json.Unmarshal([]byte(*host.Instance.ExistingCves), &cveEntries); err == nil {
+				for _, cve := range cveEntries {
+					item.Cves = append(item.Cves, HostCveRow{
+						CveId:            cve.CVEID,
+						Priority:         cve.Priority,
+						AffectedPackages: fmt.Sprintf("%v", cve.AffectedPackages),
+					})
+				}
+			}
 		}
 	}
 
-	if host.Instance != nil && host.Instance.UpdatePolicy != nil {
-		osupdatepolicy = safeString(host.Instance.UpdatePolicy.ResourceId)
-	}
-
-	if host.HostNics != nil && len(*host.HostNics) > 0 {
+	// NIC IPs summary string
+	if host.HostNics != nil {
+		ip := ""
 		for _, nic := range *host.HostNics {
 			if nic.Ipaddresses != nil && len(*nic.Ipaddresses) > 0 && nic.DeviceName != nil && (*nic.Ipaddresses)[0].Address != nil {
-				deviceName := *nic.DeviceName
-				address := *(*nic.Ipaddresses)[0].Address
-				ip = ip + deviceName + " " + address + "; "
+				ip += *nic.DeviceName + " " + *(*nic.Ipaddresses)[0].Address + "; "
 			}
 		}
+		item.NicIps = strings.TrimSuffix(ip, "; ")
 	}
 
+	// LVM size
 	if host.UserLvmSize != nil {
-		lvmsize = strconv.FormatInt(int64(*host.UserLvmSize), 10) + " GB"
+		item.LvmSize = strconv.FormatInt(int64(*host.UserLvmSize), 10) + " GB"
 	}
 
-	_, _ = fmt.Fprintf(writer, "Host Info: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tHost Resource ID:\t %s\n", safeString(host.ResourceId))
-	_, _ = fmt.Fprintf(writer, "-\tName:\t %s\n", host.Name)
-	if isFeatureEnabled(ProvisioningFeature) {
-		_, _ = fmt.Fprintf(writer, "-\tOS Profile:\t %v\n", osprofile)
-		_, _ = fmt.Fprintf(writer, "-\tNIC Name and IP Address:\t %v\n", ip)
-		_, _ = fmt.Fprintf(writer, "-\tLVM Size:\t %v\n", lvmsize)
-	}
-	_, _ = fmt.Fprintf(writer, "\nStatus details: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tHost Status:\t %s\n", hoststatus)
-
-	if isFeatureEnabled(ProvisioningFeature) {
-		_, _ = fmt.Fprintf(writer, "-\tHost Status Details:\t %s\n", hostdetails)
-		_, _ = fmt.Fprintf(writer, "-\tProvisioning Status:\t %s\n", provstatus)
-		_, _ = fmt.Fprintf(writer, "-\tUpdate Status:\t %s\n", updatestatus)
-		_, _ = fmt.Fprintf(writer, "-\tOS Update Policy:\t %s\n", osupdatepolicy)
-	}
-	_, _ = fmt.Fprintf(writer, "\nSpecification: \n\n")
-	_, _ = fmt.Fprintf(writer, "-\tSerial Number:\t %s\n", safeString(host.SerialNumber))
-	_, _ = fmt.Fprintf(writer, "-\tUUID:\t %s\n", safeString(host.Uuid))
-	if isFeatureEnabled(ProvisioningFeature) {
-		_, _ = fmt.Fprintf(writer, "-\tOS:\t %v\n", currentOS)
-		_, _ = fmt.Fprintf(writer, "-\tBIOS Vendor:\t %v\n", safeString(host.BiosVendor))
-		_, _ = fmt.Fprintf(writer, "-\tProduct Name:\t %v\n\n", safeString(host.ProductName))
-
-		_, _ = fmt.Fprintf(writer, "Customizations: \n\n")
-		_, _ = fmt.Fprintf(writer, "-\tCustom configs:\t %s\n\n", customcfg)
-
-		if host.Metadata != nil && len(*host.Metadata) > 0 {
-			_, _ = fmt.Fprintf(writer, "Metadata: \n\n")
-			for _, metadataItem := range *host.Metadata {
-				_, _ = fmt.Fprintf(writer, "-\t%s:\t %s\n", metadataItem.Key, metadataItem.Value)
-			}
-			_, _ = fmt.Fprintf(writer, "\n")
+	// Memory
+	if host.MemoryBytes != nil {
+		if memBytes, err := strconv.ParseInt(*host.MemoryBytes, 10, 64); err == nil {
+			item.MemoryGB = fmt.Sprintf("%d", int(float64(memBytes)/(1024*1024*1024)+0.5))
 		}
+	}
 
-		_, _ = fmt.Fprintf(writer, "CPU Info: \n\n")
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "Model", "Cores", "Architecture", "Threads", "Sockets")
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "-----", "-----", "------------", "-------", "-------")
-		_, _ = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n\n",
-			safeString(host.CpuModel),
-			safeInt(host.CpuCores),
-			safeString(host.CpuArchitecture),
-			safeInt(host.CpuThreads),
-			safeInt(host.CpuSockets))
-
-		_, _ = fmt.Fprintf(writer, "Memory Info: \n\n")
-		_, _ = fmt.Fprintf(writer, "%s\n", "Total (GB)")
-		_, _ = fmt.Fprintf(writer, "%s\n", "-------------")
-		if host.MemoryBytes != nil {
-			memoryBytes, err := strconv.ParseInt(*host.MemoryBytes, 10, 64)
-			if err != nil {
-				_, _ = fmt.Fprintf(writer, "%v\n\n", "Error parsing memory")
-			} else {
-				memoryGB := float64(memoryBytes) / (1024 * 1024 * 1024)
-				memoryGBRounded := int(memoryGB + 0.5) // Round up to nearest integer
-				_, _ = fmt.Fprintf(writer, "%d\n\n", memoryGBRounded)
-			}
+	// Metadata
+	if host.Metadata != nil {
+		for _, m := range *host.Metadata {
+			item.Metadata = append(item.Metadata, HostMetadataRow{Key: m.Key, Value: m.Value})
 		}
+	}
 
-		_, _ = fmt.Fprintf(writer, "Storage Info: \n\n")
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "WWID", "Capacity", "Model", "Serial", "Vendor")
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", "----", "--------", "-----", "------", "------")
-		if host.HostStorages != nil {
-			for _, storage := range *host.HostStorages {
-				wwid := "N/A"
-				capacity := "N/A"
-				model := "N/A"
-				serial := "N/A"
-				vendor := "N/A"
-
-				if storage.Wwid != nil {
-					wwid = *storage.Wwid
+	// Storage
+	if host.HostStorages != nil {
+		for _, s := range *host.HostStorages {
+			row := HostStorageRow{Wwid: "N/A", Capacity: "N/A", Model: "N/A", Serial: "N/A", Vendor: "N/A"}
+			if s.Wwid != nil {
+				row.Wwid = *s.Wwid
+			}
+			if s.CapacityBytes != nil {
+				if b, err := strconv.ParseInt(*s.CapacityBytes, 10, 64); err == nil {
+					row.Capacity = fmt.Sprintf("%d GB", b/(1024*1024*1024))
 				}
-				if storage.CapacityBytes != nil {
-					capacityBytes, err := strconv.ParseInt(*storage.CapacityBytes, 10, 64)
-					if err != nil {
-						capacity = "Parse Error"
-					} else {
-						capacityGB := capacityBytes / (1024 * 1024 * 1024)
-						capacity = fmt.Sprintf("%d GB", capacityGB)
+			}
+			if s.Model != nil {
+				row.Model = *s.Model
+			}
+			if s.Serial != nil {
+				row.Serial = *s.Serial
+			}
+			if s.Vendor != nil {
+				row.Vendor = *s.Vendor
+			}
+			item.Storage = append(item.Storage, row)
+		}
+	}
+
+	// GPUs
+	if host.HostGpus != nil {
+		for _, g := range *host.HostGpus {
+			row := HostGpuRow{DeviceName: "N/A", Vendor: "N/A", Capabilities: "N/A", PciId: "N/A"}
+			if g.DeviceName != nil {
+				row.DeviceName = *g.DeviceName
+			}
+			if g.Vendor != nil {
+				row.Vendor = *g.Vendor
+			}
+			if g.Capabilities != nil {
+				row.Capabilities = strings.Join(*g.Capabilities, ",")
+			}
+			if g.PciId != nil {
+				row.PciId = *g.PciId
+			}
+			item.Gpus = append(item.Gpus, row)
+		}
+	}
+
+	// USBs
+	if host.HostUsbs != nil {
+		for _, u := range *host.HostUsbs {
+			row := HostUsbRow{Class: "N/A", Serial: "N/A", VendorId: "N/A", ProductId: "N/A", Bus: "N/A", Address: "N/A"}
+			if u.Class != nil && *u.Class != "" {
+				row.Class = *u.Class
+			}
+			if u.Serial != nil {
+				row.Serial = *u.Serial
+			}
+			if u.IdVendor != nil {
+				row.VendorId = *u.IdVendor
+			}
+			if u.IdProduct != nil {
+				row.ProductId = *u.IdProduct
+			}
+			if u.Bus != nil {
+				row.Bus = strconv.Itoa(*u.Bus)
+			}
+			if u.Addr != nil {
+				row.Address = strconv.Itoa(*u.Addr)
+			}
+			item.Usbs = append(item.Usbs, row)
+		}
+	}
+
+	// NICs
+	if host.HostNics != nil {
+		for _, n := range *host.HostNics {
+			row := HostNicRow{
+				Name: "N/A", LinkState: "N/A", Mtu: "N/A", MacAddress: "N/A",
+				PciId: "N/A", Sriov: "N/A", SriovVFTotal: "N/A", SriovVFNum: "N/A", BmcInterface: "N/A",
+			}
+			if n.DeviceName != nil {
+				row.Name = *n.DeviceName
+			}
+			if n.LinkState != nil && n.LinkState.Type != nil {
+				switch string(*n.LinkState.Type) {
+				case "NETWORK_INTERFACE_LINK_STATE_UP":
+					row.LinkState = "UP"
+				case "NETWORK_INTERFACE_LINK_STATE_DOWN":
+					row.LinkState = "DOWN"
+				default:
+					row.LinkState = "UNSPECIFIED"
+				}
+			}
+			if n.Mtu != nil {
+				row.Mtu = strconv.Itoa(*n.Mtu)
+			}
+			if n.MacAddr != nil {
+				row.MacAddress = *n.MacAddr
+			}
+			if n.PciIdentifier != nil {
+				row.PciId = *n.PciIdentifier
+			}
+			if n.SriovEnabled != nil {
+				row.Sriov = strconv.FormatBool(*n.SriovEnabled)
+				if *n.SriovEnabled {
+					if n.SriovVfsTotal != nil {
+						row.SriovVFTotal = strconv.Itoa(*n.SriovVfsTotal)
+					}
+					if n.SriovVfsNum != nil {
+						row.SriovVFNum = strconv.Itoa(*n.SriovVfsNum)
 					}
 				}
-				if storage.Model != nil {
-					model = *storage.Model
-				}
-				if storage.Serial != nil {
-					serial = *storage.Serial
-				}
-				if storage.Vendor != nil {
-					vendor = *storage.Vendor
-				}
-
-				_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", wwid, capacity, model, serial, vendor)
 			}
-			_, _ = fmt.Fprintf(writer, "\n")
-		}
-
-		_, _ = fmt.Fprintf(writer, "GPU Info: \n\n")
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", "Device", "Vendor", "Capabilities", "PCI Address")
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", "------", "------", "------------", "-----------")
-
-		if host.HostGpus != nil {
-			for _, gpu := range *host.HostGpus {
-				model := "N/A"
-				vendor := "N/A"
-				capabilities := "N/A"
-				pciAddress := "N/A"
-
-				if gpu.DeviceName != nil {
-					model = *gpu.DeviceName
-				}
-				if gpu.Vendor != nil {
-					vendor = *gpu.Vendor
-				}
-				if gpu.Capabilities != nil {
-					capabilities = strings.Join(*gpu.Capabilities, ",")
-				}
-				if gpu.PciId != nil {
-					pciAddress = *gpu.PciId
-				}
-				_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", model, vendor, capabilities, pciAddress)
+			if n.BmcInterface != nil {
+				row.BmcInterface = strconv.FormatBool(*n.BmcInterface)
 			}
-			_, _ = fmt.Fprintf(writer, "\n")
-		}
-		_, _ = fmt.Fprintf(writer, "USB Info: \n\n")
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", "Class", "Serial", "Vendor ID", "Product ID", "Bus", "Address")
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", "-----", "------", "---------", "----------", "---", "-------")
-		if host.HostUsbs != nil {
-			for _, usb := range *host.HostUsbs {
-				class := "N/A"
-				serial := "N/A"
-				vendorID := "N/A"
-				productID := "N/A"
-				bus := "N/A"
-				address := "N/A"
-
-				if usb.Class != nil && *usb.Class != "" {
-					class = *usb.Class
-				}
-				if usb.Serial != nil {
-					serial = *usb.Serial
-				}
-				if usb.IdVendor != nil {
-					vendorID = *usb.IdVendor
-				}
-				if usb.IdProduct != nil {
-					productID = *usb.IdProduct
-				}
-				if usb.Bus != nil {
-					bus = strconv.Itoa(*usb.Bus)
-				}
-				if usb.Addr != nil {
-					address = strconv.Itoa(*usb.Addr)
-				}
-				_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", class, serial, vendorID, productID, bus, address)
-			}
-			_, _ = fmt.Fprintf(writer, "\n")
-		}
-
-		_, _ = fmt.Fprintf(writer, "Interfaces Info: \n\n")
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Name", "Links State", "MTU", "MAC Address", "PCI Identifier", "SRIOV", "SRIOV VF Total", "SRIOV VF Number", "BMC Interface ")
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "----", "-----", "------", "---------", "----------", "---", "-------", "------------", "--------------")
-
-		if host.HostNics != nil {
-			for _, nic := range *host.HostNics {
-				name := "N/A"
-				linksStatus := "N/A"
-				mtu := "N/A"
-				macAddress := "N/A"
-				pciID := "N/A"
-				sriov := "N/A"
-				sriovVFTotal := "N/A"
-				sriovVFNum := "N/A"
-				bmcInterface := "N/A"
-
-				if nic.DeviceName != nil {
-					name = *nic.DeviceName
-				}
-				if nic.LinkState != nil {
-					if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_DOWN" {
-						linksStatus = "DOWN"
-					}
-					if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_UP" {
-						linksStatus = "UP"
-					}
-					if string(*nic.LinkState.Type) == "NETWORK_INTERFACE_LINK_STATE_UNSPECIFIED" {
-						linksStatus = "UNSPECIFIED"
-					}
-				}
-				if nic.Mtu != nil {
-					mtu = strconv.Itoa(*nic.Mtu)
-				}
-				if nic.MacAddr != nil {
-					macAddress = *nic.MacAddr
-				}
-				if nic.PciIdentifier != nil {
-					pciID = *nic.PciIdentifier
-				}
-				if nic.SriovEnabled != nil {
-					sriov = strconv.FormatBool(*nic.SriovEnabled)
-				}
-				if nic.SriovVfsTotal != nil && nic.SriovEnabled != nil && *nic.SriovEnabled {
-					sriovVFTotal = strconv.Itoa(*nic.SriovVfsTotal)
-				}
-				if nic.SriovVfsNum != nil && nic.SriovEnabled != nil && *nic.SriovEnabled {
-					sriovVFNum = strconv.Itoa(*nic.SriovVfsNum)
-				}
-				if nic.BmcInterface != nil {
-					bmcInterface = strconv.FormatBool(*nic.BmcInterface)
-				}
-				_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", name, linksStatus, mtu, macAddress, pciID, sriov, sriovVFTotal, sriovVFNum, bmcInterface)
-			}
-			_, _ = fmt.Fprintf(writer, "\n")
-		}
-
-		if host.Instance != nil && host.Instance.ExistingCves != nil && host.Instance.Os != nil && host.Instance.Os.FixedCves != nil {
-
-			if *host.Instance.ExistingCves != "" {
-				err := json.Unmarshal([]byte(*host.Instance.ExistingCves), &cveEntries)
-				if err != nil {
-					fmt.Println("Error unmarshaling JSON: existing CVE entries:", err)
-					return
-				}
-			}
-
-			_, _ = fmt.Fprintf(writer, "CVE Info (existing CVEs): \n\n")
-			for _, cve := range cveEntries {
-				_, _ = fmt.Fprintf(writer, "-\tCVE ID:\t %v\n", cve.CVEID)
-				_, _ = fmt.Fprintf(writer, "-\tPriority:\t %v\n", cve.Priority)
-				_, _ = fmt.Fprintf(writer, "-\tAffected Packages:\t %v\n", cve.AffectedPackages)
-			}
+			item.Nics = append(item.Nics, row)
 		}
 	}
-	currentAmtState := "N/A"
-	if host.CurrentAmtState != nil {
-		currentAmtState = fmt.Sprintf("%v", *host.CurrentAmtState)
-	}
-	desiredAmtState := "N/A"
-	if host.DesiredAmtState != nil {
-		desiredAmtState = fmt.Sprintf("%v", *host.DesiredAmtState)
-	}
 
-	amtControlMode := "N/A"
-	if host.AmtControlMode != nil {
-		amtControlMode = fmt.Sprintf("%v", *host.AmtControlMode)
-	}
-	dnsSuffix := "N/A"
-	if host.AmtDnsSuffix != nil {
-		dnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
-	}
-	amtSKU := "N/A"
-	if host.AmtSku != nil {
-		amtSKU = fmt.Sprintf("%v", *host.AmtSku)
-	}
-
+	// AMT — only populate when SKU is specified (not UNSPECIFIED)
 	if host.AmtSku != nil && *host.AmtSku != infra.AMTSKUUNSPECIFIED {
-		_, _ = fmt.Fprintf(writer, "\nAMT Info: \n\n")
-		_, _ = fmt.Fprintf(writer, "-\tAMT State:\t %v\n", currentAmtState)
-		_, _ = fmt.Fprintf(writer, "-\tAMT Desired State:\t %v\n", desiredAmtState)
-		_, _ = fmt.Fprintf(writer, "-\tAMT Desired Control Mode:\t %v\n", amtControlMode)
-		_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
-		_, _ = fmt.Fprintf(writer, "-\tAMT SKU :\t %v\n", amtSKU)
-
+		item.AmtEnabled = true
+		item.AmtSku = fmt.Sprintf("%v", *host.AmtSku)
+		if host.CurrentAmtState != nil {
+			item.CurrentAmtState = fmt.Sprintf("%v", *host.CurrentAmtState)
+		}
+		if host.DesiredAmtState != nil {
+			item.DesiredAmtState = fmt.Sprintf("%v", *host.DesiredAmtState)
+		}
+		if host.AmtControlMode != nil {
+			item.AmtControlMode = fmt.Sprintf("%v", *host.AmtControlMode)
+		}
+		if host.AmtDnsSuffix != nil {
+			item.AmtDnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
+		}
+		// Power info only when provisioned
 		if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
-			currentPower := "N/A"
+			item.AmtProvisioned = true
 			if host.CurrentPowerState != nil {
-				currentPower = fmt.Sprintf("%v", *host.CurrentPowerState)
+				item.CurrentPower = fmt.Sprintf("%v", *host.CurrentPowerState)
 			}
-			desiredPower := "N/A"
 			if host.DesiredPowerState != nil {
-				desiredPower = fmt.Sprintf("%v", *host.DesiredPowerState)
+				item.DesiredPower = fmt.Sprintf("%v", *host.DesiredPowerState)
 			}
-			powerStatus := "N/A"
 			if host.PowerStatus != nil {
-				powerStatus = fmt.Sprintf("%v", *host.PowerStatus)
+				item.PowerStatus = fmt.Sprintf("%v", *host.PowerStatus)
 			}
-			powerOnTimeStr := "N/A"
 			if host.PowerOnTime != nil {
-				powerOnTime := time.Unix(int64(*host.PowerOnTime), 0)
-				powerOnTimeStr = powerOnTime.UTC().Format(time.RFC3339)
+				item.PowerOnTime = time.Unix(int64(*host.PowerOnTime), 0).UTC().Format(time.RFC3339)
 			}
-			_, _ = fmt.Fprintf(writer, "-\tCurrent Power State:\t %v\n", currentPower)
-			_, _ = fmt.Fprintf(writer, "-\tDesired Power State:\t %v\n", desiredPower)
-			_, _ = fmt.Fprintf(writer, "-\tPower Status:\t %v\n", powerStatus)
-			_, _ = fmt.Fprintf(writer, "-\tPowerOn Time:\t %v\n", powerOnTimeStr)
-
-		} else if host.CurrentAmtState != nil && *host.CurrentAmtState != infra.AMTSTATEPROVISIONED {
-			_, _ = fmt.Fprintf(writer, "AMT not active and/or not supported: No info available \n\n")
 		}
 	}
 
+	return item
+}
+
+const DEFAULT_HOST_INSPECT_FORMAT = `Host Info:
+  Resource ID:          {{.ResourceId}}
+  Name:                 {{.Name}}
+
+Status:
+  Host Status:          {{.HostStatus}}
+
+Specification:
+  Serial Number:        {{.SerialNumber}}
+  UUID:                 {{.Uuid}}`
+
+const DEFAULT_HOST_PROVISIONING_INSPECT_FORMAT = `Host Info:
+  Resource ID:          {{.ResourceId}}
+  Name:                 {{.Name}}
+  OS Profile:           {{.OsProfile}}
+  NIC Name and IP:      {{.NicIps}}
+  LVM Size:             {{.LvmSize}}
+
+Status:
+  Host Status:          {{.HostStatus}}
+  Status Details:       {{.HostStatusDetails}}
+  Provisioning Status:  {{.ProvisioningStatus}}
+  Update Status:        {{.UpdateStatus}}
+  OS Update Policy:     {{.OsUpdatePolicy}}
+
+Specification:
+  Serial Number:        {{.SerialNumber}}
+  UUID:                 {{.Uuid}}
+  OS:                   {{.OperatingSystem}}
+  BIOS Vendor:          {{.BiosVendor}}
+  BIOS Version:         {{.BiosVersion}}
+  Product Name:         {{.ProductName}}
+
+Customizations:
+  Custom Configs:       {{.CustomConfigs}}{{if .Metadata}}
+
+Metadata:{{range .Metadata}}
+  {{.Key}}: {{.Value}}{{end}}{{end}}
+
+CPU Info:
+  Model:                {{.CpuModel}}
+  Cores:                {{.CpuCores}}
+  Architecture:         {{.CpuArchitecture}}
+  Threads:              {{.CpuThreads}}
+  Sockets:              {{.CpuSockets}}
+
+Memory:
+  Total:                {{.MemoryGB}} GB
+
+Storage:{{if .Storage}}{{range .Storage}}
+  - WWID: {{.Wwid}}, Capacity: {{.Capacity}}, Model: {{.Model}}, Serial: {{.Serial}}, Vendor: {{.Vendor}}{{end}}{{else}}
+  None{{end}}
+
+GPU:{{if .Gpus}}{{range .Gpus}}
+  - Device: {{.DeviceName}}, Vendor: {{.Vendor}}, Capabilities: {{.Capabilities}}, PCI: {{.PciId}}{{end}}{{else}}
+  None{{end}}
+
+USB:{{if .Usbs}}{{range .Usbs}}
+  - Class: {{.Class}}, Serial: {{.Serial}}, Vendor ID: {{.VendorId}}, Product ID: {{.ProductId}}, Bus: {{.Bus}}, Address: {{.Address}}{{end}}{{else}}
+  None{{end}}
+
+Interfaces:{{if .Nics}}{{range .Nics}}
+  - Name: {{.Name}}, Link: {{.LinkState}}, MTU: {{.Mtu}}, MAC: {{.MacAddress}}, PCI: {{.PciId}}, SRIOV: {{.Sriov}}, VF Total: {{.SriovVFTotal}}, VF Num: {{.SriovVFNum}}, BMC: {{.BmcInterface}}{{end}}{{else}}
+  None{{end}}
+
+CVEs:{{if .Cves}}{{range .Cves}}
+  - CVE ID: {{.CveId}}, Priority: {{.Priority}}, Affected: {{.AffectedPackages}}{{end}}{{else}}
+  None{{end}}
+
+AMT Info:{{if .AmtEnabled}}
+  AMT SKU:              {{.AmtSku}}
+  Current State:        {{.CurrentAmtState}}
+  Desired State:        {{.DesiredAmtState}}
+  Control Mode:         {{.AmtControlMode}}
+  DNS Suffix:           {{.AmtDnsSuffix}}{{if .AmtProvisioned}}
+  Current Power:        {{.CurrentPower}}
+  Desired Power:        {{.DesiredPower}}
+  Power Status:         {{.PowerStatus}}
+  Power On Time:        {{.PowerOnTime}}{{else}}
+  AMT not active and/or not supported: No info available{{end}}{{else}}
+  AMT not enabled{{end}}
+`
+
+const HOST_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_HOST_INSPECT_OUTPUT_TEMPLATE"
+
+// getHostInspectFormat returns the inspect template, allowing override via flag or envvar.
+func getHostInspectFormat(cmd *cobra.Command) (string, error) {
+	defaultFmt := DEFAULT_HOST_INSPECT_FORMAT
+	if isFeatureEnabled(ProvisioningFeature) {
+		defaultFmt = DEFAULT_HOST_PROVISIONING_INSPECT_FORMAT
+	}
+	return resolveTableOutputTemplate(cmd, defaultFmt, HOST_INSPECT_TEMPLATE_ENVVAR)
+}
+
+// printHost renders a single host using the template-based inspect pipeline.
+// For JSON/YAML it passes the raw HostResource; for table it uses the pre-computed
+// HostInspectItem so the template has simple field references.
+func printHost(cmd *cobra.Command, writer io.Writer, host *infra.HostResource) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	if outputType == "json" || outputType == "yaml" {
+		result := CommandResult{
+			OutputAs: toOutputType(outputType),
+			Data:     *host,
+		}
+		GenerateOutput(writer, &result)
+		return nil
+	}
+
+	outputFormat, err := getHostInspectFormat(cmd)
+	if err != nil {
+		return err
+	}
+
+	item := toHostInspectItem(host)
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      item,
+	}
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 // Helper function to verify that the input file exists and is of right format
@@ -1931,8 +2050,6 @@ func runGetHostCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	outputType, _ := cmd.Flags().GetString("output-type")
-
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
 		hostHeaderGet, "error getting Host"); !proceed {
 		return err
@@ -1956,19 +2073,9 @@ func runGetHostCommand(cmd *cobra.Command, args []string) error {
 		resp.JSON200.Instance = iresp.JSON200
 	}
 
-	// For JSON/YAML output, use the structured template pipeline on the raw API struct.
-	if outputType == "json" || outputType == "yaml" {
-		hosts := []infra.HostResource{*resp.JSON200}
-		emptyFilter := ""
-		if err := printHosts(cmd, writer, &hosts, nil, &emptyFilter, false); err != nil {
-			return err
-		}
-		return writer.Flush()
+	if err := printHost(cmd, writer, resp.JSON200); err != nil {
+		return err
 	}
-
-	// For table output, use the existing detailed formatter which renders sub-sections
-	// (CPU, memory, storage, GPU, USB, NICs, CVEs, AMT) with full feature-gating.
-	printHost(writer, resp.JSON200)
 	return writer.Flush()
 }
 
