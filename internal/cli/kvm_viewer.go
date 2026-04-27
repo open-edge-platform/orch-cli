@@ -15,7 +15,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/fs"
-	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -118,18 +117,10 @@ func decodeUTF8Binary(src []byte) []byte {
 }
 
 // encodeUTF8Binary - reverse of decodeUTF8Binary.
+// Each byte >= 0x80 expands to 2 bytes; capacity hint uses src length.
+// append grows the slice automatically if needed — no overflow risk.
 func encodeUTF8Binary(src []byte) []byte {
-	n := len(src)
-	extra := n / 4
-	// Overflow-safe capacity hint: if n+extra would overflow int,
-	// fall back to n (safe — append grows the slice as needed).
-	capHint := n
-	if extra > 0 {
-		if extra <= math.MaxInt-n {
-			capHint = n + extra
-		}
-	}
-	dst := make([]byte, 0, capHint)
+	dst := make([]byte, 0, len(src))
 	for _, b := range src {
 		if b < 0x80 {
 			dst = append(dst, b)
