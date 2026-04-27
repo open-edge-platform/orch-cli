@@ -4,10 +4,9 @@
 package cli
 
 import (
-	"crypto/md5"
+	"crypto/md5" //nolint:gosec // required by AMT digest authentication protocol
 	"crypto/rand"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -15,9 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -40,7 +37,7 @@ type SOLSession struct {
 	// Shutdown coordination
 	done     chan struct{}
 	doneOnce sync.Once
-	
+
 	// Error channel
 	errChan chan error
 }
@@ -92,7 +89,7 @@ func (s *SOLSession) sendSOLData(data string) error {
 }
 
 func hexMD5(str string) string {
-	h := md5.Sum([]byte(str))
+	h := md5.Sum([]byte(str)) //nolint:gosec // required by AMT digest authentication protocol
 	return hex.EncodeToString(h[:])
 }
 
@@ -336,7 +333,7 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 
 // connectSOLSession connects to the MPS relay and runs the AMT SOL protocol
 // handshake. The function blocks until Ctrl-C or the MPS connection drops.
-func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, readyCh chan<- int) error {
+func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, _ chan<- int) error {
 	// Construct carrier URL so parsed.Host, token and GUID are available below
 	sessionURL := fmt.Sprintf("wss://%s/relay/webrelay.ashx?token=%s&host=%s", mpsDomain, token, deviceGUID)
 	parsed, err := url.Parse(sessionURL)
@@ -393,7 +390,7 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, r
 
 	// Set up ping/pong handling with proper deadline management
 	var readDeadlineMu sync.Mutex
-	conn.SetPongHandler(func(appData string) error {
+	conn.SetPongHandler(func(_ string) error {
 		readDeadlineMu.Lock()
 		defer readDeadlineMu.Unlock()
 		conn.SetReadDeadline(time.Now().Add(300 * time.Second)) //nolint:errcheck
@@ -423,7 +420,7 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, r
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(interrupt)
-	
+
 	done := make(chan struct{})
 	debug := os.Getenv("SOL_DEBUG") != ""
 
@@ -439,15 +436,15 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, r
 				return
 			default:
 			}
-			
+
 			readDeadlineMu.Lock()
 			conn.SetReadDeadline(time.Now().Add(300 * time.Second)) //nolint:errcheck
 			readDeadlineMu.Unlock()
-			
+
 			_, message, readErr := conn.ReadMessage()
 			if readErr != nil {
-				if !websocket.IsCloseError(readErr, 
-					websocket.CloseNormalClosure, 
+				if !websocket.IsCloseError(readErr,
+					websocket.CloseNormalClosure,
 					websocket.CloseGoingAway,
 					websocket.CloseNoStatusReceived) {
 					select {
@@ -541,7 +538,7 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, r
 	if err != nil {
 		return fmt.Errorf("failed to set terminal to raw mode: %w", err)
 	}
-	
+
 	// Ensure terminal is always restored, even on panic
 	defer func() {
 		if err := term.Restore(int(os.Stdin.Fd()), oldState); err != nil {
@@ -560,7 +557,7 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, r
 				return
 			default:
 			}
-			
+
 			n, readErr := os.Stdin.Read(buffer)
 			if readErr != nil {
 				if readErr != io.EOF {
@@ -571,7 +568,7 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, r
 				}
 				return
 			}
-			
+
 			if n > 0 {
 				// Check for Ctrl+C (0x03) in raw mode
 				for i := 0; i < n; i++ {
@@ -621,82 +618,13 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass string, r
 	closeMsg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
 	_ = conn.WriteMessage(websocket.CloseMessage, closeMsg)
 	sol.connMu.Unlock()
-	
+
 	// Wait a moment for graceful close
 	time.Sleep(100 * time.Millisecond)
-	
+
 	conn.Close()
-	
+
 	fmt.Printf("\nSOL session ended.\n")
-	
+
 	return sessionErr
-}
-
-// getAMTPassword retrieves the AMT password.  Priority:
-//  1. AMT_PASSWORD env var
-//  2. Vault secret (via kubectl exec)
-//  3. K8s secret dm-manager-amt-password
-func getAMTPassword() string {
-	if pass := os.Getenv("AMT_PASSWORD"); pass != "" {
-		return pass
-	}
-
-	// Try Vault: kubectl exec -n orch-platform vault-0 -- vault kv get -field=password secret/amt-password
-	if out, err := execCommand("kubectl", "exec", "-n", "orch-platform", "vault-0", "--",
-		"vault", "kv", "get", "-field=password", "secret/amt-password"); err == nil && out != "" {
-		fmt.Fprintf(os.Stderr, "[SOL] AMT password obtained from Vault.\n")
-		return out
-	}
-
-	// Try K8s secret: kubectl get secret -n orch-infra dm-manager-amt-password -o jsonpath='{.data.password}'
-	if out, err := execCommand("kubectl", "get", "secret", "-n", "orch-infra",
-		"dm-manager-amt-password", "-o", "jsonpath={.data.password}"); err == nil && out != "" {
-		if decoded, decErr := base64Decode(out); decErr == nil && decoded != "" {
-			fmt.Fprintf(os.Stderr, "[SOL] AMT password obtained from K8s secret.\n")
-			return decoded
-		}
-	}
-
-	return ""
-}
-
-// execCommand runs a command and returns its trimmed stdout.
-func execCommand(name string, args ...string) (string, error) {
-	cmd := exec.Command(name, args...)
-	out, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(out)), nil
-}
-
-// base64Decode decodes a base64 string.
-func base64Decode(s string) (string, error) {
-	b, err := base64.StdEncoding.DecodeString(s)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
-}
-
-// getJWTToken retrieves the current JWT access token from the auth store.
-func getJWTTokenFromEnv() string {
-	if token := os.Getenv("JWT_TOKEN"); token != "" {
-		return token
-	}
-	return ""
-}
-
-// parseSessionURLHost extracts the host portion from a wss:// session URL
-func parseSessionURLHost(sessionURL string) string {
-	parsed, err := url.Parse(sessionURL)
-	if err != nil {
-		return ""
-	}
-	return parsed.Host
-}
-
-// isSOLSessionURL checks if a string looks like a valid SOL session URL
-func isSOLSessionURL(s string) bool {
-	return strings.HasPrefix(s, "wss://") && strings.Contains(s, "webrelay.ashx")
 }

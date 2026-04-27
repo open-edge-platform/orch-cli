@@ -79,8 +79,7 @@ var RpsFactory interfaces.RpsFactoryFunc = func(cmd *cobra.Command) (context.Con
 }
 
 var MpsFactory interfaces.MpsFactoryFunc = func(cmd *cobra.Command) (context.Context, mpsapi.ClientWithResponsesInterface, string, error) {
-	ctx, client, projectName, err := getMpsServiceContext(cmd)
-	return ctx, mpsapi.ClientWithResponsesInterface(client), projectName, err
+	return getMpsServiceContext(cmd)
 }
 
 var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command) (context.Context, depapi.ClientWithResponsesInterface, string, error) {
