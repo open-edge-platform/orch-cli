@@ -454,9 +454,13 @@ func (s *kvmSession) sendDigestAuthResponse(authType uint8, realm, nonce, qop st
 	var buf bytes.Buffer
 	buf.Write([]byte{0x13, 0x00, 0x00, 0x00, authType})
 	buf.Write(intToLE32(uint32(totalLen)))
-	for _, s := range []string{user, realm, nonce, uri, cnonce, nc, digest} {
-		buf.WriteByte(byte(len(s)))
-		buf.WriteString(s)
+	for _, field := range []string{user, realm, nonce, uri, cnonce, nc, digest} {
+		if len(field) > 255 {
+			s.logf("[KVM] Warning: digest field exceeds 255 bytes, truncating")
+			field = field[:255]
+		}
+		buf.WriteByte(byte(len(field)))
+		buf.WriteString(field)
 	}
 	if authType == 4 {
 		buf.WriteByte(byte(len(qop)))
