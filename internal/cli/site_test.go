@@ -29,12 +29,11 @@ func (s *CLITestSuite) deleteSite(project string, name string, args commandArgs)
 }
 
 func (s *CLITestSuite) TestSite() {
+	var expectedOutputList listCommandOutput
 
 	name := "site"
 	resourceID := "site-7ceae560"
 	regionID := "region-abcd1234"
-	longitude := "5"
-	latitiude := "5"
 
 	/////////////////////////////
 	// Test Site Creation
@@ -97,11 +96,12 @@ func (s *CLITestSuite) TestSite() {
 
 	parsedOutputList := mapListOutput(listOutput)
 
-	expectedOutputList := listCommandOutput{
+	expectedOutputList = listCommandOutput{
 		{
-			"Site ID":       resourceID,
-			"Site Name":     name,
-			"Region (Name)": regionID + (" (region)"),
+			"RESOURCE ID": resourceID,
+			"NAME":        name,
+			"REGION ID":   regionID,
+			"REGION NAME": "region",
 		},
 	}
 
@@ -118,11 +118,12 @@ func (s *CLITestSuite) TestSite() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Site ID":       resourceID,
-			"Site Name":     name,
-			"Region (Name)": regionID + (" (region)"),
-			"Longitude":     longitude,
-			"Latitude":      latitiude,
+			"RESOURCE ID": resourceID,
+			"NAME":        name,
+			"REGION ID":   regionID,
+			"REGION NAME": "region",
+			"SITE LAT":    "50000000",
+			"SITE LNG":    "50000000",
 		},
 	}
 
@@ -140,11 +141,12 @@ func (s *CLITestSuite) TestSite() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Site ID":       resourceID,
-			"Site Name":     name,
-			"Region (Name)": regionID + (" (region)"),
-			"Longitude":     longitude,
-			"Latitude":      latitiude,
+			"RESOURCE ID": resourceID,
+			"NAME":        name,
+			"REGION ID":   regionID,
+			"REGION NAME": "region",
+			"SITE LAT":    "50000000",
+			"SITE LNG":    "50000000",
 		},
 	}
 
@@ -161,9 +163,10 @@ func (s *CLITestSuite) TestSite() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Site ID":       resourceID,
-			"Site Name":     name,
-			"Region (Name)": regionID + (" (region)"),
+			"RESOURCE ID": resourceID,
+			"NAME":        name,
+			"REGION ID":   regionID,
+			"REGION NAME": "region",
 		},
 	}
 
@@ -180,9 +183,10 @@ func (s *CLITestSuite) TestSite() {
 	expectedOutput := map[string]string{
 		"Name:":        name,
 		"Resource ID:": resourceID,
-		"Region:":      "region " + regionID,
-		"Longitude:":   longitude,
-		"Latitude:":    latitiude,
+		"Region ID:":   regionID,
+		"Region Name:": "region",
+		"Latitude:":    "50000000",
+		"Longitude:":   "50000000",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
