@@ -15,6 +15,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/fs"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -114,7 +115,12 @@ func decodeUTF8Binary(src []byte) []byte {
 
 // encodeUTF8Binary - reverse of decodeUTF8Binary.
 func encodeUTF8Binary(src []byte) []byte {
-	dst := make([]byte, 0, len(src)+len(src)/4)
+	extra := len(src) / 4
+	capHint := len(src)
+	if len(src) <= math.MaxInt-extra {
+		capHint = len(src) + extra
+	}
+	dst := make([]byte, 0, capHint)
 	for _, b := range src {
 		if b < 0x80 {
 			dst = append(dst, b)
