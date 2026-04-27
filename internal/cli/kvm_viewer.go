@@ -81,9 +81,13 @@ func intToLE32(v uint32) []byte {
 	return b
 }
 
+// hexMD5amt computes an MD5 hex digest.
+// MD5 is mandated by the AMT Digest Authentication protocol (RFC 2617 §3.2.2).
+// It is NOT used for password storage — it is used as a challenge-response hash
+// over a TLS-protected connection, matching the fixed algorithm required by AMT firmware.
+// Replacing it with a stronger hash would break compatibility with all AMT devices.
 func hexMD5amt(s string) string {
-	//nolint:gosec // MD5 required by AMT Digest auth RFC 2617
-	h := md5.Sum([]byte(s))
+	h := md5.Sum([]byte(s)) //nolint:gosec // MD5 mandated by AMT Digest auth RFC 2617; not used for password storage
 	return hex.EncodeToString(h[:])
 }
 
