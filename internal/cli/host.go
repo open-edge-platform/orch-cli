@@ -2256,7 +2256,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	// Handle KVM/SOL session start/stop flow
 	if sessionType != "" || sessionState != "" {
 		orchCA, _ := cmd.Flags().GetString("orch-ca")
-		if err := runHostSessionCommand(cmd, ctx, hostClient, projectName, hostID, &host, sessionType, sessionState, orchCA); err != nil {
+		if err := runHostSessionCommand(ctx, cmd, hostClient, projectName, hostID, &host, sessionType, sessionState, orchCA); err != nil {
 			return err
 		}
 	}
@@ -2268,8 +2268,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 
 // runHostSessionCommand handles the KVM/SOL session start/stop flow.
 func runHostSessionCommand(
-	cmd *cobra.Command,
 	ctx context.Context,
+	cmd *cobra.Command,
 	hostClient infra.ClientWithResponsesInterface,
 	projectName, hostID string,
 	host *infra.HostResource,

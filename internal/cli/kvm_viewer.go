@@ -119,10 +119,11 @@ func decodeUTF8Binary(src []byte) []byte {
 
 // encodeUTF8Binary - reverse of decodeUTF8Binary.
 func encodeUTF8Binary(src []byte) []byte {
-	extra := len(src) / 4
-	capHint := len(src)
-	if len(src) <= math.MaxInt-extra {
-		capHint = len(src) + extra
+	n := len(src)
+	extra := n / 4
+	capHint := n
+	if extra > 0 && n <= math.MaxInt-extra {
+		capHint = n + extra
 	}
 	dst := make([]byte, 0, capHint)
 	for _, b := range src {
@@ -522,7 +523,7 @@ type kvmServer struct {
 	mu       sync.RWMutex
 }
 
-func (srv *kvmServer) serveStatus(w http.ResponseWriter, r *http.Request) {
+func (srv *kvmServer) serveStatus(w http.ResponseWriter, _ *http.Request) {
 	srv.mu.RLock()
 	sess := srv.session
 	srv.mu.RUnlock()
@@ -774,7 +775,7 @@ func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID, orchCA st
 	srv := &kvmServer{
 		session: sess,
 		upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool { return true },
+			CheckOrigin: func(_ *http.Request) bool { return true },
 		},
 	}
 
