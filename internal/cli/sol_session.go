@@ -4,8 +4,8 @@
 package cli
 
 import (
+	"crypto/md5" //nolint:gosec // MD5 is mandated by AMT HTTP Digest Auth (RFC 2617)
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
@@ -89,8 +89,13 @@ func (s *SOLSession) sendSOLData(data string) error {
 	return s.sendBinary(frame)
 }
 
-func hexMD5(str string) string {
-	h := sha256.Sum256([]byte(str))
+// digestHash computes the MD5 hex-digest required by AMT HTTP Digest
+// Authentication (RFC 2617).  MD5 is mandated by the AMT protocol — this is
+// a challenge-response mechanism, NOT password storage.  The password is never
+// persisted; it is combined with a server-supplied nonce to produce a
+// one-time response that proves knowledge of the credential.
+func digestHash(str string) string {
+	h := md5.Sum([]byte(str)) //nolint:gosec // required by AMT digest auth protocol (RFC 2617)
 	return hex.EncodeToString(h[:])
 }
 
@@ -141,10 +146,10 @@ func (s *SOLSession) sendDigestAuthResponse(realm, nonce, qop string) error {
 	uri := ""
 	cnonce := generateRandomNonce(16)
 	snc := "00000002"
-	ha1 := hexMD5(user + ":" + realm + ":" + pass)
-	ha2 := hexMD5("POST:" + uri)
+	ha1 := digestHash(user + ":" + realm + ":" + pass)
+	ha2 := digestHash("POST:" + uri)
 	responseStr := ha1 + ":" + nonce + ":" + snc + ":" + cnonce + ":" + qop + " :" + ha2
-	digest := hexMD5(responseStr)
+	digest := digestHash(responseStr)
 
 	totalLen := len(user) + len(realm) + len(nonce) + len(uri) +
 		len(cnonce) + len(snc) + len(digest) + len(qop) + 8
