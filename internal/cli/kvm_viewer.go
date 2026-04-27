@@ -15,7 +15,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/fs"
-	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -118,18 +117,10 @@ func decodeUTF8Binary(src []byte) []byte {
 }
 
 // encodeUTF8Binary - reverse of decodeUTF8Binary.
+// Each byte >= 0x80 expands to 2 bytes; capacity hint uses src length.
+// append grows the slice automatically if needed — no overflow risk.
 func encodeUTF8Binary(src []byte) []byte {
-	n := len(src)
-	extra := n / 4
-	// Overflow-safe capacity hint: if n+extra would overflow int,
-	// fall back to n (safe — append grows the slice as needed).
-	capHint := n
-	if extra > 0 {
-		if n <= math.MaxInt-extra {
-			capHint = n + extra
-		}
-	}
-	dst := make([]byte, 0, capHint)
+	dst := make([]byte, 0, len(src))
 	for _, b := range src {
 		if b < 0x80 {
 			dst = append(dst, b)
@@ -454,9 +445,13 @@ func (s *kvmSession) sendDigestAuthResponse(authType uint8, realm, nonce, qop st
 	var buf bytes.Buffer
 	buf.Write([]byte{0x13, 0x00, 0x00, 0x00, authType})
 	buf.Write(intToLE32(uint32(totalLen)))
-	for _, s := range []string{user, realm, nonce, uri, cnonce, nc, digest} {
-		buf.WriteByte(byte(len(s)))
-		buf.WriteString(s)
+	for _, field := range []string{user, realm, nonce, uri, cnonce, nc, digest} {
+		if len(field) > 255 {
+			s.logf("[KVM] Warning: digest field exceeds 255 bytes, truncating")
+			field = field[:255]
+		}
+		buf.WriteByte(byte(len(field)))
+		buf.WriteString(field)
 	}
 	if authType == 4 {
 		buf.WriteByte(byte(len(qop)))
