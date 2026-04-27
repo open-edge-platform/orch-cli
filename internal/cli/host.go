@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -23,6 +24,7 @@ import (
 	"github.com/open-edge-platform/cli/internal/types"
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/cluster"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
@@ -240,6 +242,111 @@ orch-cli set host host-1234abcd  --project itep --osupdatepolicy <resourceID>
 	return examples
 }
 
+const (
+	// Default list format for onboarding mode (provisioning disabled)
+	DEFAULT_HOST_FORMAT = "table{{.ResourceId}}\t{{.Name}}\t{{.HostStatus}}\t{{.SerialNumber}}"
+
+	// Default list format for provisioning mode
+	DEFAULT_HOST_PROVISIONING_FORMAT = "table{{.ResourceId}}\t{{.Name}}\t{{.HostStatus}}\t{{.ProvisioningStatus}}\t{{.SerialNumber}}\t{{.OperatingSystem}}\t{{.SiteId}}\t{{.SiteName}}\t{{.Workload}}"
+
+	// Verbose list format for onboarding mode
+	DEFAULT_HOST_VERBOSE_FORMAT = "table{{.ResourceId}}\t{{.Name}}\t{{.HostStatus}}\t{{.SerialNumber}}\t{{.Uuid}}"
+
+	// Verbose list format for provisioning mode
+	DEFAULT_HOST_PROVISIONING_VERBOSE_FORMAT = "table{{.ResourceId}}\t{{.Name}}\t{{.HostStatus}}\t{{.ProvisioningStatus}}\t{{.SerialNumber}}\t{{.OperatingSystem}}\t{{.SiteId}}\t{{.SiteName}}\t{{.Workload}}\t{{.Uuid}}\t{{.CpuModel}}\t{{.OsUpdateAvailable}}\t{{.TrustedCompute}}"
+
+	HOST_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_HOST_OUTPUT_TEMPLATE"
+)
+
+// HostListRow is a flat display struct for table output of the host list.
+// It pre-computes values that require conditional logic (feature-gating, deep nil
+// chains, "Waiting on node agents" special case) so templates use simple field
+// references that produce clean column headers.
+type HostListRow struct {
+	ResourceId         string `json:"resourceId"`
+	Name               string `json:"name"`
+	HostStatus         string `json:"hostStatus"`
+	ProvisioningStatus string `json:"provisioningStatus,omitempty"`
+	SerialNumber       string `json:"serialNumber"`
+	OperatingSystem    string `json:"operatingSystem,omitempty"`
+	SiteId             string `json:"siteId,omitempty"`
+	SiteName           string `json:"siteName,omitempty"`
+	Workload           string `json:"workload,omitempty"`
+	Uuid               string `json:"uuid,omitempty"`
+	CpuModel           string `json:"cpuModel,omitempty"`
+	OsUpdateAvailable  string `json:"osUpdateAvailable,omitempty"`
+	TrustedCompute     string `json:"trustedCompute,omitempty"`
+}
+
+// toHostListRows converts a slice of HostResource into flat HostListRow display rows.
+func toHostListRows(hosts []infra.HostResource) []HostListRow {
+	rows := make([]HostListRow, 0, len(hosts))
+	for _, h := range hosts {
+		row := HostListRow{
+			ResourceId:   safeString(h.ResourceId),
+			Name:         h.Name,
+			HostStatus:   hostStatusDisplay(h),
+			SerialNumber: safeString(h.SerialNumber),
+			SiteId:       safeString(h.SiteId),
+			Uuid:         safeString(h.Uuid),
+			CpuModel:     safeString(h.CpuModel),
+		}
+		if h.Site != nil && h.Site.Name != nil {
+			row.SiteName = *h.Site.Name
+		}
+		if h.Instance != nil {
+			if h.Instance.ProvisioningStatus != nil {
+				row.ProvisioningStatus = *h.Instance.ProvisioningStatus
+			} else {
+				row.ProvisioningStatus = "Not Provisioned"
+			}
+			if h.Instance.Os != nil && h.Instance.Os.Name != nil {
+				row.OperatingSystem = *h.Instance.Os.Name
+			} else {
+				row.OperatingSystem = "Not Provisioned"
+			}
+			if h.Instance.OsUpdateAvailable != nil && *h.Instance.OsUpdateAvailable != "" {
+				row.OsUpdateAvailable = "Available"
+			} else {
+				row.OsUpdateAvailable = "No update"
+			}
+			if h.Instance.TrustedAttestationStatus != nil && *h.Instance.TrustedAttestationStatus != "" {
+				row.TrustedCompute = *h.Instance.TrustedAttestationStatus
+			} else {
+				row.TrustedCompute = "Not compatible"
+			}
+			if h.Instance.WorkloadMembers != nil && len(*h.Instance.WorkloadMembers) > 0 {
+				row.Workload = safeString((*h.Instance.WorkloadMembers)[0].Workload.Name)
+			} else {
+				row.Workload = "Not Assigned"
+			}
+		} else {
+			row.ProvisioningStatus = "Not Provisioned"
+			row.OperatingSystem = "Not Provisioned"
+			row.OsUpdateAvailable = "No update"
+			row.TrustedCompute = "Not compatible"
+			row.Workload = "Not Assigned"
+		}
+		rows = append(rows, row)
+	}
+	return rows
+}
+
+// hostStatusDisplay returns the human-readable host status, handling the
+// "Waiting on node agents" special case for error-state hosts.
+func hostStatusDisplay(h infra.HostResource) string {
+	if h.HostStatus != nil && *h.HostStatus != "" {
+		if strings.EqualFold(*h.HostStatus, "error") &&
+			h.Instance != nil &&
+			h.Instance.InstanceStatusDetail != nil &&
+			strings.Contains(*h.Instance.InstanceStatusDetail, "of 10 components running") {
+			return "Waiting on node agents"
+		}
+		return *h.HostStatus
+	}
+	return "Not Connected"
+}
+
 var hostHeaderGet = "\nDetailed Host Information\n"
 var filename = "test.csv"
 
@@ -327,79 +434,104 @@ func filterRegionsHelper(r string) (*string, error) {
 	return nil, nil
 }
 
-// Prints Host list in tabular format
-func printHosts(writer io.Writer, hosts *[]infra.HostResource, verbose bool) {
-	if isFeatureEnabled(ProvisioningFeature) {
-		if verbose {
-			fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status", "Provisioning Status",
-				"Serial Number", "Operating System", "Site ID", "Site Name", "Workload", "Host ID", "UUID", "Processor", "Available Update", "Trusted Compute")
-		} else {
-			var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Provisioning Status", "Serial Number", "Operating System", "Site ID", "Site Name", "Workload")
-			fmt.Fprintf(writer, "%s\n", shortHeader)
-		}
-	} else {
-		if verbose {
-			fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\n", "Resource ID", "Name", "Host Status", "Serial Number", "Host ID", "UUID")
-		} else {
-			var shortHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s", "Resource ID", "Name", "Host Status", "Serial Number")
-			fmt.Fprintf(writer, "%s\n", shortHeader)
-		}
-	}
-	for _, h := range *hosts {
-		//TODO clean this up
-		os, workload, site, siteName, provStat := "Not provisioned", "Not assigned", "Not provisioned", "Not provisioned", "Not provisioned"
-		host := "Not connected"
-
-		if h.Instance != nil {
-			if h.Instance.Os != nil && h.Instance.Os.Name != nil {
-				os = toJSON(h.Instance.Os.Name)
-			}
-			if h.Instance.WorkloadMembers != nil && len(*h.Instance.WorkloadMembers) > 0 {
-				workload = toJSON((*h.Instance.WorkloadMembers)[0].Workload.Name)
-			}
-		}
-		if h.SiteId != nil {
-			site = toJSON(h.SiteId)
-		}
-
-		if h.Site != nil && h.Site.Name != nil {
-			siteName = toJSON(h.Site.Name)
-		}
-
-		if h.HostStatus != nil && *h.HostStatus != "" {
-			// Only display 'Waiting on node agents' when HostStatus is 'error' (case-insensitive), Instance is not nil, and InstanceStatusDetail contains 'of 10 components running'
-			if strings.EqualFold(*h.HostStatus, "error") && h.Instance != nil && h.Instance.InstanceStatusDetail != nil && strings.Contains(*h.Instance.InstanceStatusDetail, "of 10 components running") {
-				host = "Waiting on node agents"
-			} else {
-				host = *h.HostStatus
-			}
-		}
-
-		if h.Instance != nil && h.Instance.ProvisioningStatus != nil {
-			provStat = *h.Instance.ProvisioningStatus
-		}
+// getHostOutputFormat returns the appropriate template format string for host output.
+// When verbose is true it selects the verbose list format; otherwise it resolves
+// the non-verbose template from flags / envvar / default.
+func getHostOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
 		if isFeatureEnabled(ProvisioningFeature) {
-			if !verbose {
-				fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\n", safeString(h.ResourceId), h.Name, host, provStat, safeString(h.SerialNumber), os, site, siteName, workload)
-			} else {
-				avupdt := "No update"
-				tcomp := "Not compatible"
-
-				if h.Instance != nil && h.Instance.OsUpdateAvailable != nil && *h.Instance.OsUpdateAvailable != "" {
-					avupdt = "Available"
-				}
-
-				fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\t%v\n", safeString(h.ResourceId), h.Name, host, provStat, safeString(h.SerialNumber),
-					os, site, siteName, workload, h.Name, safeString(h.Uuid), safeString(h.CpuModel), avupdt, tcomp)
-			}
-		} else {
-			if !verbose {
-				fmt.Fprintf(writer, "%s\t%s\t%s\t%v\n", safeString(h.ResourceId), h.Name, host, safeString(h.SerialNumber))
-			} else {
-				fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%v\t%v\n", safeString(h.ResourceId), h.Name, host, safeString(h.SerialNumber), h.Name, safeString(h.Uuid))
-			}
+			return DEFAULT_HOST_PROVISIONING_VERBOSE_FORMAT, nil
 		}
+		return DEFAULT_HOST_VERBOSE_FORMAT, nil
 	}
+	defaultFmt := DEFAULT_HOST_FORMAT
+	if isFeatureEnabled(ProvisioningFeature) {
+		defaultFmt = DEFAULT_HOST_PROVISIONING_FORMAT
+	}
+	return resolveTableOutputTemplate(cmd, defaultFmt, HOST_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+// printHosts renders a host list using the standard template-based output pipeline.
+// For table output, hosts are converted to flat HostListRow values so the header
+// extractor produces clean column names without {{if}} blocks.
+// For JSON/YAML, the full raw HostResource slice is serialized.
+func printHosts(cmd *cobra.Command, writer io.Writer, hosts *[]infra.HostResource, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	if outputType == "json" || outputType == "yaml" {
+		result := CommandResult{
+			Filter:   filterSpec,
+			OrderBy:  sortSpec,
+			OutputAs: toOutputType(outputType),
+			Data:     *hosts,
+		}
+		GenerateOutput(writer, &result)
+		return nil
+	}
+
+	outputFormat, err := getHostOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	rows := toHostListRows(*hosts)
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      rows,
+	}
+	GenerateOutput(writer, &result)
+	return nil
+}
+
+// getValidatedHostOrderBy validates and normalises the --order-by flag for hosts.
+// For table output it uses client-side sorting against HostResource fields.
+// For JSON/YAML output it probes the API to verify the field is supported server-side.
+func getValidatedHostOrderBy(ctx context.Context, cmd *cobra.Command, hostClient infra.ClientWithResponsesInterface, projectName string) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	if outputType == "table" {
+		// Client-side sorting uses the flat display row so field names match the template.
+		return normalizeOrderByForClientSorting(raw, HostListRow{})
+	}
+
+	return normalizeOrderByWithAPIProbe(raw, "hosts", infra.HostResource{}, func(orderBy string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{
+				OrderBy:  &orderBy,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating host order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 func printHost(writer io.Writer, host *infra.HostResource) {
@@ -1421,11 +1553,19 @@ func getListHostCommand() *cobra.Command {
 		RunE:    runListHostCommand,
 	}
 
-	// Local persistent flags
+	// Host-specific filtering flags (kept separate from standard flags due to predefined filter aliases)
 	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec. \n\tPredefined filters: --filter provisioned/onboarded/registered/nor connected/deauthorized")
 	cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Optional filter provided as part of host list to filter hosts by site")
 	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of host list to filter hosts by region")
 	cmd.PersistentFlags().StringP("workload", "w", viper.GetString("workload"), "Optional filter provided as part of host list to filter hosts by workload")
+
+	// Standard ordering and pagination flags
+	cmd.Flags().String("order-by", "", "host list order by field (e.g. name, serialNumber, hostStatus, -name)")
+	cmd.Flags().Int32("page-size", 0, "host list maximum number of items per page")
+	cmd.Flags().Int32("offset", 0, "host list starting offset")
+
+	// Standard output format flags (--output-type, --output-filter, --output-template, --output-template-file)
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -1438,6 +1578,7 @@ func getGetHostCommand() *cobra.Command {
 		Aliases: hostAliases,
 		RunE:    runGetHostCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -1605,9 +1746,21 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	//If all host for a given region are queried, sites need to be found first
-	if siteFlag == "" && regFlag != "" {
+	// Validate and normalise --order-by; for table output this is client-side.
+	validatedOrderBy, err := getValidatedHostOrderBy(ctx, cmd, hostClient, projectName)
+	if err != nil {
+		return err
+	}
 
+	// For table output sorting is done client-side; don't send orderBy to the API.
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		apiOrderBy = nil
+	}
+
+	// Build site/region filter additions.
+	if siteFlag == "" && regFlag != "" {
 		regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
 
 		cresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, *region,
@@ -1618,7 +1771,6 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 			return processError(err)
 		}
 
-		//create site filter
 		siteFilter := ""
 		if cresp.JSON200.TotalElements != 0 {
 			for i, s := range cresp.JSON200.Sites {
@@ -1632,7 +1784,6 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 			return errors.New("no site was found in provided region")
 		}
 
-		//if additional filter exists add sites to that filter if not replace empty filter with sites
 		if filtflag != "" {
 			*filter = fmt.Sprintf("%s AND (%s)", *filter, siteFilter)
 		} else {
@@ -1649,37 +1800,69 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	pageSize := 20
+	// Resolve pagination flags.
+	pageSize32, offset32, err := getPageSizeOffset(cmd)
+	if err != nil {
+		return err
+	}
+	pageSize := int(pageSize32)
+	offset := int(offset32)
+	if pageSize <= 0 {
+		pageSize = 20 // API default page size
+	}
+
 	hosts := make([]infra.HostResource, 0)
-	for offset := 0; ; offset += pageSize {
+
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		// Single-page fetch when explicit pagination is requested.
 		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
 			&infra.HostServiceListHostsParams{
 				Filter:   filter,
+				OrderBy:  apiOrderBy,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
 		}
-
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
 			return err
 		}
 		hosts = append(hosts, resp.JSON200.Hosts...)
-		if !resp.JSON200.HasNext {
-			break // No more hosts to process
+	} else {
+		// Auto-paginate to collect all hosts.
+		for {
+			resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+				&infra.HostServiceListHostsParams{
+					Filter:   filter,
+					OrderBy:  apiOrderBy,
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+				return err
+			}
+			hosts = append(hosts, resp.JSON200.Hosts...)
+			if !resp.JSON200.HasNext {
+				break
+			}
+			offset += len(resp.JSON200.Hosts)
 		}
 	}
 
 	if isFeatureEnabled(ProvisioningFeature) {
-
-		// Get instances in order to map additional host details
+		// Fetch instances to map workload membership onto host records.
+		instancePageSize := 20
+		instanceOffset := 0
 		instances := make([]infra.InstanceResource, 0)
-		for offset := 0; ; offset += pageSize {
+		for {
 			iresp, err := hostClient.InstanceServiceListInstancesWithResponse(ctx, projectName,
 				&infra.InstanceServiceListInstancesParams{
-					PageSize: &pageSize,
-					Offset:   &offset,
+					PageSize: &instancePageSize,
+					Offset:   &instanceOffset,
 				}, auth.AddAuthHeader)
 			if err != nil {
 				return processError(err)
@@ -1689,13 +1872,15 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 			}
 			instances = append(instances, iresp.JSON200.Instances...)
 			if !iresp.JSON200.HasNext {
-				break // No more instances to process
+				break
 			}
+			instanceOffset += len(iresp.JSON200.Instances)
 		}
+
 		matchedHosts := make([]infra.HostResource, 0)
 		notMatchedHosts := make([]infra.HostResource, 0)
 
-		//Map workloads to hosts
+		// Map workload membership onto each host via instance lookup.
 		for _, host := range hosts {
 			for _, instance := range instances {
 				if instance.WorkloadMembers != nil && instance.InstanceID != nil && host.Instance != nil && host.Instance.InstanceID != nil && *instance.InstanceID == *host.Instance.InstanceID {
@@ -1718,19 +1903,14 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		if workload != "" {
 			hosts = matchedHosts
 		}
-
 		if workload == "NotAssigned" {
 			hosts = notMatchedHosts
 		}
 	}
 
-	printHosts(writer, &hosts, verbose)
-	if verbose {
-		if filter != nil {
-			fmt.Fprintf(writer, "\nTotal Hosts (filter: %v): %d\n", *filter, len(hosts))
-		} else {
-			fmt.Fprintf(writer, "\nTotal Hosts: %d\n", len(hosts))
-		}
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printHosts(cmd, writer, &hosts, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
 	}
 	return writer.Flush()
 }
@@ -1750,6 +1930,8 @@ func runGetHostCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
 
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
 		hostHeaderGet, "error getting Host"); !proceed {
@@ -1774,6 +1956,18 @@ func runGetHostCommand(cmd *cobra.Command, args []string) error {
 		resp.JSON200.Instance = iresp.JSON200
 	}
 
+	// For JSON/YAML output, use the structured template pipeline on the raw API struct.
+	if outputType == "json" || outputType == "yaml" {
+		hosts := []infra.HostResource{*resp.JSON200}
+		emptyFilter := ""
+		if err := printHosts(cmd, writer, &hosts, nil, &emptyFilter, false); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	// For table output, use the existing detailed formatter which renders sub-sections
+	// (CPU, memory, storage, GPU, USB, NICs, CVEs, AMT) with full feature-gating.
 	printHost(writer, resp.JSON200)
 	return writer.Flush()
 }
