@@ -125,7 +125,7 @@ func encodeUTF8Binary(src []byte) []byte {
 	// fall back to n (safe — append grows the slice as needed).
 	capHint := n
 	if extra > 0 {
-		if n <= math.MaxInt-extra {
+		if extra <= math.MaxInt-n {
 			capHint = n + extra
 		}
 	}
