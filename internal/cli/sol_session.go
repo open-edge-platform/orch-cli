@@ -6,6 +6,8 @@ package cli
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -96,6 +98,24 @@ func generateRandomNonce(byteLen int) string {
 	b := make([]byte, byteLen)
 	_, _ = rand.Read(b)
 	return hex.EncodeToString(b)
+}
+
+// createMPSRelayTLSConfig builds a tls.Config for the MPS WebSocket dial.
+// It requires the path to the cluster CA certificate (--orch-ca flag).
+func createMPSRelayTLSConfig(orchCA string) (*tls.Config, error) {
+	if orchCA == "" {
+		return nil, fmt.Errorf("--orch-ca is required: provide the path to the cluster CA certificate (e.g. orch-ca.crt)")
+	}
+	caPEM, err := os.ReadFile(orchCA) //nolint:gosec // path supplied by operator
+	if err != nil {
+		return nil, fmt.Errorf("cannot read CA certificate %q: %w", orchCA, err)
+	}
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM(caPEM) {
+		return nil, fmt.Errorf("no valid certificates found in %q — ensure it is a valid .crt file", orchCA)
+	}
+	fmt.Fprintf(os.Stderr, "[SOL] TLS: using CA certificate from %q\n", orchCA)
+	return &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: pool}, nil
 }
 
 // sendDigestAuthInitial sends the initial digest auth request (method 4).
@@ -357,9 +377,7 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 		parsed.Host, hostGUID)
 
 	// Setup WebSocket dialer with timeout
-	tlsConfig, err := mpsRelayTLSConfig(orchCA, func(format string, args ...interface{}) {
-		fmt.Printf(format+"\n", args...)
-	})
+	tlsConfig, err := createMPSRelayTLSConfig(orchCA)
 	if err != nil {
 		return err
 	}
