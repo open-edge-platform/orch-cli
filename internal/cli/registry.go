@@ -78,6 +78,11 @@ func getListRegistriesCommand() *cobra.Command {
 		Example: "orch-cli list registries --project some-project",
 		RunE:    runListRegistriesCommand,
 	}
+	// Help hint for client-side --output-filter
+	if cmd.Annotations == nil {
+		cmd.Annotations = map[string]string{}
+	}
+	// annotations removed: dynamic header-derived hints will be used instead
 	addListOrderingFilteringPaginationFlags(cmd, "registry")
 	addStandardListOutputFlags(cmd)
 	cmd.Flags().Bool("show-sensitive-info", false, "show sensitive info, e.g. auth-token, CA certs")

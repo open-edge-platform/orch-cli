@@ -64,6 +64,8 @@ func getGetArtifactCommand() *cobra.Command {
 		Aliases: artifactAliases,
 		RunE:    runGetArtifactCommand,
 	}
+
+	// annotations removed: dynamic header-derived hints will be used instead
 	addStandardGetOutputFlags(cmd)
 	return cmd
 }

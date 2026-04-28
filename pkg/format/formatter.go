@@ -215,6 +215,43 @@ func (f Format) Execute(writer io.Writer, withHeaders bool, nameLimit int, data 
 
 }
 
+// HeaderFields returns the list of header field names extracted from the
+// provided format. It splits the header string on tab characters and trims
+// whitespace. Returns an error if the template fails to parse.
+func (f Format) HeaderFields(nameLimit int) ([]string, error) {
+	funcmap := template.FuncMap{
+		"timestamp":       formatTimestamp,
+		"since":           formatSince,
+		"gosince":         formatGoSince,
+		"deref":           formatDeref,
+		"str":             formatString,
+		"none":            formatStringOrNone,
+		"fmttime":         formatTimeSimple,
+		"formatTime":      formatTime,
+		"statusIndicator": formatStatusIndicator,
+		"statusMessage":   formatStatusMessage,
+		"nodeCount":       formatNodeCount,
+	}
+
+	// Parse the template to access its parse tree
+	tmpl, err := template.New("output").Funcs(funcmap).Parse(string(f))
+	if err != nil {
+		return nil, err
+	}
+
+	header := GetHeaderString(tmpl, nameLimit)
+	// Split by tab to get individual header labels
+	parts := strings.Split(header, "\t")
+	var fields []string
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			fields = append(fields, p)
+		}
+	}
+	return fields, nil
+}
+
 /*
  * ExecuteFixedWidth
  *

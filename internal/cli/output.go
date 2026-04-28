@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/filter"
 	"github.com/open-edge-platform/cli/pkg/format"
@@ -63,6 +64,15 @@ func GenerateOutput(writer io.Writer, result *CommandResult) {
 			f = f.Normalize(result.Data)
 			data, err = f.Process(data)
 			if err != nil {
+				// If the error appears to be about a missing field, try to provide
+				// a helpful hint derived from the table format header fields.
+				errStr := err.Error()
+				if strings.Contains(errStr, "Failed to find field") || strings.Contains(errStr, "did not resolve to a valid field") {
+					// Attempt to extract header fields from the format
+					if headerFields, hErr := format.Format(result.Format).HeaderFields(result.NameLimit); hErr == nil && len(headerFields) > 0 {
+						Fatalf("Invalid output-filter: %s. Available fields: %s", errStr, strings.Join(headerFields, ", "))
+					}
+				}
 				Fatalf("Unexpected error while filtering command results: %s", err.Error())
 			}
 		}

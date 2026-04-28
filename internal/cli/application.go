@@ -78,6 +78,8 @@ func getGetApplicationCommand() *cobra.Command {
 		Example: "orch-cli get application my-app --project some-project",
 		RunE:    runGetApplicationCommand,
 	}
+
+	// annotations removed: dynamic header-derived hints will be used instead
 	addStandardGetOutputFlags(cmd)
 	return cmd
 }

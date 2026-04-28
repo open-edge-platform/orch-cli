@@ -51,6 +51,7 @@ func getListDeploymentProfilesCommand() *cobra.Command {
 		Example: "orch-cli list deployment-package-profiles my-deployment-package 1.0.0 --project my-project",
 		RunE:    runListDeploymentProfilesCommand,
 	}
+	// annotations removed: dynamic header-derived hints will be used instead
 	addStandardListOutputFlags(cmd)
 	return cmd
 }
