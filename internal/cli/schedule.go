@@ -633,6 +633,7 @@ func getGetScheduleCommand() *cobra.Command {
 		RunE:    runGetScheduleCommand,
 	}
 	cmd.PersistentFlags().StringP("timezone", "t", viper.GetString("timezone"), "Display time in particular timezone: --timezone Europe/Berlin")
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

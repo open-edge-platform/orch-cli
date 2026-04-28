@@ -73,6 +73,7 @@ func getGetAmtProfileCommand() *cobra.Command {
 		Aliases: amtAliases,
 		RunE:    runGetAmtProfileCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

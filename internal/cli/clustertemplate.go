@@ -42,7 +42,7 @@ func getListClusterTemplatesCommand() *cobra.Command {
 		Use:     "clustertemplates [flags]",
 		Aliases: clusterTemplateAliases,
 		Short:   "List all cluster templates",
-		Example: "orch-cli list clustertemplates --project some-project --order-by name --filter name=baseline",
+		Example: "orch-cli list clustertemplates --project some-project",
 		RunE:    runListClusterTemplatesCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "cluster template")

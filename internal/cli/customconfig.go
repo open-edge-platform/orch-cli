@@ -143,6 +143,7 @@ func getGetCustomConfigCommand() *cobra.Command {
 		Aliases: customConfigAliases,
 		RunE:    runGetCustomConfigCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

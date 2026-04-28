@@ -183,6 +183,7 @@ func getGetSSHKeyCommand() *cobra.Command {
 		Aliases: sshKeyAliases,
 		RunE:    runGetSSHKeyCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

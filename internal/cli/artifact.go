@@ -46,7 +46,7 @@ func getListArtifactsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "artifacts [flags]",
 		Short:   "List all artifacts",
-		Example: "orch-cli list artifacts --project some-project --order-by name",
+		Example: "orch-cli list artifacts --project some-project",
 		Aliases: artifactAliases,
 		RunE:    runListArtifactsCommand,
 	}

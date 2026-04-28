@@ -214,6 +214,7 @@ func getGetOSUpdatePolicyCommand() *cobra.Command {
 		Aliases: osUpdatePolicyAliases,
 		RunE:    runGetOSUpdatePolicyCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

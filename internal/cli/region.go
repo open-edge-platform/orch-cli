@@ -84,6 +84,7 @@ func getGetRegionCommand() *cobra.Command {
 		Aliases: regionAliases,
 		RunE:    runGetRegionCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

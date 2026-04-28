@@ -104,6 +104,7 @@ func getGetProviderCommand() *cobra.Command {
 		Aliases: providerAliases,
 		RunE:    runGetProviderCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

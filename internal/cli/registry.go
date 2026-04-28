@@ -75,7 +75,7 @@ func getListRegistriesCommand() *cobra.Command {
 		Use:     "registries [flags]",
 		Aliases: registryAliases,
 		Short:   "List all registries",
-		Example: "orch-cli list registries --project some-project --order-by name --output-type json",
+		Example: "orch-cli list registries --project some-project",
 		RunE:    runListRegistriesCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "registry")
@@ -94,6 +94,7 @@ func getGetRegistryCommand() *cobra.Command {
 		RunE:    runGetRegistryCommand,
 	}
 	cmd.Flags().Bool("show-sensitive-info", false, "show sensitive info, e.g. auth-token, CA certs")
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

@@ -63,6 +63,7 @@ func getGetSiteCommand() *cobra.Command {
 		Aliases: siteAliases,
 		RunE:    runGetSiteCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

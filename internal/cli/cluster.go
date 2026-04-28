@@ -92,6 +92,7 @@ func getGetClusterCommand() *cobra.Command {
 		Aliases: clusterAliases,
 		RunE:    runGetClusterCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -99,7 +100,7 @@ func getListClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cluster",
 		Short:   "List clusters",
-		Example: "orch-cli list cluster --project some-project --order-by name --output-type json",
+		Example: "orch-cli list cluster --project some-project",
 		Aliases: clusterAliases,
 		RunE:    runListClusterCommand,
 	}

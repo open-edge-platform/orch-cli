@@ -98,6 +98,7 @@ func getGetOSUpdateRunCommand() *cobra.Command {
 		Aliases: osUpdateRunAliases,
 		RunE:    runGetOSUpdateRunCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 

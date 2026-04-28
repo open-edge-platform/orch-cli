@@ -288,22 +288,32 @@ func addListOrderingFilteringPaginationFlags(cmd *cobra.Command, entity string) 
 
 // Adds standard table output template override flags for commands with table rendering.
 func addTableOutputTemplateFlags(cmd *cobra.Command) {
-	cmd.Flags().String("output-template", "", "Optional custom output template (Go text/template) for table output")
-	cmd.Flags().String("output-template-file", "", "Optional path to a file containing a custom template for table output")
+	if cmd.Flags().Lookup("output-template") == nil {
+		cmd.Flags().String("output-template", "", "Optional custom output template (Go text/template) for table output")
+	}
+	if cmd.Flags().Lookup("output-template-file") == nil {
+		cmd.Flags().String("output-template-file", "", "Optional path to a file containing a custom template for table output")
+	}
 }
 
 // Adds standard output flags for list commands supporting table/json/yaml output,
 // optional client-side table filtering, and table template overrides.
 func addStandardListOutputFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
-	cmd.Flags().String("output-filter", "", "Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML")
+	if cmd.Flags().Lookup("output-type") == nil {
+		cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	}
+	if cmd.Flags().Lookup("output-filter") == nil {
+		cmd.Flags().String("output-filter", "", "Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML")
+	}
 	addTableOutputTemplateFlags(cmd)
 }
 
 // Adds standard output flags for get commands supporting table/json/yaml output
 // and table template overrides.
 func addStandardGetOutputFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	if cmd.Flags().Lookup("output-type") == nil {
+		cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	}
 	addTableOutputTemplateFlags(cmd)
 }
 
