@@ -32,7 +32,7 @@ const (
 	// Verbose table: includes description and policy
 	DEFAULT_OSUPDATERUN_VERBOSE_FORMAT = "table{{str .Name}}\t{{str .ResourceId}}\t{{str .Status}}\t{{str .AppliedPolicy.Name}}\t{{str .Description}}\t{{formatTime .StartTime}}\t{{formatTime .EndTime}}"
 	// Detailed single-get format (multiline key: value)
-	DEFAULT_OSUPDATERUN_GET_FORMAT     = "Name: {{str .Name}}\nResource ID: {{str .ResourceId}}\nStatus: {{str .Status}}\nStatus Detail: {{str .StatusDetails}}\nApplied Policy: {{str .AppliedPolicy.Name}}\nDescription: {{str .Description}}\nStart Time: {{formatTime .StartTime}}\nEnd Time: {{formatTime .EndTime}}\n"
+	DEFAULT_OSUPDATERUN_GET_FORMAT     = "Name:\t{{str .Name}}\nResource ID:\t{{str .ResourceId}}\nStatus:\t{{str .Status}}\nStatus Detail:\t{{str .StatusDetails}}\nApplied Policy:\t{{str .AppliedPolicy.Name}}\nDescription:\t{{str .Description}}\nStart Time:\t{{formatTime .StartTime}}\nEnd Time:\t{{formatTime .EndTime}}\n"
 	OSUPDATERUN_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_OSUPDATERUN_OUTPUT_TEMPLATE"
 )
 

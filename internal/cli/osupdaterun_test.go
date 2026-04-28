@@ -69,14 +69,14 @@ func (s *CLITestSuite) TestOSUpdateRun() {
 	// line without the expected tab delimiter; the test parser records
 	// those as keys with empty values. Match that observed shape here.
 	expectedOutput := map[string]string{
-		"Name: security-update-jan-2025":                         "",
-		"Resource ID: osupdaterun-abc12345":                      "",
-		"Status: completed":                                      "",
-		"Status Detail: All updates applied successfully":        "",
-		"Applied Policy: security-policy-v1.2":                   "",
-		"Description: Monthly security updates for edge devices": "",
-		"Start Time: 2025-01-15T10:30:00Z":                       "",
-		"End Time: 2025-01-15T10:30:00Z":                         "",
+		"Name:":           "security-update-jan-2025",
+		"Resource ID:":    "osupdaterun-abc12345",
+		"Status:":         "completed",
+		"Status Detail:":  "All updates applied successfully",
+		"Applied Policy:": "security-policy-v1.2",
+		"Description:":    "Monthly security updates for edge devices",
+		"Start Time:":     "2025-01-15T10:30:00Z",
+		"End Time:":       "2025-01-15T10:30:00Z",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedGetOutput)

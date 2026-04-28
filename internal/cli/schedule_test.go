@@ -214,21 +214,21 @@ func (s *CLITestSuite) TestSchedule() {
 	// parser records those as label:value keys with empty values. Match that
 	// observed shape so assertions align with output.
 	expectedOutput := map[string]string{
-		"Name: schedule":                               "",
-		"Resource ID: repeatedsche-abcd1234":           "",
-		"Schedule Status: SCHEDULE_STATUS_MAINTENANCE": "",
-		"Cron Month: 1":                                "",
-		"Cron DayMonth: 1":                             "",
-		"Cron DayWeek: 1":                              "",
-		"Hour (UTC): 1":                                "",
-		"Minute (UTC): 1":                              "",
+		"Name:":            "schedule",
+		"Resource ID:":     "repeatedsche-abcd1234",
+		"Schedule Status:": "SCHEDULE_STATUS_MAINTENANCE",
+		"Cron Month:":      "1",
+		"Cron DayMonth:":   "1",
+		"Cron DayWeek:":    "1",
+		"Hour (UTC):":      "1",
+		"Minute (UTC):":    "1",
 
-		"Duration: 1":                   "",
-		"Target Site ID: site-abcd1234": "",
-		"Target Host ID:":               "",
-		"Target Region ID:":             "",
-		"Start Time:":                   "",
-		"End Time:":                     "",
+		"Duration:":         "1",
+		"Target Site ID:":   "site-abcd1234",
+		"Target Host ID:":   "",
+		"Target Region ID:": "",
+		"Start Time:":       "",
+		"End Time:":         "",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
@@ -241,14 +241,14 @@ func (s *CLITestSuite) TestSchedule() {
 
 	parsedOutput = mapGetOutput(getOutput)
 	expectedOutput = map[string]string{
-		"Name: schedule":                               "",
-		"Resource ID: singlesche-abcd1234":             "",
-		"Target Host ID:":                              "",
-		"Target Region ID:":                            "",
-		"Target Site ID: site-abcd1234":                "",
-		"Schedule Status: SCHEDULE_STATUS_MAINTENANCE": "",
-		"Start Time: 1970-01-01T02:46:40Z":             "",
-		"End Time:":                                    "",
+		"Name:":             "schedule",
+		"Resource ID:":      "singlesche-abcd1234",
+		"Target Host ID:":   "",
+		"Target Region ID:": "",
+		"Target Site ID:":   "site-abcd1234",
+		"Schedule Status:":  "SCHEDULE_STATUS_MAINTENANCE",
+		"Start Time:":       "1970-01-01T02:46:40Z",
+		"End Time:":         "",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)

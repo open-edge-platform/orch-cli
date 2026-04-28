@@ -55,8 +55,8 @@ orch-cli set schedules singlesche-abcd1234 --timezone GMT --maintenance-type osu
 const (
 	DEFAULT_SCHEDULE_FORMAT              = "table{{.Name}}\t{{.Target}}\t{{str .ResourceId}}"
 	DEFAULT_SCHEDULE_VERBOSE_FORMAT      = "table{{.Name}}\t{{.Target}}\t{{str .ResourceId}}\t{{.Status}}\t{{.Type}}"
-	DEFAULT_SCHEDULE_GET_FORMAT          = "Name: {{.Name}}\nResource ID: {{str .ResourceId}}\nTarget Host ID: {{str .TargetHost}}\nTarget Region ID: {{str .TargetRegion}}\nTarget Site ID: {{str .TargetSite}}\nSchedule Status: {{.ScheduleStatus}}\nStart Time: {{formatTime .StartSeconds}}\nEnd Time: {{formatTime .EndSeconds}}\nCron Month: {{.CronMonth}}\nCron DayMonth: {{.CronDayMonth}}\nCron DayWeek: {{.CronDayWeek}}\nHour (UTC): {{.CronHours}}\nMinute (UTC): {{.CronMinutes}}\nDuration: {{.DurationSeconds}}\n"
-	DEFAULT_SCHEDULE_GET_SINGLE_FORMAT   = "Name: {{.Name}}\nResource ID: {{str .ResourceId}}\nTarget Host ID: {{str .TargetHost}}\nTarget Region ID: {{str .TargetRegion}}\nTarget Site ID: {{str .TargetSite}}\nSchedule Status: {{.ScheduleStatus}}\nStart Time: {{formatTime .StartSeconds}}\nEnd Time: {{formatTime .EndSeconds}}\n"
+	DEFAULT_SCHEDULE_GET_FORMAT          = "Name:\t{{.Name}}\nResource ID:\t{{str .ResourceId}}\nTarget Host ID:\t{{str .TargetHost}}\nTarget Region ID:\t{{str .TargetRegion}}\nTarget Site ID:\t{{str .TargetSite}}\nSchedule Status:\t{{.ScheduleStatus}}\nStart Time:\t{{formatTime .StartSeconds}}\nEnd Time:\t{{formatTime .EndSeconds}}\nCron Month:\t{{.CronMonth}}\nCron DayMonth:\t{{.CronDayMonth}}\nCron DayWeek:\t{{.CronDayWeek}}\nHour (UTC):\t{{.CronHours}}\nMinute (UTC):\t{{.CronMinutes}}\nDuration:\t{{.DurationSeconds}}\n"
+	DEFAULT_SCHEDULE_GET_SINGLE_FORMAT   = "Name:\t{{.Name}}\nResource ID:\t{{str .ResourceId}}\nTarget Host ID:\t{{str .TargetHost}}\nTarget Region ID:\t{{str .TargetRegion}}\nTarget Site ID:\t{{str .TargetSite}}\nSchedule Status:\t{{.ScheduleStatus}}\nStart Time:\t{{formatTime .StartSeconds}}\nEnd Time:\t{{formatTime .EndSeconds}}\n"
 	DEFAULT_SCHEDULE_GET_REPEATED_FORMAT = DEFAULT_SCHEDULE_GET_FORMAT
 )
 const SCHEDULE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_SCHEDULE_OUTPUT_TEMPLATE"

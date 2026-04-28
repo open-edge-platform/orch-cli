@@ -70,15 +70,20 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 
 	parsedOutputList := mapListOutput(listOutput)
 
+	fmt.Printf("\nDEBUG\n")
+	fmt.Printf("%s\n", parsedOutputList)
+	fmt.Printf("\nDEBUG\n")
+
 	// Current CLI list output uses uppercase headers and places timestamps
 	// in the first column (header may be empty). Match the observed shape.
 	expectedOutputList := listCommandOutput{
 		{
-			"":             "2025-01-15T10:30:00",
-			"NAME":         "security-policy-v1.2",
-			"RESOURCE ID":  "osupdatepolicy-abc12345",
-			"TARGET OS ID": "os-1234abcd",
-			"DESCRIPTION":  "Monthly security update policy",
+			"NAME":                  "security-policy-v1.2",
+			"RESOURCE ID":           "osupdatepolicy-abc12345",
+			"TARGET OS ID":          "os-1234abcd",
+			"DESCRIPTION":           "Monthly security update policy",
+			"TIMESTAMPS CREATED AT": "2025-01-15 10:30:00 +0000 UTC",
+			"TIMESTAMPS UPDATED AT": "2025-01-15 10:30:00 +0000 UTC",
 		},
 	}
 
@@ -99,17 +104,17 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 	// a single line; the test parser records those as keys with empty
 	// values. Match that observed shape here.
 	expectedOutput := map[string]string{
-		"Name: security-policy-v1.2":                           "",
-		"Resource ID: osupdatepolicy-abc12345":                 "",
-		"Target OS ID: os-1234abcd":                            "",
-		"Target OS Name: Edge Microvisor Toolkit 3.0.20250504": "",
-		"Kernel Command: console=ttyS0":                        "",
-		"Description: Monthly security update policy":          "",
-		"Update Packages: curl wget vim":                       "",
-		"Update Policy: UPDATE_POLICY_LATEST":                  "",
-		"Update Sources: [https://updates.example.com]":        "",
-		"Created at: 2025-01-15T10:30:00":                      "",
-		"Updated at: 2025-01-15T10:30:00":                      "",
+		"Name:":            "security-policy-v1.2",
+		"Resource ID:":     "osupdatepolicy-abc12345",
+		"Target OS ID:":    "os-1234abcd",
+		"Target OS Name:":  "Edge Microvisor Toolkit 3.0.20250504",
+		"Kernel Command:":  "console=ttyS0",
+		"Description:":     "Monthly security update policy",
+		"Update Packages:": "curl wget vim",
+		"Update Policy:":   "UPDATE_POLICY_LATEST",
+		"Update Sources:":  "[https://updates.example.com]",
+		"Created at:":      "2025-01-15T10:30:00",
+		"Updated at:":      "2025-01-15T10:30:00",
 	}
 	s.compareGetOutput(expectedOutput, parsedGetOutput)
 
