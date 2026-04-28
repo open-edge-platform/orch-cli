@@ -81,8 +81,10 @@ type UpdateNestedSpec struct {
 
 // Template-based output constants for standardization
 const (
-	DEFAULT_OSUPDATEPOLICY_FORMAT         = "table{{.Name}}\t{{str .ResourceId}}\t{{str .Description}}"
-	DEFAULT_OSUPDATEPOLICY_VERBOSE_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{str .TargetOsId}}\t{{str .Description}}\t{{fmttime (deref .Timestamps.CreatedAt)}}\t{{fmttime (deref .Timestamps.UpdatedAt)}}"
+	DEFAULT_OSUPDATEPOLICY_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{str .Description}}"
+	// Use raw timestamp fields in the verbose table so header extraction
+	// can detect the field names (fmttime/deref hides them from the extractor).
+	DEFAULT_OSUPDATEPOLICY_VERBOSE_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{str .TargetOsId}}\t{{str .Description}}\t{{.Timestamps.CreatedAt}}\t{{.Timestamps.UpdatedAt}}"
 	DEFAULT_OSUPDATEPOLICY_GET_FORMAT     = "Name: {{.Name}}\nResource ID: {{str .ResourceId}}\nTarget OS ID: {{str .TargetOsId}}\nTarget OS Name: {{if .TargetOs}}{{.TargetOs.Name}}{{end}}\nKernel Command: {{str .UpdateKernelCommand}}\nDescription: {{str .Description}}\nUpdate Packages: {{str .UpdatePackages}}\nUpdate Policy: {{deref .UpdatePolicy}}\nUpdate Sources: {{deref .UpdateSources}}\nCreated at: {{fmttime (deref .Timestamps.CreatedAt)}}\nUpdated at: {{fmttime (deref .Timestamps.UpdatedAt)}}\n"
 	OSUPDATEPOLICY_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_OSUPDATEPOLICY_OUTPUT_TEMPLATE"
 )
