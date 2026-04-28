@@ -11,9 +11,9 @@ import (
 	"net/http"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/orch-library/go/pkg/errors"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 // ChartInfo represents a chart entry in the API response
@@ -39,7 +39,8 @@ orch-cli list charts my-registry --project my-project --output-type json`,
 		Aliases: chartAliases,
 		RunE:    runListChartsCommand,
 	}
-	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	addListOrderingFilteringPaginationFlags(cmd, "charts")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -73,86 +74,133 @@ func runListChartsCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// Parse the JSON response
-	var chartData interface{}
-	if err := json.Unmarshal(data, &chartData); err != nil {
+	var raw interface{}
+	if err := json.Unmarshal(data, &raw); err != nil {
 		return fmt.Errorf("failed to parse chart data: %w", err)
 	}
-
-	// Handle null response
-	if chartData == nil {
-		chartData = []interface{}{}
+	if raw == nil {
+		raw = []interface{}{}
 	}
 
-	// Get output type
-	outputType, err := cmd.Flags().GetString("output-type")
-	if err != nil {
-		outputType = "table"
-	}
-
-	// Output based on type
-	switch outputType {
-	case "json":
-		jsonData, err := json.MarshalIndent(chartData, "", "  ")
-		if err != nil {
-			return fmt.Errorf("failed to marshal JSON: %w", err)
-		}
-		fmt.Fprintf(writer, "%s\n", jsonData)
-	case "yaml":
-		yamlData, err := yaml.Marshal(chartData)
-		if err != nil {
-			return fmt.Errorf("failed to marshal YAML: %w", err)
-		}
-		fmt.Fprintf(writer, "%s", yamlData)
-	case "table":
-		// For table output, format the data nicely
-		if err := printChartsTable(writer, chartData, chartName); err != nil {
-			return err
+	// Normalize into []ChartInfo
+	charts := make([]ChartInfo, 0)
+	switch v := raw.(type) {
+	case []interface{}:
+		for _, it := range v {
+			switch it2 := it.(type) {
+			case string:
+				if chartName != "" {
+					charts = append(charts, ChartInfo{Version: it2})
+				} else {
+					charts = append(charts, ChartInfo{Name: it2})
+				}
+			case map[string]interface{}:
+				ci := ChartInfo{}
+				if n, ok := it2["name"].(string); ok {
+					ci.Name = n
+				}
+				if ver, ok := it2["version"].(string); ok {
+					ci.Version = ver
+				}
+				charts = append(charts, ci)
+			default:
+				charts = append(charts, ChartInfo{Name: fmt.Sprintf("%v", it)})
+			}
 		}
 	default:
-		return fmt.Errorf("unknown output type: %s (valid options: table, json, yaml)", outputType)
+		charts = append(charts, ChartInfo{Name: fmt.Sprintf("%v", v)})
 	}
 
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	sortSpec := ""
+	filterSpec := ""
+	if outputType == "table" {
+		rawOrder, _ := cmd.Flags().GetString("order-by")
+		if rawOrder != "" {
+			sortSpec = rawOrder
+		}
+		of, _ := cmd.Flags().GetString("output-filter")
+		if of != "" {
+			filterSpec = of
+		}
+	}
+
+	const DEFAULT_CHARTS_FORMAT = "table{{.Name}}"
+	const DEFAULT_CHARTS_VERSION_FORMAT = "table{{.Version}}"
+	const CHARTS_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_CHARTS_OUTPUT_TEMPLATE"
+
+	if outputType == "json" || outputType == "yaml" {
+		result := CommandResult{
+			OutputAs: toOutputType(outputType),
+			Data:     charts,
+		}
+		GenerateOutput(writer, &result)
+		return writer.Flush()
+	}
+
+	outputFormat := DEFAULT_CHARTS_FORMAT
+	if chartName != "" {
+		outputFormat = DEFAULT_CHARTS_VERSION_FORMAT
+	}
+
+	// Resolve any template overrides
+	tmpl, err := resolveTableOutputTemplate(cmd, outputFormat, CHARTS_OUTPUT_TEMPLATE_ENVVAR)
+	if err != nil {
+		return err
+	}
+
+	result := CommandResult{
+		Format:    format.Format(tmpl),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      charts,
+	}
+	GenerateOutput(writer, &result)
 	return writer.Flush()
 }
 
-func printChartsTable(writer io.Writer, data interface{}, chartName string) error {
-	// If data is a slice, format as table
-	if items, ok := data.([]interface{}); ok {
-		if len(items) == 0 {
-			if chartName != "" {
-				fmt.Fprintf(writer, "No versions found for chart '%s'\n", chartName)
-			} else {
-				fmt.Fprintf(writer, "No charts found\n")
-			}
-			return nil
-		}
+// printCharts renders the chart list using the standard output pipeline.
+func printCharts(cmd *cobra.Command, writer io.Writer, charts *[]ChartInfo, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
 
-		// Print header
-		if chartName != "" {
-			fmt.Fprintf(writer, "VERSION\n")
-			// Print versions
-			for _, item := range items {
-				if str, ok := item.(string); ok {
-					fmt.Fprintf(writer, "%s\n", str)
-				} else {
-					fmt.Fprintf(writer, "%v\n", item)
-				}
-			}
-		} else {
-			fmt.Fprintf(writer, "CHART NAME\n")
-			// Print chart names
-			for _, item := range items {
-				if str, ok := item.(string); ok {
-					fmt.Fprintf(writer, "%s\n", str)
-				} else {
-					fmt.Fprintf(writer, "%v\n", item)
-				}
-			}
-		}
-	} else {
-		// Fallback: just print the data as-is
-		fmt.Fprintf(writer, "%v\n", data)
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
 	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	// Default formats
+	const DEFAULT_CHARTS_FORMAT = "table{{.Name}}"
+	const DEFAULT_CHARTS_VERSION_FORMAT = "table{{.Version}}"
+	const CHARTS_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_CHARTS_OUTPUT_TEMPLATE"
+
+	outputFormat := DEFAULT_CHARTS_FORMAT
+	if verbose {
+		outputFormat = DEFAULT_CHARTS_VERSION_FORMAT
+	}
+
+	tmpl, err := resolveTableOutputTemplate(cmd, outputFormat, CHARTS_OUTPUT_TEMPLATE_ENVVAR)
+	if err != nil {
+		return err
+	}
+
+	result := CommandResult{
+		Format:    format.Format(tmpl),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *charts,
+	}
+
+	GenerateOutput(writer, &result)
 	return nil
 }
 
