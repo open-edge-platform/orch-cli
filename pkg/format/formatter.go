@@ -233,23 +233,70 @@ func (f Format) HeaderFields(nameLimit int) ([]string, error) {
 		"nodeCount":       formatNodeCount,
 	}
 
+	// Trim table prefix so header text doesn't include the literal "table"
+	formatStr := string(f)
+	if strings.HasPrefix(formatStr, "table") {
+		formatStr = strings.TrimPrefix(formatStr, "table")
+	}
+
 	// Parse the template to access its parse tree
-	tmpl, err := template.New("output").Funcs(funcmap).Parse(string(f))
+	tmpl, err := template.New("output").Funcs(funcmap).Parse(formatStr)
 	if err != nil {
 		return nil, err
 	}
 
-	header := GetHeaderString(tmpl, nameLimit)
-	// Split by tab to get individual header labels
-	parts := strings.Split(header, "\t")
-	var fields []string
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			fields = append(fields, p)
+	// Walk the template parse tree and extract raw field names (e.g., Name, DisplayName)
+	var rawFields []string
+	for _, n := range tmpl.Tree.Root.Nodes {
+		switch n.Type() {
+		case parse.NodeAction:
+			found := nameFinder.FindStringSubmatch(n.String())
+			if len(found) == 2 {
+				rawFields = append(rawFields, found[1])
+			}
 		}
 	}
+
+	// Normalize to user-friendly aliases: lowercase and snake_case
+	seen := make(map[string]struct{})
+	var fields []string
+	for _, rf := range rawFields {
+		// respect nameLimit (take last N parts if dotted)
+		parts := strings.Split(rf, ".")
+		if nameLimit > 0 && len(parts) > nameLimit {
+			parts = parts[len(parts)-nameLimit:]
+		}
+		field := strings.Join(parts, ".")
+
+		// lowercase no-spaces alias
+		lower := strings.ToLower(strings.ReplaceAll(field, " ", ""))
+		if _, ok := seen[lower]; !ok {
+			fields = append(fields, lower)
+			seen[lower] = struct{}{}
+		}
+
+		// snake_case alias
+		// simple camel->snake conversion
+		snake := camelToSnake(field)
+		if _, ok := seen[snake]; !ok {
+			fields = append(fields, snake)
+			seen[snake] = struct{}{}
+		}
+	}
+
 	return fields, nil
+}
+
+// camelToSnake converts CamelCase/PascalCase to snake_case
+func camelToSnake(s string) string {
+	var b strings.Builder
+	for i, r := range s {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			b.WriteRune('_')
+		}
+		b.WriteRune(r)
+	}
+	return strings.ToLower(b.String())
 }
 
 /*
