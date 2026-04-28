@@ -554,39 +554,9 @@ func printApplicationEvent(writer io.Writer, _ string, payload []byte, verbose b
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	if !verbose {
-		_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", item.Name,
-			valueOrNone(item.DisplayName), item.Version, applicationKind2String(item.Kind),
-			item.ChartName, item.ChartVersion, item.HelmRegistryName, valueOrNone(item.DefaultProfileName))
-	} else {
-		_, _ = fmt.Fprintf(writer, "Name: %s\n", item.Name)
-		_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(item.DisplayName))
-		_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(item.Description))
-		_, _ = fmt.Fprintf(writer, "Version: %s\n", item.Version)
-		_, _ = fmt.Fprintf(writer, "Kind: %s\n", applicationKind2String(item.Kind))
-		_, _ = fmt.Fprintf(writer, "Helm Registry Name: %s\n", item.HelmRegistryName)
-		_, _ = fmt.Fprintf(writer, "Image Registry Name: %s\n", valueOrNone(item.ImageRegistryName))
-		_, _ = fmt.Fprintf(writer, "Chart Name: %s\n", item.ChartName)
-		_, _ = fmt.Fprintf(writer, "Chart Version: %s\n", item.ChartVersion)
-		creatTime := ""
-		if item.CreateTime != nil {
-			creatTime = item.CreateTime.Format(timeLayout)
-		}
-		_, _ = fmt.Fprintf(writer, "Create Time: %s\n", creatTime)
-		updateTime := ""
-		if item.UpdateTime != nil {
-			updateTime = item.UpdateTime.Format(timeLayout)
-		}
-		_, _ = fmt.Fprintf(writer, "Update Time: %s\n", updateTime)
-		profiles := make([]string, 0)
-		if item.Profiles != nil {
-			profiles = make([]string, 0, len(*item.Profiles))
-			for _, p := range *item.Profiles {
-				profiles = append(profiles, p.Name)
-			}
-		}
-		_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
-		_, _ = fmt.Fprintf(writer, "Default Profile: %s\n\n", valueOrNone(item.DefaultProfileName))
-	}
-	return nil
+	// Use the canonical printApplications helper so events follow the same output pipeline
+	cmd := &cobra.Command{}
+	cmd.Flags().String("output-type", "table", "")
+	var emptyFilter string
+	return printApplications(cmd, writer, &[]catapi.CatalogV3Application{item}, nil, &emptyFilter, verbose)
 }

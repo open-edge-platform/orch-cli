@@ -29,13 +29,13 @@ func getListChartsCommand() *cobra.Command {
 		Short:             "List Helm charts or chart versions from a registry",
 		PersistentPreRunE: auth.CheckAuth,
 		Example: `# List all charts in a registry
-orch-cli list charts my-registry --project my-project
+	orch-cli list charts my-registry --project my-project
 
-# List versions for a specific chart
-orch-cli list charts my-registry kubevirt --project my-project
+	# List versions for a specific chart
+	orch-cli list charts my-registry kubevirt --project my-project
 
-# Output as JSON
-orch-cli list charts my-registry --project my-project --output-type json`,
+	# Output as JSON
+	orch-cli list charts my-registry --project my-project --output-type json`,
 		Aliases: chartAliases,
 		RunE:    runListChartsCommand,
 	}
