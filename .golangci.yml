@@ -46,6 +46,10 @@ linters:
         text: "type name will be used as filter.FilterTerm"
         linters:
           - revive
+      - path: pkg/format/.*\.go$
+        text: "avoid package names that conflict with Go standard library"
+        linters:
+          - revive
     paths:
       - third_party$
       - builtin$
