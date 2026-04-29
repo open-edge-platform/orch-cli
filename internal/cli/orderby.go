@@ -97,6 +97,11 @@ func getSupportedOrderByFields(resourceKey string, sample any, probe orderByProb
 	for _, field := range canonical {
 		accepted, err := probe(field)
 		if err != nil {
+			var aerr *api400Error
+			if errors.As(err, &aerr) {
+				// API rejected this field for sorting — not supported, skip it.
+				continue
+			}
 			return nil, nil, err
 		}
 		if accepted {
@@ -155,7 +160,9 @@ func normalizeOrderByWithAPIProbe(raw string, resourceKey string, sample any, pr
 
 		apiField, ok := aliases[field]
 		if !ok {
-			// Field not in model at all — fetch supported fields for accurate hints.
+			// Field not in model — probe the API with the raw field name to get its
+			// specific error message, then fetch supported fields for hints.
+			_, probeErr := probe(field)
 			supported, _, err := getSupportedOrderByFields(resourceKey, sample, probe)
 			if err != nil {
 				return nil, err
@@ -163,6 +170,10 @@ func normalizeOrderByWithAPIProbe(raw string, resourceKey string, sample any, pr
 			hintFields := supported
 			if len(hintFields) == 0 {
 				hintFields = canonical
+			}
+			var aerr *api400Error
+			if probeErr != nil && errors.As(probeErr, &aerr) {
+				return nil, fmt.Errorf("%v\navailable fields: %s (note: not all fields may support API-side sorting for JSON/YAML output)", probeErr, strings.Join(hintFields, ", "))
 			}
 			return nil, fmt.Errorf("invalid --order-by field %q; available fields: %s (note: not all fields may support API-side sorting for JSON/YAML output)", field, strings.Join(hintFields, ", "))
 		}
@@ -183,6 +194,15 @@ func normalizeOrderByWithAPIProbe(raw string, resourceKey string, sample any, pr
 	normalizedOrderBy := strings.Join(normalized, ",")
 	accepted, err := probe(normalizedOrderBy)
 	if err != nil {
+		var aerr *api400Error
+		if errors.As(err, &aerr) {
+			supported, _, herr := getSupportedOrderByFields(resourceKey, sample, probe)
+			hintFields := supported
+			if herr != nil || len(hintFields) == 0 {
+				hintFields = canonical
+			}
+			return nil, fmt.Errorf("%v\navailable fields: %s (note: not all fields may support API-side sorting for JSON/YAML output)", err, strings.Join(hintFields, ", "))
+		}
 		return nil, err
 	}
 	if accepted {

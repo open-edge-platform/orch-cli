@@ -353,8 +353,8 @@ func TestNormalizeOrderByWithAPIProbe_UnknownField(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "bogus")
 	assert.Contains(t, err.Error(), "available fields:")
-	// Cache should be built to determine hint fields (3 canonical fields probed).
-	assert.Equal(t, 3, probeCalls)
+	// One probe call for the unknown field itself, plus 3 canonical fields for cache building.
+	assert.Equal(t, 4, probeCalls)
 }
 
 func TestNormalizeOrderByWithAPIProbe_UnsupportedFieldHintsOnlySupportedFields(t *testing.T) {
