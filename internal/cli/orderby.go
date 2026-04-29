@@ -5,7 +5,9 @@ package cli
 
 import (
 	"fmt"
+	pfilter "github.com/open-edge-platform/cli/pkg/filter"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -290,4 +292,142 @@ func normalizeOrderByForClientSorting(raw string, sample any) (*string, error) {
 
 	normalizedOrderBy := strings.Join(normalized, ",")
 	return &normalizedOrderBy, nil
+}
+
+type filterProbeFunc func(filter string) (bool, error)
+
+// getSupportedFilterFields probes the API to determine which canonical fields
+// support server-side filtering. It caches results analogous to order-by support.
+func getSupportedFilterFields(resourceKey string, sample any, probe filterProbeFunc) ([]string, map[string]struct{}, error) {
+	orderBySupportCache.mu.Lock()
+	if cached, ok := orderBySupportCache.fields[resourceKey+":filter"]; ok {
+		orderBySupportCache.mu.Unlock()
+		set := make(map[string]struct{}, len(cached))
+		for _, field := range cached {
+			set[field] = struct{}{}
+		}
+		return cached, set, nil
+	}
+	orderBySupportCache.mu.Unlock()
+
+	_, canonical := buildOrderByAliases(sample)
+	supported := make([]string, 0, len(canonical))
+	for _, field := range canonical {
+		// Probe using a regex that should be syntactically valid for string fields
+		probeFilter := fmt.Sprintf("%s~.*", field)
+		accepted, err := probe(probeFilter)
+		if err != nil {
+			return nil, nil, err
+		}
+		if accepted {
+			supported = append(supported, field)
+		}
+	}
+
+	orderBySupportCache.mu.Lock()
+	orderBySupportCache.fields[resourceKey+":filter"] = supported
+	orderBySupportCache.mu.Unlock()
+
+	set := make(map[string]struct{}, len(supported))
+	for _, field := range supported {
+		set[field] = struct{}{}
+	}
+	return supported, set, nil
+}
+
+// normalizeFilterWithAPIProbe normalizes a client-provided filter expression to API
+// canonical field names and probes the API to validate it. Returns nil if empty.
+func normalizeFilterWithAPIProbe(raw string, resourceKey string, sample any, probe filterProbeFunc) (*string, error) {
+	if strings.TrimSpace(raw) == "" {
+		return nil, nil
+	}
+
+	// Validate syntax first using the common filter parser
+	if _, err := pfilter.Parse(raw); err != nil {
+		return nil, fmt.Errorf("Unable to parse filter expression: %w", err)
+	}
+
+	aliases, canonical := buildOrderByAliases(sample)
+
+	// We'll preserve term order by splitting the original string
+	termRE := regexp.MustCompile(`^\s*([a-zA-Z_][.a-zA-Z0-9_]*)\s*(~|<=|>=|<|>|!=|=)\s*(.+)\s*$`)
+	rawTerms := strings.Split(raw, ",")
+	normalizedTerms := make([]string, 0, len(rawTerms))
+
+	for _, rt := range rawTerms {
+		rt = strings.TrimSpace(rt)
+		if rt == "" {
+			continue
+		}
+		parts := termRE.FindStringSubmatch(rt)
+		if parts == nil || len(parts) < 4 {
+			return nil, fmt.Errorf("Unable to parse filter term '%s'", rt)
+		}
+		key := parts[1]
+		op := parts[2]
+		val := parts[3]
+
+		// Map dotted keys piecewise
+		keyParts := strings.Split(key, ".")
+		mappedParts := make([]string, 0, len(keyParts))
+		for _, kp := range keyParts {
+			if apiName, ok := aliases[kp]; ok {
+				mappedParts = append(mappedParts, apiName)
+			} else {
+				// Field not in model at all — fetch supported fields for accurate hints.
+				supported, _, gerr := getSupportedFilterFields(resourceKey, sample, probe)
+				if gerr != nil {
+					return nil, gerr
+				}
+				hintFields := supported
+				if len(hintFields) == 0 {
+					hintFields = canonical
+				}
+				return nil, fmt.Errorf("invalid --filter field %q; available fields: %s", kp, strings.Join(hintFields, ", "))
+			}
+		}
+
+		mappedKey := strings.Join(mappedParts, ".")
+		normalizedTerms = append(normalizedTerms, fmt.Sprintf("%s%s%s", mappedKey, op, val))
+	}
+
+	if len(normalizedTerms) == 0 {
+		return nil, nil
+	}
+
+	normalized := strings.Join(normalizedTerms, ",")
+
+	accepted, err := probe(normalized)
+	if err != nil {
+		return nil, err
+	}
+	if accepted {
+		return &normalized, nil
+	}
+
+	// Probe failed: build/consult cache only now to provide precise hints.
+	supported, supportedSet, err := getSupportedFilterFields(resourceKey, sample, probe)
+	if err != nil {
+		return nil, err
+	}
+
+	hintFields := supported
+	if len(hintFields) == 0 {
+		hintFields = canonical
+	}
+
+	// Find which api field caused the rejection (best-effort): check normalized terms
+	for _, nt := range normalizedTerms {
+		// split on operator to get api field
+		m := termRE.FindStringSubmatch(nt)
+		if m == nil || len(m) < 2 {
+			continue
+		}
+		apiField := strings.SplitN(m[1], ".", 2)[0]
+		if _, ok := supportedSet[apiField]; !ok {
+			return nil, fmt.Errorf("invalid --filter field %q; available fields: %s", apiField, strings.Join(hintFields, ", "))
+		}
+	}
+
+	return nil, fmt.Errorf("invalid --filter expression %q; available fields: %s", raw, strings.Join(hintFields, ", "))
 }

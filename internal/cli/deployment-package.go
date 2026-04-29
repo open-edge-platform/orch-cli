@@ -404,6 +404,42 @@ func getValidatedDeploymentPackageOrderBy(
 	})
 }
 
+func getValidatedDeploymentPackageFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	// Always validate the filter with the API to catch syntax/field errors early.
+	return normalizeFilterWithAPIProbe(raw, "deployment-packages", catapi.CatalogV3DeploymentPackage{}, func(filter string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListDeploymentPackagesParams{
+				Kinds:    getDeploymentPackageKinds(cmd),
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment package filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
@@ -416,12 +452,22 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	validatedFilter, err := getValidatedDeploymentPackageFilter(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	outputType, _ := cmd.Flags().GetString("output-type")
 	apiOrderBy := validatedOrderBy
 	if outputType == "table" {
 		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
 		apiOrderBy = nil
 	}
+
+	// Use server-side filtering when the filter validates, even for table output.
+	// Table output may still perform client-side formatting, but applying the
+	// API filter can reduce network/pagination cost and is a valid user choice.
+	apiFilter := validatedFilter
 
 	pageSize, offset, err := getPageSizeOffset(cmd)
 	if err != nil {
@@ -434,7 +480,7 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 			&catapi.CatalogServiceListDeploymentPackagesParams{
 				Kinds:    getDeploymentPackageKinds(cmd),
 				OrderBy:  apiOrderBy,
-				Filter:   getFlag(cmd, "filter"),
+				Filter:   apiFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -459,7 +505,7 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 		&catapi.CatalogServiceListDeploymentPackagesParams{
 			Kinds:    getDeploymentPackageKinds(cmd),
 			OrderBy:  apiOrderBy,
-			Filter:   getFlag(cmd, "filter"),
+			Filter:   apiFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}, auth.AddAuthHeader)
@@ -489,7 +535,7 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 			&catapi.CatalogServiceListDeploymentPackagesParams{
 				Kinds:    getDeploymentPackageKinds(cmd),
 				OrderBy:  apiOrderBy,
-				Filter:   getFlag(cmd, "filter"),
+				Filter:   apiFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
