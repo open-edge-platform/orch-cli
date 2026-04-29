@@ -284,8 +284,7 @@ func runGetOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 // Lists all OS Update policies - retrieves all policies and displays selected information in tabular format
 func runListOSUpdatePolicyCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
-	filtflag, _ := cmd.Flags().GetString("filter")
-	filter := filterHelper(filtflag)
+	// filter helper not needed; validation uses API probe
 	ctx, OSUPolicyClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
@@ -300,9 +299,14 @@ func runListOSUpdatePolicyCommand(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
+	validatedFilter, err := getValidatedOSUpdatePolicyFilter(ctx, cmd, OSUPolicyClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	resp, err := OSUPolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
 		&infra.OSUpdatePolicyListOSUpdatePolicyParams{
-			Filter:  filter,
+			Filter:  validatedFilter,
 			OrderBy: validatedOrderBy,
 		}, auth.AddAuthHeader)
 	if err != nil {
@@ -450,6 +454,41 @@ func getValidatedOSUpdatePolicyOrderBy(ctx interface{}, cmd *cobra.Command, OSUP
 			return false, nil
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS Update Policy order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func getValidatedOSUpdatePolicyFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	OSUPolicyClient infra.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "os-update-policies", infra.OSUpdatePolicy{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := OSUPolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx,
+			projectName,
+			&infra.OSUpdatePolicyListOSUpdatePolicyParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == 400 {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS Update Policy filter"); err != nil {
 			return false, err
 		}
 		return true, nil

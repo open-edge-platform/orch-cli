@@ -534,6 +534,35 @@ func getValidatedHostOrderBy(ctx context.Context, cmd *cobra.Command, hostClient
 	})
 }
 
+func getValidatedHostFilter(ctx context.Context, cmd *cobra.Command, hostClient infra.ClientWithResponsesInterface, projectName string) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "hosts", infra.HostResource{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating host filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 // ---------------------------------------------------------------------------
 // Host inspect (get) templating support
 // ---------------------------------------------------------------------------
@@ -1878,7 +1907,13 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		apiOrderBy = nil
 	}
 
-	// Build site/region filter additions.
+	// Build site/region filter additions into a combined raw filter string, then validate via API probe.
+	var combinedRaw string
+	if filter != nil {
+		combinedRaw = *filter
+	}
+
+	// Build site/region additions and append to combinedRaw
 	if siteFlag == "" && regFlag != "" {
 		regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
 
@@ -1903,20 +1938,46 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 			return errors.New("no site was found in provided region")
 		}
 
-		if filtflag != "" {
-			*filter = fmt.Sprintf("%s AND (%s)", *filter, siteFilter)
+		if combinedRaw != "" {
+			combinedRaw = fmt.Sprintf("%s AND (%s)", combinedRaw, siteFilter)
 		} else {
-			filter = &siteFilter
+			combinedRaw = siteFilter
 		}
 	}
 
 	if siteFlag != "" {
 		siteFilter := fmt.Sprintf("site.resourceId='%s'", *site)
-		if filtflag != "" {
-			*filter = fmt.Sprintf("%s AND (%s)", *filter, siteFilter)
+		if combinedRaw != "" {
+			combinedRaw = fmt.Sprintf("%s AND (%s)", combinedRaw, siteFilter)
 		} else {
-			filter = &siteFilter
+			combinedRaw = siteFilter
 		}
+	}
+
+	// Validate the combined filter string with an API probe so callers get friendly hints.
+	validatedFilter, err := normalizeFilterWithAPIProbe(combinedRaw, "hosts", infra.HostResource{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating host filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+	if err != nil {
+		return err
 	}
 
 	// Resolve pagination flags.
@@ -1936,7 +1997,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		// Single-page fetch when explicit pagination is requested.
 		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
 			&infra.HostServiceListHostsParams{
-				Filter:   filter,
+				Filter:   validatedFilter,
 				OrderBy:  apiOrderBy,
 				PageSize: &pageSize,
 				Offset:   &offset,
@@ -1953,7 +2014,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 		for {
 			resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
 				&infra.HostServiceListHostsParams{
-					Filter:   filter,
+					Filter:   validatedFilter,
 					OrderBy:  apiOrderBy,
 					PageSize: &pageSize,
 					Offset:   &offset,

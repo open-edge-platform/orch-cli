@@ -70,6 +70,41 @@ func getCreateRegistryCommand() *cobra.Command {
 	return cmd
 }
 
+func getValidatedRegistryFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "registries", catapi.CatalogV3Registry{}, func(filter string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListRegistriesParams{
+				OrderBy:           nil,
+				Filter:            &filter,
+				PageSize:          &pageSize,
+				Offset:            &offset,
+				ShowSensitiveInfo: nil,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating registry filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func getListRegistriesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "registries [flags]",
@@ -288,6 +323,11 @@ func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	validatedFilter, err := getValidatedRegistryFilter(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	outputType, _ := cmd.Flags().GetString("output-type")
 	apiOrderBy := validatedOrderBy
 	if outputType == "table" {
@@ -307,7 +347,7 @@ func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListRegistriesParams{
 				OrderBy:           apiOrderBy,
-				Filter:            getFlag(cmd, "filter"),
+				Filter:            validatedFilter,
 				PageSize:          &pageSize,
 				Offset:            &offset,
 				ShowSensitiveInfo: &showSensitive,
@@ -331,7 +371,7 @@ func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 	resp, err := catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListRegistriesParams{
 			OrderBy:           apiOrderBy,
-			Filter:            getFlag(cmd, "filter"),
+			Filter:            validatedFilter,
 			PageSize:          &pageSize,
 			Offset:            &offset,
 			ShowSensitiveInfo: &showSensitive,
@@ -361,7 +401,7 @@ func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 		resp, err = catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListRegistriesParams{
 				OrderBy:           apiOrderBy,
-				Filter:            getFlag(cmd, "filter"),
+				Filter:            validatedFilter,
 				PageSize:          &pageSize,
 				Offset:            &offset,
 				ShowSensitiveInfo: &showSensitive,

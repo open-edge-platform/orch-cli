@@ -477,6 +477,11 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	validatedFilter, err := getValidatedDeploymentFilter(ctx, cmd, deploymentClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	outputType, _ := cmd.Flags().GetString("output-type")
 	apiOrderBy := validatedOrderBy
 	if outputType == "table" {
@@ -494,7 +499,7 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
 			&depapi.DeploymentServiceListDeploymentsParams{
 				OrderBy:  apiOrderBy,
-				Filter:   getFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -517,7 +522,7 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 	resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
 		&depapi.DeploymentServiceListDeploymentsParams{
 			OrderBy:  apiOrderBy,
-			Filter:   getFlag(cmd, "filter"),
+			Filter:   validatedFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}, auth.AddAuthHeader)
@@ -546,7 +551,7 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 		resp, err = deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
 			&depapi.DeploymentServiceListDeploymentsParams{
 				OrderBy:  apiOrderBy,
-				Filter:   getFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -593,6 +598,40 @@ func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	return writer.Flush()
+}
+
+func getValidatedDeploymentFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	deploymentClient depapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "deployments", depapi.Deployment{}, func(filter string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentServiceListDeploymentsParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {

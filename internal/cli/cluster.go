@@ -307,6 +307,40 @@ func getValidatedClusterOrderBy(
 	})
 }
 
+func getValidatedClusterFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	clusterClient coapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "clusters", coapi.ClusterInfo{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName,
+			&coapi.GetV2ProjectsProjectNameClustersParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating cluster filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func printClusters(cmd *cobra.Command, writer io.Writer, clusterList *[]coapi.ClusterInfo, orderBy *string, outputFilter *string, verbose bool) error {
 	outputType, _ := cmd.Flags().GetString("output-type")
 
@@ -368,6 +402,11 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 		apiOrderBy = nil
 	}
 
+	validatedFilter, err := getValidatedClusterFilter(ctx, cmd, clusterClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	pageSize32, offset32, err := getPageSizeOffset(cmd)
 	if err != nil {
 		return err
@@ -389,7 +428,7 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName,
 			&coapi.GetV2ProjectsProjectNameClustersParams{
 				OrderBy:  apiOrderBy,
-				Filter:   getNonEmptyFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -419,7 +458,7 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 	resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName,
 		&coapi.GetV2ProjectsProjectNameClustersParams{
 			OrderBy:  apiOrderBy,
-			Filter:   getNonEmptyFlag(cmd, "filter"),
+			Filter:   validatedFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}, auth.AddAuthHeader)
@@ -451,7 +490,7 @@ func runListClusterCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName,
 			&coapi.GetV2ProjectsProjectNameClustersParams{
 				OrderBy:  apiOrderBy,
-				Filter:   getNonEmptyFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)

@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -184,6 +185,11 @@ func runListProviderCommand(cmd *cobra.Command, _ []string) error {
 		apiOrderBy = nil
 	}
 
+	validatedFilter, err := getValidatedProviderFilter(ctx, cmd, providerClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	pageSize32, offset32, err := getPageSizeOffset(cmd)
 	if err != nil {
 		return err
@@ -199,7 +205,7 @@ func runListProviderCommand(cmd *cobra.Command, _ []string) error {
 	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
 		params := &infra.ProviderServiceListProvidersParams{
 			OrderBy:  apiOrderBy,
-			Filter:   getNonEmptyFlag(cmd, "filter"),
+			Filter:   validatedFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}
@@ -233,7 +239,7 @@ func runListProviderCommand(cmd *cobra.Command, _ []string) error {
 	resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
 		&infra.ProviderServiceListProvidersParams{
 			OrderBy:  apiOrderBy,
-			Filter:   getNonEmptyFlag(cmd, "filter"),
+			Filter:   validatedFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}, auth.AddAuthHeader)
@@ -266,7 +272,7 @@ func runListProviderCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
 			&infra.ProviderServiceListProvidersParams{
 				OrderBy:  apiOrderBy,
-				Filter:   getNonEmptyFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -363,6 +369,38 @@ func runCreateProviderCommand(cmd *cobra.Command, args []string) error {
 	}
 	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating provider")
 
+}
+
+func getValidatedProviderFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	providerClient infra.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "provider", infra.ProviderResource{}, func(filter string) (bool, error) {
+		pageSize := 1
+		resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
+			&infra.ProviderServiceListProvidersParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating provider filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 func runGetProviderCommand(cmd *cobra.Command, args []string) error {

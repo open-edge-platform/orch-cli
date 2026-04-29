@@ -275,10 +275,39 @@ func runListRegionCommand(cmd *cobra.Command, _ []string) error {
 		apiOrderBy = nil
 	}
 
+	// Build combined raw filter string (parent region + user filter) and validate via probe
+	var combinedRaw string
+	if filterString != nil {
+		combinedRaw = *filterString
+	}
+	validatedFilter, err := normalizeFilterWithAPIProbe(combinedRaw, "regions", infra.RegionResource{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating region filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
 	resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
 		&infra.RegionServiceListRegionsParams{
 			ShowTotalSites: &enableTotalSite,
-			Filter:         filterString,
+			Filter:         validatedFilter,
 			OrderBy:        apiOrderBy,
 		}, auth.AddAuthHeader)
 	if err != nil {
@@ -423,6 +452,34 @@ func getValidatedRegionOrderBy(ctx context.Context, cmd *cobra.Command, regionCl
 			return false, nil
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating region order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func getValidatedRegionFilter(ctx context.Context, cmd *cobra.Command, regionClient infra.ClientWithResponsesInterface, projectName string) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "regions", infra.RegionResource{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating region filter"); err != nil {
 			return false, err
 		}
 		return true, nil

@@ -223,6 +223,11 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	validatedFilter, err := getValidatedArtifactFilter(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	outputType, _ := cmd.Flags().GetString("output-type")
 	apiOrderBy := validatedOrderBy
 	if outputType == "table" {
@@ -240,7 +245,7 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListArtifactsParams{
 				OrderBy:  apiOrderBy,
-				Filter:   getFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -263,7 +268,7 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 	resp, err := catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListArtifactsParams{
 			OrderBy:  apiOrderBy,
-			Filter:   getFlag(cmd, "filter"),
+			Filter:   validatedFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}, auth.AddAuthHeader)
@@ -289,10 +294,10 @@ func runListArtifactsCommand(cmd *cobra.Command, _ []string) error {
 		}
 
 		offset += pageSize
-		resp, err = catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
+		resp, err := catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
 			&catapi.CatalogServiceListArtifactsParams{
 				OrderBy:  apiOrderBy,
-				Filter:   getFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -382,6 +387,40 @@ func runSetArtifactCommand(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Printf("Artifact '%s' updated successfully\n", name)
 	return nil
+}
+
+func getValidatedArtifactFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "artifacts", catapi.CatalogV3Artifact{}, func(filter string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := catalogClient.CatalogServiceListArtifactsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListArtifactsParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating artifact filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 func runDeleteArtifactCommand(cmd *cobra.Command, args []string) error {

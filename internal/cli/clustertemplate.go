@@ -70,6 +70,11 @@ func runListClusterTemplatesCommand(cmd *cobra.Command, _ []string) error {
 		apiOrderBy = nil
 	}
 
+	validatedFilter, err := getValidatedClusterTemplateFilter(ctx, cmd, clusterTemplateClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	pageSize, offset, err := getPageSizeOffset(cmd)
 	if err != nil {
 		return err
@@ -93,7 +98,7 @@ func runListClusterTemplatesCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := clusterTemplateClient.GetV2ProjectsProjectNameTemplatesWithResponse(ctx, projectName,
 			&coapi.GetV2ProjectsProjectNameTemplatesParams{
 				OrderBy:  apiOrderBy,
-				Filter:   getNonEmptyFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: pageSizePtr,
 				Offset:   offsetPtr,
 			}, auth.AddAuthHeader)
@@ -119,7 +124,7 @@ func runListClusterTemplatesCommand(cmd *cobra.Command, _ []string) error {
 	resp, err := clusterTemplateClient.GetV2ProjectsProjectNameTemplatesWithResponse(ctx, projectName,
 		&coapi.GetV2ProjectsProjectNameTemplatesParams{
 			OrderBy:  apiOrderBy,
-			Filter:   getNonEmptyFlag(cmd, "filter"),
+			Filter:   validatedFilter,
 			PageSize: pageSizePtr,
 			Offset:   offsetPtr,
 		}, auth.AddAuthHeader)
@@ -160,7 +165,7 @@ func runListClusterTemplatesCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := clusterTemplateClient.GetV2ProjectsProjectNameTemplatesWithResponse(ctx, projectName,
 			&coapi.GetV2ProjectsProjectNameTemplatesParams{
 				OrderBy:  apiOrderBy,
-				Filter:   getNonEmptyFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: pageSizePtr,
 				Offset:   offsetPtr,
 			}, auth.AddAuthHeader)
@@ -260,6 +265,40 @@ func getValidatedClusterTemplateOrderBy(
 			return false, nil
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating cluster template order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func getValidatedClusterTemplateFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	clusterClient coapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "cluster-templates", coapi.TemplateInfo{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := clusterClient.GetV2ProjectsProjectNameTemplatesWithResponse(ctx, projectName,
+			&coapi.GetV2ProjectsProjectNameTemplatesParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating cluster template filter"); err != nil {
 			return false, err
 		}
 		return true, nil

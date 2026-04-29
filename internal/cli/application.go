@@ -296,6 +296,41 @@ func getValidatedApplicationOrderBy(
 	})
 }
 
+func getValidatedApplicationFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "applications", catapi.CatalogV3Application{}, func(filter string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListApplicationsParams{
+				Kinds:    getApplicationKinds(cmd),
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating application filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
@@ -304,6 +339,11 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	validatedOrderBy, err := getValidatedApplicationOrderBy(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	validatedFilter, err := getValidatedApplicationFilter(ctx, cmd, catalogClient, projectName)
 	if err != nil {
 		return err
 	}
@@ -326,7 +366,7 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 			&catapi.CatalogServiceListApplicationsParams{
 				Kinds:    getApplicationKinds(cmd),
 				OrderBy:  apiOrderBy,
-				Filter:   getFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -350,7 +390,7 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 		&catapi.CatalogServiceListApplicationsParams{
 			Kinds:    getApplicationKinds(cmd),
 			OrderBy:  apiOrderBy,
-			Filter:   getFlag(cmd, "filter"),
+			Filter:   validatedFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}, auth.AddAuthHeader)
@@ -380,7 +420,7 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 			&catapi.CatalogServiceListApplicationsParams{
 				Kinds:    getApplicationKinds(cmd),
 				OrderBy:  apiOrderBy,
-				Filter:   getFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)

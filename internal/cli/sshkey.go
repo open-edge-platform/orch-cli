@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -328,6 +329,11 @@ func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
 		apiOrderBy = nil
 	}
 
+	validatedFilter, err := getValidatedSSHKeyFilter(ctx, cmd, sshKeyClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	pageSize32, offset32, err := getPageSizeOffset(cmd)
 	if err != nil {
 		return err
@@ -343,7 +349,7 @@ func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
 	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
 		params := &infra.LocalAccountServiceListLocalAccountsParams{
 			OrderBy:  apiOrderBy,
-			Filter:   getNonEmptyFlag(cmd, "filter"),
+			Filter:   validatedFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}
@@ -401,7 +407,7 @@ func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
 	resp, err := sshKeyClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName,
 		&infra.LocalAccountServiceListLocalAccountsParams{
 			OrderBy:  apiOrderBy,
-			Filter:   getNonEmptyFlag(cmd, "filter"),
+			Filter:   validatedFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}, auth.AddAuthHeader)
@@ -434,7 +440,7 @@ func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
 		resp, err := sshKeyClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName,
 			&infra.LocalAccountServiceListLocalAccountsParams{
 				OrderBy:  apiOrderBy,
-				Filter:   getNonEmptyFlag(cmd, "filter"),
+				Filter:   validatedFilter,
 				PageSize: &pageSize,
 				Offset:   &offset,
 			}, auth.AddAuthHeader)
@@ -517,6 +523,38 @@ func runCreateSSHKeyCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error while creating SSH key from %s", path))
+}
+
+func getValidatedSSHKeyFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	sshKeyClient infra.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "sshkey", infra.LocalAccountResource{}, func(filter string) (bool, error) {
+		pageSize := 1
+		resp, err := sshKeyClient.LocalAccountServiceListLocalAccountsWithResponse(ctx, projectName,
+			&infra.LocalAccountServiceListLocalAccountsParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating sshkey filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 // Deletes SSH Key - checks if a key already exists and then deletes it if it does

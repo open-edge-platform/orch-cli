@@ -154,16 +154,20 @@ func runGetOSUpdateRunCommand(cmd *cobra.Command, args []string) error {
 // Lists all OS Update policies - retrieves all policies and displays selected information in tabular format
 func runListOSUpdateRunCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
-	filtflag, _ := cmd.Flags().GetString("filter")
-	filter := filterHelper(filtflag)
+	// filter helper not needed; validation uses API probe
 	ctx, OSUpdateRunClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 	//TODO handle multiple pages
+	validatedFilter, err := getValidatedOSUpdateRunFilter(ctx, cmd, OSUpdateRunClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	resp, err := OSUpdateRunClient.OSUpdateRunListOSUpdateRunWithResponse(ctx, projectName,
 		&infra.OSUpdateRunListOSUpdateRunParams{
-			Filter: filter,
+			Filter: validatedFilter,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -235,6 +239,40 @@ func getValidatedOSUpdateRunOrderBy(ctx interface{}, cmd *cobra.Command, OSUpdat
 			return false, nil
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS Update Run order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func getValidatedOSUpdateRunFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	OSUpdateRunClient infra.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "os-update-runs", infra.OSUpdateRun{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := OSUpdateRunClient.OSUpdateRunListOSUpdateRunWithResponse(ctx.(context.Context), projectName,
+			&infra.OSUpdateRunListOSUpdateRunParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == 400 {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS Update Run filter"); err != nil {
 			return false, err
 		}
 		return true, nil

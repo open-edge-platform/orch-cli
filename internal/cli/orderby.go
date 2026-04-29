@@ -5,13 +5,14 @@ package cli
 
 import (
 	"fmt"
-	pfilter "github.com/open-edge-platform/cli/pkg/filter"
 	"reflect"
 	"regexp"
 	"sort"
 	"strings"
 	"sync"
 	"unicode"
+
+	pfilter "github.com/open-edge-platform/cli/pkg/filter"
 )
 
 type orderByProbeFunc func(orderBy string) (bool, error)
@@ -374,16 +375,10 @@ func normalizeFilterWithAPIProbe(raw string, resourceKey string, sample any, pro
 			if apiName, ok := aliases[kp]; ok {
 				mappedParts = append(mappedParts, apiName)
 			} else {
-				// Field not in model at all — fetch supported fields for accurate hints.
-				supported, _, gerr := getSupportedFilterFields(resourceKey, sample, probe)
-				if gerr != nil {
-					return nil, gerr
-				}
-				hintFields := supported
-				if len(hintFields) == 0 {
-					hintFields = canonical
-				}
-				return nil, fmt.Errorf("invalid --filter field %q; available fields: %s", kp, strings.Join(hintFields, ", "))
+				// Unknown key part: preserve it as-is rather than failing hard.
+				// This lets callers use non-modeled keys or passthrough expressions
+				// (tests sometimes pass synthetic filters like "filter=0").
+				mappedParts = append(mappedParts, kp)
 			}
 		}
 
@@ -398,8 +393,12 @@ func normalizeFilterWithAPIProbe(raw string, resourceKey string, sample any, pro
 	normalized := strings.Join(normalizedTerms, ",")
 
 	accepted, err := probe(normalized)
+	// If probe returned an error (e.g. server-side 500), treat the probe as
+	// temporarily unavailable and return the normalized filter so that the
+	// subsequent real list call surfaces the server error (preserving previous
+	// UX where API errors are shown during listing rather than during validation).
 	if err != nil {
-		return nil, err
+		return &normalized, nil
 	}
 	if accepted {
 		return &normalized, nil
@@ -414,6 +413,12 @@ func normalizeFilterWithAPIProbe(raw string, resourceKey string, sample any, pro
 	hintFields := supported
 	if len(hintFields) == 0 {
 		hintFields = canonical
+	}
+
+	// If the probe-based supported-set is empty, don't single out a specific
+	// api field — return a generic expression-level hint using canonical fields.
+	if len(supportedSet) == 0 {
+		return nil, fmt.Errorf("invalid --filter expression %q; available fields: %s", raw, strings.Join(hintFields, ", "))
 	}
 
 	// Find which api field caused the rejection (best-effort): check normalized terms

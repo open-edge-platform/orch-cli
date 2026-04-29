@@ -391,12 +391,45 @@ func getValidatedOSProfileOrderBy(
 	})
 }
 
+func getValidatedOSProfileFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	OSProfileClient infra.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "os profiles", infra.OperatingSystemResource{}, func(filter string) (bool, error) {
+		pageSize := int(1)
+		offset := int(0)
+		resp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+			&infra.OperatingSystemServiceListOperatingSystemsParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, nil
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS profile filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 // Lists all OS Profiles - retrieves all profiles and displays selected information in tabular format
 func runListOSProfileCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
-	filtflag, _ := cmd.Flags().GetString("filter")
-	filter := filterHelper(filtflag)
+	// filter helper not needed; validation uses API probe
 
 	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
@@ -417,9 +450,14 @@ func runListOSProfileCommand(cmd *cobra.Command, _ []string) error {
 		apiOrderBy = nil
 	}
 
+	validatedFilter, err := getValidatedOSProfileFilter(ctx, cmd, OSProfileClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	resp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
 		&infra.OperatingSystemServiceListOperatingSystemsParams{
-			Filter:  filter,
+			Filter:  validatedFilter,
 			OrderBy: apiOrderBy,
 		}, auth.AddAuthHeader)
 	if err != nil {
