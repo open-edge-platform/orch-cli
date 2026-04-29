@@ -224,10 +224,12 @@ orch-cli set host --project some-project --import-from-csv test.csv --dry-run
 # Set hosts - --import-from-csv is a mandatory flag pointing to the input file
 orch-cli set host --project some-project --import-from-csv test.csv
 
-# Bulk power actions using filters - apply power state to all matching hosts
+# Bulk actions using filters - apply changes to all matching hosts
 orch-cli set host --project some-project --filter "metadata.key='tier' AND metadata.value='lab'" --power power-cycle
 orch-cli set host --project some-project --site site-1234abcd --power on
 orch-cli set host --project some-project --region region-1234abcd --power reset
+orch-cli set host --project some-project --site site-1234abcd --amt-state provisioned --control-mode admin
+orch-cli set host --project some-project --filter "hostStatus='onboarded'" --power on --amt-state provisioned
 
 # Dry run to see which hosts would be affected
 orch-cli set host --project some-project --filter "hostStatus='onboarded'" --power off --dry-run
@@ -239,6 +241,9 @@ orch-cli set host --project some-project --filter "hostStatus='onboarded'" --pow
 		examples += `
 #Set host OS Update policy
 orch-cli set host host-1234abcd  --project itep --osupdatepolicy <resourceID>
+
+#Bulk set OS Update policy using filters
+orch-cli set host --project itep --site site-1234abcd --osupdatepolicy <resourceID>
 
 --osupdatepolicy - Set the OS Update policy for the host, must be a valid resource ID of an OS Update policy
 `
@@ -2116,8 +2121,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	if filtflag != "" || siteFlag != "" || regFlag != "" {
-		if powerFlag == "" && policyFlag == "" {
-			return fmt.Errorf("--filter, --site, and --region require --power or --power-policy for bulk operations")
+		if powerFlag == "" && policyFlag == "" && amtFlag == "" && amtModeFlag == "" && updFlag == "" {
+			return fmt.Errorf("--filter, --site, and --region require at least one action flag (--power, --power-policy, --amt-state, --control-mode, --osupdatepolicy)")
 		}
 
 		filter := filterHelper(filtflag)
@@ -2134,6 +2139,43 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 
 		if siteFlag != "" && regFlag != "" {
 			return fmt.Errorf("cannot specify both --site and --region simultaneously")
+		}
+
+		var power *infra.PowerState
+		var policy *infra.PowerCommandPolicy
+		var amtState *infra.AmtState
+		var amtMode *infra.AmtControlMode
+
+		if powerFlag != "" {
+			pow, err := resolvePower(powerFlag)
+			if err != nil {
+				return err
+			}
+			power = &pow
+		}
+
+		if policyFlag != "" {
+			pol, err := resolvePowerPolicy(policyFlag)
+			if err != nil {
+				return err
+			}
+			policy = &pol
+		}
+
+		if amtFlag != "" {
+			amt, err := resolveAmtState(amtFlag)
+			if err != nil {
+				return err
+			}
+			amtState = &amt
+		}
+
+		if amtModeFlag != "" {
+			mode, err := resolveAmtControlMode(amtModeFlag)
+			if err != nil {
+				return err
+			}
+			amtMode = &mode
 		}
 
 		ctx, hostClient, projectName, err := InfraFactory(cmd)
@@ -2207,84 +2249,103 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		var power *infra.PowerState
-		var policy *infra.PowerCommandPolicy
-
+		actions := []string{}
 		if powerFlag != "" {
-			pow, err := resolvePower(powerFlag)
-			if err != nil {
-				return err
-			}
-			power = &pow
+			actions = append(actions, "power="+powerFlag)
 		}
-
 		if policyFlag != "" {
-			pol, err := resolvePowerPolicy(policyFlag)
-			if err != nil {
-				return err
-			}
-			policy = &pol
+			actions = append(actions, "power-policy="+policyFlag)
 		}
-
-		action := powerFlag
-		if action == "" {
-			action = "policy:" + policyFlag
+		if amtFlag != "" {
+			actions = append(actions, "amt-state="+amtFlag)
 		}
+		if amtModeFlag != "" {
+			actions = append(actions, "control-mode="+amtModeFlag)
+		}
+		if updFlag != "" {
+			actions = append(actions, "osupdatepolicy="+updFlag)
+		}
+		actionSummary := strings.Join(actions, ", ")
 
 		if dryRun {
-			fmt.Printf("Dry run: %d host(s) would have power action '%s' applied:\n", len(hosts), action)
+			fmt.Printf("Dry run: %d host(s) would be updated [%s]:\n", len(hosts), actionSummary)
 			for _, h := range hosts {
 				rid := ""
 				if h.ResourceId != nil {
 					rid = *h.ResourceId
 				}
-				amtState := "unknown"
-				if h.CurrentAmtState != nil {
-					amtState = string(*h.CurrentAmtState)
-				}
-				fmt.Printf("  %s (%s) current_amt_state=%s\n", h.Name, rid, amtState)
+				fmt.Printf("  %s (%s)\n", h.Name, rid)
 			}
 			return nil
 		}
 
-		fmt.Printf("Apply power action '%s' to %d host(s)? (y/n) ", action, len(hosts))
-		var response string
-		_, err = fmt.Scanln(&response)
-		if err != nil || (response != "y" && response != "Y") {
-			return errors.New("operation cancelled by user")
-		}
+		fmt.Printf("Applying [%s] to %d host(s)\n", actionSummary, len(hosts))
 
 		updated := 0
-		skipped := 0
+		failed := 0
 		for i, h := range hosts {
 			rid := ""
 			if h.ResourceId != nil {
 				rid = *h.ResourceId
 			}
-			if h.CurrentAmtState == nil || *h.CurrentAmtState != infra.AMTSTATEPROVISIONED {
-				fmt.Printf("[%d/%d]  %s (%s)  skipped (AMT not provisioned)\n", i+1, len(hosts), h.Name, rid)
-				skipped++
-				continue
+
+			hostFailed := false
+
+			if power != nil || policy != nil {
+				if h.CurrentAmtState == nil || *h.CurrentAmtState != infra.AMTSTATEPROVISIONED {
+					fmt.Printf("[%d/%d]  %s (%s)  power skipped (AMT not provisioned)\n", i+1, len(hosts), h.Name, rid)
+				} else {
+					resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, rid, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
+						PowerCommandPolicy: policy,
+						DesiredPowerState:  power,
+						Name:               h.Name,
+					}, auth.AddAuthHeader)
+					if err != nil {
+						fmt.Printf("[%d/%d]  %s (%s)  power failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+						hostFailed = true
+					} else if err := checkResponse(resp.HTTPResponse, resp.Body, ""); err != nil {
+						fmt.Printf("[%d/%d]  %s (%s)  power failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+						hostFailed = true
+					}
+				}
 			}
-			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, rid, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
-				PowerCommandPolicy: policy,
-				DesiredPowerState:  power,
-				Name:               h.Name,
-			}, auth.AddAuthHeader)
-			if err != nil {
-				fmt.Printf("[%d/%d]  %s (%s)  failed: %v\n", i+1, len(hosts), h.Name, rid, err)
-				skipped++
-				continue
+
+			if amtState != nil || amtMode != nil {
+				resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, rid, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
+					DesiredAmtState: amtState,
+					AmtControlMode:  amtMode,
+					Name:            h.Name,
+				}, auth.AddAuthHeader)
+				if err != nil {
+					fmt.Printf("[%d/%d]  %s (%s)  amt failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+					hostFailed = true
+				} else if err := checkResponse(resp.HTTPResponse, resp.Body, ""); err != nil {
+					fmt.Printf("[%d/%d]  %s (%s)  amt failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+					hostFailed = true
+				}
 			}
-			if err := checkResponse(resp.HTTPResponse, resp.Body, ""); err != nil {
-				fmt.Printf("[%d/%d]  %s (%s)  failed: %v\n", i+1, len(hosts), h.Name, rid, err)
-				skipped++
-				continue
+
+			if updFlag != "" && h.Instance != nil && h.Instance.InstanceID != nil {
+				resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *h.Instance.InstanceID, &infra.InstanceServicePatchInstanceParams{}, infra.InstanceServicePatchInstanceJSONRequestBody{
+					OsUpdatePolicyID: &updFlag,
+				}, auth.AddAuthHeader)
+				if err != nil {
+					fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+					hostFailed = true
+				} else if err := checkResponse(resp.HTTPResponse, resp.Body, ""); err != nil {
+					fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+					hostFailed = true
+				}
 			}
-			fmt.Printf("[%d/%d]  %s (%s)  desired_power_state → %s\n", i+1, len(hosts), h.Name, rid, action)
-			updated++
+
+			if hostFailed {
+				failed++
+			} else {
+				fmt.Printf("[%d/%d]  %s (%s)  updated\n", i+1, len(hosts), h.Name, rid)
+				updated++
+			}
 		}
-		fmt.Printf("Done: %d updated, %d skipped\n", updated, skipped)
+		fmt.Printf("Done: %d updated, %d failed\n", updated, failed)
 		return nil
 	}
 
