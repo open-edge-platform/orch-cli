@@ -225,7 +225,7 @@ orch-cli set host --project some-project --import-from-csv test.csv --dry-run
 orch-cli set host --project some-project --import-from-csv test.csv
 
 # Bulk actions using filters - apply changes to all matching hosts
-orch-cli set host --project some-project --filter "metadata.key='tier' AND metadata.value='lab'" --power power-cycle
+orch-cli set host --project some-project --filter "hostStatus='onboarded'" --power power-cycle
 orch-cli set host --project some-project --site site-1234abcd --power on
 orch-cli set host --project some-project --region region-1234abcd --power reset
 orch-cli set host --project some-project --site site-1234abcd --amt-state provisioned --control-mode admin
