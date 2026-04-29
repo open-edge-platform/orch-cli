@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
+const ( //nolint:revive
 	DEFAULT_APPLICATION_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Version}}\t{{.Kind}}\t{{.ChartName}}\t{{.ChartVersion}}\t{{.HelmRegistryName}}\t{{.DefaultProfileName}}"
 	DEFAULT_APPLICATION_INSPECT_FORMAT = `Name: {{.Name}}
 Display Name: {{str .DisplayName}}

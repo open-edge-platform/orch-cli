@@ -262,7 +262,7 @@ const (
 // It pre-computes values that require conditional logic (feature-gating, deep nil
 // chains, "Waiting on node agents" special case) so templates use simple field
 // references that produce clean column headers.
-type HostListRow struct {
+type HostListRow struct { //nolint:revive
 	ResourceId         string `json:"resourceId"`
 	Name               string `json:"name"`
 	HostStatus         string `json:"hostStatus"`
@@ -534,35 +534,6 @@ func getValidatedHostOrderBy(ctx context.Context, cmd *cobra.Command, hostClient
 	})
 }
 
-func getValidatedHostFilter(ctx context.Context, cmd *cobra.Command, hostClient infra.ClientWithResponsesInterface, projectName string) (*string, error) {
-	raw, err := cmd.Flags().GetString("filter")
-	if err != nil {
-		return nil, err
-	}
-
-	return normalizeFilterWithAPIProbe(raw, "hosts", infra.HostResource{}, func(filter string) (bool, error) {
-		pageSize := 1
-		offset := 0
-		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
-			&infra.HostServiceListHostsParams{
-				OrderBy:  nil,
-				Filter:   &filter,
-				PageSize: &pageSize,
-				Offset:   &offset,
-			}, auth.AddAuthHeader)
-		if err != nil {
-			return false, processError(err)
-		}
-		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, &api400Error{string(resp.Body)}
-		}
-		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating host filter"); err != nil {
-			return false, err
-		}
-		return true, nil
-	})
-}
-
 // ---------------------------------------------------------------------------
 // Host inspect (get) templating support
 // ---------------------------------------------------------------------------
@@ -577,7 +548,7 @@ type HostStorageRow struct {
 	Vendor   string `json:"vendor"`
 }
 
-type HostNicRow struct {
+type HostNicRow struct { //nolint:revive
 	Name         string `json:"name"`
 	LinkState    string `json:"linkState"`
 	Mtu          string `json:"mtu"`
@@ -589,14 +560,14 @@ type HostNicRow struct {
 	BmcInterface string `json:"bmcInterface"`
 }
 
-type HostGpuRow struct {
+type HostGpuRow struct { //nolint:revive
 	DeviceName   string `json:"deviceName"`
 	Vendor       string `json:"vendor"`
 	Capabilities string `json:"capabilities"`
 	PciId        string `json:"pciId"`
 }
 
-type HostUsbRow struct {
+type HostUsbRow struct { //nolint:revive
 	Class     string `json:"class"`
 	Serial    string `json:"serial"`
 	VendorId  string `json:"vendorId"`
@@ -605,7 +576,7 @@ type HostUsbRow struct {
 	Address   string `json:"address"`
 }
 
-type HostCveRow struct {
+type HostCveRow struct { //nolint:revive
 	CveId            string `json:"cveId"`
 	Priority         string `json:"priority"`
 	AffectedPackages string `json:"affectedPackages"`
@@ -620,7 +591,7 @@ type HostMetadataRow struct {
 // All complex conditional logic (feature-gating, nil chains, unit conversions,
 // "Waiting on node agents" special case) is resolved in toHostInspectItem so
 // the template only needs simple field references and range loops.
-type HostInspectItem struct {
+type HostInspectItem struct { //nolint:revive
 	// Identity
 	ResourceId string `json:"resourceId"`
 	Name       string `json:"name"`

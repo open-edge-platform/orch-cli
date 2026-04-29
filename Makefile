@@ -61,7 +61,7 @@ install: build
 
 lint:
 	@# Help: Runs lint stage
-	golangci-lint run --timeout 10m
+	$(shell go env GOPATH)/bin/golangci-lint run --timeout 10m
 	yamllint .
 	$(MAKE) mdlint
 

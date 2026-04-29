@@ -89,12 +89,12 @@ func (s Sorter) GetField(val reflect.Value, name string) (reflect.Value, error) 
 		parts := strings.SplitN(name, ".", 2)
 
 		if val.Kind() != reflect.Struct {
-			return val, fmt.Errorf("Dotted field name specified in filter did not resolve to a valid field")
+			return val, fmt.Errorf("dotted field name specified in filter did not resolve to a valid field")
 		}
 
 		field := val.FieldByName(parts[0])
 		if !field.IsValid() {
-			return field, fmt.Errorf("Failed to find dotted field %s while sorting", parts[0])
+			return field, fmt.Errorf("failed to find dotted field %s while sorting", parts[0])
 		}
 		if field.Kind() == reflect.Ptr {
 			field = reflect.Indirect(field)
@@ -103,12 +103,12 @@ func (s Sorter) GetField(val reflect.Value, name string) (reflect.Value, error) 
 	}
 
 	if val.Kind() != reflect.Struct {
-		return val, fmt.Errorf("Dotted field name specified in filter did not resolve to a valid field")
+		return val, fmt.Errorf("dotted field name specified in filter did not resolve to a valid field")
 	}
 
 	field := val.FieldByName(name)
 	if !field.IsValid() {
-		return field, fmt.Errorf("Failed to find field %s while sorting", name)
+		return field, fmt.Errorf("failed to find field %s while sorting", name)
 	}
 
 	// we might have a pointer to a struct at this time, so dereference it
@@ -117,7 +117,7 @@ func (s Sorter) GetField(val reflect.Value, name string) (reflect.Value, error) 
 	}
 
 	if field.Kind() == reflect.Struct {
-		return val, fmt.Errorf("Cannot sort on a field that is a struct")
+		return val, fmt.Errorf("cannot sort on a field that is a struct")
 	}
 
 	return field, nil
@@ -129,7 +129,7 @@ func (s Sorter) Process(data interface{}) (interface{}, error) {
 		return data, nil
 	}
 
-	var sortError error = nil
+	var sortError error
 
 	sort.SliceStable(data, func(i, j int) bool {
 		left := reflect.ValueOf(slice.Index(i).Interface())
@@ -211,18 +211,15 @@ func (s Sorter) Process(data interface{}) (interface{}, error) {
 				sleft := fmt.Sprintf("%v", fleft)
 				sright := fmt.Sprintf("%v", fright)
 				diff := strings.Compare(sleft, sright)
-				if term.Op != DSC {
-					if diff == -1 {
-						return true
-					} else if diff == 1 {
-						return false
-					}
-				} else {
-					if diff == 1 {
-						return true
-					} else if diff == -1 {
-						return false
-					}
+				switch {
+				case term.Op != DSC && diff == -1:
+					return true
+				case term.Op != DSC && diff == 1:
+					return false
+				case term.Op == DSC && diff == 1:
+					return true
+				case term.Op == DSC && diff == -1:
+					return false
 				}
 			}
 		}

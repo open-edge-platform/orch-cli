@@ -162,48 +162,6 @@ func runListChartsCommand(cmd *cobra.Command, args []string) error {
 	return writer.Flush()
 }
 
-// printCharts renders the chart list using the standard output pipeline.
-func printCharts(cmd *cobra.Command, writer io.Writer, charts *[]ChartInfo, orderBy *string, outputFilter *string, verbose bool) error {
-	outputType, _ := cmd.Flags().GetString("output-type")
-
-	sortSpec := ""
-	if outputType == "table" && orderBy != nil {
-		sortSpec = *orderBy
-	}
-
-	filterSpec := ""
-	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
-		filterSpec = *outputFilter
-	}
-
-	// Default formats
-	const DEFAULT_CHARTS_FORMAT = "table{{.Name}}"
-	const DEFAULT_CHARTS_VERSION_FORMAT = "table{{.Version}}"
-	const CHARTS_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_CHARTS_OUTPUT_TEMPLATE"
-
-	outputFormat := DEFAULT_CHARTS_FORMAT
-	if verbose {
-		outputFormat = DEFAULT_CHARTS_VERSION_FORMAT
-	}
-
-	tmpl, err := resolveTableOutputTemplate(cmd, outputFormat, CHARTS_OUTPUT_TEMPLATE_ENVVAR)
-	if err != nil {
-		return err
-	}
-
-	result := CommandResult{
-		Format:    format.Format(tmpl),
-		Filter:    filterSpec,
-		OrderBy:   sortSpec,
-		OutputAs:  toOutputType(outputType),
-		NameLimit: -1,
-		Data:      *charts,
-	}
-
-	GenerateOutput(writer, &result)
-	return nil
-}
-
 func getRegistryContent(url string) ([]byte, error) {
 	ctx := context.Background()
 	r, _ := http.NewRequest("GET", url, nil)

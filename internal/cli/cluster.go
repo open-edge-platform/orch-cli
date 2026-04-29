@@ -553,25 +553,6 @@ func clusterReady(cluster coapi.ClusterInfo) bool {
 	return true
 }
 
-func statusMessage(cluster coapi.ClusterInfo) string {
-	if cluster.ProviderStatus == nil || *cluster.ProviderStatus.Indicator != coapi.STATUSINDICATIONIDLE {
-		return *cluster.ProviderStatus.Message
-	}
-	if cluster.ControlPlaneReady == nil || *cluster.ControlPlaneReady.Indicator != coapi.STATUSINDICATIONIDLE {
-		return *cluster.ControlPlaneReady.Message
-	}
-	if cluster.InfrastructureReady == nil || *cluster.InfrastructureReady.Indicator != coapi.STATUSINDICATIONIDLE {
-		return *cluster.InfrastructureReady.Message
-	}
-	if cluster.NodeHealth == nil || *cluster.NodeHealth.Indicator != coapi.STATUSINDICATIONIDLE {
-		return *cluster.NodeHealth.Message
-	}
-	if cluster.LifecyclePhase == nil || *cluster.LifecyclePhase.Indicator != coapi.STATUSINDICATIONIDLE {
-		return *cluster.LifecyclePhase.Message
-	}
-	return "active"
-}
-
 func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {
 	force, err := cmd.Flags().GetBool("force")
 	if err != nil {

@@ -41,7 +41,7 @@ func generateTestData(rows int) []TestStructure {
 	data := make([]TestStructure, rows)
 
 	abc := "abc"
-	for i := 0; i < rows; i += 1 {
+	for i := 0; i < rows; i++ {
 		data[i].Field1 = fmt.Sprintf("0x%05x", i)
 		data[i].Field2 = &abc
 		if i%2 == 0 {

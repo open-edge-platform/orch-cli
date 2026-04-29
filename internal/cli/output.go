@@ -69,7 +69,7 @@ func GenerateOutput(writer io.Writer, result *CommandResult) {
 				errStr := err.Error()
 				if strings.Contains(errStr, "Failed to find field") || strings.Contains(errStr, "did not resolve to a valid field") {
 					// Attempt to extract header fields from the format
-					if headerFields, hErr := format.Format(result.Format).HeaderFields(result.NameLimit); hErr == nil && len(headerFields) > 0 {
+					if headerFields, hErr := result.Format.HeaderFields(result.NameLimit); hErr == nil && len(headerFields) > 0 {
 						Fatalf("Invalid output-filter: %s. Available fields: %s", errStr, strings.Join(headerFields, ", "))
 					}
 				}
@@ -86,26 +86,26 @@ func GenerateOutput(writer io.Writer, result *CommandResult) {
 				Fatalf("Unexpected error while sorting command result: %s", err.Error())
 			}
 		}
-		if result.OutputAs == OUTPUT_TABLE {
-			tableFormat := format.Format(result.Format)
-			if err := tableFormat.Execute(writer, true, result.NameLimit, data); err != nil {
+		switch result.OutputAs {
+		case OUTPUT_TABLE:
+			if err := result.Format.Execute(writer, true, result.NameLimit, data); err != nil {
 				Fatalf("Unexpected error while attempting to format results as table : %s", err.Error())
 			}
-		} else if result.OutputAs == OUTPUT_JSON {
+		case OUTPUT_JSON:
 			// first try to convert it as an array of protobufs
 			//asJson, err := ConvertJsonProtobufArray(data)
 			//if err != nil {
 			// if that fails, then just do a standard json conversion
-			asJsonB, err := json.Marshal(&data)
+			asJSONB, err := json.Marshal(&data)
 			if err != nil {
 				Fatalf("Unexpected error while processing command results to JSON: %s", err.Error())
 			}
-			asJson := string(asJsonB)
+			asJSON := string(asJSONB)
 			//}
-			if _, err = fmt.Fprintf(writer, "%s", asJson); err != nil {
+			if _, err = fmt.Fprintf(writer, "%s", asJSON); err != nil {
 				Fatalf("Unexpected error while writing JSON output: %s", err.Error())
 			}
-		} else if result.OutputAs == OUTPUT_YAML {
+		case OUTPUT_YAML:
 			asYaml, err := yaml.Marshal(&data)
 			if err != nil {
 				Fatalf("Unexpected error while processing command results to YAML: %s", err.Error())

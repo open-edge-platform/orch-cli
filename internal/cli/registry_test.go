@@ -202,7 +202,7 @@ func TestPrintRegistryEvent(t *testing.T) {
 		Description: strPtr("A test registry"),
 		Type:        "HELM",
 	}
-	payload, err := json.Marshal(reg)
+	payload, err := json.Marshal(reg) //nolint:gosec
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer

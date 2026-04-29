@@ -259,7 +259,7 @@ func getValidatedOSUpdateRunFilter(
 	return normalizeFilterWithAPIProbe(raw, "os-update-runs", infra.OSUpdateRun{}, func(filter string) (bool, error) {
 		pageSize := 1
 		offset := 0
-		resp, err := OSUpdateRunClient.OSUpdateRunListOSUpdateRunWithResponse(ctx.(context.Context), projectName,
+		resp, err := OSUpdateRunClient.OSUpdateRunListOSUpdateRunWithResponse(ctx, projectName,
 			&infra.OSUpdateRunListOSUpdateRunParams{
 				OrderBy:  nil,
 				Filter:   &filter,

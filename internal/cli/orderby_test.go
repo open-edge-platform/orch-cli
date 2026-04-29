@@ -284,7 +284,10 @@ func TestNormalizeOrderByWithAPIProbe_MinusPrefixConverted(t *testing.T) {
 
 func TestNormalizeOrderByWithAPIProbe_MultipleFields(t *testing.T) {
 	resetOrderByCache()
-	got, err := normalizeOrderByWithAPIProbe("+name,-version", "key-multi", testOrderByModel{}, acceptAllProbe)
+	probe := func(_ string) (bool, error) {
+		return true, nil
+	}
+	got, err := normalizeOrderByWithAPIProbe("+name,-version", "key-multi", testOrderByModel{}, probe)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.Equal(t, "name asc,version desc", *got)
@@ -373,7 +376,7 @@ func TestNormalizeOrderByWithAPIProbe_UnsupportedFieldHintsOnlySupportedFields(t
 func TestNormalizeOrderByWithAPIProbe_ProbeFirstAcceptedDoesNotBuildFullCache(t *testing.T) {
 	resetOrderByCache()
 	probeCalls := 0
-	probe := func(orderBy string) (bool, error) {
+	probe := func(_ string) (bool, error) {
 		probeCalls++
 		return true, nil
 	}
@@ -417,7 +420,7 @@ func TestGetSupportedOrderByFields_NoneAccepted(t *testing.T) {
 func TestGetSupportedOrderByFields_CacheHitSkipsProbe(t *testing.T) {
 	resetOrderByCache()
 	callCount := 0
-	probe := func(orderBy string) (bool, error) {
+	probe := func(_ string) (bool, error) {
 		callCount++
 		return true, nil
 	}
@@ -435,7 +438,7 @@ func TestGetSupportedOrderByFields_CacheHitSkipsProbe(t *testing.T) {
 func TestGetSupportedOrderByFields_DifferentKeysMissCache(t *testing.T) {
 	resetOrderByCache()
 	callCount := 0
-	probe := func(orderBy string) (bool, error) {
+	probe := func(_ string) (bool, error) {
 		callCount++
 		return true, nil
 	}

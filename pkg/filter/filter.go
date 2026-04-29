@@ -56,7 +56,7 @@ func toOp(op string) Operation {
 	}
 }
 
-type FilterTerm struct {
+type FilterTerm struct { //nolint:revive
 	Op    Operation
 	Value string
 	re    *regexp.Regexp
@@ -167,7 +167,7 @@ func Parse(spec string) (Filter, error) {
 	for _, term := range terms {
 		parts := termRE.FindAllStringSubmatch(term, -1)
 		if parts == nil {
-			return nil, fmt.Errorf("Unable to parse filter term '%s'", term)
+			return nil, fmt.Errorf("unable to parse filter term '%s'", term)
 		}
 		value := parts[0][3]
 		// Strip surrounding single or double quotes so that Name='foo' and Name=foo behave identically.
@@ -183,7 +183,7 @@ func Parse(spec string) (Filter, error) {
 		if ft.Op == RE {
 			ft.re, err = regexp.Compile(ft.Value)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to parse regexp filter value '%s'", ft.Value)
+				return nil, fmt.Errorf("unable to parse regexp filter value '%s'", ft.Value)
 			}
 		}
 		filter[parts[0][1]] = ft
@@ -244,7 +244,7 @@ func testField(v FilterTerm, field reflect.Value) bool {
 	return true
 }
 
-func (f Filter) EvaluateTerm(k string, v FilterTerm, val reflect.Value, recurse bool) (bool, error) {
+func (f Filter) EvaluateTerm(k string, v FilterTerm, val reflect.Value, _ bool) (bool, error) {
 	// If we have been given a pointer, then deference it
 	if val.Kind() == reflect.Ptr {
 		val = reflect.Indirect(val)
@@ -254,22 +254,22 @@ func (f Filter) EvaluateTerm(k string, v FilterTerm, val reflect.Value, recurse 
 	if strings.Contains(k, ".") {
 		parts := strings.SplitN(k, ".", 2)
 		if val.Kind() != reflect.Struct {
-			return false, fmt.Errorf("Dotted field name specified in filter did not resolve to a valid field")
+			return false, fmt.Errorf("dotted field name specified in filter did not resolve to a valid field")
 		}
 		field := val.FieldByName(parts[0])
 		if !field.IsValid() {
-			return false, fmt.Errorf("Failed to find dotted field %s while filtering", parts[0])
+			return false, fmt.Errorf("failed to find dotted field %s while filtering", parts[0])
 		}
 		return f.EvaluateTerm(parts[1], v, field, false)
 	}
 
 	if val.Kind() != reflect.Struct {
-		return false, fmt.Errorf("Field name specified in filter did not resolve to a valid field")
+		return false, fmt.Errorf("field name specified in filter did not resolve to a valid field")
 	}
 
 	field := val.FieldByName(k)
 	if !field.IsValid() {
-		return false, fmt.Errorf("Failed to find field %s while filtering", k)
+		return false, fmt.Errorf("failed to find field %s while filtering", k)
 	}
 
 	// we might have a pointer to a struct at this time, so dereference it
@@ -278,7 +278,7 @@ func (f Filter) EvaluateTerm(k string, v FilterTerm, val reflect.Value, recurse 
 	}
 
 	if field.Kind() == reflect.Struct {
-		return false, fmt.Errorf("Cannot filter on a field that is a struct")
+		return false, fmt.Errorf("cannot filter on a field that is a struct")
 	}
 
 	if (field.Kind() == reflect.Slice) || (field.Kind() == reflect.Array) {

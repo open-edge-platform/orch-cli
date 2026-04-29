@@ -348,16 +348,6 @@ func getAMTProfileOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (
 	return resolveTableOutputTemplate(cmd, DEFAULT_AMTPROFILE_FORMAT, AMTPROFILE_OUTPUT_TEMPLATE_ENVVAR)
 }
 
-func getValidatedAMTProfileOrderBy(ctx interface{}, cmd *cobra.Command, rpsClient rps.ClientWithResponsesInterface, projectName string) (*string, error) {
-	raw, err := cmd.Flags().GetString("order-by")
-	if err != nil {
-		return nil, err
-	}
-
-	// rps API does not expose an order-by parameter; use client-side sorting for all outputs
-	return normalizeOrderByForClientSorting(raw, rps.DomainResponse{})
-}
-
 func readCert(certPath string) ([]byte, error) {
 
 	if certPath == "" || strings.HasPrefix(certPath, "--") {

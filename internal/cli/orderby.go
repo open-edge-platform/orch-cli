@@ -376,7 +376,7 @@ func normalizeFilterWithAPIProbe(raw string, resourceKey string, sample any, pro
 
 	// Validate syntax first using the common filter parser
 	if _, err := pfilter.Parse(raw); err != nil {
-		return nil, fmt.Errorf("Unable to parse filter expression: %w", err)
+		return nil, fmt.Errorf("unable to parse filter expression: %w", err)
 	}
 
 	aliases, canonical := buildOrderByAliases(sample)
@@ -392,8 +392,8 @@ func normalizeFilterWithAPIProbe(raw string, resourceKey string, sample any, pro
 			continue
 		}
 		parts := termRE.FindStringSubmatch(rt)
-		if parts == nil || len(parts) < 4 {
-			return nil, fmt.Errorf("Unable to parse filter term '%s'", rt)
+		if len(parts) < 4 {
+			return nil, fmt.Errorf("unable to parse filter term '%s'", rt)
 		}
 		key := parts[1]
 		op := parts[2]
@@ -470,7 +470,7 @@ func normalizeFilterWithAPIProbe(raw string, resourceKey string, sample any, pro
 	for _, nt := range normalizedTerms {
 		// split on operator to get api field
 		m := termRE.FindStringSubmatch(nt)
-		if m == nil || len(m) < 2 {
+		if len(m) < 2 {
 			continue
 		}
 		apiField := strings.SplitN(m[1], ".", 2)[0]

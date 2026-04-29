@@ -31,7 +31,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
@@ -589,14 +588,6 @@ func checkStatus(statusCode int, message string, statusMessage string) (proceed 
 	}
 }
 
-// Returns an error if the status is abnormal, i.e. status code is not OK and not merely NOT_FOUND
-func statusIsAbnormal(response *http.Response, message string, args ...string) error {
-	if response == nil || (response.StatusCode != 200 && response.StatusCode != 404 && response.StatusCode != 401) {
-		return fmt.Errorf("%s:%s", message, args)
-	}
-	return nil
-}
-
 // Returns an error if the status is abnormal, extracting error details from the response body
 func statusIsAbnormalWithBody(response *http.Response, body []byte, message string) error {
 	if response == nil || (response.StatusCode != 200 && response.StatusCode != 404 && response.StatusCode != 401) {
@@ -678,20 +669,6 @@ func processError(err error) error {
 func valueOrNone(s *string) string {
 	if s != nil && len(*s) > 0 {
 		return *s
-	}
-	return "<none>"
-}
-
-func safeBool(b *bool) bool {
-	if b != nil {
-		return *b
-	}
-	return false
-}
-
-func obscureValue(s *string) string {
-	if s != nil && len(*s) > 0 {
-		return "********"
 	}
 	return "<none>"
 }

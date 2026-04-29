@@ -421,7 +421,7 @@ func resolveLongitude(value string) (*int32, error) {
 }
 
 // Returns a validated order-by string for the site resource, with hints for valid fields
-func getValidatedSiteOrderBy(ctx interface{}, cmd *cobra.Command, siteClient infra.ClientWithResponsesInterface, projectName string) (*string, error) {
+func getValidatedSiteOrderBy(_ interface{}, cmd *cobra.Command, siteClient infra.ClientWithResponsesInterface, projectName string) (*string, error) {
 	raw, err := cmd.Flags().GetString("order-by")
 	if err != nil {
 		return nil, err
@@ -438,9 +438,10 @@ func getValidatedSiteOrderBy(ctx interface{}, cmd *cobra.Command, siteClient inf
 	// Normalize order direction for API: -field -> 'field desc', +field -> 'field asc', field -> 'field'
 	normalized := raw
 	if len(normalized) > 0 {
-		if normalized[0] == '-' {
+		switch normalized[0] {
+		case '-':
 			normalized = normalized[1:] + " desc"
-		} else if normalized[0] == '+' {
+		case '+':
 			normalized = normalized[1:] + " asc"
 		}
 	}

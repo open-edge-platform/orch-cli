@@ -194,7 +194,7 @@ func TestInvalidField(t *testing.T) {
 	}
 
 	r, err := f.Process(data)
-	assert.EqualError(t, err, "Failed to find field Four while filtering")
+	assert.EqualError(t, err, "failed to find field Four while filtering")
 
 	if r != nil {
 		t.Errorf("expected no results, got some")
@@ -215,7 +215,7 @@ func TestInvalidDotted(t *testing.T) {
 	}
 
 	r, err := f.Process(data)
-	assert.EqualError(t, err, "Failed to find field NonExistent while filtering")
+	assert.EqualError(t, err, "failed to find field NonExistent while filtering")
 
 	if r != nil {
 		t.Errorf("expected no results, got some")
@@ -236,7 +236,7 @@ func TestTrailingDot(t *testing.T) {
 	}
 
 	r, err := f.Process(data)
-	assert.EqualError(t, err, "Field name specified in filter did not resolve to a valid field")
+	assert.EqualError(t, err, "field name specified in filter did not resolve to a valid field")
 
 	if r != nil {
 		t.Errorf("expected no results, got some")
@@ -257,7 +257,7 @@ func TestDottedOnString(t *testing.T) {
 	}
 
 	r, err := f.Process(data)
-	assert.EqualError(t, err, "Field name specified in filter did not resolve to a valid field")
+	assert.EqualError(t, err, "field name specified in filter did not resolve to a valid field")
 
 	if r != nil {
 		t.Errorf("expected no results, got some")
@@ -278,7 +278,7 @@ func TestFilterOnStruct(t *testing.T) {
 	}
 
 	r, err := f.Process(data)
-	assert.EqualError(t, err, "Cannot filter on a field that is a struct")
+	assert.EqualError(t, err, "cannot filter on a field that is a struct")
 
 	if r != nil {
 		t.Errorf("expected no results, got some")
@@ -299,7 +299,7 @@ func TestFilterOnPointerStruct(t *testing.T) {
 	}
 
 	r, err := f.Process(data)
-	assert.EqualError(t, err, "Cannot filter on a field that is a struct")
+	assert.EqualError(t, err, "cannot filter on a field that is a struct")
 
 	if r != nil {
 		t.Errorf("expected no results, got some")

@@ -119,7 +119,7 @@ func flattenUser(user *keycloak.UserRepresentation, groups []keycloak.GroupRepre
 		Enabled:   user.Enabled,
 	}
 
-	if groups != nil && len(groups) > 0 {
+	if len(groups) > 0 {
 		groupNames := make([]string, 0, len(groups))
 		for _, g := range groups {
 			groupNames = append(groupNames, g.Name)
@@ -128,7 +128,7 @@ func flattenUser(user *keycloak.UserRepresentation, groups []keycloak.GroupRepre
 		item.Groups = &groupsStr
 	}
 
-	if roles != nil && len(roles) > 0 {
+	if len(roles) > 0 {
 		roleNames := make([]string, 0, len(roles))
 		for _, r := range roles {
 			roleNames = append(roleNames, r.Name)
@@ -200,13 +200,6 @@ func printUser(cmd *cobra.Command, writer io.Writer, user *keycloak.UserRepresen
 
 	GenerateOutput(writer, &result)
 	return nil
-}
-
-func valueOrDefault(s string) string {
-	if s == "" {
-		return "N/A"
-	}
-	return s
 }
 
 func getListUsersCommand() *cobra.Command {

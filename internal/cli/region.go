@@ -364,9 +364,7 @@ func runListRegionCommand(cmd *cobra.Command, _ []string) error {
 
 		// Build flat list of regions from response
 		regions := make([]infra.RegionResource, 0, len(resp.JSON200.Regions))
-		for _, r := range resp.JSON200.Regions {
-			regions = append(regions, r)
-		}
+		regions = append(regions, resp.JSON200.Regions...)
 
 		orderBy := ""
 		if validatedOrderBy != nil {
@@ -452,34 +450,6 @@ func getValidatedRegionOrderBy(ctx context.Context, cmd *cobra.Command, regionCl
 			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating region order-by"); err != nil {
-			return false, err
-		}
-		return true, nil
-	})
-}
-
-func getValidatedRegionFilter(ctx context.Context, cmd *cobra.Command, regionClient infra.ClientWithResponsesInterface, projectName string) (*string, error) {
-	raw, err := cmd.Flags().GetString("filter")
-	if err != nil {
-		return nil, err
-	}
-
-	return normalizeFilterWithAPIProbe(raw, "regions", infra.RegionResource{}, func(filter string) (bool, error) {
-		pageSize := 1
-		offset := 0
-		resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
-			&infra.RegionServiceListRegionsParams{
-				Filter:   &filter,
-				PageSize: &pageSize,
-				Offset:   &offset,
-			}, auth.AddAuthHeader)
-		if err != nil {
-			return false, processError(err)
-		}
-		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, &api400Error{string(resp.Body)}
-		}
-		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating region filter"); err != nil {
 			return false, err
 		}
 		return true, nil

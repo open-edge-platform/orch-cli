@@ -242,7 +242,7 @@ func readOSProfileFromYaml(path string) (*NestedSpec, error) {
 	if !result.Valid() {
 		var sb strings.Builder
 		for _, desc := range result.Errors() {
-			sb.WriteString(fmt.Sprintf("- %s\n", desc))
+			fmt.Fprintf(&sb, "- %s\n", desc)
 		}
 		return nil, fmt.Errorf("YAML does not conform to schema:\n%s", sb.String())
 	}

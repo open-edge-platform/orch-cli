@@ -17,8 +17,9 @@
 package order
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type SortIncludedStruct struct {
@@ -26,7 +27,7 @@ type SortIncludedStruct struct {
 }
 
 type SortTestStruct struct {
-	Id    int
+	ID    int
 	One   string
 	Two   string
 	Three uint
@@ -37,7 +38,7 @@ type SortTestStruct struct {
 
 var testSetOne = []SortTestStruct{
 	{
-		Id:    0,
+		ID:    0,
 		One:   "a",
 		Two:   "x",
 		Three: 10,
@@ -46,7 +47,7 @@ var testSetOne = []SortTestStruct{
 		Eight: &SortIncludedStruct{Seven: "o"},
 	},
 	{
-		Id:    1,
+		ID:    1,
 		One:   "a",
 		Two:   "c",
 		Three: 1,
@@ -55,7 +56,7 @@ var testSetOne = []SortTestStruct{
 		Eight: &SortIncludedStruct{Seven: "p"},
 	},
 	{
-		Id:    2,
+		ID:    2,
 		One:   "a",
 		Two:   "b",
 		Three: 2,
@@ -64,7 +65,7 @@ var testSetOne = []SortTestStruct{
 		Eight: &SortIncludedStruct{Seven: "q"},
 	},
 	{
-		Id:    3,
+		ID:    3,
 		One:   "a",
 		Two:   "a",
 		Three: 3,
@@ -73,7 +74,7 @@ var testSetOne = []SortTestStruct{
 		Eight: &SortIncludedStruct{Seven: "r"},
 	},
 	{
-		Id:    4,
+		ID:    4,
 		One:   "b",
 		Two:   "a",
 		Three: 3,
@@ -85,14 +86,14 @@ var testSetOne = []SortTestStruct{
 
 var testSetTwo = []SortTestStruct{
 	{
-		Id:    0,
+		ID:    0,
 		One:   "a",
 		Two:   "x",
 		Three: 10,
 		Four:  10,
 	},
 	{
-		Id:    1,
+		ID:    1,
 		One:   "a",
 		Two:   "y",
 		Three: 1,
@@ -102,7 +103,7 @@ var testSetTwo = []SortTestStruct{
 
 func Verify(v []SortTestStruct, order []int) bool {
 	for i, item := range v {
-		if item.Id != order[i] {
+		if item.ID != order[i] {
 			return false
 		}
 	}
@@ -258,7 +259,7 @@ func TestSortSingle(t *testing.T) {
 		t.Errorf("Unexpected result type")
 	}
 
-	if r.Id != testSetOne[0].Id {
+	if r.ID != testSetOne[0].ID {
 		t.Errorf("results don't match input")
 	}
 }
@@ -299,7 +300,7 @@ func TestInvalidDotted(t *testing.T) {
 		t.Errorf("Unable to parse sort specification")
 	}
 	o, err := s.Process(testSetOne)
-	assert.EqualError(t, err, "Failed to find field Nonexistent while sorting")
+	assert.EqualError(t, err, "failed to find field Nonexistent while sorting")
 	if o != nil {
 		t.Errorf("expected no results, got some")
 	}
@@ -311,7 +312,7 @@ func TestDotOnString(t *testing.T) {
 		t.Errorf("Unable to parse sort specification")
 	}
 	o, err := s.Process(testSetOne)
-	assert.EqualError(t, err, "Dotted field name specified in filter did not resolve to a valid field")
+	assert.EqualError(t, err, "dotted field name specified in filter did not resolve to a valid field")
 	if o != nil {
 		t.Errorf("expected no results, got some")
 	}
@@ -323,7 +324,7 @@ func TestSortOnStuct(t *testing.T) {
 		t.Errorf("Unable to parse sort specification")
 	}
 	o, err := s.Process(testSetOne)
-	assert.EqualError(t, err, "Cannot sort on a field that is a struct")
+	assert.EqualError(t, err, "cannot sort on a field that is a struct")
 	if o != nil {
 		t.Errorf("expected no results, got some")
 	}
@@ -335,7 +336,7 @@ func TestSortOnPointerStuct(t *testing.T) {
 		t.Errorf("Unable to parse sort specification")
 	}
 	o, err := s.Process(testSetOne)
-	assert.EqualError(t, err, "Cannot sort on a field that is a struct")
+	assert.EqualError(t, err, "cannot sort on a field that is a struct")
 	if o != nil {
 		t.Errorf("expected no results, got some")
 	}
@@ -347,7 +348,7 @@ func TestTrailingDot(t *testing.T) {
 		t.Errorf("Unable to parse sort specification")
 	}
 	o, err := s.Process(testSetOne)
-	assert.EqualError(t, err, "Dotted field name specified in filter did not resolve to a valid field")
+	assert.EqualError(t, err, "dotted field name specified in filter did not resolve to a valid field")
 	if o != nil {
 		t.Errorf("expected no results, got some")
 	}

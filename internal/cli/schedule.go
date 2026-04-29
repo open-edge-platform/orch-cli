@@ -75,7 +75,7 @@ const SINGLE = 0
 const REPEATED = 1
 
 // Prints SSH keys in tabular format
-type scheduleListItem struct {
+type scheduleListItem struct { //nolint:revive
 	Name       string
 	Target     string
 	ResourceId *string
@@ -159,7 +159,7 @@ func derefString(p *string) string {
 }
 
 // Prints output details of SSH key
-type scheduleGetItem struct {
+type scheduleGetItem struct { //nolint:revive
 	Name            string
 	ResourceId      *string
 	TargetHost      *string
@@ -176,7 +176,7 @@ type scheduleGetItem struct {
 	DurationSeconds int32
 }
 
-func printSchedule(cmd *cobra.Command, writer io.Writer, singleSchedule infra.SingleScheduleResource, repeatedSchedule infra.RepeatedScheduleResource, loc *time.Location) error {
+func printSchedule(cmd *cobra.Command, writer io.Writer, singleSchedule infra.SingleScheduleResource, repeatedSchedule infra.RepeatedScheduleResource, _ *time.Location) error {
 	var item scheduleGetItem
 	if singleSchedule.ResourceId != nil {
 		item = scheduleGetItem{
@@ -241,28 +241,6 @@ func printSchedule(cmd *cobra.Command, writer io.Writer, singleSchedule infra.Si
 }
 
 // Helper function to convert UTC cron time to target timezone
-func convertCronTimeToTimezone(cronHour, cronMinute string, targetLoc *time.Location) (string, string, error) {
-	// Parse the cron hour and minute
-	hour, err := strconv.Atoi(cronHour)
-	if err != nil {
-		return cronHour, cronMinute, fmt.Errorf("invalid hour format: %s", cronHour)
-	}
-
-	minute, err := strconv.Atoi(cronMinute)
-	if err != nil {
-		return cronHour, cronMinute, fmt.Errorf("invalid minute format: %s", cronMinute)
-	}
-
-	// Create a time in UTC for today with the cron hour/minute
-	now := time.Now().UTC()
-	utcTime := time.Date(now.Year(), now.Month(), now.Day(), hour, minute, 0, 0, time.UTC)
-
-	// Convert to target timezone
-	targetTime := utcTime.In(targetLoc)
-
-	return fmt.Sprintf("%d", targetTime.Hour()), fmt.Sprintf("%d", targetTime.Minute()), nil
-}
-
 // Filters list of schedules to find one with specific name
 func findSchedule(singleSchedules []infra.SingleScheduleResource, repeatedSchedules []infra.RepeatedScheduleResource, id string) (infra.SingleScheduleResource, infra.RepeatedScheduleResource, error) {
 	for _, schedule := range singleSchedules {

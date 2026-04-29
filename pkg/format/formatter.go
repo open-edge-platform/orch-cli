@@ -100,7 +100,7 @@ func headerLabelForField(field string) string {
 
 func GetHeaderString(tmpl *template.Template, nameLimit int) string {
 	var header string
-	for _, n := range tmpl.Tree.Root.Nodes {
+	for _, n := range tmpl.Root.Nodes {
 		switch n.Type() {
 		case parse.NodeText:
 			header += n.String()
@@ -130,7 +130,7 @@ func (f Format) IsTable() bool {
 }
 
 func (f Format) Execute(writer io.Writer, withHeaders bool, nameLimit int, data interface{}) error {
-	var tabWriter *tabwriter.Writer = nil
+	var tabWriter *tabwriter.Writer
 	format := f
 
 	if f.IsTable() {
@@ -234,10 +234,7 @@ func (f Format) HeaderFields(nameLimit int) ([]string, error) {
 	}
 
 	// Trim table prefix so header text doesn't include the literal "table"
-	formatStr := string(f)
-	if strings.HasPrefix(formatStr, "table") {
-		formatStr = strings.TrimPrefix(formatStr, "table")
-	}
+	formatStr := strings.TrimPrefix(string(f), "table")
 
 	// Parse the template to access its parse tree
 	tmpl, err := template.New("output").Funcs(funcmap).Parse(formatStr)
@@ -247,7 +244,7 @@ func (f Format) HeaderFields(nameLimit int) ([]string, error) {
 
 	// Walk the template parse tree and extract raw field names (e.g., Name, DisplayName)
 	var rawFields []string
-	for _, n := range tmpl.Tree.Root.Nodes {
+	for _, n := range tmpl.Root.Nodes {
 		switch n.Type() {
 		case parse.NodeAction:
 			found := nameFinder.FindStringSubmatch(n.String())
@@ -315,13 +312,13 @@ func camelToSnake(s string) string {
 
 func (f Format) ExecuteFixedWidth(columnWidths interface{}, header bool, data interface{}) (string, error) {
 	if !f.IsTable() {
-		return "", errors.New("Fixed width is only available on table format")
+		return "", errors.New("fixed width is only available on table format")
 	}
 
 	outputAs := strings.TrimPrefix(string(f), "table")
-	tmpl, err := template.New("output").Parse(string(outputAs))
+	tmpl, err := template.New("output").Parse(outputAs)
 	if err != nil {
-		return "", fmt.Errorf("Failed to parse template: %v", err)
+		return "", fmt.Errorf("failed to parse template: %v", err)
 	}
 
 	var buf bytes.Buffer
@@ -334,7 +331,7 @@ func (f Format) ExecuteFixedWidth(columnWidths interface{}, header bool, data in
 		// Caller wants the data.
 		err = tmpl.Execute(&buf, data)
 		if err != nil {
-			return "", fmt.Errorf("Failed to execute template: %v", err)
+			return "", fmt.Errorf("failed to execute template: %v", err)
 		}
 		tabSepOutput = buf.String()
 	}
@@ -346,7 +343,7 @@ func (f Format) ExecuteFixedWidth(columnWidths interface{}, header bool, data in
 	buf.Reset()
 	err = tmpl.Execute(&buf, columnWidths)
 	if err != nil {
-		return "", fmt.Errorf("Failed to execute template on widths: %v", err)
+		return "", fmt.Errorf("failed to execute template on widths: %v", err)
 	}
 	tabSepWidth := buf.String()
 
@@ -358,7 +355,7 @@ func (f Format) ExecuteFixedWidth(columnWidths interface{}, header bool, data in
 	for i, outPart := range outParts {
 		width, err := strconv.Atoi(widthParts[i])
 		if err != nil {
-			return "", fmt.Errorf("Failed to parse width %s: %v", widthParts[i], err)
+			return "", fmt.Errorf("failed to parse width %s: %v", widthParts[i], err)
 		}
 		output = output + TrimAndPad(outPart, width) + " "
 	}
