@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /*
  * Copyright 2019-2024 Open Networking Foundation (ONF) and the ONF Contributors
  *
