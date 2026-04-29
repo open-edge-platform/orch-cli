@@ -311,7 +311,7 @@ func runListSSHKeyCommand(cmd *cobra.Command, _ []string) error {
 				return false, processError(err)
 			}
 			if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-				return false, nil
+				return false, &api400Error{string(resp.Body)}
 			}
 			if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating sshkey order-by"); err != nil {
 				return false, err
@@ -548,7 +548,7 @@ func getValidatedSSHKeyFilter(
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating sshkey filter"); err != nil {
 			return false, err

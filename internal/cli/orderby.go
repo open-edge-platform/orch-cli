@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -208,6 +209,16 @@ func normalizeOrderByWithAPIProbe(raw string, resourceKey string, sample any, pr
 	return nil, fmt.Errorf("invalid --order-by expression %q; available fields: %s (note: not all fields may support API-side sorting for JSON/YAML output)", raw, strings.Join(hintFields, ", "))
 }
 
+// api400Error is a sentinel error type used by per-resource probe closures to
+// indicate the API returned HTTP 400 with a body. normalizeFilterWithAPIProbe
+// treats this specially by surfacing the API message and appending helpful
+// field hints.
+type api400Error struct {
+	msg string
+}
+
+func (e *api400Error) Error() string { return e.msg }
+
 // buildClientSortAliases builds an alias map for client-side sorting.
 // Unlike buildOrderByAliases (which maps to JSON tag names for the API), this maps all
 // aliases to the Go struct field name (e.g. "Kind") because order.go uses reflect.FieldByName
@@ -393,11 +404,25 @@ func normalizeFilterWithAPIProbe(raw string, resourceKey string, sample any, pro
 	normalized := strings.Join(normalizedTerms, ",")
 
 	accepted, err := probe(normalized)
-	// If probe returned an error (e.g. server-side 500), treat the probe as
-	// temporarily unavailable and return the normalized filter so that the
-	// subsequent real list call surfaces the server error (preserving previous
-	// UX where API errors are shown during listing rather than during validation).
+	// If probe returned an error (for example API returned HTTP 400 with a
+	// message), surface that error to the user but also attempt to build
+	// per-field hints so we can append helpful guidance.
 	if err != nil {
+		// Only surface probe errors that represent an API 400 response. Other
+		// probe errors (e.g., server-side 500) are treated as probe
+		// unavailability and the normalized filter is returned so that the
+		// subsequent real list call surfaces the server error as before.
+		var aerr *api400Error
+		if errors.As(err, &aerr) {
+			supported, _, herr := getSupportedFilterFields(resourceKey, sample, probe)
+			hintFields := supported
+			// If per-field probing failed, fall back to the canonical field list
+			// so users still get helpful hints instead of just the raw API body.
+			if herr != nil || len(hintFields) == 0 {
+				hintFields = canonical
+			}
+			return nil, fmt.Errorf("%v\navailable fields: %s", err, strings.Join(hintFields, ", "))
+		}
 		return &normalized, nil
 	}
 	if accepted {

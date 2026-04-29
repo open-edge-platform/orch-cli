@@ -298,7 +298,7 @@ func getValidatedClusterOrderBy(
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating cluster order-by"); err != nil {
 			return false, err
@@ -332,7 +332,7 @@ func getValidatedClusterFilter(
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating cluster filter"); err != nil {
 			return false, err

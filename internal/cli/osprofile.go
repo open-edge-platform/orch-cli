@@ -184,7 +184,6 @@ func printOSProfile(cmd *cobra.Command, writer io.Writer, OSProfile *infra.Opera
 		NameLimit: -1,
 		Data:      OSProfile,
 	}
-
 	GenerateOutput(writer, &result)
 	return nil
 }
@@ -382,7 +381,7 @@ func getValidatedOSProfileOrderBy(
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS profile order-by"); err != nil {
 			return false, err
@@ -416,7 +415,7 @@ func getValidatedOSProfileFilter(
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS profile filter"); err != nil {
 			return false, err

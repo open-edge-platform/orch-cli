@@ -200,7 +200,7 @@ func getValidatedDeploymentOrderBy(
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment order-by"); err != nil {
 			return false, err
@@ -625,7 +625,7 @@ func getValidatedDeploymentFilter(
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment filter"); err != nil {
 			return false, err

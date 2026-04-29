@@ -451,7 +451,7 @@ func getValidatedOSUpdatePolicyOrderBy(ctx interface{}, cmd *cobra.Command, OSUP
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == 400 {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS Update Policy order-by"); err != nil {
 			return false, err
@@ -486,7 +486,7 @@ func getValidatedOSUpdatePolicyFilter(
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == 400 {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS Update Policy filter"); err != nil {
 			return false, err

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -147,6 +148,35 @@ func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 		combinedFilter = filterSpec
 	}
 
+	// Validate combined filter with API probe so callers get friendly hints
+	var validatedFilter *string
+	if combinedFilter != nil {
+		vf, err := normalizeFilterWithAPIProbe(*combinedFilter, "sites", infra.SiteResource{}, func(filter string) (bool, error) {
+			pageSize := 1
+			offset := 0
+			resp, err := siteClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
+				&infra.SiteServiceListSitesParams{
+					Filter:   &filter,
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return false, processError(err)
+			}
+			if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+				return false, &api400Error{string(resp.Body)}
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating site filter"); err != nil {
+				return false, err
+			}
+			return true, nil
+		})
+		if err != nil {
+			return err
+		}
+		validatedFilter = vf
+	}
+
 	sites := make([]infra.SiteResource, 0)
 	outputType, _ := cmd.Flags().GetString("output-type")
 	apiOrderBy := validatedOrderBy
@@ -157,7 +187,7 @@ func runListSiteCommand(cmd *cobra.Command, _ []string) error {
 	for {
 		resp, err := siteClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
 			&infra.SiteServiceListSitesParams{
-				Filter:   combinedFilter,
+				Filter:   validatedFilter,
 				OrderBy:  apiOrderBy,
 				PageSize: pageSize,
 				Offset:   offset,

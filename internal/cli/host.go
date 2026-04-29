@@ -525,7 +525,7 @@ func getValidatedHostOrderBy(ctx context.Context, cmd *cobra.Command, hostClient
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating host order-by"); err != nil {
 			return false, err
@@ -554,7 +554,7 @@ func getValidatedHostFilter(ctx context.Context, cmd *cobra.Command, hostClient 
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating host filter"); err != nil {
 			return false, err
@@ -1969,7 +1969,7 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 			return false, processError(err)
 		}
 		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
-			return false, nil
+			return false, &api400Error{string(resp.Body)}
 		}
 		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating host filter"); err != nil {
 			return false, err
