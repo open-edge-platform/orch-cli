@@ -343,19 +343,19 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						JSON200: &infra.ListHostsResponse{
 							Hosts: []infra.HostResource{
 								{
-									HostStatus:      stringPtr("Running"),
-									ResourceId:      stringPtr("host-abc12345"),
-									Name:            "edge-host-001",
-									Hostname:        stringPtr("edge-host-001.example.com"),
-									Note:            stringPtr("Edge computing host"),
-									CpuArchitecture: stringPtr("x86_64"),
-									CpuCores:        func() *int { i := 8; return &i }(),
-									CpuModel:        stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
-									CpuSockets:      func() *int { i := 2; return &i }(),
-									CpuThreads:      func() *int { i := 32; return &i }(),
-									MemoryBytes:     stringPtr("17179869184"), // 16GB in bytes
-									SerialNumber:    stringPtr("1234567890"),
-									Uuid:            stringPtr("550e8400-e29b-41d4-a716-446655440000"),
+									HostStatus:        stringPtr("Running"),
+									ResourceId:        stringPtr("host-abc12345"),
+									Name:              "edge-host-001",
+									Hostname:          stringPtr("edge-host-001.example.com"),
+									Note:              stringPtr("Edge computing host"),
+									CpuArchitecture:   stringPtr("x86_64"),
+									CpuCores:          func() *int { i := 8; return &i }(),
+									CpuModel:          stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
+									CpuSockets:        func() *int { i := 2; return &i }(),
+									CpuThreads:        func() *int { i := 32; return &i }(),
+									MemoryBytes:       stringPtr("17179869184"), // 16GB in bytes
+									SerialNumber:      stringPtr("1234567890"),
+									Uuid:              stringPtr("550e8400-e29b-41d4-a716-446655440000"),
 									ProductName:       stringPtr("ThinkSystem SR650"),
 									CurrentAmtState:   (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
 									DesiredAmtState:   (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
