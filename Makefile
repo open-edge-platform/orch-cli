@@ -104,11 +104,15 @@ fetch-rps-openapi:
 	@# Help: Fetch the OpenDMT RPS OpenAPI spec
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-opendmt-rps-openapi.yaml -o pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 
+fetch-mps-openapi:
+	@# Help: Fetch the OpenDMT MPS OpenAPI spec
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-opendmt-mps-openapi.yaml -o pkg/rest/mps/amc-opendmt-mps-openapi.yaml
+
 fetch-utils-openapi:
 	@# Help: Fetch the Utils API OpenAPI spec
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/orch-utils.tenancy-datamodel.openapi.yaml -o pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
 
-fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi fetch-infra-openapi fetch-rps-openapi fetch-utils-openapi
+fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi fetch-infra-openapi fetch-rps-openapi fetch-mps-openapi fetch-utils-openapi
 	@# Help: Fetch OpenAPI specs for all components
 
 
@@ -134,20 +138,22 @@ mockgen-dependency:
 # install command: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.4.1
 rest-client-gen: oapi-codegen-dependency
 	@# Help: Generate Rest client from the MT GW openapi spec.
-	oapi-codegen -generate client -old-config-style -package catalog -o pkg/rest/catalog/client.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
-	oapi-codegen -generate types -old-config-style -package catalog -o pkg/rest/catalog/types.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
-	oapi-codegen -generate client -old-config-style -package catalogutilities -o pkg/rest/catalogutilities/client.go pkg/rest/catalogutilities/amc-app-orch-catalog-utilities-openapi.yaml
-	oapi-codegen -generate types -old-config-style -package catalogutilities -o pkg/rest/catalogutilities/types.go pkg/rest/catalogutilities/amc-app-orch-catalog-utilities-openapi.yaml	
-	oapi-codegen -generate client -old-config-style -package deployment -o pkg/rest/deployment/client.go pkg/rest/deployment/amc-app-orch-deployment-app-deployment-manager-openapi.yaml
-	oapi-codegen -generate types -old-config-style -package deployment -o pkg/rest/deployment/types.go pkg/rest/deployment/amc-app-orch-deployment-app-deployment-manager-openapi.yaml
-	oapi-codegen -generate client -old-config-style -package cluster -o pkg/rest/cluster/client.go pkg/rest/cluster/amc-cluster-manager-openapi.yaml
-	oapi-codegen -generate types -old-config-style -package cluster -o pkg/rest/cluster/types.go pkg/rest/cluster/amc-cluster-manager-openapi.yaml
-	oapi-codegen -generate client -old-config-style -package infra -o pkg/rest/infra/client.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
-	oapi-codegen -generate types -old-config-style -package infra -o pkg/rest/infra/types.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
-	oapi-codegen -generate client -old-config-style -package rps -o pkg/rest/rps/client.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
-	oapi-codegen -generate types -old-config-style -package rps -o pkg/rest/rps/types.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
-	oapi-codegen -generate client -old-config-style -package tenancy -o pkg/rest/tenancy/client.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
-	oapi-codegen -generate types -old-config-style -package tenancy -o pkg/rest/tenancy/types.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
+# 	oapi-codegen -generate client -old-config-style -package catalog -o pkg/rest/catalog/client.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
+# 	oapi-codegen -generate types -old-config-style -package catalog -o pkg/rest/catalog/types.go pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
+# 	oapi-codegen -generate client -old-config-style -package catalogutilities -o pkg/rest/catalogutilities/client.go pkg/rest/catalogutilities/amc-app-orch-catalog-utilities-openapi.yaml
+# 	oapi-codegen -generate types -old-config-style -package catalogutilities -o pkg/rest/catalogutilities/types.go pkg/rest/catalogutilities/amc-app-orch-catalog-utilities-openapi.yaml	
+# 	oapi-codegen -generate client -old-config-style -package deployment -o pkg/rest/deployment/client.go pkg/rest/deployment/amc-app-orch-deployment-app-deployment-manager-openapi.yaml
+# 	oapi-codegen -generate types -old-config-style -package deployment -o pkg/rest/deployment/types.go pkg/rest/deployment/amc-app-orch-deployment-app-deployment-manager-openapi.yaml
+# 	oapi-codegen -generate client -old-config-style -package cluster -o pkg/rest/cluster/client.go pkg/rest/cluster/amc-cluster-manager-openapi.yaml
+# 	oapi-codegen -generate types -old-config-style -package cluster -o pkg/rest/cluster/types.go pkg/rest/cluster/amc-cluster-manager-openapi.yaml
+# 	oapi-codegen -generate client -old-config-style -package infra -o pkg/rest/infra/client.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
+# 	oapi-codegen -generate types -old-config-style -package infra -o pkg/rest/infra/types.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
+# 	oapi-codegen -generate client -old-config-style -package rps -o pkg/rest/rps/client.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
+# 	oapi-codegen -generate types -old-config-style -package rps -o pkg/rest/rps/types.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
+	oapi-codegen -generate client -old-config-style -package mps -o pkg/rest/mps/client.go pkg/rest/mps/amc-opendmt-mps-openapi.yaml
+	oapi-codegen -generate types -old-config-style -package mps -o pkg/rest/mps/types.go pkg/rest/mps/amc-opendmt-mps-openapi.yaml
+# 	oapi-codegen -generate client -old-config-style -package tenancy -o pkg/rest/tenancy/client.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
+# 	oapi-codegen -generate types -old-config-style -package tenancy -o pkg/rest/tenancy/types.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
 
 # Supported mockgen version v0.5.2
 # install command: go install go.uber.org/mock/mockgen@v0.5.2
@@ -160,6 +166,7 @@ mock-client-gen: mockgen-dependency
 	mockgen -source=pkg/rest/infra/client.go -destination=pkg/rest/infra/mock_client.go -package=infra
 	mockgen -source=pkg/rest/rps/client.go -destination=pkg/rest/rps/mock_client.go -package=rps
 	mockgen -source=pkg/rest/tenancy/client.go -destination=pkg/rest/tenancy/mock_client.go -package=tenancy
+	mockgen -source=pkg/rest/mps/client.go -destination=pkg/rest/mps/mock_client.go -package=mps
 
 cli-docs:
 	@# Help: Generates markdowns for the orchestrator cli
