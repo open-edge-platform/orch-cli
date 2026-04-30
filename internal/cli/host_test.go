@@ -43,6 +43,11 @@ func (s *CLITestSuite) setHost(publisher string, hostID string, args commandArgs
 	return s.runCommand(commandString)
 }
 
+func (s *CLITestSuite) setHostBulk(publisher string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`set host --project %s`, publisher))
+	return s.runCommand(commandString)
+}
+
 func (s *CLITestSuite) updateOsHost(publisher string, hostID string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`update-os host %s --project %s`, hostID, publisher))
 	return s.runCommand(commandString)
@@ -81,6 +86,11 @@ func (s *CLITestSuite) testResolvePower() {
 		{"on", infra.POWERSTATEON, false},
 		{"off", infra.POWERSTATEOFF, false},
 		{"reset", infra.POWERSTATERESET, false},
+		{"power-cycle", infra.POWERSTATEPOWERCYCLE, false},
+		{"POWER_STATE_ON", infra.POWERSTATEON, false},
+		{"POWER_STATE_OFF", infra.POWERSTATEOFF, false},
+		{"POWER_STATE_RESET", infra.POWERSTATERESET, false},
+		{"POWER_STATE_POWER_CYCLE", infra.POWERSTATEPOWERCYCLE, false},
 		{"invalid", "", true},
 		{"", "", true},
 	}
@@ -526,15 +536,19 @@ func (s *CLITestSuite) TestHost() {
 		"generate-csv": "test_output.csv",
 	}
 	_, err = s.setHost(project, "", HostArgs)
-	files, _ := os.ReadDir(".")
-	for _, f := range files {
-		fmt.Println("File:", f.Name())
-	}
 	s.NoError(err)
 	s.True(PathExists("test_output.csv"), "CSV file was not generated")
+
+	csvBytes, err := os.ReadFile("test_output.csv")
+	s.NoError(err)
+	csvString := string(csvBytes)
+	s.Contains(csvString, "Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState")
+	s.Contains(csvString, "host-abc12345")
+	s.Contains(csvString, "AMT_STATE_PROVISIONED")
+	s.Contains(csvString, "POWER_STATE_ON")
 	defer os.Remove("test_output.csv")
 
-	// --- CSV Import Test ---
+	// --- CSV Import Test (3-column legacy format still works) ---
 	csvContent := `Name,ResourceID,DesiredAmtState
 host-153,host-0a6e769d,provisioned
 host-65,host-0f523c97,unprovisioned
@@ -549,6 +563,149 @@ host-65,host-0f523c97,unprovisioned
 	}
 	_, err = s.setHost(project, "", HostArgs)
 	s.NoError(err)
+
+	// --- CSV Import with all 5 columns ---
+	csvContentFull := `Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
+host-153,host-0a6e769d,provisioned,admin,on
+host-65,host-0f523c97,unprovisioned,,power-cycle
+`
+	csvPathFull := "test_import_full.csv"
+	err = os.WriteFile(csvPathFull, []byte(csvContentFull), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPathFull)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPathFull,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
+
+	// --- CSV Import with only power state (blank AMT/ControlMode) ---
+	csvContentPowerOnly := `Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
+host-153,host-0a6e769d,,,reset
+host-65,host-0f523c97,,,off
+`
+	csvPathPowerOnly := "test_import_power_only.csv"
+	err = os.WriteFile(csvPathPowerOnly, []byte(csvContentPowerOnly), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPathPowerOnly)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPathPowerOnly,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
+
+	// --- CSV round-trip: export uses proto names, import accepts them ---
+	csvContentProto := `Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
+host-153,host-0a6e769d,AMT_STATE_PROVISIONED,AMT_CONTROL_MODE_ACM,POWER_STATE_ON
+`
+	csvPathProto := "test_import_proto.csv"
+	err = os.WriteFile(csvPathProto, []byte(csvContentProto), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPathProto)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPathProto,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
+
+	///////////////////////////////////
+	// Bulk Filter Operation Tests
+	///////////////////////////////////
+
+	// Bulk power action with --filter
+	HostArgs = map[string]string{
+		"filter": "hostStatus='onboarded'",
+		"power":  "on",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power action with --site
+	HostArgs = map[string]string{
+		"site":  "site-7ceae560",
+		"power": "reset",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power-cycle
+	HostArgs = map[string]string{
+		"filter": "hostStatus='onboarded'",
+		"power":  "power-cycle",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk AMT state with --filter
+	HostArgs = map[string]string{
+		"filter":    "hostStatus='onboarded'",
+		"amt-state": "provisioned",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk combined power + control-mode
+	HostArgs = map[string]string{
+		"site":         "site-7ceae560",
+		"power":        "on",
+		"control-mode": "admin",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk with --region
+	HostArgs = map[string]string{
+		"region": "region-abcd1234",
+		"power":  "off",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk OS update policy
+	HostArgs = map[string]string{
+		"filter":         "hostStatus='onboarded'",
+		"osupdatepolicy": "osupdatepolicy-1234abcd",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Dry run
+	HostArgs = map[string]string{
+		"filter":  "hostStatus='onboarded'",
+		"power":   "off",
+		"dry-run": "true",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Error: filter without action flag
+	HostArgs = map[string]string{
+		"filter": "hostStatus='onboarded'",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.Error(err)
+	s.Contains(err.Error(), "require at least one action flag")
+
+	// Error: --site and --region together
+	HostArgs = map[string]string{
+		"site":   "site-7ceae560",
+		"region": "region-abcd1234",
+		"power":  "on",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.Error(err)
+	s.Contains(err.Error(), "cannot specify both")
+
+	// No matching hosts (nonexistent-site returns empty sites from mock)
+	HostArgs = map[string]string{
+		"region": "region-abcd1234",
+		"power":  "on",
+	}
+	_, err = s.setHostBulk("nonexistent-site", HostArgs)
+	s.Error(err)
 
 	///////////////////////////////////
 	// Host Update Tests
