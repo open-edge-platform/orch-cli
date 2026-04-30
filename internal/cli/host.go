@@ -2093,26 +2093,66 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				}
 				powerState = &pow
 			}
+			if amtState == nil && amtMode == nil && powerState == nil {
+				fmt.Printf("Skipping host %s (%s): no fields to update\n", name, resourceID)
+				continue
+			}
 			ctx, hostClient, projectName, err := InfraFactory(cmd)
 			if err != nil {
 				fmt.Printf("InfraFactory error for host %s: %v\n", name, err)
 				continue
 			}
-			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
-				DesiredAmtState:   amtState,
-				AmtControlMode:    amtMode,
-				DesiredPowerState: powerState,
-				Name:              name,
-			}, auth.AddAuthHeader)
-			if err != nil {
-				fmt.Printf("Failed to patch host %s: %v\n", name, err)
-				continue
+			hostFailed := false
+			if amtState != nil || amtMode != nil {
+				getResp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, resourceID, auth.AddAuthHeader)
+				if err != nil {
+					fmt.Printf("Failed to get host %s: %v\n", name, err)
+					hostFailed = true
+				} else if err := checkResponse(getResp.HTTPResponse, getResp.Body, "error while retrieving host"); err != nil {
+					fmt.Printf("Failed to get host %s: %v\n", name, err)
+					hostFailed = true
+				} else {
+					current := getResp.JSON200
+					patchAmt := amtState
+					patchMode := amtMode
+					if amtState != nil && current.DesiredAmtState != nil && *amtState == *current.DesiredAmtState {
+						patchAmt = nil
+					}
+					if amtMode != nil && current.AmtControlMode != nil && *amtMode == *current.AmtControlMode {
+						patchMode = nil
+					}
+					if patchAmt != nil || patchMode != nil {
+						resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
+							DesiredAmtState: patchAmt,
+							AmtControlMode:  patchMode,
+							Name:            name,
+						}, auth.AddAuthHeader)
+						if err != nil {
+							fmt.Printf("Failed to patch host %s AMT state: %v\n", name, err)
+							hostFailed = true
+						} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting AMT state"); err != nil {
+							fmt.Printf("Failed to patch host %s AMT state: %v\n", name, err)
+							hostFailed = true
+						}
+					}
+				}
 			}
-			if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set"); err != nil {
-				fmt.Printf("Failed to patch host %s: %v\n", name, err)
-				continue
+			if powerState != nil && !hostFailed {
+				resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
+					DesiredPowerState: powerState,
+					Name:              name,
+				}, auth.AddAuthHeader)
+				if err != nil {
+					fmt.Printf("Failed to patch host %s power state: %v\n", name, err)
+					hostFailed = true
+				} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting power state"); err != nil {
+					fmt.Printf("Failed to patch host %s power state: %v\n", name, err)
+					hostFailed = true
+				}
 			}
-			fmt.Printf("Host %s (%s) updated\n", name, resourceID)
+			if !hostFailed {
+				fmt.Printf("Host %s (%s) updated\n", name, resourceID)
+			}
 		}
 		if err := scanner.Err(); err != nil {
 			return err
@@ -2290,13 +2330,12 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				rid = *h.ResourceId
 			}
 
-			hostFailed := false
-			hostSkipped := false
+			didUpdate := false
+			didFail := false
 
 			if power != nil || policy != nil {
 				if h.CurrentAmtState == nil || *h.CurrentAmtState != infra.AMTSTATEPROVISIONED {
 					fmt.Printf("[%d/%d]  %s (%s)  power skipped (AMT not provisioned)\n", i+1, len(hosts), h.Name, rid)
-					hostSkipped = true
 				} else {
 					resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, rid, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 						PowerCommandPolicy: policy,
@@ -2305,10 +2344,12 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 					}, auth.AddAuthHeader)
 					if err != nil {
 						fmt.Printf("[%d/%d]  %s (%s)  power failed: %v\n", i+1, len(hosts), h.Name, rid, err)
-						hostFailed = true
+						didFail = true
 					} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting power state"); err != nil {
 						fmt.Printf("[%d/%d]  %s (%s)  power failed: %v\n", i+1, len(hosts), h.Name, rid, err)
-						hostFailed = true
+						didFail = true
+					} else {
+						didUpdate = true
 					}
 				}
 			}
@@ -2321,33 +2362,41 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				}, auth.AddAuthHeader)
 				if err != nil {
 					fmt.Printf("[%d/%d]  %s (%s)  amt failed: %v\n", i+1, len(hosts), h.Name, rid, err)
-					hostFailed = true
+					didFail = true
 				} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting AMT state"); err != nil {
 					fmt.Printf("[%d/%d]  %s (%s)  amt failed: %v\n", i+1, len(hosts), h.Name, rid, err)
-					hostFailed = true
+					didFail = true
+				} else {
+					didUpdate = true
 				}
 			}
 
-			if updFlag != "" && h.Instance != nil && h.Instance.InstanceID != nil {
-				resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *h.Instance.InstanceID, &infra.InstanceServicePatchInstanceParams{}, infra.InstanceServicePatchInstanceJSONRequestBody{
-					OsUpdatePolicyID: &updFlag,
-				}, auth.AddAuthHeader)
-				if err != nil {
-					fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
-					hostFailed = true
-				} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting OS update policy"); err != nil {
-					fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
-					hostFailed = true
+			if updFlag != "" {
+				if h.Instance == nil || h.Instance.InstanceID == nil {
+					fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy skipped (no instance)\n", i+1, len(hosts), h.Name, rid)
+				} else {
+					resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *h.Instance.InstanceID, &infra.InstanceServicePatchInstanceParams{}, infra.InstanceServicePatchInstanceJSONRequestBody{
+						OsUpdatePolicyID: &updFlag,
+					}, auth.AddAuthHeader)
+					if err != nil {
+						fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+						didFail = true
+					} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting OS update policy"); err != nil {
+						fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+						didFail = true
+					} else {
+						didUpdate = true
+					}
 				}
 			}
 
-			if hostFailed {
+			if didFail {
 				failed++
-			} else if hostSkipped && !hostFailed {
-				skipped++
-			} else {
+			} else if didUpdate {
 				fmt.Printf("[%d/%d]  %s (%s)  updated\n", i+1, len(hosts), h.Name, rid)
 				updated++
+			} else {
+				skipped++
 			}
 		}
 		fmt.Printf("Done: %d updated, %d skipped, %d failed\n", updated, skipped, failed)
