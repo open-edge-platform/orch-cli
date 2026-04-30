@@ -210,9 +210,9 @@ orch-cli set host --project some-project --generate-csv=myhosts.csv
 
 Name - Name of the machine - mandatory field
 ResourceID - Unique Identifier of host - mandatory field
-DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field or AMT_STATE_PROVISIONED|AMT_STATE_UNPROVISIONED
-ControlMode - Desired AMT control mode of host - admin|client - optional field or AMT_CONTROL_MODE_ADMIN|AMT_CONTROL_MODE_CLIENT
-DesiredPowerState - Desired power state of host - on|off|reset|power-cycle - optional field
+DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned or AMT_STATE_PROVISIONED|AMT_STATE_UNPROVISIONED - optional, leave blank to skip
+ControlMode - Desired AMT control mode of host - admin|client or AMT_CONTROL_MODE_ACM|AMT_CONTROL_MODE_CCM - optional, leave blank to skip
+DesiredPowerState - Desired power state of host - on|off|reset|power-cycle - optional, leave blank to skip
 
 Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
 host-1,host-1234abcd,provisioned
@@ -2282,6 +2282,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Applying [%s] to %d host(s)\n", actionSummary, len(hosts))
 
 		updated := 0
+		skipped := 0
 		failed := 0
 		for i, h := range hosts {
 			rid := ""
@@ -2290,10 +2291,12 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			}
 
 			hostFailed := false
+			hostSkipped := false
 
 			if power != nil || policy != nil {
 				if h.CurrentAmtState == nil || *h.CurrentAmtState != infra.AMTSTATEPROVISIONED {
 					fmt.Printf("[%d/%d]  %s (%s)  power skipped (AMT not provisioned)\n", i+1, len(hosts), h.Name, rid)
+					hostSkipped = true
 				} else {
 					resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, rid, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 						PowerCommandPolicy: policy,
@@ -2303,7 +2306,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 					if err != nil {
 						fmt.Printf("[%d/%d]  %s (%s)  power failed: %v\n", i+1, len(hosts), h.Name, rid, err)
 						hostFailed = true
-					} else if err := checkResponse(resp.HTTPResponse, resp.Body, ""); err != nil {
+					} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting power state"); err != nil {
 						fmt.Printf("[%d/%d]  %s (%s)  power failed: %v\n", i+1, len(hosts), h.Name, rid, err)
 						hostFailed = true
 					}
@@ -2319,7 +2322,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				if err != nil {
 					fmt.Printf("[%d/%d]  %s (%s)  amt failed: %v\n", i+1, len(hosts), h.Name, rid, err)
 					hostFailed = true
-				} else if err := checkResponse(resp.HTTPResponse, resp.Body, ""); err != nil {
+				} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting AMT state"); err != nil {
 					fmt.Printf("[%d/%d]  %s (%s)  amt failed: %v\n", i+1, len(hosts), h.Name, rid, err)
 					hostFailed = true
 				}
@@ -2332,7 +2335,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				if err != nil {
 					fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
 					hostFailed = true
-				} else if err := checkResponse(resp.HTTPResponse, resp.Body, ""); err != nil {
+				} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting OS update policy"); err != nil {
 					fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
 					hostFailed = true
 				}
@@ -2340,12 +2343,14 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 
 			if hostFailed {
 				failed++
+			} else if hostSkipped && !hostFailed {
+				skipped++
 			} else {
 				fmt.Printf("[%d/%d]  %s (%s)  updated\n", i+1, len(hosts), h.Name, rid)
 				updated++
 			}
 		}
-		fmt.Printf("Done: %d updated, %d failed\n", updated, failed)
+		fmt.Printf("Done: %d updated, %d skipped, %d failed\n", updated, skipped, failed)
 		return nil
 	}
 
