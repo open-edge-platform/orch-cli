@@ -722,6 +722,21 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		desiredKvmState = fmt.Sprintf("%v", *host.DesiredKvmState)
 	}
 
+	currentKvmState := "N/A"
+	if host.CurrentKvmState != nil {
+		currentKvmState = fmt.Sprintf("%v", *host.CurrentKvmState)
+	}
+
+	kvmStatus := "N/A"
+	if host.KvmStatus != nil {
+		kvmStatus = fmt.Sprintf("%v", *host.KvmStatus)
+	}
+
+	kvmSessionStatus := "N/A"
+	if host.KvmSessionStatus != nil && *host.KvmSessionStatus != "" {
+		kvmSessionStatus = *host.KvmSessionStatus
+	}
+
 	desiredSolState := "N/A"
 	if host.DesiredSolState != nil {
 		desiredSolState = fmt.Sprintf("%v", *host.DesiredSolState)
@@ -752,6 +767,9 @@ func printHost(writer io.Writer, host *infra.HostResource) {
 		_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
 		_, _ = fmt.Fprintf(writer, "-\tAMT SKU :\t %v\n", amtSKU)
 		_, _ = fmt.Fprintf(writer, "-\tKVM Desired State:\t %v\n", desiredKvmState)
+		_, _ = fmt.Fprintf(writer, "-\tKVM Current State:\t %v\n", currentKvmState)
+		_, _ = fmt.Fprintf(writer, "-\tKVM Status:\t %v\n", kvmStatus)
+		_, _ = fmt.Fprintf(writer, "-\tKVM Session Status:\t %v\n", kvmSessionStatus)
 		_, _ = fmt.Fprintf(writer, "-\tSOL Desired State:\t %v\n", desiredSolState)
 		_, _ = fmt.Fprintf(writer, "-\tSOL Current State:\t %v\n", currentSolState)
 		_, _ = fmt.Fprintf(writer, "-\tSOL Session Status:\t %v\n", solSessionStatus)
