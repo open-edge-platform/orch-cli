@@ -2097,6 +2097,20 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				fmt.Printf("Skipping host %s (%s): no fields to update\n", name, resourceID)
 				continue
 			}
+			if dryRun {
+				changes := []string{}
+				if amtState != nil {
+					changes = append(changes, "amt-state="+desiredAmtState)
+				}
+				if amtMode != nil {
+					changes = append(changes, "control-mode="+desiredControlMode)
+				}
+				if powerState != nil {
+					changes = append(changes, "power="+desiredPowerState)
+				}
+				fmt.Printf("  %s (%s) would set [%s]\n", name, resourceID, strings.Join(changes, ", "))
+				continue
+			}
 			ctx, hostClient, projectName, err := InfraFactory(cmd)
 			if err != nil {
 				fmt.Printf("InfraFactory error for host %s: %v\n", name, err)
@@ -2233,6 +2247,9 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return processError(err)
 			}
+			if err := checkResponse(cresp.HTTPResponse, cresp.Body, "error while retrieving sites for region"); err != nil {
+				return err
+			}
 
 			siteFilter := ""
 			if cresp.JSON200.TotalElements != 0 {
@@ -2335,7 +2352,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 
 			if power != nil || policy != nil {
 				if h.CurrentAmtState == nil || *h.CurrentAmtState != infra.AMTSTATEPROVISIONED {
-					fmt.Printf("[%d/%d]  %s (%s)  power skipped (AMT not provisioned)\n", i+1, len(hosts), h.Name, rid)
+					fmt.Printf("[%d/%d]  %s (%s)  power/policy skipped (AMT not provisioned)\n", i+1, len(hosts), h.Name, rid)
 				} else {
 					resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, rid, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 						PowerCommandPolicy: policy,
@@ -2343,10 +2360,10 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 						Name:               h.Name,
 					}, auth.AddAuthHeader)
 					if err != nil {
-						fmt.Printf("[%d/%d]  %s (%s)  power failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+						fmt.Printf("[%d/%d]  %s (%s)  power/policy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
 						didFail = true
-					} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting power state"); err != nil {
-						fmt.Printf("[%d/%d]  %s (%s)  power failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+					} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting power state/policy"); err != nil {
+						fmt.Printf("[%d/%d]  %s (%s)  power/policy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
 						didFail = true
 					} else {
 						didUpdate = true
