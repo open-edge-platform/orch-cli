@@ -1,20 +1,30 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
+)
+
+const (
+	DEFAULT_PROVIDER_FORMAT              = "table{{.Name}}\t{{str .ResourceId}}\t{{.ProviderKind}}\t{{.ProviderVendor}}"
+	DEFAULT_PROVIDER_LIST_VERBOSE_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{.ProviderKind}}\t{{.ProviderVendor}}\t{{.ApiEndpoint}}\t{{.Timestamps.CreatedAt}}\t{{.Timestamps.UpdatedAt}}"
+	DEFAULT_PROVIDER_GET_FORMAT          = "Name: \t{{.Name}}\nResource ID: \t{{str .ResourceId}}\nKind: \t{{.ProviderKind}}\nVendor: \t{{.ProviderVendor}}\nAPI Endpoint: \t{{.ApiEndpoint}}\nConfig: \t{{str .Config}}\nCreation Timestamp: \t{{.Timestamps.CreatedAt}}\nUpdated Timestamp: \t{{.Timestamps.UpdatedAt}}\n"
+	PROVIDER_OUTPUT_TEMPLATE_ENVVAR      = "ORCH_CLI_PROVIDER_OUTPUT_TEMPLATE"
 )
 
 const listProviderExamples = `# List all providers
@@ -30,7 +40,48 @@ orch-cli create provider myprovider "PROVIDER_KIND_BAREMETAL" "" --vendor "PROVI
 const deleteProviderExamples = `# Delete specific provider
 orch-cli delete provider provider-aaaa1111 --project some-project`
 
-var ProviderHeader = fmt.Sprintf("\n%s\t%s\t%s\t%s", "Name", "Resource ID", "Kind", "Vendor")
+func printProviders(cmd *cobra.Command, writer io.Writer, providers *[]infra.ProviderResource, orderBy *string, outputFilter *string, verbose bool, forList bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	outputFormat, err := getProviderOutputFormat(cmd, verbose, forList)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *providers,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
+}
+
+func getProviderOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string, error) {
+	if verbose && forList {
+		return DEFAULT_PROVIDER_LIST_VERBOSE_FORMAT, nil
+	}
+	if !forList {
+		// Get command always shows full details
+		return DEFAULT_PROVIDER_GET_FORMAT, nil
+	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_PROVIDER_FORMAT, PROVIDER_OUTPUT_TEMPLATE_ENVVAR)
+}
 
 func getListProviderCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -40,6 +91,8 @@ func getListProviderCommand() *cobra.Command {
 		Aliases: providerAliases,
 		RunE:    runListProviderCommand,
 	}
+	addListOrderingFilteringPaginationFlags(cmd, "provider")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -52,6 +105,7 @@ func getGetProviderCommand() *cobra.Command {
 		Aliases: providerAliases,
 		RunE:    runGetProviderCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -91,17 +145,159 @@ func runListProviderCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	var validatedOrderBy *string
+	if outputType == "table" {
+		validatedOrderBy, err = normalizeOrderByForClientSorting(raw, infra.ProviderResource{})
+	} else {
+		validatedOrderBy, err = normalizeOrderByWithAPIProbe(raw, "provider", infra.ProviderResource{}, func(orderBy string) (bool, error) {
+			pageSize := 1
+			resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
+				&infra.ProviderServiceListProvidersParams{
+					OrderBy:  &orderBy,
+					PageSize: &pageSize,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return false, processError(err)
+			}
+			if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+				return false, &api400Error{string(resp.Body)}
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating provider order-by"); err != nil {
+				return false, err
+			}
+			return true, nil
+		})
+	}
+	if err != nil {
+		return err
+	}
+
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
+	}
+
+	validatedFilter, err := getValidatedProviderFilter(ctx, cmd, providerClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	pageSize32, offset32, err := getPageSizeOffset(cmd)
+	if err != nil {
+		return err
+	}
+
+	pageSize := int(pageSize32)
+	offset := int(offset32)
+	if pageSize <= 0 {
+		pageSize = 100
+	}
+
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		params := &infra.ProviderServiceListProvidersParams{
+			OrderBy:  apiOrderBy,
+			Filter:   validatedFilter,
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}
+
+		resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName, params, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting provider"); !proceed {
+			return err
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.Providers == nil {
+			return fmt.Errorf("error listing providers: unexpected response format")
+		}
+
+		providers := resp.JSON200.Providers
+
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printProviders(cmd, writer, &providers, validatedOrderBy, &outputFilter, verbose, true); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	// Automatic pagination: fetch all pages
+	allProviders := make([]infra.ProviderResource, 0)
+
 	resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
-		&infra.ProviderServiceListProvidersParams{}, auth.AddAuthHeader)
+		&infra.ProviderServiceListProvidersParams{
+			OrderBy:  apiOrderBy,
+			Filter:   validatedFilter,
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		ProviderHeader, "error getting provider"); !proceed {
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+		"", "error getting provider"); !proceed {
 		return err
 	}
-	printProviders(writer, resp.JSON200.Providers, verbose)
+
+	if resp.JSON200 == nil || resp.JSON200.Providers == nil {
+		return fmt.Errorf("error listing providers: unexpected response format")
+	}
+
+	allProviders = append(allProviders, resp.JSON200.Providers...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = len(resp.JSON200.Providers)
+	}
+
+	for len(allProviders) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+		offset += pageSize
+		resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
+			&infra.ProviderServiceListProvidersParams{
+				OrderBy:  apiOrderBy,
+				Filter:   validatedFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting provider"); !proceed {
+			return err
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.Providers == nil {
+			return fmt.Errorf("error listing providers: unexpected response format")
+		}
+
+		if len(resp.JSON200.Providers) == 0 {
+			break
+		}
+		allProviders = append(allProviders, resp.JSON200.Providers...)
+	}
+
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printProviders(cmd, writer, &allProviders, validatedOrderBy, &outputFilter, verbose, true); err != nil {
+		return err
+	}
 
 	return writer.Flush()
 }
@@ -175,8 +371,40 @@ func runCreateProviderCommand(cmd *cobra.Command, args []string) error {
 
 }
 
+func getValidatedProviderFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	providerClient infra.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "provider", infra.ProviderResource{}, func(filter string) (bool, error) {
+		pageSize := 1
+		resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
+			&infra.ProviderServiceListProvidersParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating provider filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func runGetProviderCommand(cmd *cobra.Command, args []string) error {
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 	ctx, providerClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
@@ -190,12 +418,18 @@ func runGetProviderCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
 		"", "error getting provider"); !proceed {
 		return err
 	}
 
-	printProvider(writer, resp.JSON200)
+	providers := []infra.ProviderResource{*resp.JSON200}
+	var emptyFilter string
+	// Get command always shows full details (forList=false)
+	if err := printProviders(cmd, writer, &providers, nil, &emptyFilter, false, false); err != nil {
+		return err
+	}
+
 	return writer.Flush()
 }
 
@@ -225,40 +459,6 @@ func runDeleteProviderCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 	return err
-}
-
-// Prints providers in tabular format
-func printProviders(writer io.Writer, providers []infra.ProviderResource, verbose bool) {
-	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Name", "Resource ID", "Kind", "Vendor", "API Endpoint", "Created At", "Updated At")
-	}
-	for _, prov := range providers {
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\n", prov.Name, *prov.ResourceId, prov.ProviderKind, *prov.ProviderVendor)
-		} else {
-
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%v\t%s\t%s\t%s\n", prov.Name, *prov.ResourceId, prov.ProviderKind, *prov.ProviderVendor, prov.ApiEndpoint, prov.Timestamps.CreatedAt, prov.Timestamps.UpdatedAt)
-		}
-	}
-}
-
-// Prints output details of site
-func printProvider(writer io.Writer, provider *infra.ProviderResource) {
-
-	var config string
-	if provider.Config != nil {
-		config = *provider.Config
-	}
-
-	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", provider.Name)
-	_, _ = fmt.Fprintf(writer, "Resource ID: \t%s\n", *provider.ResourceId)
-	_, _ = fmt.Fprintf(writer, "Kind: \t%s\n", provider.ProviderKind)
-	_, _ = fmt.Fprintf(writer, "Vendor: \t%v\n", *provider.ProviderVendor)
-	_, _ = fmt.Fprintf(writer, "API Endpoint: \t%s\n", provider.ApiEndpoint)
-	_, _ = fmt.Fprintf(writer, "Config: \t%s\n", config)
-	_, _ = fmt.Fprintf(writer, "Created At: \t%s\n", provider.Timestamps.CreatedAt)
-	_, _ = fmt.Fprintf(writer, "Updated At: \t%s\n", provider.Timestamps.UpdatedAt)
-
 }
 
 func printWarning() error {

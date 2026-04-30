@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -20,7 +20,7 @@ func (s *CLITestSuite) createApplication(project string, applicationName string,
 	return err
 }
 
-func (s *CLITestSuite) listApplications(project string, verbose bool, orderBy string, filter string, kind string) (string, error) {
+func (s *CLITestSuite) listApplications(project string, verbose bool, orderBy string, filter string, kind string, outputFilter string, outputTemplate string, outputTemplateFile string) (string, error) {
 	args := `list applications --project ` + project
 	if verbose {
 		args = args + " -v"
@@ -33,6 +33,15 @@ func (s *CLITestSuite) listApplications(project string, verbose bool, orderBy st
 	}
 	if kind != "" {
 		args = args + " kind=" + kind
+	}
+	if outputFilter != "" {
+		args = args + " --output-filter " + outputFilter
+	}
+	if outputTemplate != "" {
+		args = args + " --output-template " + outputTemplate
+	}
+	if outputTemplateFile != "" {
+		args = args + " --output-template-file " + outputTemplateFile
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -93,26 +102,26 @@ func (s *CLITestSuite) TestApplication() {
 	s.NoError(err)
 
 	// list applications to make sure it was created properly
-	listOutput, err := s.listApplications(project, simpleOutput, "version", "version="+applicationVersion, "")
+	listOutput, err := s.listApplications(project, simpleOutput, "version", "version="+applicationVersion, "", "", "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
 	expectedOutput := commandOutput{
 		applicationName: {
-			"Name":               applicationName,
-			"Version":            applicationVersion,
-			"Kind":               "normal",
-			"Display Name":       applicationDisplayName,
-			"Chart Name":         chartName,
-			"Chart Version":      chartVersion,
-			"Helm Registry Name": registryName,
-			"Default Profile":    "",
+			"NAME":                 applicationName,
+			"VERSION":              applicationVersion,
+			"KIND":                 "KIND_NORMAL",
+			"DISPLAY NAME":         applicationDisplayName,
+			"CHART NAME":           chartName,
+			"CHART VERSION":        chartVersion,
+			"HELM REGISTRY NAME":   registryName,
+			"DEFAULT PROFILE NAME": "",
 		},
 	}
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list applications
-	listVerboseOutput, err := s.listApplications(project, verboseOutput, "", "", "")
+	listVerboseOutput, err := s.listApplications(project, verboseOutput, "", "", "", "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
@@ -121,15 +130,15 @@ func (s *CLITestSuite) TestApplication() {
 			"Version":             applicationVersion,
 			"Chart Name":          chartName,
 			"Chart Version":       chartVersion,
-			"Create Time":         timestampRegex,
-			"Update Time":         timestampRegex,
+			"Create Time":         "2025-12-31 23:59:59 +0000 UTC",
+			"Update Time":         "2025-12-31 23:59:59 +0000 UTC",
 			"Name":                applicationName,
-			"Kind":                "normal",
+			"Kind":                "KIND_NORMAL",
 			"Display Name":        applicationDisplayName,
 			"Description":         applicationDescription,
 			"Helm Registry Name":  registryName,
-			"Image Registry Name": "<none>",
-			"Profiles":            "[]",
+			"Image Registry Name": "",
+			"Profiles":            "",
 			"Default Profile":     "",
 		},
 	}
@@ -137,7 +146,7 @@ func (s *CLITestSuite) TestApplication() {
 	s.compareOutput(expectedVerboseOutput, parsedVerboseOutput)
 
 	// List with kind
-	_, err = s.listApplications(project, verboseOutput, "", "", "\"addon normal\"")
+	_, err = s.listApplications(project, verboseOutput, "", "", "\"addon normal\"", "", "", "")
 	s.NoError(err)
 
 	// Update the application
@@ -209,6 +218,16 @@ func (s *CLITestSuite) TestApplication() {
 	}
 	err = s.createApplication(project, applicationName, applicationVersion, createArgs)
 	s.NoError(err)
+
+	// Test error handling for dual template flags (--output-template and --output-template-file both set)
+	_, err = s.listApplications(project, simpleOutput, "", "", "", "", "table{{.Name}}", "/tmp/invalid.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "only one of")
+
+	// Test error handling for missing template file
+	_, err = s.listApplications(project, simpleOutput, "", "", "", "", "", "/nonexistent/path/template.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "unable to read")
 }
 
 func TestPrintApplicationEvent(t *testing.T) {
@@ -276,7 +295,7 @@ func FuzzApplication(f *testing.F) {
 		}
 
 		// --- List ---
-		_, err = testSuite.listApplications(project, false, "version", "version="+appVersion, kind)
+		_, err = testSuite.listApplications(project, false, "version", "version="+appVersion, kind, "", "", "")
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

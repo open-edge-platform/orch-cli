@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -6,13 +6,52 @@ package cli
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
+)
+
+const (
+	DEFAULT_CLUSTER_FORMAT = "table{{.Name}}\t{{.KubernetesVersion}}\t{{statusMessage .LifecyclePhase}}\t{{statusMessage .ProviderStatus}}\t{{statusMessage .ControlPlaneReady}}\t{{statusMessage .InfrastructureReady}}\t{{statusMessage .NodeHealth}}\t{{nodeCount .NodeQuantity}}"
+	// List verbose template (uses ClusterInfo with NodeQuantity)
+	DEFAULT_CLUSTER_LIST_INSPECT_FORMAT = `Name: {{.Name}}
+Kubernetes Version: {{none .KubernetesVersion}}
+Node Count: {{nodeCount .NodeQuantity}}
+Status:
+  Lifecycle Phase: {{statusMessage .LifecyclePhase}}
+  Provider Status: {{statusMessage .ProviderStatus}}
+  Control Plane Ready: {{statusMessage .ControlPlaneReady}}
+  Infrastructure Ready: {{statusMessage .InfrastructureReady}}
+  Node Health: {{statusMessage .NodeHealth}}{{if .Labels}}
+Labels:{{range $key, $value := deref .Labels}}
+  {{$key}}: {{$value}}{{end}}{{else}}
+Labels: <none>{{end}}
+`
+	// Get verbose template (uses ClusterDetailInfo with Template and Nodes)
+	DEFAULT_CLUSTER_INSPECT_FORMAT = `Name: {{.Name}}
+Kubernetes Version: {{none .KubernetesVersion}}
+Template: {{none .Template}}{{if .Nodes}}
+Nodes:{{range .Nodes}}
+  - ID: {{none .Id}}, Role: {{none .Role}}{{end}}{{else}}
+Nodes: <none>{{end}}
+Status:
+  Lifecycle Phase: {{statusMessage .LifecyclePhase}}
+  Provider Status: {{statusMessage .ProviderStatus}}
+  Control Plane Ready: {{statusMessage .ControlPlaneReady}}
+  Infrastructure Ready: {{statusMessage .InfrastructureReady}}
+  Node Health: {{statusMessage .NodeHealth}}{{if .Labels}}
+Labels:{{range $key, $value := deref .Labels}}
+  {{$key}}: {{$value}}{{end}}{{else}}
+Labels: <none>{{end}}
+`
+	CLUSTER_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_CLUSTER_OUTPUT_TEMPLATE"
 )
 
 const createClusterExamples = `
@@ -53,6 +92,7 @@ func getGetClusterCommand() *cobra.Command {
 		Aliases: clusterAliases,
 		RunE:    runGetClusterCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -60,10 +100,12 @@ func getListClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "cluster",
 		Short:   "List clusters",
-		Example: "orch-cli list cluster",
+		Example: "orch-cli list cluster --project some-project",
 		Aliases: clusterAliases,
 		RunE:    runListClusterCommand,
 	}
+	addListOrderingFilteringPaginationFlags(cmd, "cluster")
+	addStandardListOutputFlags(cmd)
 	cmd.Flags().Bool("not-ready", false, "Show only clusters that are not ready")
 	return cmd
 }
@@ -166,6 +208,7 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 }
 
 func runGetClusterCommand(cmd *cobra.Command, args []string) error {
+	writer, verbose := getOutputContext(cmd)
 	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
@@ -178,129 +221,316 @@ func runGetClusterCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get cluster details: %w", err)
 	}
 
-	fmt.Printf("Project: %s\n", projectName)
-	fmt.Printf("Name: %s\n", *cluster.Name)
-	fmt.Printf("Kubernetes Version: %s\n", *cluster.KubernetesVersion)
-	fmt.Printf("Template: %s\n", *cluster.Template)
-	fmt.Printf("Nodes:\n")
+	fmt.Fprintf(writer, "Project: %s\n", projectName)
+
+	// Convert ClusterDetailInfo to ClusterInfo for consistent output
+	clusterInfo := coapi.ClusterInfo{
+		Name:                cluster.Name,
+		KubernetesVersion:   cluster.KubernetesVersion,
+		LifecyclePhase:      cluster.LifecyclePhase,
+		ProviderStatus:      cluster.ProviderStatus,
+		ControlPlaneReady:   cluster.ControlPlaneReady,
+		InfrastructureReady: cluster.InfrastructureReady,
+		NodeHealth:          cluster.NodeHealth,
+		Labels:              cluster.Labels,
+	}
 	if cluster.Nodes != nil {
-		for _, node := range *cluster.Nodes {
-			id := ""
-			if node.Id != nil {
-				id = *node.Id
-			}
-			role := ""
-			if node.Role != nil {
-				role = *node.Role
-			}
-			fmt.Printf("- ID: %s, Role: %s\n", id, role)
+		clusterInfo.NodeQuantity = new(int)
+		*clusterInfo.NodeQuantity = len(*cluster.Nodes)
+	}
+
+	// For verbose output, we need the detail info with nodes
+	if verbose {
+		// Use the detail template directly
+		result := CommandResult{
+			Format:    format.Format(DEFAULT_CLUSTER_INSPECT_FORMAT),
+			Filter:    "",
+			OrderBy:   "",
+			OutputAs:  OUTPUT_TABLE,
+			NameLimit: -1,
+			Data:      cluster,
 		}
-	}
-	statusUnknown := "<unknown>"
-
-	fmt.Printf("Status:\n")
-	lifecyclePhase := statusUnknown
-	if cluster.LifecyclePhase != nil && cluster.LifecyclePhase.Message != nil {
-		lifecyclePhase = *cluster.LifecyclePhase.Message
-	}
-	fmt.Printf("- LifecyclePhase: %s\n", lifecyclePhase)
-
-	providerStatus := statusUnknown
-	if cluster.ProviderStatus != nil && cluster.ProviderStatus.Message != nil {
-		providerStatus = *cluster.ProviderStatus.Message
-	}
-	fmt.Printf("- Provider: %s\n", providerStatus)
-
-	controlPlaneReady := statusUnknown
-	if cluster.ControlPlaneReady != nil && cluster.ControlPlaneReady.Message != nil {
-		controlPlaneReady = *cluster.ControlPlaneReady.Message
-	}
-	fmt.Printf("- ControlPlaneReady: %s\n", controlPlaneReady)
-
-	infrastructureReady := statusUnknown
-	if cluster.InfrastructureReady != nil && cluster.InfrastructureReady.Message != nil {
-		infrastructureReady = *cluster.InfrastructureReady.Message
-	}
-	fmt.Printf("- InfrastructureReady: %s\n", infrastructureReady)
-
-	nodeHealth := statusUnknown
-	if cluster.NodeHealth != nil && cluster.NodeHealth.Message != nil {
-		nodeHealth = *cluster.NodeHealth.Message
-	}
-	fmt.Printf("- NodeHealth: %s\n", nodeHealth)
-
-	if cluster.Labels != nil {
-		fmt.Printf("Labels:\n")
-		for key, value := range *cluster.Labels {
-			fmt.Printf("- %s: %s\n", key, value)
-		}
+		GenerateOutput(writer, &result)
 	} else {
-		fmt.Println("Labels: None")
+		// For non-verbose, show a single cluster in table format
+		clusters := []coapi.ClusterInfo{clusterInfo}
+		var emptyFilter string
+		if err := printClusters(cmd, writer, &clusters, nil, &emptyFilter, false); err != nil {
+			return err
+		}
 	}
+
+	return writer.Flush()
+}
+
+func getValidatedClusterOrderBy(
+	ctx context.Context,
+	cmd *cobra.Command,
+	clusterClient coapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, coapi.ClusterInfo{})
+	}
+
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	return normalizeOrderByWithAPIProbe(raw, "clusters", coapi.ClusterInfo{}, func(orderBy string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		// Validate ordering in isolation. Reusing the caller's --filter here can turn
+		// filter errors into misleading "invalid --order-by field" errors.
+		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName,
+			&coapi.GetV2ProjectsProjectNameClustersParams{
+				OrderBy:  &orderBy,
+				Filter:   nil,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating cluster order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func getValidatedClusterFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	clusterClient coapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "clusters", coapi.ClusterInfo{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName,
+			&coapi.GetV2ProjectsProjectNameClustersParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating cluster filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func printClusters(cmd *cobra.Command, writer io.Writer, clusterList *[]coapi.ClusterInfo, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	outputFormat, err := getClusterOutputFormat(cmd, verbose, true)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *clusterList,
+	}
+
+	GenerateOutput(writer, &result)
 	return nil
 }
 
-func runListClusterCommand(cmd *cobra.Command, _ []string) error {
-	verbose, err := cmd.Flags().GetBool("verbose")
-	if err != nil {
-		return processError(err)
-	}
-	notReady, err := cmd.Flags().GetBool("not-ready")
-	if err != nil {
-		return processError(err)
+func getClusterOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string, error) {
+	if verbose {
+		if forList {
+			return DEFAULT_CLUSTER_LIST_INSPECT_FORMAT, nil
+		}
+		return DEFAULT_CLUSTER_INSPECT_FORMAT, nil
 	}
 
+	return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_FORMAT, CLUSTER_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func runListClusterCommand(cmd *cobra.Command, _ []string) error {
+	writer, verbose := getOutputContext(cmd)
 	ctx, clusterClient, projectName, err := ClusterFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	var clusters []coapi.ClusterInfo
-	pageSize := 100
-	offset := 0
+	validatedOrderBy, err := getValidatedClusterOrderBy(ctx, cmd, clusterClient, projectName)
+	if err != nil {
+		return err
+	}
 
-	for {
-		params := coapi.GetV2ProjectsProjectNameClustersParams{
-			PageSize: &pageSize,
-			Offset:   &offset,
-		}
-		if verbose {
-			fmt.Printf("Fetching clusters for project '%s' with page size %d and offset %d\n", projectName, pageSize, offset)
-		}
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
+	}
 
-		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName, &params, auth.AddAuthHeader)
+	validatedFilter, err := getValidatedClusterFilter(ctx, cmd, clusterClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	pageSize32, offset32, err := getPageSizeOffset(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Convert int32 to int for cluster API
+	pageSize := int(pageSize32)
+	offset := int(offset32)
+
+	// Cluster API requires pageSize > 0, use default if not specified
+	if pageSize <= 0 {
+		pageSize = 100
+	}
+
+	notReady, _ := cmd.Flags().GetBool("not-ready")
+
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName,
+			&coapi.GetV2ProjectsProjectNameClustersParams{
+				OrderBy:  apiOrderBy,
+				Filter:   validatedFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
 		}
-		if resp.JSON200 == nil {
-			return fmt.Errorf("unexpected response: %s", resp.HTTPResponse.Status)
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing clusters"); !proceed {
+			return err
 		}
-		if verbose {
-			fmt.Printf("Received %d clusters from the server out of total clusters: %d\n", len(*resp.JSON200.Clusters), resp.JSON200.TotalElements)
+		if resp.JSON200 == nil || resp.JSON200.Clusters == nil {
+			return fmt.Errorf("error listing clusters: unexpected response format")
 		}
+		clusters := *resp.JSON200.Clusters
+		if notReady {
+			clusters = filterNotReadyClusters(clusters)
+		}
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printClusters(cmd, writer, &clusters, validatedOrderBy, &outputFilter, verbose); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
 
-		clusters = append(clusters, *resp.JSON200.Clusters...)
-		if len(*resp.JSON200.Clusters) < pageSize {
+	allClusters := make([]coapi.ClusterInfo, 0)
+
+	resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName,
+		&coapi.GetV2ProjectsProjectNameClustersParams{
+			OrderBy:  apiOrderBy,
+			Filter:   validatedFilter,
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}, auth.AddAuthHeader)
+	if err != nil {
+		return processError(err)
+	}
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+		"error listing clusters"); !proceed {
+		return err
+	}
+
+	if resp.JSON200 == nil || resp.JSON200.Clusters == nil {
+		return fmt.Errorf("error listing clusters: unexpected response format")
+	}
+
+	allClusters = append(allClusters, *resp.JSON200.Clusters...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = len(*resp.JSON200.Clusters)
+	}
+
+	for len(allClusters) < totalElements {
+		if pageSize <= 0 {
 			break
 		}
 		offset += pageSize
+		resp, err := clusterClient.GetV2ProjectsProjectNameClustersWithResponse(ctx, projectName,
+			&coapi.GetV2ProjectsProjectNameClustersParams{
+				OrderBy:  apiOrderBy,
+				Filter:   validatedFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing clusters"); !proceed {
+			return err
+		}
+
+		if resp.JSON200 == nil || resp.JSON200.Clusters == nil {
+			return fmt.Errorf("error listing clusters: unexpected response format")
+		}
+
+		if len(*resp.JSON200.Clusters) == 0 {
+			break
+		}
+		allClusters = append(allClusters, *resp.JSON200.Clusters...)
 	}
 
-	fmt.Printf("Found %d clusters in project '%s'\n", len(clusters), projectName)
-	filteredClusters := 0
-	result := "Clusters:\n"
-	for _, cluster := range clusters {
-		if notReady && clusterReady(cluster) {
-			continue
-		}
-		filteredClusters++
-		result += fmt.Sprintf("- %s (%s)\n", *cluster.Name, statusMessage(cluster))
-	}
 	if notReady {
-		fmt.Printf("Found %d clusters that are not ready in project '%s'\n", filteredClusters, projectName)
+		allClusters = filterNotReadyClusters(allClusters)
 	}
-	fmt.Println(result)
-	return nil
+
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printClusters(cmd, writer, &allClusters, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
+	return writer.Flush()
+}
+
+func filterNotReadyClusters(clusters []coapi.ClusterInfo) []coapi.ClusterInfo {
+	filtered := make([]coapi.ClusterInfo, 0)
+	for _, cluster := range clusters {
+		if !clusterReady(cluster) {
+			filtered = append(filtered, cluster)
+		}
+	}
+	return filtered
 }
 
 func clusterReady(cluster coapi.ClusterInfo) bool {
@@ -321,25 +551,6 @@ func clusterReady(cluster coapi.ClusterInfo) bool {
 	}
 
 	return true
-}
-
-func statusMessage(cluster coapi.ClusterInfo) string {
-	if cluster.ProviderStatus == nil || *cluster.ProviderStatus.Indicator != coapi.STATUSINDICATIONIDLE {
-		return *cluster.ProviderStatus.Message
-	}
-	if cluster.ControlPlaneReady == nil || *cluster.ControlPlaneReady.Indicator != coapi.STATUSINDICATIONIDLE {
-		return *cluster.ControlPlaneReady.Message
-	}
-	if cluster.InfrastructureReady == nil || *cluster.InfrastructureReady.Indicator != coapi.STATUSINDICATIONIDLE {
-		return *cluster.InfrastructureReady.Message
-	}
-	if cluster.NodeHealth == nil || *cluster.NodeHealth.Indicator != coapi.STATUSINDICATIONIDLE {
-		return *cluster.NodeHealth.Message
-	}
-	if cluster.LifecyclePhase == nil || *cluster.LifecyclePhase.Indicator != coapi.STATUSINDICATIONIDLE {
-		return *cluster.LifecyclePhase.Message
-	}
-	return "active"
 }
 
 func runDeleteClusterCommand(cmd *cobra.Command, args []string) error {

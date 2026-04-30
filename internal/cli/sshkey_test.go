@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -64,8 +64,8 @@ func (s *CLITestSuite) TestSSHKey() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Remote User": name,
-			"Resource ID": resourceID,
+			"USERNAME":    name,
+			"RESOURCE ID": resourceID,
 		},
 	}
 
@@ -82,9 +82,9 @@ func (s *CLITestSuite) TestSSHKey() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Remote User": name,
-			"Resource ID": resourceID,
-			"In use":      "No",
+			"USERNAME":    name,
+			"RESOURCE ID": resourceID,
+			"IN USE":      "No",
 		},
 	}
 

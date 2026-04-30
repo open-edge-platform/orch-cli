@@ -1,17 +1,40 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
+)
+
+const ( //nolint:revive
+	DEFAULT_APPLICATION_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Version}}\t{{.Kind}}\t{{.ChartName}}\t{{.ChartVersion}}\t{{.HelmRegistryName}}\t{{.DefaultProfileName}}"
+	DEFAULT_APPLICATION_INSPECT_FORMAT = `Name: {{.Name}}
+Display Name: {{str .DisplayName}}
+Description: {{str .Description}}
+Version: {{.Version}}
+Kind: {{.Kind}}
+Helm Registry Name: {{.HelmRegistryName}}
+Image Registry Name: {{str .ImageRegistryName}}
+Chart Name: {{.ChartName}}
+Chart Version: {{.ChartVersion}}
+Create Time: {{.CreateTime}}
+Update Time: {{.UpdateTime}}
+Profiles:{{- range deref .Profiles}}
+  {{.Name}}{{- end}}
+Default Profile: {{str .DefaultProfileName}}
+`
+	APPLICATION_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_APPLICATION_OUTPUT_TEMPLATE"
 )
 
 func getCreateApplicationCommand() *cobra.Command {
@@ -42,6 +65,7 @@ func getListApplicationsCommand() *cobra.Command {
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "application")
 	cmd.Flags().StringSlice("kind", []string{}, "application kind: normal, addon, extension")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -54,6 +78,7 @@ func getGetApplicationCommand() *cobra.Command {
 		Example: "orch-cli get application my-app --project some-project",
 		RunE:    runGetApplicationCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -85,50 +110,6 @@ func getDeleteApplicationCommand() *cobra.Command {
 		RunE:    runDeleteApplicationCommand,
 	}
 	return cmd
-}
-
-var applicationHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-	"Name", "Display Name", "Version", "Kind", "Chart Name", "Chart Version", "Helm Registry Name", "Default Profile")
-
-func printApplications(writer io.Writer, appList *[]catapi.CatalogV3Application, verbose bool) {
-	for _, app := range *appList {
-		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", app.Name,
-				valueOrNone(app.DisplayName), app.Version, applicationKind2String(app.Kind),
-				app.ChartName, app.ChartVersion, app.HelmRegistryName, valueOrNone(app.DefaultProfileName))
-		} else {
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", app.Name)
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(app.DisplayName))
-			_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(app.Description))
-			_, _ = fmt.Fprintf(writer, "Version: %s\n", app.Version)
-			_, _ = fmt.Fprintf(writer, "Kind: %s\n", applicationKind2String(app.Kind))
-			_, _ = fmt.Fprintf(writer, "Helm Registry Name: %s\n", app.HelmRegistryName)
-			_, _ = fmt.Fprintf(writer, "Image Registry Name: %s\n", valueOrNone(app.ImageRegistryName))
-			_, _ = fmt.Fprintf(writer, "Chart Name: %s\n", app.ChartName)
-			_, _ = fmt.Fprintf(writer, "Chart Version: %s\n", app.ChartVersion)
-			createTime := ""
-			if app.CreateTime != nil {
-				createTime = app.CreateTime.Format(timeLayout)
-			}
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", createTime)
-
-			updateTime := ""
-			if app.UpdateTime != nil {
-				updateTime = app.UpdateTime.Format(timeLayout)
-			}
-			_, _ = fmt.Fprintf(writer, "Update Time: %s\n", updateTime)
-
-			profiles := make([]string, 0)
-			if app.Profiles != nil {
-				profiles = make([]string, 0, len(*app.Profiles))
-				for _, p := range *app.Profiles {
-					profiles = append(profiles, p.Name)
-				}
-			}
-			_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
-			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n\n", valueOrNone(app.DefaultProfileName))
-		}
-	}
 }
 
 func runCreateApplicationCommand(cmd *cobra.Command, args []string) error {
@@ -232,6 +213,124 @@ func getApplicationKinds(cmd *cobra.Command) *[]catapi.CatalogV3Kind {
 	return &list
 }
 
+func getApplicationOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_APPLICATION_INSPECT_FORMAT, nil
+	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_APPLICATION_FORMAT, APPLICATION_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func printApplications(cmd *cobra.Command, writer io.Writer, appList *[]catapi.CatalogV3Application, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getApplicationOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *appList,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
+}
+
+func getValidatedApplicationOrderBy(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, catapi.CatalogV3Application{})
+	}
+
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	return normalizeOrderByWithAPIProbe(raw, "applications", catapi.CatalogV3Application{}, func(orderBy string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		// Validate ordering in isolation. Reusing the caller's --filter here can turn
+		// filter errors into misleading "invalid --order-by field" errors.
+		resp, err := catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListApplicationsParams{
+				Kinds:    getApplicationKinds(cmd),
+				OrderBy:  &orderBy,
+				Filter:   nil,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating application order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func getValidatedApplicationFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "applications", catapi.CatalogV3Application{}, func(filter string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListApplicationsParams{
+				Kinds:    getApplicationKinds(cmd),
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating application filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
@@ -239,27 +338,110 @@ func runListApplicationsCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	validatedOrderBy, err := getValidatedApplicationOrderBy(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	validatedFilter, err := getValidatedApplicationFilter(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
+	}
+
 	pageSize, offset, err := getPageSizeOffset(cmd)
 	if err != nil {
 		return err
 	}
 
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		resp, err := catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListApplicationsParams{
+				Kinds:    getApplicationKinds(cmd),
+				OrderBy:  apiOrderBy,
+				Filter:   validatedFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing applications"); !proceed {
+			return err
+		}
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printApplications(cmd, writer, &resp.JSON200.Applications, validatedOrderBy, &outputFilter, verbose); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	allApplications := make([]catapi.CatalogV3Application, 0)
+
 	resp, err := catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListApplicationsParams{
 			Kinds:    getApplicationKinds(cmd),
-			OrderBy:  getFlag(cmd, "order-by"),
-			Filter:   getFlag(cmd, "filter"),
+			OrderBy:  apiOrderBy,
+			Filter:   validatedFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, applicationHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		"error listing applications"); !proceed {
 		return err
 	}
-	printApplications(writer, &resp.JSON200.Applications, verbose)
+
+	allApplications = append(allApplications, resp.JSON200.Applications...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = int32(len(resp.JSON200.Applications))
+	}
+
+	for len(allApplications) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+
+		offset += pageSize
+		resp, err = catalogClient.CatalogServiceListApplicationsWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListApplicationsParams{
+				Kinds:    getApplicationKinds(cmd),
+				OrderBy:  apiOrderBy,
+				Filter:   validatedFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing applications"); !proceed {
+			return err
+		}
+
+		if len(resp.JSON200.Applications) == 0 {
+			break
+		}
+		allApplications = append(allApplications, resp.JSON200.Applications...)
+	}
+
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printApplications(cmd, writer, &allApplications, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -279,7 +461,7 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, applicationHeader,
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 			fmt.Sprintf("error getting application %s:%s", name, version)); !proceed {
 			return err
 		}
@@ -290,7 +472,7 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, applicationHeader,
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 			fmt.Sprintf("error getting application %s versions", name)); !proceed {
 			return err
 		}
@@ -299,7 +481,9 @@ func runGetApplicationCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("no versions of application %s found", name)
 		}
 	}
-	printApplications(writer, &appList, verbose)
+	if err := printApplications(cmd, writer, &appList, nil, nil, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -410,6 +594,9 @@ func printApplicationEvent(writer io.Writer, _ string, payload []byte, verbose b
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printApplications(writer, &[]catapi.CatalogV3Application{item}, verbose)
-	return nil
+	// Use the canonical printApplications helper so events follow the same output pipeline
+	cmd := &cobra.Command{}
+	cmd.Flags().String("output-type", "table", "")
+	var emptyFilter string
+	return printApplications(cmd, writer, &[]catapi.CatalogV3Application{item}, nil, &emptyFilter, verbose)
 }

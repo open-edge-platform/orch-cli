@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -14,10 +14,19 @@ func (s *CLITestSuite) createProfile(pubName string, applicationName string, app
 	return err
 }
 
-func (s *CLITestSuite) listProfiles(pubName string, applicationName string, applicationVersion string, verbose bool) (string, error) {
+func (s *CLITestSuite) listProfiles(pubName string, applicationName string, applicationVersion string, verbose bool, outputFilter string, outputTemplate string, outputTemplateFile string) (string, error) {
 	args := fmt.Sprintf(`list profiles --project %s %s %s`, pubName, applicationName, applicationVersion)
 	if verbose {
 		args = args + " -v"
+	}
+	if outputFilter != "" {
+		args = args + " --output-filter " + outputFilter
+	}
+	if outputTemplate != "" {
+		args = args + " --output-template " + outputTemplate
+	}
+	if outputTemplateFile != "" {
+		args = args + " --output-template-file " + outputTemplateFile
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -81,21 +90,21 @@ func (s *CLITestSuite) TestProfile() {
 	s.NoError(err)
 
 	// list artifacts to make sure it was created properly
-	listOutput, err := s.listProfiles(pubName, applicationName, applicationVersion, simpleOutput)
+	listOutput, err := s.listProfiles(pubName, applicationName, applicationVersion, simpleOutput, "", "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
 	expectedOutput := commandOutput{
 		profileName: {
-			"Name":         profileName,
-			"Description":  profileDescription,
-			"Display Name": profileDisplayName,
+			"NAME":         profileName,
+			"DESCRIPTION":  profileDescription,
+			"DISPLAY NAME": profileDisplayName,
 		},
 	}
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list profiles
-	listVerboseOutput, err := s.listProfiles(pubName, applicationName, applicationVersion, verboseOutput)
+	listVerboseOutput, err := s.listProfiles(pubName, applicationName, applicationVersion, verboseOutput, "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
@@ -104,9 +113,11 @@ func (s *CLITestSuite) TestProfile() {
 			"Name":                    profileName,
 			"Display Name":            profileDisplayName,
 			"Description":             profileDescription,
-			"Deployment Requirements": "requirement",
-			"Create Time":             timestampRegex,
-			"Update Time":             timestampRegex,
+			"Deployment Requirements": "requirement:1.2.3:Web server",
+			"Create Time":             "2025-12-31T23:59:59",
+			"Update Time":             "2025-12-31T23:59:59",
+			"Parameter templates":     "Name: param1 Type: string Display Name: Parameter 1 Default: default-value Suggested values: value1,value2",
+			"Chart Values":            "dmFsdWVzOiAxCnZhbDoy",
 		},
 	}
 
@@ -132,6 +143,16 @@ func (s *CLITestSuite) TestProfile() {
 	// delete the profile
 	err = s.deleteProfile(pubName, applicationName, applicationVersion, profileName)
 	s.NoError(err)
+
+	// Test error handling for dual template flags (--output-template and --output-template-file both set)
+	_, err = s.listProfiles(pubName, applicationName, applicationVersion, simpleOutput, "", "table{{.Name}}", "/tmp/invalid.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "only one of")
+
+	// Test error handling for missing template file
+	_, err = s.listProfiles(pubName, applicationName, applicationVersion, simpleOutput, "", "", "/nonexistent/path/template.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "unable to read")
 
 	//Commenting out for now as mock wont support
 	// Make sure profile is gone

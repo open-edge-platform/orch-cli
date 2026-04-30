@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -81,7 +81,6 @@ func (s *CLITestSuite) TestRegion() {
 	parsedOutputLines := mapLinesOutput(linesOutput)
 
 	expectedOutputLines := linesCommandOutput{
-		"",
 		"Printing regions tree",
 		"",
 		"Region: " + resourceID + " (region)",
@@ -145,7 +144,6 @@ func (s *CLITestSuite) TestRegion() {
 	parsedOutputLines = mapLinesOutput(linesOutput)
 
 	expectedOutputLines = linesCommandOutput{
-		"",
 		"Printing regions tree",
 		"",
 		"Region: " + resourceID + " (region)",

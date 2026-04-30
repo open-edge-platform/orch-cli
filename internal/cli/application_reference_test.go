@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -51,26 +51,27 @@ func (s *CLITestSuite) TestApplicationReference() {
 	s.NoError(err)
 
 	// verbose list deployment packages to make sure it was created properly
-	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "")
+	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "", "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
 	expectedVerboseOutput := commandOutput{
 		pkgName: {
 			"Version":                  pkgVersion,
-			"Create Time":              timestampRegex,
-			"Update Time":              timestampRegex,
+			"Create Time":              "2025-12-31 23:59:59 +0000 UTC",
+			"Update Time":              "2025-12-31 23:59:59 +0000 UTC",
 			"Name":                     pkgName,
-			"Kind":                     "normal",
+			"Kind":                     "<nil>",
 			"Display Name":             "deployment.package.display.name",
 			"Description":              "",
-			"In Use":                   "false",
-			"Applications":             `[app1:1.0.0 app2:1.0.0]`,
-			"Application Dependencies": `[]`,
-			"Profiles":                 ``,
-			"Default Profile":          "",
-			"Extensions":               "[]",
-			"Artifacts":                "[]",
+			"Is Deployed":              "false",
+			"Applications":             "app1:1.0.0 app2:1.0.0",
+			"Application Dependencies": "",
+			"Profiles":                 "deployment-package-profile test-deployment-profile",
+			"Default Profile":          "default-profile",
+			"Default Namespaces":       "",
+			"Extensions":               "",
+			"Artifacts":                "",
 		},
 	}
 

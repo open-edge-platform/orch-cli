@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -102,6 +102,21 @@ func (s *CLITestSuite) TestDeployment() {
 
 	_, err = s.deleteDeployment(project, "test-deployment", make(map[string]string))
 	s.NoError(err)
+
+	// Test error handling for dual template flags (--output-template and --output-template-file both set)
+	_, err = s.listDeployment(project, map[string]string{
+		"output-template":      "table{{.Name}}",
+		"output-template-file": "/tmp/invalid.tmpl",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "only one of")
+
+	// Test error handling for missing template file
+	_, err = s.listDeployment(project, map[string]string{
+		"output-template-file": "/nonexistent/path/template.tmpl",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "unable to read")
 }
 
 func FuzzDeployment(f *testing.F) {

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -14,6 +14,7 @@ import (
 
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	"github.com/spf13/cobra"
@@ -23,8 +24,17 @@ import (
 type contextKey string
 
 const (
-	expandedLabelsKey     contextKey = "expandedLabels"
-	expandedClusterIDsKey contextKey = "expandedClusterIDs"
+	expandedLabelsKey                 contextKey = "expandedLabels"
+	expandedClusterIDsKey             contextKey = "expandedClusterIDs"
+	DEFAULT_DEPLOYMENT_FORMAT                    = "table{{str .DeployId}}\t{{str .Name}}\t{{str .DisplayName}}\t{{str .ProfileName}}\t{{.Status.State}}"
+	DEFAULT_DEPLOYMENT_INSPECT_FORMAT            = `Deployment ID: {{str .DeployId}}
+Name: {{str .Name}}
+Display Name: {{str .DisplayName}}
+Profile: {{str .ProfileName}}
+State: {{.Status.State}}
+Create Time: {{.CreateTime}}
+`
+	DEPLOYMENT_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_OUTPUT_TEMPLATE"
 )
 
 func getCreateDeploymentCommand() *cobra.Command {
@@ -53,6 +63,8 @@ func getListDeploymentsCommand() *cobra.Command {
 		Example: "orch-cli list deployments --project some-project",
 		RunE:    runListDeploymentsCommand,
 	}
+	addListOrderingFilteringPaginationFlags(cmd, "deployment")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -65,6 +77,7 @@ func getGetDeploymentCommand() *cobra.Command {
 		Example: "orch-cli get deployment 12345 --project some-project",
 		RunE:    runGetDeploymentCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -114,34 +127,86 @@ func getDeleteDeploymentCommand() *cobra.Command {
 	return cmd
 }
 
-var deploymentHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
-	"Deployment ID", "Name", "Display Name", "Profile", "State")
-
-func printDeployments(writer *tabwriter.Writer, deployments *[]depapi.Deployment, verbose bool) {
-	for _, d := range *deployments {
-		state := ""
-		if d.Status != nil && d.Status.State != nil {
-			state = string(*d.Status.State)
-		}
-
-		createTime := ""
-		if d.CreateTime != nil {
-			createTime = d.CreateTime.Format(timeLayout)
-		}
-
-		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", safeString(d.DeployId), safeString(d.Name),
-				safeString(d.DisplayName), safeString(d.ProfileName), state)
-		} else {
-			_, _ = fmt.Fprintf(writer, "Deployment ID: %s\n", safeString(d.DeployId))
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", safeString(d.Name))
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", safeString(d.DisplayName))
-			_, _ = fmt.Fprintf(writer, "Profile: %s\n", safeString(d.ProfileName))
-			_, _ = fmt.Fprintf(writer, "State: %s\n", state)
-			// FIXME: add the rest
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", createTime)
-		}
+func getDeploymentOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_DEPLOYMENT_INSPECT_FORMAT, nil
 	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_FORMAT, DEPLOYMENT_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func printDeployments(cmd *cobra.Command, writer *tabwriter.Writer, deployments *[]depapi.Deployment, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getDeploymentOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *deployments,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
+}
+
+func getValidatedDeploymentOrderBy(
+	ctx context.Context,
+	cmd *cobra.Command,
+	deploymentClient depapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, depapi.Deployment{})
+	}
+
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	return normalizeOrderByWithAPIProbe(raw, "deployments", depapi.Deployment{}, func(orderBy string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		// Validate ordering in isolation. Reusing the caller's --filter here can turn
+		// filter errors into misleading "invalid --order-by field" errors.
+		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentServiceListDeploymentsParams{
+				OrderBy:  &orderBy,
+				Filter:   nil,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
@@ -407,16 +472,107 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	validatedOrderBy, err := getValidatedDeploymentOrderBy(ctx, cmd, deploymentClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	validatedFilter, err := getValidatedDeploymentFilter(ctx, cmd, deploymentClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
+	}
+
+	pageSize, offset, err := getPageSizeOffset(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentServiceListDeploymentsParams{
+				OrderBy:  apiOrderBy,
+				Filter:   validatedFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting deployments"); !proceed {
+			return err
+		}
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printDeployments(cmd, writer, &resp.JSON200.Deployments, validatedOrderBy, &outputFilter, verbose); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	allDeployments := make([]depapi.Deployment, 0)
+
 	resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-		&depapi.DeploymentServiceListDeploymentsParams{}, auth.AddAuthHeader)
+		&depapi.DeploymentServiceListDeploymentsParams{
+			OrderBy:  apiOrderBy,
+			Filter:   validatedFilter,
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		deploymentHeader, "error getting deployments"); !proceed {
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+		"", "error getting deployments"); !proceed {
 		return err
 	}
-	printDeployments(writer, &resp.JSON200.Deployments, verbose)
+
+	allDeployments = append(allDeployments, resp.JSON200.Deployments...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = int32(len(resp.JSON200.Deployments))
+	}
+
+	for len(allDeployments) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+
+		offset += pageSize
+		resp, err = deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentServiceListDeploymentsParams{
+				OrderBy:  apiOrderBy,
+				Filter:   validatedFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting deployments"); !proceed {
+			return err
+		}
+
+		if len(resp.JSON200.Deployments) == 0 {
+			break
+		}
+		allDeployments = append(allDeployments, resp.JSON200.Deployments...)
+	}
+
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printDeployments(cmd, writer, &allDeployments, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -434,12 +590,48 @@ func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		deploymentHeader, fmt.Sprintf("error getting deployment %s", deploymentID)); !proceed {
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+		"", fmt.Sprintf("error getting deployment %s", deploymentID)); !proceed {
 		return err
 	}
-	printDeployments(writer, &[]depapi.Deployment{resp.JSON200.Deployment}, verbose)
+	if err := printDeployments(cmd, writer, &[]depapi.Deployment{resp.JSON200.Deployment}, nil, nil, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
+}
+
+func getValidatedDeploymentFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	deploymentClient depapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "deployments", depapi.Deployment{}, func(filter string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentServiceListDeploymentsParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {

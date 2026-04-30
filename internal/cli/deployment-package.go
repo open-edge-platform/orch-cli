@@ -1,21 +1,62 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"io"
 	"mime"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
+)
+
+const (
+	DEFAULT_DEPLOYMENT_PACKAGE_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Version}}\t{{.Kind}}\t{{.DefaultProfileName}}\t{{.IsDeployed}}\t{{len .ApplicationReferences}}"
+	DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT = `Name: {{.Name}}
+Display Name: {{str .DisplayName}}
+Description: {{str .Description}}
+Version: {{.Version}}
+Kind: {{.Kind}}
+Is Deployed: {{.IsDeployed}}
+Applications:
+	{{- range .ApplicationReferences}}
+  {{.Name}}:{{.Version}}
+	{{- end}}
+Application Dependencies:
+	{{- range deref .ApplicationDependencies}}
+	{{.Name}}:{{.Requires}}
+	{{- end}}
+Profiles:
+	{{- range deref .Profiles}}
+  {{.Name}}
+	{{- end}}
+Default Profile: {{str .DefaultProfileName}}
+Default Namespaces:
+	{{- range $app, $ns := deref .DefaultNamespaces}}
+  {{$app}}:{{$ns}}
+	{{- end}}
+Extensions:
+	{{- range .Extensions}}
+  {{.Name}}:{{.Version}}
+	{{- end}}
+Artifacts:
+	{{- range .Artifacts}}
+  {{.Name}} ({{.Type}})
+	{{- end}}
+Create Time: {{.CreateTime}}
+Update Time: {{.UpdateTime}}
+`
+	DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE"
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
@@ -48,6 +89,7 @@ func getListDeploymentPackagesCommand() *cobra.Command {
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "deployment package")
 	cmd.Flags().StringSlice("kind", []string{}, "deployment package kind: normal, addon, extension")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -60,6 +102,7 @@ func getGetDeploymentPackageCommand() *cobra.Command {
 		Example: "orch-cli get deployment-package my-package --project some-project",
 		RunE:    runGetDeploymentPackageCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -110,82 +153,42 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 	return cmd
 }
 
-var deploymentPackageHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s",
-	"Name", "Display Name", "Version", "Kind", "Default Profile", "In Use", "Application Count")
-
-func printDeploymentPackages(writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, verbose bool) {
-	for _, ca := range *caList {
-		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%t\t%d\n", ca.Name,
-				valueOrNone(ca.DisplayName), ca.Version, deploymentPackageKind2String(ca.Kind),
-				valueOrNone(ca.DefaultProfileName), safeBool(ca.IsDeployed),
-				len(ca.ApplicationReferences))
-		} else {
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", ca.Name)
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(ca.DisplayName))
-			_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(ca.Description))
-			_, _ = fmt.Fprintf(writer, "Version: %s\n", ca.Version)
-			_, _ = fmt.Fprintf(writer, "Kind: %s\n", deploymentPackageKind2String(ca.Kind))
-			_, _ = fmt.Fprintf(writer, "In Use: %t\n", safeBool(ca.IsDeployed))
-
-			refs := make([]string, 0, len(ca.ApplicationReferences))
-			for _, ref := range ca.ApplicationReferences {
-				refs = append(refs, fmt.Sprintf("%s:%s", ref.Name, ref.Version))
-			}
-			_, _ = fmt.Fprintf(writer, "Applications: %v\n", refs)
-
-			deps := make([]string, 0)
-			if ca.ApplicationDependencies != nil {
-				deps = make([]string, 0, len(*ca.ApplicationDependencies))
-				for _, dep := range *ca.ApplicationDependencies {
-					deps = append(deps, fmt.Sprintf("%s->%s", dep.Name, dep.Requires))
-				}
-			}
-			_, _ = fmt.Fprintf(writer, "Application Dependencies: %v\n", deps)
-
-			profiles := make([]string, 0)
-			if ca.Profiles != nil {
-				profiles = make([]string, 0, len(*ca.Profiles))
-				for _, p := range *ca.Profiles {
-					profiles = append(profiles, p.Name)
-				}
-			}
-			_, _ = fmt.Fprintf(writer, "Profiles: %v\n", profiles)
-			_, _ = fmt.Fprintf(writer, "Default Profile: %s\n", valueOrNone(ca.DefaultProfileName))
-
-			if ca.DefaultNamespaces != nil && len(*ca.DefaultNamespaces) > 0 {
-				namespaces := make([]string, 0, len(*ca.DefaultNamespaces))
-				for app, ns := range *ca.DefaultNamespaces {
-					namespaces = append(namespaces, fmt.Sprintf("%s=%s", app, ns))
-				}
-				_, _ = fmt.Fprintf(writer, "Default Namespaces: %v\n", namespaces)
-			}
-
-			extensions := make([]string, 0, len(ca.Extensions))
-			for _, ext := range ca.Extensions {
-				extensions = append(extensions, ext.Name)
-			}
-			_, _ = fmt.Fprintf(writer, "Extensions: %v\n", extensions)
-
-			artifacts := make([]string, 0, len(ca.Artifacts))
-			for _, ext := range ca.Artifacts {
-				artifacts = append(artifacts, fmt.Sprintf("%s:%s", ext.Name, ext.Purpose))
-			}
-			_, _ = fmt.Fprintf(writer, "Artifacts: %v\n", artifacts)
-
-			createTime := ""
-			if ca.CreateTime != nil {
-				createTime = ca.CreateTime.Format(timeLayout)
-			}
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", createTime)
-
-			updateTime := ""
-			if ca.UpdateTime != nil {
-				updateTime = ca.UpdateTime.Format(timeLayout)
-			}
-			_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", updateTime)
-		}
+func getDeploymentPackageOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT, nil
 	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_PACKAGE_FORMAT, DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func printDeploymentPackages(cmd *cobra.Command, writer io.Writer, caList *[]catapi.CatalogV3DeploymentPackage, orderBy *string, outputFilter *string, verbose bool) error {
+	outputFormat, err := getDeploymentPackageOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *caList,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 // Produces an application reference from the specified <name>:<version> string
@@ -356,6 +359,87 @@ func getDeploymentPackageKinds(cmd *cobra.Command) *[]catapi.CatalogV3Kind {
 	return &list
 }
 
+func getValidatedDeploymentPackageOrderBy(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, catapi.CatalogV3DeploymentPackage{})
+	}
+
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	return normalizeOrderByWithAPIProbe(raw, "deployment-packages", catapi.CatalogV3DeploymentPackage{}, func(orderBy string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		// Validate ordering in isolation. Reusing the caller's --filter here can turn
+		// filter errors into misleading "invalid --order-by field" errors.
+		resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListDeploymentPackagesParams{
+				Kinds:    getDeploymentPackageKinds(cmd),
+				OrderBy:  &orderBy,
+				Filter:   nil,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment package order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func getValidatedDeploymentPackageFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	// Always validate the filter with the API to catch syntax/field errors early.
+	return normalizeFilterWithAPIProbe(raw, "deployment-packages", catapi.CatalogV3DeploymentPackage{}, func(filter string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListDeploymentPackagesParams{
+				Kinds:    getDeploymentPackageKinds(cmd),
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment package filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
@@ -363,27 +447,116 @@ func runListDeploymentPackagesCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	validatedOrderBy, err := getValidatedDeploymentPackageOrderBy(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	validatedFilter, err := getValidatedDeploymentPackageFilter(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
+	}
+
+	// Use server-side filtering when the filter validates, even for table output.
+	// Table output may still perform client-side formatting, but applying the
+	// API filter can reduce network/pagination cost and is a valid user choice.
+	apiFilter := validatedFilter
+
 	pageSize, offset, err := getPageSizeOffset(cmd)
 	if err != nil {
 		return err
 	}
 
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListDeploymentPackagesParams{
+				Kinds:    getDeploymentPackageKinds(cmd),
+				OrderBy:  apiOrderBy,
+				Filter:   apiFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing deployment packages"); !proceed {
+			return err
+		}
+
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printDeploymentPackages(cmd, writer, &resp.JSON200.DeploymentPackages, validatedOrderBy, &outputFilter, verbose); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	allDeploymentPackages := make([]catapi.CatalogV3DeploymentPackage, 0)
+
 	resp, err := catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListDeploymentPackagesParams{
 			Kinds:    getDeploymentPackageKinds(cmd),
-			OrderBy:  getFlag(cmd, "order-by"),
-			Filter:   getFlag(cmd, "filter"),
+			OrderBy:  apiOrderBy,
+			Filter:   apiFilter,
 			PageSize: &pageSize,
 			Offset:   &offset,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, deploymentPackageHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		"error listing deployment packages"); !proceed {
 		return err
 	}
-	printDeploymentPackages(writer, &resp.JSON200.DeploymentPackages, verbose)
+
+	allDeploymentPackages = append(allDeploymentPackages, resp.JSON200.DeploymentPackages...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = int32(len(resp.JSON200.DeploymentPackages))
+	}
+
+	for len(allDeploymentPackages) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+
+		offset += pageSize
+		resp, err = catalogClient.CatalogServiceListDeploymentPackagesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListDeploymentPackagesParams{
+				Kinds:    getDeploymentPackageKinds(cmd),
+				OrderBy:  apiOrderBy,
+				Filter:   apiFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing deployment packages"); !proceed {
+			return err
+		}
+
+		if len(resp.JSON200.DeploymentPackages) == 0 {
+			break
+		}
+		allDeploymentPackages = append(allDeploymentPackages, resp.JSON200.DeploymentPackages...)
+	}
+
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printDeploymentPackages(cmd, writer, &allDeploymentPackages, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -404,7 +577,7 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, deploymentPackageHeader,
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, "",
 			fmt.Sprintf("error getting deployment package %s:%s", name, version)); !proceed {
 			return err
 		}
@@ -415,7 +588,7 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return processError(err)
 		}
-		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, deploymentPackageHeader,
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, "",
 			fmt.Sprintf("error getting deployment package %s versions", name)); !proceed {
 			return err
 		}
@@ -424,7 +597,9 @@ func runGetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("no versions of deployment package %s found", name)
 		}
 	}
-	printDeploymentPackages(writer, &deploymentPkgs, verbose)
+	if err := printDeploymentPackages(cmd, writer, &deploymentPkgs, nil, nil, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -641,14 +816,5 @@ func runExportDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	}
 	fmt.Printf("Deployment package exported to %s\n", filename)
 
-	return nil
-}
-
-func printDeploymentPackageEvent(writer io.Writer, _ string, payload []byte, verbose bool) error {
-	var item catapi.CatalogV3DeploymentPackage
-	if err := json.Unmarshal(payload, &item); err != nil {
-		return err
-	}
-	printDeploymentPackages(writer, &[]catapi.CatalogV3DeploymentPackage{item}, verbose)
 	return nil
 }

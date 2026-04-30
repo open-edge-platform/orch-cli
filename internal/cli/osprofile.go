@@ -1,23 +1,32 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v2"
+)
+
+const (
+	DEFAULT_OSPROFILE_FORMAT         = "table{{str .Name}}\t{{str .Architecture}}\t{{.SecurityFeature}}"
+	DEFAULT_OSPROFILE_VERBOSE_FORMAT = "Name: \t{{str .Name}}\nProfile Name: \t{{str .ProfileName}}\nSecurity Feature: \t{{.SecurityFeature}}\nArchitecture: \t{{str .Architecture}}\nRepository URL: \t{{str .RepoUrl}}\nsha256: \t{{.Sha256}}\n"
+	DEFAULT_OSPROFILE_INSPECT_FORMAT = "Name: \t{{str .Name}}\nProfile Name: \t{{str .ProfileName}}\nOS Resource ID: \t{{str .OsResourceID}}\nVersion: \t{{str .ProfileVersion}}\nSha256: \t{{.Sha256}}\nImage ID: \t{{str .ImageId}}\nImage URL: \t{{str .ImageUrl}}\nRepository URL: \t{{str .RepoUrl}}\nDescription: \t{{str .Description}}\nMetadata: \t{{str .Metadata}}\nSecurity Feature: \t{{.SecurityFeature}}\nArchitecture: \t{{str .Architecture}}\nOS Type: \t{{.OsType}}\nOS Provider: \t{{.OsProvider}}\nPlatform Bundle: \t{{str .PlatformBundle}}\nInstalled Packages: \t{{str .InstalledPackages}}\nCreated: \t{{.Timestamps.CreatedAt}}\nUpdated: \t{{.Timestamps.UpdatedAt}}\n{{if .TlsCaCert}}TLS CA Cert: \t{{str .TlsCaCert}}\n{{end}}{{if .ExistingCves}}Existing CVEs: \t{{str .ExistingCves}}\n{{end}}{{if .FixedCves}}Fixed CVEs: \t{{str .FixedCves}}\n{{end}}"
+	OSPROFILE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_OSPROFILE_OUTPUT_TEMPLATE"
 )
 
 const listOSProfileExamples = `# List all OS Profiles
@@ -55,9 +64,6 @@ https://github.com/open-edge-platform/infra-core/tree/main/os-profiles`
 
 const deleteOSProfileExamples = `#Delete an OS Profile using it's name
 orch-cli delete osprofile "Edge Microvisor Toolkit 3.0.20250504" --project some-project`
-
-var OSProfileHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Architecture", "Security Feature")
-var OSProfileHeaderGet = fmt.Sprintf("\n%s\t%s", "OS Profile Field", "Value")
 
 var osProfileSchema = `
 {
@@ -121,80 +127,65 @@ type NestedSpec struct {
 	Spec       OSProfileSpec `yaml:"spec"`
 }
 
-// Prints OS Profiles in tabular format
-func printOSProfiles(writer io.Writer, OSProfiles []infra.OperatingSystemResource, verbose bool) {
-	for _, osp := range OSProfiles {
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", *osp.Name, *osp.Architecture, *osp.SecurityFeature)
-		} else {
-			_, _ = fmt.Fprintf(writer, "\nName:\t %s\n", *osp.Name)
-			_, _ = fmt.Fprintf(writer, "Profile Name:\t %s\n", *osp.ProfileName)
-			_, _ = fmt.Fprintf(writer, "Security Feature:\t %v\n", toJSON(osp.SecurityFeature))
-			_, _ = fmt.Fprintf(writer, "Architecture:\t %s\n", *osp.Architecture)
-			_, _ = fmt.Fprintf(writer, "Repository URL:\t %s\n", *osp.RepoUrl)
-			_, _ = fmt.Fprintf(writer, "sha256:\t %v\n", osp.Sha256)
-		}
+func getOSProfileOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string, error) {
+	if verbose && forList {
+		return DEFAULT_OSPROFILE_VERBOSE_FORMAT, nil
 	}
+	if !forList {
+		// Get command always shows full details
+		return DEFAULT_OSPROFILE_INSPECT_FORMAT, nil
+	}
+	return resolveTableOutputTemplate(cmd, DEFAULT_OSPROFILE_FORMAT, OSPROFILE_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+// Prints OS Profiles in tabular format
+func printOSProfiles(cmd *cobra.Command, writer io.Writer, OSProfiles []infra.OperatingSystemResource, orderBy *string, outputFilter *string, verbose bool) error {
+	outputFormat, err := getOSProfileOutputFormat(cmd, verbose, true)
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      OSProfiles,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 // Prints output details of OS Profiles
-func printOSProfile(writer io.Writer, OSProfile *infra.OperatingSystemResource) {
-	var cveEntries []CVEEntry
-	var fcveEntries []CVEEntry
-	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", *OSProfile.Name)
-	_, _ = fmt.Fprintf(writer, "Profile Name: \t%s\n", *OSProfile.ProfileName)
-	_, _ = fmt.Fprintf(writer, "OS Resource ID: \t%s\n", *OSProfile.OsResourceID)
-	_, _ = fmt.Fprintf(writer, "version: \t%v\n", toJSON(OSProfile.ProfileVersion))
-	_, _ = fmt.Fprintf(writer, "sha256: \t%v\n", OSProfile.Sha256)
-	_, _ = fmt.Fprintf(writer, "Image ID: \t%s\n", *OSProfile.ImageId)
-	_, _ = fmt.Fprintf(writer, "Image URL: \t%s\n", *OSProfile.ImageUrl)
-	_, _ = fmt.Fprintf(writer, "Repository URL: \t%s\n", *OSProfile.RepoUrl)
-	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", *OSProfile.Description)
-	_, _ = fmt.Fprintf(writer, "Metadata: \t%s\n", *OSProfile.Metadata)
-	_, _ = fmt.Fprintf(writer, "Security Feature: \t%v\n", toJSON(OSProfile.SecurityFeature))
-	_, _ = fmt.Fprintf(writer, "Architecture: \t%s\n", *OSProfile.Architecture)
-	_, _ = fmt.Fprintf(writer, "OS type: \t%s\n", *OSProfile.OsType)
-	_, _ = fmt.Fprintf(writer, "OS provider: \t%s\n", *OSProfile.OsProvider)
-	_, _ = fmt.Fprintf(writer, "Platform Bundle: \t%s\n", *OSProfile.PlatformBundle)
-	_, _ = fmt.Fprintf(writer, "Installed Packages: \t%v\n", toJSON(OSProfile.InstalledPackages))
-	_, _ = fmt.Fprintf(writer, "Created: \t%v\n", OSProfile.Timestamps.CreatedAt)
-	_, _ = fmt.Fprintf(writer, "Updated: \t%v\n", OSProfile.Timestamps.UpdatedAt)
+func printOSProfile(cmd *cobra.Command, writer io.Writer, OSProfile *infra.OperatingSystemResource) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
 
-	if OSProfile.TlsCaCert != nil {
-		_, _ = fmt.Fprintf(writer, "TLS CA Cert: \t%v\n", *OSProfile.TlsCaCert)
+	outputFormat, err := getOSProfileOutputFormat(cmd, false, false)
+	if err != nil {
+		return err
 	}
 
-	if OSProfile.ExistingCves != nil && OSProfile.FixedCves != nil {
-
-		if *OSProfile.ExistingCves != "" {
-			err := json.Unmarshal([]byte(*OSProfile.ExistingCves), &cveEntries)
-			if err != nil {
-				fmt.Println("Error unmarshaling JSON: existing CVE entries:", err)
-				return
-			}
-		}
-		if *OSProfile.FixedCves != "" {
-			err := json.Unmarshal([]byte(*OSProfile.FixedCves), &fcveEntries)
-			if err != nil {
-				fmt.Println("Error unmarshaling JSON: fixed CVE entries:", err)
-				return
-			}
-		}
-
-		_, _ = fmt.Fprintf(writer, "\nCVE Info:\n")
-		_, _ = fmt.Fprintf(writer, "\t Existing CVEs: \n\n")
-		for _, cve := range cveEntries {
-			_, _ = fmt.Fprintf(writer, "-\t\tCVE ID:\t %v\n", cve.CVEID)
-			_, _ = fmt.Fprintf(writer, "-\t\tPriority:\t %v\n", cve.Priority)
-			_, _ = fmt.Fprintf(writer, "-\t\tAffected Packages:\t %v\n\n", cve.AffectedPackages)
-		}
-		_, _ = fmt.Fprintf(writer, "\t Fixed CVEs: \n\n")
-		for _, fcve := range fcveEntries {
-			_, _ = fmt.Fprintf(writer, "-\t\tCVE ID:\t %v\n", fcve.CVEID)
-			_, _ = fmt.Fprintf(writer, "-\t\tPriority:\t %v\n", fcve.Priority)
-			_, _ = fmt.Fprintf(writer, "-\t\tAffected Packages:\t %v\n\n", fcve.AffectedPackages)
-		}
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      OSProfile,
 	}
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 // Helper function to verify that the input file exists and is of right format
@@ -251,7 +242,7 @@ func readOSProfileFromYaml(path string) (*NestedSpec, error) {
 	if !result.Valid() {
 		var sb strings.Builder
 		for _, desc := range result.Errors() {
-			sb.WriteString(fmt.Sprintf("- %s\n", desc))
+			fmt.Fprintf(&sb, "- %s\n", desc)
 		}
 		return nil, fmt.Errorf("YAML does not conform to schema:\n%s", sb.String())
 	}
@@ -283,6 +274,7 @@ func getGetOSProfileCommand() *cobra.Command {
 		Aliases: osProfileAliases,
 		RunE:    runGetOSProfileCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -294,7 +286,9 @@ func getListOSProfileCommand() *cobra.Command {
 		Aliases: osProfileAliases,
 		RunE:    runListOSProfileCommand,
 	}
-	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")
+	cmd.Flags().StringP("filter", "f", "", "API filter (see https://google.aip.dev/160)")
+	cmd.Flags().String("order-by", "", "order results by field (table output only)")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -325,7 +319,7 @@ func getDeleteOSProfileCommand() *cobra.Command {
 // Gets specific OS Profile - retrieves list of profiles and then filters and outputs
 // specifc profile by name
 func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
@@ -337,8 +331,7 @@ func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		OSProfileHeaderGet, "error getting OS Profile"); !proceed {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error getting OS Profile"); err != nil {
 		return err
 	}
 
@@ -348,36 +341,136 @@ func runGetOSProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printOSProfile(writer, profile)
+	if err := printOSProfile(cmd, writer, profile); err != nil {
+		return err
+	}
 	return writer.Flush()
+}
+
+func getValidatedOSProfileOrderBy(
+	ctx context.Context,
+	cmd *cobra.Command,
+	OSProfileClient infra.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, infra.OperatingSystemResource{})
+	}
+
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	return normalizeOrderByWithAPIProbe(raw, "os profiles", infra.OperatingSystemResource{}, func(orderBy string) (bool, error) {
+		pageSize := int(1)
+		offset := int(0)
+		// Validate ordering in isolation
+		resp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+			&infra.OperatingSystemServiceListOperatingSystemsParams{
+				OrderBy:  &orderBy,
+				Filter:   nil,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS profile order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func getValidatedOSProfileFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	OSProfileClient infra.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "os profiles", infra.OperatingSystemResource{}, func(filter string) (bool, error) {
+		pageSize := int(1)
+		offset := int(0)
+		resp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
+			&infra.OperatingSystemServiceListOperatingSystemsParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS profile filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 // Lists all OS Profiles - retrieves all profiles and displays selected information in tabular format
 func runListOSProfileCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 
-	filtflag, _ := cmd.Flags().GetString("filter")
-	filter := filterHelper(filtflag)
+	// filter helper not needed; validation uses API probe
 
 	ctx, OSProfileClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
+	// Get and validate order-by
+	validatedOrderBy, err := getValidatedOSProfileOrderBy(ctx, cmd, OSProfileClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	// Determine if we use API or client-side ordering
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
+	}
+
+	validatedFilter, err := getValidatedOSProfileFilter(ctx, cmd, OSProfileClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	resp, err := OSProfileClient.OperatingSystemServiceListOperatingSystemsWithResponse(ctx, projectName,
 		&infra.OperatingSystemServiceListOperatingSystemsParams{
-			Filter: filter,
+			Filter:  validatedFilter,
+			OrderBy: apiOrderBy,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		OSProfileHeader, "error getting OS Profiles"); !proceed {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error getting OS Profiles"); err != nil {
 		return err
 	}
 
-	printOSProfiles(writer, resp.JSON200.OperatingSystemResources, verbose)
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printOSProfiles(cmd, writer, resp.JSON200.OperatingSystemResources, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 
 	return writer.Flush()
 }

@@ -16,15 +16,15 @@ func (s *CLITestSuite) TestListGroups() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Name": "org-admin-group",
+			"NAME": "org-admin-group",
 			"ID":   "group-uuid-1",
 		},
 		{
-			"Name": "edge-manager-group",
+			"NAME": "edge-manager-group",
 			"ID":   "group-uuid-2",
 		},
 		{
-			"Name": "edge-operator-group",
+			"NAME": "edge-operator-group",
 			"ID":   "group-uuid-3",
 		},
 	}
@@ -43,19 +43,19 @@ func (s *CLITestSuite) TestListGroupsVerbose() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Name": "org-admin-group",
+			"NAME": "org-admin-group",
 			"ID":   "group-uuid-1",
-			"Path": "/org-admin-group",
+			"PATH": "/org-admin-group",
 		},
 		{
-			"Name": "edge-manager-group",
+			"NAME": "edge-manager-group",
 			"ID":   "group-uuid-2",
-			"Path": "/edge-manager-group",
+			"PATH": "/edge-manager-group",
 		},
 		{
-			"Name": "edge-operator-group",
+			"NAME": "edge-operator-group",
 			"ID":   "group-uuid-3",
-			"Path": "/edge-operator-group",
+			"PATH": "/edge-operator-group",
 		},
 	}
 

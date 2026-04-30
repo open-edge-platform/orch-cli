@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package catalog
@@ -90,13 +90,13 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 				registries := []catapi.CatalogV3Registry{}
 				for _, registryName := range []string{"registry-image", "registry-helm"} {
 					name, displayName, regType := getRegistryInfo(registryName)
-					var authToken, username *string
+					var authToken *string
+					// Username is always returned (not considered sensitive)
+					username := stringPtr("user")
 					if params.ShowSensitiveInfo != nil && *params.ShowSensitiveInfo {
 						authToken = stringPtr("token")
-						username = stringPtr("user")
 					} else {
 						authToken = stringPtr("********")
-						username = stringPtr("<none>")
 					}
 					registries = append(registries, catapi.CatalogV3Registry{
 						Name:        name,

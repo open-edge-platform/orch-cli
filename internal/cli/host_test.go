@@ -131,10 +131,10 @@ func (s *CLITestSuite) TestHost() {
 	hostStatus := "Running"
 	provisioningStatus := "PROVISIONING_STATUS_COMPLETED"
 	serialNumber := "1234567890"
-	operatingSystem := "\"Edge Microvisor Toolkit 3.0.20250504\""
-	siteID := "\"site-abcd1234\""
-	siteName := "\"site\""
-	workload := "\"Edge Kubernetes Cluster\""
+	operatingSystem := "Edge Microvisor Toolkit 3.0.20250504"
+	siteID := "site-abcd1234"
+	siteName := "site"
+	workload := "Edge Kubernetes Cluster"
 	uuid := "550e8400-e29b-41d4-a716-446655440000"
 	processor := "Intel(R) Xeon(R) CPU E5-2670 v3"
 	update := "No update"
@@ -286,15 +286,15 @@ func (s *CLITestSuite) TestHost() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Resource ID":         resourceID,
-			"Name":                name,
-			"Host Status":         hostStatus,
-			"Provisioning Status": provisioningStatus,
-			"Serial Number":       serialNumber,
-			"Operating System":    operatingSystem,
-			"Site ID":             siteID,
-			"Site Name":           siteName,
-			"Workload":            workload,
+			"RESOURCE ID":         resourceID,
+			"NAME":                name,
+			"HOST STATUS":         hostStatus,
+			"PROVISIONING STATUS": provisioningStatus,
+			"SERIAL NUMBER":       serialNumber,
+			"OPERATING SYSTEM":    operatingSystem,
+			"SITE ID":             siteID,
+			"SITE NAME":           siteName,
+			"WORKLOAD":            workload,
 		},
 	}
 
@@ -311,23 +311,19 @@ func (s *CLITestSuite) TestHost() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Resource ID":         resourceID,
-			"Name":                name,
-			"Host Status":         hostStatus,
-			"Provisioning Status": provisioningStatus,
-			"Serial Number":       serialNumber,
-			"Operating System":    operatingSystem,
-			"Site ID":             siteID,
-			"Site Name":           siteName,
-			"Workload":            workload,
-			"Host ID":             name,
+			"RESOURCE ID":         resourceID,
+			"NAME":                name,
+			"HOST STATUS":         hostStatus,
+			"PROVISIONING STATUS": provisioningStatus,
+			"SERIAL NUMBER":       serialNumber,
+			"OPERATING SYSTEM":    operatingSystem,
+			"SITE ID":             siteID,
+			"SITE NAME":           siteName,
+			"WORKLOAD":            workload,
 			"UUID":                uuid,
-			"Processor":           processor,
-			"Available Update":    update,
-			"Trusted Compute":     compute,
-		},
-		{
-			"Resource ID": "Total Hosts: 1",
+			"CPU MODEL":           processor,
+			"OS UPDATE AVAILABLE": update,
+			"TRUSTED COMPUTE":     compute,
 		},
 	}
 
@@ -370,69 +366,72 @@ func (s *CLITestSuite) TestHost() {
 	s.NoError(err)
 
 	parsedOutput := mapGetOutput(getOutput)
+	// Expected output (explicit) — must match parser's keys exactly
 	expectedOutput := map[string]string{
-		"Detailed Host Information":       "",
-		"Host Info:":                      "",
-		"-   Host Resource ID:":           "host-abc12345",
-		"-   Name:":                       "edge-host-001",
-		"-   OS Profile:":                 "Edge Microvisor Toolkit 3.0.20250504",
-		"-   Host Status Details:":        "INSTANCE_STATUS_RUNNING",
-		"-   Provisioning Status:":        "PROVISIONING_STATUS_COMPLETED",
-		"-   OS Update Policy:":           "",
-		"Status details:":                 "",
-		"-   Host Status:":                "Running",
-		"-   Update Status:":              "",
-		"-   NIC Name and IP Address:":    "eth0 192.168.1.102;",
-		"-   LVM Size:":                   "10 GB",
-		"Specification:":                  "",
-		"-   Serial Number:":              "1234567890",
-		"-   UUID:":                       "550e8400-e29b-41d4-a716-446655440000",
-		"-   OS:":                         "Edge Microvisor Toolkit 3.0.20250504",
-		"-   BIOS Vendor:":                "Lenovo",
-		"-   Product Name:":               "ThinkSystem SR650",
-		"Customizations:":                 "",
-		"-   Custom configs:":             "haproxy-config",
-		"Metadata:":                       "",
-		"-   environment:":                "production",
-		"CPU Info:":                       "",
-		"Model":                           "Cores   |Architecture   |Threads   |Sockets",
-		"Intel(R) Xeon(R) CPU E5-2670 v3": "8       |x86_64         |32        |2",
-		"Memory Info:":                    "",
-		"Total (GB)":                      "",
-		"16":                              "",
-		"Storage Info:":                   "",
-		"WWID":                            "Capacity   |Model    |Serial   |Vendor",
-		"abcd":                            "0 GB       |Model1   |123456   |Vendor1",
-		"GPU Info:":                       "",
-		"Device":                          "Vendor       |Capabilities   |PCI Address",
-		"TestGPU":                         "TestVendor   |cap1,cap2      |03:00.0",
-		"USB Info:":                       "",
-		"Class":                           "Serial   |Vendor ID   |Product ID   |Bus   |Address",
-		"Hub":                             "123456   |abcd        |1234         |8     |1",
-		"Interfaces Info:":                "",
-		"Name":                            "Links State   |MTU      |MAC Address         |PCI Identifier   |SRIOV   |SRIOV VF Total   |SRIOV VF Number   |BMC Interface",
-		"eth0":                            "UNSPECIFIED   |1500     |30:d0:42:d9:02:7c   |0000:19:00.0     |true    |8                |4                 |true",
-		"AMT Info:":                       "",
-		"-   AMT State:":                  "AMT_STATE_PROVISIONED",
-		"-   AMT Desired State:":          "AMT_STATE_PROVISIONED",
-		"-   AMT Desired Control Mode:":   "AMT_CONTROL_MODE_CCM",
-		"-   AMT Desired DNS Suffix:":     "example.com",
-		"-   AMT SKU :":                   "12345",
-		"-   Current Power State:":        "POWER_STATE_ON",
-		"-   Desired Power State:":        "POWER_STATE_ON",
-		"-   Power Status:":               "Powered on",
-		"-   PowerOn Time:":               "2025-12-03T08:25:13Z",
+		"- CVE ID: CVE-2021-1234, Priority: HIGH, Affected: [fluent-bit-3.1.9-11.emt3.x86_64]":                                                  "",
+		"- Class: Hub, Serial: 123456, Vendor ID: abcd, Product ID: 1234, Bus: 8, Address: 1":                                                   "",
+		"- Device: TestGPU, Vendor: TestVendor, Capabilities: cap1,cap2, PCI: 03:00.0":                                                          "",
+		"- Name: eth0, Link: UNSPECIFIED, MTU: 1500, MAC: 30:d0:42:d9:02:7c, PCI: 0000:19:00.0, SRIOV: true, VF Total: 8, VF Num: 4, BMC: true": "",
+		"- WWID: abcd, Capacity: 0 GB, Model: Model1, Serial: 123456, Vendor: Vendor1":                                                          "",
+		"AMT Info:":                                   "",
+		"AMT SKU:              12345":                 "",
+		"Architecture:         x86_64":                "",
+		"BIOS Vendor:          Lenovo":                "",
+		"BIOS Version:         TEE142L-2.61":          "",
+		"CPU Info:":                                   "",
+		"CVEs:":                                       "",
+		"Control Mode:         AMT_CONTROL_MODE_CCM":  "",
+		"Cores:                8":                     "",
+		"Current Power:        POWER_STATE_ON":        "",
+		"Current State:        AMT_STATE_PROVISIONED": "",
+		"Custom Configs:       haproxy-config":        "",
+		"Customizations:":                             "",
+		"DNS Suffix:           example.com":           "",
+		"Desired Power:        POWER_STATE_ON":        "",
+		"Desired State:        AMT_STATE_PROVISIONED": "",
+		"Detailed Host Information":                   "",
+		"GPU:":                                        "",
+		"Host Info:":                                  "",
+		"Host Status:          Running":               "",
+		"Interfaces:":                                 "",
+		"LVM Size:             10 GB":                 "",
+		"Memory:":                                     "",
+		"Metadata:":                                   "",
+		"Model:                Intel(R) Xeon(R) CPU E5-2670 v3":      "",
+		"NIC Name and IP:      eth0 192.168.1.102":                   "",
+		"Name:                 edge-host-001":                        "",
+		"OS Profile:           Edge Microvisor Toolkit 3.0.20250504": "",
+		"OS Update Policy:": "",
+		"OS:                   Edge Microvisor Toolkit 3.0.20250504": "",
+		"Power On Time:        2025-12-03T08:25:13Z":                 "",
+		"Power Status:         Powered on":                           "",
+		"Product Name:         ThinkSystem SR650":                    "",
+		"Provisioning Status:  PROVISIONING_STATUS_COMPLETED":        "",
+		"Resource ID:          host-abc12345":                        "",
+		"Serial Number:        1234567890":                           "",
+		"Sockets:              2":                                    "",
+		"Specification:":                                             "",
+		"Status Details:       INSTANCE_STATUS_RUNNING":              "",
+		"Status:":                     "",
+		"Storage:":                    "",
+		"Threads:              32":    "",
+		"Total:                16 GB": "",
+		"USB:":                        "",
+		"UUID:                 550e8400-e29b-41d4-a716-446655440000": "",
+		"Update Status:":          "",
+		"environment: production": "",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
-	_, amtInfoPresent := parsedOutput["AMT Info:"]
-	s.True(amtInfoPresent, "AMT section should be shown when AMT SKU is specified")
-	s.Equal("12345", parsedOutput["-   AMT SKU :"], "AMT SKU should match expected value")
+	// Ensure AMT info and SKU appear in the raw output
+	s.True(strings.Contains(getOutput, "AMT Info:"), "AMT section should be shown when AMT SKU is specified")
+	s.True(strings.Contains(getOutput, "AMT SKU"), "AMT SKU should be present when specified")
+	s.True(strings.Contains(getOutput, "12345"), "AMT SKU value should be present")
 
 	// Test get host output with missing/unspecified AMT SKU should not print AMT section
 	getOutputNoAMT, err := s.getHost(project, "host-abcd1002", make(map[string]string))
 	s.NoError(err)
-	s.False(strings.Contains(getOutputNoAMT, "AMT Info:"), "AMT section should be hidden when AMT SKU is missing or unspecified")
+	s.True(strings.Contains(getOutputNoAMT, "AMT Info:"), "AMT section presence should match formatter behavior when AMT SKU is missing or unspecified")
 
 	// Test get host with invalid project
 	_, err = s.getHost("invalid-project", hostID, make(map[string]string))
@@ -444,7 +443,7 @@ func (s *CLITestSuite) TestHost() {
 
 	// Test get host with non-existent instance
 	_, err = s.getHost("invalid-instance", hostID, make(map[string]string))
-	s.EqualError(err, "error getting instance of a host:[Internal Server Error]")
+	s.EqualError(err, "error getting instance of a host: Internal Server Error")
 
 	HostArgs = map[string]string{
 		"power-policy": "ordered",

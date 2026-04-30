@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -16,11 +16,20 @@ func (s *CLITestSuite) createDeploymentProfile(pubName string, pkgName string, p
 	return err
 }
 
-func (s *CLITestSuite) listDeploymentProfiles(pubName string, pkgName string, pkgVersion string, verbose bool) (string, error) {
+func (s *CLITestSuite) listDeploymentProfiles(pubName string, pkgName string, pkgVersion string, verbose bool, outputFilter string, outputTemplate string, outputTemplateFile string) (string, error) {
 	args := fmt.Sprintf(`list deployment-package-profiles --project %s %s %s`,
 		pubName, pkgName, pkgVersion)
 	if verbose {
 		args = args + " -v"
+	}
+	if outputFilter != "" {
+		args = args + " --output-filter " + outputFilter
+	}
+	if outputTemplate != "" {
+		args = args + " --output-template " + outputTemplate
+	}
+	if outputTemplateFile != "" {
+		args = args + " --output-template-file " + outputTemplateFile
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -67,34 +76,34 @@ func (s *CLITestSuite) TestDeploymentProfile() {
 	s.NoError(err)
 
 	// list deployment profiles to make sure it was created properly
-	listOutput, err := s.listDeploymentProfiles(pubName, pkgName, pkgVersion, simpleOutput)
+	listOutput, err := s.listDeploymentProfiles(pubName, pkgName, pkgVersion, simpleOutput, "", "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
 	expectedOutput := commandOutput{
 		pkgProfileName: {
-			"Name":          pkgProfileName,
-			"Display Name":  deploymentProfileDisplayName,
-			"Description":   deploymentProfileDescription,
-			"Profile Count": "0",
+			"NAME":                 pkgProfileName,
+			"DISPLAY NAME":         deploymentProfileDisplayName,
+			"DESCRIPTION":          deploymentProfileDescription,
+			"APPLICATION PROFILES": "0",
 		},
 	}
 
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list deployment profiles
-	listVerboseOutput, err := s.listDeploymentProfiles(pubName, pkgName, pkgVersion, verboseOutput)
+	listVerboseOutput, err := s.listDeploymentProfiles(pubName, pkgName, pkgVersion, verboseOutput, "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
 	expectedVerboseOutput := commandOutput{
 		pkgProfileName: {
-			"Create Time":  timestampRegex,
-			"Update Time":  timestampRegex,
+			"Create Time":  "2025-12-31 23:59:59 +0000 UTC",
+			"Update Time":  "2025-12-31 23:59:59 +0000 UTC",
 			"Name":         pkgProfileName,
 			"Display Name": deploymentProfileDisplayName,
 			"Description":  deploymentProfileDescription,
-			"Profiles":     "map[]",
+			"Profiles":     "",
 		},
 	}
 
@@ -114,6 +123,16 @@ func (s *CLITestSuite) TestDeploymentProfile() {
 	// delete the deployment profile
 	err = s.deleteDeploymentProfile(pubName, pkgName, pkgVersion, pkgProfileName)
 	s.NoError(err)
+
+	// Test error handling for dual template flags (--output-template and --output-template-file both set)
+	_, err = s.listDeploymentProfiles(pubName, pkgName, pkgVersion, simpleOutput, "", "table{{.Name}}", "/tmp/invalid.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "only one of")
+
+	// Test error handling for missing template file
+	_, err = s.listDeploymentProfiles(pubName, pkgName, pkgVersion, simpleOutput, "", "", "/nonexistent/path/template.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "unable to read")
 }
 
 func FuzzDeploymentProfile(f *testing.F) {
@@ -146,7 +165,7 @@ func FuzzDeploymentProfile(f *testing.F) {
 		}
 
 		// --- List Deployment Profiles ---
-		_, err = testSuite.listDeploymentProfiles(pubName, pkgName, pkgVersion, false)
+		_, err = testSuite.listDeploymentProfiles(pubName, pkgName, pkgVersion, false, "", "", "")
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

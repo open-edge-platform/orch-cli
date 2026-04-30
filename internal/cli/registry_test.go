@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -111,11 +111,11 @@ func (s *CLITestSuite) registryTest(registryTypeCommand string, registryTypeValu
 	parsedOutput := mapCliOutput(listOutput)
 	expectedOutput := commandOutput{
 		registryName: {
-			"Name":         registryName,
-			"Display Name": registryDisplayName,
-			"Description":  registryDescription,
-			"Type":         registryTypeValue,
-			"Root URL":     registryRootURL,
+			"NAME":         registryName,
+			"DISPLAY NAME": registryDisplayName,
+			"DESCRIPTION":  registryDescription,
+			"TYPE":         registryTypeValue,
+			"ROOT URL":     registryRootURL,
 		},
 	}
 
@@ -159,7 +159,7 @@ func (s *CLITestSuite) registryTest(registryTypeCommand string, registryTypeValu
 			"Inventory URL": "<none>",
 			"Type":          registryTypeValue,
 			"API Type":      "<none>",
-			"Username":      "<none>",
+			"Username":      "user",
 			"AuthToken":     "********",
 			"CA Certs":      "<none>",
 			"Create Time":   timestampRegex,
@@ -181,7 +181,7 @@ func (s *CLITestSuite) registryTest(registryTypeCommand string, registryTypeValu
 	s.NoError(err)
 
 	parsedGetOutput := mapCliOutput(getCmdOutput)
-	expectedOutput[registryName]["Description"] = `new-description`
+	expectedOutput[registryName]["DESCRIPTION"] = `new-description`
 	s.compareOutput(expectedOutput, parsedGetOutput)
 
 	s.removeRegistry(registryName)
@@ -202,7 +202,7 @@ func TestPrintRegistryEvent(t *testing.T) {
 		Description: strPtr("A test registry"),
 		Type:        "HELM",
 	}
-	payload, err := json.Marshal(reg)
+	payload, err := json.Marshal(reg) //nolint:gosec
 	assert.NoError(t, err)
 
 	var buf bytes.Buffer

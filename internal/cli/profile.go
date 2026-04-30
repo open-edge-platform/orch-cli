@@ -1,19 +1,38 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
-	b64 "encoding/base64"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/open-edge-platform/orch-library/go/pkg/errors"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+)
+
+const (
+	DEFAULT_PROFILE_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Description}}"
+	DEFAULT_PROFILE_INSPECT_FORMAT = `Name: {{.Name}}
+Display Name: {{none .DisplayName}}
+Description: {{none .Description}}{{if deref .DeploymentRequirement}}
+Deployment Requirements:{{- range deref .DeploymentRequirement}}
+  {{.Name}}:{{.Version}}{{if .DeploymentProfileName}}:{{str .DeploymentProfileName}}{{end}}{{- end}}{{end}}
+Create Time: {{fmttime .CreateTime}}
+Update Time: {{fmttime .UpdateTime}}{{if deref .ParameterTemplates}}
+Parameter templates:{{- range deref .ParameterTemplates}}
+   Name: {{.Name}}
+   Type: {{.Type}}
+   Display Name: {{none .DisplayName}}
+   Default: {{str .Default}}
+   Suggested values: {{if .SuggestedValues}}{{range $i, $v := deref .SuggestedValues}}{{if $i}},{{end}}{{$v}}{{end}}{{end}}{{end}}{{- end}}{{if str .ChartValues}}
+Chart Values: {{str .ChartValues}}{{end}}`
+	PROFILE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_PROFILE_OUTPUT_TEMPLATE"
 )
 
 func getCreateProfileCommand() *cobra.Command {
@@ -41,6 +60,8 @@ func getListProfilesCommand() *cobra.Command {
 		Aliases: profileAliases,
 		RunE:    runListProfilesCommand,
 	}
+	cmd.Flags().String("order-by", "", "order results by field (table output only)")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -53,6 +74,7 @@ func getGetProfileCommand() *cobra.Command {
 		Aliases: profileAliases,
 		RunE:    runGetProfileCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -83,8 +105,6 @@ func getDeleteProfileCommand() *cobra.Command {
 	}
 	return cmd
 }
-
-var profileHeader = fmt.Sprintf("%s\t%s\t%s", "Name", "Display Name", "Description")
 
 // parseParameterTemplates parses parameter template flags from CLI
 func parseParameterTemplates(cmd *cobra.Command) (*[]catapi.CatalogV3ParameterTemplate, error) {
@@ -155,58 +175,42 @@ func parseParameterTemplate(spec string) (*catapi.CatalogV3ParameterTemplate, er
 	return template, nil
 }
 
-func printProfiles(writer io.Writer, profileList *[]catapi.CatalogV3Profile, verbose bool) {
-	for _, p := range *profileList {
-		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\n", p.Name, valueOrNone(p.DisplayName), valueOrNone(p.Description))
-		} else {
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", p.Name)
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(p.DisplayName))
-			_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(p.Description))
-
-			if len(*p.DeploymentRequirement) != 0 {
-				requirements := make([]string, 0, len(*p.DeploymentRequirement))
-				for _, dr := range *p.DeploymentRequirement {
-					reqStr := fmt.Sprintf("%s:%s", dr.Name, dr.Version)
-					if dr.DeploymentProfileName != nil && *dr.DeploymentProfileName != "" {
-						reqStr += fmt.Sprintf(":%s", *dr.DeploymentProfileName)
-					}
-					requirements = append(requirements, reqStr)
-				}
-				_, _ = fmt.Fprintf(writer, "Deployment Requirements: %s\n", requirements)
-			}
-
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", p.CreateTime.Format(timeLayout))
-			_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", p.UpdateTime.Format(timeLayout))
-			if len(*p.ParameterTemplates) != 0 {
-				_, _ = fmt.Fprintf(writer, "Parameter templates:\n")
-				for _, pt := range *p.ParameterTemplates {
-					_, _ = fmt.Fprintf(writer, "   Name: %s\n   Type: %s\n   Display Name: %s\n   Default: %s\n   Suggested values: %s\n\n",
-						pt.Name, pt.Type, valueOrNone(pt.DisplayName), *pt.Default, strings.Join((*pt.SuggestedValues)[:], ","))
-				}
-			}
-
-			if p.ChartValues != nil && *p.ChartValues != "" {
-				_, _ = fmt.Fprintf(writer, "Chart Values:\n")
-				decodedValues, err := b64.StdEncoding.DecodeString(*p.ChartValues)
-				var chartContent string
-
-				if err == nil {
-					// Successfully decoded, use decoded content
-					chartContent = string(decodedValues)
-				} else {
-					// Not base64 encoded, use as-is
-					chartContent = *p.ChartValues
-				}
-
-				lines := strings.Split(chartContent, "\n")
-				for _, line := range lines {
-					_, _ = fmt.Fprintf(writer, "  %s\n", line)
-				}
-				_, _ = fmt.Fprintf(writer, "\n")
-			}
-		}
+func getProfileOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_PROFILE_INSPECT_FORMAT, nil
 	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_PROFILE_FORMAT, PROFILE_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func printProfiles(cmd *cobra.Command, writer io.Writer, profileList *[]catapi.CatalogV3Profile, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getProfileOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *profileList,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 func runCreateProfileCommand(cmd *cobra.Command, args []string) error {
@@ -317,11 +321,25 @@ func runListProfilesCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, profileHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		fmt.Sprintf("error listing profiles for application %s:%s", name, version)); !proceed {
 		return err
 	}
-	printProfiles(writer, resp.JSON200.Application.Profiles, verbose)
+
+	// Validate and normalize order-by for client-side sorting
+	var orderBy *string
+	if rawOrderBy := getFlag(cmd, "order-by"); rawOrderBy != nil {
+		var sampleProfile catapi.CatalogV3Profile
+		orderBy, err = normalizeOrderByForClientSorting(*rawOrderBy, sampleProfile)
+		if err != nil {
+			return err
+		}
+	}
+
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printProfiles(cmd, writer, resp.JSON200.Application.Profiles, orderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -341,14 +359,16 @@ func runGetProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, profileHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		fmt.Sprintf("error listing profiles for application %s:%s", name, version)); !proceed {
 		return err
 	}
 
 	for _, profile := range *resp.JSON200.Application.Profiles {
 		if profile.Name == profileName {
-			printProfiles(writer, &[]catapi.CatalogV3Profile{profile}, verbose)
+			if err := printProfiles(cmd, writer, &[]catapi.CatalogV3Profile{profile}, nil, nil, verbose); err != nil {
+				return err
+			}
 			return writer.Flush()
 		}
 	}

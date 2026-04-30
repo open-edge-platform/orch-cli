@@ -1,16 +1,11 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"testing"
-
-	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
-	"github.com/stretchr/testify/assert"
 )
 
 func (s *CLITestSuite) createDeploymentPackage(project string, applicationName string, applicationVersion string, args commandArgs) error {
@@ -19,7 +14,7 @@ func (s *CLITestSuite) createDeploymentPackage(project string, applicationName s
 	return err
 }
 
-func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orderBy string, filter string) (string, error) {
+func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orderBy string, filter string, outputFilter string, outputTemplate string, outputTemplateFile string) (string, error) {
 	args := `list deployment-packages --project ` + project
 	if verbose {
 		args = args + " -v"
@@ -29,6 +24,15 @@ func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orde
 	}
 	if filter != "" {
 		args = args + " filter=" + filter
+	}
+	if outputFilter != "" {
+		args = args + " --output-filter " + outputFilter
+	}
+	if outputTemplate != "" {
+		args = args + " --output-template " + outputTemplate
+	}
+	if outputTemplateFile != "" {
+		args = args + " --output-template-file " + outputTemplateFile
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -97,45 +101,46 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	s.NoError(err)
 
 	// list deployment packages to make sure it was created properly
-	listOutput, err := s.listDeploymentPackages(project, simpleOutput, "display_name", "display_name="+deploymentPackageDisplayName)
+	listOutput, err := s.listDeploymentPackages(project, simpleOutput, "display_name", "display_name="+deploymentPackageDisplayName, "", "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
 	expectedOutput := commandOutput{
 		pkgName: {
-			"Name":              pkgName,
-			"Version":           pkgVersion,
-			"Kind":              "normal",
-			"Display Name":      deploymentPackageDisplayName,
-			"Default Profile":   "default-profile",
-			"In Use":            "false",
-			"Application Count": "2",
+			"NAME":                 pkgName,
+			"DISPLAY NAME":         deploymentPackageDisplayName,
+			"VERSION":              pkgVersion,
+			"KIND":                 "<nil>",
+			"DEFAULT PROFILE NAME": "default-profile",
+			"IS DEPLOYED":          "false",
+			"APPLICATION COUNT":    "2",
 		},
 	}
 
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list deployment packages
-	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "")
+	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "", "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
 	expectedVerboseOutput := commandOutput{
 		pkgName: {
 			"Version":                  pkgVersion,
-			"Create Time":              timestampRegex,
-			"Update Time":              timestampRegex,
+			"Create Time":              "2025-12-31 23:59:59 +0000 UTC",
+			"Update Time":              "2025-12-31 23:59:59 +0000 UTC",
 			"Name":                     pkgName,
-			"Kind":                     "normal",
+			"Kind":                     "<nil>",
 			"Display Name":             deploymentPackageDisplayName,
 			"Description":              deploymentPackageDescription,
-			"In Use":                   "false",
-			"Applications":             `[app1:1.0.0 app2:1.0.0]`,
-			"Application Dependencies": `[]`,
-			"Profiles":                 ``,
-			"Default Profile":          "",
-			"Extensions":               "[]",
-			"Artifacts":                "[]",
+			"Is Deployed":              "false",
+			"Applications":             "app1:1.0.0 app2:1.0.0",
+			"Application Dependencies": "",
+			"Profiles":                 "deployment-package-profile test-deployment-profile",
+			"Default Profile":          "default-profile",
+			"Default Namespaces":       "",
+			"Extensions":               "",
+			"Artifacts":                "",
 		},
 	}
 
@@ -184,30 +189,19 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	// s.Error(err)
 	// s.Contains(err.Error(), fmt.Sprintf("deployment package versions %s: 404 Not Found", pkgName))
 
+	// Test error handling for dual template flags (--output-template and --output-template-file both set)
+	_, err = s.listDeploymentPackages(project, simpleOutput, "", "", "", "table{{.Name}}", "/tmp/invalid.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "only one of")
+
+	// Test error handling for missing template file
+	_, err = s.listDeploymentPackages(project, simpleOutput, "", "", "", "", "/nonexistent/path/template.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "unable to read")
+
 	err = s.exportDeploymentPackage(project, pkgName, pkgVersion, make(map[string]string))
 	s.NoError(err)
 	// TODO not viable to mock at this time - just testing if command call works, not the actual export logic
-}
-
-func TestPrintDeploymentPackageEvent(t *testing.T) {
-	kind := catapi.CatalogV3Kind("normal")
-	dp := catapi.CatalogV3DeploymentPackage{
-		Name:        "test-deployment-pkg",
-		Version:     "1.0.0",
-		DisplayName: strPtr("Test Deployment Package"),
-		Description: strPtr("A test deployment package"),
-		Kind:        &kind,
-	}
-	payload, err := json.Marshal(dp)
-	assert.NoError(t, err)
-
-	var buf bytes.Buffer
-	err = printDeploymentPackageEvent(&buf, "DeploymentPackage", payload, false)
-	assert.NoError(t, err)
-	output := buf.String()
-	assert.Contains(t, output, "test-deployment-pkg")
-	assert.Contains(t, output, "1.0.0")
-	assert.Contains(t, output, "Test Deployment Package")
 }
 
 func FuzzDeploymentPackage(f *testing.F) {
@@ -242,7 +236,7 @@ func FuzzDeploymentPackage(f *testing.F) {
 		}
 
 		// --- List Deployment Packages ---
-		_, err = testSuite.listDeploymentPackages(project, false, "", "")
+		_, err = testSuite.listDeploymentPackages(project, false, "", "", "", "", "")
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

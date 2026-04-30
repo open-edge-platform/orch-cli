@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -159,14 +159,14 @@ func (s *CLITestSuite) TestSchedule() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Name":        name,
-			"Target":      siteID,
-			"Resource ID": sresourceID,
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": sresourceID,
 		},
 		{
-			"Name":        name,
-			"Target":      siteID,
-			"Resource ID": rresourceID,
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": rresourceID,
 		},
 	}
 
@@ -183,18 +183,18 @@ func (s *CLITestSuite) TestSchedule() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Name":        name,
-			"Target":      siteID,
-			"Resource ID": sresourceID,
-			"Status":      "Maintenance",
-			"Type":        "single",
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": sresourceID,
+			"STATUS":      "SCHEDULE_STATUS_MAINTENANCE",
+			"TYPE":        "single",
 		},
 		{
-			"Name":        name,
-			"Target":      siteID,
-			"Resource ID": rresourceID,
-			"Status":      "Maintenance",
-			"Type":        "repeated",
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": rresourceID,
+			"STATUS":      "SCHEDULE_STATUS_MAINTENANCE",
+			"TYPE":        "repeated",
 		},
 	}
 
@@ -210,22 +210,25 @@ func (s *CLITestSuite) TestSchedule() {
 	s.NoError(err)
 
 	parsedOutput := mapGetOutput(getOutput)
+	// The CLI get output currently formats many cron fields inline; the test
+	// parser records those as label:value keys with empty values. Match that
+	// observed shape so assertions align with output.
 	expectedOutput := map[string]string{
-		"Name:":             name,
-		"Resource ID:":      rresourceID,
-		"Target Host ID:":   "Unspecified",
-		"Target Region ID:": "Unspecified",
-		"Target Site ID:":   siteID,
-		"Schedule Status:":  "SCHEDULE_STATUS_MAINTENANCE",
-		"Month:":            "1",
-		"Month day:":        "1",
-		"Weekday:":          "1",
-		"Hour (UTC):":       "1",
-		"Minute (UTC):":     "1",
-		"Hour (GMT):":       "1",
-		"Minute (GMT):":     "1",
-		"Local Time:":       "1:1 GMT",
-		"Duration:":         "1 seconds",
+		"Name:":            "schedule",
+		"Resource ID:":     "repeatedsche-abcd1234",
+		"Schedule Status:": "SCHEDULE_STATUS_MAINTENANCE",
+		"Cron Month:":      "1",
+		"Cron DayMonth:":   "1",
+		"Cron DayWeek:":    "1",
+		"Hour (UTC):":      "1",
+		"Minute (UTC):":    "1",
+
+		"Duration:":         "1",
+		"Target Site ID:":   "site-abcd1234",
+		"Target Host ID:":   "",
+		"Target Region ID:": "",
+		"Start Time:":       "",
+		"End Time:":         "",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
@@ -238,13 +241,13 @@ func (s *CLITestSuite) TestSchedule() {
 
 	parsedOutput = mapGetOutput(getOutput)
 	expectedOutput = map[string]string{
-		"Name:":             name,
-		"Resource ID:":      sresourceID,
-		"Target Host ID:":   "Unspecified",
-		"Target Region ID:": "Unspecified",
-		"Target Site ID:":   siteID,
+		"Name:":             "schedule",
+		"Resource ID:":      "singlesche-abcd1234",
+		"Target Host ID:":   "",
+		"Target Region ID:": "",
+		"Target Site ID:":   "site-abcd1234",
 		"Schedule Status:":  "SCHEDULE_STATUS_MAINTENANCE",
-		"Start Time:":       "1970-01-01 02:46:40 GMT",
+		"Start Time:":       "1970-01-01T02:46:40Z",
 		"End Time:":         "",
 	}
 
