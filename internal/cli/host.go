@@ -903,7 +903,20 @@ Status:
 
 Specification:
   Serial Number:        {{.SerialNumber}}
-  UUID:                 {{.Uuid}}`
+  UUID:                 {{.Uuid}}
+  
+AMT Info:{{if .AmtEnabled}}
+  AMT SKU:              {{.AmtSku}}
+  Current State:        {{.CurrentAmtState}}
+  Desired State:        {{.DesiredAmtState}}
+  Control Mode:         {{.AmtControlMode}}
+  DNS Suffix:           {{.AmtDnsSuffix}}{{if .AmtProvisioned}}
+  Current Power:        {{.CurrentPower}}
+  Desired Power:        {{.DesiredPower}}
+  Power Status:         {{.PowerStatus}}
+  Power On Time:        {{.PowerOnTime}}{{else}}
+  AMT not active and/or not supported: No info available{{end}}{{else}}
+  AMT not enabled{{end}}`
 
 const DEFAULT_HOST_PROVISIONING_INSPECT_FORMAT = `Host Info:
   Resource ID:          {{.ResourceId}}
