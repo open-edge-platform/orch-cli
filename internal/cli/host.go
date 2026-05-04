@@ -3402,7 +3402,24 @@ func solAcquireAndActivate(
 	}
 	jwtToken, _ := auth.GetAccessToken(ctx)
 	amtPassword := os.Getenv("AMT_PASSWORD")
-	return connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPassword, orchCA, nil)
+	sessionErr := connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPassword, orchCA, nil)
+
+	// After SOL session ends (Ctrl+] or connection drop), signal sol-manager to deactivate.
+	fmt.Println("Deactivating SOL session...")
+	stopState := infra.SOLSTATESTOP
+	stopResp, patchErr := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
+		&infra.HostServicePatchHostParams{},
+		infra.HostServicePatchHostJSONRequestBody{
+			DesiredSolState: &stopState,
+			Name:            hostName,
+		}, auth.AddAuthHeader)
+	if patchErr != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to deactivate SOL session: %v\n", patchErr)
+	} else if stopResp.HTTPResponse.StatusCode < 200 || stopResp.HTTPResponse.StatusCode >= 300 {
+		fmt.Fprintf(os.Stderr, "Warning: failed to deactivate SOL session: HTTP %d\n", stopResp.HTTPResponse.StatusCode)
+	}
+
+	return sessionErr
 }
 
 // readConsentCode prompts the operator for the 6-digit on-screen consent code.

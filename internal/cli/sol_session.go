@@ -441,9 +441,14 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 		return fmt.Errorf("failed to send SOL start: %w", err)
 	}
 
-	// Graceful shutdown on SIGINT/SIGTERM
+	// Ignore SIGINT so Ctrl+C is passed through to the remote host.
+	// Use Ctrl+] to exit the SOL session instead.
+	signal.Ignore(os.Interrupt)
+	defer signal.Reset(os.Interrupt)
+
+	// Graceful shutdown on SIGTERM only
 	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(interrupt, syscall.SIGTERM)
 	defer signal.Stop(interrupt)
 
 	done := make(chan struct{})
@@ -555,7 +560,7 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 	fmt.Printf("========================================\r\n")
 	fmt.Printf("  SOL SESSION ACTIVE\r\n")
 	fmt.Printf("========================================\r\n")
-	fmt.Printf("Press Ctrl+C to disconnect.\r\n")
+	fmt.Printf("Press Ctrl+] to disconnect.\r\n")
 	fmt.Printf("\r\n")
 
 	// Set terminal to raw mode for direct input
@@ -595,9 +600,10 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 			}
 
 			if n > 0 {
-				// Check for Ctrl+C (0x03) in raw mode
+				// Check for Ctrl+] (0x1D) to exit SOL session.
+				// Ctrl+C (0x03) is passed through to the remote host.
 				for i := 0; i < n; i++ {
-					if buffer[i] == 0x03 {
+					if buffer[i] == 0x1D {
 						sol.Close()
 						return
 					}
@@ -622,9 +628,9 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 		}
 		sol.Close()
 	case <-sol.done:
-		// Channel already closed by Ctrl+C in terminal
+		// Channel already closed by Ctrl+] in terminal
 		if debug {
-			fmt.Fprintf(os.Stderr, "\n[SOL] Ctrl+C detected in terminal\n")
+			fmt.Fprintf(os.Stderr, "\n[SOL] Ctrl+] detected in terminal\n")
 		}
 	case <-done:
 		// MPS connection closed
