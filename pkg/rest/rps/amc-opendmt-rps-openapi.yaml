@@ -1,10 +1,10 @@
----
 # SPDX-FileCopyrightText: 2025 Intel Corporation
+#
 # SPDX-License-Identifier: Apache-2.0
 
 openapi: 3.0.0
 info:
-  title: Remote Provisioning  (RPS) API
+  title: Remote Provisioning (RPS) API
   description: |
     Open AMT Cloud Toolkit supports RPS API methods for domains, CIRA configuration, wireless, profiles, and version information.
 
