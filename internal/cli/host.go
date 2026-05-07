@@ -927,7 +927,7 @@ const DEFAULT_HOST_PROVISIONING_INSPECT_FORMAT = `Host Info:
 
 Status:
   Host Status:          {{.HostStatus}}
-  Status Details:       {{.HostStatusDetails}}
+  Host Status Details:  {{.HostStatusDetails}}
   Provisioning Status:  {{.ProvisioningStatus}}
   Update Status:        {{.UpdateStatus}}
   OS Update Policy:     {{.OsUpdatePolicy}}
