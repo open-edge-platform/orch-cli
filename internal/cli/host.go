@@ -187,7 +187,7 @@ orch-cli set host host-1234abcd  --project itep --power on
 #Set host power command policy
 orch-cli set host host-1234abcd  --project itep --power-policy ordered
 
---power - Set desired power state of host to on|off|reset
+--power - Set desired power state of host to on|off|reset|power-cycle
 --power-policy - Set the desired power command policy to ordered|immediate
 
 #Set host AMT state to provisioned
@@ -210,20 +210,29 @@ orch-cli set host --project some-project --generate-csv=myhosts.csv
 
 Name - Name of the machine - mandatory field
 ResourceID - Unique Identifier of host - mandatory field
-DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned - mandatory field or AMT_STATE_PROVISIONED|AMT_STATE_UNPROVISIONED
-ControlMode - Desired AMT control mode of host - admin|client - optional field or AMT_CONTROL_MODE_ADMIN|AMT_CONTROL_MODE_CLIENT
+DesiredAmtState - Desired AMT state of host - provisioned|unprovisioned or AMT_STATE_PROVISIONED|AMT_STATE_UNPROVISIONED - optional, leave blank to skip
+ControlMode - Desired AMT control mode of host - admin|client or AMT_CONTROL_MODE_ACM|AMT_CONTROL_MODE_CCM - optional, leave blank to skip
+DesiredPowerState - Desired power state of host - on|off|reset|power-cycle - optional, leave blank to skip
 
-Name,ResourceID,DesiredAmtState,ControlMode
+Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
 host-1,host-1234abcd,provisioned
-
-Name,ResourceID,DesiredAmtState,ControlMode
-host-1,host-1234abcd,provisioned,admin
+host-1,host-1234abcd,provisioned,admin,power-cycle
 
 # --dry-run allows for verification of the validity of the input csv file without updating hosts
 orch-cli set host --project some-project --import-from-csv test.csv --dry-run
 
-# Set hosts - --import-from-csv is a mandatory flag pointing to the input file. Successfully provisioned host indicated by output - errors provided in output file
+# Set hosts - --import-from-csv is a mandatory flag pointing to the input file
 orch-cli set host --project some-project --import-from-csv test.csv
+
+# Bulk actions using filters - apply changes to all matching hosts
+orch-cli set host --project some-project --filter "hostStatus='onboarded'" --power power-cycle
+orch-cli set host --project some-project --site site-1234abcd --power on
+orch-cli set host --project some-project --region region-1234abcd --power reset
+orch-cli set host --project some-project --site site-1234abcd --amt-state provisioned --control-mode admin
+orch-cli set host --project some-project --filter "hostStatus='onboarded'" --power on --amt-state provisioned
+
+# Dry run to see which hosts would be affected
+orch-cli set host --project some-project --filter "hostStatus='onboarded'" --power off --dry-run
 `
 	}
 
@@ -232,6 +241,9 @@ orch-cli set host --project some-project --import-from-csv test.csv
 		examples += `
 #Set host OS Update policy
 orch-cli set host host-1234abcd  --project itep --osupdatepolicy <resourceID>
+
+#Bulk set OS Update policy using filters
+orch-cli set host --project itep --site site-1234abcd --osupdatepolicy <resourceID>
 
 --osupdatepolicy - Set the OS Update policy for the host, must be a valid resource ID of an OS Update policy
 `
@@ -1477,7 +1489,7 @@ func getDeleteHostCommand() *cobra.Command {
 
 func getSetHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "host <resourceID> [flags]",
+		Use:     "host [resourceID] [flags]",
 		Short:   "Sets a host attribute or action",
 		Example: setHostExamples(),
 		Args: func(cmd *cobra.Command, args []string) error {
@@ -1487,7 +1499,12 @@ func getSetHostCommand() *cobra.Command {
 			}
 			importCSV, _ := cmd.Flags().GetString("import-from-csv")
 			if generateCSV != "" || importCSV != "" {
-				// No positional arg required for bulk operations
+				return nil
+			}
+			filterFlag, _ := cmd.Flags().GetString("filter")
+			siteFlag, _ := cmd.Flags().GetString("site")
+			regionFlag, _ := cmd.Flags().GetString("region")
+			if filterFlag != "" || siteFlag != "" || regionFlag != "" {
 				return nil
 			}
 			if len(args) != 1 {
@@ -1503,10 +1520,13 @@ func getSetHostCommand() *cobra.Command {
 	if isFeatureEnabled(OobFeature) {
 		cmd.PersistentFlags().StringP("import-from-csv", "i", viper.GetString("import-from-csv"), "CSV file containing information about provisioned hosts")
 		cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
-		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|reset")
+		cmd.PersistentFlags().StringP("power", "r", viper.GetString("power"), "Power on|off|reset|power-cycle")
 		cmd.PersistentFlags().StringP("power-policy", "c", viper.GetString("power-policy"), "Set power policy immediate|ordered")
 		cmd.PersistentFlags().StringP("amt-state", "a", viper.GetString("amt-state"), "Set AMT state <provisioned|unprovisioned>")
 		cmd.PersistentFlags().StringP("control-mode", "m", viper.GetString("control-mode"), "Set AMT control mode client|admin")
+		cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Filter hosts for bulk operations using AIP-160 filter expressions")
+		cmd.PersistentFlags().StringP("site", "s", viper.GetString("site"), "Filter hosts by site for bulk operations")
+		cmd.PersistentFlags().StringP("region", "", viper.GetString("region"), "Filter hosts by region for bulk operations")
 	}
 	if isFeatureEnabled(Day2Feature) {
 		cmd.PersistentFlags().StringP("osupdatepolicy", "u", viper.GetString("osupdatepolicy"), "Set OS update policy <resourceID>")
@@ -1941,6 +1961,10 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	updFlag, _ := cmd.Flags().GetString("osupdatepolicy")
 	amtFlag, _ := cmd.Flags().GetString("amt-state")
 	amtModeFlag, _ := cmd.Flags().GetString("control-mode")
+	filtflag, _ := cmd.Flags().GetString("filter")
+	siteFlag, _ := cmd.Flags().GetString("site")
+	regFlag, _ := cmd.Flags().GetString("region")
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
 
 	// Bulk CSV generation
 	if generateCSV != "" {
@@ -1985,12 +2009,13 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		defer f.Close()
-		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode")
+		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState")
 		for _, h := range hosts {
 			name := h.Name
 			resourceID := ""
 			desiredAmtState := ""
 			controlMode := ""
+			desiredPowerState := ""
 			if h.ResourceId != nil {
 				resourceID = *h.ResourceId
 			}
@@ -2000,7 +2025,10 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			if h.AmtControlMode != nil && *h.AmtControlMode != infra.AMTCONTROLMODEUNSPECIFIED {
 				controlMode = string(*h.AmtControlMode)
 			}
-			fmt.Fprintf(f, "%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode)
+			if h.DesiredPowerState != nil && *h.DesiredPowerState != infra.POWERSTATEUNSPECIFIED {
+				desiredPowerState = string(*h.DesiredPowerState)
+			}
+			fmt.Fprintf(f, "%s,%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode, desiredPowerState)
 		}
 		fmt.Printf("CSV template generated: %s\n", generateCSV)
 		return nil
@@ -2027,18 +2055,25 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				continue
 			}
 			desiredControlMode := ""
+			desiredPowerState := ""
 			name := strings.TrimSpace(fields[0])
 			resourceID := strings.TrimSpace(fields[1])
 			desiredAmtState := strings.TrimSpace(fields[2])
 			if len(fields) >= 4 {
 				desiredControlMode = strings.TrimSpace(fields[3])
 			}
+			if len(fields) >= 5 {
+				desiredPowerState = strings.TrimSpace(fields[4])
+			}
 
-			// Validate desiredAmtState
-			amtState, err := resolveAmtState(desiredAmtState)
-			if err != nil {
-				fmt.Printf("Invalid AMT state for host %s: %s\n", name, desiredAmtState)
-				continue
+			var amtState *infra.AmtState
+			if desiredAmtState != "" {
+				amt, err := resolveAmtState(desiredAmtState)
+				if err != nil {
+					fmt.Printf("Invalid AMT state for host %s: %s\n", name, desiredAmtState)
+					continue
+				}
+				amtState = &amt
 			}
 			var amtMode *infra.AmtControlMode
 			if desiredControlMode != "" {
@@ -2049,30 +2084,339 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				}
 				amtMode = &mode
 			}
-			// Patch host
+			var powerState *infra.PowerState
+			if desiredPowerState != "" {
+				pow, err := resolvePower(desiredPowerState)
+				if err != nil {
+					fmt.Printf("Invalid power state for host %s: %s\n", name, desiredPowerState)
+					continue
+				}
+				powerState = &pow
+			}
+			if amtState == nil && amtMode == nil && powerState == nil {
+				fmt.Printf("Skipping host %s (%s): no fields to update\n", name, resourceID)
+				continue
+			}
+			if dryRun {
+				changes := []string{}
+				if amtState != nil {
+					changes = append(changes, "amt-state="+desiredAmtState)
+				}
+				if amtMode != nil {
+					changes = append(changes, "control-mode="+desiredControlMode)
+				}
+				if powerState != nil {
+					changes = append(changes, "power="+desiredPowerState)
+				}
+				fmt.Printf("  %s (%s) would set [%s]\n", name, resourceID, strings.Join(changes, ", "))
+				continue
+			}
 			ctx, hostClient, projectName, err := InfraFactory(cmd)
 			if err != nil {
 				fmt.Printf("InfraFactory error for host %s: %v\n", name, err)
 				continue
 			}
-			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
-				DesiredAmtState: &amtState,
-				AmtControlMode:  amtMode,
-				Name:            name,
-			}, auth.AddAuthHeader)
-			if err != nil {
-				fmt.Printf("Failed to patch host %s: %v\n", name, err)
-				continue
+			hostFailed := false
+			if amtState != nil || amtMode != nil {
+				getResp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, resourceID, auth.AddAuthHeader)
+				if err != nil {
+					fmt.Printf("Failed to get host %s: %v\n", name, err)
+					hostFailed = true
+				} else if err := checkResponse(getResp.HTTPResponse, getResp.Body, "error while retrieving host"); err != nil {
+					fmt.Printf("Failed to get host %s: %v\n", name, err)
+					hostFailed = true
+				} else {
+					current := getResp.JSON200
+					patchAmt := amtState
+					patchMode := amtMode
+					if amtState != nil && current.DesiredAmtState != nil && *amtState == *current.DesiredAmtState {
+						patchAmt = nil
+					}
+					if amtMode != nil && current.AmtControlMode != nil && *amtMode == *current.AmtControlMode {
+						patchMode = nil
+					}
+					if patchAmt != nil || patchMode != nil {
+						resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
+							DesiredAmtState: patchAmt,
+							AmtControlMode:  patchMode,
+							Name:            name,
+						}, auth.AddAuthHeader)
+						if err != nil {
+							fmt.Printf("Failed to patch host %s AMT state: %v\n", name, err)
+							hostFailed = true
+						} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting AMT state"); err != nil {
+							fmt.Printf("Failed to patch host %s AMT state: %v\n", name, err)
+							hostFailed = true
+						}
+					}
+				}
 			}
-			if err := checkResponse(resp.HTTPResponse, resp.Body, "error while executing host set for AMT"); err != nil {
-				fmt.Printf("Failed to patch host %s: %v\n", name, err)
-				continue
+			if powerState != nil && !hostFailed {
+				resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
+					DesiredPowerState: powerState,
+					Name:              name,
+				}, auth.AddAuthHeader)
+				if err != nil {
+					fmt.Printf("Failed to patch host %s power state: %v\n", name, err)
+					hostFailed = true
+				} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting power state"); err != nil {
+					fmt.Printf("Failed to patch host %s power state: %v\n", name, err)
+					hostFailed = true
+				}
 			}
-			fmt.Printf("Host %s (%s) AMT state updated to %s\n", name, resourceID, desiredAmtState)
+			if !hostFailed {
+				fmt.Printf("Host %s (%s) updated\n", name, resourceID)
+			}
 		}
 		if err := scanner.Err(); err != nil {
 			return err
 		}
+		return nil
+	}
+
+	if filtflag != "" || siteFlag != "" || regFlag != "" {
+		if powerFlag == "" && policyFlag == "" && amtFlag == "" && amtModeFlag == "" && updFlag == "" {
+			return fmt.Errorf("--filter, --site, and --region require at least one action flag (--power, --power-policy, --amt-state, --control-mode, --osupdatepolicy)")
+		}
+
+		filter := filterHelper(filtflag)
+
+		site, err := filterSitesHelper(siteFlag)
+		if err != nil {
+			return err
+		}
+
+		region, err := filterRegionsHelper(regFlag)
+		if err != nil {
+			return err
+		}
+
+		if siteFlag != "" && regFlag != "" {
+			return fmt.Errorf("cannot specify both --site and --region simultaneously")
+		}
+
+		var power *infra.PowerState
+		var policy *infra.PowerCommandPolicy
+		var amtState *infra.AmtState
+		var amtMode *infra.AmtControlMode
+
+		if powerFlag != "" {
+			pow, err := resolvePower(powerFlag)
+			if err != nil {
+				return err
+			}
+			power = &pow
+		}
+
+		if policyFlag != "" {
+			pol, err := resolvePowerPolicy(policyFlag)
+			if err != nil {
+				return err
+			}
+			policy = &pol
+		}
+
+		if amtFlag != "" {
+			amt, err := resolveAmtState(amtFlag)
+			if err != nil {
+				return err
+			}
+			amtState = &amt
+		}
+
+		if amtModeFlag != "" {
+			mode, err := resolveAmtControlMode(amtModeFlag)
+			if err != nil {
+				return err
+			}
+			amtMode = &mode
+		}
+
+		ctx, hostClient, projectName, err := InfraFactory(cmd)
+		if err != nil {
+			return err
+		}
+
+		if siteFlag == "" && regFlag != "" {
+			regFilter := fmt.Sprintf("region.resource_id='%s' OR region.parent_region.resource_id='%s' OR region.parent_region.parent_region.resource_id='%s' OR region.parent_region.parent_region.parent_region.resource_id='%s'", regFlag, regFlag, regFlag, regFlag)
+
+			cresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, *region,
+				&infra.SiteServiceListSitesParams{
+					Filter: &regFilter,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(cresp.HTTPResponse, cresp.Body, "error while retrieving sites for region"); err != nil {
+				return err
+			}
+
+			siteFilter := ""
+			if cresp.JSON200.TotalElements != 0 {
+				for i, s := range cresp.JSON200.Sites {
+					if i == 0 {
+						siteFilter = fmt.Sprintf("site.resourceId='%s'", *s.ResourceId)
+					} else {
+						siteFilter = fmt.Sprintf("%s OR site.resourceId='%s'", siteFilter, *s.ResourceId)
+					}
+				}
+			} else {
+				return errors.New("no site was found in provided region")
+			}
+
+			if filtflag != "" {
+				*filter = fmt.Sprintf("%s AND (%s)", *filter, siteFilter)
+			} else {
+				filter = &siteFilter
+			}
+		}
+
+		if siteFlag != "" {
+			siteFilter := fmt.Sprintf("site.resourceId='%s'", *site)
+			if filtflag != "" {
+				*filter = fmt.Sprintf("%s AND (%s)", *filter, siteFilter)
+			} else {
+				filter = &siteFilter
+			}
+		}
+
+		pageSize := 100
+		hosts := make([]infra.HostResource, 0)
+		for offset := 0; ; offset += pageSize {
+			resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+				&infra.HostServiceListHostsParams{
+					Filter:   filter,
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+				return err
+			}
+			hosts = append(hosts, resp.JSON200.Hosts...)
+			if !resp.JSON200.HasNext {
+				break
+			}
+		}
+
+		if len(hosts) == 0 {
+			fmt.Println("No hosts matched the provided filters")
+			return nil
+		}
+
+		actions := []string{}
+		if powerFlag != "" {
+			actions = append(actions, "power="+powerFlag)
+		}
+		if policyFlag != "" {
+			actions = append(actions, "power-policy="+policyFlag)
+		}
+		if amtFlag != "" {
+			actions = append(actions, "amt-state="+amtFlag)
+		}
+		if amtModeFlag != "" {
+			actions = append(actions, "control-mode="+amtModeFlag)
+		}
+		if updFlag != "" {
+			actions = append(actions, "osupdatepolicy="+updFlag)
+		}
+		actionSummary := strings.Join(actions, ", ")
+
+		if dryRun {
+			fmt.Printf("Dry run: %d host(s) would be updated [%s]:\n", len(hosts), actionSummary)
+			for _, h := range hosts {
+				rid := ""
+				if h.ResourceId != nil {
+					rid = *h.ResourceId
+				}
+				fmt.Printf("  %s (%s)\n", h.Name, rid)
+			}
+			return nil
+		}
+
+		fmt.Printf("Applying [%s] to %d host(s)\n", actionSummary, len(hosts))
+
+		updated := 0
+		skipped := 0
+		failed := 0
+		for i, h := range hosts {
+			rid := ""
+			if h.ResourceId != nil {
+				rid = *h.ResourceId
+			}
+
+			didUpdate := false
+			didFail := false
+
+			if power != nil || policy != nil {
+				if h.CurrentAmtState == nil || *h.CurrentAmtState != infra.AMTSTATEPROVISIONED {
+					fmt.Printf("[%d/%d]  %s (%s)  power/policy skipped (AMT not provisioned)\n", i+1, len(hosts), h.Name, rid)
+				} else {
+					resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, rid, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
+						PowerCommandPolicy: policy,
+						DesiredPowerState:  power,
+						Name:               h.Name,
+					}, auth.AddAuthHeader)
+					if err != nil {
+						fmt.Printf("[%d/%d]  %s (%s)  power/policy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+						didFail = true
+					} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting power state/policy"); err != nil {
+						fmt.Printf("[%d/%d]  %s (%s)  power/policy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+						didFail = true
+					} else {
+						didUpdate = true
+					}
+				}
+			}
+
+			if amtState != nil || amtMode != nil {
+				resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, rid, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
+					DesiredAmtState: amtState,
+					AmtControlMode:  amtMode,
+					Name:            h.Name,
+				}, auth.AddAuthHeader)
+				if err != nil {
+					fmt.Printf("[%d/%d]  %s (%s)  amt failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+					didFail = true
+				} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting AMT state"); err != nil {
+					fmt.Printf("[%d/%d]  %s (%s)  amt failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+					didFail = true
+				} else {
+					didUpdate = true
+				}
+			}
+
+			if updFlag != "" {
+				if h.Instance == nil || h.Instance.InstanceID == nil {
+					fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy skipped (no instance)\n", i+1, len(hosts), h.Name, rid)
+				} else {
+					resp, err := hostClient.InstanceServicePatchInstanceWithResponse(ctx, projectName, *h.Instance.InstanceID, &infra.InstanceServicePatchInstanceParams{}, infra.InstanceServicePatchInstanceJSONRequestBody{
+						OsUpdatePolicyID: &updFlag,
+					}, auth.AddAuthHeader)
+					if err != nil {
+						fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+						didFail = true
+					} else if err := checkResponse(resp.HTTPResponse, resp.Body, "error while setting OS update policy"); err != nil {
+						fmt.Printf("[%d/%d]  %s (%s)  osupdatepolicy failed: %v\n", i+1, len(hosts), h.Name, rid, err)
+						didFail = true
+					} else {
+						didUpdate = true
+					}
+				}
+			}
+
+			if didFail {
+				failed++
+			} else if didUpdate {
+				fmt.Printf("[%d/%d]  %s (%s)  updated\n", i+1, len(hosts), h.Name, rid)
+				updated++
+			} else {
+				skipped++
+			}
+		}
+		fmt.Printf("Done: %d updated, %d skipped, %d failed\n", updated, skipped, failed)
 		return nil
 	}
 
@@ -2866,14 +3210,16 @@ func resolvePowerPolicy(power string) (infra.PowerCommandPolicy, error) {
 
 func resolvePower(power string) (infra.PowerState, error) {
 	switch power {
-	case "on":
+	case "on", "POWER_STATE_ON":
 		return infra.POWERSTATEON, nil
-	case "off":
+	case "off", "POWER_STATE_OFF":
 		return infra.POWERSTATEOFF, nil
-	case "reset":
+	case "reset", "POWER_STATE_RESET":
 		return infra.POWERSTATERESET, nil
+	case "power-cycle", "POWER_STATE_POWER_CYCLE":
+		return infra.POWERSTATEPOWERCYCLE, nil
 	default:
-		return "", errors.New("incorrect power action provided with --power flag use one of on|off|reset")
+		return "", errors.New("incorrect power action provided with --power flag use one of on|off|reset|power-cycle")
 	}
 }
 
