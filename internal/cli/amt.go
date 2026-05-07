@@ -98,12 +98,12 @@ func getDeleteAmtProfileCommand() *cobra.Command {
 func runListAmtProfileCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	count := true
-	ctx, rpsClient, projectName, err := RpsFactory(cmd)
+	ctx, rpsClient, _, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := rpsClient.GetAllDomainsWithResponse(ctx, projectName, &rps.GetAllDomainsParams{
+	resp, err := rpsClient.GetAllDomainsWithResponse(ctx, &rps.GetAllDomainsParams{
 		Count: &count,
 	}, auth.AddAuthHeader)
 	if err != nil {
@@ -160,12 +160,12 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 		return errors.New("domain suffix format must be provided with --domain-suffix flag and cannot be empty")
 	}
 
-	ctx, rpsClient, projectName, err := RpsFactory(cmd)
+	ctx, rpsClient, _, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := rpsClient.CreateDomainWithResponse(ctx, projectName,
+	resp, err := rpsClient.CreateDomainWithResponse(ctx,
 		rps.CreateDomainJSONRequestBody{
 			DomainSuffix:                  domainsuffix,
 			ProfileName:                   name,
@@ -181,14 +181,14 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 
 func runGetAmtProfileCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, rpsClient, projectName, err := RpsFactory(cmd)
+	ctx, rpsClient, _, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
 
 	name := args[0]
 
-	resp, err := rpsClient.GetDomainWithResponse(ctx, projectName,
+	resp, err := rpsClient.GetDomainWithResponse(ctx,
 		name, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -207,12 +207,12 @@ func runGetAmtProfileCommand(cmd *cobra.Command, args []string) error {
 func runDeleteAmtProfileCommand(cmd *cobra.Command, args []string) error {
 	name := args[0]
 
-	ctx, rpsClient, projectName, err := RpsFactory(cmd)
+	ctx, rpsClient, _, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	resp, err := rpsClient.RemoveDomainWithResponse(ctx, projectName,
+	resp, err := rpsClient.RemoveDomainWithResponse(ctx,
 		name, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)

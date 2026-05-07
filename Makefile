@@ -102,11 +102,11 @@ fetch-infra-openapi:
 
 fetch-mps-openapi:
 	@# Help: Fetch the OpenDMT MPS OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/edge-manage-docs/main/docs/api/openapi/amc-opendmt-mps-openapi.yaml -o pkg/rest/mps/amc-opendmt-mps-openapi.yaml
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-external/main/dm-manager/pkg/api/mps/openapi/openapi.yaml -o pkg/rest/mps/amc-opendmt-mps-openapi.yaml
 
 fetch-rps-openapi:
 	@# Help: Fetch the OpenDMT RPS OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/edge-manage-docs/main/docs/api/openapi/amc-opendmt-rps-openapi.yaml -o pkg/rest/rps/amc-opendmt-rps-openapi.yaml
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-external/main/dm-manager/pkg/api/rps/openapi/openapi.yaml -o pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 
 fetch-utils-openapi:
 	@# Help: Fetch the Utils API OpenAPI spec
