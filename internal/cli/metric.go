@@ -1,0 +1,613 @@
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+package cli
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/open-edge-platform/cli/pkg/auth"
+	promapi "github.com/prometheus/client_golang/api"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+const (
+	metricsEndpointFlag = "metrics-endpoint"
+	hostnameFlag        = "hostname"
+	hostnameLabelFlag   = "hostname-label"
+	orgIDFlag           = "org-id"
+	averageFlag         = "average"
+	sumFlag             = "sum"
+	durationFlag        = "duration"
+	startTimeFlag       = "start-time"
+	endTimeFlag         = "end-time"
+
+	defaultHostnameLabel         = "host"
+	defaultMetricsTimeout        = 30 * time.Second
+	prometheusQueryAPIPath       = "/api/v1/query"
+	prometheusQueryRangeAPIPath  = "/api/v1/query_range"
+	prometheusLabelValuesAPIPath = "/api/v1/label/__name__/values"
+)
+
+var metricNamePattern = regexp.MustCompile(`^[a-zA-Z_:][a-zA-Z0-9_:]*$`)
+var labelNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+
+var PrometheusClientFactory = newPrometheusClient
+
+func getListMetricNamesCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "metrics",
+		Short: "List all metric names available at a Mimir (Prometheus-compatible) endpoint",
+		Args:  cobra.NoArgs,
+		Example: strings.Join([]string{
+			"# List metrics for the current project (org-id auto-derived from project UID) and current metrics endpoint",
+			"orch-cli list metrics",
+			"# List metrics for a different project and metrics endpoint",
+			"orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --project myproject",
+			"# List metrics with explicit org-id",
+			"orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --org-id 698fde6a-b721-447a-a7c2-7187d64393c1",
+			"# Filter metric names",
+			"orch-cli list metrics --filter node_cpu",
+		}, "\n"),
+		RunE: runListMetricNamesCommand,
+	}
+
+	cmd.Flags().String(metricsEndpointFlag, configuredMetricsEndpoint(), "Mimir (Prometheus-compatible) base URL")
+	cmd.Flags().String(orgIDFlag, viper.GetString(orgIDFlag), "Mimir tenant ID sent as X-Scope-OrgID")
+	cmd.Flags().String("filter", "", "Only show metric names containing this substring")
+	return cmd
+}
+
+func runListMetricNamesCommand(cmd *cobra.Command, _ []string) error {
+	filter, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultMetricsTimeout)
+	defer cancel()
+
+	client, err := PrometheusClientFactory(cmd)
+	if err != nil {
+		return err
+	}
+	argID, err := resolveOrgID(cmd)
+	if err != nil {
+		return err
+	}
+
+	body, err := executePrometheusGET(ctx, client, prometheusLabelValuesAPIPath, argID)
+	if err != nil {
+		return err
+	}
+
+	var result struct {
+		Status string   `json:"status"`
+		Data   []string `json:"data"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return fmt.Errorf("failed to parse Prometheus response: %w", err)
+	}
+	if result.Status != "success" {
+		return fmt.Errorf("prometheus returned non-success status: %s", result.Status)
+	}
+
+	count := 0
+	for _, name := range result.Data {
+		if filter == "" || strings.Contains(name, filter) {
+			fmt.Fprintln(cmd.OutOrStdout(), name)
+			count++
+		}
+	}
+	if count == 0 {
+		if filter != "" {
+			fmt.Fprintf(cmd.OutOrStdout(), "No metrics found matching %q\n", filter)
+		} else {
+			fmt.Fprintln(cmd.OutOrStdout(), "No metrics found")
+		}
+	}
+	return nil
+}
+
+func getGetMetricCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "metric <metric-name>",
+		Short: "Query a metric from a Mimir (Prometheus-compatible) endpoint for a specific hostname",
+		Args:  cobra.ExactArgs(1),
+		Example: strings.Join([]string{
+			"# Configure metrics endpoint (once)",
+			"orch-cli config set metrics-endpoint http://<mimir-endpoint>/prometheus",
+			"# Query metric for a host in the current project (org-id auto-derived)",
+			"orch-cli get metric mem_used_percent --hostname host-fd7108f7",
+			"# Query metric for a host in another project (org-id auto-derived)",
+			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --project myproject",
+			"# Query with explicit org-id",
+			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --org-id 698fde6a-b721-447a-a7c2-7187d64393c1",
+			"# Query using a custom hostname label",
+			"orch-cli get metric up --hostname edge-node-01 --hostname-label instance --project myproject",
+			"# Query average metric over a time range (Unix timestamps)",
+			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --average --start-time 1704067200 --end-time 1704153600",
+			"# Query average metric with RFC3339 timestamps",
+			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --average --start-time 2024-01-01T00:00:00Z --end-time 2024-01-02T00:00:00Z",
+			"# Query sum of metric over a specific time range",
+			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --sum --start-time 1704067200 --end-time 1704153600",
+			"# Query sum of metric over the last hour ending now",
+			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --sum --duration 3600",
+		}, "\n"),
+		RunE: runGetMetricCommand,
+	}
+
+	cmd.Aliases = []string{"metrics"}
+	cmd.Flags().String(hostnameFlag, viper.GetString(hostnameFlag), "Hostname label value to match in Prometheus")
+	cmd.Flags().String(hostnameLabelFlag, defaultHostnameLabel, "Prometheus label name used to match the hostname")
+	cmd.Flags().String(metricsEndpointFlag, configuredMetricsEndpoint(), "Mimir (Prometheus-compatible) base URL")
+	cmd.Flags().String(orgIDFlag, viper.GetString(orgIDFlag), "Mimir tenant ID sent as X-Scope-OrgID")
+	cmd.Flags().Bool(averageFlag, false, "Calculate average of metric over time range (requires --start-time and --end-time)")
+	cmd.Flags().Bool(sumFlag, false, "Calculate sum of metric over time range (use either --duration or --start-time with --end-time)")
+	cmd.Flags().Int64(durationFlag, 0, "Duration in seconds for --sum calculation ending now (e.g. 3600 for last hour)")
+	cmd.Flags().String(startTimeFlag, "", "Start time for range query (Unix timestamp or RFC3339 format, e.g. 1704067200 or 2024-01-01T00:00:00Z)")
+	cmd.Flags().String(endTimeFlag, "", "End time for range query (Unix timestamp or RFC3339 format, e.g. 1704153600 or 2024-01-02T00:00:00Z)")
+	_ = cmd.MarkFlagRequired(hostnameFlag)
+
+	return cmd
+}
+
+func runGetMetricCommand(cmd *cobra.Command, args []string) error {
+	metricName := args[0]
+	hostname, err := cmd.Flags().GetString(hostnameFlag)
+	if err != nil {
+		return err
+	}
+	hostnameLabel, err := cmd.Flags().GetString(hostnameLabelFlag)
+	if err != nil {
+		return err
+	}
+
+	// Check if this is a range query
+	average, err := cmd.Flags().GetBool(averageFlag)
+	if err != nil {
+		return err
+	}
+	sum, err := cmd.Flags().GetBool(sumFlag)
+	if err != nil {
+		return err
+	}
+	durationSec, err := cmd.Flags().GetInt64(durationFlag)
+	if err != nil {
+		return err
+	}
+	startTimeStr, err := cmd.Flags().GetString(startTimeFlag)
+	if err != nil {
+		return err
+	}
+	endTimeStr, err := cmd.Flags().GetString(endTimeFlag)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultMetricsTimeout)
+	defer cancel()
+
+	client, err := PrometheusClientFactory(cmd)
+	if err != nil {
+		return err
+	}
+	argID, err := resolveOrgID(cmd)
+	if err != nil {
+		return err
+	}
+
+	if average && sum {
+		return fmt.Errorf("--average and --sum cannot be used together")
+	}
+
+	if sum {
+		startTime, endTime, err := resolveSumWindow(startTimeStr, endTimeStr, durationSec, time.Now())
+		if err != nil {
+			return err
+		}
+
+		durationSec = endTime - startTime
+		query, err := buildSumMetricQuery(metricName, hostnameLabel, hostname, durationSec)
+		if err != nil {
+			return err
+		}
+
+		body, err := executePrometheusQueryAt(ctx, client, query, endTime, argID)
+		if err != nil {
+			return err
+		}
+
+		if _, err := cmd.OutOrStdout().Write(body); err != nil {
+			return err
+		}
+		if len(body) == 0 || body[len(body)-1] != '\n' {
+			_, err = cmd.OutOrStdout().Write([]byte("\n"))
+		}
+		return err
+	}
+
+	// If average flag is set, require both start and end times
+	if average {
+		if startTimeStr == "" || endTimeStr == "" {
+			return fmt.Errorf("--average requires both --start-time and --end-time to be set")
+		}
+
+		startTime, err := parseTimestamp(startTimeStr)
+		if err != nil {
+			return fmt.Errorf("failed to parse --start-time: %w", err)
+		}
+		endTime, err := parseTimestamp(endTimeStr)
+		if err != nil {
+			return fmt.Errorf("failed to parse --end-time: %w", err)
+		}
+
+		if startTime >= endTime {
+			return fmt.Errorf("--start-time must be before --end-time")
+		}
+
+		durationSec := endTime - startTime
+		query, err := buildAverageMetricQuery(metricName, hostnameLabel, hostname, durationSec)
+		if err != nil {
+			return err
+		}
+
+		body, err := executePrometheusQueryAt(ctx, client, query, endTime, argID)
+		if err != nil {
+			return err
+		}
+
+		if _, err := cmd.OutOrStdout().Write(body); err != nil {
+			return err
+		}
+		if len(body) == 0 || body[len(body)-1] != '\n' {
+			_, err = cmd.OutOrStdout().Write([]byte("\n"))
+		}
+		return err
+	}
+
+	// Instant query (backward compatibility)
+	query, err := buildMetricQuery(metricName, hostnameLabel, hostname)
+	if err != nil {
+		return err
+	}
+
+	body, err := executePrometheusQuery(ctx, client, query, argID)
+	if err != nil {
+		return err
+	}
+
+	if _, err := cmd.OutOrStdout().Write(body); err != nil {
+		return err
+	}
+	if len(body) == 0 || body[len(body)-1] != '\n' {
+		_, err = cmd.OutOrStdout().Write([]byte("\n"))
+	}
+	return err
+}
+
+func buildMetricQuery(metricName string, hostnameLabel string, hostname string) (string, error) {
+	if !metricNamePattern.MatchString(metricName) {
+		return "", fmt.Errorf("invalid metric name %q", metricName)
+	}
+	if !labelNamePattern.MatchString(hostnameLabel) {
+		return "", fmt.Errorf("invalid hostname label %q", hostnameLabel)
+	}
+	if strings.TrimSpace(hostname) == "" {
+		return "", fmt.Errorf("hostname cannot be empty")
+	}
+
+	return fmt.Sprintf(`%s{%s=%q}`, metricName, hostnameLabel, hostname), nil
+}
+
+// parseTimestamp parses a timestamp as either Unix seconds (int64) or RFC3339 string
+func parseTimestamp(ts string) (int64, error) {
+	ts = strings.TrimSpace(ts)
+
+	// Try parsing as Unix timestamp (seconds)
+	unixSec, err := strconv.ParseInt(ts, 10, 64)
+	if err == nil {
+		return unixSec, nil
+	}
+
+	// Try parsing as RFC3339 string
+	t, err := time.Parse(time.RFC3339, ts)
+	if err != nil {
+		return 0, fmt.Errorf("timestamp must be Unix seconds or RFC3339 format (e.g. 1704067200 or 2024-01-01T00:00:00Z)")
+	}
+
+	return t.Unix(), nil
+}
+
+func resolveSumWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
+	hasStart := strings.TrimSpace(startTimeStr) != ""
+	hasEnd := strings.TrimSpace(endTimeStr) != ""
+	hasDuration := durationSec > 0
+
+	if hasDuration && (hasStart || hasEnd) {
+		return 0, 0, fmt.Errorf("--sum supports either --duration or --start-time with --end-time, not both")
+	}
+
+	if hasDuration {
+		endTime := now.Unix()
+		startTime := endTime - durationSec
+		if startTime >= endTime {
+			return 0, 0, fmt.Errorf("--duration must be greater than 0 seconds")
+		}
+		return startTime, endTime, nil
+	}
+
+	if hasStart || hasEnd {
+		if !hasStart || !hasEnd {
+			return 0, 0, fmt.Errorf("--sum requires both --start-time and --end-time to be set")
+		}
+
+		startTime, err := parseTimestamp(startTimeStr)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to parse --start-time: %w", err)
+		}
+		endTime, err := parseTimestamp(endTimeStr)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to parse --end-time: %w", err)
+		}
+
+		if startTime >= endTime {
+			return 0, 0, fmt.Errorf("--start-time must be before --end-time")
+		}
+
+		return startTime, endTime, nil
+	}
+
+	return 0, 0, fmt.Errorf("--sum requires either --duration or both --start-time and --end-time")
+}
+
+// buildAverageMetricQuery builds a PromQL query with avg_over_time for range queries
+// The query fetches the metric and computes the average over the time range.
+func buildAverageMetricQuery(metricName string, hostnameLabel string, hostname string, durationSec int64) (string, error) {
+	if !metricNamePattern.MatchString(metricName) {
+		return "", fmt.Errorf("invalid metric name %q", metricName)
+	}
+	if !labelNamePattern.MatchString(hostnameLabel) {
+		return "", fmt.Errorf("invalid hostname label %q", hostnameLabel)
+	}
+	if strings.TrimSpace(hostname) == "" {
+		return "", fmt.Errorf("hostname cannot be empty")
+	}
+	if durationSec <= 0 {
+		return "", fmt.Errorf("duration must be greater than 0 seconds")
+	}
+
+	// Build instant query evaluated at end-time over the full requested range.
+	return fmt.Sprintf(`avg_over_time(%s{%s=%q}[%ds])`, metricName, hostnameLabel, hostname, durationSec), nil
+}
+
+func buildSumMetricQuery(metricName string, hostnameLabel string, hostname string, durationSec int64) (string, error) {
+	if !metricNamePattern.MatchString(metricName) {
+		return "", fmt.Errorf("invalid metric name %q", metricName)
+	}
+	if !labelNamePattern.MatchString(hostnameLabel) {
+		return "", fmt.Errorf("invalid hostname label %q", hostnameLabel)
+	}
+	if strings.TrimSpace(hostname) == "" {
+		return "", fmt.Errorf("hostname cannot be empty")
+	}
+	if durationSec <= 0 {
+		return "", fmt.Errorf("duration must be greater than 0 seconds")
+	}
+
+	return fmt.Sprintf(`sum_over_time(%s{%s=%q}[%ds])`, metricName, hostnameLabel, hostname, durationSec), nil
+}
+
+func newPrometheusClient(cmd *cobra.Command) (promapi.Client, error) {
+	endpoint, err := getMetricsEndpoint(cmd)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(endpoint) == "" {
+		return nil, fmt.Errorf("metrics endpoint not configured. Set --%s or run 'orch-cli config set %s <url>'", metricsEndpointFlag, metricsEndpointFlag)
+	}
+
+	roundTripper := metricsAuthRoundTripper{base: promapi.DefaultRoundTripper}
+	client, err := promapi.NewClient(promapi.Config{
+		Address: endpoint,
+		Client: &http.Client{
+			Timeout:   defaultMetricsTimeout,
+			Transport: roundTripper,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func configuredMetricsEndpoint() string {
+	return strings.TrimSpace(viper.GetString(metricsEndpointFlag))
+}
+
+func getMetricsEndpoint(cmd *cobra.Command) (string, error) {
+	endpoint, err := cmd.Flags().GetString(metricsEndpointFlag)
+	if err != nil {
+		return "", err
+	}
+	endpoint = strings.TrimSpace(endpoint)
+	if endpoint != "" {
+		return endpoint, nil
+	}
+
+	return configuredMetricsEndpoint(), nil
+}
+
+// resolveOrgID returns the tenant/project UID for Mimir queries
+// Precedence: explicit --org-id flag > project UID > empty string
+func resolveOrgID(cmd *cobra.Command) (string, error) {
+	// First check if org-id is explicitly set
+	argID, err := cmd.Flags().GetString(orgIDFlag)
+	if err != nil {
+		return "", err
+	}
+	argID = strings.TrimSpace(argID)
+	if argID != "" {
+		return argID, nil
+	}
+
+	// If not set, try to derive from project UID
+	projectName, err := cmd.Flags().GetString("project")
+	if err != nil {
+		return "", err
+	}
+	projectName = strings.TrimSpace(projectName)
+
+	if projectName != "" {
+		projectUID, err := getProjectUID(cmd, projectName)
+		if err != nil {
+			// If project UID lookup fails, continue without org-id
+			return "", nil
+		}
+		return projectUID, nil
+	}
+
+	return "", nil
+}
+
+// getProjectUID fetches the UID for a given project name
+func getProjectUID(cmd *cobra.Command, projectName string) (string, error) {
+	ctx, projectClient, err := TenancyFactory(cmd)
+	if err != nil {
+		return "", fmt.Errorf("failed to create project client: %w", err)
+	}
+
+	resp, err := projectClient.GETV1ProjectsProjectProjectWithResponse(ctx, projectName, auth.AddAuthHeader)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch project %s: %w", projectName, err)
+	}
+
+	if resp == nil || resp.JSON200 == nil {
+		return "", fmt.Errorf("project %s not found", projectName)
+	}
+
+	if resp.JSON200.Status == nil || resp.JSON200.Status.ProjectStatus == nil || resp.JSON200.Status.ProjectStatus.UID == nil {
+		return "", fmt.Errorf("project %s has no UID", projectName)
+	}
+
+	return *resp.JSON200.Status.ProjectStatus.UID, nil
+}
+
+func executePrometheusQuery(ctx context.Context, client promapi.Client, query string, orgID string) ([]byte, error) {
+	return executePrometheusQueryAt(ctx, client, query, 0, orgID)
+}
+
+func executePrometheusQueryAt(ctx context.Context, client promapi.Client, query string, evalTime int64, orgID string) ([]byte, error) {
+	values := url.Values{}
+	values.Set("query", query)
+	values.Set("timeout", defaultMetricsTimeout.String())
+	if evalTime > 0 {
+		values.Set("time", fmt.Sprintf("%d", evalTime))
+	}
+
+	u := client.URL(prometheusQueryAPIPath, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(values.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if orgID != "" {
+		req.Header.Set("X-Scope-OrgID", orgID)
+	}
+	resp, body, err := client.Do(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("prometheus query failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	return body, nil
+}
+
+// executePrometheusRangeQuery executes a range query on Prometheus/Mimir endpoint
+// and returns the JSON response body. The query is evaluated over [startTime, endTime].
+func executePrometheusRangeQuery(ctx context.Context, client promapi.Client, query string, startTime int64, endTime int64, orgID string) ([]byte, error) {
+	// Compute an appropriate step based on time range
+	// Default: divide range into ~100 points
+	rangeSec := endTime - startTime
+	if rangeSec < 1 {
+		return nil, fmt.Errorf("time range must be at least 1 second")
+	}
+
+	stepSec := rangeSec / 100
+	if stepSec < 1 {
+		stepSec = 1
+	}
+
+	values := url.Values{}
+	values.Set("query", query)
+	values.Set("start", fmt.Sprintf("%d", startTime))
+	values.Set("end", fmt.Sprintf("%d", endTime))
+	values.Set("step", fmt.Sprintf("%d", stepSec))
+	values.Set("timeout", defaultMetricsTimeout.String())
+
+	u := client.URL(prometheusQueryRangeAPIPath, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(values.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if orgID != "" {
+		req.Header.Set("X-Scope-OrgID", orgID)
+	}
+	resp, body, err := client.Do(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("prometheus range query failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	return body, nil
+}
+
+func executePrometheusGET(ctx context.Context, client promapi.Client, path string, orgID string) ([]byte, error) {
+	u := client.URL(path, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+	if orgID != "" {
+		req.Header.Set("X-Scope-OrgID", orgID)
+	}
+
+	resp, body, err := client.Do(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("prometheus request failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+	return body, nil
+}
+
+type metricsAuthRoundTripper struct {
+	base http.RoundTripper
+}
+
+func (rt metricsAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	clone := req.Clone(req.Context())
+	if err := auth.AddAuthHeader(clone.Context(), clone); err != nil {
+		return nil, err
+	}
+	return rt.base.RoundTrip(clone)
+}
