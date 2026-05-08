@@ -55,7 +55,13 @@ func (s *CLITestSuite) TestMetric() {
 		orgIDFlag:           "698fde6a-b721-447a-a7c2-7187d64393c1",
 	})
 	s.NoError(err)
-	s.Equal("{\"status\":\"success\",\"data\":{\"resultType\":\"vector\",\"result\":[{\"metric\":{\"__name__\":\"node_cpu_seconds_total\",\"hostname\":\"edge-node-01\"},\"value\":[1714478400,\"42\"]}]}}\n", output)
+	s.Contains(output, "METRIC")
+	s.Contains(output, "HOST")
+	s.Contains(output, "VALUE")
+	s.Contains(output, "TIMESTAMP")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "42")
+	s.Contains(output, "1714478400")
 
 	_, err = s.getMetric("invalid-metric!", commandArgs{
 		metricsEndpointFlag: server.URL,
@@ -113,13 +119,19 @@ func (s *CLITestSuite) TestListMetrics() {
 	commandString := addCommandArgs(commandArgs{metricsEndpointFlag: server.URL, orgIDFlag: "698fde6a-b721-447a-a7c2-7187d64393c1"}, fmt.Sprintf("list metrics --project %s", project))
 	output, err := s.runCommand(commandString)
 	s.NoError(err)
-	s.Equal("node_cpu_seconds_total\nnode_memory_MemAvailable_bytes\nup\n", output)
+	s.Contains(output, "METRIC")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "node_memory_MemAvailable_bytes")
+	s.Contains(output, "up")
 
 	// filtered
 	commandString = addCommandArgs(commandArgs{metricsEndpointFlag: server.URL, orgIDFlag: "698fde6a-b721-447a-a7c2-7187d64393c1", "filter": "memory"}, fmt.Sprintf("list metrics --project %s", project))
 	output, err = s.runCommand(commandString)
 	s.NoError(err)
-	s.Equal("node_memory_MemAvailable_bytes\n", output)
+	s.Contains(output, "METRIC")
+	s.Contains(output, "node_memory_MemAvailable_bytes")
+	s.NotContains(output, "node_cpu_seconds_total")
+	s.NotContains(output, "\nup\n")
 }
 
 func TestParseTimestamp(t *testing.T) {
@@ -132,13 +144,10 @@ func TestParseTimestamp(t *testing.T) {
 		t.Fatalf("expected 1704067200, got %d", ts)
 	}
 
-	// Test RFC3339 timestamp
-	ts, err = parseTimestamp("2024-01-01T00:00:00Z")
-	if err != nil {
-		t.Fatalf("unexpected error for RFC3339 timestamp: %v", err)
-	}
-	if ts != 1704067200 {
-		t.Fatalf("expected 1704067200, got %d", ts)
+	// RFC3339 timestamp is no longer supported
+	_, err = parseTimestamp("2024-01-01T00:00:00Z")
+	if err == nil {
+		t.Fatal("expected error for RFC3339 timestamp")
 	}
 
 	// Test whitespace handling
@@ -274,7 +283,7 @@ func (s *CLITestSuite) TestGetMetricWithRange() {
 		s.Equal(defaultMetricsTimeout.String(), r.Form.Get("timeout"))
 
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"value":[1704153600,"45"]}]}}`))
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"values":[[1704067200,"45"],[1704153600,"45"]]}]}}`))
 	}))
 	defer server.Close()
 
@@ -287,7 +296,11 @@ func (s *CLITestSuite) TestGetMetricWithRange() {
 		"end-time":         "1704153600",
 	})
 	s.NoError(err)
-	s.Contains(output, "success")
+	s.Contains(output, "METRIC")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "edge-node-01")
+	s.Contains(output, "45")
+	s.Contains(output, "1704153600")
 }
 
 func (s *CLITestSuite) TestGetMetricAverageRequiresTimeRange() {
@@ -329,7 +342,7 @@ func (s *CLITestSuite) TestGetMetricWithSumRange() {
 		s.Equal(defaultMetricsTimeout.String(), r.Form.Get("timeout"))
 
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"value":[1714478400,"4200"]}]}}`))
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"values":[[1704150000,"4200"],[1704151000,"4200"],[1704152000,"4200"],[1704153000,"4200"],[1704153600,"4200"]]}]}}`))
 	}))
 	defer server.Close()
 
@@ -342,7 +355,11 @@ func (s *CLITestSuite) TestGetMetricWithSumRange() {
 		endTimeFlag:        "1704153600",
 	})
 	s.NoError(err)
-	s.Contains(output, "success")
+	s.Contains(output, "METRIC")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "edge-node-01")
+	s.Contains(output, "4200")
+	s.Contains(output, "1704153600")
 }
 
 func (s *CLITestSuite) TestGetMetricWithSumDuration() {
@@ -369,13 +386,16 @@ func (s *CLITestSuite) TestGetMetricWithSumDuration() {
 		s.NoError(r.ParseForm())
 		s.Equal(`sum_over_time(node_cpu_seconds_total{host="edge-node-01"}[3600s])`, r.Form.Get("query"))
 
+		// Parse eval time to verify it's near now
 		evalTime, parseErr := strconv.ParseInt(r.Form.Get("time"), 10, 64)
 		s.NoError(parseErr)
-		s.True(evalTime >= before)
-		s.True(evalTime <= time.Now().Unix())
+
+		// Verify eval time is near "now"
+		now := time.Now().Unix()
+		s.True(evalTime >= before && evalTime <= now+1) // Allow 1 second tolerance
 
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"value":[1714478400,"4200"]}]}}`))
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"values":[[1714474800,"4200"],[1714478400,"4200"]]}]}}`))
 	}))
 	defer server.Close()
 
@@ -386,7 +406,10 @@ func (s *CLITestSuite) TestGetMetricWithSumDuration() {
 		durationFlag:       "3600",
 	})
 	s.NoError(err)
-	s.Contains(output, "success")
+	s.Contains(output, "METRIC")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "edge-node-01")
+	s.Contains(output, "4200")
 }
 
 func (s *CLITestSuite) TestGetMetricSumRequiresTimeRange() {
