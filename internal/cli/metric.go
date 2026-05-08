@@ -677,49 +677,6 @@ func executePrometheusQueryAt(ctx context.Context, client promapi.Client, query 
 	return body, nil
 }
 
-// executePrometheusRangeQuery executes a range query on Prometheus/Mimir endpoint
-// and returns the JSON response body. The query is evaluated over [startTime, endTime].
-func executePrometheusRangeQuery(ctx context.Context, client promapi.Client, query string, startTime int64, endTime int64, orgID string) ([]byte, error) {
-	// Compute an appropriate step based on time range
-	// Default: divide range into ~100 points
-	rangeSec := endTime - startTime
-	if rangeSec < 1 {
-		return nil, fmt.Errorf("time range must be at least 1 second")
-	}
-
-	stepSec := rangeSec / 100
-	if stepSec < 1 {
-		stepSec = 1
-	}
-
-	values := url.Values{}
-	values.Set("query", query)
-	values.Set("start", fmt.Sprintf("%d", startTime))
-	values.Set("end", fmt.Sprintf("%d", endTime))
-	values.Set("step", fmt.Sprintf("%d", stepSec))
-	values.Set("timeout", defaultMetricsTimeout.String())
-
-	u := client.URL(prometheusQueryRangeAPIPath, nil)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(values.Encode()))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if orgID != "" {
-		req.Header.Set("X-Scope-OrgID", orgID)
-	}
-	resp, body, err := client.Do(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("prometheus range query failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
-	}
-
-	return body, nil
-}
-
 func executePrometheusGET(ctx context.Context, client promapi.Client, path string, orgID string) ([]byte, error) {
 	u := client.URL(path, nil)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
