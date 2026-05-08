@@ -36,7 +36,6 @@ const (
 	defaultHostnameLabel         = "host"
 	defaultMetricsTimeout        = 30 * time.Second
 	prometheusQueryAPIPath       = "/api/v1/query"
-	prometheusQueryRangeAPIPath  = "/api/v1/query_range"
 	prometheusLabelValuesAPIPath = "/api/v1/label/__name__/values"
 
 	DEFAULT_LIST_METRICS_FORMAT    = "table{{str .Metric}}"
@@ -45,7 +44,7 @@ const (
 	DEFAULT_GET_METRIC_FORMAT         = "table{{str .Metric}}\t{{str .Host}}\t{{str .Value}}\t{{str .Timestamp}}"
 	DEFAULT_GET_METRIC_INSPECT_FORMAT = `Metric: {{str .Metric}}
 Host: {{str .Host}}
-Host GUID: {{str .HostGuid}}
+Host GUID: {{str .HostGUID}}
 Project ID: {{str .ProjectID}}
 Timestamp: {{str .Timestamp}}
 Value: {{str .Value}}
@@ -71,7 +70,7 @@ type prometheusVectorResponse struct {
 type metricGetRow struct {
 	Metric    *string `json:"metric"`
 	Host      *string `json:"host"`
-	HostGuid  *string `json:"hostGuid"`
+	HostGUID  *string `json:"hostGuid"`
 	ProjectID *string `json:"projectId"`
 	Timestamp *string `json:"timestamp"`
 	Value     *string `json:"value"`
@@ -264,7 +263,7 @@ func printMetricResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName 
 			host = item.Metric[defaultHostnameLabel]
 		}
 
-		hostGuid := item.Metric["hostGuid"]
+		hostGUID := item.Metric["hostGuid"]
 		projectID := item.Metric["projectId"]
 
 		timestamp, value := "", ""
@@ -277,7 +276,7 @@ func printMetricResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName 
 		rows = append(rows, metricGetRow{
 			Metric:    &metricName,
 			Host:      &host,
-			HostGuid:  &hostGuid,
+			HostGuid:  &hostGUID,
 			ProjectID: &projectID,
 			Timestamp: &timestamp,
 			Value:     &value,
