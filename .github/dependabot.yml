@@ -1,17 +1,18 @@
-# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 ---
 version: 2
 updates:
   - package-ecosystem: "gomod"
-    directories:
-      - "/"
+    directory: "/"
     schedule:
       interval: daily
     open-pull-requests-limit: 3
     commit-message:
       prefix: "[gomod] "
+    cooldown:
+      default-days: 7
     groups:
       dependencies:
         patterns:
@@ -22,10 +23,11 @@ updates:
         patterns:
           - "*open-edge-platform*"
   - package-ecosystem: "github-actions"
-    directories:
-      - "/"  # this enables searching only in /.github/workflows directory
+    directory: "/"
     schedule:
       interval: daily
     open-pull-requests-limit: 10
     commit-message:
       prefix: "[gha] "
+    cooldown:
+      default-days: 7
