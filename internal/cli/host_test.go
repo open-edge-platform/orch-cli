@@ -421,7 +421,7 @@ func (s *CLITestSuite) TestHost() {
 		"Serial Number:        1234567890":                           "",
 		"Sockets:              2":                                    "",
 		"Specification:":                                             "",
-		"Status Details:       INSTANCE_STATUS_RUNNING":              "",
+		"Host Status Details:  INSTANCE_STATUS_RUNNING":              "",
 		"Status:":                     "",
 		"Storage:":                    "",
 		"Threads:              32":    "",
