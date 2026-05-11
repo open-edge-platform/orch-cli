@@ -98,6 +98,8 @@ orch-cli create host --project some-project --import-from-csv test.csv
 
 # Optional flag ovverides - the flag will override all instances of an attribute inside the CSV file
 
+--serial - serial number of the host
+--uuid - UUID of the host
 --remote-user - name or id of a SSH user
 --site - site ID
 --secure - true or false - security feature configuration
@@ -111,6 +113,9 @@ orch-cli create host --project some-project --import-from-csv test.csv
 
 # Create hosts from CSV and override provided values
 /orch-cli create host --project some-project --import-from-csv test.csv --os-profile ubuntu-22.04-lts-generic-ext --secure false --site site-7ca0a77c --remote-user user --metadata "key7=val7key3=val3"
+
+# Create a single host directly using flags
+orch-cli create host <name> --project some-project --serial 2500JF3 --uuid 4c4c4544-2046-5310-8052-cac04f515233 --os-profile "Edge Microvisor Toolkit 3.0.20250617" --site site-c69a3c81 --[flags]
 `
 	} else {
 		// Simplified onboarding examples when provisioning is disabled
@@ -130,6 +135,13 @@ orch-cli create host --project some-project --import-from-csv test.csv --dry-run
 
 # Create hosts - --import-from-csv is a mandatory flag pointing to the input file. Successfully onboarded hosts indicated by output - errors provided in output file
 orch-cli create host --project some-project --import-from-csv test.csv
+
+# Create a single host directly using flags
+orch-cli create host <name> --project some-project --serial 2500JF3 --uuid 4c4c4544-2046-5310-8052-cac04f515233 --site site-c69a3c81
+
+--serial - serial number of the host
+--uuid - UUID of the host
+--site - site ID
 `
 	}
 
@@ -269,6 +281,8 @@ const (
 
 	HOST_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_HOST_OUTPUT_TEMPLATE"
 )
+
+var hostname = ""
 
 // HostListRow is a flat display struct for table output of the host list.
 // It pre-computes values that require conditional logic (feature-gating, deep nil
@@ -1073,7 +1087,7 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 	uuid := rIn.UUID
 	var lvmSize *int
 	// predefine other fields
-	hostName := ""
+	hostName := hostname
 	hostID := ""
 	autonboard := true
 
@@ -1103,7 +1117,7 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 			return
 		}
 
-		err = allocateHostToSiteAndAddMetadata(ctx, hClient, projectName, hostID, rOut)
+		err = allocateHostToSiteAndAddMetadata(ctx, hClient, projectName, hostID, hostName, rOut)
 		if err != nil {
 			rIn.Error = err.Error()
 			*erringRecords = append(*erringRecords, rIn)
@@ -1119,7 +1133,10 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 			}
 		}
 	} else {
-		err = setHostName(ctx, hClient, projectName, hostID)
+		if hostName == "" {
+			hostName = hostID
+		}
+		err = setHostName(ctx, hClient, projectName, hostID, hostName)
 		if err != nil {
 			rIn.Error = err.Error()
 			*erringRecords = append(*erringRecords, rIn)
@@ -1128,7 +1145,7 @@ func doRegister(ctx context.Context, ctx2 context.Context, hClient infra.ClientW
 	}
 
 	// Print host_id from response if successful
-	fmt.Printf("✔ Host Serial number : %s  UUID : %s registered. Name : %s\n", sNo, uuid, hostID)
+	fmt.Printf("✔ Host Serial number : %s  UUID : %s registered. Host ID : %s\n", sNo, uuid, hostID)
 }
 
 // Decodes the provided metadata from input string
@@ -1728,10 +1745,11 @@ func getGetHostCommand() *cobra.Command {
 
 func getCreateHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "host --import-from-csv]",
+		Use:     "host [hostname] [flags]",
 		Short:   "Provisions a host or hosts",
 		Example: createHostExamples(),
 		Aliases: hostAliases,
+		Args:    cobra.MaximumNArgs(1),
 		RunE:    runCreateHostCommand,
 	}
 
@@ -1740,6 +1758,8 @@ func getCreateHostCommand() *cobra.Command {
 	cmd.PersistentFlags().BoolP("dry-run", "d", viper.GetBool("dry-run"), "Verify the validity of input CSV file")
 	cmd.PersistentFlags().StringP("generate-csv", "g", viper.GetString("generate-csv"), "Generates a template CSV file for host import")
 	cmd.PersistentFlags().Lookup("generate-csv").NoOptDefVal = filename
+	cmd.PersistentFlags().String("serial", viper.GetString("serial"), "Serial number of the host")
+	cmd.PersistentFlags().StringP("uuid", "u", viper.GetString("uuid"), "UUID of the host")
 
 	// Provisioning-specific overrides - only when provisioning is enabled
 	if isFeatureEnabled(ProvisioningFeature) {
@@ -2145,7 +2165,7 @@ func runGetHostCommand(cmd *cobra.Command, args []string) error {
 }
 
 // Lists all Hosts - retrieves all hosts and displays selected information in tabular format
-func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
+func runCreateHostCommand(cmd *cobra.Command, args []string) error {
 
 	currentPath, err := os.Getwd()
 	if err != nil {
@@ -2166,6 +2186,8 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	k8sTmplIn, _ := cmd.Flags().GetString("cluster-template")
 	k8sConfigIn, _ := cmd.Flags().GetString("cluster-config")
 	lvmIn, _ := cmd.Flags().GetString("lvm-size")
+	serialIn, _ := cmd.Flags().GetString("serial")
+	uuidIn, _ := cmd.Flags().GetString("uuid")
 
 	globalAttr := &types.HostRecord{
 		OSProfile:          osProfileIn,
@@ -2178,6 +2200,8 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		K8sClusterTemplate: k8sTmplIn,
 		K8sConfig:          k8sConfigIn,
 		CloudInitMeta:      cloudInitIn,
+		Serial:             serialIn,
+		UUID:               uuidIn,
 	}
 
 	if cmd.Flags().Changed("generate-csv") && (dryRun || csvFilePath != "") {
@@ -2199,30 +2223,56 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	if csvFilePath == "" || strings.HasPrefix(csvFilePath, "--") {
-		return fmt.Errorf("--import-from-csv <path/to/file.csv> is required, cannot be empty")
+	if (csvFilePath == "" || strings.HasPrefix(csvFilePath, "--")) && len(args) == 0 {
+		return fmt.Errorf("a host name or --import-from-csv <path/to/file.csv> is required")
 	}
 
-	err = verifyCSVInput(csvFilePath)
-	if err != nil {
-		return err
+	if len(args) > 0 && csvFilePath != "" && !strings.HasPrefix(csvFilePath, "--") {
+		return fmt.Errorf("cannot use both a host name and --import-from-csv at the same time")
 	}
 
-	if dryRun {
-		fmt.Println("--dry-run flag provided, validating input, hosts will not be imported")
-		provisioningSupported := viper.GetBool(ProvisioningFeature)
-		_, err := validator.CheckCSV(csvFilePath, *globalAttr, provisioningSupported)
+	var validated []types.HostRecord
+
+	if len(args) == 0 {
+		err = verifyCSVInput(csvFilePath)
 		if err != nil {
 			return err
 		}
-		fmt.Println("CSV validation successful")
-		return nil
-	}
 
-	provisioningSupported := viper.GetBool(ProvisioningFeature)
-	validated, err := validator.CheckCSV(csvFilePath, *globalAttr, provisioningSupported)
-	if err != nil {
-		return err
+		if dryRun {
+			fmt.Println("--dry-run flag provided, validating input, hosts will not be imported")
+			provisioningSupported := viper.GetBool(ProvisioningFeature)
+			_, err := validator.CheckCSV(csvFilePath, *globalAttr, provisioningSupported)
+			if err != nil {
+				return err
+			}
+			fmt.Println("CSV validation successful")
+			return nil
+		}
+
+		provisioningSupported := viper.GetBool(ProvisioningFeature)
+		validated, err = validator.CheckCSV(csvFilePath, *globalAttr, provisioningSupported)
+		if err != nil {
+			return err
+		}
+	} else {
+		hostname = args[0]
+		if dryRun {
+			fmt.Println("--dry-run flag provided, validating input, hosts will not be imported")
+			provisioningSupported := viper.GetBool(ProvisioningFeature)
+			_, err := validator.CheckDirectInput(*globalAttr, provisioningSupported)
+			if err != nil {
+				return err
+			}
+			fmt.Println("Single host input validation successful")
+			return nil
+		}
+
+		provisioningSupported := viper.GetBool(ProvisioningFeature)
+		validated, err = validator.CheckDirectInput(*globalAttr, provisioningSupported)
+		if err != nil {
+			return err
+		}
 	}
 
 	respCache := ResponseCache{
@@ -2252,11 +2302,18 @@ func runCreateHostCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	if len(erringRecords) > 0 {
-		newFilename := fmt.Sprintf("%s_%s_%s", "import_error",
-			time.Now().Format(time.RFC3339), filepath.Base(currentPath))
-		fmt.Printf("Generating error file: %s\n", newFilename)
-		if err := files.WriteHostRecords(newFilename, erringRecords); err != nil {
-			return e.NewCustomError(e.ErrFileRW)
+		if len(args) > 0 {
+			// Single host direct input - print errors to console instead of writing to file
+			for _, record := range erringRecords {
+				fmt.Printf("Error creating host: %s\n", record.Error)
+			}
+		} else {
+			newFilename := fmt.Sprintf("%s_%s_%s", "import_error",
+				time.Now().Format(time.RFC3339), filepath.Base(currentPath))
+			fmt.Printf("Generating error file: %s\n", newFilename)
+			if err := files.WriteHostRecords(newFilename, erringRecords); err != nil {
+				return e.NewCustomError(e.ErrFileRW)
+			}
 		}
 		return e.NewCustomError(e.ErrImportFailed)
 	}
@@ -3505,7 +3562,7 @@ func createCluster(ctx context.Context, cClient cluster.ClientWithResponsesInter
 
 // Decode input metadata and add to host, allocate host to site
 func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientWithResponsesInterface,
-	projectName, hostID string, rOut *types.HostRecord) error {
+	projectName, hostID, hostName string, rOut *types.HostRecord) error {
 
 	// Update host with Site and metadata
 	var metadata *[]infra.MetadataItem
@@ -3517,9 +3574,13 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientW
 		}
 	}
 
+	if hostName == "" {
+		hostName = hostID
+	}
+
 	sresp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{},
 		infra.HostServicePatchHostJSONRequestBody{
-			Name:     hostID,
+			Name:     hostName,
 			Metadata: metadata,
 			SiteId:   &rOut.Site,
 		}, auth.AddAuthHeader)
@@ -3537,12 +3598,12 @@ func allocateHostToSiteAndAddMetadata(ctx context.Context, hClient infra.ClientW
 }
 
 func setHostName(ctx context.Context, hClient infra.ClientWithResponsesInterface,
-	projectName, hostID string) error {
+	projectName, hostID, hostName string) error {
 
 	// Update host name
 	resp, err := hClient.HostServicePatchHostWithResponse(ctx, projectName, hostID, &infra.HostServicePatchHostParams{},
 		infra.HostServicePatchHostJSONRequestBody{
-			Name: hostID,
+			Name: hostName,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		err := processError(err)
