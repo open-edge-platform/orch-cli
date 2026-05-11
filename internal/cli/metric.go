@@ -276,7 +276,7 @@ func printMetricResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName 
 		rows = append(rows, metricGetRow{
 			Metric:    &metricName,
 			Host:      &host,
-			HostGuid:  &hostGUID,
+			HostGUID:  &hostGUID,
 			ProjectID: &projectID,
 			Timestamp: &timestamp,
 			Value:     &value,
