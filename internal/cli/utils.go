@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -31,7 +31,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
@@ -286,6 +285,75 @@ func addListOrderingFilteringPaginationFlags(cmd *cobra.Command, entity string) 
 	cmd.Flags().Int32("offset", 0, fmt.Sprintf("%s list starting offset", entity))
 }
 
+// Adds standard table output template override flags for commands with table rendering.
+func addTableOutputTemplateFlags(cmd *cobra.Command) {
+	cmd.Flags().String("output-template", "", "Optional custom output template (Go text/template) for table output")
+	cmd.Flags().String("output-template-file", "", "Optional path to a file containing a custom template for table output")
+}
+
+// Adds standard output flags for list commands supporting table/json/yaml output,
+// optional client-side table filtering, and table template overrides.
+func addStandardListOutputFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	filterHelp := "Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML"
+	cmd.Flags().String("output-filter", "", filterHelp)
+	addTableOutputTemplateFlags(cmd)
+}
+
+// Adds standard output flags for get commands supporting table/json/yaml output
+// and table template overrides.
+func addStandardGetOutputFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	addTableOutputTemplateFlags(cmd)
+}
+
+func normalizeEscapedOutputTemplate(in string) string {
+	return strings.NewReplacer(`\t`, "\t", `\n`, "\n", `\r`, "\r").Replace(in)
+}
+
+// Resolves a table output template from command flags and optional environment variable.
+// Precedence is: --output-template > --output-template-file > environment variable > defaultTemplate.
+// Returns the resolved template string and any error (e.g., file not found, conflicting flags).
+func resolveTableOutputTemplate(cmd *cobra.Command, defaultTemplate string, envVar string) (string, error) {
+	flagName := "output-template"
+	fileFlagName := "output-template-file"
+	selectedEnvVar := envVar
+
+	outputTemplate, errTemplate := cmd.Flags().GetString(flagName)
+	if errTemplate != nil {
+		outputTemplate = ""
+	}
+	outputTemplateFile, errTemplateFile := cmd.Flags().GetString(fileFlagName)
+	if errTemplateFile != nil {
+		outputTemplateFile = ""
+	}
+
+	if outputTemplate != "" && outputTemplateFile != "" {
+		return "", fmt.Errorf("only one of --%s and --%s can be specified", flagName, fileFlagName)
+	}
+
+	if outputTemplateFile != "" {
+		tmplBytes, err := readInput(outputTemplateFile)
+		if err != nil {
+			return "", fmt.Errorf("unable to read output template file %q: %w", outputTemplateFile, err)
+		}
+		outputTemplate = normalizeEscapedOutputTemplate(string(tmplBytes))
+	} else if outputTemplate != "" {
+		outputTemplate = normalizeEscapedOutputTemplate(outputTemplate)
+	}
+
+	if outputTemplate == "" && selectedEnvVar != "" {
+		outputTemplate = os.Getenv(selectedEnvVar)
+		outputTemplate = normalizeEscapedOutputTemplate(outputTemplate)
+	}
+
+	if strings.TrimSpace(outputTemplate) == "" {
+		return defaultTemplate, nil
+	}
+
+	return outputTemplate, nil
+}
+
 // Gets the standard display-name, and description
 func getEntityFlags(cmd *cobra.Command) (string, string, error) {
 	displayName, err := cmd.Flags().GetString("display-name")
@@ -347,6 +415,16 @@ func getProjectName(cmd *cobra.Command) (string, error) {
 func getFlag(cmd *cobra.Command, flag string) *string {
 	value, err := cmd.Flags().GetString(flag)
 	if err != nil {
+		return nil
+	}
+	return &value
+}
+
+// Get the named flag as an optional string reference, returning nil for empty strings.
+// This is useful for APIs that reject empty strings (e.g., cluster API filter parameter).
+func getNonEmptyFlag(cmd *cobra.Command, flag string) *string {
+	value, err := cmd.Flags().GetString(flag)
+	if err != nil || value == "" {
 		return nil
 	}
 	return &value
@@ -510,10 +588,28 @@ func checkStatus(statusCode int, message string, statusMessage string) (proceed 
 	}
 }
 
-// Returns an error if the status is abnormal, i.e. status code is not OK and not merely NOT_FOUND
-func statusIsAbnormal(response *http.Response, message string, args ...string) error {
+// Returns an error if the status is abnormal, extracting error details from the response body
+func statusIsAbnormalWithBody(response *http.Response, body []byte, message string) error {
 	if response == nil || (response.StatusCode != 200 && response.StatusCode != 404 && response.StatusCode != 401) {
-		return fmt.Errorf("%s:%s", message, args)
+		// Extract error message from response body
+		var errorResponse struct {
+			Message string `json:"message"`
+		}
+
+		var bodyMessage string
+		if len(body) > 0 {
+			if err := json.Unmarshal(body, &errorResponse); err == nil && errorResponse.Message != "" {
+				bodyMessage = errorResponse.Message
+			} else {
+				// Fallback to raw body if JSON parsing fails
+				bodyMessage = string(body)
+			}
+		}
+
+		if bodyMessage != "" {
+			return fmt.Errorf("%s: %s\n%s", message, response.Status, bodyMessage)
+		}
+		return fmt.Errorf("%s: %s", message, response.Status)
 	}
 	return nil
 }
@@ -534,7 +630,7 @@ func statusForbidden(response *http.Response) bool {
 }
 
 func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer, verbose bool, header string, message string) (proceed bool, err error) {
-	abnormalErr := statusIsAbnormal(resp, message, resp.Status)
+	abnormalErr := statusIsAbnormalWithBody(resp, body, message)
 	switch {
 	case abnormalErr != nil:
 		return false, abnormalErr
@@ -546,7 +642,7 @@ func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer,
 		return false, getError(body, "Unauthorized (forbidden). Please login with a user that has the required permissions")
 	}
 
-	if !verbose {
+	if !verbose && header != "" {
 		_, _ = fmt.Fprintf(writer, "%s\n", header)
 	}
 	return true, nil
@@ -573,20 +669,6 @@ func processError(err error) error {
 func valueOrNone(s *string) string {
 	if s != nil && len(*s) > 0 {
 		return *s
-	}
-	return "<none>"
-}
-
-func safeBool(b *bool) bool {
-	if b != nil {
-		return *b
-	}
-	return false
-}
-
-func obscureValue(s *string) string {
-	if s != nil && len(*s) > 0 {
-		return "********"
 	}
 	return "<none>"
 }

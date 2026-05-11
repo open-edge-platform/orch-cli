@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -112,7 +112,7 @@ func TestProcessResponse(t *testing.T) {
 			verbose:         true,
 			header:          "test-header",
 			message:         "test-message",
-			expectedError:   "test-message:[Forbidden]",
+			expectedError:   "test-message: Forbidden",
 			expectedProceed: false,
 		},
 	}
