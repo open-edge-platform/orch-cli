@@ -40,12 +40,12 @@ func (s *CLITestSuite) TestListUsers() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Username": "admin",
-			"Enabled":  "true",
+			"USERNAME": "admin",
+			"ENABLED":  "true",
 		},
 		{
-			"Username": "sample-user",
-			"Enabled":  "true",
+			"USERNAME": "sample-user",
+			"ENABLED":  "true",
 		},
 	}
 
@@ -63,16 +63,16 @@ func (s *CLITestSuite) TestListUsersVerbose() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Username":   "admin",
-			"Email":      "admin@example.com",
-			"First Name": "Admin",
-			"Enabled":    "true",
+			"USERNAME":   "admin",
+			"EMAIL":      "admin@example.com",
+			"FIRST NAME": "Admin",
+			"ENABLED":    "true",
 		},
 		{
-			"Username":   "sample-user",
-			"Email":      "sample-user@sample-domain.com",
-			"First Name": "sample",
-			"Enabled":    "true",
+			"USERNAME":   "sample-user",
+			"EMAIL":      "sample-user@sample-domain.com",
+			"FIRST NAME": "sample",
+			"ENABLED":    "true",
 		},
 	}
 
