@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -62,8 +62,8 @@ func (s *CLITestSuite) TestOrganization() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Name":   name,
-			"Status": status,
+			"NAME":             name,
+			"STATUS INDICATOR": status,
 		},
 	}
 
@@ -80,9 +80,9 @@ func (s *CLITestSuite) TestOrganization() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Name":        name,
-			"Status":      status,
-			"Description": description,
+			"NAME":             name,
+			"STATUS INDICATOR": status,
+			"DESCRIPTION":      description,
 		},
 	}
 
@@ -100,7 +100,7 @@ func (s *CLITestSuite) TestOrganization() {
 		"Name:":           name,
 		"Description:":    description,
 		"Status:":         status,
-		"Status message:": "Org itep CREATE is complete",
+		"Status Message:": "Org itep CREATE is complete",
 		"UID:":            "db8d42ad-849d-4626-8dc7-d7955b83e995",
 	}
 

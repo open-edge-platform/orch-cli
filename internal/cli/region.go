@@ -1,17 +1,20 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -45,6 +48,13 @@ type region2Site struct {
 	Region map[string]infra.RegionResource
 }
 
+// RegionNode is a nested representation of a region and its children/sites for machine output
+type RegionNode struct {
+	Region   infra.RegionResource `json:"region"`
+	Sites    []infra.SiteResource `json:"sites"`
+	Children []RegionNode         `json:"children"`
+}
+
 func getListRegionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "region [flags]",
@@ -54,6 +64,14 @@ func getListRegionCommand() *cobra.Command {
 		RunE:    runListRegionCommand,
 	}
 	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Optional filter provided as part of region list to filter region by parent region")
+	addListOrderingFilteringPaginationFlags(cmd, "region")
+	addStandardListOutputFlags(cmd)
+	// Override default output-type to "tree" for region list; table/json/yaml are also supported
+	if f := cmd.Flags().Lookup("output-type"); f != nil {
+		f.DefValue = "tree"
+		_ = f.Value.Set("tree")
+		f.Usage = "output type: tree (default), table, json, yaml"
+	}
 	return cmd
 }
 
@@ -66,6 +84,7 @@ func getGetRegionCommand() *cobra.Command {
 		Aliases: regionAliases,
 		RunE:    runGetRegionCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -117,7 +136,20 @@ func runGetRegionCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printRegion(writer, resp.JSON200)
+	region := resp.JSON200
+	// GET endpoint does not populate TotalSites; fetch it via list with ShowTotalSites=true
+	showTotalSites := true
+	filterStr := fmt.Sprintf("resource_id='%s'", id)
+	lresp, lerr := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+		&infra.RegionServiceListRegionsParams{
+			ShowTotalSites: &showTotalSites,
+			Filter:         &filterStr,
+		}, auth.AddAuthHeader)
+	if lerr == nil && lresp.JSON200 != nil && len(lresp.JSON200.Regions) > 0 {
+		region.TotalSites = lresp.JSON200.Regions[0].TotalSites
+	}
+
+	printRegion(writer, region)
 	return writer.Flush()
 }
 
@@ -213,19 +245,70 @@ func runListRegionCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	// Validate order-by early so we can pass it to the region list API when appropriate
+	validatedOrderBy, err := getValidatedRegionOrderBy(ctx, cmd, regionClient, projectName)
+	if err != nil {
+		return err
+	}
+
 	enableTotalSite := true
 
+	filterFlag, _ := cmd.Flags().GetString("filter")
 	var filterString *string
-	if regFlag != "" {
-		filter := fmt.Sprintf("parent_region.resource_id='%s'", *region)
-		filterString = &filter
+	var filterParts []string
+	if regFlag != "" && region != nil {
+		filterParts = append(filterParts, fmt.Sprintf("parent_region.resource_id='%s'", *region))
+	}
+	if filterFlag != "" {
+		filterParts = append(filterParts, filterFlag)
+	}
+	if len(filterParts) > 0 {
+		combined := strings.Join(filterParts, " AND ")
+		filterString = &combined
 	}
 
 	//Get all regions
+	// For table output we will sort client-side; for JSON/YAML allow API ordering
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		apiOrderBy = nil
+	}
+
+	// Build combined raw filter string (parent region + user filter) and validate via probe
+	var combinedRaw string
+	if filterString != nil {
+		combinedRaw = *filterString
+	}
+	validatedFilter, err := normalizeFilterWithAPIProbe(combinedRaw, "regions", infra.RegionResource{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating region filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
 	resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
 		&infra.RegionServiceListRegionsParams{
 			ShowTotalSites: &enableTotalSite,
-			Filter:         filterString,
+			Filter:         validatedFilter,
+			OrderBy:        apiOrderBy,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -257,6 +340,51 @@ func runListRegionCommand(cmd *cobra.Command, _ []string) error {
 		regionMap.Sites[*region.ResourceId] = sresp.JSON200.Sites
 	}
 
+	// If JSON/YAML output requested, build nested nodes and use GenerateOutput
+	if outputType == "json" || outputType == "yaml" {
+		// For JSON/YAML output, print flat API response
+		result := CommandResult{
+			Format:    format.Format("table"),
+			Filter:    "",
+			OrderBy:   "",
+			OutputAs:  toOutputType(outputType),
+			NameLimit: -1,
+			Data:      resp.JSON200.Regions,
+		}
+		GenerateOutput(writer, &result)
+		return writer.Flush()
+	}
+
+	// If table output requested, render flat list via templates and client-side sorting
+	if outputType == "table" {
+		outputFormat, err := getRegionOutputFormat(cmd, verbose, true)
+		if err != nil {
+			return err
+		}
+
+		// Build flat list of regions from response
+		regions := make([]infra.RegionResource, 0, len(resp.JSON200.Regions))
+		regions = append(regions, resp.JSON200.Regions...)
+
+		orderBy := ""
+		if validatedOrderBy != nil {
+			orderBy = *validatedOrderBy
+		}
+
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		result := CommandResult{
+			Format:    format.Format(outputFormat),
+			Filter:    outputFilter,
+			OrderBy:   orderBy,
+			OutputAs:  toOutputType(outputType),
+			NameLimit: -1,
+			Data:      regions,
+		}
+		GenerateOutput(writer, &result)
+		return writer.Flush()
+	}
+
+	// Default: print ASCII tree
 	printRegions(writer, regionMap, verbose, region)
 
 	return writer.Flush()
@@ -290,6 +418,42 @@ func printRegions(writer io.Writer, regions region2Site, verbose bool, regionfla
 			}
 		}
 	}
+}
+
+// Returns a validated order-by string for regions, with API hints when necessary
+func getValidatedRegionOrderBy(ctx context.Context, cmd *cobra.Command, regionClient infra.ClientWithResponsesInterface, projectName string) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, infra.RegionResource{})
+	}
+
+	// For JSON/YAML, validate with probe using API
+	return normalizeOrderByWithAPIProbe(raw, "regions", infra.RegionResource{}, func(orderBy string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{
+				OrderBy:  &orderBy,
+				Filter:   nil,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating region order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 // Prints output tree of regions
@@ -328,6 +492,20 @@ func printRegion(writer io.Writer, region *infra.RegionResource) {
 	_, _ = fmt.Fprintf(writer, "Metadata: \t%s\n", *region.Metadata)
 	_, _ = fmt.Fprintf(writer, "TotalSites: \t%v\n", *region.TotalSites)
 
+}
+
+func getRegionOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string, error) {
+	const DEFAULT_REGION_FORMAT = "table{{.ResourceId}}\t{{.Name}}\t{{.ParentId}}\t{{.TotalSites}}"
+	const DEFAULT_REGION_VERBOSE_FORMAT = "table{{.ResourceId}}\t{{.Name}}\t{{.ParentId}}\t{{.ParentRegion.Name}}\t{{.TotalSites}}"
+	const DEFAULT_REGION_INSPECT_FORMAT = "Name:\t{{.Name}}\nResource ID:\t{{.ResourceId}}\nParent Region:\t{{.ParentRegion.Name}}\nParent ID:\t{{.ParentId}}\nTotalSites:\t{{.TotalSites}}\n"
+
+	if verbose && forList {
+		return DEFAULT_REGION_VERBOSE_FORMAT, nil
+	}
+	if !forList {
+		return DEFAULT_REGION_INSPECT_FORMAT, nil
+	}
+	return resolveTableOutputTemplate(cmd, DEFAULT_REGION_FORMAT, "ORCH_CLI_REGION_OUTPUT_TEMPLATE")
 }
 
 func checkName(name string, resource int) error {

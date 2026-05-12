@@ -1,9 +1,10 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -40,8 +42,6 @@ spec:
 
 const deleteOSUpdatePolicyExamples = `#Delete an OS Update Policy  using it's name
 orch-cli delete <resourceID> policy --project some-project`
-
-var OSUpdatePolicyHeader = fmt.Sprintf("\n%s\t%s\t%s", "Name", "Resource ID", "Description")
 
 var osUpdatePolicySchema = `
 {
@@ -79,81 +79,68 @@ type UpdateNestedSpec struct {
 	Spec OSUpdatePolicy `yaml:"spec"`
 }
 
-// // Filters list of profiles to find one with specific name
-// func filterPoliciesByName(OSPolicies []infra.OSUpdatePolicy, name string) (*infra.OSUpdatePolicy, error) {
-// 	for _, policy := range OSPolicies {
-// 		if policy.Name == name {
-// 			return &policy, nil
-// 		}
-// 	}
-// 	return nil, errors.New("no os update policy matches the given name")
-// }
+// Template-based output constants for standardization
+const (
+	DEFAULT_OSUPDATEPOLICY_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{str .Description}}"
+	// Use raw timestamp fields in the verbose table so header extraction
+	// can detect the field names (fmttime/deref hides them from the extractor).
+	DEFAULT_OSUPDATEPOLICY_VERBOSE_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{str .TargetOsId}}\t{{str .Description}}\t{{.Timestamps.CreatedAt}}\t{{.Timestamps.UpdatedAt}}"
+	DEFAULT_OSUPDATEPOLICY_GET_FORMAT     = "Name:\t{{.Name}}\nResource ID:\t{{str .ResourceId}}\nTarget OS ID:\t{{str .TargetOsId}}\nTarget OS Name:\t{{if .TargetOs}}{{.TargetOs.Name}}{{end}}\nKernel Command:\t{{str .UpdateKernelCommand}}\nDescription:\t{{str .Description}}\nUpdate Packages:\t{{str .UpdatePackages}}\nUpdate Policy:\t{{deref .UpdatePolicy}}\nUpdate Sources:\t{{deref .UpdateSources}}\nCreated at:\t{{fmttime (deref .Timestamps.CreatedAt)}}\nUpdated at:\t{{fmttime (deref .Timestamps.UpdatedAt)}}\n"
+	OSUPDATEPOLICY_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_OSUPDATEPOLICY_OUTPUT_TEMPLATE"
+)
 
-// Prints OS Profiles in tabular format
-func printOSUpdatePolicies(writer io.Writer, OSUpdatePolicies []infra.OSUpdatePolicy, verbose bool) {
-	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\t%s\t%s\t%s\n", "Name", "Resource ID", "Target OS ID", "Description", "Created", "Updated")
+// Template-based print helpers for standardization
+func getOSUpdatePolicyOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string, error) {
+	if verbose && forList {
+		return DEFAULT_OSUPDATEPOLICY_VERBOSE_FORMAT, nil
 	}
-	for _, osup := range OSUpdatePolicies {
-		createdAt := ""
-		updatedAt := ""
-		if osup.Timestamps != nil {
-			if osup.Timestamps.CreatedAt != nil {
-				createdAt = fmt.Sprint(osup.Timestamps.CreatedAt)
-			}
-			if osup.Timestamps.UpdatedAt != nil {
-				updatedAt = fmt.Sprint(osup.Timestamps.UpdatedAt)
-			}
-		}
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", osup.Name, safeString(osup.ResourceId), safeString(osup.Description))
-		} else {
-			fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\n", osup.Name, safeString(osup.ResourceId), safeString(osup.TargetOsId), safeString(osup.Description), createdAt, updatedAt)
-		}
+	if !forList {
+		// For single-get, return the detailed get format but allow overrides via flags/env
+		return resolveTableOutputTemplate(cmd, DEFAULT_OSUPDATEPOLICY_GET_FORMAT, OSUPDATEPOLICY_OUTPUT_TEMPLATE_ENVVAR)
 	}
+	return resolveTableOutputTemplate(cmd, DEFAULT_OSUPDATEPOLICY_FORMAT, OSUPDATEPOLICY_OUTPUT_TEMPLATE_ENVVAR)
 }
 
-// Prints output details of OS Profiles
-func printOSUpdatePolicy(writer io.Writer, OSUpdatePolicy *infra.OSUpdatePolicy) {
-	if OSUpdatePolicy == nil {
-		_, _ = fmt.Fprintf(writer, "OS Update Policy not found\n")
-		return
+func printOSUpdatePolicies(cmd *cobra.Command, writer io.Writer, policies []infra.OSUpdatePolicy, orderBy *string, outputFilter *string, verbose bool) error {
+	outputFormat, err := getOSUpdatePolicyOutputFormat(cmd, verbose, true)
+	if err != nil {
+		return err
 	}
-
-	targetOSID := ""
-	targetOSName := ""
-	if OSUpdatePolicy.TargetOs != nil {
-		targetOSID = safeString(OSUpdatePolicy.TargetOs.OsResourceID)
-		targetOSName = safeString(OSUpdatePolicy.TargetOs.Name)
+	outputType, _ := cmd.Flags().GetString("output-type")
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
 	}
-
-	createdAt := ""
-	updatedAt := ""
-	if OSUpdatePolicy.Timestamps != nil {
-		if OSUpdatePolicy.Timestamps.CreatedAt != nil {
-			createdAt = fmt.Sprint(OSUpdatePolicy.Timestamps.CreatedAt)
-		}
-		if OSUpdatePolicy.Timestamps.UpdatedAt != nil {
-			updatedAt = fmt.Sprint(OSUpdatePolicy.Timestamps.UpdatedAt)
-		}
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
 	}
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      policies,
+	}
+	GenerateOutput(writer, &result)
+	return nil
+}
 
-	_, _ = fmt.Fprintf(writer, "Name:\t %s\n", OSUpdatePolicy.Name)
-	_, _ = fmt.Fprintf(writer, "Resource ID:\t %s\n", safeString(OSUpdatePolicy.ResourceId))
-	_, _ = fmt.Fprintf(writer, "Target OS ID:\t %s\n", targetOSID)
-	_, _ = fmt.Fprintf(writer, "Target OS Name:\t %s\n", targetOSName)
-	_, _ = fmt.Fprintf(writer, "Kernel Command:\t %s\n", safeString(OSUpdatePolicy.UpdateKernelCommand))
-	_, _ = fmt.Fprintf(writer, "Description:\t %v\n", safeString(OSUpdatePolicy.Description))
-	_, _ = fmt.Fprintf(writer, "Update Packages:\t %s\n", safeString(OSUpdatePolicy.UpdatePackages))
-	_, _ = fmt.Fprintf(writer, "Update Policy:\t %s\n", func() string {
-		if OSUpdatePolicy.UpdatePolicy == nil {
-			return ""
-		}
-		return string(*OSUpdatePolicy.UpdatePolicy)
-	}())
-	_, _ = fmt.Fprintf(writer, "Create at:\t %v\n", createdAt)
-	_, _ = fmt.Fprintf(writer, "Updated at:\t %v\n", updatedAt)
-
+func printOSUpdatePolicy(cmd *cobra.Command, writer io.Writer, policy *infra.OSUpdatePolicy) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getOSUpdatePolicyOutputFormat(cmd, false, false)
+	if err != nil {
+		return err
+	}
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      policy,
+	}
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 // Helper function to verify that the input file exists and is of right format
@@ -207,7 +194,7 @@ func readUpdateProfileFromYaml(path string) (*UpdateNestedSpec, error) {
 	if !result.Valid() {
 		var sb strings.Builder
 		for _, desc := range result.Errors() {
-			sb.WriteString(fmt.Sprintf("- %s\n", desc))
+			fmt.Fprintf(&sb, "- %s\n", desc)
 		}
 		return nil, fmt.Errorf("YAML does not conform to schema:\n%s", sb.String())
 	}
@@ -229,6 +216,7 @@ func getGetOSUpdatePolicyCommand() *cobra.Command {
 		Aliases: osUpdatePolicyAliases,
 		RunE:    runGetOSUpdatePolicyCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -240,7 +228,9 @@ func getListOSUpdatePolicyCommand() *cobra.Command {
 		Aliases: osUpdatePolicyAliases,
 		RunE:    runListOSUpdatePolicyCommand,
 	}
-	cmd.PersistentFlags().StringP("filter", "f", viper.GetString("filter"), "Optional filter provided as part of host list command\nUsage:\n\tCustom filter: --filter \"<custom filter>\" ie. --filter \"osType=OS_TYPE_IMMUTABLE\" see https://google.aip.dev/160 and API spec.")
+	cmd.Flags().StringP("filter", "f", viper.GetString("filter"), "API filter (see https://google.aip.dev/160)")
+	cmd.Flags().String("order-by", "", "order results by field (table output only)")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -272,76 +262,64 @@ func getDeleteOSUpdatePolicyCommand() *cobra.Command {
 // specifc policy by name
 func runGetOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 	ctx, OSUpdatePolicyClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
-
-	// In future get policy by name istead of resourceid
-	// name := args[0]
-
-	// lresp, err := OSUpdatePolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
-	// 	&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
-
-	// if err = checkResponse(lresp.HTTPResponse, "Error getting OS Update policies"); err != nil {
-	// 	return err
-	// }
-
-	// policy, err := filterPoliciesByName(lresp.JSON200.OsUpdatePolicies, name)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// policyID := *policy.ResourceId
-
 	policyID := args[0]
-
-	resp, err := OSUpdatePolicyClient.OSUpdatePolicyGetOSUpdatePolicyWithResponse(ctx, projectName,
-		policyID, auth.AddAuthHeader)
+	resp, err := OSUpdatePolicyClient.OSUpdatePolicyGetOSUpdatePolicyWithResponse(ctx, projectName, policyID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		"", "error getting OS Update Policy"); !proceed {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error getting OS Update Policy"); err != nil {
 		return err
 	}
-
-	printOSUpdatePolicy(writer, resp.JSON200)
+	if err := printOSUpdatePolicy(cmd, writer, resp.JSON200); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
 // Lists all OS Update policies - retrieves all policies and displays selected information in tabular format
 func runListOSUpdatePolicyCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
-
-	filtflag, _ := cmd.Flags().GetString("filter")
-	filter := filterHelper(filtflag)
-
+	// filter helper not needed; validation uses API probe
 	ctx, OSUPolicyClient, projectName, err := InfraFactory(cmd)
+	if err != nil {
+		return err
+	}
+	// Determine validated order-by for API-side ordering when output is json/yaml
+	outputType, _ := cmd.Flags().GetString("output-type")
+	var validatedOrderBy *string
+	if outputType != "table" {
+		validatedOrderBy, err = getValidatedOSUpdatePolicyOrderBy(ctx, cmd, OSUPolicyClient, projectName)
+		if err != nil {
+			return err
+		}
+	}
+
+	validatedFilter, err := getValidatedOSUpdatePolicyFilter(ctx, cmd, OSUPolicyClient, projectName)
 	if err != nil {
 		return err
 	}
 
 	resp, err := OSUPolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
 		&infra.OSUpdatePolicyListOSUpdatePolicyParams{
-			Filter: filter,
+			Filter:  validatedFilter,
+			OrderBy: validatedOrderBy,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		OSUpdatePolicyHeader, "error getting OS Update Policies"); !proceed {
+		"", "error getting OS Update Policies"); !proceed {
 		return err
 	}
-
-	printOSUpdatePolicies(writer, resp.JSON200.OsUpdatePolicies, verbose)
-
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printOSUpdatePolicies(cmd, writer, resp.JSON200.OsUpdatePolicies, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -380,7 +358,7 @@ func runCreateOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 		}
 
 		if proceed, err := processResponse(oresp.HTTPResponse, oresp.Body, writer, verbose,
-			OSProfileHeaderGet, "error getting OS Profile"); !proceed {
+			"", "error getting OS Profile"); !proceed {
 			return err
 		}
 
@@ -435,25 +413,6 @@ func runDeleteOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// In future delete by name instead of resource id
-	// name := args[0]
-	// lresp, err := OSUPolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
-	// 	&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
-	// if err != nil {
-	// 	return processError(err)
-	// }
-
-	// if err = checkResponse(lresp.HTTPResponse, "Error getting OS Update policies"); err != nil {
-	// 	return err
-	// }
-
-	// policy, err := filterPoliciesByName(lresp.JSON200.OsUpdatePolicies, name)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// policyID := *policy.ResourceId
-
 	policyID := args[0]
 
 	resp, err := OSUPolicyClient.OSUpdatePolicyDeleteOSUpdatePolicyWithResponse(ctx, projectName,
@@ -463,4 +422,75 @@ func runDeleteOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	return checkResponse(resp.HTTPResponse, resp.Body, fmt.Sprintf("error deleting OS Update policy %s", policyID))
+}
+
+// Validates the order-by argument for OSUpdatePolicy and provides hints for valid fields
+func getValidatedOSUpdatePolicyOrderBy(ctx interface{}, cmd *cobra.Command, OSUPolicyClient infra.ClientWithResponsesInterface, projectName string) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+	outputType, _ := cmd.Flags().GetString("output-type")
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		normalized, _ := normalizeOrderByForClientSorting(raw, infra.OSUpdatePolicy{})
+		return normalized, nil
+	}
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	return normalizeOrderByWithAPIProbe(raw, "os-update-policies", infra.OSUpdatePolicy{}, func(orderBy string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := OSUPolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx.(context.Context), projectName,
+			&infra.OSUpdatePolicyListOSUpdatePolicyParams{
+				OrderBy:  &orderBy,
+				Filter:   nil,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == 400 {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS Update Policy order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+func getValidatedOSUpdatePolicyFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	OSUPolicyClient infra.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "os-update-policies", infra.OSUpdatePolicy{}, func(filter string) (bool, error) {
+		pageSize := 1
+		offset := 0
+		resp, err := OSUPolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx,
+			projectName,
+			&infra.OSUpdatePolicyListOSUpdatePolicyParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == 400 {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating OS Update Policy filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
