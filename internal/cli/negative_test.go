@@ -666,7 +666,7 @@ func (s *CLITestSuite) TestNegative() {
 	s.Contains(output, expectedAliasOutput)
 
 	//LIST
-	output, err = s.listArtifacts(project, false, "", "", "", "", "")
+	output, err = s.listArtifacts(project, false, "", "", "", "", "", "", "")
 	s.NoError(err)
 	s.Contains(output, "Error: command \"artifacts\" is disabled in the current Edge Orchestrator configuration")
 

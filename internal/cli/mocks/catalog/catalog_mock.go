@@ -628,8 +628,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 								DisplayName: stringPtr("artifact-display-name"),
 								Description: stringPtr("Artifact-Description"),
 								MimeType:    "text/plain",
-								CreateTime:  timePtr(time.Now()),
-								UpdateTime:  timePtr(time.Now()),
+								CreateTime:  timePtr(testTime),
+								UpdateTime:  timePtr(testTime),
 								// Add other fields as needed
 							},
 						},
