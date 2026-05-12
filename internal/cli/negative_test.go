@@ -620,7 +620,7 @@ func (s *CLITestSuite) TestNegative() {
 	//LIST
 	//fail to list application with application-orchestration disabled
 
-	output, err = s.listApplications(project, false, "", "", "", "", "", "")
+	output, err = s.listApplications(project, false, "", "", "", "", "", "", "", "")
 	s.NoError(err)
 	s.Contains(output, "Error: command \"applications\" is disabled in the current Edge Orchestrator configuration")
 
