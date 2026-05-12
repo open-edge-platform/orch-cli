@@ -32,7 +32,7 @@ func (s *CLITestSuite) createRegistry(project string, name string, args commandA
 	return err
 }
 
-func (s *CLITestSuite) listRegistries(project string, verbose bool, showSensitive bool, orderBy string, filter string) (string, error) {
+func (s *CLITestSuite) listRegistries(project string, verbose bool, showSensitive bool, orderBy string, filter string, outputType string, pageSize string) (string, error) {
 	args := `list registries --project ` + project
 	if verbose {
 		args = args + " -v"
@@ -41,10 +41,16 @@ func (s *CLITestSuite) listRegistries(project string, verbose bool, showSensitiv
 		}
 	}
 	if orderBy != "" {
-		args = args + " order-by=" + orderBy
+		args = args + " --order-by=" + orderBy
 	}
 	if filter != "" {
-		args = args + " filter=" + filter
+		args = args + " --filter=" + filter
+	}
+	if outputType != "" {
+		args = args + " --output-type " + outputType
+	}
+	if pageSize != "" {
+		args = args + " --page-size " + pageSize
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -105,7 +111,7 @@ func (s *CLITestSuite) registryTest(registryTypeCommand string, registryTypeValu
 	s.setupRegistry(registryTypeCommand, registryName)
 
 	// list registries to make sure it was created properly
-	listOutput, err := s.listRegistries(project, simpleOutput, false, "name desc", "description="+registryDescription)
+	listOutput, err := s.listRegistries(project, simpleOutput, false, "name desc", "description="+registryDescription, "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
@@ -122,7 +128,7 @@ func (s *CLITestSuite) registryTest(registryTypeCommand string, registryTypeValu
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list registry (show sensitive)
-	listVerboseOutput, err := s.listRegistries(project, verboseOutput, true, "", "")
+	listVerboseOutput, err := s.listRegistries(project, verboseOutput, true, "", "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
@@ -146,7 +152,7 @@ func (s *CLITestSuite) registryTest(registryTypeCommand string, registryTypeValu
 	s.compareOutput(expectedVerboseOutput, parsedVerboseOutput)
 
 	// verbose list registry (hide sensitive)
-	listVerboseOutput, err = s.listRegistries(project, verboseOutput, false, "", "")
+	listVerboseOutput, err = s.listRegistries(project, verboseOutput, false, "", "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput = mapVerboseCliOutput(listVerboseOutput)
@@ -183,6 +189,40 @@ func (s *CLITestSuite) registryTest(registryTypeCommand string, registryTypeValu
 	parsedGetOutput := mapCliOutput(getCmdOutput)
 	expectedOutput[registryName]["DESCRIPTION"] = `new-description`
 	s.compareOutput(expectedOutput, parsedGetOutput)
+
+	// List registries with order-by and YAML output
+	listOrderedOutput, err := s.listRegistries(project, false, false, "name", "", "yaml", "1")
+	s.NoError(err)
+
+	parsedOrderedOutput := mapLinesOutput(listOrderedOutput)
+
+	expectedOrderedOutput := linesCommandOutput{
+		"- apitype: null",
+		"  authtoken: '********'",
+		"  cacerts: null",
+		"  createtime: 2025-12-31T23:59:59Z",
+		"  description: Registry-Description",
+		"  displayname: registry-display-name",
+		"  inventoryurl: null",
+		"  name: registry-image",
+		"  rooturl: http://x.y.z",
+		"  type: IMAGE",
+		"  updatetime: 2025-12-31T23:59:59Z",
+		"  username: user",
+		"- apitype: null",
+		"  authtoken: '********'",
+		"  cacerts: null",
+		"  createtime: 2025-12-31T23:59:59Z",
+		"  description: Registry-Description",
+		"  displayname: registry-display-name",
+		"  inventoryurl: null",
+		"  name: registry-helm",
+		"  rooturl: http://x.y.z",
+		"  type: HELM",
+		"  updatetime: 2025-12-31T23:59:59Z",
+		"  username: user",
+	}
+	s.compareLinesOutput(expectedOrderedOutput, parsedOrderedOutput)
 
 	s.removeRegistry(registryName)
 }
@@ -248,7 +288,7 @@ func FuzzRegistry(f *testing.F) {
 		}
 
 		// --- List ---
-		_, err = testSuite.listRegistries(project, false, false, "", "")
+		_, err = testSuite.listRegistries(project, false, false, "", "", "", "")
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

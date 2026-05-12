@@ -907,7 +907,7 @@ func (s *CLITestSuite) TestNegative() {
 	s.Contains(output, expectedAliasOutput)
 
 	//LIST
-	output, err = s.listRegistries(project, false, false, "", "")
+	output, err = s.listRegistries(project, false, false, "", "", "", "")
 	s.NoError(err)
 	s.Contains(output, "Error: command \"registries\" is disabled in the current Edge Orchestrator configuration")
 
