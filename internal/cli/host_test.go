@@ -18,6 +18,11 @@ func (s *CLITestSuite) createHost(publisher string, args commandArgs) (string, e
 	return s.runCommand(commandString)
 }
 
+func (s *CLITestSuite) createHostSingle(publisher string, name string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`create host --project %s %s`, publisher, name))
+	return s.runCommand(commandString)
+}
+
 func (s *CLITestSuite) listHost(publisher string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`list host --project %s`, publisher))
 	return s.runCommand(commandString)
@@ -202,6 +207,27 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.createHost(project, HostArgs)
 	s.NoError(err)
 
+	//host creation single host
+	HostArgs = map[string]string{
+		"uuid":       "550e8400-e29b-41d4-a716-446655440000",
+		"serial":     "1234567890",
+		"site":       "site-abcd1111",
+		"os-profile": "Edge Microvisor Toolkit 3.0.20250504",
+	}
+	_, err = s.createHostSingle(project, "edge-host-001", HostArgs)
+	s.NoError(err)
+
+	//dry run single host creation
+	HostArgs = map[string]string{
+		"dry-run":    "true",
+		"uuid":       "550e8400-e29b-41d4-a716-446655440000",
+		"serial":     "1234567890",
+		"site":       "site-abcd1111",
+		"os-profile": "Edge Microvisor Toolkit 3.0.20250504",
+	}
+	_, err = s.createHostSingle(project, "edge-host-001", HostArgs)
+	s.NoError(err)
+
 	// Host creation with invalid project
 	HostArgs = map[string]string{
 		"import-from-csv": "./testdata/mock.csv",
@@ -239,7 +265,7 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.createHost(project, HostArgs)
 	// Accept either error message as valid
 	s.True(err != nil && (err.Error() == "Pre-flight check failed" ||
-		err.Error() == "--import-from-csv <path/to/file.csv> is required, cannot be empty"),
+		err.Error() == "a host name or --import-from-csv <path/to/file.csv> is required"),
 		"Expected either pre-flight check failure or missing CSV error, got: %v", err)
 
 	// Host creation with wrong cloud init
