@@ -251,6 +251,8 @@ func addCommandArgs(args commandArgs, commandString string) string {
 	for argName, argValue := range args {
 		if argValue == "" {
 			commandString += fmt.Sprintf(" --%s", argName)
+		} else if strings.Contains(argValue, " ") && !strings.HasPrefix(argValue, "\"") {
+			commandString += fmt.Sprintf(` --%s="%s"`, argName, argValue)
 		} else {
 			commandString += fmt.Sprintf(" --%s=%s", argName, argValue)
 		}
