@@ -469,7 +469,7 @@ func (s *CLITestSuite) TestNegative() {
 	//LIST
 	//fail to list clusters with cluster-orchestration disabled
 
-	output, err = s.listCluster(project, SArgs)
+	output, err = s.listCluster(project, false, "", "", "", "", SArgs)
 	s.NoError(err)
 	s.Contains(output, expectedOutput)
 
