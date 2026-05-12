@@ -823,7 +823,7 @@ func (s *CLITestSuite) TestNegative() {
 	s.Contains(output, expectedAliasOutput)
 
 	//LIST
-	output, err = s.listDeploymentProfiles(project, name, version, false, "", "", "")
+	output, err = s.listDeploymentProfiles(project, name, version, false, "", "", "", "")
 	s.NoError(err)
 	s.Contains(output, "Error: command \"deployment-package-profiles\" is disabled in the current Edge Orchestrator configuration")
 
