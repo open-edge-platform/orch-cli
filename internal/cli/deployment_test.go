@@ -103,6 +103,53 @@ func (s *CLITestSuite) TestDeployment() {
 	_, err = s.deleteDeployment(project, "test-deployment", make(map[string]string))
 	s.NoError(err)
 
+	// List deployments with order-by and YAML output
+	listOrderedOutput, err := s.listDeployment(project, map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	})
+	s.NoError(err)
+
+	parsedOrderedOutput := mapLinesOutput(listOrderedOutput)
+	expectedOrderedOutput := linesCommandOutput{
+		"- allapptargetclusters: null",
+		`  appname: ""`,
+		`  appversion: ""`,
+		"  apps: null",
+		"  createtime: 2025-12-31T23:59:59Z",
+		"  defaultprofilename: null",
+		"  deployid: deployment-id",
+		"  deploymenttype: null",
+		"  displayname: displayName",
+		"  name: projectName",
+		"  networkname: null",
+		"  overridevalues: null",
+		"  profilename: profileName",
+		"  publishername: null",
+		"  serviceexports: null",
+		"  status:",
+		"    message: message",
+		"    state: state",
+		"    summary:",
+		"      down: 1",
+		"      running: 2",
+		"      total: 3",
+		"      type: apps",
+		"      unknown: 0",
+		"  targetclusters: null",
+	}
+	s.compareLinesOutput(expectedOrderedOutput, parsedOrderedOutput)
+
+	// List deployments with filter and YAML output
+	listFilteredOutput, err := s.listDeployment(project, map[string]string{
+		"filter":      "name=projectName",
+		"output-type": "yaml",
+		"page-size":   "1",
+	})
+	s.NoError(err)
+	s.compareLinesOutput(expectedOrderedOutput, mapLinesOutput(listFilteredOutput))
+
 	// Test error handling for dual template flags (--output-template and --output-template-file both set)
 	_, err = s.listDeployment(project, map[string]string{
 		"output-template":      "table{{.Name}}",
