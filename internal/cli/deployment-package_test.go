@@ -14,10 +14,13 @@ func (s *CLITestSuite) createDeploymentPackage(project string, applicationName s
 	return err
 }
 
-func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, orderBy string, filter string, outputFilter string, outputTemplate string, outputTemplateFile string, outputType string, offset string) (string, error) {
+func (s *CLITestSuite) listDeploymentPackages(project string, verbose bool, kind string, orderBy string, filter string, outputFilter string, outputTemplate string, outputTemplateFile string, outputType string, offset string) (string, error) {
 	args := `list deployment-packages --project ` + project
 	if verbose {
 		args = args + " -v"
+	}
+	if kind != "" {
+		args = args + " --kind=" + kind
 	}
 	if orderBy != "" {
 		args = args + " --order-by=" + orderBy
@@ -107,7 +110,7 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	s.NoError(err)
 
 	// list deployment packages to make sure it was created properly
-	listOutput, err := s.listDeploymentPackages(project, simpleOutput, "display_name", "display_name="+deploymentPackageDisplayName, "", "", "", "", "")
+	listOutput, err := s.listDeploymentPackages(project, simpleOutput, "", "display_name", "display_name="+deploymentPackageDisplayName, "", "", "", "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
@@ -126,7 +129,7 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list deployment packages
-	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "", "", "", "", "", "", "")
+	listVerboseOutput, err := s.listDeploymentPackages(project, verboseOutput, "addon", "", "", "", "", "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
@@ -152,7 +155,7 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	s.compareOutput(expectedVerboseOutput, parsedVerboseOutput)
 
 	// List deployment packages with order-by and YAML output
-	listOrderedOutput, err := s.listDeploymentPackages(project, false, "name", "", "", "", "", "yaml", "1")
+	listOrderedOutput, err := s.listDeploymentPackages(project, false, "extension", "name", "", "", "", "", "yaml", "1")
 	s.NoError(err)
 
 	parsedOrderedOutput := mapLinesOutput(listOrderedOutput)
@@ -236,12 +239,12 @@ func (s *CLITestSuite) TestDeploymentPackage() {
 	// s.Contains(err.Error(), fmt.Sprintf("deployment package versions %s: 404 Not Found", pkgName))
 
 	// Test error handling for dual template flags (--output-template and --output-template-file both set)
-	_, err = s.listDeploymentPackages(project, simpleOutput, "", "", "", "table{{.Name}}", "/tmp/invalid.tmpl", "", "")
+	_, err = s.listDeploymentPackages(project, simpleOutput, "", "", "", "", "table{{.Name}}", "/tmp/invalid.tmpl", "", "")
 	s.Error(err)
 	s.Contains(err.Error(), "only one of")
 
 	// Test error handling for missing template file
-	_, err = s.listDeploymentPackages(project, simpleOutput, "", "", "", "", "/nonexistent/path/template.tmpl", "", "")
+	_, err = s.listDeploymentPackages(project, simpleOutput, "", "", "", "", "", "/nonexistent/path/template.tmpl", "", "")
 	s.Error(err)
 	s.Contains(err.Error(), "unable to read")
 
@@ -282,7 +285,7 @@ func FuzzDeploymentPackage(f *testing.F) {
 		}
 
 		// --- List Deployment Packages ---
-		_, err = testSuite.listDeploymentPackages(project, false, "", "", "", "", "", "", "")
+		_, err = testSuite.listDeploymentPackages(project, false, "", "", "", "", "", "", "", "")
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

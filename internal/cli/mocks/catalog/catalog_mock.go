@@ -300,50 +300,89 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(_ context.Context, _ string, params *catapi.CatalogServiceListApplicationsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListApplicationsResponse, error) {
-				_ = params
+				// wipe.go calls with PageSize=500; return TotalElements == item count so the wipe
+				// loop terminates immediately without a second call.
+				isWipeCall := params != nil && params.PageSize != nil && *params.PageSize == 500
+				// Second-page call from the list pagination loop: return one extra item so the
+				// loop appends it and exits normally (len == totalElements).
+				isSecondPage := !isWipeCall && params != nil && params.Offset != nil && *params.Offset > 0
+
+				if isWipeCall || !isSecondPage {
+					// First page (or wipe): return 3 items.
+					// For wipe TotalElements==3 ends the loop; for list TotalElements==4 triggers pagination.
+					totalElements := int32(3)
+					if !isWipeCall {
+						totalElements = 4
+					}
+					return &catapi.CatalogServiceListApplicationsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &catapi.CatalogV3ListApplicationsResponse{
+							Applications: []catapi.CatalogV3Application{
+								{
+									Name:               "new-application",
+									Version:            "1.2.3",
+									Kind:               applicationKindPtr(catapi.KINDNORMAL),
+									DisplayName:        stringPtr("application.display.name"),
+									Description:        stringPtr("Application.Description"),
+									ChartName:          "chart-name",
+									ChartVersion:       "22.33.44",
+									HelmRegistryName:   "test-registry",
+									ImageRegistryName:  nil,
+									Profiles:           &[]catapi.CatalogV3Profile{},
+									DefaultProfileName: stringPtr(""),
+									CreateTime:         timePtr(testTime),
+									UpdateTime:         timePtr(testTime),
+								},
+								{
+									Name:               "addon-app",
+									Version:            "1.0.0",
+									Kind:               applicationKindPtr(catapi.KINDADDON),
+									DisplayName:        stringPtr("addon.display.name"),
+									Description:        stringPtr("Addon Description"),
+									ChartName:          "addon-chart",
+									ChartVersion:       "1.0.0",
+									HelmRegistryName:   "addon-registry",
+									ImageRegistryName:  nil,
+									Profiles:           &[]catapi.CatalogV3Profile{},
+									DefaultProfileName: stringPtr(""),
+									CreateTime:         timePtr(testTime),
+									UpdateTime:         timePtr(testTime),
+								},
+								{
+									Name:               "extension-app",
+									Version:            "2.0.0",
+									Kind:               applicationKindPtr(catapi.KINDEXTENSION),
+									DisplayName:        stringPtr("extension.display.name"),
+									Description:        stringPtr("Extension Description"),
+									ChartName:          "extension-chart",
+									ChartVersion:       "2.0.0",
+									HelmRegistryName:   "extension-registry",
+									ImageRegistryName:  nil,
+									Profiles:           &[]catapi.CatalogV3Profile{},
+									DefaultProfileName: stringPtr(""),
+									CreateTime:         timePtr(testTime),
+									UpdateTime:         timePtr(testTime),
+								},
+							},
+							TotalElements: totalElements,
+						},
+					}, nil
+				}
+
+				// Second page for the list pagination loop: return one additional application.
 				return &catapi.CatalogServiceListApplicationsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.CatalogV3ListApplicationsResponse{
 						Applications: []catapi.CatalogV3Application{
 							{
-								Name:               "new-application",
-								Version:            "1.2.3",
+								Name:               "paged-app",
+								Version:            "3.0.0",
 								Kind:               applicationKindPtr(catapi.KINDNORMAL),
-								DisplayName:        stringPtr("application.display.name"),
-								Description:        stringPtr("Application.Description"),
-								ChartName:          "chart-name",
-								ChartVersion:       "22.33.44",
-								HelmRegistryName:   "test-registry",
-								ImageRegistryName:  nil,
-								Profiles:           &[]catapi.CatalogV3Profile{},
-								DefaultProfileName: stringPtr(""),
-								CreateTime:         timePtr(testTime),
-								UpdateTime:         timePtr(testTime),
-							},
-							{
-								Name:               "addon-app",
-								Version:            "1.0.0",
-								Kind:               applicationKindPtr(catapi.KINDADDON),
-								DisplayName:        stringPtr("addon.display.name"),
-								Description:        stringPtr("Addon Description"),
-								ChartName:          "addon-chart",
-								ChartVersion:       "1.0.0",
-								HelmRegistryName:   "addon-registry",
-								ImageRegistryName:  nil,
-								Profiles:           &[]catapi.CatalogV3Profile{},
-								DefaultProfileName: stringPtr(""),
-								CreateTime:         timePtr(testTime),
-								UpdateTime:         timePtr(testTime),
-							},
-							{
-								Name:               "extension-app",
-								Version:            "2.0.0",
-								Kind:               applicationKindPtr(catapi.KINDEXTENSION),
-								DisplayName:        stringPtr("extension.display.name"),
-								Description:        stringPtr("Extension Description"),
-								ChartName:          "extension-chart",
-								ChartVersion:       "2.0.0",
-								HelmRegistryName:   "extension-registry",
+								DisplayName:        stringPtr("paged.display.name"),
+								Description:        stringPtr("Paged Application"),
+								ChartName:          "paged-chart",
+								ChartVersion:       "3.0.0",
+								HelmRegistryName:   "paged-registry",
 								ImageRegistryName:  nil,
 								Profiles:           &[]catapi.CatalogV3Profile{},
 								DefaultProfileName: stringPtr(""),
@@ -351,12 +390,10 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 								UpdateTime:         timePtr(testTime),
 							},
 						},
-						TotalElements: 3,
-					},
+						TotalElements: 4},
 				}, nil
 			},
 		).AnyTimes()
-
 		mockClient.EXPECT().CatalogServiceGetApplicationVersionsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(

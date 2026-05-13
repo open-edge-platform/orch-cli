@@ -81,6 +81,14 @@ func (s *CLITestSuite) TestDeployment() {
 	})
 	s.NoError(err)
 
+	err = s.createDeployment("deployment-pkg", "1.0.0", map[string]string{
+		"project":                project,
+		"display-name":           "Test",
+		"profile":                "test-profile",
+		"application-cluster-id": "cluster-abcd1234",
+	})
+	s.NoError(err)
+
 	_, err = s.listDeployment(project, make(map[string]string))
 	s.NoError(err)
 
