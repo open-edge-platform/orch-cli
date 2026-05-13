@@ -24,6 +24,10 @@ const (
 	OUTPUT_YAML
 )
 
+// exitFunc is the function called by Fatalf to terminate the process.
+// It is a variable so tests can replace it to avoid os.Exit.
+var exitFunc = func(code int) { os.Exit(code) }
+
 type CommandResult struct {
 	Format    format.Format
 	Filter    string
@@ -35,7 +39,7 @@ type CommandResult struct {
 
 func Fatalf(format string, v ...interface{}) {
 	fmt.Printf(format+"\n", v...)
-	os.Exit(1)
+	exitFunc(1)
 }
 
 func toOutputType(in string) OutputType {

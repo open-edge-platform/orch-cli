@@ -591,7 +591,7 @@ func TestNormalizeOrderByWithAPIProbe_AllApiFieldsInSupportedSet(t *testing.T) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 func acceptAllFilterProbe(_ string) (bool, error) { return true, nil }
-func rejectAllFilterProbe(_ string) (bool, error)  { return false, nil }
+func rejectAllFilterProbe(_ string) (bool, error) { return false, nil }
 
 func TestGetSupportedFilterFields_AllAccepted(t *testing.T) {
 	resetOrderByCache()
