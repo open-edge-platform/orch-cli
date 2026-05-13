@@ -157,6 +157,29 @@ func (s *CLITestSuite) TestCluster() {
 	_, err = s.getCluster(project, name, CArgs)
 	s.NoError(err)
 
+	//Get cluster verbose
+	verboseGetOut, err := s.getCluster(project, name, map[string]string{"verbose": ""})
+	s.NoError(err)
+
+	expectedVerboseGetOutput := linesCommandOutput{
+		"Project: project",
+		"Name: test-cluster-1",
+		"Kubernetes Version: v1.28.0",
+		"Template: default-template-v1.0.0",
+		"Nodes:",
+		"  - ID: default-node-id, Role: control-plane",
+		"Status:",
+		"  Lifecycle Phase: Provisioned",
+		"  Provider Status: Ready",
+		"  Control Plane Ready: Ready",
+		"  Infrastructure Ready: Ready",
+		"  Node Health: Healthy",
+		"Labels:",
+		"  created-by: test",
+		"",
+	}
+	s.compareLinesOutput(expectedVerboseGetOutput, mapLinesOutput(verboseGetOut))
+
 	//Get non existing cluster
 	_, err = s.getCluster("nonexistent-cluster", "nonexistent-cluster", CArgs)
 	s.EqualError(err, "failed to get cluster details: cluster nonexistent-cluster not found in project nonexistent-cluster")
