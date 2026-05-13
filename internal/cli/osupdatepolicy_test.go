@@ -126,6 +126,28 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 	OArgs = map[string]string{}
 	_, err = s.deleteOSUpdatePolicy(project, id, OArgs)
 	s.NoError(err)
+
+	// List OS Update Policies with order-by and YAML output
+	OArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+	}
+	listOrderedOutput, err := s.listOSUpdatePolicy(project, OArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "security-policy-v1.2")
+	s.Contains(listOrderedOutput, "osupdatepolicy-abc12345")
+	s.Contains(listOrderedOutput, "Monthly security update policy")
+
+	// List OS Update Policies with filter and YAML output
+	OArgs = map[string]string{
+		"filter":      "name=security-policy-v1.2",
+		"output-type": "yaml",
+	}
+	listFilteredOutput, err := s.listOSUpdatePolicy(project, OArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "security-policy-v1.2")
+	s.Contains(listFilteredOutput, "osupdatepolicy-abc12345")
+	s.Contains(listFilteredOutput, "Monthly security update policy")
 }
 
 func FuzzOSUpdatePolicy(f *testing.F) {

@@ -89,4 +89,26 @@ func (s *CLITestSuite) TestOSUpdateRun() {
 	OArgs = map[string]string{}
 	_, err = s.deleteOSUpdateRun(project, id, OArgs)
 	s.NoError(err)
+
+	// List OS Update Runs with order-by and YAML output
+	OArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+	}
+	listOrderedOutput, err := s.listOSUpdateRun(project, OArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "security-update-jan-2025")
+	s.Contains(listOrderedOutput, "osupdate-run-abc123")
+	s.Contains(listOrderedOutput, "completed")
+
+	// List OS Update Runs with filter and YAML output
+	OArgs = map[string]string{
+		"filter":      "name=security-update-jan-2025",
+		"output-type": "yaml",
+	}
+	listFilteredOutput, err := s.listOSUpdateRun(project, OArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "security-update-jan-2025")
+	s.Contains(listFilteredOutput, "osupdate-run-abc123")
+	s.Contains(listFilteredOutput, "completed")
 }
