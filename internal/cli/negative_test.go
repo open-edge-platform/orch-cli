@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -620,7 +620,7 @@ func (s *CLITestSuite) TestNegative() {
 	//LIST
 	//fail to list application with application-orchestration disabled
 
-	output, err = s.listApplications(project, false, "", "", "")
+	output, err = s.listApplications(project, false, "", "", "", "", "", "")
 	s.NoError(err)
 	s.Contains(output, "Error: command \"applications\" is disabled in the current Edge Orchestrator configuration")
 
@@ -666,7 +666,7 @@ func (s *CLITestSuite) TestNegative() {
 	s.Contains(output, expectedAliasOutput)
 
 	//LIST
-	output, err = s.listArtifacts(project, false, "", "")
+	output, err = s.listArtifacts(project, false, "", "", "", "", "")
 	s.NoError(err)
 	s.Contains(output, "Error: command \"artifacts\" is disabled in the current Edge Orchestrator configuration")
 
@@ -719,7 +719,7 @@ func (s *CLITestSuite) TestNegative() {
 	s.Contains(output, expectedAliasOutput)
 
 	//LIST
-	output, err = s.listProfiles(project, name, version, false)
+	output, err = s.listProfiles(project, name, version, false, "", "", "")
 	s.NoError(err)
 	s.Contains(output, "Error: command \"profiles\" is disabled in the current Edge Orchestrator configuration")
 
@@ -772,7 +772,7 @@ func (s *CLITestSuite) TestNegative() {
 	s.Contains(output, expectedAliasOutput)
 
 	//LIST
-	output, err = s.listDeploymentPackages(project, false, "", "")
+	output, err = s.listDeploymentPackages(project, false, "", "", "", "", "")
 	s.NoError(err)
 	s.Contains(output, "Error: command \"deployment-packages\" is disabled in the current Edge Orchestrator configuration")
 
@@ -823,7 +823,7 @@ func (s *CLITestSuite) TestNegative() {
 	s.Contains(output, expectedAliasOutput)
 
 	//LIST
-	output, err = s.listDeploymentProfiles(project, name, version, false)
+	output, err = s.listDeploymentProfiles(project, name, version, false, "", "", "")
 	s.NoError(err)
 	s.Contains(output, "Error: command \"deployment-package-profiles\" is disabled in the current Edge Orchestrator configuration")
 

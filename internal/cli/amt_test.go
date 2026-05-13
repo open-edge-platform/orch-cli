@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -97,8 +97,8 @@ func (s *CLITestSuite) TestAMT() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"AMT Profile Name": "corporate-domain",
-			"Domain Suffix":    "corp.example.com",
+			"PROFILE NAME":  "corporate-domain",
+			"DOMAIN SUFFIX": "corp.example.com",
 		},
 	}
 
@@ -117,11 +117,11 @@ func (s *CLITestSuite) TestAMT() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"AMT Profile Name": "corporate-domain",
-			"Domain Suffix":    "corp.example.com",
-			"Expiration date":  "2025-12-31 23:59:59 +0000 UTC",
-			"Format":           "pfx",
-			"Version":          "1.0.0",
+			"PROFILE NAME":                     "corporate-domain",
+			"DOMAIN SUFFIX":                    "corp.example.com",
+			"VERSION":                          "1.0.0",
+			"PROVISIONING CERT STORAGE FORMAT": "pfx",
+			"EXPIRATION DATE":                  "2025-12-31T23:59:59",
 		},
 	}
 
@@ -144,7 +144,7 @@ func (s *CLITestSuite) TestAMT() {
 		"Cert Format:":     "pfx",
 		"Tenant ID:":       "tenant-abc12345",
 		"Version:":         "1.0.0",
-		"Expiration Date:": "2025-12-31 23:59:59 +0000 UTC",
+		"Expiration Date:": "2025-12-31T23:59:59",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)

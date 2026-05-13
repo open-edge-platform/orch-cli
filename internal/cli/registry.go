@@ -1,16 +1,52 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
+)
+
+const (
+	DEFAULT_REGISTRY_FORMAT         = "table{{.Name}}\t{{str .DisplayName}}\t{{str .Description}}\t{{.Type}}\t{{.RootUrl}}"
+	DEFAULT_REGISTRY_INSPECT_FORMAT = `Name: {{.Name}}
+Display Name: {{str .DisplayName}}
+Description: {{str .Description}}
+Root URL: {{.RootUrl}}
+Inventory URL: {{none .InventoryUrl}}
+Type: {{.Type}}
+API Type: {{none .ApiType}}
+Username: {{none .Username}}{{if .AuthToken}}
+AuthToken: ********{{else}}
+AuthToken: <none>{{end}}{{if .Cacerts}}
+CA Certs: ********{{else}}
+CA Certs: <none>{{end}}
+Create Time: {{fmttime .CreateTime}}
+Update Time: {{fmttime .UpdateTime}}
+`
+	DEFAULT_REGISTRY_INSPECT_FORMAT_SENSITIVE = `Name: {{.Name}}
+Display Name: {{str .DisplayName}}
+Description: {{str .Description}}
+Root URL: {{.RootUrl}}
+Inventory URL: {{none .InventoryUrl}}
+Type: {{.Type}}
+API Type: {{none .ApiType}}
+Username: {{none .Username}}
+AuthToken: {{none .AuthToken}}
+CA Certs: {{none .Cacerts}}
+Create Time: {{fmttime .CreateTime}}
+Update Time: {{fmttime .UpdateTime}}
+`
+	REGISTRY_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_REGISTRY_OUTPUT_TEMPLATE"
 )
 
 func getCreateRegistryCommand() *cobra.Command {
@@ -34,15 +70,51 @@ func getCreateRegistryCommand() *cobra.Command {
 	return cmd
 }
 
+func getValidatedRegistryFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "registries", catapi.CatalogV3Registry{}, func(filter string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListRegistriesParams{
+				OrderBy:           nil,
+				Filter:            &filter,
+				PageSize:          &pageSize,
+				Offset:            &offset,
+				ShowSensitiveInfo: nil,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating registry filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func getListRegistriesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "registries [flags]",
 		Aliases: registryAliases,
 		Short:   "List all registries",
-		Example: "orch-cli list registries --project some-project --order-by name",
+		Example: "orch-cli list registries --project some-project",
 		RunE:    runListRegistriesCommand,
 	}
 	addListOrderingFilteringPaginationFlags(cmd, "registry")
+	addStandardListOutputFlags(cmd)
 	cmd.Flags().Bool("show-sensitive-info", false, "show sensitive info, e.g. auth-token, CA certs")
 	return cmd
 }
@@ -57,6 +129,7 @@ func getGetRegistryCommand() *cobra.Command {
 		RunE:    runGetRegistryCommand,
 	}
 	cmd.Flags().Bool("show-sensitive-info", false, "show sensitive info, e.g. auth-token, CA certs")
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -92,34 +165,46 @@ func getDeleteRegistryCommand() *cobra.Command {
 	return cmd
 }
 
-var registryHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
-	"Name", "Display Name", "Description", "Type", "Root URL")
+func printRegistries(cmd *cobra.Command, writer io.Writer, registryList *[]catapi.CatalogV3Registry, orderBy *string, outputFilter *string, verbose bool, showSensitive bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
 
-func printRegistries(writer io.Writer, registryList *[]catapi.CatalogV3Registry, verbose bool, showSensitive bool) {
-	for _, r := range *registryList {
-		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", r.Name,
-				valueOrNone(r.DisplayName), valueOrNone(r.Description), r.Type, r.RootUrl)
-		} else {
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", r.Name)
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(r.DisplayName))
-			_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(r.Description))
-			_, _ = fmt.Fprintf(writer, "Root URL: %s\n", r.RootUrl)
-			_, _ = fmt.Fprintf(writer, "Inventory URL: %s\n", valueOrNone(r.InventoryUrl))
-			_, _ = fmt.Fprintf(writer, "Type: %s\n", r.Type)
-			_, _ = fmt.Fprintf(writer, "API Type: %s\n", valueOrNone(r.ApiType))
-			_, _ = fmt.Fprintf(writer, "Username: %s\n", valueOrNone(r.Username))
-			if showSensitive {
-				_, _ = fmt.Fprintf(writer, "AuthToken: %s\n", valueOrNone(r.AuthToken))
-				_, _ = fmt.Fprintf(writer, "CA Certs: %s\n", valueOrNone(r.Cacerts))
-			} else {
-				_, _ = fmt.Fprintf(writer, "AuthToken: %s\n", obscureValue(r.AuthToken))
-				_, _ = fmt.Fprintf(writer, "CA Certs: %s\n", obscureValue(r.Cacerts))
-			}
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", r.CreateTime.Format(timeLayout))
-			_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", r.UpdateTime.Format(timeLayout))
-		}
+	outputFormat, err := getRegistryOutputFormat(cmd, verbose, showSensitive)
+	if err != nil {
+		return err
 	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *registryList,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
+}
+
+func getRegistryOutputFormat(cmd *cobra.Command, verbose bool, showSensitive bool) (string, error) {
+	if verbose {
+		if showSensitive {
+			return DEFAULT_REGISTRY_INSPECT_FORMAT_SENSITIVE, nil
+		}
+		return DEFAULT_REGISTRY_INSPECT_FORMAT, nil
+	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_REGISTRY_FORMAT, REGISTRY_OUTPUT_TEMPLATE_ENVVAR)
 }
 
 func verifyRegistryType(cmd *cobra.Command) error {
@@ -180,11 +265,74 @@ func runCreateRegistryCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func getValidatedRegistryOrderBy(
+	ctx context.Context,
+	cmd *cobra.Command,
+	catalogClient catapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, catapi.CatalogV3Registry{})
+	}
+
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	showSensitive, _ := cmd.Flags().GetBool("show-sensitive-info")
+	return normalizeOrderByWithAPIProbe(raw, "registries", catapi.CatalogV3Registry{}, func(orderBy string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		// Validate ordering in isolation. Reusing the caller's --filter here can turn
+		// filter errors into misleading "invalid --order-by field" errors.
+		resp, err := catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListRegistriesParams{
+				OrderBy:           &orderBy,
+				Filter:            nil,
+				PageSize:          &pageSize,
+				Offset:            &offset,
+				ShowSensitiveInfo: &showSensitive,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating registry order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
+}
+
 func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, catalogClient, projectName, err := CatalogFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	validatedOrderBy, err := getValidatedRegistryOrderBy(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	validatedFilter, err := getValidatedRegistryFilter(ctx, cmd, catalogClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
 	}
 
 	pageSize, offset, err := getPageSizeOffset(cmd)
@@ -193,10 +341,37 @@ func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	showSensitive, _ := cmd.Flags().GetBool("show-sensitive-info")
+
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		resp, err := catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListRegistriesParams{
+				OrderBy:           apiOrderBy,
+				Filter:            validatedFilter,
+				PageSize:          &pageSize,
+				Offset:            &offset,
+				ShowSensitiveInfo: &showSensitive,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing registries"); !proceed {
+			return err
+		}
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printRegistries(cmd, writer, &resp.JSON200.Registries, validatedOrderBy, &outputFilter, verbose, showSensitive); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	allRegistries := make([]catapi.CatalogV3Registry, 0)
+
 	resp, err := catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
 		&catapi.CatalogServiceListRegistriesParams{
-			OrderBy:           getFlag(cmd, "order-by"),
-			Filter:            getFlag(cmd, "filter"),
+			OrderBy:           apiOrderBy,
+			Filter:            validatedFilter,
 			PageSize:          &pageSize,
 			Offset:            &offset,
 			ShowSensitiveInfo: &showSensitive,
@@ -204,11 +379,51 @@ func runListRegistriesCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, registryHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		"error listing registries"); !proceed {
 		return err
 	}
-	printRegistries(writer, &resp.JSON200.Registries, verbose, showSensitive)
+
+	allRegistries = append(allRegistries, resp.JSON200.Registries...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = int32(len(resp.JSON200.Registries))
+	}
+
+	for len(allRegistries) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+
+		offset += pageSize
+		resp, err = catalogClient.CatalogServiceListRegistriesWithResponse(ctx, projectName,
+			&catapi.CatalogServiceListRegistriesParams{
+				OrderBy:           apiOrderBy,
+				Filter:            validatedFilter,
+				PageSize:          &pageSize,
+				Offset:            &offset,
+				ShowSensitiveInfo: &showSensitive,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
+			"error listing registries"); !proceed {
+			return err
+		}
+
+		if len(resp.JSON200.Registries) == 0 {
+			break
+		}
+		allRegistries = append(allRegistries, resp.JSON200.Registries...)
+	}
+
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printRegistries(cmd, writer, &allRegistries, validatedOrderBy, &outputFilter, verbose, showSensitive); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -228,10 +443,14 @@ func runGetRegistryCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		registryHeader, fmt.Sprintf("error getting registry %s", name)); !proceed {
+		"", fmt.Sprintf("error getting registry %s", name)); !proceed {
 		return err
 	}
-	printRegistries(writer, &[]catapi.CatalogV3Registry{resp.JSON200.Registry}, verbose, showSensitive)
+
+	var emptyFilter string
+	if err := printRegistries(cmd, writer, &[]catapi.CatalogV3Registry{resp.JSON200.Registry}, nil, &emptyFilter, verbose, showSensitive); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -315,6 +534,9 @@ func printRegistryEvent(writer io.Writer, _ string, payload []byte, verbose bool
 	if err := json.Unmarshal(payload, &item); err != nil {
 		return err
 	}
-	printRegistries(writer, &[]catapi.CatalogV3Registry{item}, verbose, false)
-	return nil
+	// Create a dummy command to pass to printRegistries (events don't support full output features)
+	cmd := &cobra.Command{}
+	cmd.Flags().String("output-type", "table", "")
+	var emptyFilter string
+	return printRegistries(cmd, writer, &[]catapi.CatalogV3Registry{item}, nil, &emptyFilter, verbose, false)
 }
