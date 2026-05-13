@@ -4,6 +4,8 @@
 package cli
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -451,4 +453,446 @@ func TestGetSupportedOrderByFields_DifferentKeysMissCache(t *testing.T) {
 	require.NoError(t, err)
 	// Both keys are distinct → probe should be called again for the second key.
 	assert.Greater(t, callCount, countAfterFirst)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// api400Error
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestApi400Error_Error(t *testing.T) {
+	e := &api400Error{msg: "HTTP 400: invalid field"}
+	assert.Equal(t, "HTTP 400: invalid field", e.Error())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// buildOrderByAliases / buildClientSortAliases — json:"-," tag
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestBuildOrderByAliases_IgnoresDashCommaTag(t *testing.T) {
+	type modelWithDashTag struct {
+		Name   string `json:"name"`
+		Hidden string `json:"-,"`
+	}
+	aliases, canonical := buildOrderByAliases(modelWithDashTag{})
+	assert.Equal(t, []string{"name"}, canonical)
+	_, hasHidden := aliases["-"]
+	assert.False(t, hasHidden, "field with json:\"-,\" should not appear in aliases")
+}
+
+func TestBuildClientSortAliases_IgnoresDashCommaTag(t *testing.T) {
+	type modelWithDashTag struct {
+		Name   string `json:"name"`
+		Hidden string `json:"-,"`
+	}
+	aliases, hints := buildClientSortAliases(modelWithDashTag{})
+	assert.Equal(t, []string{"name"}, hints)
+	_, hasHidden := aliases["-"]
+	assert.False(t, hasHidden, "field with json:\"-,\" should not appear in aliases")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// getSupportedOrderByFields — probe returns api400Error or non-api400 error
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestGetSupportedOrderByFields_ProbeReturnsApi400Error(t *testing.T) {
+	resetOrderByCache()
+	// Probe returns api400Error for every field → all fields skipped → empty supported list.
+	probe := func(_ string) (bool, error) {
+		return false, &api400Error{msg: "API 400: bad field"}
+	}
+	supported, set, err := getSupportedOrderByFields("key-400-err", testOrderByModel{}, probe)
+	require.NoError(t, err)
+	assert.Empty(t, supported)
+	assert.Empty(t, set)
+}
+
+func TestGetSupportedOrderByFields_ProbeReturnsNonApi400Error(t *testing.T) {
+	resetOrderByCache()
+	probe := func(_ string) (bool, error) {
+		return false, fmt.Errorf("network error")
+	}
+	supported, set, err := getSupportedOrderByFields("key-net-err", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "network error")
+	assert.Nil(t, supported)
+	assert.Nil(t, set)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// normalizeOrderByWithAPIProbe — final probe error paths
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestNormalizeOrderByWithAPIProbe_FinalProbeApi400Error(t *testing.T) {
+	resetOrderByCache()
+	// All individual fields probe as (true, nil) so getSupportedOrderByFields works,
+	// but the combined expression probe returns api400Error.
+	callNum := 0
+	probe := func(expr string) (bool, error) {
+		callNum++
+		if callNum == 1 {
+			// First call is the full expression → api400Error
+			return false, &api400Error{msg: "API 400: combined sort rejected"}
+		}
+		// Subsequent calls are per-field probes in getSupportedOrderByFields
+		return true, nil
+	}
+	_, err := normalizeOrderByWithAPIProbe("name", "key-final-400", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "API 400: combined sort rejected")
+	assert.Contains(t, err.Error(), "available fields:")
+}
+
+func TestNormalizeOrderByWithAPIProbe_FinalProbeNonApi400Error(t *testing.T) {
+	resetOrderByCache()
+	probe := func(_ string) (bool, error) {
+		return false, fmt.Errorf("server error 500")
+	}
+	_, err := normalizeOrderByWithAPIProbe("name", "key-final-500", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "server error 500")
+}
+
+func TestNormalizeOrderByWithAPIProbe_RejectedGetSupportedReturnsError(t *testing.T) {
+	resetOrderByCache()
+	// First call (full expression): rejected with (false, nil).
+	// Subsequent calls (per-field in getSupportedOrderByFields): return error.
+	callNum := 0
+	probe := func(_ string) (bool, error) {
+		callNum++
+		if callNum == 1 {
+			return false, nil // reject expression
+		}
+		return false, fmt.Errorf("discovery error")
+	}
+	_, err := normalizeOrderByWithAPIProbe("name", "key-rejected-disc-err", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "discovery error")
+}
+
+func TestNormalizeOrderByWithAPIProbe_AllApiFieldsInSupportedSet(t *testing.T) {
+	resetOrderByCache()
+	// Expression probe is called first; subsequent per-field probes accept "name" only.
+	callNum := 0
+	probe := func(expr string) (bool, error) {
+		callNum++
+		if callNum == 1 {
+			return false, nil // reject the combined expression
+		}
+		return expr == "name", nil // accept only "name" for getSupportedOrderByFields
+	}
+	_, err := normalizeOrderByWithAPIProbe("name", "key-all-in-set", testOrderByModel{}, probe)
+	require.Error(t, err)
+	// All apiFields ("name") are in supportedSet, so falls through to expression-level error.
+	assert.Contains(t, err.Error(), "invalid --order-by expression")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// getSupportedFilterFields
+// ─────────────────────────────────────────────────────────────────────────────
+
+func acceptAllFilterProbe(_ string) (bool, error) { return true, nil }
+func rejectAllFilterProbe(_ string) (bool, error)  { return false, nil }
+
+func TestGetSupportedFilterFields_AllAccepted(t *testing.T) {
+	resetOrderByCache()
+	supported, set, err := getSupportedFilterFields("fkey-all", testOrderByModel{}, acceptAllFilterProbe)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"displayName", "name", "version"}, supported)
+	assert.Len(t, set, 3)
+}
+
+func TestGetSupportedFilterFields_NoneAccepted(t *testing.T) {
+	resetOrderByCache()
+	supported, set, err := getSupportedFilterFields("fkey-none", testOrderByModel{}, rejectAllFilterProbe)
+	require.NoError(t, err)
+	assert.Empty(t, supported)
+	assert.Empty(t, set)
+}
+
+func TestGetSupportedFilterFields_ProbeError(t *testing.T) {
+	resetOrderByCache()
+	probe := func(_ string) (bool, error) {
+		return false, fmt.Errorf("filter probe error")
+	}
+	supported, set, err := getSupportedFilterFields("fkey-err", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "filter probe error")
+	assert.Nil(t, supported)
+	assert.Nil(t, set)
+}
+
+func TestGetSupportedFilterFields_CacheHit(t *testing.T) {
+	resetOrderByCache()
+	callCount := 0
+	probe := func(_ string) (bool, error) {
+		callCount++
+		return true, nil
+	}
+	_, _, err := getSupportedFilterFields("fkey-cache", testOrderByModel{}, probe)
+	require.NoError(t, err)
+	firstCount := callCount
+
+	_, _, err = getSupportedFilterFields("fkey-cache", testOrderByModel{}, probe)
+	require.NoError(t, err)
+	assert.Equal(t, firstCount, callCount, "probe should not be called on cache hit")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// normalizeFilterWithAPIProbe
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestNormalizeFilterWithAPIProbe_EmptyReturnsNil(t *testing.T) {
+	resetOrderByCache()
+	got, err := normalizeFilterWithAPIProbe("", "fkey-empty", testOrderByModel{}, acceptAllFilterProbe)
+	require.NoError(t, err)
+	assert.Nil(t, got)
+}
+
+func TestNormalizeFilterWithAPIProbe_WhitespaceReturnsNil(t *testing.T) {
+	resetOrderByCache()
+	got, err := normalizeFilterWithAPIProbe("   ", "fkey-ws", testOrderByModel{}, acceptAllFilterProbe)
+	require.NoError(t, err)
+	assert.Nil(t, got)
+}
+
+func TestNormalizeFilterWithAPIProbe_InvalidSyntax(t *testing.T) {
+	resetOrderByCache()
+	// "invalidfilter" has no operator → pfilter.Parse fails
+	_, err := normalizeFilterWithAPIProbe("invalidfilter", "fkey-syntax", testOrderByModel{}, acceptAllFilterProbe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unable to parse filter expression")
+}
+
+func TestNormalizeFilterWithAPIProbe_ProbeAccepts(t *testing.T) {
+	resetOrderByCache()
+	got, err := normalizeFilterWithAPIProbe("name~test", "fkey-accept", testOrderByModel{}, acceptAllFilterProbe)
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, "name~test", *got)
+}
+
+func TestNormalizeFilterWithAPIProbe_AliasMapping(t *testing.T) {
+	resetOrderByCache()
+	// "display_name" is a snake_case alias → should be normalized to "displayName"
+	got, err := normalizeFilterWithAPIProbe("display_name~test", "fkey-alias", testOrderByModel{}, acceptAllFilterProbe)
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, "displayName~test", *got)
+}
+
+func TestNormalizeFilterWithAPIProbe_ProbeNonApi400Error(t *testing.T) {
+	resetOrderByCache()
+	// Non-api400 error from probe → normalized filter is returned (passthrough)
+	probe := func(_ string) (bool, error) {
+		return false, fmt.Errorf("server unavailable")
+	}
+	got, err := normalizeFilterWithAPIProbe("name~test", "fkey-non400", testOrderByModel{}, probe)
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, "name~test", *got)
+}
+
+func TestNormalizeFilterWithAPIProbe_ProbeApi400ErrorWithHints(t *testing.T) {
+	resetOrderByCache()
+	// Main expression probe → api400Error; per-field probes (in getSupportedFilterFields) accept all.
+	probe := func(expr string) (bool, error) {
+		if strings.HasSuffix(expr, "~.*") {
+			return true, nil
+		}
+		return false, &api400Error{msg: "API 400: unsupported filter expression"}
+	}
+	_, err := normalizeFilterWithAPIProbe("name~test", "fkey-400-hints", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "API 400: unsupported filter expression")
+	assert.Contains(t, err.Error(), "available fields:")
+}
+
+func TestNormalizeFilterWithAPIProbe_ProbeRejectsEmptySupported(t *testing.T) {
+	resetOrderByCache()
+	// Probe rejects everything → getSupportedFilterFields returns empty → canonical fallback
+	_, err := normalizeFilterWithAPIProbe("name~test", "fkey-empty-supp", testOrderByModel{}, rejectAllFilterProbe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid --filter expression")
+	assert.Contains(t, err.Error(), "available fields:")
+}
+
+func TestNormalizeFilterWithAPIProbe_ProbeRejectsFieldNotInSupportedSet(t *testing.T) {
+	resetOrderByCache()
+	// Only "displayName~.*" is accepted in per-field discovery, but user queried "name"
+	probe := func(expr string) (bool, error) {
+		return expr == "displayName~.*", nil
+	}
+	_, err := normalizeFilterWithAPIProbe("name~test", "fkey-field-not-in-set", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid --filter field")
+	assert.Contains(t, err.Error(), `"name"`)
+}
+
+func TestNormalizeFilterWithAPIProbe_ProbeRejectsAllFieldsInSupportedSet(t *testing.T) {
+	resetOrderByCache()
+	// Per-field discovery accepts all fields, but expression probe rejects → expression-level error
+	probe := func(expr string) (bool, error) {
+		if strings.HasSuffix(expr, "~.*") {
+			return true, nil
+		}
+		return false, nil
+	}
+	_, err := normalizeFilterWithAPIProbe("name~test", "fkey-expr-err", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid --filter expression")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pointer inputs to buildOrderByAliases / buildClientSortAliases
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestBuildOrderByAliases_PointerInput(t *testing.T) {
+	sample := &testOrderByModel{}
+	_, canonical := buildOrderByAliases(sample)
+	assert.Equal(t, []string{"displayName", "name", "version"}, canonical)
+}
+
+func TestBuildClientSortAliases_PointerInput(t *testing.T) {
+	sample := &testOrderByModel{}
+	_, hints := buildClientSortAliases(sample)
+	assert.Equal(t, []string{"displayName", "name", "version"}, hints)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// normalizeOrderByWithAPIProbe edge cases
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestNormalizeOrderByWithAPIProbe_EmptyTermInList(t *testing.T) {
+	resetOrderByCache()
+	// "name,,version" — middle term is empty → should be skipped gracefully
+	got, err := normalizeOrderByWithAPIProbe("name,,version", "key-empty-term", testOrderByModel{}, acceptAllProbe)
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, "name,version", *got)
+}
+
+func TestNormalizeOrderByWithAPIProbe_PlusEmptyField(t *testing.T) {
+	resetOrderByCache()
+	_, err := normalizeOrderByWithAPIProbe("+", "key-plus-empty", testOrderByModel{}, acceptAllProbe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `"+"`)
+}
+
+func TestNormalizeOrderByWithAPIProbe_AllEmptyTermsReturnsNil(t *testing.T) {
+	resetOrderByCache()
+	// All-whitespace terms → normalized is empty → nil
+	got, err := normalizeOrderByWithAPIProbe(" , , ", "key-all-empty-terms", testOrderByModel{}, acceptAllProbe)
+	require.NoError(t, err)
+	assert.Nil(t, got)
+}
+
+func TestNormalizeOrderByWithAPIProbe_UnknownFieldProbeApi400(t *testing.T) {
+	resetOrderByCache()
+	// Probe returns api400Error for unknown field itself (first probe call for field)
+	probe := func(expr string) (bool, error) {
+		return false, &api400Error{msg: "API 400: unknown field " + expr}
+	}
+	_, err := normalizeOrderByWithAPIProbe("bogus", "key-unknown-400", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "API 400: unknown field")
+}
+
+func TestNormalizeOrderByWithAPIProbe_FinalProbeApi400HintFromSupported(t *testing.T) {
+	resetOrderByCache()
+	// Probe accepts individual fields but rejects the combined expression with api400Error.
+	// getSupportedOrderByFields returns non-empty so hints come from supported list.
+	callNum := 0
+	probe := func(expr string) (bool, error) {
+		callNum++
+		if callNum == 1 {
+			// Full expression probe → api400Error
+			return false, &api400Error{msg: "API 400: cannot combine fields"}
+		}
+		// Per-field probes: accept only "name"
+		return expr == "name", nil
+	}
+	_, err := normalizeOrderByWithAPIProbe("name", "key-final-400-supp", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "API 400: cannot combine fields")
+	assert.Contains(t, err.Error(), "available fields:")
+	assert.Contains(t, err.Error(), "name")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// normalizeFilterWithAPIProbe — filter term regex mismatch (line 395)
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestNormalizeFilterWithAPIProbe_MultipleFilterTerms(t *testing.T) {
+	resetOrderByCache()
+	// Two filter terms joined by comma
+	got, err := normalizeFilterWithAPIProbe("name~test,version~1.0", "fkey-multi-filter-term", testOrderByModel{}, acceptAllFilterProbe)
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, "name~test,version~1.0", *got)
+}
+
+func TestNormalizeFilterWithAPIProbe_AllEmptyFilterTermsReturnsNil(t *testing.T) {
+	resetOrderByCache()
+	// All-whitespace terms after comma-split → normalizedTerms is empty → nil
+	// But pfilter.Parse will reject "  ,  " so we can't get there easily.
+	// Instead test with a single space-only comma list — this will fail pfilter.Parse first.
+	// So this path can only be reached if the first comma-term is valid but later ones aren't.
+	// This is effectively unreachable from outside, skip with a comment test.
+	// Already tested via empty string path. No new test needed here.
+	t.Skip("empty normalizedTerms is only reachable via internal filter term building, not from valid public input")
+}
+
+func TestNormalizeFilterWithAPIProbe_GetSupportedFilterFieldsError(t *testing.T) {
+	resetOrderByCache()
+	// Main expression probe: api400Error. getSupportedFilterFields probe: non-api400 error.
+	// This covers the "herr != nil" branch on line 441.
+	callNum := 0
+	probe := func(expr string) (bool, error) {
+		callNum++
+		if callNum == 1 {
+			// Full expression → api400Error
+			return false, &api400Error{msg: "API 400: filter rejected"}
+		}
+		// getSupportedFilterFields per-field probes → non-api400 error
+		return false, fmt.Errorf("discovery error for filter")
+	}
+	_, err := normalizeFilterWithAPIProbe("name~test", "fkey-disc-err", testOrderByModel{}, probe)
+	require.Error(t, err)
+	// Since getSupportedFilterFields failed, fall back to canonical, still show api400 error
+	assert.Contains(t, err.Error(), "API 400: filter rejected")
+	assert.Contains(t, err.Error(), "available fields:")
+}
+
+func TestNormalizeFilterWithAPIProbe_ProbeRejectedGetSupportedReturnsError(t *testing.T) {
+	resetOrderByCache()
+	// Expression probe: (false, nil). getSupportedFilterFields probes: return error.
+	callNum := 0
+	probe := func(expr string) (bool, error) {
+		callNum++
+		if callNum == 1 {
+			return false, nil // reject expression
+		}
+		return false, fmt.Errorf("filter discovery error")
+	}
+	_, err := normalizeFilterWithAPIProbe("name~test", "fkey-rejected-disc-err", testOrderByModel{}, probe)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "filter discovery error")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// normalizeOrderByForClientSorting — empty term in comma list
+// ─────────────────────────────────────────────────────────────────────────────
+
+func TestNormalizeOrderByForClientSorting_EmptyTermInList(t *testing.T) {
+	// "name,,version" — empty middle term skipped
+	got, err := normalizeOrderByForClientSorting("name,,version", testOrderByModel{})
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, "Name,Version", *got)
+}
+
+func TestNormalizeOrderByForClientSorting_AllEmptyTermsReturnsNil(t *testing.T) {
+	got, err := normalizeOrderByForClientSorting(" , , ", testOrderByModel{})
+	require.NoError(t, err)
+	assert.Nil(t, got)
 }

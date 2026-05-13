@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
+	"github.com/spf13/viper"
 )
 
 func (s *CLITestSuite) createHost(publisher string, args commandArgs) (string, error) {
@@ -921,6 +922,40 @@ host-66,host-abcd1002,osupdatepolicy-abcd1234
 	}
 	_, err = s.updateOsHost(project, "", HostArgs)
 	s.EqualError(err, "\nfound 2 issues related to non-existing hosts and/or no set OS update policies - fix them and re-apply")
+}
+
+// TestHostOnboarding covers the setHostName code path, which is only reached
+// when the provisioning feature is disabled (onboarding-only mode).
+func (s *CLITestSuite) TestHostOnboarding() {
+	// Switch to onboarding-only mode: provisioning=false
+	viper.Set("test_orchestrator_features_disabled", true)
+	defer func() {
+		viper.Set("test_orchestrator_features_disabled", false)
+		// Re-login to restore full feature flags for subsequent tests
+		_ = s.logout()
+		_ = s.login("u", "p")
+	}()
+	// Re-login so that feature flags are set based on the mock response
+	_ = s.logout()
+	err := s.login("u", "p")
+	s.NoError(err)
+
+	// CSV import: Serial-only row — provisioning=false means OSProfile/Site are
+	// optional, so validation passes. registerHost returns hostID="host-1111abcd",
+	// then setHostName calls PatchHost with that ID.
+	HostArgs := commandArgs{
+		"import-from-csv": "./testdata/minimal.csv",
+	}
+	_, err = s.createHost(project, HostArgs)
+	s.NoError(err)
+
+	// Single-host creation with an explicit name: covers the hostName!="" branch
+	// inside setHostName (name is passed directly rather than defaulting to hostID).
+	HostArgs = commandArgs{
+		"serial": "SNONBOARD01",
+	}
+	_, err = s.createHostSingle(project, "onboard-host-001", HostArgs)
+	s.NoError(err)
 }
 
 func FuzzHost(f *testing.F) {

@@ -40,7 +40,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.CustomConfigServiceListCustomConfigsParams, reqEditors ...infra.RequestEditorFn) (*infra.CustomConfigServiceListCustomConfigsResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
-				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project", "nonexistent-init":
@@ -48,6 +47,17 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
 					}, nil
 				default:
+					// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+					if params != nil && params.Offset != nil && *params.Offset > 0 {
+						return &infra.CustomConfigServiceListCustomConfigsResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ListCustomConfigsResponse{
+								CustomConfigs: []infra.CustomConfigResource{},
+								HasNext:       false,
+								TotalElements: 2,
+							},
+						}, nil
+					}
 					return &infra.CustomConfigServiceListCustomConfigsResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.ListCustomConfigsResponse{
@@ -64,7 +74,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								},
 							},
 							HasNext:       false,
-							TotalElements: 1,
+							TotalElements: 2,
 						},
 					}, nil
 				}
@@ -182,7 +192,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.LocalAccountServiceListLocalAccountsParams, reqEditors ...infra.RequestEditorFn) (*infra.LocalAccountServiceListLocalAccountsResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
-				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project", "nonexistent-user":
@@ -190,6 +199,17 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
 				default:
+					// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+					if params != nil && params.Offset != nil && *params.Offset > 0 {
+						return &infra.LocalAccountServiceListLocalAccountsResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ListLocalAccountsResponse{
+								LocalAccounts: []infra.LocalAccountResource{},
+								TotalElements: 2,
+								HasNext:       false,
+							},
+						}, nil
+					}
 					return &infra.LocalAccountServiceListLocalAccountsResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.ListLocalAccountsResponse{
@@ -205,7 +225,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									},
 								},
 							},
-							TotalElements: 1,
+							TotalElements: 2,
 							HasNext:       false,
 						},
 					}, nil
@@ -1712,7 +1732,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.OSUpdatePolicyListOSUpdatePolicyParams, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdatePolicyListOSUpdatePolicyResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
-				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
@@ -1720,6 +1739,17 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
 				default:
+					// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+					if params != nil && params.Offset != nil && *params.Offset > 0 {
+						return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ListOSUpdatePolicyResponse{
+								OsUpdatePolicies: []infra.OSUpdatePolicy{},
+								TotalElements:    2,
+								HasNext:          false,
+							},
+						}, nil
+					}
 					return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.ListOSUpdatePolicyResponse{
@@ -1741,7 +1771,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									},
 								},
 							},
-							TotalElements: 1,
+							TotalElements: 2,
 							HasNext:       false,
 						},
 					}, nil
@@ -1950,13 +1980,24 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		mockInfraClient.EXPECT().ProviderServiceListProvidersWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, projectName string, _ *infra.ProviderServiceListProvidersParams, _ ...infra.RequestEditorFn) (*infra.ProviderServiceListProvidersResponse, error) {
+			func(_ context.Context, projectName string, params *infra.ProviderServiceListProvidersParams, _ ...infra.RequestEditorFn) (*infra.ProviderServiceListProvidersResponse, error) {
 				switch projectName {
 				case "invalid-project":
 					return &infra.ProviderServiceListProvidersResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
 				default:
+					// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+					if params != nil && params.Offset != nil && *params.Offset > 0 {
+						return &infra.ProviderServiceListProvidersResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ListProvidersResponse{
+								Providers:     []infra.ProviderResource{},
+								TotalElements: 2,
+								HasNext:       false,
+							},
+						}, nil
+					}
 					return &infra.ProviderServiceListProvidersResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.ListProvidersResponse{
@@ -1973,7 +2014,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									},
 								},
 							},
-							TotalElements: 1,
+							TotalElements: 2,
 							HasNext:       false,
 						},
 					}, nil

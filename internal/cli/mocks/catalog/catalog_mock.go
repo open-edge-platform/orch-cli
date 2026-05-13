@@ -86,6 +86,16 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(_ context.Context, _ string, params *catapi.CatalogServiceListRegistriesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListRegistriesResponse, error) {
+				// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+				if params != nil && params.Offset != nil && *params.Offset > 0 {
+					return &catapi.CatalogServiceListRegistriesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &catapi.CatalogV3ListRegistriesResponse{
+							Registries:    []catapi.CatalogV3Registry{},
+							TotalElements: 3,
+						},
+					}, nil
+				}
 				// You may want to simulate both registries in the list
 				registries := []catapi.CatalogV3Registry{}
 				for _, registryName := range []string{"registry-image", "registry-helm"} {
@@ -113,7 +123,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 				resp := &catapi.CatalogServiceListRegistriesResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.CatalogV3ListRegistriesResponse{
-						Registries: registries,
+						Registries:    registries,
+						TotalElements: 3,
 					},
 				}
 				return resp, nil
@@ -288,7 +299,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceListApplicationsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ *catapi.CatalogServiceListApplicationsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListApplicationsResponse, error) {
+			func(_ context.Context, _ string, params *catapi.CatalogServiceListApplicationsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListApplicationsResponse, error) {
+				_ = params
 				return &catapi.CatalogServiceListApplicationsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.CatalogV3ListApplicationsResponse{
@@ -502,7 +514,19 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceListDeploymentPackagesWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ *catapi.CatalogServiceListDeploymentPackagesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListDeploymentPackagesResponse, error) {
+			func(_ context.Context, _ string, params *catapi.CatalogServiceListDeploymentPackagesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListDeploymentPackagesResponse, error) {
+				// Pagination loop second call: offset>0 AND pageSize>0 (derived from first page length).
+				// Distinguished from the "--offset 1" test path where pageSize=0 (flag not set).
+				if params != nil && params.Offset != nil && *params.Offset > 0 &&
+					params.PageSize != nil && *params.PageSize > 0 {
+					return &catapi.CatalogServiceListDeploymentPackagesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &catapi.CatalogV3ListDeploymentPackagesResponse{
+							DeploymentPackages: []catapi.CatalogV3DeploymentPackage{},
+							TotalElements:      2,
+						},
+					}, nil
+				}
 				// Get the tracked profiles for deployment-pkg:1.0.0
 				mockStateMutex.RLock()
 				key := "deployment-pkg:1.0.0"
@@ -556,6 +580,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 								// Add other fields as needed for your tests
 							},
 						},
+						TotalElements: 2,
 					},
 				}, nil
 			},
@@ -617,12 +642,21 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceListArtifactsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ *catapi.CatalogServiceListArtifactsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListArtifactsResponse, error) {
+			func(_ context.Context, _ string, params *catapi.CatalogServiceListArtifactsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListArtifactsResponse, error) {
+				// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+				if params != nil && params.Offset != nil && *params.Offset > 0 {
+					return &catapi.CatalogServiceListArtifactsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &catapi.CatalogV3ListArtifactsResponse{
+							Artifacts:     []catapi.CatalogV3Artifact{},
+							TotalElements: 2,
+						},
+					}, nil
+				}
 				return &catapi.CatalogServiceListArtifactsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.CatalogV3ListArtifactsResponse{
 						Artifacts: []catapi.CatalogV3Artifact{
-
 							{
 								Name:        "artifact",
 								DisplayName: stringPtr("artifact-display-name"),
@@ -633,6 +667,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 								// Add other fields as needed
 							},
 						},
+						TotalElements: 2,
 					},
 				}, nil
 			},
