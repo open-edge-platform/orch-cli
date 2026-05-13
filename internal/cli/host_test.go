@@ -555,6 +555,54 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.deleteHost(project, "host-11111111", make(map[string]string))
 	s.Error(err)
 
+	// List hosts with order-by and YAML output
+	HostArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "resourceid: host-abc12345")
+	s.Contains(listOrderedOutput, "name: edge-host-001")
+	s.Contains(listOrderedOutput, "hoststatus: Running")
+
+	// List hosts with filter and YAML output
+	HostArgs = map[string]string{
+		"filter":      "name=edge-host-001",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "resourceid: host-abc12345")
+	s.Contains(listFilteredOutput, "name: edge-host-001")
+	s.Contains(listFilteredOutput, "hoststatus: Running")
+
+	// List hosts with table output and order-by
+	HostArgs = map[string]string{
+		"output-type": "table",
+		"order-by":    "name",
+	}
+	tableOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+
+	parsedTableOutput := mapListOutput(tableOutput)
+	expectedTableOutput := listCommandOutput{
+		{
+			"RESOURCE ID":         resourceID,
+			"NAME":                "edge-host-001",
+			"HOST STATUS":         "Running",
+			"PROVISIONING STATUS": "PROVISIONING_STATUS_COMPLETED",
+			"SERIAL NUMBER":       "1234567890",
+			"OPERATING SYSTEM":    "Edge Microvisor Toolkit 3.0.20250504",
+			"SITE ID":             "site-abcd1234",
+			"SITE NAME":           "site",
+			"WORKLOAD":            "Edge Kubernetes Cluster",
+		},
+	}
+	s.compareListOutput(expectedTableOutput, parsedTableOutput)
+
 	// --- CSV Generation Test ---
 	os.Remove("test_output.csv")
 	HostArgs = map[string]string{
