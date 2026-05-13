@@ -35,12 +35,35 @@ type SOLSession struct {
 	amtUser     string
 	amtPass     string
 
+	// Flow control: track the sequence number from the last received
+	// 0x2A (terminal data) frame from AMT.  This value is sent back
+	// in 0x2B heartbeat messages so AMT knows which frames we've
+	// consumed and can free its TX buffer to continue sending.
+	amtLastRecvSeq uint32
+	amtAccMu       sync.Mutex
+
+	// Receive buffer: AMT frames can span multiple WebSocket messages
+	// (the MPS relay may split frames at arbitrary boundaries).
+	// We accumulate data here and only process complete frames.
+	recvBuf []byte
+
 	// Shutdown coordination
 	done     chan struct{}
 	doneOnce sync.Once
 
 	// Error channel
 	errChan chan error
+}
+
+// sendACK sends a 0x2B heartbeat carrying the last received 0x2A
+// frame sequence number so AMT can free TX buffer and keep sending.
+func (s *SOLSession) sendACK() {
+	s.amtAccMu.Lock()
+	ack := s.amtLastRecvSeq
+	s.amtAccMu.Unlock()
+	msg := []byte{0x2B, 0x00, 0x00, 0x00}
+	msg = append(msg, intToLE(ack)...)
+	_ = s.sendBinary(msg)
 }
 
 // intToLE writes a uint32 as 4 little-endian bytes.
@@ -190,8 +213,8 @@ func (s *SOLSession) sendSOLSettings() error {
 }
 
 // handleMPSFrame processes a single AMT frame from the given data slice
-// and returns the number of bytes consumed.  This allows the caller to
-// iterate through multiple concatenated frames in one WebSocket message.
+// and returns the number of bytes consumed.  Returns 0 when the buffer
+// does not yet contain a complete frame (caller must wait for more data).
 func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 	if len(data) == 0 {
 		return 0
@@ -201,17 +224,17 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 	switch cmd {
 	case 0x11: // StartRedirectionSessionReply
 		if len(data) < 13 {
-			return len(data)
+			return 0 // incomplete — wait for more data
 		}
 		status := data[1]
 		if status != 0 {
 			fmt.Fprintf(os.Stderr, "\nSOL session start failed (status=%d)\n", status)
-			return len(data)
+			return 13 // consume the fixed header even on error
 		}
 		oemLen := int(data[12])
 		frameSize := 13 + oemLen
 		if frameSize > len(data) {
-			frameSize = len(data)
+			return 0 // incomplete
 		}
 		if debug {
 			fmt.Fprintf(os.Stderr, "[SOL] StartRedirectionSessionReply OK (frame=%d)\n", frameSize)
@@ -222,24 +245,21 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 
 	case 0x14: // AuthenticateSessionReply
 		if len(data) < 9 {
-			return len(data)
+			return 0 // incomplete
 		}
 		status := data[1]
 		authType := data[4]
 		authDataLen := int(binary.LittleEndian.Uint32(data[5:9]))
 		frameSize := 9 + authDataLen
 		if frameSize > len(data) {
-			frameSize = len(data)
+			return 0 // incomplete
 		}
 		if debug {
 			fmt.Fprintf(os.Stderr, "[SOL] AuthReply: status=%d authType=%d dataLen=%d frame=%d\n", status, authType, authDataLen, frameSize)
 		}
 
 		if status == 0 && authType == 0 {
-			var authMethods []byte
-			if len(data) >= 9+authDataLen {
-				authMethods = data[9 : 9+authDataLen]
-			}
+			authMethods := data[9 : 9+authDataLen]
 			hasDigest := false
 			for _, m := range authMethods {
 				if m == 4 {
@@ -258,9 +278,6 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 			}
 			_ = s.sendSOLSettings()
 		} else if status == 1 && (authType == 3 || authType == 4) {
-			if len(data) < 9+authDataLen {
-				return frameSize
-			}
 			authData := data[9 : 9+authDataLen]
 			ptr := 0
 			realmLen := int(authData[ptr])
@@ -288,13 +305,25 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 		}
 		return frameSize
 
-	case 0x21: // SOL settings response (24 bytes)
-		frameSize := 24
-		if frameSize > len(data) {
-			frameSize = len(data)
+	case 0x21: // SOL settings response
+		// AMT Start SOL Session Reply layout (23 bytes):
+		//   [0]     command (0x21)
+		//   [1]     status
+		//   [2-3]   OEM error
+		//   [4-7]   sequence number
+		//   [8-9]   max TX buffer size
+		//   [10-11] TX timeout
+		//   [12-13] TX overflow timeout
+		//   [14-15] host session RX timeout
+		//   [16-17] host session flush timeout
+		//   [18-19] heartbeat interval
+		//   [20-22] reserved (3 bytes)
+		const solSettingsReplySize = 23
+		if len(data) < solSettingsReplySize {
+			return 0 // incomplete
 		}
 		if debug {
-			fmt.Fprintf(os.Stderr, "[SOL] SOL Settings Response, sending finalize\n")
+			fmt.Fprintf(os.Stderr, "[SOL] SOL Settings Response (status=%d), sending finalize\n", data[1])
 		}
 		seq := s.nextSequence()
 		finalizeMsg := []byte{0x27, 0x00, 0x00, 0x00}
@@ -308,41 +337,56 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 		default:
 			close(s.solReady)
 		}
-		return frameSize
+		return solSettingsReplySize
+
+	case 0x24: // EndSOLSession (8 bytes)
+		if len(data) < 8 {
+			return 0 // incomplete
+		}
+		if debug {
+			fmt.Fprintf(os.Stderr, "[SOL] EndSOLSession received\n")
+		}
+		return 8
 
 	case 0x29: // Serial settings (10 bytes)
-		frameSize := 10
-		if frameSize > len(data) {
-			frameSize = len(data)
+		if len(data) < 10 {
+			return 0 // incomplete
 		}
-		return frameSize
+		return 10
 
 	case 0x2A: // Incoming terminal data
 		if len(data) < 10 {
-			return len(data)
+			return 0 // incomplete — need at least the header
 		}
-		dataLen := int(data[8]) | int(data[9])<<8
+		dataLen := int(binary.LittleEndian.Uint16(data[8:10]))
 		frameSize := 10 + dataLen
 		if frameSize > len(data) {
-			dataLen = len(data) - 10
-			frameSize = len(data)
+			return 0 // incomplete — payload not fully received yet
 		}
-		termData := string(data[10 : 10+dataLen])
-		// Write terminal data to stdout
-		fmt.Print(termData)
+		if dataLen > 0 {
+			// Write terminal data directly to stdout (bypasses fmt buffering)
+			os.Stdout.Write(data[10 : 10+dataLen]) //nolint:errcheck
+		}
+
+		// Record this frame's sequence number for flow-control ACK.
+		// AMT uses the value we send back in 0x2B to determine how much
+		// TX buffer it can free. Without this, AMT's buffer fills and
+		// it stops sending — causing truncated output.
+		seqNum := binary.LittleEndian.Uint32(data[4:8])
+		s.amtAccMu.Lock()
+		s.amtLastRecvSeq = seqNum
+		s.amtAccMu.Unlock()
+
+		// Immediately ACK so AMT frees its TX buffer right away.
+		s.sendACK()
 		return frameSize
 
-	case 0x2B: // Keep alive (8 bytes) — respond with pong
-		frameSize := 8
-		if frameSize > len(data) {
-			frameSize = len(data)
+	case 0x2B: // Keep alive (8 bytes) — respond with our ACK byte count
+		if len(data) < 8 {
+			return 0 // incomplete
 		}
-		if len(data) >= 8 {
-			pong := []byte{0x2B, 0x00, 0x00, 0x00}
-			pong = append(pong, data[4:8]...)
-			_ = s.sendBinary(pong)
-		}
-		return frameSize
+		s.sendACK()
+		return 8
 
 	default:
 		if cmd == 0x00 {
@@ -351,7 +395,9 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 		if debug {
 			fmt.Fprintf(os.Stderr, "[SOL] Unknown cmd 0x%02X (%d bytes remaining)\n", cmd, len(data))
 		}
-		return len(data) // consume rest to avoid infinite loop
+		// Skip only 1 byte so we don't discard valid frames that follow.
+		// The old code returned len(data) which threw away everything.
+		return 1
 	}
 }
 
@@ -471,7 +517,7 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 			conn.SetReadDeadline(time.Now().Add(300 * time.Second)) //nolint:errcheck
 			readDeadlineMu.Unlock()
 
-			_, message, readErr := conn.ReadMessage()
+			msgType, message, readErr := conn.ReadMessage()
 			if readErr != nil {
 				if !websocket.IsCloseError(readErr,
 					websocket.CloseNormalClosure,
@@ -488,15 +534,33 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 				continue
 			}
 
-			// Process all AMT frames within this WebSocket message.
-			// A single WS message can contain multiple concatenated AMT frames.
-			offset := 0
-			for offset < len(message) {
-				consumed := sol.handleMPSFrame(message[offset:], debug)
+			// MPS relay sends AMT protocol frames using BOTH text (type 1)
+			// and binary (type 2) WebSocket messages — we must process all
+			// of them.  Only skip close/ping/pong control frames.
+			if debug && msgType == websocket.TextMessage {
+				fmt.Fprintf(os.Stderr, "[SOL] Text WS message (len=%d), processing as AMT frame\n", len(message))
+			}
+
+			// Append to receive buffer — AMT frames can span multiple
+			// WebSocket messages because the MPS relay may split them
+			// at arbitrary byte boundaries.
+			sol.recvBuf = append(sol.recvBuf, message...)
+
+			// Process as many complete frames as possible.
+			for len(sol.recvBuf) > 0 {
+				consumed := sol.handleMPSFrame(sol.recvBuf, debug)
 				if consumed <= 0 {
-					break
+					break // incomplete frame — wait for more data
 				}
-				offset += consumed
+				sol.recvBuf = sol.recvBuf[consumed:]
+			}
+
+			// Prevent unbounded buffer growth from unrecognised padding
+			if len(sol.recvBuf) > 64*1024 {
+				if debug {
+					fmt.Fprintf(os.Stderr, "[SOL] Dropping oversized recvBuf (%d bytes)\n", len(sol.recvBuf))
+				}
+				sol.recvBuf = nil
 			}
 		}
 	}()
@@ -511,7 +575,13 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 			}
 		}
 	case <-done:
-		return fmt.Errorf("SOL session closed before becoming active")
+		// Drain error channel to include the actual failure reason.
+		select {
+		case connErr := <-sol.errChan:
+			return fmt.Errorf("SOL session closed before becoming active: %w", connErr)
+		default:
+			return fmt.Errorf("SOL session closed before becoming active")
+		}
 	case <-time.After(30 * time.Second):
 		return fmt.Errorf("timeout waiting for SOL session to become active")
 	}
@@ -539,11 +609,14 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 					}
 					return
 				}
-				// SOL keepalive frame (0x28 with 0-length data)
-				seq := sol.nextSequence()
-				frame := []byte{0x28, 0x00, 0x00, 0x00}
-				frame = append(frame, intToLE(seq)...)
-				frame = append(frame, shortToLE(0)...)
+				// SOL heartbeat (0x2B) carrying the last received frame
+				// sequence number.  This is critical for flow control:
+				// AMT will stop transmitting if it never sees ACKs.
+				sol.amtAccMu.Lock()
+				ack := sol.amtLastRecvSeq
+				sol.amtAccMu.Unlock()
+				frame := []byte{0x2B, 0x00, 0x00, 0x00}
+				frame = append(frame, intToLE(ack)...)
 				if err := sol.sendBinary(frame); err != nil {
 					if debug {
 						fmt.Fprintf(os.Stderr, "[SOL] Keep-alive frame failed: %v\n", err)
@@ -600,20 +673,31 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 			}
 
 			if n > 0 {
+				if debug {
+					fmt.Fprintf(os.Stderr, "[SOL] stdin: %d bytes: %q (hex: %x)\n", n, string(buffer[:n]), buffer[:n])
+				}
 				// Check for Ctrl+] (0x1D) to exit SOL session.
 				// Ctrl+C (0x03) is passed through to the remote host.
+				hasExit := false
 				for i := 0; i < n; i++ {
 					if buffer[i] == 0x1D {
+						hasExit = true
+						// Send any data before the exit character
+						if i > 0 {
+							_ = sol.sendSOLData(string(buffer[:i]))
+						}
 						sol.Close()
 						return
 					}
 				}
-				// Send input to SOL
-				if err := sol.sendSOLData(string(buffer[:n])); err != nil {
-					if debug {
-						fmt.Fprintf(os.Stderr, "[SOL] Failed to send data: %v\n", err)
+				if !hasExit {
+					// Send input to SOL
+					if err := sol.sendSOLData(string(buffer[:n])); err != nil {
+						if debug {
+							fmt.Fprintf(os.Stderr, "[SOL] Failed to send data: %v\n", err)
+						}
+						return
 					}
-					return
 				}
 			}
 		}
