@@ -71,6 +71,81 @@ func (s *CLITestSuite) TestMetric() {
 	s.EqualError(err, `invalid metric name "invalid-metric!"`)
 }
 
+func (s *CLITestSuite) TestGetMetricAtTimestamp() {
+	tokenEnvWasSet := false
+	previousToken := os.Getenv("MT_GW_TOKEN")
+	if previousToken != "" {
+		tokenEnvWasSet = true
+	}
+	s.T().Cleanup(func() {
+		if tokenEnvWasSet {
+			s.NoError(os.Setenv("MT_GW_TOKEN", previousToken))
+			return
+		}
+		os.Unsetenv("MT_GW_TOKEN")
+	})
+	s.NoError(os.Setenv("MT_GW_TOKEN", "metric-ts-test-token"))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.Equal(http.MethodPost, r.Method)
+		s.Equal("/prometheus/api/v1/query", r.URL.Path)
+		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
+		s.Equal("Bearer metric-ts-test-token", r.Header.Get("Authorization"))
+		s.Equal("698fde6a-b721-447a-a7c2-7187d64393c1", r.Header.Get("X-Scope-OrgID"))
+		s.NoError(r.ParseForm())
+		s.Equal(`node_cpu_seconds_total{host="edge-node-01"}`, r.Form.Get("query"))
+		s.Equal("1704153600", r.Form.Get("time"))
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","hostname":"edge-node-01"},"value":[1704153600,"42"]}]}}`))
+	}))
+	defer server.Close()
+
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		metricsEndpointFlag: server.URL + "/prometheus",
+		hostnameFlag:        "edge-node-01",
+		orgIDFlag:           "698fde6a-b721-447a-a7c2-7187d64393c1",
+		timestampFlag:       "1704153600",
+	})
+	s.NoError(err)
+	s.Contains(output, "1704153600")
+	s.Contains(output, "42")
+}
+
+func (s *CLITestSuite) TestGetMetricNoResults() {
+	tokenEnvWasSet := false
+	previousToken := os.Getenv("MT_GW_TOKEN")
+	if previousToken != "" {
+		tokenEnvWasSet = true
+	}
+	s.T().Cleanup(func() {
+		if tokenEnvWasSet {
+			s.NoError(os.Setenv("MT_GW_TOKEN", previousToken))
+			return
+		}
+		os.Unsetenv("MT_GW_TOKEN")
+	})
+	s.NoError(os.Setenv("MT_GW_TOKEN", "metric-empty-test-token"))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.Equal(http.MethodPost, r.Method)
+		s.Equal("/prometheus/api/v1/query", r.URL.Path)
+		s.NoError(r.ParseForm())
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[]}}`))
+	}))
+	defer server.Close()
+
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": server.URL + "/prometheus",
+		hostnameFlag:       "edge-node-01",
+		orgIDFlag:          "698fde6a-b721-447a-a7c2-7187d64393c1",
+	})
+	s.NoError(err)
+	s.Contains(output, "No metrics found")
+	s.NotContains(output, "METRIC")
+}
+
 func TestBuildMetricQuery(t *testing.T) {
 	query, err := buildMetricQuery("up", "host", "edge-node-01")
 	if err != nil {
@@ -256,6 +331,41 @@ func TestResolveSumWindow(t *testing.T) {
 	}
 }
 
+func TestResolveRangeWindow(t *testing.T) {
+	now := time.Unix(1704153600, 0)
+
+	start, end, err := resolveRangeWindow("1704150000", "1704153600", 0, now)
+	if err != nil {
+		t.Fatalf("unexpected error for explicit range: %v", err)
+	}
+	if start != 1704150000 || end != 1704153600 {
+		t.Fatalf("unexpected explicit range start/end: %d/%d", start, end)
+	}
+
+	start, end, err = resolveRangeWindow("", "", 3600, now)
+	if err != nil {
+		t.Fatalf("unexpected error for duration range: %v", err)
+	}
+	if start != 1704150000 || end != 1704153600 {
+		t.Fatalf("unexpected duration range start/end: %d/%d", start, end)
+	}
+
+	_, _, err = resolveRangeWindow("1704150000", "1704153600", 3600, now)
+	if err == nil {
+		t.Fatal("expected conflict error when using duration with explicit range")
+	}
+
+	_, _, err = resolveRangeWindow("1704150000", "", 0, now)
+	if err == nil {
+		t.Fatal("expected missing end-time error")
+	}
+
+	_, _, err = resolveRangeWindow("", "", 0, now)
+	if err == nil {
+		t.Fatal("expected missing range window params error")
+	}
+}
+
 func (s *CLITestSuite) TestGetMetricWithRange() {
 	tokenEnvWasSet := false
 	previousToken := os.Getenv("MT_GW_TOKEN")
@@ -308,11 +418,58 @@ func (s *CLITestSuite) TestGetMetricAverageRequiresTimeRange() {
 		"metrics-endpoint": "http://localhost:9090",
 		hostnameFlag:       "edge-node-01",
 		"average":          "true",
-		// Missing start-time and end-time
+		// Missing duration and explicit start/end window
 	})
 	s.Error(err)
-	s.Contains(err.Error(), "requires both --start-time and --end-time")
+	s.Contains(err.Error(), "--average requires either --duration or both --start-time and --end-time")
 	s.Empty(output)
+}
+
+func (s *CLITestSuite) TestGetMetricWithAverageDuration() {
+	tokenEnvWasSet := false
+	previousToken := os.Getenv("MT_GW_TOKEN")
+	if previousToken != "" {
+		tokenEnvWasSet = true
+	}
+	s.T().Cleanup(func() {
+		if tokenEnvWasSet {
+			s.NoError(os.Setenv("MT_GW_TOKEN", previousToken))
+			return
+		}
+		os.Unsetenv("MT_GW_TOKEN")
+	})
+	s.NoError(os.Setenv("MT_GW_TOKEN", "avg-duration-metric-test-token"))
+
+	before := time.Now().Unix()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.Equal(http.MethodPost, r.Method)
+		s.Equal("/prometheus/api/v1/query", r.URL.Path)
+		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
+		s.Equal("Bearer avg-duration-metric-test-token", r.Header.Get("Authorization"))
+		s.NoError(r.ParseForm())
+		s.Equal(`avg_over_time(node_cpu_seconds_total{host="edge-node-01"}[3600s])`, r.Form.Get("query"))
+
+		evalTime, parseErr := strconv.ParseInt(r.Form.Get("time"), 10, 64)
+		s.NoError(parseErr)
+		s.True(evalTime >= before)
+		s.True(evalTime <= time.Now().Unix())
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"values":[[1714474800,"42"],[1714478400,"45"]]}]}}`))
+	}))
+	defer server.Close()
+
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": server.URL + "/prometheus",
+		hostnameFlag:       "edge-node-01",
+		averageFlag:        "true",
+		durationFlag:       "3600",
+	})
+	s.NoError(err)
+	s.Contains(output, "METRIC")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "edge-node-01")
+	s.Contains(output, "45")
 }
 
 func (s *CLITestSuite) TestGetMetricWithSumRange() {
@@ -448,5 +605,174 @@ func (s *CLITestSuite) TestGetMetricSumDurationAndRangeConflict() {
 	})
 	s.Error(err)
 	s.Contains(err.Error(), "either --duration or --start-time with --end-time")
+	s.Empty(output)
+}
+
+func (s *CLITestSuite) TestGetMetricAverageDurationAndRangeConflict() {
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": "http://localhost:9090",
+		hostnameFlag:       "edge-node-01",
+		averageFlag:        "true",
+		durationFlag:       "3600",
+		startTimeFlag:      "1704067200",
+		endTimeFlag:        "1704153600",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "either --duration or --start-time with --end-time")
+	s.Empty(output)
+}
+
+func (s *CLITestSuite) TestGetMetricDurationRequiresAggregationMode() {
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": "http://localhost:9090",
+		hostnameFlag:       "edge-node-01",
+		durationFlag:       "3600",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "--duration requires either --sum, --average, or --range")
+	s.Empty(output)
+}
+
+func (s *CLITestSuite) TestGetMetricWithRangeDuration() {
+	tokenEnvWasSet := false
+	previousToken := os.Getenv("MT_GW_TOKEN")
+	if previousToken != "" {
+		tokenEnvWasSet = true
+	}
+	s.T().Cleanup(func() {
+		if tokenEnvWasSet {
+			s.NoError(os.Setenv("MT_GW_TOKEN", previousToken))
+			return
+		}
+		os.Unsetenv("MT_GW_TOKEN")
+	})
+	s.NoError(os.Setenv("MT_GW_TOKEN", "range-duration-metric-test-token"))
+
+	before := time.Now().Unix()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.Equal(http.MethodPost, r.Method)
+		s.Equal("/prometheus/api/v1/query_range", r.URL.Path)
+		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
+		s.Equal("Bearer range-duration-metric-test-token", r.Header.Get("Authorization"))
+		s.NoError(r.ParseForm())
+		s.Equal(`node_cpu_seconds_total{host="edge-node-01"}`, r.Form.Get("query"))
+
+		start, parseErr := strconv.ParseInt(r.Form.Get("start"), 10, 64)
+		s.NoError(parseErr)
+		end, parseErr := strconv.ParseInt(r.Form.Get("end"), 10, 64)
+		s.NoError(parseErr)
+		now := time.Now().Unix()
+		s.True(end >= before && end <= now+1)
+		s.True(end-start == 3600)
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"values":[[1714474800,"41"],[1714478400,"42"]]}]}}`))
+	}))
+	defer server.Close()
+
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": server.URL + "/prometheus",
+		hostnameFlag:       "edge-node-01",
+		rangeFlag:          "true",
+		durationFlag:       "3600",
+	})
+	s.NoError(err)
+	s.Contains(output, "METRIC")
+	s.Contains(output, "HOST")
+	s.Contains(output, "VALUE")
+	s.Contains(output, "TIMESTAMP")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "edge-node-01")
+	s.Contains(output, "41")
+	s.Contains(output, "42")
+	s.Contains(output, "1714474800")
+	s.Contains(output, "1714478400")
+}
+
+func (s *CLITestSuite) TestGetMetricWithRangeExplicitWindow() {
+	tokenEnvWasSet := false
+	previousToken := os.Getenv("MT_GW_TOKEN")
+	if previousToken != "" {
+		tokenEnvWasSet = true
+	}
+	s.T().Cleanup(func() {
+		if tokenEnvWasSet {
+			s.NoError(os.Setenv("MT_GW_TOKEN", previousToken))
+			return
+		}
+		os.Unsetenv("MT_GW_TOKEN")
+	})
+	s.NoError(os.Setenv("MT_GW_TOKEN", "range-explicit-metric-test-token"))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.Equal(http.MethodPost, r.Method)
+		s.Equal("/prometheus/api/v1/query_range", r.URL.Path)
+		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
+		s.Equal("Bearer range-explicit-metric-test-token", r.Header.Get("Authorization"))
+		s.NoError(r.ParseForm())
+		s.Equal(`node_cpu_seconds_total{host="edge-node-01"}`, r.Form.Get("query"))
+		s.Equal("1704150000", r.Form.Get("start"))
+		s.Equal("1704153600", r.Form.Get("end"))
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"values":[[1704150000,"41"],[1704153600,"42"]]}]}}`))
+	}))
+	defer server.Close()
+
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": server.URL + "/prometheus",
+		hostnameFlag:       "edge-node-01",
+		rangeFlag:          "true",
+		startTimeFlag:      "1704150000",
+		endTimeFlag:        "1704153600",
+	})
+	s.NoError(err)
+	s.Contains(output, "METRIC")
+	s.Contains(output, "HOST")
+	s.Contains(output, "VALUE")
+	s.Contains(output, "TIMESTAMP")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "edge-node-01")
+	s.Contains(output, "41")
+	s.Contains(output, "42")
+	s.Contains(output, "1704150000")
+	s.Contains(output, "1704153600")
+}
+
+func (s *CLITestSuite) TestGetMetricRangeAndSumConflict() {
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": "http://localhost:9090",
+		hostnameFlag:       "edge-node-01",
+		rangeFlag:          "true",
+		sumFlag:            "true",
+		durationFlag:       "3600",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "--range cannot be used with --sum or --average")
+	s.Empty(output)
+}
+
+func (s *CLITestSuite) TestGetMetricTimestampConflictsWithAggregation() {
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": "http://localhost:9090",
+		hostnameFlag:       "edge-node-01",
+		sumFlag:            "true",
+		timestampFlag:      "1704153600",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "--timestamp cannot be used with --sum, --average, or --range")
+	s.Empty(output)
+}
+
+func (s *CLITestSuite) TestGetMetricTimestampConflictsWithRangeFlags() {
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": "http://localhost:9090",
+		hostnameFlag:       "edge-node-01",
+		timestampFlag:      "1704153600",
+		startTimeFlag:      "1704150000",
+		endTimeFlag:        "1704153600",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "--timestamp cannot be used with --duration, --start-time, or --end-time")
 	s.Empty(output)
 }

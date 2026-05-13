@@ -29,28 +29,69 @@ const (
 	orgIDFlag           = "org-id"
 	averageFlag         = "average"
 	sumFlag             = "sum"
+	rangeFlag           = "range"
 	durationFlag        = "duration"
 	startTimeFlag       = "start-time"
 	endTimeFlag         = "end-time"
+	timestampFlag       = "timestamp"
 
 	defaultHostnameLabel         = "host"
 	defaultMetricsTimeout        = 30 * time.Second
 	prometheusQueryAPIPath       = "/api/v1/query"
+	prometheusQueryRangeAPIPath  = "/api/v1/query_range"
 	prometheusLabelValuesAPIPath = "/api/v1/label/__name__/values"
 
-	DEFAULT_LIST_METRICS_FORMAT    = "table{{str .Metric}}"
+	DEFAULT_LIST_METRICS_FORMAT    = "table{{.Number}}\t{{str .Metric}}"
 	METRICS_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_METRICS_OUTPUT_TEMPLATE"
 
-	DEFAULT_GET_METRIC_FORMAT         = "table{{str .Metric}}\t{{str .Host}}\t{{str .Value}}\t{{str .Timestamp}}"
+	DEFAULT_GET_METRIC_FORMAT         = "table{{str .Metric}}\t{{str .Host}}\t{{str .Labels}}\t{{str .Value}}\t{{str .Timestamp}}"
+	DEFAULT_GET_METRIC_RANGE_FORMAT   = "table{{.Row}}\t{{str .Metric}}\t{{str .Host}}\t{{str .Labels}}\t{{str .Value}}\t{{str .Timestamp}}"
 	DEFAULT_GET_METRIC_INSPECT_FORMAT = `Metric: {{str .Metric}}
 Host: {{str .Host}}
 Host GUID: {{str .HostGUID}}
 Project ID: {{str .ProjectID}}
+Labels: {{str .Labels}}
 Timestamp: {{str .Timestamp}}
 Value: {{str .Value}}
 `
 	METRIC_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_METRIC_OUTPUT_TEMPLATE"
 )
+
+const listMetricNamesExamples = `# List metrics for the current project (org-id auto-derived from project UID) and current metrics endpoint
+orch-cli list metrics
+# List metrics for a different project and metrics endpoint
+orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --project myproject
+# List metrics with explicit org-id
+orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --org-id 698fde6a-b721-447a-a7c2-7187d64393c1
+# Filter metric names
+orch-cli list metrics --filter node_cpu
+`
+
+const getMetricExamples = `# Configure metrics endpoint (once)
+orch-cli config set metrics-endpoint http://<mimir-endpoint>/prometheus
+# Query metric for a host in the current project (org-id auto-derived)
+orch-cli get metric mem_used_percent --hostname host-fd7108f7
+# Query metric for a host in another project (org-id auto-derived)
+orch-cli get metric mem_used_percent --hostname host-fd7108f7 --project myproject
+# Query with explicit org-id
+orch-cli get metric mem_used_percent --hostname host-fd7108f7 --org-id 698fde6a-b721-447a-a7c2-7187d64393c1
+# Query using a custom hostname label
+orch-cli get metric up --hostname edge-node-01 --hostname-label instance --project myproject
+# Query average metric over a time range (Unix timestamps)
+orch-cli get metric mem_used_percent --hostname host-fd7108f7 --average --start-time 1704067200 --end-time 1704153600
+# Query average metric over the last hour ending now
+orch-cli get metric mem_used_percent --hostname host-fd7108f7 --average --duration 3600
+# Query sum of metric over a specific time range
+orch-cli get metric mem_used_percent --hostname host-fd7108f7 --sum --start-time 1704067200 --end-time 1704153600
+# Query sum of metric over the last hour ending now
+orch-cli get metric mem_used_percent --hostname host-fd7108f7 --sum --duration 3600
+# Query metric range over the last hour ending now
+orch-cli get metric mem_used_percent --hostname host-fd7108f7 --range --duration 3600
+# Query metric range between two timestamps
+orch-cli get metric mem_used_percent --hostname host-fd7108f7 --range --start-time 1704067200 --end-time 1704153600
+# Query metric at a specific timestamp
+orch-cli get metric mem_used_percent --hostname host-fd7108f7 --timestamp 1704153600
+`
 
 var metricNamePattern = regexp.MustCompile(`^[a-zA-Z_:][a-zA-Z0-9_:]*$`)
 var labelNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
@@ -72,32 +113,36 @@ type metricGetRow struct {
 	Host      *string `json:"host"`
 	HostGUID  *string `json:"hostGuid"`
 	ProjectID *string `json:"projectId"`
+	Labels    *string `json:"labels"`
 	Timestamp *string `json:"timestamp"`
 	Value     *string `json:"value"`
 }
 
 type metricListRow struct {
+	Number int     `json:"number"`
 	Metric *string `json:"metric"`
+}
+
+type metricRangeRow struct {
+	Row       *int    `json:"row"`
+	Metric    *string `json:"metric"`
+	Host      *string `json:"host"`
+	HostGUID  *string `json:"hostGuid"`
+	ProjectID *string `json:"projectId"`
+	Labels    *string `json:"labels"`
+	Timestamp *string `json:"timestamp"`
+	Value     *string `json:"value"`
 }
 
 var PrometheusClientFactory = newPrometheusClient
 
 func getListMetricNamesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "metrics",
-		Short: "List all metric names available at a Mimir (Prometheus-compatible) endpoint",
-		Args:  cobra.NoArgs,
-		Example: strings.Join([]string{
-			"# List metrics for the current project (org-id auto-derived from project UID) and current metrics endpoint",
-			"orch-cli list metrics",
-			"# List metrics for a different project and metrics endpoint",
-			"orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --project myproject",
-			"# List metrics with explicit org-id",
-			"orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --org-id 698fde6a-b721-447a-a7c2-7187d64393c1",
-			"# Filter metric names",
-			"orch-cli list metrics --filter node_cpu",
-		}, "\n"),
-		RunE: runListMetricNamesCommand,
+		Use:     "metrics",
+		Short:   "List all metric names available at a Mimir (Prometheus-compatible) endpoint",
+		Args:    cobra.NoArgs,
+		Example: listMetricNamesExamples,
+		RunE:    runListMetricNamesCommand,
 	}
 
 	cmd.Flags().String(metricsEndpointFlag, configuredMetricsEndpoint(), "Mimir (Prometheus-compatible) base URL")
@@ -113,9 +158,9 @@ func getListMetricsOutputFormat(cmd *cobra.Command) (string, error) {
 
 func printMetricNames(cmd *cobra.Command, writer *tabwriter.Writer, metricNames []string) error {
 	rows := make([]metricListRow, 0, len(metricNames))
-	for _, metricName := range metricNames {
+	for i, metricName := range metricNames {
 		name := metricName
-		rows = append(rows, metricListRow{Metric: &name})
+		rows = append(rows, metricListRow{Number: i + 1, Metric: &name})
 	}
 
 	outputType, _ := cmd.Flags().GetString("output-type")
@@ -192,28 +237,11 @@ func runListMetricNamesCommand(cmd *cobra.Command, _ []string) error {
 
 func getGetMetricCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "metric <metric-name>",
-		Short: "Query a metric from a Mimir (Prometheus-compatible) endpoint for a specific hostname",
-		Args:  cobra.ExactArgs(1),
-		Example: strings.Join([]string{
-			"# Configure metrics endpoint (once)",
-			"orch-cli config set metrics-endpoint http://<mimir-endpoint>/prometheus",
-			"# Query metric for a host in the current project (org-id auto-derived)",
-			"orch-cli get metric mem_used_percent --hostname host-fd7108f7",
-			"# Query metric for a host in another project (org-id auto-derived)",
-			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --project myproject",
-			"# Query with explicit org-id",
-			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --org-id 698fde6a-b721-447a-a7c2-7187d64393c1",
-			"# Query using a custom hostname label",
-			"orch-cli get metric up --hostname edge-node-01 --hostname-label instance --project myproject",
-			"# Query average metric over a time range (Unix timestamps)",
-			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --average --start-time 1704067200 --end-time 1704153600",
-			"# Query sum of metric over a specific time range",
-			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --sum --start-time 1704067200 --end-time 1704153600",
-			"# Query sum of metric over the last hour ending now",
-			"orch-cli get metric mem_used_percent --hostname host-fd7108f7 --sum --duration 3600",
-		}, "\n"),
-		RunE: runGetMetricCommand,
+		Use:     "metric <metric-name>",
+		Short:   "Query a metric from a Mimir (Prometheus-compatible) endpoint for a specific hostname",
+		Args:    cobra.ExactArgs(1),
+		Example: getMetricExamples,
+		RunE:    runGetMetricCommand,
 	}
 
 	cmd.Aliases = []string{"metrics"}
@@ -221,11 +249,13 @@ func getGetMetricCommand() *cobra.Command {
 	cmd.Flags().String(hostnameLabelFlag, defaultHostnameLabel, "Prometheus label name used to match the hostname")
 	cmd.Flags().String(metricsEndpointFlag, configuredMetricsEndpoint(), "Mimir (Prometheus-compatible) base URL")
 	cmd.Flags().String(orgIDFlag, viper.GetString(orgIDFlag), "Mimir tenant ID sent as X-Scope-OrgID")
-	cmd.Flags().Bool(averageFlag, false, "Calculate average of metric over time range (requires --start-time and --end-time)")
+	cmd.Flags().Bool(averageFlag, false, "Calculate average of metric over time range (use either --duration or --start-time with --end-time)")
 	cmd.Flags().Bool(sumFlag, false, "Calculate sum of metric over time range (use either --duration or --start-time with --end-time)")
-	cmd.Flags().Int64(durationFlag, 0, "Duration in seconds for --sum calculation ending now (e.g. 3600 for last hour)")
+	cmd.Flags().Bool(rangeFlag, false, "Retrieve metric range values over time (use either --duration or --start-time with --end-time)")
+	cmd.Flags().Int64(durationFlag, 0, "Duration in seconds for --sum/--average/--range calculation ending now (e.g. 3600 for last hour)")
 	cmd.Flags().String(startTimeFlag, "", "Start time for range query (Unix timestamp, e.g. 1704067200)")
 	cmd.Flags().String(endTimeFlag, "", "End time for range query (Unix timestamp, e.g. 1704153600)")
+	cmd.Flags().String(timestampFlag, "", "Evaluate metric at a specific Unix timestamp (instant query mode)")
 	addStandardGetOutputFlags(cmd)
 	_ = cmd.MarkFlagRequired(hostnameFlag)
 
@@ -240,10 +270,15 @@ func getMetricOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	return resolveTableOutputTemplate(cmd, DEFAULT_GET_METRIC_FORMAT, METRIC_OUTPUT_TEMPLATE_ENVVAR)
 }
 
-// printMetricResult formats successful Prometheus query responses for `get metric`.
-// Although this command is intended to show a single aggregated value per series,
-// some backends may still return a matrix result. In that case, we keep the command
-// semantics stable by rendering only the last sample from each returned series.
+func getMetricRangeOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_GET_METRIC_INSPECT_FORMAT, nil
+	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_GET_METRIC_RANGE_FORMAT, METRIC_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+// printMetricResult formats non-range get metric responses and keeps the last sample for matrix results.
 func printMetricResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName string, hostnameLabel string, body []byte, verbose bool) error {
 	var resp prometheusVectorResponse
 	if err := json.Unmarshal(body, &resp); err != nil {
@@ -266,6 +301,22 @@ func printMetricResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName 
 		hostGUID := item.Metric["hostGuid"]
 		projectID := item.Metric["projectId"]
 
+		// Extract additional labels (like cpu, disk, etc.) excluding standard ones
+		additionalLabels := make([]string, 0)
+		standardLabels := map[string]bool{
+			hostnameLabel:        true,
+			defaultHostnameLabel: true,
+			"hostGuid":           true,
+			"projectId":          true,
+			"__name__":           true,
+		}
+		for k, v := range item.Metric {
+			if !standardLabels[k] && v != "" {
+				additionalLabels = append(additionalLabels, fmt.Sprintf("%s=%s", k, v))
+			}
+		}
+		labelsStr := strings.Join(additionalLabels, ", ")
+
 		timestamp, value := "", ""
 		if resp.Data.ResultType == "matrix" {
 			timestamp, value = formatPrometheusSample(lastPrometheusSample(item.Values))
@@ -278,6 +329,7 @@ func printMetricResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName 
 			Host:      &host,
 			HostGUID:  &hostGUID,
 			ProjectID: &projectID,
+			Labels:    &labelsStr,
 			Timestamp: &timestamp,
 			Value:     &value,
 		})
@@ -286,6 +338,96 @@ func printMetricResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName 
 	outputType, _ := cmd.Flags().GetString("output-type")
 	outputFormat, err := getMetricOutputFormat(cmd, verbose)
 	if err != nil {
+		return err
+	}
+	if len(rows) == 0 {
+		_, err = fmt.Fprintln(writer, "No metrics found")
+		return err
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      rows,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
+}
+
+// printMetricRangeResult formats range-query responses for `get metric --range`.
+// For matrix results, each sample in `values` becomes a separate output row.
+func printMetricRangeResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName string, hostnameLabel string, body []byte, verbose bool) error {
+	var resp prometheusVectorResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return fmt.Errorf("failed to parse Prometheus response: %w", err)
+	}
+	if resp.Status != "success" {
+		return fmt.Errorf("prometheus returned non-success status: %s", resp.Status)
+	}
+	if resp.Data.ResultType != "vector" && resp.Data.ResultType != "matrix" {
+		return fmt.Errorf("unsupported prometheus result type %q, expected vector or matrix", resp.Data.ResultType)
+	}
+
+	rows := make([]metricRangeRow, 0)
+	rowNumber := 0
+	for _, item := range resp.Data.Result {
+		host := item.Metric[hostnameLabel]
+		if host == "" {
+			host = item.Metric[defaultHostnameLabel]
+		}
+
+		hostGUID := item.Metric["hostGuid"]
+		projectID := item.Metric["projectId"]
+
+		additionalLabels := make([]string, 0)
+		standardLabels := map[string]bool{
+			hostnameLabel:        true,
+			defaultHostnameLabel: true,
+			"hostGuid":           true,
+			"projectId":          true,
+			"__name__":           true,
+		}
+		for k, v := range item.Metric {
+			if !standardLabels[k] && v != "" {
+				additionalLabels = append(additionalLabels, fmt.Sprintf("%s=%s", k, v))
+			}
+		}
+		labelsStr := strings.Join(additionalLabels, ", ")
+
+		appendSample := func(sample []interface{}) {
+			timestamp, value := formatPrometheusSample(sample)
+			rowNumber++
+			row := rowNumber
+			rows = append(rows, metricRangeRow{
+				Row:       &row,
+				Metric:    &metricName,
+				Host:      &host,
+				HostGUID:  &hostGUID,
+				ProjectID: &projectID,
+				Labels:    &labelsStr,
+				Timestamp: &timestamp,
+				Value:     &value,
+			})
+		}
+
+		if resp.Data.ResultType == "matrix" {
+			for _, sample := range item.Values {
+				appendSample(sample)
+			}
+		} else {
+			appendSample(item.Value)
+		}
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getMetricRangeOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+	if len(rows) == 0 {
+		_, err = fmt.Fprintln(writer, "No metrics found")
 		return err
 	}
 
@@ -304,7 +446,11 @@ func formatPrometheusSample(sample []interface{}) (string, string) {
 	timestamp := ""
 	value := ""
 	if len(sample) >= 2 {
-		timestamp = fmt.Sprintf("%v", sample[0])
+		if ts, ok := sample[0].(float64); ok {
+			timestamp = strconv.FormatInt(int64(ts), 10)
+		} else {
+			timestamp = fmt.Sprintf("%v", sample[0])
+		}
 		value = fmt.Sprintf("%v", sample[1])
 	}
 	return timestamp, value
@@ -338,6 +484,10 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	rangeQuery, err := cmd.Flags().GetBool(rangeFlag)
+	if err != nil {
+		return err
+	}
 	durationSec, err := cmd.Flags().GetInt64(durationFlag)
 	if err != nil {
 		return err
@@ -347,6 +497,10 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	endTimeStr, err := cmd.Flags().GetString(endTimeFlag)
+	if err != nil {
+		return err
+	}
+	timestampStr, err := cmd.Flags().GetString(timestampFlag)
 	if err != nil {
 		return err
 	}
@@ -365,6 +519,44 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 
 	if average && sum {
 		return fmt.Errorf("--average and --sum cannot be used together")
+	}
+	if rangeQuery && (average || sum) {
+		return fmt.Errorf("--range cannot be used with --sum or --average")
+	}
+
+	if strings.TrimSpace(timestampStr) != "" {
+		if average || sum || rangeQuery {
+			return fmt.Errorf("--timestamp cannot be used with --sum, --average, or --range")
+		}
+		if durationSec > 0 || strings.TrimSpace(startTimeStr) != "" || strings.TrimSpace(endTimeStr) != "" {
+			return fmt.Errorf("--timestamp cannot be used with --duration, --start-time, or --end-time")
+		}
+	}
+
+	if durationSec > 0 && !average && !sum && !rangeQuery {
+		return fmt.Errorf("--duration requires either --sum, --average, or --range")
+	}
+
+	if rangeQuery {
+		startTime, endTime, err := resolveRangeWindow(startTimeStr, endTimeStr, durationSec, time.Now())
+		if err != nil {
+			return err
+		}
+
+		query, err := buildMetricQuery(metricName, hostnameLabel, hostname)
+		if err != nil {
+			return err
+		}
+
+		body, err := executePrometheusRangeQuery(ctx, client, query, startTime, endTime, argID)
+		if err != nil {
+			return err
+		}
+
+		if err := printMetricRangeResult(cmd, writer, metricName, hostnameLabel, body, verbose); err != nil {
+			return err
+		}
+		return writer.Flush()
 	}
 
 	if sum {
@@ -390,23 +582,11 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 		return writer.Flush()
 	}
 
-	// If average flag is set, require both start and end times
+	// If average flag is set, support either duration or explicit start/end window.
 	if average {
-		if startTimeStr == "" || endTimeStr == "" {
-			return fmt.Errorf("--average requires both --start-time and --end-time to be set")
-		}
-
-		startTime, err := parseTimestamp(startTimeStr)
+		startTime, endTime, err := resolveAverageWindow(startTimeStr, endTimeStr, durationSec, time.Now())
 		if err != nil {
-			return fmt.Errorf("failed to parse --start-time: %w", err)
-		}
-		endTime, err := parseTimestamp(endTimeStr)
-		if err != nil {
-			return fmt.Errorf("failed to parse --end-time: %w", err)
-		}
-
-		if startTime >= endTime {
-			return fmt.Errorf("--start-time must be before --end-time")
+			return err
 		}
 
 		durationSec := endTime - startTime
@@ -426,13 +606,21 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 		return writer.Flush()
 	}
 
-	// Instant query (backward compatibility)
+	// Instant query mode.
 	query, err := buildMetricQuery(metricName, hostnameLabel, hostname)
 	if err != nil {
 		return err
 	}
 
-	body, err := executePrometheusQuery(ctx, client, query, argID)
+	evalTime := int64(0)
+	if strings.TrimSpace(timestampStr) != "" {
+		evalTime, err = parseTimestamp(timestampStr)
+		if err != nil {
+			return fmt.Errorf("failed to parse --timestamp: %w", err)
+		}
+	}
+
+	body, err := executePrometheusQueryAt(ctx, client, query, evalTime, argID)
 	if err != nil {
 		return err
 	}
@@ -508,6 +696,90 @@ func resolveSumWindow(startTimeStr string, endTimeStr string, durationSec int64,
 	}
 
 	return 0, 0, fmt.Errorf("--sum requires either --duration or both --start-time and --end-time")
+}
+
+func resolveAverageWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
+	hasStart := strings.TrimSpace(startTimeStr) != ""
+	hasEnd := strings.TrimSpace(endTimeStr) != ""
+	hasDuration := durationSec > 0
+
+	if hasDuration && (hasStart || hasEnd) {
+		return 0, 0, fmt.Errorf("--average supports either --duration or --start-time with --end-time, not both")
+	}
+
+	if hasDuration {
+		endTime := now.Unix()
+		startTime := endTime - durationSec
+		if startTime >= endTime {
+			return 0, 0, fmt.Errorf("--duration must be greater than 0 seconds")
+		}
+		return startTime, endTime, nil
+	}
+
+	if hasStart || hasEnd {
+		if !hasStart || !hasEnd {
+			return 0, 0, fmt.Errorf("--average requires both --start-time and --end-time to be set")
+		}
+
+		startTime, err := parseTimestamp(startTimeStr)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to parse --start-time: %w", err)
+		}
+		endTime, err := parseTimestamp(endTimeStr)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to parse --end-time: %w", err)
+		}
+
+		if startTime >= endTime {
+			return 0, 0, fmt.Errorf("--start-time must be before --end-time")
+		}
+
+		return startTime, endTime, nil
+	}
+
+	return 0, 0, fmt.Errorf("--average requires either --duration or both --start-time and --end-time")
+}
+
+func resolveRangeWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
+	hasStart := strings.TrimSpace(startTimeStr) != ""
+	hasEnd := strings.TrimSpace(endTimeStr) != ""
+	hasDuration := durationSec > 0
+
+	if hasDuration && (hasStart || hasEnd) {
+		return 0, 0, fmt.Errorf("--range supports either --duration or --start-time with --end-time, not both")
+	}
+
+	if hasDuration {
+		endTime := now.Unix()
+		startTime := endTime - durationSec
+		if startTime >= endTime {
+			return 0, 0, fmt.Errorf("--duration must be greater than 0 seconds")
+		}
+		return startTime, endTime, nil
+	}
+
+	if hasStart || hasEnd {
+		if !hasStart || !hasEnd {
+			return 0, 0, fmt.Errorf("--range requires both --start-time and --end-time to be set")
+		}
+
+		startTime, err := parseTimestamp(startTimeStr)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to parse --start-time: %w", err)
+		}
+		endTime, err := parseTimestamp(endTimeStr)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to parse --end-time: %w", err)
+		}
+
+		if startTime >= endTime {
+			return 0, 0, fmt.Errorf("--start-time must be before --end-time")
+		}
+
+		return startTime, endTime, nil
+	}
+
+	return 0, 0, fmt.Errorf("--range requires either --duration or both --start-time and --end-time")
 }
 
 // buildAverageMetricQuery builds a PromQL query with avg_over_time for range queries
@@ -643,10 +915,6 @@ func getProjectUID(cmd *cobra.Command, projectName string) (string, error) {
 	return *resp.JSON200.Status.ProjectStatus.UID, nil
 }
 
-func executePrometheusQuery(ctx context.Context, client promapi.Client, query string, orgID string) ([]byte, error) {
-	return executePrometheusQueryAt(ctx, client, query, 0, orgID)
-}
-
 func executePrometheusQueryAt(ctx context.Context, client promapi.Client, query string, evalTime int64, orgID string) ([]byte, error) {
 	values := url.Values{}
 	values.Set("query", query)
@@ -671,6 +939,45 @@ func executePrometheusQueryAt(ctx context.Context, client promapi.Client, query 
 	}
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		return nil, fmt.Errorf("prometheus query failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	return body, nil
+}
+
+func executePrometheusRangeQuery(ctx context.Context, client promapi.Client, query string, startTime int64, endTime int64, orgID string) ([]byte, error) {
+	rangeSec := endTime - startTime
+	if rangeSec < 1 {
+		return nil, fmt.Errorf("time range must be at least 1 second")
+	}
+
+	stepSec := rangeSec / 100
+	if stepSec < 1 {
+		stepSec = 1
+	}
+
+	values := url.Values{}
+	values.Set("query", query)
+	values.Set("start", fmt.Sprintf("%d", startTime))
+	values.Set("end", fmt.Sprintf("%d", endTime))
+	values.Set("step", fmt.Sprintf("%d", stepSec))
+	values.Set("timeout", defaultMetricsTimeout.String())
+
+	u := client.URL(prometheusQueryRangeAPIPath, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(values.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if orgID != "" {
+		req.Header.Set("X-Scope-OrgID", orgID)
+	}
+	resp, body, err := client.Do(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("prometheus range query failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
 	return body, nil
