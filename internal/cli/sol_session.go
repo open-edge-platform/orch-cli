@@ -120,7 +120,7 @@ func createMPSRelayTLSConfig(orchCA string) (*tls.Config, error) {
 		return nil, fmt.Errorf("no valid certificates found in %q — ensure it is a valid .crt file", orchCA)
 	}
 	fmt.Fprintf(os.Stderr, "[SOL] TLS: using CA certificate from %q\n", orchCA)
-	return &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: pool}, nil
+	return &tls.Config{MinVersion: tls.VersionTLS13, RootCAs: pool}, nil
 }
 
 // sendDigestAuthInitial sends the initial digest auth request (method 4).

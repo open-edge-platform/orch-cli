@@ -2039,14 +2039,12 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		defer f.Close()
-		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode,DesiredKvmState")
+		fmt.Fprintln(f, "Name,ResourceID,DesiredAmtState,ControlMode")
 		for _, h := range hosts {
 			name := h.Name
 			resourceID := ""
 			desiredAmtState := ""
 			controlMode := ""
-			desiredKvmState := ""
-			desiredSolState := ""
 
 			if h.ResourceId != nil {
 				resourceID = *h.ResourceId
@@ -2057,13 +2055,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			if h.AmtControlMode != nil && *h.AmtControlMode != infra.AMTCONTROLMODEUNSPECIFIED {
 				controlMode = string(*h.AmtControlMode)
 			}
-			if h.DesiredKvmState != nil {
-				desiredKvmState = string(*h.DesiredKvmState)
-			}
-			if h.DesiredSolState != nil {
-				desiredSolState = string(*h.DesiredSolState)
-			}
-			fmt.Fprintf(f, "%s,%s,%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode, desiredKvmState, desiredSolState)
+			fmt.Fprintf(f, "%s,%s,%s,%s\n", name, resourceID, desiredAmtState, controlMode)
 		}
 		fmt.Printf("CSV template generated: %s\n", generateCSV)
 		return nil
@@ -2093,16 +2085,8 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			name := strings.TrimSpace(fields[0])
 			resourceID := strings.TrimSpace(fields[1])
 			desiredAmtState := strings.TrimSpace(fields[2])
-			desiredKvmState := ""
-			desiredSolState := ""
 			if len(fields) >= 4 {
 				desiredControlMode = strings.TrimSpace(fields[3])
-			}
-			if len(fields) >= 5 {
-				desiredKvmState = strings.TrimSpace(fields[4])
-			}
-			if len(fields) >= 6 {
-				desiredSolState = strings.TrimSpace(fields[5])
 			}
 
 			// Validate desiredAmtState
@@ -2120,24 +2104,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				}
 				amtMode = &mode
 			}
-			var kvmState *infra.KvmState
-			if desiredKvmState != "" {
-				ks, err := resolveKvmState(desiredKvmState)
-				if err != nil {
-					fmt.Printf("Invalid KVM state for host %s: %s\n", name, desiredKvmState)
-					continue
-				}
-				kvmState = &ks
-			}
-			var solState *infra.SolState
-			if desiredSolState != "" {
-				ss, err := resolveSolState(desiredSolState)
-				if err != nil {
-					fmt.Printf("Invalid SOL state for host %s: %s\n", name, desiredSolState)
-					continue
-				}
-				solState = &ss
-			}
 			// Patch host
 			ctx, hostClient, projectName, err := InfraFactory(cmd)
 			if err != nil {
@@ -2147,8 +2113,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			resp, err := hostClient.HostServicePatchHostWithResponse(ctx, projectName, resourceID, &infra.HostServicePatchHostParams{}, infra.HostServicePatchHostJSONRequestBody{
 				DesiredAmtState: &amtState,
 				AmtControlMode:  amtMode,
-				DesiredKvmState: kvmState,
-				DesiredSolState: solState,
 				Name:            name,
 			}, auth.AddAuthHeader)
 			if err != nil {
@@ -2159,11 +2123,7 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				fmt.Printf("Failed to patch host %s: %v\n", name, err)
 				continue
 			}
-			if desiredSolState != "" {
-				fmt.Printf("Host %s (%s) AMT state updated to %s, KVM state updated to %s, SOL state updated to %s\n", name, resourceID, desiredAmtState, desiredKvmState, desiredSolState)
-			} else {
-				fmt.Printf("Host %s (%s) AMT state updated to %s, KVM state updated to %s\n", name, resourceID, desiredAmtState, desiredKvmState)
-			}
+			fmt.Printf("Host %s (%s) AMT state updated to %s\n", name, resourceID, desiredAmtState)
 		}
 		if err := scanner.Err(); err != nil {
 			return err
