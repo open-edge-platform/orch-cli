@@ -9,7 +9,7 @@ Use [AGENTS.md](../AGENTS.md) as the repository context catalog and `.claude/ski
 
 ## How To Select a Skill
 1. Parse the user request for desired outcome.
-2. Match against skill trigger phrases in [AGENTS.md](../AGENTS.md#available-skills).
+2. Find the matching skill in [AGENTS.md](../AGENTS.md#available-skills), then read its `.claude/skills/<name>/SKILL.md` for trigger phrases and execution details.
 3. Ask for missing required inputs before running commands.
 
 For skill execution order, see [AGENTS.md](../AGENTS.md#skill-execution-order-must-follow-for-all-skills).

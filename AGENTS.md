@@ -34,7 +34,7 @@ make clean        # remove build artifacts
 make license      # check license compliance
 ```
 
-Prerequisites: Go 1.20+, make, golangci-lint, yamllint, oapi-codegen.
+Prerequisites: Go 1.20+, make, golangci-lint, yamllint, markdownlint, oapi-codegen.
 
 ## Available Skills
 Skills are in `.claude/skills/`. Use trigger phrases to activate:
