@@ -39,16 +39,18 @@ requires_network: true
 
 ## Preconditions
  - [ ] CLI is configured and authenticated (see `configure` and `login` skills)
- - [ ] Infrastructure exists: region, site, SSH key (see `setup-infrastructure` skill — will be invoked if missing)
+
+### Additional preconditions when provisioning feature is enabled
+ - [ ] Infrastructure exists: region, site (see `setup-infrastructure` skill — will be invoked if missing)
  - [ ] At least one OS profile is available (`orch-cli list osprofile`)
+ - [ ] SSH key exists if remote access is needed (optional)
 
 ## Steps
 
 ### Single Host (direct flags)
 1. Check prerequisites exist:
-   - `orch-cli list site` (confirm target site exists)
-   - `orch-cli list osprofile` (confirm OS profile is available)
-   - If any are missing, invoke the `setup-infrastructure` skill.
+   - `orch-cli list site` (confirm target site exists — invoke `setup-infrastructure` if missing)
+   - `orch-cli list osprofile` (confirm OS profile is available — if none exist, inform the user; OS profiles are managed by the orchestrator and cannot be created via CLI)
 2. Dry-run to validate inputs (at least one of --serial or --uuid is required):
    - `orch-cli create host <HOSTNAME> --serial <SERIAL> --os-profile <PROFILE> --site <SITE_ID> --dry-run`
 3. Create the host:
@@ -59,10 +61,9 @@ requires_network: true
 
 ### Bulk (CSV import)
 1. Check prerequisites exist:
-   - `orch-cli list site` (confirm target site exists)
-   - `orch-cli list osprofile` (confirm OS profile is available)
-   - `orch-cli list sshkey` (confirm SSH key exists if needed)
-   - If any are missing, invoke the `setup-infrastructure` skill.
+   - `orch-cli list site` (confirm target site exists — invoke `setup-infrastructure` if missing)
+   - `orch-cli list osprofile` (confirm OS profile is available — if none exist, inform the user; OS profiles are managed by the orchestrator)
+   - `orch-cli list sshkey` (confirm SSH key exists if remote access is needed — invoke `setup-infrastructure` if missing)
 2. Generate a CSV template (if user doesn't have one):
    - `orch-cli create host --generate-csv=hosts.csv`
 3. Validate the CSV with a dry run:

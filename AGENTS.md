@@ -5,7 +5,8 @@ SPDX-License-Identifier: Apache-2.0
 
 # orch-cli - Agent Context File
 
-> CLI tool for managing edge infrastructure and orchestrator resources (hosts, clusters, sites, etc.) via REST APIs and Keycloak authentication.
+> CLI tool for managing edge infrastructure and orchestrator resources
+> (hosts, clusters, sites, etc.) via REST APIs and Keycloak authentication.
 
 ## Platform Overview
 
@@ -15,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0
 ## Component Map
 
 | Component | Purpose |
-|---|---|
+| --- | --- |
 | `cmd/orch-cli/main.go` | Main CLI entrypoint |
 | `internal/cli/` | All CLI command implementations (login, host, cluster, etc.) |
 | `pkg/rest/` | Auto-generated REST API clients |
@@ -43,6 +44,7 @@ Prerequisites: Go 1.26+, make, golangci-lint, yamllint, markdownlint, oapi-codeg
 ## Available Skills
 
 Skills are in `.claude/skills/`. Use trigger phrases to activate:
+
 - `build`: Build and install the CLI binary.
 - `configure`: Set up the CLI to point at an orchestrator URL and project.
 - `login`: Authenticate the CLI against an orchestrator instance.
@@ -55,6 +57,7 @@ Skills are in `.claude/skills/`. Use trigger phrases to activate:
 ## Skill Execution Order (MUST follow for all skills)
 
 Every skill execution follows this mandatory sequence:
+
 1. Collect required inputs
 2. Run all preconditions
 3. Execute build/deployment steps

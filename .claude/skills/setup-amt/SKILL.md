@@ -80,9 +80,14 @@ Intel AMT supports two provisioning control modes that determine the level of ma
 
 ### Bulk Provisioning (either mode)
 Bulk AMT provisioning is supported via CSV import:
-- `orch-cli set host --import-from-csv <FILE>` (CSV includes DesiredAmtState and ControlMode columns)
+
+1. Dry-run to validate:
+   - `orch-cli set host --import-from-csv <FILE> --dry-run`
+2. Execute:
+   - `orch-cli set host --import-from-csv <FILE>`
 
 CSV example:
+
 ```
 Name,ResourceID,DesiredAmtState,ControlMode
 host-lab-01,host-1234abcd,provisioned,admin

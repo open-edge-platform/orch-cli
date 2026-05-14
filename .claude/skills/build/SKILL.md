@@ -8,7 +8,7 @@ skill_id: build
 component: cli
 estimated_time: 2 minutes
 requires_sudo: false
-requires_network: false
+requires_network: true
 
 ## Trigger Phrases
  - build the cli
