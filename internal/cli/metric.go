@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -17,7 +16,7 @@ import (
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/format"
-	promapi "github.com/prometheus/client_golang/api"
+	promrest "github.com/open-edge-platform/cli/pkg/rest/prometheus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -35,11 +34,8 @@ const (
 	endTimeFlag         = "end-time"
 	timestampFlag       = "timestamp"
 
-	defaultHostnameLabel         = "host"
-	defaultMetricsTimeout        = 30 * time.Second
-	prometheusQueryAPIPath       = "/api/v1/query"
-	prometheusQueryRangeAPIPath  = "/api/v1/query_range"
-	prometheusLabelValuesAPIPath = "/api/v1/label/__name__/values"
+	defaultHostnameLabel  = "host"
+	defaultMetricsTimeout = 30 * time.Second
 
 	DEFAULT_LIST_METRICS_FORMAT    = "table{{.Number}}\t{{str .Metric}}"
 	METRICS_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_METRICS_OUTPUT_TEMPLATE"
@@ -70,27 +66,27 @@ orch-cli list metrics --filter node_cpu
 const getMetricExamples = `# Configure metrics endpoint (once)
 orch-cli config set metrics-endpoint http://<mimir-endpoint>/prometheus
 # Query metric for a host in the current project (org-id auto-derived)
-orch-cli get metric mem_used_percent --hostname host-fd7108f7
+orch-cli get metric metric_example --hostname host-fd7108f7
 # Query metric for a host in another project (org-id auto-derived)
-orch-cli get metric mem_used_percent --hostname host-fd7108f7 --project myproject
+orch-cli get metric metric_example --hostname host-fd7108f7 --project myproject
 # Query with explicit org-id
-orch-cli get metric mem_used_percent --hostname host-fd7108f7 --org-id 698fde6a-b721-447a-a7c2-7187d64393c1
+orch-cli get metric metric_example --hostname host-fd7108f7 --org-id 698fde6a-b721-447a-a7c2-7187d64393c1
 # Query using a custom hostname label
 orch-cli get metric up --hostname edge-node-01 --hostname-label instance --project myproject
 # Query average metric over a time range (Unix timestamps)
-orch-cli get metric mem_used_percent --hostname host-fd7108f7 --average --start-time 1704067200 --end-time 1704153600
+orch-cli get metric metric_example --hostname host-fd7108f7 --average --start-time 1704067200 --end-time 1704153600
 # Query average metric over the last hour ending now
-orch-cli get metric mem_used_percent --hostname host-fd7108f7 --average --duration 3600
+orch-cli get metric metric_example --hostname host-fd7108f7 --average --duration 3600
 # Query sum of metric over a specific time range
-orch-cli get metric mem_used_percent --hostname host-fd7108f7 --sum --start-time 1704067200 --end-time 1704153600
+orch-cli get metric metric_example --hostname host-fd7108f7 --sum --start-time 1704067200 --end-time 1704153600
 # Query sum of metric over the last hour ending now
-orch-cli get metric mem_used_percent --hostname host-fd7108f7 --sum --duration 3600
+orch-cli get metric metric_example --hostname host-fd7108f7 --sum --duration 3600
 # Query metric range over the last hour ending now
-orch-cli get metric mem_used_percent --hostname host-fd7108f7 --range --duration 3600
+orch-cli get metric metric_example --hostname host-fd7108f7 --range --duration 3600
 # Query metric range between two timestamps
-orch-cli get metric mem_used_percent --hostname host-fd7108f7 --range --start-time 1704067200 --end-time 1704153600
+orch-cli get metric metric_example --hostname host-fd7108f7 --range --start-time 1704067200 --end-time 1704153600
 # Query metric at a specific timestamp
-orch-cli get metric mem_used_percent --hostname host-fd7108f7 --timestamp 1704153600
+orch-cli get metric metric_example --hostname host-fd7108f7 --timestamp 1704153600
 `
 
 var metricNamePattern = regexp.MustCompile(`^[a-zA-Z_:][a-zA-Z0-9_:]*$`)
@@ -133,8 +129,6 @@ type metricRangeRow struct {
 	Timestamp *string `json:"timestamp"`
 	Value     *string `json:"value"`
 }
-
-var PrometheusClientFactory = newPrometheusClient
 
 func getListMetricNamesCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -206,7 +200,7 @@ func runListMetricNamesCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	body, err := executePrometheusGET(ctx, client, prometheusLabelValuesAPIPath, argID)
+	body, err := promrest.ExecuteGET(ctx, client, promrest.ListMetricsAPIPath, argID)
 	if err != nil {
 		return err
 	}
@@ -548,7 +542,7 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		body, err := executePrometheusRangeQuery(ctx, client, query, startTime, endTime, argID)
+		body, err := promrest.ExecuteRangeQuery(ctx, client, query, startTime, endTime, argID, defaultMetricsTimeout)
 		if err != nil {
 			return err
 		}
@@ -571,7 +565,7 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		body, err := executePrometheusQueryAt(ctx, client, query, endTime, argID)
+		body, err := promrest.ExecuteQueryAt(ctx, client, query, endTime, argID, defaultMetricsTimeout)
 		if err != nil {
 			return err
 		}
@@ -595,7 +589,7 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		body, err := executePrometheusQueryAt(ctx, client, query, endTime, argID)
+		body, err := promrest.ExecuteQueryAt(ctx, client, query, endTime, argID, defaultMetricsTimeout)
 		if err != nil {
 			return err
 		}
@@ -620,7 +614,7 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	body, err := executePrometheusQueryAt(ctx, client, query, evalTime, argID)
+	body, err := promrest.ExecuteQueryAt(ctx, client, query, evalTime, argID, defaultMetricsTimeout)
 	if err != nil {
 		return err
 	}
@@ -819,30 +813,6 @@ func buildSumMetricQuery(metricName string, hostnameLabel string, hostname strin
 	return fmt.Sprintf(`sum_over_time(%s{%s=%q}[%ds])`, metricName, hostnameLabel, hostname, durationSec), nil
 }
 
-func newPrometheusClient(cmd *cobra.Command) (promapi.Client, error) {
-	endpoint, err := getMetricsEndpoint(cmd)
-	if err != nil {
-		return nil, err
-	}
-	if strings.TrimSpace(endpoint) == "" {
-		return nil, fmt.Errorf("metrics endpoint not configured. Set --%s or run 'orch-cli config set %s <url>'", metricsEndpointFlag, metricsEndpointFlag)
-	}
-
-	roundTripper := metricsAuthRoundTripper{base: promapi.DefaultRoundTripper}
-	client, err := promapi.NewClient(promapi.Config{
-		Address: endpoint,
-		Client: &http.Client{
-			Timeout:   defaultMetricsTimeout,
-			Transport: roundTripper,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
-
 func configuredMetricsEndpoint() string {
 	return strings.TrimSpace(viper.GetString(metricsEndpointFlag))
 }
@@ -857,7 +827,54 @@ func getMetricsEndpoint(cmd *cobra.Command) (string, error) {
 		return endpoint, nil
 	}
 
-	return configuredMetricsEndpoint(), nil
+	endpoint = configuredMetricsEndpoint()
+	if endpoint != "" {
+		return endpoint, nil
+	}
+
+	apiEp, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return "", err
+	}
+	apiEp = strings.TrimSpace(apiEp)
+	if apiEp == "" {
+		apiEp = strings.TrimSpace(viper.GetString(apiEndpoint))
+	}
+	if apiEp == "" {
+		return "", nil
+	}
+
+	derivedMetricsEndpoint, err := deriveMetricsEndpointFromAPIEndpoint(apiEp)
+	if err != nil {
+		return "", fmt.Errorf(
+			"failed to determine metrics endpoint from api endpoint %q: %w. Set --%s or run 'orch-cli config set %s <url>'",
+			apiEp,
+			err,
+			metricsEndpointFlag,
+			metricsEndpointFlag,
+		)
+	}
+
+	fmt.Printf("Determined metrics endpoint from api endpoint: %s\n", derivedMetricsEndpoint)
+	return derivedMetricsEndpoint, nil
+}
+
+func deriveMetricsEndpointFromAPIEndpoint(apiEp string) (string, error) {
+	u, err := url.Parse(apiEp)
+	if err != nil {
+		return "", err
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return "", fmt.Errorf("invalid api endpoint %q", apiEp)
+	}
+
+	hostname := u.Hostname()
+	parts := strings.SplitN(hostname, ".", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("failed to determine metrics endpoint from api endpoint %q", apiEp)
+	}
+
+	return fmt.Sprintf("%s://metrics-node_cli.%s/prometheus", u.Scheme, parts[1]), nil
 }
 
 // resolveOrgID returns the tenant/project UID for Mimir queries
@@ -913,105 +930,4 @@ func getProjectUID(cmd *cobra.Command, projectName string) (string, error) {
 	}
 
 	return *resp.JSON200.Status.ProjectStatus.UID, nil
-}
-
-func executePrometheusQueryAt(ctx context.Context, client promapi.Client, query string, evalTime int64, orgID string) ([]byte, error) {
-	values := url.Values{}
-	values.Set("query", query)
-	values.Set("timeout", defaultMetricsTimeout.String())
-	if evalTime > 0 {
-		values.Set("time", fmt.Sprintf("%d", evalTime))
-	}
-
-	u := client.URL(prometheusQueryAPIPath, nil)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(values.Encode()))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if orgID != "" {
-		req.Header.Set("X-Scope-OrgID", orgID)
-	}
-	resp, body, err := client.Do(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("prometheus query failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
-	}
-
-	return body, nil
-}
-
-func executePrometheusRangeQuery(ctx context.Context, client promapi.Client, query string, startTime int64, endTime int64, orgID string) ([]byte, error) {
-	rangeSec := endTime - startTime
-	if rangeSec < 1 {
-		return nil, fmt.Errorf("time range must be at least 1 second")
-	}
-
-	stepSec := rangeSec / 100
-	if stepSec < 1 {
-		stepSec = 1
-	}
-
-	values := url.Values{}
-	values.Set("query", query)
-	values.Set("start", fmt.Sprintf("%d", startTime))
-	values.Set("end", fmt.Sprintf("%d", endTime))
-	values.Set("step", fmt.Sprintf("%d", stepSec))
-	values.Set("timeout", defaultMetricsTimeout.String())
-
-	u := client.URL(prometheusQueryRangeAPIPath, nil)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(values.Encode()))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if orgID != "" {
-		req.Header.Set("X-Scope-OrgID", orgID)
-	}
-	resp, body, err := client.Do(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("prometheus range query failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
-	}
-
-	return body, nil
-}
-
-func executePrometheusGET(ctx context.Context, client promapi.Client, path string, orgID string) ([]byte, error) {
-	u := client.URL(path, nil)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/json")
-	if orgID != "" {
-		req.Header.Set("X-Scope-OrgID", orgID)
-	}
-
-	resp, body, err := client.Do(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("prometheus request failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
-	}
-	return body, nil
-}
-
-type metricsAuthRoundTripper struct {
-	base http.RoundTripper
-}
-
-func (rt metricsAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	clone := req.Clone(req.Context())
-	if err := auth.AddAuthHeader(clone.Context(), clone); err != nil {
-		return nil, err
-	}
-	return rt.base.RoundTrip(clone)
 }

@@ -27,6 +27,7 @@ import (
 	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
+	promapi "github.com/prometheus/client_golang/api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -90,6 +91,46 @@ var OrchestratorFactory interfaces.OrchestratorFactoryFunc = func(cmd *cobra.Com
 
 var KeycloakAdminFactory interfaces.KeycloakAdminFactoryFunc = func(cmd *cobra.Command) (context.Context, kcapi.ClientInterface, string, error) {
 	return getKeycloakAdminServiceContext(cmd)
+}
+
+var PrometheusClientFactory interfaces.PrometheusFactoryFunc = func(cmd *cobra.Command) (promapi.Client, error) {
+	return newPrometheusClient(cmd)
+}
+
+func newPrometheusClient(cmd *cobra.Command) (promapi.Client, error) {
+	endpoint, err := getMetricsEndpoint(cmd)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(endpoint) == "" {
+		return nil, fmt.Errorf("metrics endpoint not configured. Set --%s or run 'orch-cli config set %s <url>'", metricsEndpointFlag, metricsEndpointFlag)
+	}
+
+	roundTripper := metricsAuthRoundTripper{base: promapi.DefaultRoundTripper}
+	client, err := promapi.NewClient(promapi.Config{
+		Address: endpoint,
+		Client: &http.Client{
+			Timeout:   defaultMetricsTimeout,
+			Transport: roundTripper,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+type metricsAuthRoundTripper struct {
+	base http.RoundTripper
+}
+
+func (rt metricsAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	clone := req.Clone(req.Context())
+	if err := auth.AddAuthHeader(clone.Context(), clone); err != nil {
+		return nil, err
+	}
+	return rt.base.RoundTrip(clone)
 }
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {

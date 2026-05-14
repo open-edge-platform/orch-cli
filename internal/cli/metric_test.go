@@ -4,13 +4,19 @@
 package cli
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strconv"
 	"testing"
 	"time"
+
+	promapi "github.com/prometheus/client_golang/api"
+	"github.com/spf13/cobra"
 )
 
 func (s *CLITestSuite) getMetric(metricName string, args commandArgs) (string, error) {
@@ -146,6 +152,56 @@ func (s *CLITestSuite) TestGetMetricNoResults() {
 	s.NotContains(output, "METRIC")
 }
 
+func (s *CLITestSuite) TestGetMetricDerivesEndpointFromAPIEndpoint() {
+	originalFactory := PrometheusClientFactory
+	s.T().Cleanup(func() {
+		PrometheusClientFactory = originalFactory
+	})
+
+	PrometheusClientFactory = func(cmd *cobra.Command) (promapi.Client, error) {
+		endpoint, err := getMetricsEndpoint(cmd)
+		s.NoError(err)
+		s.Equal("https://metrics-node_cli.kind.internal/prometheus", endpoint)
+
+		return &fakePrometheusClient{
+			responseBody: []byte(`{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"value":[1714478400,"42"]}]}}`),
+		}, nil
+	}
+
+	cmd := getRootCmd()
+	cmd.SetArgs([]string{
+		"get", "metric", "node_cpu_seconds_total",
+		"--project", "unit-test-project",
+		"--hostname", "edge-node-01",
+		"--org-id", "698fde6a-b721-447a-a7c2-7187d64393c1",
+		"--api-endpoint", "https://api.kind.internal/",
+		"--debug-headers",
+	})
+
+	stdout := new(bytes.Buffer)
+	stderr := new(bytes.Buffer)
+	cmd.SetOut(stdout)
+	cmd.SetErr(stderr)
+	err := cmd.Execute()
+	output := stderr.String() + stdout.String()
+	s.NoError(err)
+	s.Contains(output, "METRIC")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "42")
+}
+
+type fakePrometheusClient struct {
+	responseBody []byte
+}
+
+func (f *fakePrometheusClient) URL(ep string, _ map[string]string) *url.URL {
+	return &url.URL{Scheme: "https", Host: "metrics-node_cli.kind.internal", Path: ep}
+}
+
+func (f *fakePrometheusClient) Do(_ context.Context, _ *http.Request) (*http.Response, []byte, error) {
+	return &http.Response{StatusCode: http.StatusOK}, f.responseBody, nil
+}
+
 func TestBuildMetricQuery(t *testing.T) {
 	query, err := buildMetricQuery("up", "host", "edge-node-01")
 	if err != nil {
@@ -238,6 +294,55 @@ func TestParseTimestamp(t *testing.T) {
 	_, err = parseTimestamp("invalid")
 	if err == nil {
 		t.Fatal("expected error for invalid timestamp")
+	}
+}
+
+func TestDeriveMetricsEndpointFromAPIEndpoint(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+		wantErr  bool
+	}{
+		{
+			name:     "valid https endpoint",
+			input:    "https://api.kind.internal/",
+			expected: "https://metrics-node_cli.kind.internal/prometheus",
+		},
+		{
+			name:     "valid endpoint with port",
+			input:    "http://api.example.com:8443",
+			expected: "http://metrics-node_cli.example.com/prometheus",
+		},
+		{
+			name:    "invalid without scheme",
+			input:   "api.example.com",
+			wantErr: true,
+		},
+		{
+			name:    "invalid host without cluster suffix",
+			input:   "https://localhost/",
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := deriveMetricsEndpointFromAPIEndpoint(tc.input)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("expected error, got nil and endpoint %q", got)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got != tc.expected {
+				t.Fatalf("unexpected endpoint: got %q, want %q", got, tc.expected)
+			}
+		})
 	}
 }
 
