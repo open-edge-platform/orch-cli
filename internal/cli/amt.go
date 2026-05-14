@@ -110,7 +110,7 @@ func getDeleteAmtProfileCommand() *cobra.Command {
 func runListAmtProfileCommand(cmd *cobra.Command, _ []string) error {
 	writer, verbose := getOutputContext(cmd)
 	count := true
-	ctx, rpsClient, _, err := RpsFactory(cmd)
+	ctx, rpsClient, projectName, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func runListAmtProfileCommand(cmd *cobra.Command, _ []string) error {
 		Top:   top,
 		Skip:  skip,
 		Count: &count,
-	}, auth.AddAuthHeader)
+	}, auth.AddAuthHeader, rewriteRpsAmtPath(projectName))
 	if err != nil {
 		return processError(err)
 	}
@@ -216,7 +216,7 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 		return errors.New("domain suffix format must be provided with --domain-suffix flag and cannot be empty")
 	}
 
-	ctx, rpsClient, _, err := RpsFactory(cmd)
+	ctx, rpsClient, projectName, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 			ProvisioningCert:              cert,
 			ProvisioningCertPassword:      certpass,
 			ProvisioningCertStorageFormat: certformat,
-		}, auth.AddAuthHeader)
+		}, auth.AddAuthHeader, rewriteRpsAmtPath(projectName))
 	if err != nil {
 		return processError(err)
 	}
@@ -237,7 +237,7 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 
 func runGetAmtProfileCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
-	ctx, rpsClient, _, err := RpsFactory(cmd)
+	ctx, rpsClient, projectName, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func runGetAmtProfileCommand(cmd *cobra.Command, args []string) error {
 	name := args[0]
 
 	resp, err := rpsClient.GetDomainWithResponse(ctx,
-		name, auth.AddAuthHeader)
+		name, auth.AddAuthHeader, rewriteRpsAmtPath(projectName))
 	if err != nil {
 		return processError(err)
 	}
@@ -265,13 +265,13 @@ func runGetAmtProfileCommand(cmd *cobra.Command, args []string) error {
 func runDeleteAmtProfileCommand(cmd *cobra.Command, args []string) error {
 	name := args[0]
 
-	ctx, rpsClient, _, err := RpsFactory(cmd)
+	ctx, rpsClient, projectName, err := RpsFactory(cmd)
 	if err != nil {
 		return err
 	}
 
 	resp, err := rpsClient.RemoveDomainWithResponse(ctx,
-		name, auth.AddAuthHeader)
+		name, auth.AddAuthHeader, rewriteRpsAmtPath(projectName))
 	if err != nil {
 		return processError(err)
 	}
