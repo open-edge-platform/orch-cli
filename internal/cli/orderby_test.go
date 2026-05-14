@@ -527,7 +527,7 @@ func TestNormalizeOrderByWithAPIProbe_FinalProbeApi400Error(t *testing.T) {
 	// All individual fields probe as (true, nil) so getSupportedOrderByFields works,
 	// but the combined expression probe returns api400Error.
 	callNum := 0
-	probe := func(expr string) (bool, error) {
+	probe := func(_ string) (bool, error) {
 		callNum++
 		if callNum == 1 {
 			// First call is the full expression → api400Error
@@ -847,7 +847,7 @@ func TestNormalizeFilterWithAPIProbe_GetSupportedFilterFieldsError(t *testing.T)
 	// Main expression probe: api400Error. getSupportedFilterFields probe: non-api400 error.
 	// This covers the "herr != nil" branch on line 441.
 	callNum := 0
-	probe := func(expr string) (bool, error) {
+	probe := func(_ string) (bool, error) {
 		callNum++
 		if callNum == 1 {
 			// Full expression → api400Error
@@ -867,7 +867,7 @@ func TestNormalizeFilterWithAPIProbe_ProbeRejectedGetSupportedReturnsError(t *te
 	resetOrderByCache()
 	// Expression probe: (false, nil). getSupportedFilterFields probes: return error.
 	callNum := 0
-	probe := func(expr string) (bool, error) {
+	probe := func(_ string) (bool, error) {
 		callNum++
 		if callNum == 1 {
 			return false, nil // reject expression
