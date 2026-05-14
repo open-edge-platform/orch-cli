@@ -7,10 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
-	"time" // Add this import
+	"time"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/format"
@@ -23,8 +24,11 @@ const listScheduleExamples = `# List all schedule resources
 orch-cli list schedule --project some-project
 `
 
-const getScheduleExamples = `# Get detailed information about specific schedule resource using it's resource ID
-orch-cli get schedule repeatedsche-abcd1234 --project some-project`
+const getScheduleExamples = `# Get a schedule by resource ID
+orch-cli get schedule repeatedsche-abcd1234 --project some-project
+
+# Get a schedule by name
+orch-cli get schedule my-schedule --project some-project`
 
 const createScheduleExamples = `# Create a new repeated schedule, an osupdate , using days of week
 orch-cli create schedules my-schedule --timezone GMT --frequency-type repeated --maintenance-type osupdate --target site-532d1d07 --frequency weekly --start-time "10:10" --day-of-week "1-3,5" --months "2,4,7-8" --duration 3600
@@ -254,6 +258,62 @@ func findSchedule(singleSchedules []infra.SingleScheduleResource, repeatedSchedu
 		}
 	}
 	return infra.SingleScheduleResource{}, infra.RepeatedScheduleResource{}, errors.New("no schedule matches the given id")
+}
+
+// scheduleResourceIDPattern matches schedule resource IDs.
+// Known prefixes are "singlesche" and "repeatedsche", followed by a hyphen and 8 hex chars.
+var scheduleResourceIDPattern = regexp.MustCompile(`^(singlesche|repeatedsche)-[0-9a-f]{8}$`)
+
+func isScheduleResourceID(s string) bool {
+	return scheduleResourceIDPattern.MatchString(s)
+}
+
+// findScheduleByName searches all schedules by exact name match.
+// Returns an error if no match is found or if multiple schedules share the same name
+// (in which case the error lists the matches so the caller can retry with a resource ID).
+func findScheduleByName(singleSchedules []infra.SingleScheduleResource, repeatedSchedules []infra.RepeatedScheduleResource, name string) (infra.SingleScheduleResource, infra.RepeatedScheduleResource, error) {
+	type scheduleMatch struct {
+		single   *infra.SingleScheduleResource
+		repeated *infra.RepeatedScheduleResource
+	}
+
+	var matches []scheduleMatch
+	for i := range singleSchedules {
+		s := &singleSchedules[i]
+		if s.Name != nil && *s.Name == name {
+			cp := singleSchedules[i]
+			matches = append(matches, scheduleMatch{single: &cp})
+		}
+	}
+	for i := range repeatedSchedules {
+		r := &repeatedSchedules[i]
+		if r.Name != nil && *r.Name == name {
+			cp := repeatedSchedules[i]
+			matches = append(matches, scheduleMatch{repeated: &cp})
+		}
+	}
+
+	switch len(matches) {
+	case 0:
+		return infra.SingleScheduleResource{}, infra.RepeatedScheduleResource{}, fmt.Errorf("no schedule found with name %q", name)
+	case 1:
+		m := matches[0]
+		if m.single != nil {
+			return *m.single, infra.RepeatedScheduleResource{}, nil
+		}
+		return infra.SingleScheduleResource{}, *m.repeated, nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple schedules found with name %q; use a resource ID instead:\n", name)
+		for _, m := range matches {
+			if m.single != nil {
+				fmt.Fprintf(&sb, "  name: %s  resource-id: %s\n", derefString(m.single.Name), derefString(m.single.ResourceId))
+			} else {
+				fmt.Fprintf(&sb, "  name: %s  resource-id: %s\n", derefString(m.repeated.Name), derefString(m.repeated.ResourceId))
+			}
+		}
+		return infra.SingleScheduleResource{}, infra.RepeatedScheduleResource{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
 }
 
 // parseTargetResource parses a target string in format "type-resourceid" and returns appropriate target pointers
@@ -603,7 +663,7 @@ func convertMonthToCron(months string) (string, error) {
 
 func getGetScheduleCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "schedule <name> [flags]",
+		Use:     "schedule <name|resourceID> [flags]",
 		Short:   "Get a schedule configuration",
 		Example: getScheduleExamples,
 		Args:    cobra.ExactArgs(1),
@@ -695,7 +755,9 @@ func getDeleteScheduleCommand() *cobra.Command {
 	return cmd
 }
 
-// Gets specific schedule configuration by resource ID
+// Gets specific schedule configuration by resource ID or name.
+// If the argument matches the resource ID pattern (<prefix>-<8 hex chars>) it is looked up directly.
+// Otherwise all schedules are fetched and filtered by exact name match.
 func runGetScheduleCommand(cmd *cobra.Command, args []string) error {
 	timezone, _ := cmd.Flags().GetString("timezone")
 	loc := time.UTC
@@ -724,13 +786,18 @@ func runGetScheduleCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	id := args[0]
-
 	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving schedule"); err != nil {
 		return err
 	}
 
-	singleSchedule, repeatedSchedule, err := findSchedule(resp.JSON200.SingleSchedules, resp.JSON200.RepeatedSchedules, id)
+	query := args[0]
+	var singleSchedule infra.SingleScheduleResource
+	var repeatedSchedule infra.RepeatedScheduleResource
+	if isScheduleResourceID(query) {
+		singleSchedule, repeatedSchedule, err = findSchedule(resp.JSON200.SingleSchedules, resp.JSON200.RepeatedSchedules, query)
+	} else {
+		singleSchedule, repeatedSchedule, err = findScheduleByName(resp.JSON200.SingleSchedules, resp.JSON200.RepeatedSchedules, query)
+	}
 	if err != nil {
 		return err
 	}
