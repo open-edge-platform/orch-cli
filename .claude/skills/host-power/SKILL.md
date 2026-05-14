@@ -19,7 +19,7 @@ requires_network: true
  - bulk power
 
 ## Required Inputs
- - power action: on, off, or reset
+ - power action: on, off, reset, or power-cycle
  - target: host resource ID, OR filter/site/region for bulk operations
 
 ## Optional Inputs
@@ -35,17 +35,17 @@ requires_network: true
 
 ### Single Host
 1. Set power state:
-   - `orch-cli set host <HOST_ID> --power <on|off|reset>`
+   - `orch-cli set host <HOST_ID> --power <on|off|reset|power-cycle>`
 2. Optionally set power policy:
    - `orch-cli set host <HOST_ID> --power-policy <ordered|immediate>`
 
 ### Bulk via Filter
 1. Dry-run to see which hosts match:
-   - `orch-cli set host --filter "<EXPRESSION>" --power <on|off|reset> --dry-run`
-   - Or by site: `orch-cli set host --site <SITE_ID> --power <on|off|reset> --dry-run`
-   - Or by region: `orch-cli set host --region <REGION_ID> --power <on|off|reset> --dry-run`
+   - `orch-cli set host --filter "<EXPRESSION>" --power <on|off|reset|power-cycle> --dry-run`
+   - Or by site: `orch-cli set host --site <SITE_ID> --power <on|off|reset|power-cycle> --dry-run`
+   - Or by region: `orch-cli set host --region <REGION_ID> --power <on|off|reset|power-cycle> --dry-run`
 2. Execute:
-   - `orch-cli set host --filter "<EXPRESSION>" --power <on|off|reset>`
+   - `orch-cli set host --filter "<EXPRESSION>" --power <on|off|reset|power-cycle>`
 
 ### Bulk via CSV
 1. Generate a CSV template:

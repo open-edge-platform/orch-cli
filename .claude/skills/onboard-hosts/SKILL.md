@@ -18,7 +18,7 @@ requires_network: true
  - import hosts from csv
 
 ## Required Inputs
- - CSV file with host definitions, OR serial/UUID and OS profile for a single host
+ - CSV file with host definitions (can be a single row for one host)
  - site ID (target site for deployment)
 
 ## Optional Inputs

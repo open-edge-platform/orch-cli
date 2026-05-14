@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 skill_id: build
 component: cli
 estimated_time: 2 minutes
-requires_sudo: true
+requires_sudo: false
 requires_network: false
 
 ## Trigger Phrases

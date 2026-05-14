@@ -42,8 +42,9 @@ Skills are in `.claude/skills/`. Use trigger phrases to activate:
 - `configure`: Set up the CLI to point at an orchestrator URL and project.
 - `login`: Authenticate the CLI against an orchestrator instance.
 - `setup-infrastructure`: Create regions, sites, and SSH keys (prerequisite for onboarding).
+- `setup-amt`: Configure AMT profiles for out-of-band management (ACM/CCM).
 - `onboard-hosts`: Register and provision hosts via CSV import.
-- `host-power`: Power on/off/reset hosts individually or in bulk.
+- `host-power`: Power on/off/cycle/reset hosts individually or in bulk.
 - `user-management`: Create/delete users, set passwords, manage groups and realm roles.
 
 ## Skill Execution Order (MUST follow for all skills)
