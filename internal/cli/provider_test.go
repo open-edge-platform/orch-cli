@@ -171,6 +171,49 @@ func (s *CLITestSuite) TestProvider() {
 	_, err = s.deleteProvider(project, "nonexistent-provider", make(map[string]string))
 	s.EqualError(err, "operation cancelled by user")
 
+	// List providers with order-by and YAML output
+	SArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listProvider(project, SArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "name: provider")
+	s.Contains(listOrderedOutput, "resourceid: "+resourceID)
+	s.Contains(listOrderedOutput, "providerkind: PROVIDER_KIND_BAREMETAL")
+
+	// List providers with filter and YAML output
+	SArgs = map[string]string{
+		"filter":      "name=provider",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listProvider(project, SArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "name: provider")
+	s.Contains(listFilteredOutput, "resourceid: "+resourceID)
+	s.Contains(listFilteredOutput, "providerkind: PROVIDER_KIND_BAREMETAL")
+
+	// List providers with table output and order-by
+	SArgs = map[string]string{
+		"output-type": "table",
+		"order-by":    "name",
+	}
+	tableOutput, err := s.listProvider(project, SArgs)
+	s.NoError(err)
+
+	parsedTableOutput := mapListOutput(tableOutput)
+	expectedTableOutput := listCommandOutput{
+		{
+			"NAME":            name,
+			"RESOURCE ID":     resourceID,
+			"PROVIDER KIND":   kind,
+			"PROVIDER VENDOR": vendor,
+		},
+	}
+	s.compareListOutput(expectedTableOutput, parsedTableOutput)
+
 }
 
 func FuzzProvider(f *testing.F) {

@@ -11,7 +11,9 @@ import (
 	"text/tabwriter"
 
 	tenancymock "github.com/open-edge-platform/cli/internal/cli/mocks/tenancy"
+	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -167,6 +169,11 @@ func TestGetServiceContexts(t *testing.T) {
 	_, _, _, err = getDeploymentServiceContext(cmd)
 	assert.NoError(t, err)
 
+	// CatalogUtilities
+	//nolint:dogsled
+	_, _, _, err = getCatalogUtilitiesServiceContext(cmd)
+	assert.NoError(t, err)
+
 	// Tenancy
 	//nolint:dogsled
 	_, _, err = getTenancyServiceContext(cmd)
@@ -176,6 +183,46 @@ func TestGetServiceContexts(t *testing.T) {
 	//nolint:dogsled
 	_, _, err = getOrchestratorServiceContext(cmd)
 	assert.NoError(t, err)
+}
+
+func TestGetKeycloakAdminServiceContext(t *testing.T) {
+	t.Run("empty keycloak endpoint returns error", func(t *testing.T) {
+		viper.Set(auth.KeycloakEndpointField, "")
+		cmd := &cobra.Command{}
+		cmd.Flags().String("realm", "", "realm")
+		_, _, _, err := getKeycloakAdminServiceContext(cmd)
+		assert.EqualError(t, err, "keycloak endpoint not configured. Please login first")
+	})
+
+	t.Run("endpoint with realms suffix extracts realm and base URL", func(t *testing.T) {
+		viper.Set(auth.KeycloakEndpointField, "https://keycloak.example.com/realms/myrealm")
+		cmd := &cobra.Command{}
+		cmd.Flags().String("realm", "", "realm")
+		ctx, client, realm, err := getKeycloakAdminServiceContext(cmd)
+		assert.NoError(t, err)
+		assert.NotNil(t, ctx)
+		assert.NotNil(t, client)
+		assert.Equal(t, "myrealm", realm)
+	})
+
+	t.Run("realm flag overrides extracted realm", func(t *testing.T) {
+		viper.Set(auth.KeycloakEndpointField, "https://keycloak.example.com/realms/myrealm")
+		cmd := &cobra.Command{}
+		cmd.Flags().String("realm", "", "realm")
+		assert.NoError(t, cmd.Flags().Set("realm", "otherrealm"))
+		_, _, realm, err := getKeycloakAdminServiceContext(cmd)
+		assert.NoError(t, err)
+		assert.Equal(t, "otherrealm", realm)
+	})
+
+	t.Run("invalid realm character returns error", func(t *testing.T) {
+		viper.Set(auth.KeycloakEndpointField, "https://keycloak.example.com/realms/bad/realm")
+		cmd := &cobra.Command{}
+		cmd.Flags().String("realm", "", "realm")
+		_, _, _, err := getKeycloakAdminServiceContext(cmd)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid realm name")
+	})
 }
 
 func TestCheckResponseGRPC(t *testing.T) {

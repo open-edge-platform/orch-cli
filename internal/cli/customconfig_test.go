@@ -65,7 +65,8 @@ func (s *CLITestSuite) TestCustomConfig() {
 
 	//List customconfig
 
-	listOutput, err := s.listCustomConfig(project, make(map[string]string))
+	CArgs = map[string]string{}
+	listOutput, err := s.listCustomConfig(project, CArgs)
 	s.NoError(err)
 
 	parsedOutputList := mapListOutput(listOutput)
@@ -130,6 +131,40 @@ func (s *CLITestSuite) TestCustomConfig() {
 	//delete invalid cusotm config
 	_, err = s.deleteCustomConfig(project, "nonexistent-config", make(map[string]string))
 	s.EqualError(err, "no custom config matches the given name")
+
+	// List custom configs with order-by and YAML output
+	CArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listCustomConfig(project, CArgs)
+	s.NoError(err)
+
+	expectedYAMLOutput := linesCommandOutput{
+		"- config: |-",
+		"    #cloud-config",
+		"    write_files:",
+		"    - path: /tmp/testfile",
+		"      content: TEST",
+		"  description: haproxy configuration for web services",
+		"  name: haproxy-config",
+		"  resourceid: config-abc12345",
+		"  timestamps:",
+		"    createdat: 2025-01-15T10:30:00Z",
+		"    updatedat: 2025-01-15T10:30:00Z",
+	}
+	s.compareLinesOutput(expectedYAMLOutput, mapLinesOutput(listOrderedOutput))
+
+	// List custom configs with filter and YAML output
+	CArgs = map[string]string{
+		"filter":      "name=haproxy-config",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listCustomConfig(project, CArgs)
+	s.NoError(err)
+	s.compareLinesOutput(expectedYAMLOutput, mapLinesOutput(listFilteredOutput))
 
 }
 

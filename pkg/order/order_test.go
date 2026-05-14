@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type SortIncludedStruct struct {
@@ -346,6 +347,52 @@ func TestSortOnPointerStuct(t *testing.T) {
 
 func TestTrailingDot(t *testing.T) {
 	s, err := Parse("+Six.Seven.")
+	if err != nil {
+		t.Errorf("Unable to parse sort specification")
+	}
+	o, err := s.Process(testSetOne)
+	assert.EqualError(t, err, "dotted field name specified in filter did not resolve to a valid field")
+	if o != nil {
+		t.Errorf("expected no results, got some")
+	}
+}
+
+func TestSplitEmptyString(t *testing.T) {
+	st := split("")
+	assert.Equal(t, ASC, st.Op)
+	assert.Equal(t, "", st.Name)
+}
+
+func TestSplitGreaterThanPrefix(t *testing.T) {
+	st := split(">name")
+	assert.Equal(t, ASC, st.Op)
+	assert.Equal(t, "name", st.Name)
+}
+
+func TestSplitLessThanPrefix(t *testing.T) {
+	st := split("<name")
+	assert.Equal(t, DSC, st.Op)
+	assert.Equal(t, "name", st.Name)
+}
+
+func TestSortPointerSlice(t *testing.T) {
+	s, err := Parse("+One")
+	if err != nil {
+		t.Errorf("Unable to parse sort specification")
+	}
+	data := []*SortTestStruct{
+		{ID: 1, One: "b"},
+		{ID: 0, One: "a"},
+	}
+	result, err := s.Process(data)
+	require.NoError(t, err)
+	sorted := result.([]*SortTestStruct)
+	assert.Equal(t, 0, sorted[0].ID)
+	assert.Equal(t, 1, sorted[1].ID)
+}
+
+func TestDottedOnNonStructIntermediate(t *testing.T) {
+	s, err := Parse("+One.Sub.Nested")
 	if err != nil {
 		t.Errorf("Unable to parse sort specification")
 	}
