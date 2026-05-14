@@ -110,7 +110,7 @@ func TestGenerateOutput_NilData(t *testing.T) {
 	assert.Empty(t, buf.String())
 }
 
-func TestGenerateOutput_NilWriter(t *testing.T) {
+func TestGenerateOutput_NilWriter(_ *testing.T) {
 	// writer=nil should default to stdout — exercise the nil-writer branch
 	// without actually writing to stdout in a disruptive way; just ensure no panic.
 	result := &CommandResult{
