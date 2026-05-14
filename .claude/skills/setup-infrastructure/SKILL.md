@@ -20,7 +20,7 @@ requires_network: true
 ## Required Inputs
  - region name and type (country/state/county/region/city)
  - site name
- - SSH public key file path
+ - SSH key name and public key file path
 
 ## Optional Inputs
  - parent region (for sub-regions)
@@ -34,19 +34,21 @@ requires_network: true
 1. Create a region:
    - `orch-cli create region <NAME> --type <TYPE>`
    - If a sub-region: `orch-cli create region <NAME> --type <TYPE> --parent <PARENT_REGION_ID>`
-2. Create a site in the region:
+2. Get the region resource ID (create does not print it):
+   - `orch-cli list region`
+3. Create a site in the region:
    - `orch-cli create site <NAME> --region <REGION_ID>`
    - Optional: `--latitude <LAT> --longitude <LON>`
-3. Create an SSH key for remote access:
+4. Create an SSH key for remote access:
    - `orch-cli create sshkey <NAME> <PUBLIC_KEY_FILE>`
-4. Verify all resources were created:
+5. Verify all resources were created:
    - `orch-cli list region`
    - `orch-cli list site`
    - `orch-cli list sshkey`
 
 ## Behavior Notes
 - Region types are hierarchical: country > state > county > region > city.
-- Sites must belong to a region. Get the region resource ID from step 1 output or `orch-cli list region`.
+- Sites must belong to a region. Get the region resource ID from `orch-cli list region` (the create command does not print it).
 - SSH keys reference a public key file (e.g. `~/.ssh/id_rsa.pub`). The file must exist.
 - All resources are scoped to the currently configured project.
 

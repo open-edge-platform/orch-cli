@@ -49,10 +49,12 @@ Intel AMT supports two provisioning control modes that determine the level of ma
  - host resource ID
  - Only the control mode flag: `--control-mode client`
 
-## Preconditions
+## Preconditions (all modes)
  - [ ] CLI is configured and authenticated (see `configure` and `login` skills)
- - [ ] PFX certificate file exists on disk
  - [ ] OOB (Out-of-Band) feature is enabled on the orchestrator (`orch-cli list features`)
+
+## Preconditions (ACM only)
+ - [ ] PFX certificate file exists on disk
 
 ## Steps
 
@@ -62,8 +64,8 @@ Intel AMT supports two provisioning control modes that determine the level of ma
 2. Verify the certificate file exists:
    - Check the provided path is accessible
 3. Create the AMT profile:
-   - `orch-cli create amtprofile <NAME> --cert <PATH_TO_PFX> --cert-pass <PASSWORD> --cert-format <string|raw> --domain-suffix <DOMAIN>`
-   - If `--cert-pass` is omitted, the CLI will prompt interactively.
+   - `orch-cli create amtprofile <NAME> --cert <PATH_TO_PFX> --cert-format <string|raw> --domain-suffix <DOMAIN>`
+   - The CLI will prompt for the certificate password interactively. To provide it inline (caution: visible in shell history): add `--cert-pass <PASSWORD>`.
 4. Verify the profile was created:
    - `orch-cli list amtprofile`
    - `orch-cli get amtprofile <NAME>`

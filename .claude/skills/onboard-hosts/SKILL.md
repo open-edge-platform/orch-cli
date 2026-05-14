@@ -18,8 +18,15 @@ requires_network: true
  - import hosts from csv
 
 ## Required Inputs
- - CSV file with host definitions, OR hostname with --serial/--uuid flags for a single host
- - site ID (target site for deployment)
+
+### Bulk (CSV)
+ - CSV file with host definitions
+
+### Single Host (direct flags)
+ - hostname (positional argument)
+ - at least one of: --serial or --uuid
+ - --os-profile (required when provisioning feature is enabled)
+ - --site (required when provisioning feature is enabled)
 
 ## Optional Inputs
  - OS profile override (--os-profile)
@@ -42,10 +49,11 @@ requires_network: true
    - `orch-cli list site` (confirm target site exists)
    - `orch-cli list osprofile` (confirm OS profile is available)
    - If any are missing, invoke the `setup-infrastructure` skill.
-2. Dry-run to validate inputs:
-   - `orch-cli create host <HOSTNAME> --serial <SERIAL> --uuid <UUID> --os-profile <PROFILE> --site <SITE_ID> --dry-run`
+2. Dry-run to validate inputs (at least one of --serial or --uuid is required):
+   - `orch-cli create host <HOSTNAME> --serial <SERIAL> --os-profile <PROFILE> --site <SITE_ID> --dry-run`
 3. Create the host:
-   - `orch-cli create host <HOSTNAME> --serial <SERIAL> --uuid <UUID> --os-profile <PROFILE> --site <SITE_ID>`
+   - `orch-cli create host <HOSTNAME> --serial <SERIAL> --os-profile <PROFILE> --site <SITE_ID>`
+   - Or with UUID: `orch-cli create host <HOSTNAME> --uuid <UUID> --os-profile <PROFILE> --site <SITE_ID>`
 4. Verify:
    - `orch-cli list host`
 
