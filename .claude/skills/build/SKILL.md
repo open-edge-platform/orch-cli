@@ -24,7 +24,7 @@ requires_network: false
  - install path (defaults to /usr/local/bin)
 
 ## Preconditions
- - [ ] Go 1.20+ is installed (`go version`)
+ - [ ] Go 1.26+ is installed (`go version`)
  - [ ] make is installed (`make --version`)
 
 ## Steps

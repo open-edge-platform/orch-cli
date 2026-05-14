@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 > CLI tool for managing edge infrastructure and orchestrator resources (hosts, clusters, sites, etc.) via REST APIs and Keycloak authentication.
 
 ## Platform Overview
-- Go (>=1.20) CLI application, monorepo structure.
+- Go (>=1.26) CLI application, monorepo structure.
 - Cobra (CLI), Viper (config), Keycloak (OIDC), REST API clients (OpenAPI-generated).
 
 ## Component Map
@@ -34,7 +34,7 @@ make clean        # remove build artifacts
 make license      # check license compliance
 ```
 
-Prerequisites: Go 1.20+, make, golangci-lint, yamllint, markdownlint, oapi-codegen.
+Prerequisites: Go 1.26+, make, golangci-lint, yamllint, markdownlint, oapi-codegen.
 
 ## Available Skills
 Skills are in `.claude/skills/`. Use trigger phrases to activate:
