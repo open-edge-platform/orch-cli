@@ -163,7 +163,7 @@ func getListCommand() *cobra.Command {
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListGroupsCommand(), MultitenancyFeature)
 
 	// Observability related commands
-	addCommandIfFeatureEnabled(catalogListRootCmd, getListMetricNamesCommand(), ObservabilityFeature)
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListMetricNamesCommand(), EdgeNodeObservabilityFeature)
 
 	return catalogListRootCmd
 }
@@ -197,7 +197,7 @@ func getGetCommand() *cobra.Command {
 
 	// Cluster related commands
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetClusterCommand(), ClusterOrchFeature)
-	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetMetricCommand(), ObservabilityFeature)
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetMetricCommand(), EdgeNodeObservabilityFeature)
 
 	// Day2 related commands
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetScheduleCommand(), Day2Feature)

@@ -401,6 +401,32 @@ func TestBuildSumMetricQuery(t *testing.T) {
 	}
 }
 
+func TestBuildIncreaseMetricQuery(t *testing.T) {
+	query, err := buildIncreaseMetricQuery("node_cpu", "hostname", "host-01", 3600)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if query != `increase(node_cpu{hostname="host-01"}[3600s])` {
+		t.Fatalf("unexpected query: %s", query)
+	}
+
+	if _, err := buildIncreaseMetricQuery("invalid!", "host", "edge-01", 3600); err == nil {
+		t.Fatal("expected invalid metric name error")
+	}
+
+	if _, err := buildIncreaseMetricQuery("node_cpu", "invalid!", "host-01", 3600); err == nil {
+		t.Fatal("expected invalid label name error")
+	}
+
+	if _, err := buildIncreaseMetricQuery("node_cpu", "host", "   ", 3600); err == nil {
+		t.Fatal("expected empty hostname error")
+	}
+
+	if _, err := buildIncreaseMetricQuery("node_cpu", "host", "host-01", 0); err == nil {
+		t.Fatal("expected invalid duration error")
+	}
+}
+
 func TestResolveSumWindow(t *testing.T) {
 	now := time.Unix(1704153600, 0)
 
@@ -468,6 +494,41 @@ func TestResolveRangeWindow(t *testing.T) {
 	_, _, err = resolveRangeWindow("", "", 0, now)
 	if err == nil {
 		t.Fatal("expected missing range window params error")
+	}
+}
+
+func TestResolveIncreaseWindow(t *testing.T) {
+	now := time.Unix(1704153600, 0)
+
+	start, end, err := resolveIncreaseWindow("1704150000", "1704153600", 0, now)
+	if err != nil {
+		t.Fatalf("unexpected error for explicit range: %v", err)
+	}
+	if start != 1704150000 || end != 1704153600 {
+		t.Fatalf("unexpected explicit range start/end: %d/%d", start, end)
+	}
+
+	start, end, err = resolveIncreaseWindow("", "", 3600, now)
+	if err != nil {
+		t.Fatalf("unexpected error for duration range: %v", err)
+	}
+	if start != 1704150000 || end != 1704153600 {
+		t.Fatalf("unexpected duration range start/end: %d/%d", start, end)
+	}
+
+	_, _, err = resolveIncreaseWindow("1704150000", "1704153600", 3600, now)
+	if err == nil {
+		t.Fatal("expected conflict error when using duration with explicit range")
+	}
+
+	_, _, err = resolveIncreaseWindow("1704150000", "", 0, now)
+	if err == nil {
+		t.Fatal("expected missing end-time error")
+	}
+
+	_, _, err = resolveIncreaseWindow("", "", 0, now)
+	if err == nil {
+		t.Fatal("expected missing increase window params error")
 	}
 }
 
@@ -695,7 +756,20 @@ func (s *CLITestSuite) TestGetMetricSumAndAverageConflict() {
 		endTimeFlag:        "1704153600",
 	})
 	s.Error(err)
-	s.Contains(err.Error(), "cannot be used together")
+	s.Contains(err.Error(), "mutually exclusive")
+	s.Empty(output)
+}
+
+func (s *CLITestSuite) TestGetMetricSumAndIncreaseConflict() {
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": "http://localhost:9090",
+		hostnameFlag:       "edge-node-01",
+		sumFlag:            "true",
+		increaseFlag:       "true",
+		durationFlag:       "3600",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "mutually exclusive")
 	s.Empty(output)
 }
 
@@ -734,7 +808,65 @@ func (s *CLITestSuite) TestGetMetricDurationRequiresAggregationMode() {
 		durationFlag:       "3600",
 	})
 	s.Error(err)
-	s.Contains(err.Error(), "--duration requires either --sum, --average, or --range")
+	s.Contains(err.Error(), "--duration requires either --sum, --average, --increase, or --range")
+	s.Empty(output)
+}
+
+func (s *CLITestSuite) TestGetMetricWithIncreaseDuration() {
+	tokenEnvWasSet := false
+	previousToken := os.Getenv("MT_GW_TOKEN")
+	if previousToken != "" {
+		tokenEnvWasSet = true
+	}
+	s.T().Cleanup(func() {
+		if tokenEnvWasSet {
+			s.NoError(os.Setenv("MT_GW_TOKEN", previousToken))
+			return
+		}
+		os.Unsetenv("MT_GW_TOKEN")
+	})
+	s.NoError(os.Setenv("MT_GW_TOKEN", "increase-duration-metric-test-token"))
+
+	before := time.Now().Unix()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.Equal(http.MethodPost, r.Method)
+		s.Equal("/prometheus/api/v1/query", r.URL.Path)
+		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
+		s.Equal("Bearer increase-duration-metric-test-token", r.Header.Get("Authorization"))
+		s.NoError(r.ParseForm())
+		s.Equal(`increase(node_cpu_seconds_total{host="edge-node-01"}[3600s])`, r.Form.Get("query"))
+
+		evalTime, parseErr := strconv.ParseInt(r.Form.Get("time"), 10, 64)
+		s.NoError(parseErr)
+		now := time.Now().Unix()
+		s.True(evalTime >= before && evalTime <= now+1)
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"values":[[1714474800,"12"],[1714478400,"12"]]}]}}`))
+	}))
+	defer server.Close()
+
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": server.URL + "/prometheus",
+		hostnameFlag:       "edge-node-01",
+		increaseFlag:       "true",
+		durationFlag:       "3600",
+	})
+	s.NoError(err)
+	s.Contains(output, "METRIC")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "edge-node-01")
+	s.Contains(output, "12")
+}
+
+func (s *CLITestSuite) TestGetMetricIncreaseRequiresTimeRange() {
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		"metrics-endpoint": "http://localhost:9090",
+		hostnameFlag:       "edge-node-01",
+		increaseFlag:       "true",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "--increase requires either --duration or both --start-time and --end-time")
 	s.Empty(output)
 }
 
@@ -853,7 +985,7 @@ func (s *CLITestSuite) TestGetMetricRangeAndSumConflict() {
 		durationFlag:       "3600",
 	})
 	s.Error(err)
-	s.Contains(err.Error(), "--range cannot be used with --sum or --average")
+	s.Contains(err.Error(), "--range cannot be used with --sum, --average, or --increase")
 	s.Empty(output)
 }
 
@@ -865,7 +997,7 @@ func (s *CLITestSuite) TestGetMetricTimestampConflictsWithAggregation() {
 		timestampFlag:      "1704153600",
 	})
 	s.Error(err)
-	s.Contains(err.Error(), "--timestamp cannot be used with --sum, --average, or --range")
+	s.Contains(err.Error(), "--timestamp cannot be used with --sum, --average, --increase, or --range")
 	s.Empty(output)
 }
 

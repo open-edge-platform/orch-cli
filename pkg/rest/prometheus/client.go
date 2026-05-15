@@ -118,7 +118,7 @@ func ExecuteGET(ctx context.Context, client promapi.Client, path string, orgID s
 		return nil, err
 	}
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("prometheus request failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		return nil, fmt.Errorf("prometheus GET request failed with status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	return body, nil
 }

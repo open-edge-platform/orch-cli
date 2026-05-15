@@ -35,17 +35,18 @@ import (
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
-	EIMFeature           = "orchestrator.features.edge-infrastructure-manager.installed"
-	OobFeature           = "orchestrator.features.edge-infrastructure-manager.oob.installed"
-	OnboardingFeature    = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
-	ProvisioningFeature  = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"
-	Day2Feature          = "orchestrator.features.edge-infrastructure-manager.day2.installed"
-	OxmFeature           = "orchestrator.features.edge-infrastructure-manager.oxm-profile.installed"
-	AppOrchFeature       = "orchestrator.features.application-orchestration.installed"
-	ClusterOrchFeature   = "orchestrator.features.cluster-orchestration.installed"
-	ObservabilityFeature = "orchestrator.features.orchestrator-observability.installed"
-	MultitenancyFeature  = "orchestrator.features.multitenancy.installed"
-	OrchVersion          = "orchestrator.version"
+	EIMFeature                       = "orchestrator.features.edge-infrastructure-manager.installed"
+	OobFeature                       = "orchestrator.features.edge-infrastructure-manager.oob.installed"
+	OnboardingFeature                = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
+	ProvisioningFeature              = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"
+	Day2Feature                      = "orchestrator.features.edge-infrastructure-manager.day2.installed"
+	OxmFeature                       = "orchestrator.features.edge-infrastructure-manager.oxm-profile.installed"
+	AppOrchFeature                   = "orchestrator.features.application-orchestration.installed"
+	ClusterOrchFeature               = "orchestrator.features.cluster-orchestration.installed"
+	OrchestratorObservabilityFeature = "orchestrator.features.orchestrator-observability.installed"
+	EdgeNodeObservabilityFeature     = "orchestrator.features.edgenode-observability.installed"
+	MultitenancyFeature              = "orchestrator.features.multitenancy.installed"
+	OrchVersion                      = "orchestrator.version"
 )
 
 const (
@@ -871,8 +872,10 @@ func isFeatureEnabled(feature string) bool {
 		return viper.GetBool(Day2Feature)
 	case OxmFeature:
 		return viper.GetBool(OxmFeature)
-	case ObservabilityFeature:
-		return viper.GetBool(ObservabilityFeature)
+	case OrchestratorObservabilityFeature:
+		return viper.GetBool(OrchestratorObservabilityFeature)
+	case EdgeNodeObservabilityFeature:
+		return viper.GetBool(EdgeNodeObservabilityFeature)
 	case AppOrchFeature:
 		return viper.GetBool(AppOrchFeature)
 	case ClusterOrchFeature:

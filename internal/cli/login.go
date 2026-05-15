@@ -237,7 +237,7 @@ func performLogout() error {
 		viper.Set(Day2Feature, false)
 		viper.Set(AppOrchFeature, false)
 		viper.Set(ClusterOrchFeature, false)
-		viper.Set(ObservabilityFeature, false)
+		viper.Set(OrchestratorObservabilityFeature, false)
 		viper.Set(MultitenancyFeature, false)
 		viper.Set(EIMFeature, false)
 
@@ -280,7 +280,8 @@ func setDefaultFeatureFlags() error {
 	viper.Set(Day2Feature, true)
 	viper.Set(AppOrchFeature, true)
 	viper.Set(ClusterOrchFeature, true)
-	viper.Set(ObservabilityFeature, true)
+	viper.Set(OrchestratorObservabilityFeature, true)
+	viper.Set(EdgeNodeObservabilityFeature, true)
 	viper.Set(MultitenancyFeature, true)
 	viper.Set(EIMFeature, true)
 	if err := viper.WriteConfig(); err != nil {
