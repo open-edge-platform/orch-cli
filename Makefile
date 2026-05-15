@@ -200,8 +200,8 @@ license: reuse-tool
 artifact-publish:
 	@echo "TAR orch-cli."
 	FILES := src ./binaries/build/_output/orch-cli
-
-	package: clean
+	
+	archive:
     	tar -czvf orch-cli-package.tar.gz $(FILES)
 
 	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
