@@ -11,10 +11,20 @@ path = [
     "**.png",
     "internal/cli/deployment-mock-rest_test.go",
     "internal/cli/testdata/**",
+    "internal/cli/static/favicon.ico",
+    "internal/cli/static/index.html",
+    "internal/cli/static/main-IM2YPGKV.js",
+    "internal/cli/static/styles-5INURTSO.css",
     "docs/cli/**",
     "pkg/rest/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2025 Intel Corporation"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "internal/cli/static/3rdpartylicenses.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 Intel Corporation"
+SPDX-License-Identifier = "LicenseRef-third-party-software"
 
