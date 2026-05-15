@@ -31,27 +31,27 @@ func CreateDeploymentMock(mctrl *gomock.Controller) interfaces.DeploymentFactory
 		}
 
 		// Mock GetDeployment
-		mockClient.EXPECT().DeploymentServiceGetDeploymentWithResponse(
+		mockClient.EXPECT().DeploymentV1DeploymentServiceGetDeploymentWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ string, _ ...deployment.RequestEditorFn) (*deployment.DeploymentServiceGetDeploymentResponse, error) {
-				summary := &deployment.Summary{
+			func(_ context.Context, _ string, _ string, _ ...deployment.RequestEditorFn) (*deployment.DeploymentV1DeploymentServiceGetDeploymentResponse, error) {
+				summary := &deployment.DeploymentV1Summary{
 					Down:    int32Ptr(1),
 					Running: int32Ptr(2),
 					Total:   int32Ptr(3),
 					Type:    stringPtr("apps"),
 					Unknown: int32Ptr(0),
 				}
-				return &deployment.DeploymentServiceGetDeploymentResponse{
+				return &deployment.DeploymentV1DeploymentServiceGetDeploymentResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &deployment.GetDeploymentResponse{
-						Deployment: deployment.Deployment{
+					JSON200: &deployment.DeploymentV1GetDeploymentResponse{
+						Deployment: deployment.DeploymentV1Deployment{
 
 							DeployId:    stringPtr("deployment-id"),
 							Name:        stringPtr("projectName"),
 							DisplayName: stringPtr("displayName"),
 							ProfileName: stringPtr("profileName"),
-							Status: &deployment.DeploymentStatus{
+							Status: &deployment.DeploymentV1DeploymentStatus{
 								State:   statusStatePtr("state"),
 								Message: stringPtr("message"),
 								Summary: summary,
@@ -64,26 +64,26 @@ func CreateDeploymentMock(mctrl *gomock.Controller) interfaces.DeploymentFactory
 		).AnyTimes()
 
 		// Mock CreateDeployment
-		mockClient.EXPECT().DeploymentServiceCreateDeploymentWithResponse(
+		mockClient.EXPECT().DeploymentV1DeploymentServiceCreateDeploymentWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ deployment.DeploymentServiceCreateDeploymentJSONRequestBody, _ ...deployment.RequestEditorFn) (*deployment.DeploymentServiceCreateDeploymentResponse, error) {
-				return &deployment.DeploymentServiceCreateDeploymentResponse{
+			func(_ context.Context, _ string, _ deployment.DeploymentV1DeploymentServiceCreateDeploymentJSONRequestBody, _ ...deployment.RequestEditorFn) (*deployment.DeploymentV1DeploymentServiceCreateDeploymentResponse, error) {
+				return &deployment.DeploymentV1DeploymentServiceCreateDeploymentResponse{
 					HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
-					JSON200: &deployment.CreateDeploymentResponse{
+					JSON200: &deployment.DeploymentV1CreateDeploymentResponse{
 						DeploymentId: "id",
 					},
 				}, nil
 			},
 		).AnyTimes()
 
-		mockClient.EXPECT().DeploymentServiceUpdateDeploymentWithResponse(
+		mockClient.EXPECT().DeploymentV1DeploymentServiceUpdateDeploymentWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ string, _ deployment.DeploymentServiceUpdateDeploymentJSONRequestBody, _ ...deployment.RequestEditorFn) (*deployment.DeploymentServiceUpdateDeploymentResponse, error) {
-				return &deployment.DeploymentServiceUpdateDeploymentResponse{
+			func(_ context.Context, _ string, _ string, _ deployment.DeploymentV1DeploymentServiceUpdateDeploymentJSONRequestBody, _ ...deployment.RequestEditorFn) (*deployment.DeploymentV1DeploymentServiceUpdateDeploymentResponse, error) {
+				return &deployment.DeploymentV1DeploymentServiceUpdateDeploymentResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200:      &deployment.UpdateDeploymentResponse{
+					JSON200:      &deployment.DeploymentV1UpdateDeploymentResponse{
 						// Add fields as needed for your tests
 					},
 				}, nil
@@ -91,47 +91,47 @@ func CreateDeploymentMock(mctrl *gomock.Controller) interfaces.DeploymentFactory
 		).AnyTimes()
 
 		// Mock DeleteDeployment
-		mockClient.EXPECT().DeploymentServiceDeleteDeploymentWithResponse(
+		mockClient.EXPECT().DeploymentV1DeploymentServiceDeleteDeploymentWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ string, _ *deployment.DeploymentServiceDeleteDeploymentParams, _ ...deployment.RequestEditorFn) (*deployment.DeploymentServiceDeleteDeploymentResponse, error) {
-				return &deployment.DeploymentServiceDeleteDeploymentResponse{
+			func(_ context.Context, _ string, _ string, _ *deployment.DeploymentV1DeploymentServiceDeleteDeploymentParams, _ ...deployment.RequestEditorFn) (*deployment.DeploymentV1DeploymentServiceDeleteDeploymentResponse, error) {
+				return &deployment.DeploymentV1DeploymentServiceDeleteDeploymentResponse{
 					HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
 				}, nil
 			},
 		).AnyTimes()
 
-		mockClient.EXPECT().DeploymentServiceListDeploymentsWithResponse(
+		mockClient.EXPECT().DeploymentV1DeploymentServiceListDeploymentsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, params *deployment.DeploymentServiceListDeploymentsParams, _ ...deployment.RequestEditorFn) (*deployment.DeploymentServiceListDeploymentsResponse, error) {
+			func(_ context.Context, _ string, params *deployment.DeploymentV1DeploymentServiceListDeploymentsParams, _ ...deployment.RequestEditorFn) (*deployment.DeploymentV1DeploymentServiceListDeploymentsResponse, error) {
 				// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
 				if params != nil && params.Offset != nil && *params.Offset > 0 {
-					return &deployment.DeploymentServiceListDeploymentsResponse{
+					return &deployment.DeploymentV1DeploymentServiceListDeploymentsResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-						JSON200: &deployment.ListDeploymentsResponse{
-							Deployments:   []deployment.Deployment{},
+						JSON200: &deployment.DeploymentV1ListDeploymentsResponse{
+							Deployments:   []deployment.DeploymentV1Deployment{},
 							TotalElements: 2,
 						},
 					}, nil
 				}
-				summary := &deployment.Summary{
+				summary := &deployment.DeploymentV1Summary{
 					Down:    int32Ptr(1),
 					Running: int32Ptr(2),
 					Total:   int32Ptr(3),
 					Type:    stringPtr("apps"),
 					Unknown: int32Ptr(0),
 				}
-				return &deployment.DeploymentServiceListDeploymentsResponse{
+				return &deployment.DeploymentV1DeploymentServiceListDeploymentsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-					JSON200: &deployment.ListDeploymentsResponse{
-						Deployments: []deployment.Deployment{
+					JSON200: &deployment.DeploymentV1ListDeploymentsResponse{
+						Deployments: []deployment.DeploymentV1Deployment{
 							{
 								DeployId:    stringPtr("deployment-id"),
 								Name:        stringPtr("projectName"),
 								DisplayName: stringPtr("displayName"),
 								ProfileName: stringPtr("profileName"),
-								Status: &deployment.DeploymentStatus{
+								Status: &deployment.DeploymentV1DeploymentStatus{
 									State:   statusStatePtr("state"),
 									Message: stringPtr("message"),
 									Summary: summary,
@@ -151,7 +151,7 @@ func CreateDeploymentMock(mctrl *gomock.Controller) interfaces.DeploymentFactory
 
 // Helper functions
 func int32Ptr(i int32) *int32 { return &i }
-func statusStatePtr(s string) *deployment.DeploymentStatusState {
-	v := deployment.DeploymentStatusState(s)
+func statusStatePtr(s string) *deployment.DeploymentV1State {
+	v := deployment.DeploymentV1State(s)
 	return &v
 }

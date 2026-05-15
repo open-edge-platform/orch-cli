@@ -135,7 +135,7 @@ func getDeploymentOutputFormat(cmd *cobra.Command, verbose bool) (string, error)
 	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_FORMAT, DEPLOYMENT_OUTPUT_TEMPLATE_ENVVAR)
 }
 
-func printDeployments(cmd *cobra.Command, writer *tabwriter.Writer, deployments *[]depapi.Deployment, orderBy *string, outputFilter *string, verbose bool) error {
+func printDeployments(cmd *cobra.Command, writer *tabwriter.Writer, deployments *[]depapi.DeploymentV1Deployment, orderBy *string, outputFilter *string, verbose bool) error {
 	outputType, _ := cmd.Flags().GetString("output-type")
 	outputFormat, err := getDeploymentOutputFormat(cmd, verbose)
 	if err != nil {
@@ -180,17 +180,17 @@ func getValidatedDeploymentOrderBy(
 
 	// For table format (default), use client-side sorting which supports any field in the model
 	if outputType == "table" {
-		return normalizeOrderByForClientSorting(raw, depapi.Deployment{})
+		return normalizeOrderByForClientSorting(raw, depapi.DeploymentV1Deployment{})
 	}
 
 	// For JSON/YAML, use API ordering (only API-supported fields)
-	return normalizeOrderByWithAPIProbe(raw, "deployments", depapi.Deployment{}, func(orderBy string) (bool, error) {
+	return normalizeOrderByWithAPIProbe(raw, "deployments", depapi.DeploymentV1Deployment{}, func(orderBy string) (bool, error) {
 		pageSize := int32(1)
 		offset := int32(0)
 		// Validate ordering in isolation. Reusing the caller's --filter here can turn
 		// filter errors into misleading "invalid --order-by field" errors.
-		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-			&depapi.DeploymentServiceListDeploymentsParams{
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{
 				OrderBy:  &orderBy,
 				Filter:   nil,
 				PageSize: &pageSize,
@@ -280,8 +280,8 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := deploymentClient.DeploymentServiceCreateDeploymentWithResponse(ctx, projectName,
-		depapi.DeploymentServiceCreateDeploymentJSONRequestBody{
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceCreateDeploymentWithResponse(ctx, projectName,
+		depapi.DeploymentV1DeploymentServiceCreateDeploymentJSONRequestBody{
 			DisplayName:    getFlag(cmd, "display-name"),
 			AppName:        appName,
 			AppVersion:     appVersion,
@@ -305,20 +305,20 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getOverrideValues(cmd *cobra.Command) ([]depapi.OverrideValues, error) {
+func getOverrideValues(cmd *cobra.Command) ([]depapi.DeploymentV1OverrideValues, error) {
 	namespaces, _ := cmd.Flags().GetStringToString("application-namespace")
 	sets, _ := cmd.Flags().GetStringToString("application-set")
 	return getOverrideValuesRaw(namespaces, sets)
 }
 
-func getOverrideValuesRaw(namespaces, sets map[string]string) ([]depapi.OverrideValues, error) {
-	overrides := make(map[string]depapi.OverrideValues, 0)
+func getOverrideValuesRaw(namespaces, sets map[string]string) ([]depapi.DeploymentV1OverrideValues, error) {
+	overrides := make(map[string]depapi.DeploymentV1OverrideValues, 0)
 
 	// First, accumulate any app target namespace settings in the format "<app-name>=<target-namespace>"
 	for app, namespace := range namespaces {
 		ns := namespace
-		values := make(map[string]interface{}, 0)
-		overrides[app] = depapi.OverrideValues{AppName: app, TargetNamespace: &ns, Values: &values}
+		values := make(depapi.GoogleProtobufStruct, 0)
+		overrides[app] = depapi.DeploymentV1OverrideValues{AppName: app, TargetNamespace: &ns, Values: &values}
 	}
 
 	// Next accumulate any app value overrides in format "<app-name>.<property-name>=<value>"
@@ -332,36 +332,48 @@ func getOverrideValuesRaw(namespaces, sets map[string]string) ([]depapi.Override
 
 		override, ok := overrides[app]
 		if !ok {
-			values := make(map[string]interface{}, 0)
-			override = depapi.OverrideValues{AppName: app, Values: &values}
+			values := make(depapi.GoogleProtobufStruct, 0)
+			override = depapi.DeploymentV1OverrideValues{AppName: app, Values: &values}
 		}
 		override.Values = addProperty(override.Values, app, prop, value)
 		overrides[app] = override
 	}
 
 	// Transform overrides map into array
-	overrideValues := make([]depapi.OverrideValues, 0)
+	overrideValues := make([]depapi.DeploymentV1OverrideValues, 0)
 	for _, override := range overrides {
 		overrideValues = append(overrideValues, override)
 	}
 	return overrideValues, nil
 }
 
-func addProperty(values *map[string]interface{}, app string, prop string, value string) *map[string]interface{} {
+func addProperty(values *depapi.GoogleProtobufStruct, _ string, prop string, value string) *depapi.GoogleProtobufStruct {
 	ovs := *values
+	segs := strings.SplitN(prop, ".", 2)
+	if _, ok := ovs[segs[0]]; !ok {
+		gv := depapi.GoogleProtobufValue{}
+		ovs[segs[0]] = &gv
+	}
+	if len(segs) == 1 {
+		(*ovs[segs[0]])[segs[0]] = parseValue(value)
+	} else {
+		addToProtobufValue((*map[string]interface{})(ovs[segs[0]]), segs[1], value)
+	}
+	return values
+}
+
+func addToProtobufValue(m *map[string]interface{}, prop string, value string) {
+	ovs := *m
 	segs := strings.SplitN(prop, ".", 2)
 	if len(segs) == 1 {
 		ovs[segs[0]] = parseValue(value)
-	} else if len(segs) > 1 {
-		gprops, ok := ovs[segs[0]]
-		if !ok {
-			newProps := make(map[string]interface{}, 0)
-			gprops = &newProps
+	} else {
+		if _, ok := ovs[segs[0]]; !ok {
+			newProps := make(map[string]interface{})
+			ovs[segs[0]] = &newProps
 		}
-		props := gprops.(*map[string]interface{})
-		ovs[segs[0]] = addProperty(props, app, segs[1], value)
+		addToProtobufValue(ovs[segs[0]].(*map[string]interface{}), segs[1], value)
 	}
-	return values
 }
 
 func parseValue(value string) interface{} {
@@ -377,7 +389,7 @@ func parseValue(value string) interface{} {
 	return value
 }
 
-func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.TargetClusters, string, error) {
+func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.DeploymentV1TargetClusters, string, error) {
 	targetClustersByLabel, err := getTargetClustersByLabel(cmd)
 	if err != nil {
 		return nil, "", err
@@ -402,10 +414,10 @@ func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.TargetClu
 	if !allowEmpty {
 		return nil, "", fmt.Errorf("no target clusters specified, use either --application-label or --application-cluster-id")
 	}
-	return &[]depapi.TargetClusters{}, "", nil
+	return &[]depapi.DeploymentV1TargetClusters{}, "", nil
 }
 
-func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
+func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.DeploymentV1TargetClusters, error) {
 	// Check for expanded labels from context (set during command preprocessing)
 	var labels map[string]string
 	if expandedLabels := cmd.Context().Value(expandedLabelsKey); expandedLabels != nil {
@@ -416,7 +428,7 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 	}
 
 	// Accumulate any app target cluster labels in format "<app-name>.<label-name>=<label-value>"
-	targets := make(map[string]depapi.TargetClusters, 0)
+	targets := make(map[string]depapi.DeploymentV1TargetClusters, 0)
 	for appLabel, value := range labels {
 		fields := strings.SplitN(appLabel, ".", 2)
 		if len(fields) < 2 {
@@ -429,21 +441,21 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 
 		if !alreadyExists {
 			lbls := make(map[string]string, 1)
-			target = depapi.TargetClusters{AppName: &app, Labels: &lbls}
+			target = depapi.DeploymentV1TargetClusters{AppName: &app, Labels: &lbls}
 			targets[app] = target
 		}
 		(*target.Labels)[label] = value
 	}
 
 	// Transform targets map into array
-	targetClusters := make([]depapi.TargetClusters, 0, len(targets))
+	targetClusters := make([]depapi.DeploymentV1TargetClusters, 0, len(targets))
 	for _, target := range targets {
 		targetClusters = append(targetClusters, target)
 	}
 	return &targetClusters, nil
 }
 
-func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
+func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.DeploymentV1TargetClusters, error) {
 	// Check for expanded cluster IDs from context (set during command preprocessing)
 	var clusterIDs map[string]string
 	if expandedIDs := cmd.Context().Value(expandedClusterIDsKey); expandedIDs != nil {
@@ -451,15 +463,15 @@ func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error)
 	}
 
 	if len(clusterIDs) == 0 {
-		return &[]depapi.TargetClusters{}, nil
+		return &[]depapi.DeploymentV1TargetClusters{}, nil
 	}
 
 	// Transform to target clusters array
-	targetClusters := make([]depapi.TargetClusters, 0, len(clusterIDs))
+	targetClusters := make([]depapi.DeploymentV1TargetClusters, 0, len(clusterIDs))
 	for app, clusterID := range clusterIDs {
 		appName := app
 		cID := clusterID
-		target := depapi.TargetClusters{AppName: &appName, ClusterId: &cID}
+		target := depapi.DeploymentV1TargetClusters{AppName: &appName, ClusterId: &cID}
 		targetClusters = append(targetClusters, target)
 	}
 	return &targetClusters, nil
@@ -496,8 +508,8 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 
 	// Preserve explicit pagination requests as single-page results.
 	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
-		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-			&depapi.DeploymentServiceListDeploymentsParams{
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{
 				OrderBy:  apiOrderBy,
 				Filter:   validatedFilter,
 				PageSize: &pageSize,
@@ -517,10 +529,10 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 		return writer.Flush()
 	}
 
-	allDeployments := make([]depapi.Deployment, 0)
+	allDeployments := make([]depapi.DeploymentV1Deployment, 0)
 
-	resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-		&depapi.DeploymentServiceListDeploymentsParams{
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+		&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{
 			OrderBy:  apiOrderBy,
 			Filter:   validatedFilter,
 			PageSize: &pageSize,
@@ -548,8 +560,8 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 		}
 
 		offset += pageSize
-		resp, err = deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-			&depapi.DeploymentServiceListDeploymentsParams{
+		resp, err = deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{
 				OrderBy:  apiOrderBy,
 				Filter:   validatedFilter,
 				PageSize: &pageSize,
@@ -585,7 +597,7 @@ func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	deploymentID := args[0]
 
-	resp, err := deploymentClient.DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
 		auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
@@ -594,7 +606,7 @@ func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		"", fmt.Sprintf("error getting deployment %s", deploymentID)); !proceed {
 		return err
 	}
-	if err := printDeployments(cmd, writer, &[]depapi.Deployment{resp.JSON200.Deployment}, nil, nil, verbose); err != nil {
+	if err := printDeployments(cmd, writer, &[]depapi.DeploymentV1Deployment{resp.JSON200.Deployment}, nil, nil, verbose); err != nil {
 		return err
 	}
 	return writer.Flush()
@@ -611,11 +623,11 @@ func getValidatedDeploymentFilter(
 		return nil, err
 	}
 
-	return normalizeFilterWithAPIProbe(raw, "deployments", depapi.Deployment{}, func(filter string) (bool, error) {
+	return normalizeFilterWithAPIProbe(raw, "deployments", depapi.DeploymentV1Deployment{}, func(filter string) (bool, error) {
 		pageSize := int32(1)
 		offset := int32(0)
-		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-			&depapi.DeploymentServiceListDeploymentsParams{
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{
 				OrderBy:  nil,
 				Filter:   &filter,
 				PageSize: &pageSize,
@@ -652,7 +664,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	gresp, err := deploymentClient.DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
+	gresp, err := deploymentClient.DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
 		auth.AddAuthHeader)
 	if err != nil {
 		return err
@@ -664,7 +676,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	dep := gresp.JSON200.Deployment
 
-	request := depapi.DeploymentServiceUpdateDeploymentJSONRequestBody{
+	request := depapi.DeploymentV1DeploymentServiceUpdateDeploymentJSONRequestBody{
 		DeployId:       &deploymentID,
 		Name:           getFlagOrDefault(cmd, "name", dep.Name),
 		AppName:        *getFlagOrDefault(cmd, "application-name", &dep.AppName),
@@ -682,7 +694,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		request.DeploymentType = &deploymentType
 	}
 
-	resp, err := deploymentClient.DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -703,7 +715,7 @@ func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
 	newPackageVersion, _ := cmd.Flags().GetString("package-version")
 
 	// Get the current deployment to retrieve package name and other details
-	gresp, err := deploymentClient.DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
+	gresp, err := deploymentClient.DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
 		auth.AddAuthHeader)
 	if err != nil {
 		return err
@@ -716,7 +728,7 @@ func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
 	dep := gresp.JSON200.Deployment
 
 	// Build the update request with the new package version
-	request := depapi.DeploymentServiceUpdateDeploymentJSONRequestBody{
+	request := depapi.DeploymentV1DeploymentServiceUpdateDeploymentJSONRequestBody{
 		DeployId:       &deploymentID,
 		Name:           dep.Name,
 		AppName:        dep.AppName,
@@ -728,7 +740,7 @@ func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
 		DeploymentType: dep.DeploymentType,
 	}
 
-	resp, err := deploymentClient.DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -747,8 +759,8 @@ func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	deploymentID := args[0]
 
-	resp, err := deploymentClient.DeploymentServiceDeleteDeploymentWithResponse(ctx, projectName, deploymentID,
-		&depapi.DeploymentServiceDeleteDeploymentParams{}, auth.AddAuthHeader)
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceDeleteDeploymentWithResponse(ctx, projectName, deploymentID,
+		&depapi.DeploymentV1DeploymentServiceDeleteDeploymentParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -788,7 +800,7 @@ func getValidApplicationNames(ctx context.Context, catalogClient catapi.ClientWi
 }
 
 // validateApplicationNames checks that all application names in overrides exist in validNames
-func validateApplicationNames(overrides []depapi.OverrideValues, validNames map[string]bool, flagName string) error {
+func validateApplicationNames(overrides []depapi.DeploymentV1OverrideValues, validNames map[string]bool, flagName string) error {
 	var invalidNames []string
 	for _, override := range overrides {
 		appName := override.AppName
@@ -811,7 +823,7 @@ func validateApplicationNames(overrides []depapi.OverrideValues, validNames map[
 }
 
 // validateTargetClustersApplicationNames checks that all application names in target clusters exist in validNames
-func validateTargetClustersApplicationNames(targetClusters *[]depapi.TargetClusters, validNames map[string]bool) error {
+func validateTargetClustersApplicationNames(targetClusters *[]depapi.DeploymentV1TargetClusters, validNames map[string]bool) error {
 	if targetClusters == nil {
 		return nil
 	}
