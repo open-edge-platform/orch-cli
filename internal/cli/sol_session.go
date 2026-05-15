@@ -35,11 +35,12 @@ type SOLSession struct {
 	amtUser     string
 	amtPass     string
 
-	// Flow control: track the sequence number from the last received
-	// 0x2A (terminal data) frame from AMT.  This value is sent back
-	// in 0x2B heartbeat messages so AMT knows which frames we've
-	// consumed and can free its TX buffer to continue sending.
-	amtLastRecvSeq uint32
+	// Flow control: accumulate the payload byte count from received
+	// 0x2A (terminal data) frames.  This delta is sent back in 0x2B
+	// heartbeat/ACK messages so AMT knows how many TX-buffer bytes to
+	// free.  After each ACK the accumulator resets to zero (matching
+	// the meshcentral / Open AMT Cloud Toolkit protocol behaviour).
+	amtAccumulator uint32
 	amtAccMu       sync.Mutex
 
 	// Receive buffer: AMT frames can span multiple WebSocket messages
@@ -55,11 +56,13 @@ type SOLSession struct {
 	errChan chan error
 }
 
-// sendACK sends a 0x2B heartbeat carrying the last received 0x2A
-// frame sequence number so AMT can free TX buffer and keep sending.
+// sendACK sends a 0x2B heartbeat carrying the number of payload bytes
+// received since the last ACK and resets the accumulator.  AMT uses this
+// value to free its TX buffer so it can keep sending terminal data.
 func (s *SOLSession) sendACK() {
 	s.amtAccMu.Lock()
-	ack := s.amtLastRecvSeq
+	ack := s.amtAccumulator
+	s.amtAccumulator = 0
 	s.amtAccMu.Unlock()
 	msg := []byte{0x2B, 0x00, 0x00, 0x00}
 	msg = append(msg, intToLE(ack)...)
@@ -221,6 +224,14 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 	}
 	cmd := data[0]
 
+	if debug {
+		hdr := data
+		if len(hdr) > 16 {
+			hdr = hdr[:16]
+		}
+		fmt.Fprintf(os.Stderr, "[SOL] handleMPSFrame cmd=0x%02X buf=%d hex=%x\n", cmd, len(data), hdr)
+	}
+
 	switch cmd {
 	case 0x11: // StartRedirectionSessionReply
 		if len(data) < 13 {
@@ -363,18 +374,20 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 		if frameSize > len(data) {
 			return 0 // incomplete — payload not fully received yet
 		}
+		if debug {
+			fmt.Fprintf(os.Stderr, "[SOL] 0x2A: dataLen=%d frameSize=%d\n", dataLen, frameSize)
+		}
 		if dataLen > 0 {
 			// Write terminal data directly to stdout (bypasses fmt buffering)
 			os.Stdout.Write(data[10 : 10+dataLen]) //nolint:errcheck
 		}
 
-		// Record this frame's sequence number for flow-control ACK.
-		// AMT uses the value we send back in 0x2B to determine how much
-		// TX buffer it can free. Without this, AMT's buffer fills and
-		// it stops sending — causing truncated output.
-		seqNum := binary.LittleEndian.Uint32(data[4:8])
+		// Accumulate received payload bytes for flow-control ACK.
+		// AMT uses the byte-count we send back in 0x2B to free its
+		// TX buffer.  Without correct byte counts, AMT stalls after
+		// ~10 KB — causing login-stuck and long-output truncation.
 		s.amtAccMu.Lock()
-		s.amtLastRecvSeq = seqNum
+		s.amtAccumulator += uint32(dataLen)
 		s.amtAccMu.Unlock()
 
 		// Immediately ACK so AMT frees its TX buffer right away.
@@ -498,7 +511,7 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 	defer signal.Stop(interrupt)
 
 	done := make(chan struct{})
-	debug := os.Getenv("SOL_DEBUG") != ""
+	debug := os.Getenv("SOL_DEBUG") == "1"
 
 	// Reader goroutine: handles AMT SOL protocol and writes terminal data to stdout
 	go func() {
@@ -537,8 +550,28 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 			// MPS relay sends AMT protocol frames using BOTH text (type 1)
 			// and binary (type 2) WebSocket messages — we must process all
 			// of them.  Only skip close/ping/pong control frames.
-			if debug && msgType == websocket.TextMessage {
-				fmt.Fprintf(os.Stderr, "[SOL] Text WS message (len=%d), processing as AMT frame\n", len(message))
+			//
+			// CRITICAL: When MPS sends binary AMT data as TEXT WebSocket
+			// messages, every raw byte 0x00–0xFF is encoded as a single
+			// Unicode codepoint.  Bytes > 0x7F become multi-byte UTF-8
+			// sequences (e.g. raw 0x96 → UTF-8 C2 96).  We must decode
+			// each codepoint back to a single byte so the AMT binary
+			// frame parser sees the original byte stream.
+			if msgType == websocket.TextMessage {
+				runes := []rune(string(message))
+				raw := make([]byte, len(runes))
+				for i, r := range runes {
+					raw[i] = byte(r)
+				}
+				message = raw
+			}
+
+			if debug {
+				hdr := message
+				if len(hdr) > 20 {
+					hdr = hdr[:20]
+				}
+				fmt.Fprintf(os.Stderr, "[SOL] WS msg type=%d len=%d hex=%x\n", msgType, len(message), hdr)
 			}
 
 			// Append to receive buffer — AMT frames can span multiple
@@ -609,20 +642,10 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 					}
 					return
 				}
-				// SOL heartbeat (0x2B) carrying the last received frame
-				// sequence number.  This is critical for flow control:
+				// SOL heartbeat (0x2B) carrying accumulated byte count
+				// since the last ACK.  This is critical for flow control:
 				// AMT will stop transmitting if it never sees ACKs.
-				sol.amtAccMu.Lock()
-				ack := sol.amtLastRecvSeq
-				sol.amtAccMu.Unlock()
-				frame := []byte{0x2B, 0x00, 0x00, 0x00}
-				frame = append(frame, intToLE(ack)...)
-				if err := sol.sendBinary(frame); err != nil {
-					if debug {
-						fmt.Fprintf(os.Stderr, "[SOL] Keep-alive frame failed: %v\n", err)
-					}
-					return
-				}
+				sol.sendACK()
 			}
 		}
 	}()
