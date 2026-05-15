@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -8,9 +8,17 @@ import (
 	"io"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+)
+
+const (
+	DEFAULT_ORGANIZATION_FORMAT         = "table{{none .Name}}\t{{.StatusIndicator}}"
+	DEFAULT_ORGANIZATION_VERBOSE_FORMAT = "table{{none .Name}}\t{{.StatusIndicator}}\t{{none .Description}}"
+	DEFAULT_ORGANIZATION_INSPECT_FORMAT = "Name: \t{{none .Name}}\nDescription: \t{{none .Description}}\nStatus: \t{{none .StatusIndicator}}\nStatus Message: \t{{none .StatusMessage}}\nUID: \t{{none .UID}}"
+	ORGANIZATION_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_ORGANIZATION_OUTPUT_TEMPLATE"
 )
 
 const listOrganizationExamples = `# List all organizations in the organization
@@ -31,76 +39,106 @@ orch-cli create organization myorganization --description "my description"
 const deleteOrganizationExamples = `#Delete a organization using it's name
 orch-cli delete organization myorganization`
 
-var OrganizationHeader = fmt.Sprintf("\n%s\t%s", "Name", "Status")
-
-// Prints OS Profiles in tabular format
-func printOrganizations(writer io.Writer, organizations *tenancy.OrgOrgList, verbose bool) {
-	if organizations == nil {
-		fmt.Fprintf(writer, "No organizations found\n")
-		return
-	}
-
-	if verbose {
-		fmt.Fprintf(writer, "\n%s\t%s\t%s\n", "Name", "Status", "Description")
-	}
-
-	for _, organization := range *organizations {
-		name := "N/A"
-		if organization.Name != nil {
-			name = *organization.Name
-		}
-
-		status := "Unknown"
-		if organization.Status != nil && organization.Status.OrgStatus != nil && organization.Status.OrgStatus.StatusIndicator != nil {
-			status = *organization.Status.OrgStatus.StatusIndicator
-		}
-
-		if !verbose {
-			fmt.Fprintf(writer, "%s\t%s\n", name, status)
-		} else {
-			description := "N/A"
-			if organization.Spec != nil && organization.Spec.Description != nil {
-				description = *organization.Spec.Description
-			}
-			fmt.Fprintf(writer, "%s\t%s\t%s\n", name, status, description)
-		}
-	}
+// OrganizationListItem is a flattened view for template output
+type OrganizationListItem struct {
+	Name            *string `json:"name,omitempty"`
+	Description     *string `json:"description,omitempty"`
+	StatusIndicator *string `json:"statusIndicator,omitempty"`
+	StatusMessage   *string `json:"statusMessage,omitempty"`
+	UID             *string `json:"uid,omitempty"`
 }
 
-// Prints output details of OS Profiles
-func printOrganization(writer io.Writer, name string, organization *tenancy.GetorgOrg) {
-	if organization == nil {
-		fmt.Fprintf(writer, "Organization %s not found\n", name)
-		return
+func flattenOrganizations(organizations *tenancy.OrgOrgList) []OrganizationListItem {
+	if organizations == nil {
+		return []OrganizationListItem{}
 	}
 
-	_, _ = fmt.Fprintf(writer, "Name: \t%s\n", name)
-
-	description := "N/A"
-	if organization.Spec != nil && organization.Spec.Description != nil {
-		description = *organization.Spec.Description
+	items := make([]OrganizationListItem, 0, len(*organizations))
+	for _, org := range *organizations {
+		item := OrganizationListItem{
+			Name: org.Name,
+		}
+		if org.Spec != nil {
+			item.Description = org.Spec.Description
+		}
+		if org.Status != nil && org.Status.OrgStatus != nil {
+			item.StatusIndicator = org.Status.OrgStatus.StatusIndicator
+			item.StatusMessage = org.Status.OrgStatus.Message
+			item.UID = org.Status.OrgStatus.UID
+		}
+		items = append(items, item)
 	}
-	_, _ = fmt.Fprintf(writer, "Description: \t%s\n", description)
+	return items
+}
 
-	status := "Unknown"
-	message := "N/A"
-	uid := "N/A"
+func getOrganizationOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_ORGANIZATION_VERBOSE_FORMAT, nil
+	}
+	return resolveTableOutputTemplate(cmd, DEFAULT_ORGANIZATION_FORMAT, ORGANIZATION_OUTPUT_TEMPLATE_ENVVAR)
+}
 
-	if organization.Status != nil && organization.Status.OrgStatus != nil {
-		if organization.Status.OrgStatus.StatusIndicator != nil {
-			status = *organization.Status.OrgStatus.StatusIndicator
+func printOrganizations(cmd *cobra.Command, writer io.Writer, organizations *tenancy.OrgOrgList, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	outputFormat, err := getOrganizationOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	items := flattenOrganizations(organizations)
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      items,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
+}
+
+func printOrganization(cmd *cobra.Command, writer io.Writer, name string, organization *tenancy.GetorgOrg) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	item := OrganizationListItem{
+		Name: &name,
+	}
+	if organization != nil {
+		if organization.Spec != nil {
+			item.Description = organization.Spec.Description
 		}
-		if organization.Status.OrgStatus.Message != nil {
-			message = *organization.Status.OrgStatus.Message
-		}
-		if organization.Status.OrgStatus.UID != nil {
-			uid = *organization.Status.OrgStatus.UID
+		if organization.Status != nil && organization.Status.OrgStatus != nil {
+			item.StatusIndicator = organization.Status.OrgStatus.StatusIndicator
+			item.StatusMessage = organization.Status.OrgStatus.Message
+			item.UID = organization.Status.OrgStatus.UID
 		}
 	}
 
-	_, _ = fmt.Fprintf(writer, "Status: \t%s\n", status)
-	_, _ = fmt.Fprintf(writer, "Status message: \t%s\n", message)
-	_, _ = fmt.Fprintf(writer, "UID: \t%s\n\n", uid)
+	outputFormat := DEFAULT_ORGANIZATION_INSPECT_FORMAT
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      item,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 func getGetOrganizationCommand() *cobra.Command {
@@ -112,6 +150,7 @@ func getGetOrganizationCommand() *cobra.Command {
 		Aliases: organizationAliases,
 		RunE:    runGetOrganizationCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -123,6 +162,8 @@ func getListOrganizationCommand() *cobra.Command {
 		Aliases: organizationAliases,
 		RunE:    runListOrganizationCommand,
 	}
+	cmd.Flags().String("order-by", "", "order results by field (table output only)")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -151,11 +192,10 @@ func getDeleteOrganizationCommand() *cobra.Command {
 	return cmd
 }
 
-// Gets specific Cloud Init configuration bu resource ID
+// Gets specific organization by name
 func runGetOrganizationCommand(cmd *cobra.Command, args []string) error {
-
 	name := args[0]
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 	ctx, organizationClient, err := TenancyFactory(cmd)
 	if err != nil {
 		return err
@@ -166,20 +206,42 @@ func runGetOrganizationCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
 		"", "error getting organizations"); !proceed {
 		return err
 	}
 
-	printOrganization(writer, name, resp.JSON200)
+	if err := printOrganization(cmd, writer, name, resp.JSON200); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
-// Lists all Cloud Init configurations - retrieves all configurations and displays selected information in tabular format
+// Lists all organizations
 func runListOrganizationCommand(cmd *cobra.Command, _ []string) error {
-	writer, verbose := getOutputContext(cmd)
+	writer, _ := getOutputContext(cmd)
 
 	ctx, organizationClient, err := TenancyFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	var validatedOrderBy *string
+	if outputType == "table" {
+		validatedOrderBy, err = normalizeOrderByForClientSorting(raw, OrganizationListItem{})
+	} else {
+		// JSON/YAML: no API support, but allow any field for consistency
+		if raw != "" {
+			validatedOrderBy = &raw
+		}
+	}
 	if err != nil {
 		return err
 	}
@@ -189,12 +251,16 @@ func runListOrganizationCommand(cmd *cobra.Command, _ []string) error {
 		return processError(err)
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		OrganizationHeader, "error getting organizations"); !proceed {
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+		"", "error getting organizations"); !proceed {
 		return err
 	}
 
-	printOrganizations(writer, resp.JSON200, verbose)
+	verbose, _ := cmd.Flags().GetBool("verbose")
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printOrganizations(cmd, writer, resp.JSON200, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 
 	return writer.Flush()
 }

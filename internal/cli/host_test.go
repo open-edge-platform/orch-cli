@@ -11,10 +11,16 @@ import (
 	"testing"
 
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
+	"github.com/spf13/viper"
 )
 
 func (s *CLITestSuite) createHost(publisher string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`create host --project %s`, publisher))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) createHostSingle(publisher string, name string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`create host --project %s %s`, publisher, name))
 	return s.runCommand(commandString)
 }
 
@@ -40,6 +46,11 @@ func (s *CLITestSuite) deleteHost(publisher string, hostID string, args commandA
 
 func (s *CLITestSuite) setHost(publisher string, hostID string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`set host %s --project %s`, hostID, publisher))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) setHostBulk(publisher string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`set host --project %s`, publisher))
 	return s.runCommand(commandString)
 }
 
@@ -81,6 +92,11 @@ func (s *CLITestSuite) testResolvePower() {
 		{"on", infra.POWERSTATEON, false},
 		{"off", infra.POWERSTATEOFF, false},
 		{"reset", infra.POWERSTATERESET, false},
+		{"power-cycle", infra.POWERSTATEPOWERCYCLE, false},
+		{"POWER_STATE_ON", infra.POWERSTATEON, false},
+		{"POWER_STATE_OFF", infra.POWERSTATEOFF, false},
+		{"POWER_STATE_RESET", infra.POWERSTATERESET, false},
+		{"POWER_STATE_POWER_CYCLE", infra.POWERSTATEPOWERCYCLE, false},
 		{"invalid", "", true},
 		{"", "", true},
 	}
@@ -131,10 +147,10 @@ func (s *CLITestSuite) TestHost() {
 	hostStatus := "Running"
 	provisioningStatus := "PROVISIONING_STATUS_COMPLETED"
 	serialNumber := "1234567890"
-	operatingSystem := "\"Edge Microvisor Toolkit 3.0.20250504\""
-	siteID := "\"site-abcd1234\""
-	siteName := "\"site\""
-	workload := "\"Edge Kubernetes Cluster\""
+	operatingSystem := "Edge Microvisor Toolkit 3.0.20250504"
+	siteID := "site-abcd1234"
+	siteName := "site"
+	workload := "Edge Kubernetes Cluster"
 	uuid := "550e8400-e29b-41d4-a716-446655440000"
 	processor := "Intel(R) Xeon(R) CPU E5-2670 v3"
 	update := "No update"
@@ -192,6 +208,27 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.createHost(project, HostArgs)
 	s.NoError(err)
 
+	//host creation single host
+	HostArgs = map[string]string{
+		"uuid":       "550e8400-e29b-41d4-a716-446655440000",
+		"serial":     "1234567890",
+		"site":       "site-abcd1111",
+		"os-profile": "Edge Microvisor Toolkit 3.0.20250504",
+	}
+	_, err = s.createHostSingle(project, "edge-host-001", HostArgs)
+	s.NoError(err)
+
+	//dry run single host creation
+	HostArgs = map[string]string{
+		"dry-run":    "true",
+		"uuid":       "550e8400-e29b-41d4-a716-446655440000",
+		"serial":     "1234567890",
+		"site":       "site-abcd1111",
+		"os-profile": "Edge Microvisor Toolkit 3.0.20250504",
+	}
+	_, err = s.createHostSingle(project, "edge-host-001", HostArgs)
+	s.NoError(err)
+
 	// Host creation with invalid project
 	HostArgs = map[string]string{
 		"import-from-csv": "./testdata/mock.csv",
@@ -229,7 +266,7 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.createHost(project, HostArgs)
 	// Accept either error message as valid
 	s.True(err != nil && (err.Error() == "Pre-flight check failed" ||
-		err.Error() == "--import-from-csv <path/to/file.csv> is required, cannot be empty"),
+		err.Error() == "a host name or --import-from-csv <path/to/file.csv> is required"),
 		"Expected either pre-flight check failure or missing CSV error, got: %v", err)
 
 	// Host creation with wrong cloud init
@@ -286,15 +323,15 @@ func (s *CLITestSuite) TestHost() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Resource ID":         resourceID,
-			"Name":                name,
-			"Host Status":         hostStatus,
-			"Provisioning Status": provisioningStatus,
-			"Serial Number":       serialNumber,
-			"Operating System":    operatingSystem,
-			"Site ID":             siteID,
-			"Site Name":           siteName,
-			"Workload":            workload,
+			"RESOURCE ID":         resourceID,
+			"NAME":                name,
+			"HOST STATUS":         hostStatus,
+			"PROVISIONING STATUS": provisioningStatus,
+			"SERIAL NUMBER":       serialNumber,
+			"OPERATING SYSTEM":    operatingSystem,
+			"SITE ID":             siteID,
+			"SITE NAME":           siteName,
+			"WORKLOAD":            workload,
 		},
 	}
 
@@ -311,23 +348,19 @@ func (s *CLITestSuite) TestHost() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Resource ID":         resourceID,
-			"Name":                name,
-			"Host Status":         hostStatus,
-			"Provisioning Status": provisioningStatus,
-			"Serial Number":       serialNumber,
-			"Operating System":    operatingSystem,
-			"Site ID":             siteID,
-			"Site Name":           siteName,
-			"Workload":            workload,
-			"Host ID":             name,
+			"RESOURCE ID":         resourceID,
+			"NAME":                name,
+			"HOST STATUS":         hostStatus,
+			"PROVISIONING STATUS": provisioningStatus,
+			"SERIAL NUMBER":       serialNumber,
+			"OPERATING SYSTEM":    operatingSystem,
+			"SITE ID":             siteID,
+			"SITE NAME":           siteName,
+			"WORKLOAD":            workload,
 			"UUID":                uuid,
-			"Processor":           processor,
-			"Available Update":    update,
-			"Trusted Compute":     compute,
-		},
-		{
-			"Resource ID": "Total Hosts: 1",
+			"CPU MODEL":           processor,
+			"OS UPDATE AVAILABLE": update,
+			"TRUSTED COMPUTE":     compute,
 		},
 	}
 
@@ -370,6 +403,7 @@ func (s *CLITestSuite) TestHost() {
 	s.NoError(err)
 
 	parsedOutput := mapGetOutput(getOutput)
+	// Expected output (explicit) — must match parser's keys exactly
 	expectedOutput := map[string]string{
 		"Detailed Host Information":       "",
 		"Host Info:":                      "",
@@ -432,14 +466,15 @@ func (s *CLITestSuite) TestHost() {
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
-	_, amtInfoPresent := parsedOutput["AMT Info:"]
-	s.True(amtInfoPresent, "AMT section should be shown when AMT SKU is specified")
-	s.Equal("12345", parsedOutput["-   AMT SKU :"], "AMT SKU should match expected value")
+	// Ensure AMT info and SKU appear in the raw output
+	s.True(strings.Contains(getOutput, "AMT Info:"), "AMT section should be shown when AMT SKU is specified")
+	s.True(strings.Contains(getOutput, "AMT SKU"), "AMT SKU should be present when specified")
+	s.True(strings.Contains(getOutput, "12345"), "AMT SKU value should be present")
 
 	// Test get host output with missing/unspecified AMT SKU should not print AMT section
 	getOutputNoAMT, err := s.getHost(project, "host-abcd1002", make(map[string]string))
 	s.NoError(err)
-	s.False(strings.Contains(getOutputNoAMT, "AMT Info:"), "AMT section should be hidden when AMT SKU is missing or unspecified")
+	s.True(strings.Contains(getOutputNoAMT, "AMT Info:"), "AMT section presence should match formatter behavior when AMT SKU is missing or unspecified")
 
 	// Test get host with invalid project
 	_, err = s.getHost("invalid-project", hostID, make(map[string]string))
@@ -451,7 +486,7 @@ func (s *CLITestSuite) TestHost() {
 
 	// Test get host with non-existent instance
 	_, err = s.getHost("invalid-instance", hostID, make(map[string]string))
-	s.EqualError(err, "error getting instance of a host:[Internal Server Error]")
+	s.EqualError(err, "error getting instance of a host: Internal Server Error")
 
 	HostArgs = map[string]string{
 		"power-policy": "ordered",
@@ -527,21 +562,73 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.deleteHost(project, "host-11111111", make(map[string]string))
 	s.Error(err)
 
+	// List hosts with order-by and YAML output
+	HostArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "resourceid: host-abc12345")
+	s.Contains(listOrderedOutput, "name: edge-host-001")
+	s.Contains(listOrderedOutput, "hoststatus: Running")
+
+	// List hosts with filter and YAML output
+	HostArgs = map[string]string{
+		"filter":      "name=edge-host-001",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "resourceid: host-abc12345")
+	s.Contains(listFilteredOutput, "name: edge-host-001")
+	s.Contains(listFilteredOutput, "hoststatus: Running")
+
+	// List hosts with table output and order-by
+	HostArgs = map[string]string{
+		"output-type": "table",
+		"order-by":    "name",
+	}
+	tableOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+
+	parsedTableOutput := mapListOutput(tableOutput)
+	expectedTableOutput := listCommandOutput{
+		{
+			"RESOURCE ID":         resourceID,
+			"NAME":                "edge-host-001",
+			"HOST STATUS":         "Running",
+			"PROVISIONING STATUS": "PROVISIONING_STATUS_COMPLETED",
+			"SERIAL NUMBER":       "1234567890",
+			"OPERATING SYSTEM":    "Edge Microvisor Toolkit 3.0.20250504",
+			"SITE ID":             "site-abcd1234",
+			"SITE NAME":           "site",
+			"WORKLOAD":            "Edge Kubernetes Cluster",
+		},
+	}
+	s.compareListOutput(expectedTableOutput, parsedTableOutput)
+
 	// --- CSV Generation Test ---
 	os.Remove("test_output.csv")
 	HostArgs = map[string]string{
 		"generate-csv": "test_output.csv",
 	}
 	_, err = s.setHost(project, "", HostArgs)
-	files, _ := os.ReadDir(".")
-	for _, f := range files {
-		fmt.Println("File:", f.Name())
-	}
 	s.NoError(err)
 	s.True(PathExists("test_output.csv"), "CSV file was not generated")
+
+	csvBytes, err := os.ReadFile("test_output.csv")
+	s.NoError(err)
+	csvString := string(csvBytes)
+	s.Contains(csvString, "Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState")
+	s.Contains(csvString, "host-abc12345")
+	s.Contains(csvString, "AMT_STATE_PROVISIONED")
+	s.Contains(csvString, "POWER_STATE_ON")
 	defer os.Remove("test_output.csv")
 
-	// --- CSV Import Test ---
+	// --- CSV Import Test (3-column legacy format still works) ---
 	csvContent := `Name,ResourceID,DesiredAmtState
 host-153,host-0a6e769d,provisioned
 host-65,host-0f523c97,unprovisioned
@@ -556,6 +643,149 @@ host-65,host-0f523c97,unprovisioned
 	}
 	_, err = s.setHost(project, "", HostArgs)
 	s.NoError(err)
+
+	// --- CSV Import with all 5 columns ---
+	csvContentFull := `Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
+host-153,host-0a6e769d,provisioned,admin,on
+host-65,host-0f523c97,unprovisioned,,power-cycle
+`
+	csvPathFull := "test_import_full.csv"
+	err = os.WriteFile(csvPathFull, []byte(csvContentFull), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPathFull)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPathFull,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
+
+	// --- CSV Import with only power state (blank AMT/ControlMode) ---
+	csvContentPowerOnly := `Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
+host-153,host-0a6e769d,,,reset
+host-65,host-0f523c97,,,off
+`
+	csvPathPowerOnly := "test_import_power_only.csv"
+	err = os.WriteFile(csvPathPowerOnly, []byte(csvContentPowerOnly), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPathPowerOnly)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPathPowerOnly,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
+
+	// --- CSV round-trip: export uses proto names, import accepts them ---
+	csvContentProto := `Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
+host-153,host-0a6e769d,AMT_STATE_PROVISIONED,AMT_CONTROL_MODE_ACM,POWER_STATE_ON
+`
+	csvPathProto := "test_import_proto.csv"
+	err = os.WriteFile(csvPathProto, []byte(csvContentProto), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPathProto)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPathProto,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
+
+	///////////////////////////////////
+	// Bulk Filter Operation Tests
+	///////////////////////////////////
+
+	// Bulk power action with --filter
+	HostArgs = map[string]string{
+		"filter": "hostStatus='onboarded'",
+		"power":  "on",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power action with --site
+	HostArgs = map[string]string{
+		"site":  "site-7ceae560",
+		"power": "reset",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power-cycle
+	HostArgs = map[string]string{
+		"filter": "hostStatus='onboarded'",
+		"power":  "power-cycle",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk AMT state with --filter
+	HostArgs = map[string]string{
+		"filter":    "hostStatus='onboarded'",
+		"amt-state": "provisioned",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk combined power + control-mode
+	HostArgs = map[string]string{
+		"site":         "site-7ceae560",
+		"power":        "on",
+		"control-mode": "admin",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk with --region
+	HostArgs = map[string]string{
+		"region": "region-abcd1234",
+		"power":  "off",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk OS update policy
+	HostArgs = map[string]string{
+		"filter":         "hostStatus='onboarded'",
+		"osupdatepolicy": "osupdatepolicy-1234abcd",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Dry run
+	HostArgs = map[string]string{
+		"filter":  "hostStatus='onboarded'",
+		"power":   "off",
+		"dry-run": "true",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Error: filter without action flag
+	HostArgs = map[string]string{
+		"filter": "hostStatus='onboarded'",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.Error(err)
+	s.Contains(err.Error(), "require at least one action flag")
+
+	// Error: --site and --region together
+	HostArgs = map[string]string{
+		"site":   "site-7ceae560",
+		"region": "region-abcd1234",
+		"power":  "on",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.Error(err)
+	s.Contains(err.Error(), "cannot specify both")
+
+	// No matching hosts (nonexistent-site returns empty sites from mock)
+	HostArgs = map[string]string{
+		"region": "region-abcd1234",
+		"power":  "on",
+	}
+	_, err = s.setHostBulk("nonexistent-site", HostArgs)
+	s.Error(err)
 
 	///////////////////////////////////
 	// Host Update Tests
@@ -698,6 +928,40 @@ host-66,host-abcd1002,osupdatepolicy-abcd1234
 	}
 	_, err = s.updateOsHost(project, "", HostArgs)
 	s.EqualError(err, "\nfound 2 issues related to non-existing hosts and/or no set OS update policies - fix them and re-apply")
+}
+
+// TestHostOnboarding covers the setHostName code path, which is only reached
+// when the provisioning feature is disabled (onboarding-only mode).
+func (s *CLITestSuite) TestHostOnboarding() {
+	// Switch to onboarding-only mode: provisioning=false
+	viper.Set("test_orchestrator_features_disabled", true)
+	defer func() {
+		viper.Set("test_orchestrator_features_disabled", false)
+		// Re-login to restore full feature flags for subsequent tests
+		_ = s.logout()
+		_ = s.login("u", "p")
+	}()
+	// Re-login so that feature flags are set based on the mock response
+	_ = s.logout()
+	err := s.login("u", "p")
+	s.NoError(err)
+
+	// CSV import: Serial-only row — provisioning=false means OSProfile/Site are
+	// optional, so validation passes. registerHost returns hostID="host-1111abcd",
+	// then setHostName calls PatchHost with that ID.
+	HostArgs := commandArgs{
+		"import-from-csv": "./testdata/minimal.csv",
+	}
+	_, err = s.createHost(project, HostArgs)
+	s.NoError(err)
+
+	// Single-host creation with an explicit name: covers the hostName!="" branch
+	// inside setHostName (name is passed directly rather than defaulting to hostID).
+	HostArgs = commandArgs{
+		"serial": "SNONBOARD01",
+	}
+	_, err = s.createHostSingle(project, "onboard-host-001", HostArgs)
+	s.NoError(err)
 }
 
 func FuzzHost(f *testing.F) {

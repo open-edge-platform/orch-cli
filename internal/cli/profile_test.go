@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -6,6 +6,10 @@ package cli
 import (
 	"fmt"
 	"testing"
+
+	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func (s *CLITestSuite) createProfile(pubName string, applicationName string, applicationVersion string, profileName string, args commandArgs) error {
@@ -14,10 +18,19 @@ func (s *CLITestSuite) createProfile(pubName string, applicationName string, app
 	return err
 }
 
-func (s *CLITestSuite) listProfiles(pubName string, applicationName string, applicationVersion string, verbose bool) (string, error) {
+func (s *CLITestSuite) listProfiles(pubName string, applicationName string, applicationVersion string, verbose bool, outputFilter string, outputTemplate string, outputTemplateFile string) (string, error) {
 	args := fmt.Sprintf(`list profiles --project %s %s %s`, pubName, applicationName, applicationVersion)
 	if verbose {
 		args = args + " -v"
+	}
+	if outputFilter != "" {
+		args = args + " --output-filter " + outputFilter
+	}
+	if outputTemplate != "" {
+		args = args + " --output-template " + outputTemplate
+	}
+	if outputTemplateFile != "" {
+		args = args + " --output-template-file " + outputTemplateFile
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -81,21 +94,21 @@ func (s *CLITestSuite) TestProfile() {
 	s.NoError(err)
 
 	// list artifacts to make sure it was created properly
-	listOutput, err := s.listProfiles(pubName, applicationName, applicationVersion, simpleOutput)
+	listOutput, err := s.listProfiles(pubName, applicationName, applicationVersion, simpleOutput, "", "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
 	expectedOutput := commandOutput{
 		profileName: {
-			"Name":         profileName,
-			"Description":  profileDescription,
-			"Display Name": profileDisplayName,
+			"NAME":         profileName,
+			"DESCRIPTION":  profileDescription,
+			"DISPLAY NAME": profileDisplayName,
 		},
 	}
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list profiles
-	listVerboseOutput, err := s.listProfiles(pubName, applicationName, applicationVersion, verboseOutput)
+	listVerboseOutput, err := s.listProfiles(pubName, applicationName, applicationVersion, verboseOutput, "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
@@ -104,9 +117,11 @@ func (s *CLITestSuite) TestProfile() {
 			"Name":                    profileName,
 			"Display Name":            profileDisplayName,
 			"Description":             profileDescription,
-			"Deployment Requirements": "requirement",
-			"Create Time":             timestampRegex,
-			"Update Time":             timestampRegex,
+			"Deployment Requirements": "requirement:1.2.3:Web server",
+			"Create Time":             "2025-12-31T23:59:59",
+			"Update Time":             "2025-12-31T23:59:59",
+			"Parameter templates":     "Name: param1 Type: string Display Name: Parameter 1 Default: default-value Suggested values: value1,value2",
+			"Chart Values":            "dmFsdWVzOiAxCnZhbDoy",
 		},
 	}
 
@@ -132,6 +147,16 @@ func (s *CLITestSuite) TestProfile() {
 	// delete the profile
 	err = s.deleteProfile(pubName, applicationName, applicationVersion, profileName)
 	s.NoError(err)
+
+	// Test error handling for dual template flags (--output-template and --output-template-file both set)
+	_, err = s.listProfiles(pubName, applicationName, applicationVersion, simpleOutput, "", "table{{.Name}}", "/tmp/invalid.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "only one of")
+
+	// Test error handling for missing template file
+	_, err = s.listProfiles(pubName, applicationName, applicationVersion, simpleOutput, "", "", "/nonexistent/path/template.tmpl")
+	s.Error(err)
+	s.Contains(err.Error(), "unable to read")
 
 	//Commenting out for now as mock wont support
 	// Make sure profile is gone
@@ -200,4 +225,90 @@ func FuzzProfile(f *testing.F) {
 			t.Errorf("Unexpected error: %v", err)
 		}
 	})
+}
+
+// newCmdWithDeploymentRequirementFlag creates a minimal cobra.Command with the
+// --deployment-requirement flag registered, for use in parseDeploymentRequirements tests.
+func newCmdWithDeploymentRequirementFlag(values ...string) *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Flags().StringSlice("deployment-requirement", values, "")
+	return cmd
+}
+
+func TestParseDeploymentRequirements_NoFlag(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag()
+	result, err := parseDeploymentRequirements(cmd)
+	require.NoError(t, err)
+	assert.Nil(t, result)
+}
+
+func TestParseDeploymentRequirements_NameAndVersion(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("cert-manager:0.2.1")
+	result, err := parseDeploymentRequirements(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Len(t, *result, 1)
+	assert.Equal(t, "cert-manager", (*result)[0].Name)
+	assert.Equal(t, "0.2.1", (*result)[0].Version)
+	assert.Nil(t, (*result)[0].DeploymentProfileName)
+}
+
+func TestParseDeploymentRequirements_NameVersionAndProfile(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("cert-manager:0.2.1:default-profile")
+	result, err := parseDeploymentRequirements(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Len(t, *result, 1)
+	assert.Equal(t, "cert-manager", (*result)[0].Name)
+	assert.Equal(t, "0.2.1", (*result)[0].Version)
+	require.NotNil(t, (*result)[0].DeploymentProfileName)
+	assert.Equal(t, "default-profile", *(*result)[0].DeploymentProfileName)
+}
+
+func TestParseDeploymentRequirements_ProfileNameEmpty(t *testing.T) {
+	// Three parts but profile name is blank → DeploymentProfileName stays nil
+	cmd := newCmdWithDeploymentRequirementFlag("cert-manager:0.2.1: ")
+	result, err := parseDeploymentRequirements(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Nil(t, (*result)[0].DeploymentProfileName)
+}
+
+func TestParseDeploymentRequirements_MultipleRequirements(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("pkg-a:1.0", "pkg-b:2.0:my-profile")
+	result, err := parseDeploymentRequirements(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Len(t, *result, 2)
+	assert.Equal(t, "pkg-a", (*result)[0].Name)
+	assert.Equal(t, "pkg-b", (*result)[1].Name)
+	assert.Equal(t, "my-profile", *(*result)[1].DeploymentProfileName)
+}
+
+func TestParseDeploymentRequirements_TooFewParts(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("onlyone")
+	_, err := parseDeploymentRequirements(cmd)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid deployment requirement format")
+}
+
+func TestParseDeploymentRequirements_TooManyParts(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("a:b:c:d")
+	_, err := parseDeploymentRequirements(cmd)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid deployment requirement format")
+}
+
+func TestParseDeploymentRequirements_EmptyPackageName(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag(":1.0")
+	_, err := parseDeploymentRequirements(cmd)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "package name and version cannot be empty")
+}
+
+func TestParseDeploymentRequirements_EmptyVersion(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("pkg-a:")
+	_, err := parseDeploymentRequirements(cmd)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "package name and version cannot be empty")
 }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -81,6 +81,14 @@ func (s *CLITestSuite) TestDeployment() {
 	})
 	s.NoError(err)
 
+	err = s.createDeployment("deployment-pkg", "1.0.0", map[string]string{
+		"project":                project,
+		"display-name":           "Test",
+		"profile":                "test-profile",
+		"application-cluster-id": "cluster-abcd1234",
+	})
+	s.NoError(err)
+
 	_, err = s.listDeployment(project, make(map[string]string))
 	s.NoError(err)
 
@@ -102,6 +110,68 @@ func (s *CLITestSuite) TestDeployment() {
 
 	_, err = s.deleteDeployment(project, "test-deployment", make(map[string]string))
 	s.NoError(err)
+
+	// List deployments with order-by and YAML output
+	listOrderedOutput, err := s.listDeployment(project, map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	})
+	s.NoError(err)
+
+	parsedOrderedOutput := mapLinesOutput(listOrderedOutput)
+	expectedOrderedOutput := linesCommandOutput{
+		"- allapptargetclusters: null",
+		`  appname: ""`,
+		`  appversion: ""`,
+		"  apps: null",
+		"  createtime: 2025-12-31T23:59:59Z",
+		"  defaultprofilename: null",
+		"  deployid: deployment-id",
+		"  deploymenttype: null",
+		"  displayname: displayName",
+		"  name: projectName",
+		"  networkname: null",
+		"  overridevalues: null",
+		"  profilename: profileName",
+		"  publishername: null",
+		"  serviceexports: null",
+		"  status:",
+		"    message: message",
+		"    state: state",
+		"    summary:",
+		"      down: 1",
+		"      running: 2",
+		"      total: 3",
+		"      type: apps",
+		"      unknown: 0",
+		"  targetclusters: null",
+	}
+	s.compareLinesOutput(expectedOrderedOutput, parsedOrderedOutput)
+
+	// List deployments with filter and YAML output
+	listFilteredOutput, err := s.listDeployment(project, map[string]string{
+		"filter":      "name=projectName",
+		"output-type": "yaml",
+		"page-size":   "1",
+	})
+	s.NoError(err)
+	s.compareLinesOutput(expectedOrderedOutput, mapLinesOutput(listFilteredOutput))
+
+	// Test error handling for dual template flags (--output-template and --output-template-file both set)
+	_, err = s.listDeployment(project, map[string]string{
+		"output-template":      "table{{.Name}}",
+		"output-template-file": "/tmp/invalid.tmpl",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "only one of")
+
+	// Test error handling for missing template file
+	_, err = s.listDeployment(project, map[string]string{
+		"output-template-file": "/nonexistent/path/template.tmpl",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), "unable to read")
 }
 
 func FuzzDeployment(f *testing.F) {

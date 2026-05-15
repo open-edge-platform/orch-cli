@@ -8,9 +8,24 @@ import (
 	"testing"
 )
 
-func (s *CLITestSuite) listClusterTemplates(publisher string, args commandArgs) (string, error) {
-	commandString := addCommandArgs(args, fmt.Sprintf(`list clustertemplates --project %s`,
-		publisher))
+func (s *CLITestSuite) listClusterTemplates(publisher string, verbose bool, orderBy string, filter string, outputType string, pageSize string, args commandArgs) (string, error) {
+	commandString := fmt.Sprintf(`list clustertemplates --project %s`, publisher)
+	if verbose {
+		commandString += " --verbose"
+	}
+	if orderBy != "" {
+		commandString += " --order-by=" + orderBy
+	}
+	if filter != "" {
+		commandString += " --filter=" + filter
+	}
+	if outputType != "" {
+		commandString += " --output-type=" + outputType
+	}
+	if pageSize != "" {
+		commandString += " --page-size=" + pageSize
+	}
+	commandString = addCommandArgs(args, commandString)
 	return s.runCommand(commandString)
 }
 
@@ -21,20 +36,65 @@ func (s *CLITestSuite) TestClusterTemplate() {
 	/////////////////////////////
 
 	//List cluster
-	CArgs := map[string]string{}
-	_, err := s.listClusterTemplates(project, CArgs)
+	_, err := s.listClusterTemplates(project, false, "", "", "", "", commandArgs{})
 	s.NoError(err)
 
 	//List cluster with non existent project
-	_, err = s.listClusterTemplates("nonexistent-project", CArgs)
+	_, err = s.listClusterTemplates("nonexistent-project", false, "", "", "", "", commandArgs{})
 	s.Error(err)
 
 	//List cluster --verbose
-	CArgs = map[string]string{
-		"verbose": "",
-	}
-	_, err = s.listClusterTemplates(project, CArgs)
+	_, err = s.listClusterTemplates(project, true, "", "", "", "", commandArgs{})
 	s.NoError(err)
+
+	expectedOrderedOutput := linesCommandOutput{
+		"- clusterlabels:",
+		"    created-by: test",
+		"  clusternetwork:",
+		"    pods:",
+		"      cidrblocks:",
+		"      - 10.244.0.0/16",
+		"    services:",
+		"      cidrblocks:",
+		"      - 10.96.0.0/12",
+		"  clusterconfiguration:",
+		"    apiServer:",
+		"      port: 6443",
+		"  controlplaneprovidertype: kubernetes",
+		"  description: Default Kubernetes cluster template",
+		"  infraprovidertype: type",
+		"  kubernetesversion: v1.28.0",
+		"  name: default-template",
+		"  version: v1.0.0",
+		"- clusterlabels:",
+		"    created-by: test",
+		"  clusternetwork:",
+		"    pods:",
+		"      cidrblocks:",
+		"      - 10.244.0.0/16",
+		"    services:",
+		"      cidrblocks:",
+		"      - 10.96.0.0/12",
+		"  clusterconfiguration:",
+		"    apiServer:",
+		"      port: 6443",
+		"  controlplaneprovidertype: kubernetes",
+		"  description: High availability cluster template",
+		"  infraprovidertype: type",
+		"  kubernetesversion: v1.28.0",
+		"  name: ha-template",
+		"  version: v1.1.0",
+	}
+
+	// List cluster templates with order-by and YAML output
+	listOrderedOutput, err := s.listClusterTemplates(project, false, "name", "", "yaml", "1", commandArgs{})
+	s.NoError(err)
+	s.compareLinesOutput(expectedOrderedOutput, mapLinesOutput(listOrderedOutput))
+
+	// List cluster templates with filter and YAML output
+	listFilteredOutput, err := s.listClusterTemplates(project, false, "", "name=default-template", "yaml", "1", commandArgs{})
+	s.NoError(err)
+	s.compareLinesOutput(expectedOrderedOutput, mapLinesOutput(listFilteredOutput))
 }
 
 func FuzzClusterTemplate(f *testing.F) {
@@ -52,12 +112,9 @@ func FuzzClusterTemplate(f *testing.F) {
 		testSuite.SetupTest()
 		defer testSuite.TearDownTest()
 
-		args := map[string]string{
-			"verbose": flag,
-		}
-
+		verbose := flag == "true"
 		// --- List Cluster ---
-		_, err := testSuite.listClusterTemplates(publisher, args)
+		_, err := testSuite.listClusterTemplates(publisher, verbose, "", "", "", "", commandArgs{})
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

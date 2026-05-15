@@ -4,7 +4,7 @@
 
 module github.com/open-edge-platform/cli
 
-go 1.26.1
+go 1.26.3
 
 require (
 	github.com/atomix/dazl v1.1.4
@@ -12,8 +12,9 @@ require (
 	github.com/go-task/slim-sprig v2.20.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gorilla/websocket v1.5.3
+	github.com/golang/protobuf v1.5.4
 	github.com/joho/godotenv v1.5.1
-	github.com/mattn/go-sqlite3 v1.14.42
+	github.com/mattn/go-sqlite3 v1.14.44
 	github.com/oapi-codegen/runtime v1.4.0
 	github.com/open-edge-platform/orch-library/go v0.6.3
 	github.com/spf13/cobra v1.10.2

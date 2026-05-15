@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -19,16 +19,31 @@ func (s *CLITestSuite) createArtifact(project string, artifactName string, args 
 	return err
 }
 
-func (s *CLITestSuite) listArtifacts(project string, verbose bool, orderBy string, filter string) (string, error) {
+func (s *CLITestSuite) listArtifacts(project string, verbose bool, orderBy string, filter string, outputFilter string, outputTemplate string, outputTemplateFile string, outputType string, pageSize string) (string, error) {
 	args := `list artifacts --project ` + project
 	if verbose {
 		args = args + " -v"
 	}
 	if orderBy != "" {
-		args = args + " order-by=" + orderBy
+		args = args + " --order-by=" + orderBy
 	}
 	if filter != "" {
-		args = args + " filter=" + filter
+		args = args + " --filter=" + filter
+	}
+	if outputFilter != "" {
+		args = args + " --output-filter " + outputFilter
+	}
+	if outputTemplate != "" {
+		args = args + " --output-template " + outputTemplate
+	}
+	if outputTemplateFile != "" {
+		args = args + " --output-template-file " + outputTemplateFile
+	}
+	if outputType != "" {
+		args = args + " --output-type " + outputType
+	}
+	if pageSize != "" {
+		args = args + " --page-size " + pageSize
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -70,22 +85,22 @@ func (s *CLITestSuite) TestArtifact() {
 	s.NoError(err)
 
 	// list artifacts to make sure it was created properly
-	listOutput, err := s.listArtifacts(project, simpleOutput, "", "")
+	listOutput, err := s.listArtifacts(project, simpleOutput, "", "", "", "", "", "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
 	expectedOutput := commandOutput{
 		artifactName: {
-			"Name":         artifactName,
-			"Description":  artifactDescription,
-			"Display Name": artifactName,
+			"NAME":         artifactName,
+			"DESCRIPTION":  artifactDescription,
+			"DISPLAY NAME": artifactDisplayName,
 		},
 	}
 
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list artifact
-	listVerboseOutput, err := s.listArtifacts(project, verboseOutput, "name", "description="+artifactDescription)
+	listVerboseOutput, err := s.listArtifacts(project, verboseOutput, "name", "description="+artifactDescription, "", "", "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
@@ -120,6 +135,33 @@ func (s *CLITestSuite) TestArtifact() {
 	err = s.deleteArtifact(project, artifactName)
 	s.NoError(err)
 
+	// List artifacts with order-by and YAML output
+	listOrderedOutput, err := s.listArtifacts(project, false, "name", "", "", "", "", "yaml", "1")
+	s.NoError(err)
+
+	parsedOrderedOutput := mapLinesOutput(listOrderedOutput)
+
+	expectedOrderedOutput := linesCommandOutput{
+		"- artifact: []",
+		"  createtime: 2025-12-31T23:59:59Z",
+		"  description: Artifact-Description",
+		"  displayname: artifact-display-name",
+		"  mimetype: text/plain",
+		"  name: artifact",
+		"  updatetime: 2025-12-31T23:59:59Z",
+	}
+	s.compareLinesOutput(expectedOrderedOutput, parsedOrderedOutput)
+
+	// Test error handling for dual template flags (--output-template and --output-template-file both set)
+	_, err = s.listArtifacts(project, simpleOutput, "", "", "", "table{{.Name}}", "/tmp/invalid.tmpl", "", "")
+	s.Error(err)
+	s.Contains(err.Error(), "only one of")
+
+	// Test error handling for missing template file
+	_, err = s.listArtifacts(project, simpleOutput, "", "", "", "", "/nonexistent/path/template.tmpl", "", "")
+	s.Error(err)
+	s.Contains(err.Error(), "unable to read")
+
 	// Not viable to test via mock
 	// // Make sure artifact is gone
 	// _, err = s.getArtifact(project, artifactName)
@@ -144,6 +186,16 @@ func TestPrintArtifactEvent(t *testing.T) {
 	assert.Contains(t, output, "test-artifact")
 	assert.Contains(t, output, "Test Artifact")
 	assert.Contains(t, output, "A test artifact")
+
+	// verbose
+	buf.Reset()
+	err = printArtifactEvent(&buf, "Artifact", payload, true)
+	assert.NoError(t, err)
+	verboseOutput := buf.String()
+	assert.Contains(t, verboseOutput, "Name: test-artifact")
+	assert.Contains(t, verboseOutput, "Display Name: Test Artifact")
+	assert.Contains(t, verboseOutput, "Description: A test artifact")
+	assert.Contains(t, verboseOutput, "Mime Type: application/octet-stream")
 }
 
 func FuzzArtifact(f *testing.F) {
@@ -179,7 +231,7 @@ func FuzzArtifact(f *testing.F) {
 			t.Errorf("Unexpected error: %v", err)
 		}
 		// --- List ---
-		_, err = testSuite.listArtifacts(project, false, "", "")
+		_, err = testSuite.listArtifacts(project, false, "", "", "", "", "", "", "")
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {

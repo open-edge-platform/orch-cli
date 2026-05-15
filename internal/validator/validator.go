@@ -210,6 +210,26 @@ func CheckCSV(filename string, globalOverrides types.HostRecord, provisioningSup
 	return validated, errVal
 }
 
+// CheckDirectInput validates a single host record provided directly as globalOverrides
+// and prints any validation errors to the console instead of writing them to a file.
+func CheckDirectInput(globalOverrides types.HostRecord, provisioningSupported bool) ([]types.HostRecord, error) {
+	content := []types.HostRecord{globalOverrides}
+
+	validated, errVal := SanitizeEntries(content, provisioningSupported)
+	if errVal != nil && validated == nil {
+		return nil, errVal
+	}
+
+	if errVal != nil {
+		for _, record := range validated {
+			if record.Error != "" {
+				fmt.Printf("Validation error: %s\n", record.Error)
+			}
+		}
+	}
+	return validated, errVal
+}
+
 // Version pattern as defined in catalog OpenAPI spec
 // Allows: 1.0.0, v1.0.0, 2.0.0-rc1, 2.0.0-pre-rc1, 2.0.0+build.123
 const VERSIONPATTERN = `^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9]+(-[a-z0-9]+)*)?(\+[a-z0-9]+([.-][a-z0-9]+)*)?$`

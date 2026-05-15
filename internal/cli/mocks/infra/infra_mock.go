@@ -40,7 +40,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.CustomConfigServiceListCustomConfigsParams, reqEditors ...infra.RequestEditorFn) (*infra.CustomConfigServiceListCustomConfigsResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
-				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project", "nonexistent-init":
@@ -48,13 +47,24 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
 					}, nil
 				default:
+					// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+					if params != nil && params.Offset != nil && *params.Offset > 0 {
+						return &infra.CustomConfigServiceListCustomConfigsResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ListCustomConfigsResponse{
+								CustomConfigs: []infra.CustomConfigResource{},
+								HasNext:       false,
+								TotalElements: 2,
+							},
+						}, nil
+					}
 					return &infra.CustomConfigServiceListCustomConfigsResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.ListCustomConfigsResponse{
 							CustomConfigs: []infra.CustomConfigResource{
 								{
 									Name:        "haproxy-config",
-									Config:      "test:",
+									Config:      "#cloud-config\nwrite_files:\n- path: /tmp/testfile\n  content: TEST",
 									Description: stringPtr("haproxy configuration for web services"),
 									ResourceId:  stringPtr("config-abc12345"),
 									Timestamps: &infra.Timestamps{
@@ -64,7 +74,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 								},
 							},
 							HasNext:       false,
-							TotalElements: 1,
+							TotalElements: 2,
 						},
 					}, nil
 				}
@@ -182,7 +192,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.LocalAccountServiceListLocalAccountsParams, reqEditors ...infra.RequestEditorFn) (*infra.LocalAccountServiceListLocalAccountsResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
-				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project", "nonexistent-user":
@@ -190,6 +199,17 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
 				default:
+					// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+					if params != nil && params.Offset != nil && *params.Offset > 0 {
+						return &infra.LocalAccountServiceListLocalAccountsResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ListLocalAccountsResponse{
+								LocalAccounts: []infra.LocalAccountResource{},
+								TotalElements: 2,
+								HasNext:       false,
+							},
+						}, nil
+					}
 					return &infra.LocalAccountServiceListLocalAccountsResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.ListLocalAccountsResponse{
@@ -205,7 +225,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									},
 								},
 							},
-							TotalElements: 1,
+							TotalElements: 2,
 							HasNext:       false,
 						},
 					}, nil
@@ -343,25 +363,29 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						JSON200: &infra.ListHostsResponse{
 							Hosts: []infra.HostResource{
 								{
-									HostStatus:      stringPtr("Running"),
-									ResourceId:      stringPtr("host-abc12345"),
-									Name:            "edge-host-001",
-									Hostname:        stringPtr("edge-host-001.example.com"),
-									Note:            stringPtr("Edge computing host"),
-									CpuArchitecture: stringPtr("x86_64"),
-									CpuCores:        func() *int { i := 8; return &i }(),
-									CpuModel:        stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
-									CpuSockets:      func() *int { i := 2; return &i }(),
-									CpuThreads:      func() *int { i := 32; return &i }(),
-									MemoryBytes:     stringPtr("17179869184"), // 16GB in bytes
-									SerialNumber:    stringPtr("1234567890"),
-									Uuid:            stringPtr("550e8400-e29b-41d4-a716-446655440000"),
-									ProductName:     stringPtr("ThinkSystem SR650"),
-									BiosVendor:      stringPtr("Lenovo"),
-									BiosVersion:     stringPtr("TEE142L-2.61"),
-									BiosReleaseDate: stringPtr("03/25/2023"),
-									BmcIp:           stringPtr("192.168.1.101"),
-									SiteId:          stringPtr("site-abcd1234"),
+									HostStatus:        stringPtr("Running"),
+									ResourceId:        stringPtr("host-abc12345"),
+									Name:              "edge-host-001",
+									Hostname:          stringPtr("edge-host-001.example.com"),
+									Note:              stringPtr("Edge computing host"),
+									CpuArchitecture:   stringPtr("x86_64"),
+									CpuCores:          func() *int { i := 8; return &i }(),
+									CpuModel:          stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
+									CpuSockets:        func() *int { i := 2; return &i }(),
+									CpuThreads:        func() *int { i := 32; return &i }(),
+									MemoryBytes:       stringPtr("17179869184"), // 16GB in bytes
+									SerialNumber:      stringPtr("1234567890"),
+									Uuid:              stringPtr("550e8400-e29b-41d4-a716-446655440000"),
+									ProductName:       stringPtr("ThinkSystem SR650"),
+									CurrentAmtState:   (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+									DesiredAmtState:   (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+									CurrentPowerState: (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
+									DesiredPowerState: (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
+									BiosVendor:        stringPtr("Lenovo"),
+									BiosVersion:       stringPtr("TEE142L-2.61"),
+									BiosReleaseDate:   stringPtr("03/25/2023"),
+									BmcIp:             stringPtr("192.168.1.101"),
+									SiteId:            stringPtr("site-abcd1234"),
 									Site: &infra.SiteResource{
 										ResourceId: stringPtr("site-abcd1234"),
 										Name:       stringPtr("site"),
@@ -1708,7 +1732,6 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *infra.OSUpdatePolicyListOSUpdatePolicyParams, reqEditors ...infra.RequestEditorFn) (*infra.OSUpdatePolicyListOSUpdatePolicyResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
-				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
@@ -1716,6 +1739,17 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
 				default:
+					// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+					if params != nil && params.Offset != nil && *params.Offset > 0 {
+						return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ListOSUpdatePolicyResponse{
+								OsUpdatePolicies: []infra.OSUpdatePolicy{},
+								TotalElements:    2,
+								HasNext:          false,
+							},
+						}, nil
+					}
 					return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.ListOSUpdatePolicyResponse{
@@ -1737,7 +1771,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									},
 								},
 							},
-							TotalElements: 1,
+							TotalElements: 2,
 							HasNext:       false,
 						},
 					}, nil
@@ -1946,13 +1980,24 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 		mockInfraClient.EXPECT().ProviderServiceListProvidersWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, projectName string, _ *infra.ProviderServiceListProvidersParams, _ ...infra.RequestEditorFn) (*infra.ProviderServiceListProvidersResponse, error) {
+			func(_ context.Context, projectName string, params *infra.ProviderServiceListProvidersParams, _ ...infra.RequestEditorFn) (*infra.ProviderServiceListProvidersResponse, error) {
 				switch projectName {
 				case "invalid-project":
 					return &infra.ProviderServiceListProvidersResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
 				default:
+					// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+					if params != nil && params.Offset != nil && *params.Offset > 0 {
+						return &infra.ProviderServiceListProvidersResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &infra.ListProvidersResponse{
+								Providers:     []infra.ProviderResource{},
+								TotalElements: 2,
+								HasNext:       false,
+							},
+						}, nil
+					}
 					return &infra.ProviderServiceListProvidersResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.ListProvidersResponse{
@@ -1969,7 +2014,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									},
 								},
 							},
-							TotalElements: 1,
+							TotalElements: 2,
 							HasNext:       false,
 						},
 					}, nil

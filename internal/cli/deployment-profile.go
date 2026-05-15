@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -8,10 +8,24 @@ import (
 	"io"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	"github.com/open-edge-platform/orch-library/go/pkg/errors"
 
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	"github.com/spf13/cobra"
+)
+
+const (
+	DEFAULT_DEPLOYMENT_PROFILE_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Description}}\t{{len .ApplicationProfiles}}"
+	DEFAULT_DEPLOYMENT_PROFILE_INSPECT_FORMAT = `Name: {{.Name}}
+Display Name: {{str .DisplayName}}
+Description: {{str .Description}}
+Profiles:{{range $app, $profile := .ApplicationProfiles}}
+  {{$app}}:{{$profile}}{{- end}}
+Create Time: {{.CreateTime}}
+Update Time: {{.UpdateTime}}
+`
+	DEPLOYMENT_PROFILE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_PROFILE_OUTPUT_TEMPLATE"
 )
 
 func getCreateDeploymentProfileCommand() *cobra.Command {
@@ -37,6 +51,7 @@ func getListDeploymentProfilesCommand() *cobra.Command {
 		Example: "orch-cli list deployment-package-profiles my-deployment-package 1.0.0 --project my-project",
 		RunE:    runListDeploymentProfilesCommand,
 	}
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
@@ -49,6 +64,7 @@ func getGetDeploymentProfileCommand() *cobra.Command {
 		Example: "orch-cli get deployment-package-profile my-deployment-package 1.0.0 my-profile --project my-project",
 		RunE:    runGetDeploymentProfileCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
@@ -78,22 +94,36 @@ func getDeleteDeploymentProfileCommand() *cobra.Command {
 	return cmd
 }
 
-var deploymentProfileHeader = fmt.Sprintf("%s\t%s\t%s\t%s", "Name", "Display Name", "Description", "Profile Count")
-
-func printDeploymentProfiles(writer io.Writer, profileList *[]catapi.CatalogV3DeploymentProfile, verbose bool) {
-	for _, p := range *profileList {
-		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%d\n", p.Name,
-				valueOrNone(p.DisplayName), valueOrNone(p.Description), len(p.ApplicationProfiles))
-		} else {
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", p.Name)
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", valueOrNone(p.DisplayName))
-			_, _ = fmt.Fprintf(writer, "Description: %s\n", valueOrNone(p.Description))
-			_, _ = fmt.Fprintf(writer, "Profiles: %s\n", p.ApplicationProfiles)
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", p.CreateTime.Format(timeLayout))
-			_, _ = fmt.Fprintf(writer, "Update Time: %s\n\n", p.UpdateTime.Format(timeLayout))
-		}
+func getDeploymentProfileOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_DEPLOYMENT_PROFILE_INSPECT_FORMAT, nil
 	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_PROFILE_FORMAT, DEPLOYMENT_PROFILE_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func printDeploymentProfiles(cmd *cobra.Command, writer io.Writer, profileList *[]catapi.CatalogV3DeploymentProfile, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getDeploymentProfileOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *profileList,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
 }
 
 func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
@@ -177,12 +207,14 @@ func runListDeploymentProfilesCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, deploymentProfileHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		fmt.Sprintf("error listing deployment profiles for deployment package %s:%s", name, version)); !proceed {
 		return err
 	}
-
-	printDeploymentProfiles(writer, resp.JSON200.DeploymentPackage.Profiles, verbose)
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printDeploymentProfiles(cmd, writer, resp.JSON200.DeploymentPackage.Profiles, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
 }
 
@@ -202,7 +234,7 @@ func runGetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose, deploymentProfileHeader,
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true, "",
 		fmt.Sprintf("error getting deployment profile %s for deployment package %s:%s", profileName, name, version)); !proceed {
 		return err
 	}
@@ -210,7 +242,9 @@ func runGetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 	pkg := resp.JSON200.DeploymentPackage
 	for _, profile := range *pkg.Profiles {
 		if profile.Name == profileName {
-			printDeploymentProfiles(writer, &[]catapi.CatalogV3DeploymentProfile{profile}, verbose)
+			if err := printDeploymentProfiles(cmd, writer, &[]catapi.CatalogV3DeploymentProfile{profile}, nil, verbose); err != nil {
+				return err
+			}
 			return writer.Flush()
 		}
 	}

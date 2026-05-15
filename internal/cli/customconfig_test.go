@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -65,16 +65,17 @@ func (s *CLITestSuite) TestCustomConfig() {
 
 	//List customconfig
 
-	listOutput, err := s.listCustomConfig(project, make(map[string]string))
+	CArgs = map[string]string{}
+	listOutput, err := s.listCustomConfig(project, CArgs)
 	s.NoError(err)
 
 	parsedOutputList := mapListOutput(listOutput)
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Name":        name,
-			"Resource ID": resourceID,
-			"Description": description,
+			"NAME":        name,
+			"RESOURCE ID": resourceID,
+			"DESCRIPTION": description,
 		},
 	}
 
@@ -91,11 +92,11 @@ func (s *CLITestSuite) TestCustomConfig() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Name":               name,
-			"Resource ID":        resourceID,
-			"Description":        description,
-			"Creation Timestamp": timestamp,
-			"Updated Timestamp":  timestamp,
+			"NAME":                  name,
+			"RESOURCE ID":           resourceID,
+			"DESCRIPTION":           description,
+			"TIMESTAMPS CREATED AT": timestamp,
+			"TIMESTAMPS UPDATED AT": timestamp,
 		},
 	}
 
@@ -109,15 +110,15 @@ func (s *CLITestSuite) TestCustomConfig() {
 	s.NoError(err)
 
 	parsedOutput := mapGetOutput(getOutput)
-	expectedOutput := map[string]string{
-		"Name:":        "haproxy-config",
-		"Resource ID:": "config-abc12345",
-		"Description:": "haproxy configuration for web services",
-		"Cloud Init:":  "",
-		"test:":        "",
-	}
-
-	s.compareGetOutput(expectedOutput, parsedOutput)
+	// Note: The cloud-init content contains YAML with colons which the test parser
+	// treats as separate fields. We just check for the key fields here.
+	s.Contains(parsedOutput, "Name:", "Should contain Name field")
+	s.Equal("haproxy-config", parsedOutput["Name:"], "Name should match")
+	s.Contains(parsedOutput, "Resource ID:", "Should contain Resource ID field")
+	s.Equal("config-abc12345", parsedOutput["Resource ID:"], "Resource ID should match")
+	s.Contains(parsedOutput, "Description:", "Should contain Description field")
+	s.Equal("haproxy configuration for web services", parsedOutput["Description:"], "Description should match")
+	s.Contains(parsedOutput, "Cloud Init:", "Should contain Cloud Init field")
 
 	/////////////////////////////
 	// Test Custom Config Delete
@@ -130,6 +131,40 @@ func (s *CLITestSuite) TestCustomConfig() {
 	//delete invalid cusotm config
 	_, err = s.deleteCustomConfig(project, "nonexistent-config", make(map[string]string))
 	s.EqualError(err, "no custom config matches the given name")
+
+	// List custom configs with order-by and YAML output
+	CArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listCustomConfig(project, CArgs)
+	s.NoError(err)
+
+	expectedYAMLOutput := linesCommandOutput{
+		"- config: |-",
+		"    #cloud-config",
+		"    write_files:",
+		"    - path: /tmp/testfile",
+		"      content: TEST",
+		"  description: haproxy configuration for web services",
+		"  name: haproxy-config",
+		"  resourceid: config-abc12345",
+		"  timestamps:",
+		"    createdat: 2025-01-15T10:30:00Z",
+		"    updatedat: 2025-01-15T10:30:00Z",
+	}
+	s.compareLinesOutput(expectedYAMLOutput, mapLinesOutput(listOrderedOutput))
+
+	// List custom configs with filter and YAML output
+	CArgs = map[string]string{
+		"filter":      "name=haproxy-config",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listCustomConfig(project, CArgs)
+	s.NoError(err)
+	s.compareLinesOutput(expectedYAMLOutput, mapLinesOutput(listFilteredOutput))
 
 }
 
