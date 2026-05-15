@@ -44,8 +44,10 @@ spec:
   updatePolicy: "UPDATE_POLICY_LATEST"
 `
 
-const deleteOSUpdatePolicyExamples = `#Delete an OS Update Policy  using it's name
-orch-cli delete <resourceID> policy --project some-project`
+const deleteOSUpdatePolicyExamples = `# Delete an OS Update policy by resource ID
+orch-cli delete osupdatepolicy osupdatepolicy-1234abcd --project some-project
+# Delete an OS Update policy by name
+orch-cli delete osupdatepolicy "my-policy" --project some-project`
 
 var osUpdatePolicySchema = `
 {
@@ -252,7 +254,7 @@ func getCreateOSUpdatePolicyCommand() *cobra.Command {
 
 func getDeleteOSUpdatePolicyCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "osupdatepolicy <name> [flags]",
+		Use:     "osupdatepolicy <name|resourceID> [flags]",
 		Short:   "Delete an OS Update policy",
 		Example: deleteOSUpdatePolicyExamples,
 		Args:    cobra.ExactArgs(1),
@@ -473,6 +475,23 @@ func runDeleteOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	policyID := args[0]
+
+	if !isOSUpdatePolicyResourceID(policyID) {
+		// Name-based lookup: list all policies and filter by name.
+		resp, err := OSUPolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+			&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving OS Update policies"); err != nil {
+			return err
+		}
+		policy, err := findOSUpdatePolicyByName(resp.JSON200.OsUpdatePolicies, policyID)
+		if err != nil {
+			return err
+		}
+		policyID = derefString(policy.ResourceId)
+	}
 
 	resp, err := OSUPolicyClient.OSUpdatePolicyDeleteOSUpdatePolicyWithResponse(ctx, projectName,
 		policyID, auth.AddAuthHeader)

@@ -40,8 +40,10 @@ orch-cli create region name --project some-project --parent region-bbbb1111 --ty
 
 --type = country/state/county/region/city`
 
-const deleteRegionExamples = `# Delete specific region
-orch-cli delete region region-aaaa1111 --project some-project`
+const deleteRegionExamples = `# Delete a region by resource ID
+orch-cli delete region region-aaaa1111 --project some-project
+# Delete a region by name
+orch-cli delete region "my-region" --project some-project`
 
 const spaces string = "       "
 const spaces2 string = ""
@@ -139,7 +141,7 @@ func getCreateRegionCommand() *cobra.Command {
 
 func getDeleteRegionCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "region <resourceid> [flags]",
+		Use:     "region <name|resourceID> [flags]",
 		Short:   "Delete a region",
 		Example: deleteRegionExamples,
 		Args:    cobra.ExactArgs(1),
@@ -263,9 +265,21 @@ func runDeleteRegionCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = checkID(id)
-	if err != nil {
-		return err
+	if !isRegionResourceID(id) {
+		// Name-based lookup: list all regions and filter by name.
+		resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving regions"); err != nil {
+			return err
+		}
+		region, err := findRegionByName(resp.JSON200.Regions, id)
+		if err != nil {
+			return err
+		}
+		id = derefString(region.ResourceId)
 	}
 
 	resp, err := regionClient.RegionServiceDeleteRegionWithResponse(ctx, projectName,

@@ -151,8 +151,10 @@ orch-cli create host <name> --project some-project --serial 2500JF3 --uuid 4c4c4
 	return examples
 }
 
-const deleteHostExamples = `#Delete a host using it's host Resource ID
-orch-cli delete host host-1234abcd  --project itep`
+const deleteHostExamples = `#Delete a host using its resource ID
+orch-cli delete host host-1234abcd  --project itep
+#Delete a host using its name
+orch-cli delete host "my-host"  --project itep`
 
 const deauthorizeHostExamples = `#Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
 orch-cli deauthorize host host-1234abcd  --project itep`
@@ -1866,7 +1868,7 @@ func getCreateHostCommand() *cobra.Command {
 
 func getDeleteHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "host <resourceID> [flags]",
+		Use:     "host <name|resourceID> [flags]",
 		Short:   "Deletes a host and associated instance",
 		Example: deleteHostExamples,
 		Args:    cobra.ExactArgs(1),
@@ -2464,6 +2466,24 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	if !isHostResourceID(hostID) {
+		// Name-based lookup: pass name filter to the API to narrow results, then exact client-side match.
+		nameFilter := fmt.Sprintf("name=%q", hostID)
+		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+			return err
+		}
+		host, err := findHostByName(resp.JSON200.Hosts, hostID)
+		if err != nil {
+			return err
+		}
+		hostID = derefString(host.ResourceId)
 	}
 
 	// retrieve the host (to check if it has an instance associated with it)

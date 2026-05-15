@@ -29,8 +29,10 @@ orch-cli get osupdaterun osupdaterun-ced8549f --project some-project
 # Get an OS Update Run by name
 orch-cli get osupdaterun my-update-run --project some-project`
 
-const deleteOSUpdateRunExamples = `#Delete an OS Update Run  using it's name
-orch-cli delete osupdaterun <resourceid> --project some-project`
+const deleteOSUpdateRunExamples = `# Delete an OS Update run by resource ID
+orch-cli delete osupdaterun osupdaterun-1234abcd --project some-project
+# Delete an OS Update run by name
+orch-cli delete osupdaterun "my-osupdaterun" --project some-project`
 
 // Template-based output constants for standardization
 const (
@@ -124,7 +126,7 @@ func getListOSUpdateRunCommand() *cobra.Command {
 
 func getDeleteOSUpdateRunCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "osupdaterun <name> [flags]",
+		Use:     "osupdaterun <name|resourceID> [flags]",
 		Short:   "Delete an OS Update run",
 		Example: deleteOSUpdateRunExamples,
 		Args:    cobra.ExactArgs(1),
@@ -256,6 +258,23 @@ func runDeleteOSUpdateRunCommand(cmd *cobra.Command, args []string) error {
 	ctx, OSUpdateRunClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	if !isOSUpdateRunResourceID(osrun) {
+		// Name-based lookup: list all runs and filter by name.
+		resp, err := OSUpdateRunClient.OSUpdateRunListOSUpdateRunWithResponse(ctx, projectName,
+			&infra.OSUpdateRunListOSUpdateRunParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving OS Update runs"); err != nil {
+			return err
+		}
+		run, err := findOSUpdateRunByName(resp.JSON200.OsUpdateRuns, osrun)
+		if err != nil {
+			return err
+		}
+		osrun = derefString(run.ResourceId)
 	}
 
 	resp, err := OSUpdateRunClient.OSUpdateRunDeleteOSUpdateRunWithResponse(ctx, projectName,

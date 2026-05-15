@@ -40,8 +40,10 @@ orch-cli create site name --project some-project --region region-bbbb1111
 # Create a site in a region (default longitude and latitude set to 0)
 orch-cli create site name --project some-project --region region-bbbb1111 --longitude 5 --latitude 5
 `
-const deleteSiteExamples = `# Delete specific site
-orch-cli delete site region-aaaa1111 --project some-project`
+const deleteSiteExamples = `# Delete a site by resource ID
+orch-cli delete site site-aaaa1111 --project some-project
+# Delete a site by name
+orch-cli delete site "my-site" --project some-project`
 
 var queryRegion = "region"
 
@@ -121,7 +123,7 @@ func getCreateSiteCommand() *cobra.Command {
 
 func getDeleteSiteCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "site <resourceid> [flags]",
+		Use:     "site <name|resourceID> [flags]",
 		Short:   "Delete a site",
 		Example: deleteSiteExamples,
 		Args:    cobra.ExactArgs(1),
@@ -365,6 +367,23 @@ func runDeleteSiteCommand(cmd *cobra.Command, args []string) error {
 	ctx, siteClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	if !isSiteResourceID(id) {
+		// Name-based lookup: list all sites and filter by name.
+		resp, err := siteClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
+			&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving sites"); err != nil {
+			return err
+		}
+		site, err := findSiteByName(resp.JSON200.Sites, id)
+		if err != nil {
+			return err
+		}
+		id = derefString(site.ResourceId)
 	}
 
 	resp, err := siteClient.SiteServiceDeleteSiteWithResponse(ctx, projectName,

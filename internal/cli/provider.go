@@ -41,8 +41,10 @@ const createProviderExamples = `# Create specific provider
 # Create a provider by providing name, kind, and empty API endpoint
 orch-cli create provider myprovider "PROVIDER_KIND_BAREMETAL" "" --vendor "PROVIDER_VENDOR_UNSPECIFIED" --config ""defaultOs":"","autoProvision":false,"defaultLocalAccount":"","osSecurityFeatureEnable":false" --project some-project`
 
-const deleteProviderExamples = `# Delete specific provider
-orch-cli delete provider provider-aaaa1111 --project some-project`
+const deleteProviderExamples = `# Delete a provider by resource ID
+orch-cli delete provider provider-aaaa1111 --project some-project
+# Delete a provider by name
+orch-cli delete provider "my-provider" --project some-project`
 
 func printProviders(cmd *cobra.Command, writer io.Writer, providers *[]infra.ProviderResource, orderBy *string, outputFilter *string, verbose bool, forList bool) error {
 	outputType, _ := cmd.Flags().GetString("output-type")
@@ -130,7 +132,7 @@ func getCreateProviderCommand() *cobra.Command {
 
 func getDeleteProviderCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "provider <resourceid> [flags]",
+		Use:     "provider <name|resourceID> [flags]",
 		Short:   "Delete a provider",
 		Example: deleteProviderExamples,
 		Args:    cobra.ExactArgs(1),
@@ -517,6 +519,39 @@ func runDeleteProviderCommand(cmd *cobra.Command, args []string) error {
 	ctx, providerClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	if !isProviderResourceID(id) {
+		// Name-based lookup: paginated list, then exact client-side match.
+		pageSize := 100
+		offset := 0
+		var allProviders []infra.ProviderResource
+		for {
+			resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
+				&infra.ProviderServiceListProvidersParams{
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving providers"); err != nil {
+				return err
+			}
+			if resp.JSON200 == nil {
+				break
+			}
+			allProviders = append(allProviders, resp.JSON200.Providers...)
+			if len(allProviders) >= int(resp.JSON200.TotalElements) || len(resp.JSON200.Providers) == 0 {
+				break
+			}
+			offset += pageSize
+		}
+		provider, err := findProviderByName(allProviders, id)
+		if err != nil {
+			return err
+		}
+		id = derefString(provider.ResourceId)
 	}
 
 	resp, err := providerClient.ProviderServiceDeleteProviderWithResponse(ctx, projectName,

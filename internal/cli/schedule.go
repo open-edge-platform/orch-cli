@@ -1244,7 +1244,13 @@ func runDeleteScheduleCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	singleSchedule, repeatedSchedule, err := findSchedule(gresp.JSON200.SingleSchedules, gresp.JSON200.RepeatedSchedules, name)
+	var singleSchedule infra.SingleScheduleResource
+	var repeatedSchedule infra.RepeatedScheduleResource
+	if isScheduleResourceID(name) {
+		singleSchedule, repeatedSchedule, err = findSchedule(gresp.JSON200.SingleSchedules, gresp.JSON200.RepeatedSchedules, name)
+	} else {
+		singleSchedule, repeatedSchedule, err = findScheduleByName(gresp.JSON200.SingleSchedules, gresp.JSON200.RepeatedSchedules, name)
+	}
 	if err != nil {
 		return err
 	}

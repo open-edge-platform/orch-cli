@@ -119,10 +119,10 @@ func getUpgradeDeploymentCommand() *cobra.Command {
 
 func getDeleteDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Short:   "Delete a deployment",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli delete deployment 12345 --project some-project",
+		Example: "orch-cli delete deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --project some-project\norch-cli delete deployment \"Test Headlamp Dashboard\" --project some-project",
 		Aliases: deploymentAliases,
 		RunE:    runDeleteDeploymentCommand,
 	}
@@ -798,6 +798,24 @@ func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	deploymentID := args[0]
+
+	if !isDeploymentID(deploymentID) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, deploymentID)
+		if err != nil {
+			return err
+		}
+		deploymentID = derefString(deployment.DeployId)
+	}
 
 	resp, err := deploymentClient.DeploymentServiceDeleteDeploymentWithResponse(ctx, projectName, deploymentID,
 		&depapi.DeploymentServiceDeleteDeploymentParams{}, auth.AddAuthHeader)
