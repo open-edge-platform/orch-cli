@@ -947,23 +947,16 @@ func toHostInspectItem(host *infra.HostResource) HostInspectItem {
 		solSessionStatus = *host.SolSessionStatus
 	}
 
-	dnsSuffix := "N/A"
-	if host.AmtDnsSuffix != nil {
-		dnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
-	}
-	amtSKU := "N/A"
-	if host.AmtSku != nil {
-		amtSKU = fmt.Sprintf("%v", *host.AmtSku)
-	}
-
 	// AMT — only populate when SKU is specified (not UNSPECIFIED)
 	if host.AmtSku != nil && *host.AmtSku != infra.AMTSKUUNSPECIFIED {
 		item.AmtEnabled = true
-		item.AmtSku = amtSKU
+		item.AmtSku = fmt.Sprintf("%v", *host.AmtSku)
 		item.CurrentAmtState = currentAmtState
 		item.DesiredAmtState = desiredAmtState
 		item.AmtControlMode = amtControlMode
-		item.AmtDnsSuffix = dnsSuffix
+		if host.AmtDnsSuffix != nil {
+			item.AmtDnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
+		}
 		item.DesiredKvmState = desiredKvmState
 		item.CurrentKvmState = currentKvmState
 		item.KvmStatus = kvmStatus
