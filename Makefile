@@ -198,7 +198,7 @@ license: reuse-tool
 	reuse lint
 
 artifact-publish:
-	@echo "CoPublishing orch-cli-package.tar.gz to Production Release Service."
+	@echo "TAR orch-cli."
 	FILES := src ./binaries/build/_output/orch-cli
 
 	package: clean
