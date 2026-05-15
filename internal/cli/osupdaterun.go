@@ -4,8 +4,11 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"regexp"
+	"strings"
 
 	"context"
 
@@ -20,8 +23,11 @@ const listOSUpdateRunExamples = `# List all OS Update Policies
 orch-cli list osupdaterun --project some-project
 `
 
-const getOSUpdateRunExamples = `# Get detailed information about specific OS Update Run using the run name
-orch-cli get osupdaterun <resourceid> --project some-project`
+const getOSUpdateRunExamples = `# Get an OS Update Run by resource ID
+orch-cli get osupdaterun osupdaterun-ced8549f --project some-project
+
+# Get an OS Update Run by name
+orch-cli get osupdaterun my-update-run --project some-project`
 
 const deleteOSUpdateRunExamples = `#Delete an OS Update Run  using it's name
 orch-cli delete osupdaterun <resourceid> --project some-project`
@@ -91,7 +97,7 @@ func printOSUpdateRun(cmd *cobra.Command, writer io.Writer, run *infra.OSUpdateR
 
 func getGetOSUpdateRunCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "osupdaterun <name> [flags]",
+		Use:     "osupdaterun <name|resourceID> [flags]",
 		Short:   "Get an OS Update run",
 		Example: getOSUpdateRunExamples,
 		Args:    cobra.ExactArgs(1),
@@ -128,24 +134,79 @@ func getDeleteOSUpdateRunCommand() *cobra.Command {
 	return cmd
 }
 
-// Gets specific OSUpdateRun - retrieves list of policies and then filters and outputs
-// specifc run by name
+// osUpdateRunResourceIDPattern matches OS Update Run resource IDs: "osupdaterun-" followed by 8 hex chars.
+var osUpdateRunResourceIDPattern = regexp.MustCompile(`^osupdaterun-[0-9a-f]{8}$`)
+
+func isOSUpdateRunResourceID(s string) bool {
+	return osUpdateRunResourceIDPattern.MatchString(s)
+}
+
+// findOSUpdateRunByName searches a slice of OS Update Runs for an exact name match.
+// Returns an error if no match is found or if multiple runs share the same name
+// (listing the matches so the caller can retry with a resource ID).
+func findOSUpdateRunByName(runs []infra.OSUpdateRun, name string) (infra.OSUpdateRun, error) {
+	var matches []infra.OSUpdateRun
+	for _, r := range runs {
+		if r.Name != nil && *r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return infra.OSUpdateRun{}, fmt.Errorf("no OS Update Run found with name %q", name)
+	case 1:
+		return matches[0], nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple OS Update Runs found with name %q; use a resource ID instead:\n", name)
+		for _, m := range matches {
+			fmt.Fprintf(&sb, "  name: %s  resource-id: %s\n", derefString(m.Name), derefString(m.ResourceId))
+		}
+		return infra.OSUpdateRun{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
+}
+
+// Gets specific OSUpdateRun by resource ID or name.
+// If the argument matches the resource ID pattern it is looked up directly.
+// Otherwise all runs are fetched and filtered by exact name match.
 func runGetOSUpdateRunCommand(cmd *cobra.Command, args []string) error {
-	uprun := args[0]
+	query := args[0]
 	writer, _ := getOutputContext(cmd)
 	ctx, OSUpdateRunClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
-	resp, err := OSUpdateRunClient.OSUpdateRunGetOSUpdateRunWithResponse(ctx, projectName,
-		uprun, auth.AddAuthHeader)
+
+	if isOSUpdateRunResourceID(query) {
+		resp, err := OSUpdateRunClient.OSUpdateRunGetOSUpdateRunWithResponse(ctx, projectName,
+			query, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error getting OS Update run"); err != nil {
+			return err
+		}
+		if err := printOSUpdateRun(cmd, writer, resp.JSON200); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	// Name-based lookup: list all runs and filter by name.
+	resp, err := OSUpdateRunClient.OSUpdateRunListOSUpdateRunWithResponse(ctx, projectName,
+		&infra.OSUpdateRunListOSUpdateRunParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	if err := checkResponse(resp.HTTPResponse, resp.Body, "error getting OS Update run"); err != nil {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving OS Update runs"); err != nil {
 		return err
 	}
-	if err := printOSUpdateRun(cmd, writer, resp.JSON200); err != nil {
+
+	run, err := findOSUpdateRunByName(resp.JSON200.OsUpdateRuns, query)
+	if err != nil {
+		return err
+	}
+	if err := printOSUpdateRun(cmd, writer, &run); err != nil {
 		return err
 	}
 	return writer.Flush()
