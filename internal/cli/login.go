@@ -238,6 +238,7 @@ func performLogout() error {
 		viper.Set(AppOrchFeature, false)
 		viper.Set(ClusterOrchFeature, false)
 		viper.Set(OrchestratorObservabilityFeature, false)
+		viper.Set(EdgeNodeObservabilityFeature, false)
 		viper.Set(MultitenancyFeature, false)
 		viper.Set(EIMFeature, false)
 
