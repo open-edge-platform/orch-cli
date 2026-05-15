@@ -810,9 +810,10 @@ func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID, orchCA st
 	fmt.Printf("╚══════════════════════════════════════════════════════╝\n")
 	fmt.Printf("\n  %s\n\n", viewerURL)
 	fmt.Println("Press Ctrl+C to stop the KVM session.")
-	go openBrowser(viewerURL)
-
-	// Step 4 — wait for session to end (MPS disconnect, ctx cancel, or browser disconnect)
+        // Auto-open is disabled for Coder/remote environments where xdg-open
+        // opens in the IDE browser instead of the user's local browser.
+        // Use Coder's port-forward feature and paste the URL above manually.
+        // go openBrowser(viewerURL)
 	select {
 	case <-sess.done:
 		logf("[KVM] Session ended")
