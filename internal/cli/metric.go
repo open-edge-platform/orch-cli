@@ -61,39 +61,39 @@ orch-cli config set metrics-endpoint https://metrics-node-cli.<CLUSTER_FQDN>/pro
 const listMetricNamesExamples = `# List metrics for the current project (org-id auto-derived from project UID) and current metrics endpoint
 orch-cli list metrics
 # List metrics for a different project and metrics endpoint
-orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --project myproject
+orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --project sampleproject
 # List metrics with explicit org-id
 orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --org-id 698fde6a-b721-447a-a7c2-7187d64393c1
 # Filter metric names
-orch-cli list metrics --filter node_cpu
+orch-cli list metrics --filter cpu
 `
 
 const getMetricExamples = `# Query metric for a host in the current project (org-id auto-derived)
-orch-cli get metric metric_example --hostname host-fd7108f7
+orch-cli get metric metric_example --hostname host-xxxxxxxx
 # Query metric for a host in another project (org-id auto-derived)
-orch-cli get metric metric_example --hostname host-fd7108f7 --project myproject
+orch-cli get metric metric_example --hostname host-xxxxxxxx --project sampleproject
 # Query with explicit org-id
-orch-cli get metric metric_example --hostname host-fd7108f7 --org-id 698fde6a-b721-447a-a7c2-7187d64393c1
+orch-cli get metric metric_example --hostname host-xxxxxxx --org-id 698fde6a-b721-447a-a7c2-7187d64393c1
 # Query using a custom hostname label
-orch-cli get metric up --hostname edge-node-01 --hostname-label instance --project myproject
+orch-cli get metric metric_example --hostname host-xxxxxxxx --hostname-label instance --project sampleproject
 # Query average metric over a time range (Unix timestamps)
-orch-cli get metric metric_example --hostname host-fd7108f7 --average --start-time 1704067200 --end-time 1704153600
+orch-cli get metric metric_example --hostname host-xxxxxxxx --average --start-time 1704067200 --end-time 1704153600
 # Query average metric over the last hour ending now
-orch-cli get metric metric_example --hostname host-fd7108f7 --average --duration 3600
+orch-cli get metric metric_example --hostname host-xxxxxxxx --average --duration 3600
 # Query sum of metric over a specific time range
-orch-cli get metric metric_example --hostname host-fd7108f7 --sum --start-time 1704067200 --end-time 1704153600
+orch-cli get metric metric_example --hostname host-xxxxxxxx --sum --start-time 1704067200 --end-time 1704153600
 # Query sum of metric over the last hour ending now
-orch-cli get metric metric_example --hostname host-fd7108f7 --sum --duration 3600
+orch-cli get metric metric_example --hostname host-xxxxxxxx --sum --duration 3600
 # Query increase of metric over a specific time range (best for counters)
-orch-cli get metric metric_example --hostname host-fd7108f7 --increase --start-time 1704067200 --end-time 1704153600
+orch-cli get metric metric_example --hostname host-xxxxxxxx --increase --start-time 1704067200 --end-time 1704153600
 # Query increase of metric over the last hour ending now
-orch-cli get metric metric_example --hostname host-fd7108f7 --increase --duration 3600
+orch-cli get metric metric_example --hostname host-xxxxxxxx --increase --duration 3600
 # Query metric range over the last hour ending now
-orch-cli get metric metric_example --hostname host-fd7108f7 --range --duration 3600
+orch-cli get metric metric_example --hostname host-xxxxxxxx --range --duration 3600
 # Query metric range between two timestamps
-orch-cli get metric metric_example --hostname host-fd7108f7 --range --start-time 1704067200 --end-time 1704153600
+orch-cli get metric metric_example --hostname host-xxxxxxxx --range --start-time 1704067200 --end-time 1704153600
 # Query metric at a specific timestamp
-orch-cli get metric metric_example --hostname host-fd7108f7 --timestamp 1704153600
+orch-cli get metric metric_example --hostname host-xxxxxxxx --timestamp 1704153600
 `
 
 var metricNamePattern = regexp.MustCompile(`^[a-zA-Z_:][a-zA-Z0-9_:]*$`)
@@ -287,44 +287,58 @@ func getMetricRangeOutputFormat(cmd *cobra.Command, verbose bool) (string, error
 	return resolveTableOutputTemplate(cmd, DEFAULT_GET_METRIC_RANGE_FORMAT, METRIC_OUTPUT_TEMPLATE_ENVVAR)
 }
 
-// printMetricResult formats non-range get metric responses and keeps the last sample for matrix results.
-func printMetricResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName string, hostnameLabel string, body []byte, verbose bool) error {
+// parsePrometheusResponse unmarshals and validates a Prometheus HTTP response body.
+func parsePrometheusResponse(body []byte) (*prometheusVectorResponse, error) {
 	var resp prometheusVectorResponse
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return fmt.Errorf("failed to parse Prometheus response: %w", err)
+		return nil, fmt.Errorf("failed to parse Prometheus response: %w", err)
 	}
 	if resp.Status != "success" {
-		return fmt.Errorf("prometheus returned non-success status: %s", resp.Status)
+		return nil, fmt.Errorf("prometheus returned non-success status: %s", resp.Status)
 	}
 	if resp.Data.ResultType != "vector" && resp.Data.ResultType != "matrix" {
-		return fmt.Errorf("unsupported prometheus result type %q, expected vector or matrix", resp.Data.ResultType)
+		return nil, fmt.Errorf("unsupported prometheus result type %q, expected vector or matrix", resp.Data.ResultType)
+	}
+	return &resp, nil
+}
+
+// extractMetricItemFields returns host, hostGUID, projectID, and additional labels string
+// from a Prometheus result item's metric map.
+func extractMetricItemFields(metric map[string]string, hostnameLabel string) (host, hostGUID, projectID, labelsStr string) {
+	host = metric[hostnameLabel]
+	if host == "" {
+		host = metric[defaultHostnameLabel]
+	}
+	hostGUID = metric["hostGuid"]
+	projectID = metric["projectId"]
+
+	standardLabels := map[string]bool{
+		hostnameLabel:        true,
+		defaultHostnameLabel: true,
+		"hostGuid":           true,
+		"projectId":          true,
+		"__name__":           true,
+	}
+	additionalLabels := make([]string, 0)
+	for k, v := range metric {
+		if !standardLabels[k] && v != "" {
+			additionalLabels = append(additionalLabels, fmt.Sprintf("%s=%s", k, v))
+		}
+	}
+	labelsStr = strings.Join(additionalLabels, ", ")
+	return
+}
+
+// printMetricResult formats non-range get metric responses and keeps the last sample for matrix results.
+func printMetricResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName string, hostnameLabel string, body []byte, verbose bool) error {
+	resp, err := parsePrometheusResponse(body)
+	if err != nil {
+		return err
 	}
 
 	rows := make([]metricGetRow, 0, len(resp.Data.Result))
 	for _, item := range resp.Data.Result {
-		host := item.Metric[hostnameLabel]
-		if host == "" {
-			host = item.Metric[defaultHostnameLabel]
-		}
-
-		hostGUID := item.Metric["hostGuid"]
-		projectID := item.Metric["projectId"]
-
-		// Extract additional labels (like cpu, disk, etc.) excluding standard ones
-		additionalLabels := make([]string, 0)
-		standardLabels := map[string]bool{
-			hostnameLabel:        true,
-			defaultHostnameLabel: true,
-			"hostGuid":           true,
-			"projectId":          true,
-			"__name__":           true,
-		}
-		for k, v := range item.Metric {
-			if !standardLabels[k] && v != "" {
-				additionalLabels = append(additionalLabels, fmt.Sprintf("%s=%s", k, v))
-			}
-		}
-		labelsStr := strings.Join(additionalLabels, ", ")
+		host, hostGUID, projectID, labelsStr := extractMetricItemFields(item.Metric, hostnameLabel)
 
 		timestamp, value := "", ""
 		if resp.Data.ResultType == "matrix" {
@@ -368,42 +382,15 @@ func printMetricResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName 
 // printMetricRangeResult formats range-query responses for `get metric --range`.
 // For matrix results, each sample in `values` becomes a separate output row.
 func printMetricRangeResult(cmd *cobra.Command, writer *tabwriter.Writer, metricName string, hostnameLabel string, body []byte, verbose bool) error {
-	var resp prometheusVectorResponse
-	if err := json.Unmarshal(body, &resp); err != nil {
-		return fmt.Errorf("failed to parse Prometheus response: %w", err)
-	}
-	if resp.Status != "success" {
-		return fmt.Errorf("prometheus returned non-success status: %s", resp.Status)
-	}
-	if resp.Data.ResultType != "vector" && resp.Data.ResultType != "matrix" {
-		return fmt.Errorf("unsupported prometheus result type %q, expected vector or matrix", resp.Data.ResultType)
+	resp, err := parsePrometheusResponse(body)
+	if err != nil {
+		return err
 	}
 
 	rows := make([]metricRangeRow, 0)
 	rowNumber := 0
 	for _, item := range resp.Data.Result {
-		host := item.Metric[hostnameLabel]
-		if host == "" {
-			host = item.Metric[defaultHostnameLabel]
-		}
-
-		hostGUID := item.Metric["hostGuid"]
-		projectID := item.Metric["projectId"]
-
-		additionalLabels := make([]string, 0)
-		standardLabels := map[string]bool{
-			hostnameLabel:        true,
-			defaultHostnameLabel: true,
-			"hostGuid":           true,
-			"projectId":          true,
-			"__name__":           true,
-		}
-		for k, v := range item.Metric {
-			if !standardLabels[k] && v != "" {
-				additionalLabels = append(additionalLabels, fmt.Sprintf("%s=%s", k, v))
-			}
-		}
-		labelsStr := strings.Join(additionalLabels, ", ")
+		host, hostGUID, projectID, labelsStr := extractMetricItemFields(item.Metric, hostnameLabel)
 
 		appendSample := func(sample []interface{}) {
 			timestamp, value := formatPrometheusSample(sample)
@@ -681,16 +668,25 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 	return writer.Flush()
 }
 
-// buildMetricQuery builds a selector for the requested metric and hostname.
-func buildMetricQuery(metricName string, hostnameLabel string, hostname string) (string, error) {
+// validateMetricSelectorInputs validates metric selector inputs shared across query builders.
+func validateMetricSelectorInputs(metricName string, hostnameLabel string, hostname string) error {
 	if !metricNamePattern.MatchString(metricName) {
-		return "", fmt.Errorf("invalid metric name %q", metricName)
+		return fmt.Errorf("invalid metric name %q", metricName)
 	}
 	if !labelNamePattern.MatchString(hostnameLabel) {
-		return "", fmt.Errorf("invalid hostname label %q", hostnameLabel)
+		return fmt.Errorf("invalid hostname label %q", hostnameLabel)
 	}
 	if strings.TrimSpace(hostname) == "" {
-		return "", fmt.Errorf("hostname cannot be empty")
+		return fmt.Errorf("hostname cannot be empty")
+	}
+
+	return nil
+}
+
+// buildMetricQuery builds a selector for the requested metric and hostname.
+func buildMetricQuery(metricName string, hostnameLabel string, hostname string) (string, error) {
+	if err := validateMetricSelectorInputs(metricName, hostnameLabel, hostname); err != nil {
+		return "", err
 	}
 
 	return fmt.Sprintf(`%s{%s=%q}`, metricName, hostnameLabel, hostname), nil
@@ -707,14 +703,14 @@ func parseTimestamp(ts string) (int64, error) {
 	return 0, fmt.Errorf("timestamp must be Unix seconds (e.g. 1704067200)")
 }
 
-// resolveSumWindow converts sum inputs into a concrete time window.
-func resolveSumWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
+// resolveWindowInputs converts duration/start/end inputs into a concrete time window.
+func resolveWindowInputs(mode string, startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
 	hasStart := strings.TrimSpace(startTimeStr) != ""
 	hasEnd := strings.TrimSpace(endTimeStr) != ""
 	hasDuration := durationSec > 0
 
 	if hasDuration && (hasStart || hasEnd) {
-		return 0, 0, fmt.Errorf("--sum supports either --duration or --start-time with --end-time, not both")
+		return 0, 0, fmt.Errorf("--%s supports either --duration or --start-time with --end-time, not both", mode)
 	}
 
 	if hasDuration {
@@ -728,7 +724,7 @@ func resolveSumWindow(startTimeStr string, endTimeStr string, durationSec int64,
 
 	if hasStart || hasEnd {
 		if !hasStart || !hasEnd {
-			return 0, 0, fmt.Errorf("--sum requires both --start-time and --end-time to be set")
+			return 0, 0, fmt.Errorf("--%s requires both --start-time and --end-time to be set", mode)
 		}
 
 		startTime, err := parseTimestamp(startTimeStr)
@@ -747,125 +743,49 @@ func resolveSumWindow(startTimeStr string, endTimeStr string, durationSec int64,
 		return startTime, endTime, nil
 	}
 
-	return 0, 0, fmt.Errorf("--sum requires either --duration or both --start-time and --end-time")
+	return 0, 0, fmt.Errorf("--%s requires either --duration or both --start-time and --end-time", mode)
+}
+
+// resolveSumWindow converts sum inputs into a concrete time window.
+func resolveSumWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
+	return resolveWindowInputs("sum", startTimeStr, endTimeStr, durationSec, now)
 }
 
 // resolveAverageWindow converts average inputs into a concrete time window.
 func resolveAverageWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
-	hasStart := strings.TrimSpace(startTimeStr) != ""
-	hasEnd := strings.TrimSpace(endTimeStr) != ""
-	hasDuration := durationSec > 0
-
-	if hasDuration && (hasStart || hasEnd) {
-		return 0, 0, fmt.Errorf("--average supports either --duration or --start-time with --end-time, not both")
-	}
-
-	if hasDuration {
-		endTime := now.Unix()
-		startTime := endTime - durationSec
-		if startTime >= endTime {
-			return 0, 0, fmt.Errorf("--duration must be greater than 0 seconds")
-		}
-		return startTime, endTime, nil
-	}
-
-	if hasStart || hasEnd {
-		if !hasStart || !hasEnd {
-			return 0, 0, fmt.Errorf("--average requires both --start-time and --end-time to be set")
-		}
-
-		startTime, err := parseTimestamp(startTimeStr)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failed to parse --start-time: %w", err)
-		}
-		endTime, err := parseTimestamp(endTimeStr)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failed to parse --end-time: %w", err)
-		}
-
-		if startTime >= endTime {
-			return 0, 0, fmt.Errorf("--start-time must be before --end-time")
-		}
-
-		return startTime, endTime, nil
-	}
-
-	return 0, 0, fmt.Errorf("--average requires either --duration or both --start-time and --end-time")
+	return resolveWindowInputs("average", startTimeStr, endTimeStr, durationSec, now)
 }
 
 // resolveRangeWindow converts range inputs into a concrete time window.
 func resolveRangeWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
-	hasStart := strings.TrimSpace(startTimeStr) != ""
-	hasEnd := strings.TrimSpace(endTimeStr) != ""
-	hasDuration := durationSec > 0
+	return resolveWindowInputs("range", startTimeStr, endTimeStr, durationSec, now)
+}
 
-	if hasDuration && (hasStart || hasEnd) {
-		return 0, 0, fmt.Errorf("--range supports either --duration or --start-time with --end-time, not both")
+// validateWindowAggregationInputs validates common inputs for avg/sum/increase queries.
+func validateWindowAggregationInputs(metricName string, hostnameLabel string, hostname string, durationSec int64) error {
+	if err := validateMetricSelectorInputs(metricName, hostnameLabel, hostname); err != nil {
+		return err
+	}
+	if durationSec <= 0 {
+		return fmt.Errorf("duration must be greater than 0 seconds")
 	}
 
-	if hasDuration {
-		endTime := now.Unix()
-		startTime := endTime - durationSec
-		if startTime >= endTime {
-			return 0, 0, fmt.Errorf("--duration must be greater than 0 seconds")
-		}
-		return startTime, endTime, nil
-	}
-
-	if hasStart || hasEnd {
-		if !hasStart || !hasEnd {
-			return 0, 0, fmt.Errorf("--range requires both --start-time and --end-time to be set")
-		}
-
-		startTime, err := parseTimestamp(startTimeStr)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failed to parse --start-time: %w", err)
-		}
-		endTime, err := parseTimestamp(endTimeStr)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failed to parse --end-time: %w", err)
-		}
-
-		if startTime >= endTime {
-			return 0, 0, fmt.Errorf("--start-time must be before --end-time")
-		}
-
-		return startTime, endTime, nil
-	}
-
-	return 0, 0, fmt.Errorf("--range requires either --duration or both --start-time and --end-time")
+	return nil
 }
 
 // buildAverageMetricQuery builds an avg_over_time query for the requested window.
 func buildAverageMetricQuery(metricName string, hostnameLabel string, hostname string, durationSec int64) (string, error) {
-	if !metricNamePattern.MatchString(metricName) {
-		return "", fmt.Errorf("invalid metric name %q", metricName)
+	if err := validateWindowAggregationInputs(metricName, hostnameLabel, hostname, durationSec); err != nil {
+		return "", err
 	}
-	if !labelNamePattern.MatchString(hostnameLabel) {
-		return "", fmt.Errorf("invalid hostname label %q", hostnameLabel)
-	}
-	if strings.TrimSpace(hostname) == "" {
-		return "", fmt.Errorf("hostname cannot be empty")
-	}
-	if durationSec <= 0 {
-		return "", fmt.Errorf("duration must be greater than 0 seconds")
-	}
+
 	return fmt.Sprintf(`avg_over_time(%s{%s=%q}[%ds])`, metricName, hostnameLabel, hostname, durationSec), nil
 }
 
 // buildSumMetricQuery builds a sum_over_time query for the requested window.
 func buildSumMetricQuery(metricName string, hostnameLabel string, hostname string, durationSec int64) (string, error) {
-	if !metricNamePattern.MatchString(metricName) {
-		return "", fmt.Errorf("invalid metric name %q", metricName)
-	}
-	if !labelNamePattern.MatchString(hostnameLabel) {
-		return "", fmt.Errorf("invalid hostname label %q", hostnameLabel)
-	}
-	if strings.TrimSpace(hostname) == "" {
-		return "", fmt.Errorf("hostname cannot be empty")
-	}
-	if durationSec <= 0 {
-		return "", fmt.Errorf("duration must be greater than 0 seconds")
+	if err := validateWindowAggregationInputs(metricName, hostnameLabel, hostname, durationSec); err != nil {
+		return "", err
 	}
 
 	return fmt.Sprintf(`sum_over_time(%s{%s=%q}[%ds])`, metricName, hostnameLabel, hostname, durationSec), nil
@@ -873,17 +793,8 @@ func buildSumMetricQuery(metricName string, hostnameLabel string, hostname strin
 
 // buildIncreaseMetricQuery builds an increase query for counter-like metrics.
 func buildIncreaseMetricQuery(metricName string, hostnameLabel string, hostname string, durationSec int64) (string, error) {
-	if !metricNamePattern.MatchString(metricName) {
-		return "", fmt.Errorf("invalid metric name %q", metricName)
-	}
-	if !labelNamePattern.MatchString(hostnameLabel) {
-		return "", fmt.Errorf("invalid hostname label %q", hostnameLabel)
-	}
-	if strings.TrimSpace(hostname) == "" {
-		return "", fmt.Errorf("hostname cannot be empty")
-	}
-	if durationSec <= 0 {
-		return "", fmt.Errorf("duration must be greater than 0 seconds")
+	if err := validateWindowAggregationInputs(metricName, hostnameLabel, hostname, durationSec); err != nil {
+		return "", err
 	}
 
 	return fmt.Sprintf(`increase(%s{%s=%q}[%ds])`, metricName, hostnameLabel, hostname, durationSec), nil
@@ -891,45 +802,7 @@ func buildIncreaseMetricQuery(metricName string, hostnameLabel string, hostname 
 
 // resolveIncreaseWindow converts increase inputs into a concrete time window.
 func resolveIncreaseWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
-	hasStart := strings.TrimSpace(startTimeStr) != ""
-	hasEnd := strings.TrimSpace(endTimeStr) != ""
-	hasDuration := durationSec > 0
-
-	if hasDuration && (hasStart || hasEnd) {
-		return 0, 0, fmt.Errorf("--increase supports either --duration or --start-time with --end-time, not both")
-	}
-
-	if hasDuration {
-		endTime := now.Unix()
-		startTime := endTime - durationSec
-		if startTime >= endTime {
-			return 0, 0, fmt.Errorf("--duration must be greater than 0 seconds")
-		}
-		return startTime, endTime, nil
-	}
-
-	if hasStart || hasEnd {
-		if !hasStart || !hasEnd {
-			return 0, 0, fmt.Errorf("--increase requires both --start-time and --end-time to be set")
-		}
-
-		startTime, err := parseTimestamp(startTimeStr)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failed to parse --start-time: %w", err)
-		}
-		endTime, err := parseTimestamp(endTimeStr)
-		if err != nil {
-			return 0, 0, fmt.Errorf("failed to parse --end-time: %w", err)
-		}
-
-		if startTime >= endTime {
-			return 0, 0, fmt.Errorf("--start-time must be before --end-time")
-		}
-
-		return startTime, endTime, nil
-	}
-
-	return 0, 0, fmt.Errorf("--increase requires either --duration or both --start-time and --end-time")
+	return resolveWindowInputs("increase", startTimeStr, endTimeStr, durationSec, now)
 }
 
 // configuredMetricsEndpoint reads the configured Prometheus endpoint.

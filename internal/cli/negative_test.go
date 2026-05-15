@@ -1053,7 +1053,7 @@ func (s *CLITestSuite) TestNegativeLegacyOrch() {
 	s.True(viper.GetBool(AppOrchFeature), "AppOrchFeature should be true")
 	s.True(viper.GetBool(ClusterOrchFeature), "ClusterOrchFeature should be true")
 	s.True(viper.GetBool(OrchestratorObservabilityFeature), "OrchestratorObservabilityFeature should be true")
-	s.True(viper.GetBool(EdgeNodeObservabilityFeature), "EdgeNodeOservabilitFeature should be true")
+	s.True(viper.GetBool(EdgeNodeObservabilityFeature), "EdgeNodeObservabilityFeature should be true")
 	s.True(viper.GetBool(MultitenancyFeature), "MultitenancyFeature should be true")
 	s.True(viper.GetBool(EIMFeature), "EIMFeature should be true")
 }
