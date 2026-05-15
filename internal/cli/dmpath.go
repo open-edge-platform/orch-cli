@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 
-	mpsapi "github.com/open-edge-platform/cli/pkg/rest/mps"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 )
 
@@ -24,15 +23,15 @@ import (
 //
 // Per-service mappings (see traefik-extra-objects IngressRoutes):
 //
-//   RPS  →  dmSubPath = "dm/amt"
-//        client  /api/v1/admin/domains
-//        gateway /v1/projects/{p}/dm/amt/admin/domains
+//	RPS  →  dmSubPath = "dm/amt"
+//	     client  /api/v1/admin/domains
+//	     gateway /v1/projects/{p}/dm/amt/admin/domains
 //
-//   MPS  →  dmSubPath = "dm"
-//        client  /api/v1/devices
-//        gateway /v1/projects/{p}/dm/devices
-//        client  /api/v1/amt/generalSettings
-//        gateway /v1/projects/{p}/dm/amt/generalSettings
+//	MPS  →  dmSubPath = "dm"
+//	     client  /api/v1/devices
+//	     gateway /v1/projects/{p}/dm/devices
+//	     client  /api/v1/amt/generalSettings
+//	     gateway /v1/projects/{p}/dm/amt/generalSettings
 //
 // projectName == "" leaves the request unchanged so unit tests and other
 // callers without a project context still work.
@@ -53,14 +52,6 @@ func rewriteDmPath(projectName, dmSubPath string, req *http.Request) {
 func rewriteRpsAmtPath(projectName string) rpsapi.RequestEditorFn {
 	return func(_ context.Context, req *http.Request) error {
 		rewriteDmPath(projectName, "dm/amt", req)
-		return nil
-	}
-}
-
-// rewriteMpsPath returns a request editor for the generated MPS client.
-func rewriteMpsPath(projectName string) mpsapi.RequestEditorFn {
-	return func(_ context.Context, req *http.Request) error {
-		rewriteDmPath(projectName, "dm", req)
 		return nil
 	}
 }
