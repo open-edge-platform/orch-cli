@@ -3860,30 +3860,6 @@ func resolveRemoteSessionState(state, sessionType string) (string, error) {
 	return "", fmt.Errorf("incorrect session state '%s' for %s: use 'start' or 'stop'", state, sessionType)
 }
 
-// resolveKvmState is kept for backward compatibility with CSV import
-func resolveKvmState(kvm string) (infra.KvmState, error) {
-	switch kvm {
-	case "start", "KVM_STATE_START":
-		return infra.KVMSTATESTART, nil
-	case "stop", "KVM_STATE_STOP":
-		return infra.KVMSTATESTOP, nil
-	default:
-		return "", errors.New("incorrect KVM state provided use one of start|stop")
-	}
-}
-
-// resolveSolState is kept for backward compatibility with CSV import
-func resolveSolState(sol string) (infra.SolState, error) {
-	switch sol {
-	case "start", "SOL_STATE_START":
-		return infra.SOLSTATESTART, nil
-	case "stop", "SOL_STATE_STOP":
-		return infra.SOLSTATESTOP, nil
-	default:
-		return "", errors.New("incorrect SOL state provided use one of start|stop")
-	}
-}
-
 // runKVMSession drives the KVM session state machine (ACM and CCM).
 func runKVMSession(
 	ctx context.Context,

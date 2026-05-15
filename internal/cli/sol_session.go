@@ -678,10 +678,8 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 				}
 				// Check for Ctrl+] (0x1D) to exit SOL session.
 				// Ctrl+C (0x03) is passed through to the remote host.
-				hasExit := false
 				for i := 0; i < n; i++ {
 					if buffer[i] == 0x1D {
-						hasExit = true
 						// Send any data before the exit character
 						if i > 0 {
 							_ = sol.sendSOLData(string(buffer[:i]))
@@ -690,14 +688,12 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 						return
 					}
 				}
-				if !hasExit {
-					// Send input to SOL
-					if err := sol.sendSOLData(string(buffer[:n])); err != nil {
-						if debug {
-							fmt.Fprintf(os.Stderr, "[SOL] Failed to send data: %v\n", err)
-						}
-						return
+				// Send input to SOL
+				if err := sol.sendSOLData(string(buffer[:n])); err != nil {
+					if debug {
+						fmt.Fprintf(os.Stderr, "[SOL] Failed to send data: %v\n", err)
 					}
+					return
 				}
 			}
 		}
