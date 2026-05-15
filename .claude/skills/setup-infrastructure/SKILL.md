@@ -20,7 +20,7 @@ requires_network: true
 ## Required Inputs
  - region name and type (country/state/county/region/city)
  - site name
- - SSH key name and public key file path
+ - SSH key name (must be a valid SSH username: lowercase, starts with a letter, max 32 chars, only `a-z`, `0-9`, `-`) and public key file path
 
 ## Optional Inputs
  - parent region (for sub-regions)
@@ -49,7 +49,7 @@ requires_network: true
 ## Behavior Notes
 - Region types are hierarchical: country > state > county > region > city.
 - Sites must belong to a region. Get the region resource ID from `orch-cli list region` (the create command does not print it).
-- SSH keys reference a public key file (e.g. `~/.ssh/id_rsa.pub`). The file must exist.
+- SSH keys reference a public key file. Only `ssh-ed25519` or `ecdsa-sha2-nistp521` key types are accepted (e.g. `~/.ssh/id_ed25519.pub`). RSA keys are not supported.
 - All resources are scoped to the currently configured project.
 
 ## Troubleshooting

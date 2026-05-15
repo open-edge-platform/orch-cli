@@ -44,8 +44,10 @@ requires_network: true
    - `orch-cli set host --filter "<EXPRESSION>" --power <on|off|reset|power-cycle> --dry-run`
    - Or by site: `orch-cli set host --site <SITE_ID> --power <on|off|reset|power-cycle> --dry-run`
    - Or by region: `orch-cli set host --region <REGION_ID> --power <on|off|reset|power-cycle> --dry-run`
-2. Execute:
+2. Execute (use the same selector as dry-run):
    - `orch-cli set host --filter "<EXPRESSION>" --power <on|off|reset|power-cycle>`
+   - Or by site: `orch-cli set host --site <SITE_ID> --power <on|off|reset|power-cycle>`
+   - Or by region: `orch-cli set host --region <REGION_ID> --power <on|off|reset|power-cycle>`
 
 ### Bulk via CSV
 1. Generate a CSV template:
@@ -80,5 +82,5 @@ host-b,host-5678efgh,,,reset
 
 ## Safety Rules
 - Always run `--dry-run` before bulk power operations.
-- `power off` and `reset` are disruptive — confirm the host count with the user.
+- `power off`, `reset`, and `power-cycle` are disruptive — confirm the host count with the user.
 - Never assume AMT provisioning state; verify before issuing power commands.

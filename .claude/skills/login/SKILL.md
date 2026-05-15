@@ -17,7 +17,7 @@ requires_network: true
  - authenticate
 
 ## Required Inputs
- - orchestrator URL
+ - orchestrator cluster FQDN (e.g. `mycluster.example.com`, not the full API URL)
  - username
 
 ## Optional Inputs
@@ -38,6 +38,8 @@ requires_network: true
    - `orch-cli config set project <PROJECT>`
 4. Log in (password will be prompted interactively — do NOT pass it as an argument):
    - `orch-cli login <USERNAME>`
+   - With custom keycloak endpoint: `orch-cli login <USERNAME> --keycloak <KEYCLOAK_URL>`
+   - With custom client-id: `orch-cli login <USERNAME> --client-id <CLIENT_ID>`
 5. Verify the CLI can connect to the orchestrator:
    - `orch-cli list features`
 

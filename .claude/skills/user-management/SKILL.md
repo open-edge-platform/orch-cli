@@ -105,7 +105,7 @@ orch-cli set user sample-user --add-realm-role "org-abc123_proj-def456_m"
 | Symptom | Cause | Fix |
 |---|---|---|
 | "command not found" or not listed | Multitenancy feature not enabled | Verify with `orch-cli list features` |
-| "group not found" | Exact group name mismatch | Check available groups (they may include org/project UUID prefixes) |
+| "group not found" | Exact group name mismatch | Run `orch-cli list groups` to see available names (they may include org/project UUID prefixes) |
 | "realm role not found" | Role name doesn't exist | Realm roles follow the pattern `${ORG_UID}_${PROJ_UID}_m` |
 | "not authorized" | Insufficient admin privileges | The logged-in user must have Keycloak admin access |
 | "user created but failed to set password" | Password policy violation | Check Keycloak realm password policies |
