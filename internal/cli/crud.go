@@ -197,7 +197,6 @@ func getGetCommand() *cobra.Command {
 
 	// Cluster related commands
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetClusterCommand(), ClusterOrchFeature)
-	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetMetricCommand(), EdgeNodeObservabilityFeature)
 
 	// Day2 related commands
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetScheduleCommand(), Day2Feature)
@@ -224,6 +223,9 @@ func getGetCommand() *cobra.Command {
 
 	// IAM user management commands
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetUserCommand(), MultitenancyFeature)
+
+	// Observability related commands
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetMetricCommand(), EdgeNodeObservabilityFeature)
 
 	return catalogGetRootCmd
 }
