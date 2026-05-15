@@ -203,6 +203,30 @@ func (s *CLITestSuite) TestSite() {
 	_, err = s.deleteSite(project, "nonexistent-site", make(map[string]string))
 	s.EqualError(err, "error while deleting site: Not Found")
 
+	// List sites with order-by and YAML output
+	SArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listSite(project, SArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "name: site")
+	s.Contains(listOrderedOutput, "resourceid: "+resourceID)
+	s.Contains(listOrderedOutput, "regionid: "+regionID)
+
+	// List sites with filter and YAML output
+	SArgs = map[string]string{
+		"filter":      "name=site",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listSite(project, SArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "name: site")
+	s.Contains(listFilteredOutput, "resourceid: "+resourceID)
+	s.Contains(listFilteredOutput, "regionid: "+regionID)
+
 }
 
 func FuzzSite(f *testing.F) {

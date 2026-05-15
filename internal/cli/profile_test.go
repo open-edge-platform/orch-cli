@@ -6,6 +6,10 @@ package cli
 import (
 	"fmt"
 	"testing"
+
+	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func (s *CLITestSuite) createProfile(pubName string, applicationName string, applicationVersion string, profileName string, args commandArgs) error {
@@ -221,4 +225,90 @@ func FuzzProfile(f *testing.F) {
 			t.Errorf("Unexpected error: %v", err)
 		}
 	})
+}
+
+// newCmdWithDeploymentRequirementFlag creates a minimal cobra.Command with the
+// --deployment-requirement flag registered, for use in parseDeploymentRequirements tests.
+func newCmdWithDeploymentRequirementFlag(values ...string) *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Flags().StringSlice("deployment-requirement", values, "")
+	return cmd
+}
+
+func TestParseDeploymentRequirements_NoFlag(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag()
+	result, err := parseDeploymentRequirements(cmd)
+	require.NoError(t, err)
+	assert.Nil(t, result)
+}
+
+func TestParseDeploymentRequirements_NameAndVersion(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("cert-manager:0.2.1")
+	result, err := parseDeploymentRequirements(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Len(t, *result, 1)
+	assert.Equal(t, "cert-manager", (*result)[0].Name)
+	assert.Equal(t, "0.2.1", (*result)[0].Version)
+	assert.Nil(t, (*result)[0].DeploymentProfileName)
+}
+
+func TestParseDeploymentRequirements_NameVersionAndProfile(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("cert-manager:0.2.1:default-profile")
+	result, err := parseDeploymentRequirements(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Len(t, *result, 1)
+	assert.Equal(t, "cert-manager", (*result)[0].Name)
+	assert.Equal(t, "0.2.1", (*result)[0].Version)
+	require.NotNil(t, (*result)[0].DeploymentProfileName)
+	assert.Equal(t, "default-profile", *(*result)[0].DeploymentProfileName)
+}
+
+func TestParseDeploymentRequirements_ProfileNameEmpty(t *testing.T) {
+	// Three parts but profile name is blank → DeploymentProfileName stays nil
+	cmd := newCmdWithDeploymentRequirementFlag("cert-manager:0.2.1: ")
+	result, err := parseDeploymentRequirements(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Nil(t, (*result)[0].DeploymentProfileName)
+}
+
+func TestParseDeploymentRequirements_MultipleRequirements(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("pkg-a:1.0", "pkg-b:2.0:my-profile")
+	result, err := parseDeploymentRequirements(cmd)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Len(t, *result, 2)
+	assert.Equal(t, "pkg-a", (*result)[0].Name)
+	assert.Equal(t, "pkg-b", (*result)[1].Name)
+	assert.Equal(t, "my-profile", *(*result)[1].DeploymentProfileName)
+}
+
+func TestParseDeploymentRequirements_TooFewParts(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("onlyone")
+	_, err := parseDeploymentRequirements(cmd)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid deployment requirement format")
+}
+
+func TestParseDeploymentRequirements_TooManyParts(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("a:b:c:d")
+	_, err := parseDeploymentRequirements(cmd)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid deployment requirement format")
+}
+
+func TestParseDeploymentRequirements_EmptyPackageName(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag(":1.0")
+	_, err := parseDeploymentRequirements(cmd)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "package name and version cannot be empty")
+}
+
+func TestParseDeploymentRequirements_EmptyVersion(t *testing.T) {
+	cmd := newCmdWithDeploymentRequirementFlag("pkg-a:")
+	_, err := parseDeploymentRequirements(cmd)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "package name and version cannot be empty")
 }

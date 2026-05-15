@@ -329,6 +329,38 @@ func (s *CLITestSuite) TestSchedule() {
 	}
 	_, err = s.setSchedule(project, sresourceID, SArgs)
 	s.EqualError(err, "single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
+
+	// List schedules with YAML output (order-by is only supported for table output)
+	SArgs = map[string]string{
+		"output-type": "yaml",
+	}
+	listYAMLOutput, err := s.listSchedule(project, SArgs)
+	s.NoError(err)
+	s.Contains(listYAMLOutput, "schedule")
+	s.Contains(listYAMLOutput, siteID)
+
+	// List schedules with table output and order-by
+	SArgs = map[string]string{
+		"output-type": "table",
+		"order-by":    "name",
+	}
+	tableOutput, err := s.listSchedule(project, SArgs)
+	s.NoError(err)
+
+	parsedTableOutput := mapListOutput(tableOutput)
+	expectedTableOutput := listCommandOutput{
+		{
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": sresourceID,
+		},
+		{
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": rresourceID,
+		},
+	}
+	s.compareListOutput(expectedTableOutput, parsedTableOutput)
 }
 
 func FuzzSchedule(f *testing.F) {

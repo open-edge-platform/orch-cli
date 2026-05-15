@@ -214,6 +214,46 @@ func (s *CLITestSuite) TestRegion() {
 	_, err = s.deleteRegion(project, "nonexistent-region", make(map[string]string))
 	s.EqualError(err, "invalid region id")
 
+	// List regions with order-by and YAML output
+	SArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+	}
+	listOrderedOutput, err := s.listRegion(project, SArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "name: region")
+	s.Contains(listOrderedOutput, "resourceid: "+resourceID)
+	s.Contains(listOrderedOutput, "totalsites: 1")
+
+	// List regions with filter and YAML output
+	SArgs = map[string]string{
+		"filter":      "name=region",
+		"output-type": "yaml",
+	}
+	listFilteredOutput, err := s.listRegion(project, SArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "name: region")
+	s.Contains(listFilteredOutput, "resourceid: "+resourceID)
+	s.Contains(listFilteredOutput, "totalsites: 1")
+
+	// List regions with table output
+	SArgs = map[string]string{
+		"output-type": "table",
+	}
+	tableOutput, err := s.listRegion(project, SArgs)
+	s.NoError(err)
+
+	parsedTableOutput := mapListOutput(tableOutput)
+	expectedTableOutput := listCommandOutput{
+		{
+			"RESOURCE ID": resourceID,
+			"NAME":        name,
+			"PARENT ID":   "",
+			"TOTAL SITES": "1",
+		},
+	}
+	s.compareListOutput(expectedTableOutput, parsedTableOutput)
+
 }
 
 func FuzzRegion(f *testing.F) {

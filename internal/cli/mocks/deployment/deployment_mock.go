@@ -104,7 +104,17 @@ func CreateDeploymentMock(mctrl *gomock.Controller) interfaces.DeploymentFactory
 		mockClient.EXPECT().DeploymentServiceListDeploymentsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ *deployment.DeploymentServiceListDeploymentsParams, _ ...deployment.RequestEditorFn) (*deployment.DeploymentServiceListDeploymentsResponse, error) {
+			func(_ context.Context, _ string, params *deployment.DeploymentServiceListDeploymentsParams, _ ...deployment.RequestEditorFn) (*deployment.DeploymentServiceListDeploymentsResponse, error) {
+				// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+				if params != nil && params.Offset != nil && *params.Offset > 0 {
+					return &deployment.DeploymentServiceListDeploymentsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &deployment.ListDeploymentsResponse{
+							Deployments:   []deployment.Deployment{},
+							TotalElements: 2,
+						},
+					}, nil
+				}
 				summary := &deployment.Summary{
 					Down:    int32Ptr(1),
 					Running: int32Ptr(2),
@@ -129,6 +139,7 @@ func CreateDeploymentMock(mctrl *gomock.Controller) interfaces.DeploymentFactory
 								CreateTime: timePtr(testTime),
 							},
 						},
+						TotalElements: 2,
 					},
 				}, nil
 			},

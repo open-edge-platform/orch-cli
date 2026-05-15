@@ -20,19 +20,19 @@ func (s *CLITestSuite) createApplication(project string, applicationName string,
 	return err
 }
 
-func (s *CLITestSuite) listApplications(project string, verbose bool, orderBy string, filter string, kind string, outputFilter string, outputTemplate string, outputTemplateFile string) (string, error) {
+func (s *CLITestSuite) listApplications(project string, verbose bool, orderBy string, filter string, kind string, outputFilter string, outputTemplate string, outputTemplateFile string, outputType string, pageSize string) (string, error) {
 	args := `list applications --project ` + project
 	if verbose {
 		args = args + " -v"
 	}
 	if orderBy != "" {
-		args = args + " order-by=" + orderBy
+		args = args + " --order-by=" + orderBy
 	}
 	if filter != "" {
-		args = args + " filter=" + filter
+		args = args + " --filter=" + filter
 	}
 	if kind != "" {
-		args = args + " kind=" + kind
+		args = args + " --kind=" + kind
 	}
 	if outputFilter != "" {
 		args = args + " --output-filter " + outputFilter
@@ -42,6 +42,12 @@ func (s *CLITestSuite) listApplications(project string, verbose bool, orderBy st
 	}
 	if outputTemplateFile != "" {
 		args = args + " --output-template-file " + outputTemplateFile
+	}
+	if outputType != "" {
+		args = args + " --output-type " + outputType
+	}
+	if pageSize != "" {
+		args = args + " --page-size " + pageSize
 	}
 	getCmdOutput, err := s.runCommand(args)
 	return getCmdOutput, err
@@ -102,7 +108,7 @@ func (s *CLITestSuite) TestApplication() {
 	s.NoError(err)
 
 	// list applications to make sure it was created properly
-	listOutput, err := s.listApplications(project, simpleOutput, "version", "version="+applicationVersion, "", "", "", "")
+	listOutput, err := s.listApplications(project, simpleOutput, "version", "version="+applicationVersion, "", "", "", "", "", "")
 	s.NoError(err)
 
 	parsedOutput := mapCliOutput(listOutput)
@@ -121,7 +127,7 @@ func (s *CLITestSuite) TestApplication() {
 	s.compareOutput(expectedOutput, parsedOutput)
 
 	// verbose list applications
-	listVerboseOutput, err := s.listApplications(project, verboseOutput, "", "", "", "", "", "")
+	listVerboseOutput, err := s.listApplications(project, verboseOutput, "", "", "", "", "", "", "", "")
 	s.NoError(err)
 
 	parsedVerboseOutput := mapVerboseCliOutput(listVerboseOutput)
@@ -146,7 +152,7 @@ func (s *CLITestSuite) TestApplication() {
 	s.compareOutput(expectedVerboseOutput, parsedVerboseOutput)
 
 	// List with kind
-	_, err = s.listApplications(project, verboseOutput, "", "", "\"addon normal\"", "", "", "")
+	_, err = s.listApplications(project, verboseOutput, "", "", "\"addon normal\"", "", "", "", "", "")
 	s.NoError(err)
 
 	// Update the application
@@ -219,13 +225,65 @@ func (s *CLITestSuite) TestApplication() {
 	err = s.createApplication(project, applicationName, applicationVersion, createArgs)
 	s.NoError(err)
 
+	// List applications with order-by and YAML output
+	listOrderedOutput, err := s.listApplications(project, false, "name", "", "", "", "", "", "yaml", "1")
+	s.NoError(err)
+
+	parsedOrderedOutput := mapLinesOutput(listOrderedOutput)
+
+	expectedOrderedOutput := linesCommandOutput{
+		"- chartname: chart-name",
+		"  chartversion: 22.33.44",
+		"  createtime: 2025-12-31T23:59:59Z",
+		"  defaultprofilename: \"\"",
+		"  description: Application.Description",
+		"  displayname: application.display.name",
+		"  helmregistryname: test-registry",
+		"  ignoredresources: null",
+		"  imageregistryname: null",
+		"  kind: KIND_NORMAL",
+		"  name: new-application",
+		"  profiles: []",
+		"  updatetime: 2025-12-31T23:59:59Z",
+		"  version: 1.2.3",
+		"- chartname: addon-chart",
+		"  chartversion: 1.0.0",
+		"  createtime: 2025-12-31T23:59:59Z",
+		"  defaultprofilename: \"\"",
+		"  description: Addon Description",
+		"  displayname: addon.display.name",
+		"  helmregistryname: addon-registry",
+		"  ignoredresources: null",
+		"  imageregistryname: null",
+		"  kind: KIND_ADDON",
+		"  name: addon-app",
+		"  profiles: []",
+		"  updatetime: 2025-12-31T23:59:59Z",
+		"  version: 1.0.0",
+		"- chartname: extension-chart",
+		"  chartversion: 2.0.0",
+		"  createtime: 2025-12-31T23:59:59Z",
+		"  defaultprofilename: \"\"",
+		"  description: Extension Description",
+		"  displayname: extension.display.name",
+		"  helmregistryname: extension-registry",
+		"  ignoredresources: null",
+		"  imageregistryname: null",
+		"  kind: KIND_EXTENSION",
+		"  name: extension-app",
+		"  profiles: []",
+		"  updatetime: 2025-12-31T23:59:59Z",
+		"  version: 2.0.0",
+	}
+	s.compareLinesOutput(expectedOrderedOutput, parsedOrderedOutput)
+
 	// Test error handling for dual template flags (--output-template and --output-template-file both set)
-	_, err = s.listApplications(project, simpleOutput, "", "", "", "", "table{{.Name}}", "/tmp/invalid.tmpl")
+	_, err = s.listApplications(project, simpleOutput, "", "", "", "", "table{{.Name}}", "/tmp/invalid.tmpl", "", "")
 	s.Error(err)
 	s.Contains(err.Error(), "only one of")
 
 	// Test error handling for missing template file
-	_, err = s.listApplications(project, simpleOutput, "", "", "", "", "", "/nonexistent/path/template.tmpl")
+	_, err = s.listApplications(project, simpleOutput, "", "", "", "", "", "/nonexistent/path/template.tmpl", "", "")
 	s.Error(err)
 	s.Contains(err.Error(), "unable to read")
 }
@@ -295,7 +353,11 @@ func FuzzApplication(f *testing.F) {
 		}
 
 		// --- List ---
-		_, err = testSuite.listApplications(project, false, "version", "version="+appVersion, kind, "", "", "")
+		filter := ""
+		if appVersion != "" {
+			filter = "version=" + appVersion
+		}
+		_, err = testSuite.listApplications(project, false, "version", filter, kind, "", "", "", "", "")
 		if isExpectedError(err) {
 			t.Log("Expected error:", err)
 		} else if !testSuite.NoError(err) {
