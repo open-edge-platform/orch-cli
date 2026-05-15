@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -25,8 +26,11 @@ orch-cli list site --project some-project
 # List all sites within specific parent region ID
 orch-cli list site --project some-project --region region-aaaa1111"`
 
-const getSiteExamples = `# Get specific site information
-orch-cli get site site-aaaa1111 --project some-project`
+const getSiteExamples = `# Get a site by resource ID
+orch-cli get site site-aaaa1111 --project some-project
+
+# Get a site by name
+orch-cli get site mysite --project some-project`
 
 const createSiteExamples = `# Create specific site
 
@@ -40,6 +44,38 @@ const deleteSiteExamples = `# Delete specific site
 orch-cli delete site region-aaaa1111 --project some-project`
 
 var queryRegion = "region"
+
+// siteResourceIDPattern matches site resource IDs: "site-" followed by 8 hex chars.
+var siteResourceIDPattern = regexp.MustCompile(`^site-[0-9a-f]{8}$`)
+
+func isSiteResourceID(s string) bool {
+	return siteResourceIDPattern.MatchString(s)
+}
+
+// findSiteByName searches a slice of sites for an exact name match.
+// Returns an error if no match is found or if multiple sites share the same name
+// (listing the matches so the caller can retry with a resource ID).
+func findSiteByName(sites []infra.SiteResource, name string) (infra.SiteResource, error) {
+	var matches []infra.SiteResource
+	for _, s := range sites {
+		if s.Name != nil && *s.Name == name {
+			matches = append(matches, s)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return infra.SiteResource{}, fmt.Errorf("no site found with name %q", name)
+	case 1:
+		return matches[0], nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple sites found with name %q; use a resource ID instead:\n", name)
+		for _, m := range matches {
+			fmt.Fprintf(&sb, "  name: %s  resource-id: %s\n", derefString(m.Name), derefString(m.ResourceId))
+		}
+		return infra.SiteResource{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
+}
 
 func getListSiteCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -57,7 +93,7 @@ func getListSiteCommand() *cobra.Command {
 
 func getGetSiteCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "site <resourceid> [flags]",
+		Use:     "site <name|resourceID> [flags]",
 		Short:   "Get a site",
 		Example: getSiteExamples,
 		Args:    cobra.ExactArgs(1),
@@ -285,20 +321,39 @@ func runGetSiteCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	id := args[0]
+	query := args[0]
 
-	resp, err := siteClient.SiteServiceGetSiteWithResponse(ctx, projectName,
-		"empty", id, auth.AddAuthHeader)
+	if isSiteResourceID(query) {
+		resp, err := siteClient.SiteServiceGetSiteWithResponse(ctx, projectName,
+			"empty", query, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, false,
+			"", "error getting site"); !proceed {
+			return err
+		}
+		if err := printSite(cmd, writer, resp.JSON200); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	// Name-based lookup: list all sites and filter by name.
+	resp, err := siteClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
+		&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, false,
-		"", "error getting site"); !proceed {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving sites"); err != nil {
 		return err
 	}
 
-	if err := printSite(cmd, writer, resp.JSON200); err != nil {
+	site, err := findSiteByName(resp.JSON200.Sites, query)
+	if err != nil {
+		return err
+	}
+	if err := printSite(cmd, writer, &site); err != nil {
 		return err
 	}
 	return writer.Flush()
