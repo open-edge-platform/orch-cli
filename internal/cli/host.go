@@ -1880,7 +1880,7 @@ func getDeleteHostCommand() *cobra.Command {
 
 func getSetHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "host [resourceID] [flags]",
+		Use:     "host [name|resourceID] [flags]",
 		Short:   "Sets a host attribute or action",
 		Example: setHostExamples(),
 		Args: func(cmd *cobra.Command, args []string) error {
@@ -1943,7 +1943,7 @@ func getDeauthorizeHostCommand() *cobra.Command {
 
 func getUpdateHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "host <resourceID> [flags]",
+		Use:     "host <name|resourceID> [flags]",
 		Short:   "Updates a host",
 		Example: updateHostExamples,
 		Args: func(cmd *cobra.Command, args []string) error {
@@ -3051,6 +3051,24 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if !isHostResourceID(hostID) {
+		// Name-based lookup: pass name filter to the API, then exact client-side match.
+		nameFilter := fmt.Sprintf("name=%q", hostID)
+		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+			return err
+		}
+		host, err := findHostByName(resp.JSON200.Hosts, hostID)
+		if err != nil {
+			return err
+		}
+		hostID = derefString(host.ResourceId)
+	}
+
 	// retrieve the host (to check if it has an instance associated with it)
 	iresp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
 	if err != nil {
@@ -3422,6 +3440,24 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return fmt.Errorf("no host ID provided")
 		}
+		hostID := args[0]
+		if !isHostResourceID(hostID) {
+			// Name-based lookup: pass name filter to the API, then exact client-side match.
+			nameFilter := fmt.Sprintf("name=%q", hostID)
+			resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+				&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+				return err
+			}
+			host, err := findHostByName(resp.JSON200.Hosts, hostID)
+			if err != nil {
+				return err
+			}
+			hostID = derefString(host.ResourceId)
+		}
 		if policyFlag != "" {
 			err := validateOSUpdatePolicy(policyFlag)
 			if err != nil {
@@ -3429,14 +3465,14 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 			}
 			updateRecords = append(updateRecords, UpdateHostRecord{
 				Name:           "",
-				ResourceID:     args[0],
+				ResourceID:     hostID,
 				OsUpdatePolicy: policyFlag,
 				Error:          "",
 			})
 		} else {
 			updateRecords = append(updateRecords, UpdateHostRecord{
 				Name:           "",
-				ResourceID:     args[0],
+				ResourceID:     hostID,
 				OsUpdatePolicy: "",
 				Error:          "",
 			})

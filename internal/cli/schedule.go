@@ -677,7 +677,7 @@ func getGetScheduleCommand() *cobra.Command {
 
 func getSetScheduleCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "schedule <name> [flags]",
+		Use:     "schedule <name|resourceID> [flags]",
 		Short:   "Update a schedule configuration",
 		Example: setScheduleExamples,
 		Args:    cobra.ExactArgs(1),
@@ -1064,6 +1064,27 @@ func runSetScheduleCommand(cmd *cobra.Command, args []string) error {
 	ctx, scheduleClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	if !isScheduleResourceID(id) {
+		// Name-based lookup: list all schedules and filter by name.
+		gresp, err := scheduleClient.ScheduleServiceListSchedulesWithResponse(ctx, projectName,
+			&infra.ScheduleServiceListSchedulesParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(gresp.HTTPResponse, gresp.Body, "error while retrieving schedules"); err != nil {
+			return err
+		}
+		single, repeated, err := findScheduleByName(gresp.JSON200.SingleSchedules, gresp.JSON200.RepeatedSchedules, id)
+		if err != nil {
+			return err
+		}
+		if single.ResourceId != nil {
+			id = *single.ResourceId
+		} else {
+			id = *repeated.ResourceId
+		}
 	}
 
 	//Repeated schedule logic

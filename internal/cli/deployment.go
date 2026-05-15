@@ -85,10 +85,10 @@ func getGetDeploymentCommand() *cobra.Command {
 
 func getSetDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Short:   "Update a deployment",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli set deployment 12345 --project some-project --name my-deployment --package-name my-package --package-version 1.0.0 --profile sample-profile --application-namespace <app>=<namespace> --application-set <app>.<prop>=<prop-value> --application-label <label>=<label-value>",
+		Example: "orch-cli set deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --project some-project --profile sample-profile\norch-cli set deployment \"Test Headlamp Dashboard\" --project some-project --profile sample-profile",
 		Aliases: deploymentAliases,
 		RunE:    runSetDeploymentCommand,
 	}
@@ -105,10 +105,10 @@ func getSetDeploymentCommand() *cobra.Command {
 
 func getUpgradeDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Short:   "Upgrade a deployment to a new package version",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli upgrade deployment 12345 --package-version 1.1.0",
+		Example: "orch-cli upgrade deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --package-version 1.1.0\norch-cli upgrade deployment \"Test Headlamp Dashboard\" --package-version 1.1.0",
 		Aliases: deploymentAliases,
 		RunE:    runUpgradeDeploymentCommand,
 	}
@@ -694,6 +694,24 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	deploymentID := args[0]
 
+	if !isDeploymentID(deploymentID) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, deploymentID)
+		if err != nil {
+			return err
+		}
+		deploymentID = derefString(deployment.DeployId)
+	}
+
 	overrideValues, err := getOverrideValues(cmd)
 	if err != nil {
 		return err
@@ -753,6 +771,24 @@ func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	deploymentID := args[0]
 	newPackageVersion, _ := cmd.Flags().GetString("package-version")
+
+	if !isDeploymentID(deploymentID) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, deploymentID)
+		if err != nil {
+			return err
+		}
+		deploymentID = derefString(deployment.DeployId)
+	}
 
 	// Get the current deployment to retrieve package name and other details
 	gresp, err := deploymentClient.DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
