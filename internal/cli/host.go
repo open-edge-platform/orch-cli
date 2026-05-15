@@ -1529,8 +1529,8 @@ func resolveClusterTemplate(ctx context.Context, cClient cluster.ClientWithRespo
 
 	template := strings.Split(remoteCTempToQuery, ":")
 
-	resp, err := cClient.GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse(ctx, projectName,
-		strings.TrimSpace(template[0]), strings.TrimSpace(template[1]), auth.AddAuthHeader)
+	resp, err := cClient.GetV2ProjectsProjectNameTemplatesNameVersionWithResponse(ctx, projectName,
+		strings.TrimSpace(template[0]), strings.TrimSpace(template[1]), nil, auth.AddAuthHeader)
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)

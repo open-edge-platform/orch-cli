@@ -81,8 +81,48 @@ func (m *MockClientInterface) EXPECT() *MockClientInterfaceMockRecorder {
 	return m.recorder
 }
 
+// DeleteV2ClustersName mocks base method.
+func (m *MockClientInterface) DeleteV2ClustersName(ctx context.Context, name string, params *DeleteV2ClustersNameParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteV2ClustersName", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteV2ClustersName indicates an expected call of DeleteV2ClustersName.
+func (mr *MockClientInterfaceMockRecorder) DeleteV2ClustersName(ctx, name, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2ClustersName", reflect.TypeOf((*MockClientInterface)(nil).DeleteV2ClustersName), varargs...)
+}
+
+// DeleteV2ClustersNameNodesNodeId mocks base method.
+func (m *MockClientInterface) DeleteV2ClustersNameNodesNodeId(ctx context.Context, name, nodeId string, params *DeleteV2ClustersNameNodesNodeIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, nodeId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteV2ClustersNameNodesNodeId", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteV2ClustersNameNodesNodeId indicates an expected call of DeleteV2ClustersNameNodesNodeId.
+func (mr *MockClientInterfaceMockRecorder) DeleteV2ClustersNameNodesNodeId(ctx, name, nodeId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, nodeId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2ClustersNameNodesNodeId", reflect.TypeOf((*MockClientInterface)(nil).DeleteV2ClustersNameNodesNodeId), varargs...)
+}
+
 // DeleteV2ProjectsProjectNameClustersName mocks base method.
-func (m *MockClientInterface) DeleteV2ProjectsProjectNameClustersName(ctx context.Context, projectName, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) DeleteV2ProjectsProjectNameClustersName(ctx context.Context, projectName ProjectNamePath, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name}
 	for _, a := range reqEditors {
@@ -102,7 +142,7 @@ func (mr *MockClientInterfaceMockRecorder) DeleteV2ProjectsProjectNameClustersNa
 }
 
 // DeleteV2ProjectsProjectNameClustersNameNodesNodeId mocks base method.
-func (m *MockClientInterface) DeleteV2ProjectsProjectNameClustersNameNodesNodeId(ctx context.Context, projectName, name, nodeId string, params *DeleteV2ProjectsProjectNameClustersNameNodesNodeIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) DeleteV2ProjectsProjectNameClustersNameNodesNodeId(ctx context.Context, projectName ProjectNamePath, name, nodeId string, params *DeleteV2ProjectsProjectNameClustersNameNodesNodeIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, nodeId, params}
 	for _, a := range reqEditors {
@@ -121,28 +161,188 @@ func (mr *MockClientInterfaceMockRecorder) DeleteV2ProjectsProjectNameClustersNa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2ProjectsProjectNameClustersNameNodesNodeId", reflect.TypeOf((*MockClientInterface)(nil).DeleteV2ProjectsProjectNameClustersNameNodesNodeId), varargs...)
 }
 
-// DeleteV2ProjectsProjectNameTemplatesNameVersionsVersion mocks base method.
-func (m *MockClientInterface) DeleteV2ProjectsProjectNameTemplatesNameVersionsVersion(ctx context.Context, projectName, name, version string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeleteV2ProjectsProjectNameTemplatesNameVersion mocks base method.
+func (m *MockClientInterface) DeleteV2ProjectsProjectNameTemplatesNameVersion(ctx context.Context, projectName ProjectNamePath, name, version string, params *DeleteV2ProjectsProjectNameTemplatesNameVersionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name, version}
+	varargs := []any{ctx, projectName, name, version, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeleteV2ProjectsProjectNameTemplatesNameVersionsVersion", varargs...)
+	ret := m.ctrl.Call(m, "DeleteV2ProjectsProjectNameTemplatesNameVersion", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeleteV2ProjectsProjectNameTemplatesNameVersionsVersion indicates an expected call of DeleteV2ProjectsProjectNameTemplatesNameVersionsVersion.
-func (mr *MockClientInterfaceMockRecorder) DeleteV2ProjectsProjectNameTemplatesNameVersionsVersion(ctx, projectName, name, version any, reqEditors ...any) *gomock.Call {
+// DeleteV2ProjectsProjectNameTemplatesNameVersion indicates an expected call of DeleteV2ProjectsProjectNameTemplatesNameVersion.
+func (mr *MockClientInterfaceMockRecorder) DeleteV2ProjectsProjectNameTemplatesNameVersion(ctx, projectName, name, version, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name, version}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2ProjectsProjectNameTemplatesNameVersionsVersion", reflect.TypeOf((*MockClientInterface)(nil).DeleteV2ProjectsProjectNameTemplatesNameVersionsVersion), varargs...)
+	varargs := append([]any{ctx, projectName, name, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2ProjectsProjectNameTemplatesNameVersion", reflect.TypeOf((*MockClientInterface)(nil).DeleteV2ProjectsProjectNameTemplatesNameVersion), varargs...)
+}
+
+// DeleteV2TemplatesNameVersion mocks base method.
+func (m *MockClientInterface) DeleteV2TemplatesNameVersion(ctx context.Context, name, version string, params *DeleteV2TemplatesNameVersionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteV2TemplatesNameVersion", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteV2TemplatesNameVersion indicates an expected call of DeleteV2TemplatesNameVersion.
+func (mr *MockClientInterfaceMockRecorder) DeleteV2TemplatesNameVersion(ctx, name, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2TemplatesNameVersion", reflect.TypeOf((*MockClientInterface)(nil).DeleteV2TemplatesNameVersion), varargs...)
+}
+
+// GetMetrics mocks base method.
+func (m *MockClientInterface) GetMetrics(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMetrics", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMetrics indicates an expected call of GetMetrics.
+func (mr *MockClientInterfaceMockRecorder) GetMetrics(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetrics", reflect.TypeOf((*MockClientInterface)(nil).GetMetrics), varargs...)
+}
+
+// GetV2Clusters mocks base method.
+func (m *MockClientInterface) GetV2Clusters(ctx context.Context, params *GetV2ClustersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2Clusters", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2Clusters indicates an expected call of GetV2Clusters.
+func (mr *MockClientInterfaceMockRecorder) GetV2Clusters(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2Clusters", reflect.TypeOf((*MockClientInterface)(nil).GetV2Clusters), varargs...)
+}
+
+// GetV2ClustersName mocks base method.
+func (m *MockClientInterface) GetV2ClustersName(ctx context.Context, name string, params *GetV2ClustersNameParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2ClustersName", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2ClustersName indicates an expected call of GetV2ClustersName.
+func (mr *MockClientInterfaceMockRecorder) GetV2ClustersName(ctx, name, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ClustersName", reflect.TypeOf((*MockClientInterface)(nil).GetV2ClustersName), varargs...)
+}
+
+// GetV2ClustersNameKubeconfigs mocks base method.
+func (m *MockClientInterface) GetV2ClustersNameKubeconfigs(ctx context.Context, name string, params *GetV2ClustersNameKubeconfigsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2ClustersNameKubeconfigs", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2ClustersNameKubeconfigs indicates an expected call of GetV2ClustersNameKubeconfigs.
+func (mr *MockClientInterfaceMockRecorder) GetV2ClustersNameKubeconfigs(ctx, name, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ClustersNameKubeconfigs", reflect.TypeOf((*MockClientInterface)(nil).GetV2ClustersNameKubeconfigs), varargs...)
+}
+
+// GetV2ClustersNodeIdClusterdetail mocks base method.
+func (m *MockClientInterface) GetV2ClustersNodeIdClusterdetail(ctx context.Context, nodeId string, params *GetV2ClustersNodeIdClusterdetailParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, nodeId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2ClustersNodeIdClusterdetail", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2ClustersNodeIdClusterdetail indicates an expected call of GetV2ClustersNodeIdClusterdetail.
+func (mr *MockClientInterfaceMockRecorder) GetV2ClustersNodeIdClusterdetail(ctx, nodeId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, nodeId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ClustersNodeIdClusterdetail", reflect.TypeOf((*MockClientInterface)(nil).GetV2ClustersNodeIdClusterdetail), varargs...)
+}
+
+// GetV2ClustersSummary mocks base method.
+func (m *MockClientInterface) GetV2ClustersSummary(ctx context.Context, params *GetV2ClustersSummaryParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2ClustersSummary", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2ClustersSummary indicates an expected call of GetV2ClustersSummary.
+func (mr *MockClientInterfaceMockRecorder) GetV2ClustersSummary(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ClustersSummary", reflect.TypeOf((*MockClientInterface)(nil).GetV2ClustersSummary), varargs...)
+}
+
+// GetV2Healthz mocks base method.
+func (m *MockClientInterface) GetV2Healthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2Healthz", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2Healthz indicates an expected call of GetV2Healthz.
+func (mr *MockClientInterfaceMockRecorder) GetV2Healthz(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2Healthz", reflect.TypeOf((*MockClientInterface)(nil).GetV2Healthz), varargs...)
 }
 
 // GetV2ProjectsProjectNameClusters mocks base method.
-func (m *MockClientInterface) GetV2ProjectsProjectNameClusters(ctx context.Context, projectName string, params *GetV2ProjectsProjectNameClustersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) GetV2ProjectsProjectNameClusters(ctx context.Context, projectName ProjectNamePath, params *GetV2ProjectsProjectNameClustersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, params}
 	for _, a := range reqEditors {
@@ -162,7 +362,7 @@ func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameClusters(ctx,
 }
 
 // GetV2ProjectsProjectNameClustersName mocks base method.
-func (m *MockClientInterface) GetV2ProjectsProjectNameClustersName(ctx context.Context, projectName, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) GetV2ProjectsProjectNameClustersName(ctx context.Context, projectName ProjectNamePath, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name}
 	for _, a := range reqEditors {
@@ -182,9 +382,9 @@ func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameClustersName(
 }
 
 // GetV2ProjectsProjectNameClustersNameKubeconfigs mocks base method.
-func (m *MockClientInterface) GetV2ProjectsProjectNameClustersNameKubeconfigs(ctx context.Context, projectName, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) GetV2ProjectsProjectNameClustersNameKubeconfigs(ctx context.Context, projectName ProjectNamePath, name string, params *GetV2ProjectsProjectNameClustersNameKubeconfigsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name}
+	varargs := []any{ctx, projectName, name, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -195,14 +395,14 @@ func (m *MockClientInterface) GetV2ProjectsProjectNameClustersNameKubeconfigs(ct
 }
 
 // GetV2ProjectsProjectNameClustersNameKubeconfigs indicates an expected call of GetV2ProjectsProjectNameClustersNameKubeconfigs.
-func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameClustersNameKubeconfigs(ctx, projectName, name any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameClustersNameKubeconfigs(ctx, projectName, name, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name}, reqEditors...)
+	varargs := append([]any{ctx, projectName, name, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameClustersNameKubeconfigs", reflect.TypeOf((*MockClientInterface)(nil).GetV2ProjectsProjectNameClustersNameKubeconfigs), varargs...)
 }
 
 // GetV2ProjectsProjectNameClustersNodeIdClusterdetail mocks base method.
-func (m *MockClientInterface) GetV2ProjectsProjectNameClustersNodeIdClusterdetail(ctx context.Context, projectName, nodeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) GetV2ProjectsProjectNameClustersNodeIdClusterdetail(ctx context.Context, projectName ProjectNamePath, nodeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, nodeId}
 	for _, a := range reqEditors {
@@ -222,7 +422,7 @@ func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameClustersNodeI
 }
 
 // GetV2ProjectsProjectNameClustersSummary mocks base method.
-func (m *MockClientInterface) GetV2ProjectsProjectNameClustersSummary(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) GetV2ProjectsProjectNameClustersSummary(ctx context.Context, projectName ProjectNamePath, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName}
 	for _, a := range reqEditors {
@@ -242,7 +442,7 @@ func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameClustersSumma
 }
 
 // GetV2ProjectsProjectNameTemplates mocks base method.
-func (m *MockClientInterface) GetV2ProjectsProjectNameTemplates(ctx context.Context, projectName string, params *GetV2ProjectsProjectNameTemplatesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) GetV2ProjectsProjectNameTemplates(ctx context.Context, projectName ProjectNamePath, params *GetV2ProjectsProjectNameTemplatesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, params}
 	for _, a := range reqEditors {
@@ -261,10 +461,30 @@ func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameTemplates(ctx
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameTemplates", reflect.TypeOf((*MockClientInterface)(nil).GetV2ProjectsProjectNameTemplates), varargs...)
 }
 
-// GetV2ProjectsProjectNameTemplatesNameVersions mocks base method.
-func (m *MockClientInterface) GetV2ProjectsProjectNameTemplatesNameVersions(ctx context.Context, projectName, name string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// GetV2ProjectsProjectNameTemplatesNameVersion mocks base method.
+func (m *MockClientInterface) GetV2ProjectsProjectNameTemplatesNameVersion(ctx context.Context, projectName ProjectNamePath, name, version string, params *GetV2ProjectsProjectNameTemplatesNameVersionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name}
+	varargs := []any{ctx, projectName, name, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2ProjectsProjectNameTemplatesNameVersion", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2ProjectsProjectNameTemplatesNameVersion indicates an expected call of GetV2ProjectsProjectNameTemplatesNameVersion.
+func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameTemplatesNameVersion(ctx, projectName, name, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, projectName, name, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameTemplatesNameVersion", reflect.TypeOf((*MockClientInterface)(nil).GetV2ProjectsProjectNameTemplatesNameVersion), varargs...)
+}
+
+// GetV2ProjectsProjectNameTemplatesNameVersions mocks base method.
+func (m *MockClientInterface) GetV2ProjectsProjectNameTemplatesNameVersions(ctx context.Context, projectName ProjectNamePath, name string, params *GetV2ProjectsProjectNameTemplatesNameVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, projectName, name, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -275,34 +495,114 @@ func (m *MockClientInterface) GetV2ProjectsProjectNameTemplatesNameVersions(ctx 
 }
 
 // GetV2ProjectsProjectNameTemplatesNameVersions indicates an expected call of GetV2ProjectsProjectNameTemplatesNameVersions.
-func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameTemplatesNameVersions(ctx, projectName, name any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameTemplatesNameVersions(ctx, projectName, name, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name}, reqEditors...)
+	varargs := append([]any{ctx, projectName, name, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameTemplatesNameVersions", reflect.TypeOf((*MockClientInterface)(nil).GetV2ProjectsProjectNameTemplatesNameVersions), varargs...)
 }
 
-// GetV2ProjectsProjectNameTemplatesNameVersionsVersion mocks base method.
-func (m *MockClientInterface) GetV2ProjectsProjectNameTemplatesNameVersionsVersion(ctx context.Context, projectName, name, version string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// GetV2Templates mocks base method.
+func (m *MockClientInterface) GetV2Templates(ctx context.Context, params *GetV2TemplatesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name, version}
+	varargs := []any{ctx, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "GetV2ProjectsProjectNameTemplatesNameVersionsVersion", varargs...)
+	ret := m.ctrl.Call(m, "GetV2Templates", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetV2ProjectsProjectNameTemplatesNameVersionsVersion indicates an expected call of GetV2ProjectsProjectNameTemplatesNameVersionsVersion.
-func (mr *MockClientInterfaceMockRecorder) GetV2ProjectsProjectNameTemplatesNameVersionsVersion(ctx, projectName, name, version any, reqEditors ...any) *gomock.Call {
+// GetV2Templates indicates an expected call of GetV2Templates.
+func (mr *MockClientInterfaceMockRecorder) GetV2Templates(ctx, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name, version}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameTemplatesNameVersionsVersion", reflect.TypeOf((*MockClientInterface)(nil).GetV2ProjectsProjectNameTemplatesNameVersionsVersion), varargs...)
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2Templates", reflect.TypeOf((*MockClientInterface)(nil).GetV2Templates), varargs...)
+}
+
+// GetV2TemplatesNameVersion mocks base method.
+func (m *MockClientInterface) GetV2TemplatesNameVersion(ctx context.Context, name, version string, params *GetV2TemplatesNameVersionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2TemplatesNameVersion", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2TemplatesNameVersion indicates an expected call of GetV2TemplatesNameVersion.
+func (mr *MockClientInterfaceMockRecorder) GetV2TemplatesNameVersion(ctx, name, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2TemplatesNameVersion", reflect.TypeOf((*MockClientInterface)(nil).GetV2TemplatesNameVersion), varargs...)
+}
+
+// GetV2TemplatesNameVersions mocks base method.
+func (m *MockClientInterface) GetV2TemplatesNameVersions(ctx context.Context, name string, params *GetV2TemplatesNameVersionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2TemplatesNameVersions", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2TemplatesNameVersions indicates an expected call of GetV2TemplatesNameVersions.
+func (mr *MockClientInterfaceMockRecorder) GetV2TemplatesNameVersions(ctx, name, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2TemplatesNameVersions", reflect.TypeOf((*MockClientInterface)(nil).GetV2TemplatesNameVersions), varargs...)
+}
+
+// PostV2Clusters mocks base method.
+func (m *MockClientInterface) PostV2Clusters(ctx context.Context, params *PostV2ClustersParams, body PostV2ClustersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostV2Clusters", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostV2Clusters indicates an expected call of PostV2Clusters.
+func (mr *MockClientInterfaceMockRecorder) PostV2Clusters(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2Clusters", reflect.TypeOf((*MockClientInterface)(nil).PostV2Clusters), varargs...)
+}
+
+// PostV2ClustersWithBody mocks base method.
+func (m *MockClientInterface) PostV2ClustersWithBody(ctx context.Context, params *PostV2ClustersParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostV2ClustersWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostV2ClustersWithBody indicates an expected call of PostV2ClustersWithBody.
+func (mr *MockClientInterfaceMockRecorder) PostV2ClustersWithBody(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2ClustersWithBody", reflect.TypeOf((*MockClientInterface)(nil).PostV2ClustersWithBody), varargs...)
 }
 
 // PostV2ProjectsProjectNameClusters mocks base method.
-func (m *MockClientInterface) PostV2ProjectsProjectNameClusters(ctx context.Context, projectName string, body PostV2ProjectsProjectNameClustersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PostV2ProjectsProjectNameClusters(ctx context.Context, projectName ProjectNamePath, body PostV2ProjectsProjectNameClustersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, body}
 	for _, a := range reqEditors {
@@ -322,7 +622,7 @@ func (mr *MockClientInterfaceMockRecorder) PostV2ProjectsProjectNameClusters(ctx
 }
 
 // PostV2ProjectsProjectNameClustersWithBody mocks base method.
-func (m *MockClientInterface) PostV2ProjectsProjectNameClustersWithBody(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PostV2ProjectsProjectNameClustersWithBody(ctx context.Context, projectName ProjectNamePath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, contentType, body}
 	for _, a := range reqEditors {
@@ -342,9 +642,9 @@ func (mr *MockClientInterfaceMockRecorder) PostV2ProjectsProjectNameClustersWith
 }
 
 // PostV2ProjectsProjectNameTemplates mocks base method.
-func (m *MockClientInterface) PostV2ProjectsProjectNameTemplates(ctx context.Context, projectName string, body PostV2ProjectsProjectNameTemplatesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PostV2ProjectsProjectNameTemplates(ctx context.Context, projectName ProjectNamePath, params *PostV2ProjectsProjectNameTemplatesParams, body PostV2ProjectsProjectNameTemplatesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, body}
+	varargs := []any{ctx, projectName, params, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -355,16 +655,16 @@ func (m *MockClientInterface) PostV2ProjectsProjectNameTemplates(ctx context.Con
 }
 
 // PostV2ProjectsProjectNameTemplates indicates an expected call of PostV2ProjectsProjectNameTemplates.
-func (mr *MockClientInterfaceMockRecorder) PostV2ProjectsProjectNameTemplates(ctx, projectName, body any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientInterfaceMockRecorder) PostV2ProjectsProjectNameTemplates(ctx, projectName, params, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, body}, reqEditors...)
+	varargs := append([]any{ctx, projectName, params, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2ProjectsProjectNameTemplates", reflect.TypeOf((*MockClientInterface)(nil).PostV2ProjectsProjectNameTemplates), varargs...)
 }
 
 // PostV2ProjectsProjectNameTemplatesWithBody mocks base method.
-func (m *MockClientInterface) PostV2ProjectsProjectNameTemplatesWithBody(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PostV2ProjectsProjectNameTemplatesWithBody(ctx context.Context, projectName ProjectNamePath, params *PostV2ProjectsProjectNameTemplatesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, contentType, body}
+	varargs := []any{ctx, projectName, params, contentType, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -375,14 +675,174 @@ func (m *MockClientInterface) PostV2ProjectsProjectNameTemplatesWithBody(ctx con
 }
 
 // PostV2ProjectsProjectNameTemplatesWithBody indicates an expected call of PostV2ProjectsProjectNameTemplatesWithBody.
-func (mr *MockClientInterfaceMockRecorder) PostV2ProjectsProjectNameTemplatesWithBody(ctx, projectName, contentType, body any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientInterfaceMockRecorder) PostV2ProjectsProjectNameTemplatesWithBody(ctx, projectName, params, contentType, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, contentType, body}, reqEditors...)
+	varargs := append([]any{ctx, projectName, params, contentType, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2ProjectsProjectNameTemplatesWithBody", reflect.TypeOf((*MockClientInterface)(nil).PostV2ProjectsProjectNameTemplatesWithBody), varargs...)
 }
 
+// PostV2Templates mocks base method.
+func (m *MockClientInterface) PostV2Templates(ctx context.Context, params *PostV2TemplatesParams, body PostV2TemplatesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostV2Templates", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostV2Templates indicates an expected call of PostV2Templates.
+func (mr *MockClientInterfaceMockRecorder) PostV2Templates(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2Templates", reflect.TypeOf((*MockClientInterface)(nil).PostV2Templates), varargs...)
+}
+
+// PostV2TemplatesWithBody mocks base method.
+func (m *MockClientInterface) PostV2TemplatesWithBody(ctx context.Context, params *PostV2TemplatesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostV2TemplatesWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostV2TemplatesWithBody indicates an expected call of PostV2TemplatesWithBody.
+func (mr *MockClientInterfaceMockRecorder) PostV2TemplatesWithBody(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2TemplatesWithBody", reflect.TypeOf((*MockClientInterface)(nil).PostV2TemplatesWithBody), varargs...)
+}
+
+// PutV2ClustersNameLabels mocks base method.
+func (m *MockClientInterface) PutV2ClustersNameLabels(ctx context.Context, name string, params *PutV2ClustersNameLabelsParams, body PutV2ClustersNameLabelsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameLabels", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameLabels indicates an expected call of PutV2ClustersNameLabels.
+func (mr *MockClientInterfaceMockRecorder) PutV2ClustersNameLabels(ctx, name, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameLabels", reflect.TypeOf((*MockClientInterface)(nil).PutV2ClustersNameLabels), varargs...)
+}
+
+// PutV2ClustersNameLabelsWithBody mocks base method.
+func (m *MockClientInterface) PutV2ClustersNameLabelsWithBody(ctx context.Context, name string, params *PutV2ClustersNameLabelsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameLabelsWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameLabelsWithBody indicates an expected call of PutV2ClustersNameLabelsWithBody.
+func (mr *MockClientInterfaceMockRecorder) PutV2ClustersNameLabelsWithBody(ctx, name, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameLabelsWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutV2ClustersNameLabelsWithBody), varargs...)
+}
+
+// PutV2ClustersNameNodes mocks base method.
+func (m *MockClientInterface) PutV2ClustersNameNodes(ctx context.Context, name string, params *PutV2ClustersNameNodesParams, body PutV2ClustersNameNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameNodes", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameNodes indicates an expected call of PutV2ClustersNameNodes.
+func (mr *MockClientInterfaceMockRecorder) PutV2ClustersNameNodes(ctx, name, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameNodes", reflect.TypeOf((*MockClientInterface)(nil).PutV2ClustersNameNodes), varargs...)
+}
+
+// PutV2ClustersNameNodesWithBody mocks base method.
+func (m *MockClientInterface) PutV2ClustersNameNodesWithBody(ctx context.Context, name string, params *PutV2ClustersNameNodesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameNodesWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameNodesWithBody indicates an expected call of PutV2ClustersNameNodesWithBody.
+func (mr *MockClientInterfaceMockRecorder) PutV2ClustersNameNodesWithBody(ctx, name, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameNodesWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutV2ClustersNameNodesWithBody), varargs...)
+}
+
+// PutV2ClustersNameTemplate mocks base method.
+func (m *MockClientInterface) PutV2ClustersNameTemplate(ctx context.Context, name string, params *PutV2ClustersNameTemplateParams, body PutV2ClustersNameTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameTemplate", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameTemplate indicates an expected call of PutV2ClustersNameTemplate.
+func (mr *MockClientInterfaceMockRecorder) PutV2ClustersNameTemplate(ctx, name, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameTemplate", reflect.TypeOf((*MockClientInterface)(nil).PutV2ClustersNameTemplate), varargs...)
+}
+
+// PutV2ClustersNameTemplateWithBody mocks base method.
+func (m *MockClientInterface) PutV2ClustersNameTemplateWithBody(ctx context.Context, name string, params *PutV2ClustersNameTemplateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameTemplateWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameTemplateWithBody indicates an expected call of PutV2ClustersNameTemplateWithBody.
+func (mr *MockClientInterfaceMockRecorder) PutV2ClustersNameTemplateWithBody(ctx, name, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameTemplateWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutV2ClustersNameTemplateWithBody), varargs...)
+}
+
 // PutV2ProjectsProjectNameClustersNameLabels mocks base method.
-func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameLabels(ctx context.Context, projectName, name string, body PutV2ProjectsProjectNameClustersNameLabelsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameLabels(ctx context.Context, projectName ProjectNamePath, name string, body PutV2ProjectsProjectNameClustersNameLabelsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, body}
 	for _, a := range reqEditors {
@@ -402,7 +862,7 @@ func (mr *MockClientInterfaceMockRecorder) PutV2ProjectsProjectNameClustersNameL
 }
 
 // PutV2ProjectsProjectNameClustersNameLabelsWithBody mocks base method.
-func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameLabelsWithBody(ctx context.Context, projectName, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameLabelsWithBody(ctx context.Context, projectName ProjectNamePath, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, contentType, body}
 	for _, a := range reqEditors {
@@ -422,7 +882,7 @@ func (mr *MockClientInterfaceMockRecorder) PutV2ProjectsProjectNameClustersNameL
 }
 
 // PutV2ProjectsProjectNameClustersNameNodes mocks base method.
-func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameNodes(ctx context.Context, projectName, name string, body PutV2ProjectsProjectNameClustersNameNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameNodes(ctx context.Context, projectName ProjectNamePath, name string, body PutV2ProjectsProjectNameClustersNameNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, body}
 	for _, a := range reqEditors {
@@ -442,7 +902,7 @@ func (mr *MockClientInterfaceMockRecorder) PutV2ProjectsProjectNameClustersNameN
 }
 
 // PutV2ProjectsProjectNameClustersNameNodesWithBody mocks base method.
-func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameNodesWithBody(ctx context.Context, projectName, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameNodesWithBody(ctx context.Context, projectName ProjectNamePath, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, contentType, body}
 	for _, a := range reqEditors {
@@ -462,7 +922,7 @@ func (mr *MockClientInterfaceMockRecorder) PutV2ProjectsProjectNameClustersNameN
 }
 
 // PutV2ProjectsProjectNameClustersNameTemplate mocks base method.
-func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameTemplate(ctx context.Context, projectName, name string, body PutV2ProjectsProjectNameClustersNameTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameTemplate(ctx context.Context, projectName ProjectNamePath, name string, body PutV2ProjectsProjectNameClustersNameTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, body}
 	for _, a := range reqEditors {
@@ -482,7 +942,7 @@ func (mr *MockClientInterfaceMockRecorder) PutV2ProjectsProjectNameClustersNameT
 }
 
 // PutV2ProjectsProjectNameClustersNameTemplateWithBody mocks base method.
-func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameTemplateWithBody(ctx context.Context, projectName, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PutV2ProjectsProjectNameClustersNameTemplateWithBody(ctx context.Context, projectName ProjectNamePath, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, contentType, body}
 	for _, a := range reqEditors {
@@ -502,9 +962,9 @@ func (mr *MockClientInterfaceMockRecorder) PutV2ProjectsProjectNameClustersNameT
 }
 
 // PutV2ProjectsProjectNameTemplatesNameDefault mocks base method.
-func (m *MockClientInterface) PutV2ProjectsProjectNameTemplatesNameDefault(ctx context.Context, projectName, name string, body PutV2ProjectsProjectNameTemplatesNameDefaultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PutV2ProjectsProjectNameTemplatesNameDefault(ctx context.Context, projectName ProjectNamePath, name string, params *PutV2ProjectsProjectNameTemplatesNameDefaultParams, body PutV2ProjectsProjectNameTemplatesNameDefaultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name, body}
+	varargs := []any{ctx, projectName, name, params, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -515,16 +975,16 @@ func (m *MockClientInterface) PutV2ProjectsProjectNameTemplatesNameDefault(ctx c
 }
 
 // PutV2ProjectsProjectNameTemplatesNameDefault indicates an expected call of PutV2ProjectsProjectNameTemplatesNameDefault.
-func (mr *MockClientInterfaceMockRecorder) PutV2ProjectsProjectNameTemplatesNameDefault(ctx, projectName, name, body any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientInterfaceMockRecorder) PutV2ProjectsProjectNameTemplatesNameDefault(ctx, projectName, name, params, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name, body}, reqEditors...)
+	varargs := append([]any{ctx, projectName, name, params, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ProjectsProjectNameTemplatesNameDefault", reflect.TypeOf((*MockClientInterface)(nil).PutV2ProjectsProjectNameTemplatesNameDefault), varargs...)
 }
 
 // PutV2ProjectsProjectNameTemplatesNameDefaultWithBody mocks base method.
-func (m *MockClientInterface) PutV2ProjectsProjectNameTemplatesNameDefaultWithBody(ctx context.Context, projectName, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (m *MockClientInterface) PutV2ProjectsProjectNameTemplatesNameDefaultWithBody(ctx context.Context, projectName ProjectNamePath, name string, params *PutV2ProjectsProjectNameTemplatesNameDefaultParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name, contentType, body}
+	varargs := []any{ctx, projectName, name, params, contentType, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -535,10 +995,50 @@ func (m *MockClientInterface) PutV2ProjectsProjectNameTemplatesNameDefaultWithBo
 }
 
 // PutV2ProjectsProjectNameTemplatesNameDefaultWithBody indicates an expected call of PutV2ProjectsProjectNameTemplatesNameDefaultWithBody.
-func (mr *MockClientInterfaceMockRecorder) PutV2ProjectsProjectNameTemplatesNameDefaultWithBody(ctx, projectName, name, contentType, body any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientInterfaceMockRecorder) PutV2ProjectsProjectNameTemplatesNameDefaultWithBody(ctx, projectName, name, params, contentType, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name, contentType, body}, reqEditors...)
+	varargs := append([]any{ctx, projectName, name, params, contentType, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ProjectsProjectNameTemplatesNameDefaultWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutV2ProjectsProjectNameTemplatesNameDefaultWithBody), varargs...)
+}
+
+// PutV2TemplatesNameDefault mocks base method.
+func (m *MockClientInterface) PutV2TemplatesNameDefault(ctx context.Context, name string, params *PutV2TemplatesNameDefaultParams, body PutV2TemplatesNameDefaultJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2TemplatesNameDefault", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2TemplatesNameDefault indicates an expected call of PutV2TemplatesNameDefault.
+func (mr *MockClientInterfaceMockRecorder) PutV2TemplatesNameDefault(ctx, name, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2TemplatesNameDefault", reflect.TypeOf((*MockClientInterface)(nil).PutV2TemplatesNameDefault), varargs...)
+}
+
+// PutV2TemplatesNameDefaultWithBody mocks base method.
+func (m *MockClientInterface) PutV2TemplatesNameDefaultWithBody(ctx context.Context, name string, params *PutV2TemplatesNameDefaultParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2TemplatesNameDefaultWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2TemplatesNameDefaultWithBody indicates an expected call of PutV2TemplatesNameDefaultWithBody.
+func (mr *MockClientInterfaceMockRecorder) PutV2TemplatesNameDefaultWithBody(ctx, name, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2TemplatesNameDefaultWithBody", reflect.TypeOf((*MockClientInterface)(nil).PutV2TemplatesNameDefaultWithBody), varargs...)
 }
 
 // MockClientWithResponsesInterface is a mock of ClientWithResponsesInterface interface.
@@ -565,8 +1065,48 @@ func (m *MockClientWithResponsesInterface) EXPECT() *MockClientWithResponsesInte
 	return m.recorder
 }
 
+// DeleteV2ClustersNameNodesNodeIdWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeleteV2ClustersNameNodesNodeIdWithResponse(ctx context.Context, name, nodeId string, params *DeleteV2ClustersNameNodesNodeIdParams, reqEditors ...RequestEditorFn) (*DeleteV2ClustersNameNodesNodeIdResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, nodeId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteV2ClustersNameNodesNodeIdWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeleteV2ClustersNameNodesNodeIdResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteV2ClustersNameNodesNodeIdWithResponse indicates an expected call of DeleteV2ClustersNameNodesNodeIdWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteV2ClustersNameNodesNodeIdWithResponse(ctx, name, nodeId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, nodeId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2ClustersNameNodesNodeIdWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeleteV2ClustersNameNodesNodeIdWithResponse), varargs...)
+}
+
+// DeleteV2ClustersNameWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeleteV2ClustersNameWithResponse(ctx context.Context, name string, params *DeleteV2ClustersNameParams, reqEditors ...RequestEditorFn) (*DeleteV2ClustersNameResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteV2ClustersNameWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeleteV2ClustersNameResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteV2ClustersNameWithResponse indicates an expected call of DeleteV2ClustersNameWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteV2ClustersNameWithResponse(ctx, name, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2ClustersNameWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeleteV2ClustersNameWithResponse), varargs...)
+}
+
 // DeleteV2ProjectsProjectNameClustersNameNodesNodeIdWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeleteV2ProjectsProjectNameClustersNameNodesNodeIdWithResponse(ctx context.Context, projectName, name, nodeId string, params *DeleteV2ProjectsProjectNameClustersNameNodesNodeIdParams, reqEditors ...RequestEditorFn) (*DeleteV2ProjectsProjectNameClustersNameNodesNodeIdResponse, error) {
+func (m *MockClientWithResponsesInterface) DeleteV2ProjectsProjectNameClustersNameNodesNodeIdWithResponse(ctx context.Context, projectName ProjectNamePath, name, nodeId string, params *DeleteV2ProjectsProjectNameClustersNameNodesNodeIdParams, reqEditors ...RequestEditorFn) (*DeleteV2ProjectsProjectNameClustersNameNodesNodeIdResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, nodeId, params}
 	for _, a := range reqEditors {
@@ -586,7 +1126,7 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteV2ProjectsProjectN
 }
 
 // DeleteV2ProjectsProjectNameClustersNameWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeleteV2ProjectsProjectNameClustersNameWithResponse(ctx context.Context, projectName, name string, reqEditors ...RequestEditorFn) (*DeleteV2ProjectsProjectNameClustersNameResponse, error) {
+func (m *MockClientWithResponsesInterface) DeleteV2ProjectsProjectNameClustersNameWithResponse(ctx context.Context, projectName ProjectNamePath, name string, reqEditors ...RequestEditorFn) (*DeleteV2ProjectsProjectNameClustersNameResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name}
 	for _, a := range reqEditors {
@@ -605,30 +1145,190 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteV2ProjectsProjectN
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2ProjectsProjectNameClustersNameWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeleteV2ProjectsProjectNameClustersNameWithResponse), varargs...)
 }
 
-// DeleteV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeleteV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse(ctx context.Context, projectName, name, version string, reqEditors ...RequestEditorFn) (*DeleteV2ProjectsProjectNameTemplatesNameVersionsVersionResponse, error) {
+// DeleteV2ProjectsProjectNameTemplatesNameVersionWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeleteV2ProjectsProjectNameTemplatesNameVersionWithResponse(ctx context.Context, projectName ProjectNamePath, name, version string, params *DeleteV2ProjectsProjectNameTemplatesNameVersionParams, reqEditors ...RequestEditorFn) (*DeleteV2ProjectsProjectNameTemplatesNameVersionResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name, version}
+	varargs := []any{ctx, projectName, name, version, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeleteV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeleteV2ProjectsProjectNameTemplatesNameVersionsVersionResponse)
+	ret := m.ctrl.Call(m, "DeleteV2ProjectsProjectNameTemplatesNameVersionWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeleteV2ProjectsProjectNameTemplatesNameVersionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeleteV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse indicates an expected call of DeleteV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse(ctx, projectName, name, version any, reqEditors ...any) *gomock.Call {
+// DeleteV2ProjectsProjectNameTemplatesNameVersionWithResponse indicates an expected call of DeleteV2ProjectsProjectNameTemplatesNameVersionWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteV2ProjectsProjectNameTemplatesNameVersionWithResponse(ctx, projectName, name, version, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name, version}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeleteV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse), varargs...)
+	varargs := append([]any{ctx, projectName, name, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2ProjectsProjectNameTemplatesNameVersionWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeleteV2ProjectsProjectNameTemplatesNameVersionWithResponse), varargs...)
+}
+
+// DeleteV2TemplatesNameVersionWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeleteV2TemplatesNameVersionWithResponse(ctx context.Context, name, version string, params *DeleteV2TemplatesNameVersionParams, reqEditors ...RequestEditorFn) (*DeleteV2TemplatesNameVersionResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteV2TemplatesNameVersionWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeleteV2TemplatesNameVersionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteV2TemplatesNameVersionWithResponse indicates an expected call of DeleteV2TemplatesNameVersionWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeleteV2TemplatesNameVersionWithResponse(ctx, name, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteV2TemplatesNameVersionWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeleteV2TemplatesNameVersionWithResponse), varargs...)
+}
+
+// GetMetricsWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetMetricsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetMetricsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMetricsWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetMetricsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMetricsWithResponse indicates an expected call of GetMetricsWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetMetricsWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetMetricsWithResponse), varargs...)
+}
+
+// GetV2ClustersNameKubeconfigsWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetV2ClustersNameKubeconfigsWithResponse(ctx context.Context, name string, params *GetV2ClustersNameKubeconfigsParams, reqEditors ...RequestEditorFn) (*GetV2ClustersNameKubeconfigsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2ClustersNameKubeconfigsWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetV2ClustersNameKubeconfigsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2ClustersNameKubeconfigsWithResponse indicates an expected call of GetV2ClustersNameKubeconfigsWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ClustersNameKubeconfigsWithResponse(ctx, name, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ClustersNameKubeconfigsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ClustersNameKubeconfigsWithResponse), varargs...)
+}
+
+// GetV2ClustersNameWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetV2ClustersNameWithResponse(ctx context.Context, name string, params *GetV2ClustersNameParams, reqEditors ...RequestEditorFn) (*GetV2ClustersNameResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2ClustersNameWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetV2ClustersNameResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2ClustersNameWithResponse indicates an expected call of GetV2ClustersNameWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ClustersNameWithResponse(ctx, name, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ClustersNameWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ClustersNameWithResponse), varargs...)
+}
+
+// GetV2ClustersNodeIdClusterdetailWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetV2ClustersNodeIdClusterdetailWithResponse(ctx context.Context, nodeId string, params *GetV2ClustersNodeIdClusterdetailParams, reqEditors ...RequestEditorFn) (*GetV2ClustersNodeIdClusterdetailResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, nodeId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2ClustersNodeIdClusterdetailWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetV2ClustersNodeIdClusterdetailResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2ClustersNodeIdClusterdetailWithResponse indicates an expected call of GetV2ClustersNodeIdClusterdetailWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ClustersNodeIdClusterdetailWithResponse(ctx, nodeId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, nodeId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ClustersNodeIdClusterdetailWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ClustersNodeIdClusterdetailWithResponse), varargs...)
+}
+
+// GetV2ClustersSummaryWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetV2ClustersSummaryWithResponse(ctx context.Context, params *GetV2ClustersSummaryParams, reqEditors ...RequestEditorFn) (*GetV2ClustersSummaryResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2ClustersSummaryWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetV2ClustersSummaryResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2ClustersSummaryWithResponse indicates an expected call of GetV2ClustersSummaryWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ClustersSummaryWithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ClustersSummaryWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ClustersSummaryWithResponse), varargs...)
+}
+
+// GetV2ClustersWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetV2ClustersWithResponse(ctx context.Context, params *GetV2ClustersParams, reqEditors ...RequestEditorFn) (*GetV2ClustersResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2ClustersWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetV2ClustersResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2ClustersWithResponse indicates an expected call of GetV2ClustersWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ClustersWithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ClustersWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ClustersWithResponse), varargs...)
+}
+
+// GetV2HealthzWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetV2HealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetV2HealthzResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2HealthzWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetV2HealthzResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2HealthzWithResponse indicates an expected call of GetV2HealthzWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2HealthzWithResponse(ctx any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2HealthzWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2HealthzWithResponse), varargs...)
 }
 
 // GetV2ProjectsProjectNameClustersNameKubeconfigsWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersNameKubeconfigsWithResponse(ctx context.Context, projectName, name string, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameClustersNameKubeconfigsResponse, error) {
+func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersNameKubeconfigsWithResponse(ctx context.Context, projectName ProjectNamePath, name string, params *GetV2ProjectsProjectNameClustersNameKubeconfigsParams, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameClustersNameKubeconfigsResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name}
+	varargs := []any{ctx, projectName, name, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -639,14 +1339,14 @@ func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersNameK
 }
 
 // GetV2ProjectsProjectNameClustersNameKubeconfigsWithResponse indicates an expected call of GetV2ProjectsProjectNameClustersNameKubeconfigsWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectNameClustersNameKubeconfigsWithResponse(ctx, projectName, name any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectNameClustersNameKubeconfigsWithResponse(ctx, projectName, name, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name}, reqEditors...)
+	varargs := append([]any{ctx, projectName, name, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameClustersNameKubeconfigsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ProjectsProjectNameClustersNameKubeconfigsWithResponse), varargs...)
 }
 
 // GetV2ProjectsProjectNameClustersNameWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersNameWithResponse(ctx context.Context, projectName, name string, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameClustersNameResponse, error) {
+func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersNameWithResponse(ctx context.Context, projectName ProjectNamePath, name string, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameClustersNameResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name}
 	for _, a := range reqEditors {
@@ -666,7 +1366,7 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectName
 }
 
 // GetV2ProjectsProjectNameClustersNodeIdClusterdetailWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersNodeIdClusterdetailWithResponse(ctx context.Context, projectName, nodeId string, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameClustersNodeIdClusterdetailResponse, error) {
+func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersNodeIdClusterdetailWithResponse(ctx context.Context, projectName ProjectNamePath, nodeId string, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameClustersNodeIdClusterdetailResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, nodeId}
 	for _, a := range reqEditors {
@@ -686,7 +1386,7 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectName
 }
 
 // GetV2ProjectsProjectNameClustersSummaryWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersSummaryWithResponse(ctx context.Context, projectName string, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameClustersSummaryResponse, error) {
+func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersSummaryWithResponse(ctx context.Context, projectName ProjectNamePath, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameClustersSummaryResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName}
 	for _, a := range reqEditors {
@@ -706,7 +1406,7 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectName
 }
 
 // GetV2ProjectsProjectNameClustersWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersWithResponse(ctx context.Context, projectName string, params *GetV2ProjectsProjectNameClustersParams, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameClustersResponse, error) {
+func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameClustersWithResponse(ctx context.Context, projectName ProjectNamePath, params *GetV2ProjectsProjectNameClustersParams, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameClustersResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, params}
 	for _, a := range reqEditors {
@@ -725,30 +1425,30 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectName
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameClustersWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ProjectsProjectNameClustersWithResponse), varargs...)
 }
 
-// GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse(ctx context.Context, projectName, name, version string, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse, error) {
+// GetV2ProjectsProjectNameTemplatesNameVersionWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameTemplatesNameVersionWithResponse(ctx context.Context, projectName ProjectNamePath, name, version string, params *GetV2ProjectsProjectNameTemplatesNameVersionParams, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameTemplatesNameVersionResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name, version}
+	varargs := []any{ctx, projectName, name, version, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse", varargs...)
-	ret0, _ := ret[0].(*GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse)
+	ret := m.ctrl.Call(m, "GetV2ProjectsProjectNameTemplatesNameVersionWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetV2ProjectsProjectNameTemplatesNameVersionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse indicates an expected call of GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse(ctx, projectName, name, version any, reqEditors ...any) *gomock.Call {
+// GetV2ProjectsProjectNameTemplatesNameVersionWithResponse indicates an expected call of GetV2ProjectsProjectNameTemplatesNameVersionWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectNameTemplatesNameVersionWithResponse(ctx, projectName, name, version, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name, version}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse), varargs...)
+	varargs := append([]any{ctx, projectName, name, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameTemplatesNameVersionWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ProjectsProjectNameTemplatesNameVersionWithResponse), varargs...)
 }
 
 // GetV2ProjectsProjectNameTemplatesNameVersionsWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameTemplatesNameVersionsWithResponse(ctx context.Context, projectName, name string, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameTemplatesNameVersionsResponse, error) {
+func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameTemplatesNameVersionsWithResponse(ctx context.Context, projectName ProjectNamePath, name string, params *GetV2ProjectsProjectNameTemplatesNameVersionsParams, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameTemplatesNameVersionsResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name}
+	varargs := []any{ctx, projectName, name, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -759,14 +1459,14 @@ func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameTemplatesName
 }
 
 // GetV2ProjectsProjectNameTemplatesNameVersionsWithResponse indicates an expected call of GetV2ProjectsProjectNameTemplatesNameVersionsWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectNameTemplatesNameVersionsWithResponse(ctx, projectName, name any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectNameTemplatesNameVersionsWithResponse(ctx, projectName, name, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name}, reqEditors...)
+	varargs := append([]any{ctx, projectName, name, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameTemplatesNameVersionsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ProjectsProjectNameTemplatesNameVersionsWithResponse), varargs...)
 }
 
 // GetV2ProjectsProjectNameTemplatesWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameTemplatesWithResponse(ctx context.Context, projectName string, params *GetV2ProjectsProjectNameTemplatesParams, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameTemplatesResponse, error) {
+func (m *MockClientWithResponsesInterface) GetV2ProjectsProjectNameTemplatesWithResponse(ctx context.Context, projectName ProjectNamePath, params *GetV2ProjectsProjectNameTemplatesParams, reqEditors ...RequestEditorFn) (*GetV2ProjectsProjectNameTemplatesResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, params}
 	for _, a := range reqEditors {
@@ -785,8 +1485,108 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2ProjectsProjectName
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2ProjectsProjectNameTemplatesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2ProjectsProjectNameTemplatesWithResponse), varargs...)
 }
 
+// GetV2TemplatesNameVersionWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetV2TemplatesNameVersionWithResponse(ctx context.Context, name, version string, params *GetV2TemplatesNameVersionParams, reqEditors ...RequestEditorFn) (*GetV2TemplatesNameVersionResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2TemplatesNameVersionWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetV2TemplatesNameVersionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2TemplatesNameVersionWithResponse indicates an expected call of GetV2TemplatesNameVersionWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2TemplatesNameVersionWithResponse(ctx, name, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2TemplatesNameVersionWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2TemplatesNameVersionWithResponse), varargs...)
+}
+
+// GetV2TemplatesNameVersionsWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetV2TemplatesNameVersionsWithResponse(ctx context.Context, name string, params *GetV2TemplatesNameVersionsParams, reqEditors ...RequestEditorFn) (*GetV2TemplatesNameVersionsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2TemplatesNameVersionsWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetV2TemplatesNameVersionsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2TemplatesNameVersionsWithResponse indicates an expected call of GetV2TemplatesNameVersionsWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2TemplatesNameVersionsWithResponse(ctx, name, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2TemplatesNameVersionsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2TemplatesNameVersionsWithResponse), varargs...)
+}
+
+// GetV2TemplatesWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) GetV2TemplatesWithResponse(ctx context.Context, params *GetV2TemplatesParams, reqEditors ...RequestEditorFn) (*GetV2TemplatesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetV2TemplatesWithResponse", varargs...)
+	ret0, _ := ret[0].(*GetV2TemplatesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetV2TemplatesWithResponse indicates an expected call of GetV2TemplatesWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) GetV2TemplatesWithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetV2TemplatesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).GetV2TemplatesWithResponse), varargs...)
+}
+
+// PostV2ClustersWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostV2ClustersWithBodyWithResponse(ctx context.Context, params *PostV2ClustersParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostV2ClustersResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostV2ClustersWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*PostV2ClustersResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostV2ClustersWithBodyWithResponse indicates an expected call of PostV2ClustersWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostV2ClustersWithBodyWithResponse(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2ClustersWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostV2ClustersWithBodyWithResponse), varargs...)
+}
+
+// PostV2ClustersWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostV2ClustersWithResponse(ctx context.Context, params *PostV2ClustersParams, body PostV2ClustersJSONRequestBody, reqEditors ...RequestEditorFn) (*PostV2ClustersResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostV2ClustersWithResponse", varargs...)
+	ret0, _ := ret[0].(*PostV2ClustersResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostV2ClustersWithResponse indicates an expected call of PostV2ClustersWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostV2ClustersWithResponse(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2ClustersWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostV2ClustersWithResponse), varargs...)
+}
+
 // PostV2ProjectsProjectNameClustersWithBodyWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PostV2ProjectsProjectNameClustersWithBodyWithResponse(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostV2ProjectsProjectNameClustersResponse, error) {
+func (m *MockClientWithResponsesInterface) PostV2ProjectsProjectNameClustersWithBodyWithResponse(ctx context.Context, projectName ProjectNamePath, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostV2ProjectsProjectNameClustersResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, contentType, body}
 	for _, a := range reqEditors {
@@ -806,7 +1606,7 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PostV2ProjectsProjectNam
 }
 
 // PostV2ProjectsProjectNameClustersWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PostV2ProjectsProjectNameClustersWithResponse(ctx context.Context, projectName string, body PostV2ProjectsProjectNameClustersJSONRequestBody, reqEditors ...RequestEditorFn) (*PostV2ProjectsProjectNameClustersResponse, error) {
+func (m *MockClientWithResponsesInterface) PostV2ProjectsProjectNameClustersWithResponse(ctx context.Context, projectName ProjectNamePath, body PostV2ProjectsProjectNameClustersJSONRequestBody, reqEditors ...RequestEditorFn) (*PostV2ProjectsProjectNameClustersResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, body}
 	for _, a := range reqEditors {
@@ -826,9 +1626,9 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PostV2ProjectsProjectNam
 }
 
 // PostV2ProjectsProjectNameTemplatesWithBodyWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PostV2ProjectsProjectNameTemplatesWithBodyWithResponse(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostV2ProjectsProjectNameTemplatesResponse, error) {
+func (m *MockClientWithResponsesInterface) PostV2ProjectsProjectNameTemplatesWithBodyWithResponse(ctx context.Context, projectName ProjectNamePath, params *PostV2ProjectsProjectNameTemplatesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostV2ProjectsProjectNameTemplatesResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, contentType, body}
+	varargs := []any{ctx, projectName, params, contentType, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -839,16 +1639,16 @@ func (m *MockClientWithResponsesInterface) PostV2ProjectsProjectNameTemplatesWit
 }
 
 // PostV2ProjectsProjectNameTemplatesWithBodyWithResponse indicates an expected call of PostV2ProjectsProjectNameTemplatesWithBodyWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) PostV2ProjectsProjectNameTemplatesWithBodyWithResponse(ctx, projectName, contentType, body any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostV2ProjectsProjectNameTemplatesWithBodyWithResponse(ctx, projectName, params, contentType, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, contentType, body}, reqEditors...)
+	varargs := append([]any{ctx, projectName, params, contentType, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2ProjectsProjectNameTemplatesWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostV2ProjectsProjectNameTemplatesWithBodyWithResponse), varargs...)
 }
 
 // PostV2ProjectsProjectNameTemplatesWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PostV2ProjectsProjectNameTemplatesWithResponse(ctx context.Context, projectName string, body PostV2ProjectsProjectNameTemplatesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostV2ProjectsProjectNameTemplatesResponse, error) {
+func (m *MockClientWithResponsesInterface) PostV2ProjectsProjectNameTemplatesWithResponse(ctx context.Context, projectName ProjectNamePath, params *PostV2ProjectsProjectNameTemplatesParams, body PostV2ProjectsProjectNameTemplatesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostV2ProjectsProjectNameTemplatesResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, body}
+	varargs := []any{ctx, projectName, params, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -859,14 +1659,174 @@ func (m *MockClientWithResponsesInterface) PostV2ProjectsProjectNameTemplatesWit
 }
 
 // PostV2ProjectsProjectNameTemplatesWithResponse indicates an expected call of PostV2ProjectsProjectNameTemplatesWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) PostV2ProjectsProjectNameTemplatesWithResponse(ctx, projectName, body any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostV2ProjectsProjectNameTemplatesWithResponse(ctx, projectName, params, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, body}, reqEditors...)
+	varargs := append([]any{ctx, projectName, params, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2ProjectsProjectNameTemplatesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostV2ProjectsProjectNameTemplatesWithResponse), varargs...)
 }
 
+// PostV2TemplatesWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostV2TemplatesWithBodyWithResponse(ctx context.Context, params *PostV2TemplatesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostV2TemplatesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostV2TemplatesWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*PostV2TemplatesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostV2TemplatesWithBodyWithResponse indicates an expected call of PostV2TemplatesWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostV2TemplatesWithBodyWithResponse(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2TemplatesWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostV2TemplatesWithBodyWithResponse), varargs...)
+}
+
+// PostV2TemplatesWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PostV2TemplatesWithResponse(ctx context.Context, params *PostV2TemplatesParams, body PostV2TemplatesJSONRequestBody, reqEditors ...RequestEditorFn) (*PostV2TemplatesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PostV2TemplatesWithResponse", varargs...)
+	ret0, _ := ret[0].(*PostV2TemplatesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PostV2TemplatesWithResponse indicates an expected call of PostV2TemplatesWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PostV2TemplatesWithResponse(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostV2TemplatesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PostV2TemplatesWithResponse), varargs...)
+}
+
+// PutV2ClustersNameLabelsWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutV2ClustersNameLabelsWithBodyWithResponse(ctx context.Context, name string, params *PutV2ClustersNameLabelsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ClustersNameLabelsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameLabelsWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*PutV2ClustersNameLabelsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameLabelsWithBodyWithResponse indicates an expected call of PutV2ClustersNameLabelsWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ClustersNameLabelsWithBodyWithResponse(ctx, name, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameLabelsWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutV2ClustersNameLabelsWithBodyWithResponse), varargs...)
+}
+
+// PutV2ClustersNameLabelsWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutV2ClustersNameLabelsWithResponse(ctx context.Context, name string, params *PutV2ClustersNameLabelsParams, body PutV2ClustersNameLabelsJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ClustersNameLabelsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameLabelsWithResponse", varargs...)
+	ret0, _ := ret[0].(*PutV2ClustersNameLabelsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameLabelsWithResponse indicates an expected call of PutV2ClustersNameLabelsWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ClustersNameLabelsWithResponse(ctx, name, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameLabelsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutV2ClustersNameLabelsWithResponse), varargs...)
+}
+
+// PutV2ClustersNameNodesWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutV2ClustersNameNodesWithBodyWithResponse(ctx context.Context, name string, params *PutV2ClustersNameNodesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ClustersNameNodesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameNodesWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*PutV2ClustersNameNodesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameNodesWithBodyWithResponse indicates an expected call of PutV2ClustersNameNodesWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ClustersNameNodesWithBodyWithResponse(ctx, name, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameNodesWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutV2ClustersNameNodesWithBodyWithResponse), varargs...)
+}
+
+// PutV2ClustersNameNodesWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutV2ClustersNameNodesWithResponse(ctx context.Context, name string, params *PutV2ClustersNameNodesParams, body PutV2ClustersNameNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ClustersNameNodesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameNodesWithResponse", varargs...)
+	ret0, _ := ret[0].(*PutV2ClustersNameNodesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameNodesWithResponse indicates an expected call of PutV2ClustersNameNodesWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ClustersNameNodesWithResponse(ctx, name, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameNodesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutV2ClustersNameNodesWithResponse), varargs...)
+}
+
+// PutV2ClustersNameTemplateWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutV2ClustersNameTemplateWithBodyWithResponse(ctx context.Context, name string, params *PutV2ClustersNameTemplateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ClustersNameTemplateResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameTemplateWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*PutV2ClustersNameTemplateResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameTemplateWithBodyWithResponse indicates an expected call of PutV2ClustersNameTemplateWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ClustersNameTemplateWithBodyWithResponse(ctx, name, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameTemplateWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutV2ClustersNameTemplateWithBodyWithResponse), varargs...)
+}
+
+// PutV2ClustersNameTemplateWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutV2ClustersNameTemplateWithResponse(ctx context.Context, name string, params *PutV2ClustersNameTemplateParams, body PutV2ClustersNameTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ClustersNameTemplateResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2ClustersNameTemplateWithResponse", varargs...)
+	ret0, _ := ret[0].(*PutV2ClustersNameTemplateResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2ClustersNameTemplateWithResponse indicates an expected call of PutV2ClustersNameTemplateWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ClustersNameTemplateWithResponse(ctx, name, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ClustersNameTemplateWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutV2ClustersNameTemplateWithResponse), varargs...)
+}
+
 // PutV2ProjectsProjectNameClustersNameLabelsWithBodyWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameLabelsWithBodyWithResponse(ctx context.Context, projectName, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameLabelsResponse, error) {
+func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameLabelsWithBodyWithResponse(ctx context.Context, projectName ProjectNamePath, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameLabelsResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, contentType, body}
 	for _, a := range reqEditors {
@@ -886,7 +1846,7 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ProjectsProjectName
 }
 
 // PutV2ProjectsProjectNameClustersNameLabelsWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameLabelsWithResponse(ctx context.Context, projectName, name string, body PutV2ProjectsProjectNameClustersNameLabelsJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameLabelsResponse, error) {
+func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameLabelsWithResponse(ctx context.Context, projectName ProjectNamePath, name string, body PutV2ProjectsProjectNameClustersNameLabelsJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameLabelsResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, body}
 	for _, a := range reqEditors {
@@ -906,7 +1866,7 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ProjectsProjectName
 }
 
 // PutV2ProjectsProjectNameClustersNameNodesWithBodyWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameNodesWithBodyWithResponse(ctx context.Context, projectName, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameNodesResponse, error) {
+func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameNodesWithBodyWithResponse(ctx context.Context, projectName ProjectNamePath, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameNodesResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, contentType, body}
 	for _, a := range reqEditors {
@@ -926,7 +1886,7 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ProjectsProjectName
 }
 
 // PutV2ProjectsProjectNameClustersNameNodesWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameNodesWithResponse(ctx context.Context, projectName, name string, body PutV2ProjectsProjectNameClustersNameNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameNodesResponse, error) {
+func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameNodesWithResponse(ctx context.Context, projectName ProjectNamePath, name string, body PutV2ProjectsProjectNameClustersNameNodesJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameNodesResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, body}
 	for _, a := range reqEditors {
@@ -946,7 +1906,7 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ProjectsProjectName
 }
 
 // PutV2ProjectsProjectNameClustersNameTemplateWithBodyWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameTemplateWithBodyWithResponse(ctx context.Context, projectName, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameTemplateResponse, error) {
+func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameTemplateWithBodyWithResponse(ctx context.Context, projectName ProjectNamePath, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameTemplateResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, contentType, body}
 	for _, a := range reqEditors {
@@ -966,7 +1926,7 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ProjectsProjectName
 }
 
 // PutV2ProjectsProjectNameClustersNameTemplateWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameTemplateWithResponse(ctx context.Context, projectName, name string, body PutV2ProjectsProjectNameClustersNameTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameTemplateResponse, error) {
+func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameClustersNameTemplateWithResponse(ctx context.Context, projectName ProjectNamePath, name string, body PutV2ProjectsProjectNameClustersNameTemplateJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameClustersNameTemplateResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, name, body}
 	for _, a := range reqEditors {
@@ -986,9 +1946,9 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ProjectsProjectName
 }
 
 // PutV2ProjectsProjectNameTemplatesNameDefaultWithBodyWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameTemplatesNameDefaultWithBodyWithResponse(ctx context.Context, projectName, name, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameTemplatesNameDefaultResponse, error) {
+func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameTemplatesNameDefaultWithBodyWithResponse(ctx context.Context, projectName ProjectNamePath, name string, params *PutV2ProjectsProjectNameTemplatesNameDefaultParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameTemplatesNameDefaultResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name, contentType, body}
+	varargs := []any{ctx, projectName, name, params, contentType, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -999,16 +1959,16 @@ func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameTemplatesName
 }
 
 // PutV2ProjectsProjectNameTemplatesNameDefaultWithBodyWithResponse indicates an expected call of PutV2ProjectsProjectNameTemplatesNameDefaultWithBodyWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ProjectsProjectNameTemplatesNameDefaultWithBodyWithResponse(ctx, projectName, name, contentType, body any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ProjectsProjectNameTemplatesNameDefaultWithBodyWithResponse(ctx, projectName, name, params, contentType, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name, contentType, body}, reqEditors...)
+	varargs := append([]any{ctx, projectName, name, params, contentType, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ProjectsProjectNameTemplatesNameDefaultWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutV2ProjectsProjectNameTemplatesNameDefaultWithBodyWithResponse), varargs...)
 }
 
 // PutV2ProjectsProjectNameTemplatesNameDefaultWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameTemplatesNameDefaultWithResponse(ctx context.Context, projectName, name string, body PutV2ProjectsProjectNameTemplatesNameDefaultJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameTemplatesNameDefaultResponse, error) {
+func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameTemplatesNameDefaultWithResponse(ctx context.Context, projectName ProjectNamePath, name string, params *PutV2ProjectsProjectNameTemplatesNameDefaultParams, body PutV2ProjectsProjectNameTemplatesNameDefaultJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2ProjectsProjectNameTemplatesNameDefaultResponse, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, name, body}
+	varargs := []any{ctx, projectName, name, params, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
@@ -1019,8 +1979,48 @@ func (m *MockClientWithResponsesInterface) PutV2ProjectsProjectNameTemplatesName
 }
 
 // PutV2ProjectsProjectNameTemplatesNameDefaultWithResponse indicates an expected call of PutV2ProjectsProjectNameTemplatesNameDefaultWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ProjectsProjectNameTemplatesNameDefaultWithResponse(ctx, projectName, name, body any, reqEditors ...any) *gomock.Call {
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2ProjectsProjectNameTemplatesNameDefaultWithResponse(ctx, projectName, name, params, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, name, body}, reqEditors...)
+	varargs := append([]any{ctx, projectName, name, params, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2ProjectsProjectNameTemplatesNameDefaultWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutV2ProjectsProjectNameTemplatesNameDefaultWithResponse), varargs...)
+}
+
+// PutV2TemplatesNameDefaultWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutV2TemplatesNameDefaultWithBodyWithResponse(ctx context.Context, name string, params *PutV2TemplatesNameDefaultParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutV2TemplatesNameDefaultResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2TemplatesNameDefaultWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*PutV2TemplatesNameDefaultResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2TemplatesNameDefaultWithBodyWithResponse indicates an expected call of PutV2TemplatesNameDefaultWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2TemplatesNameDefaultWithBodyWithResponse(ctx, name, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2TemplatesNameDefaultWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutV2TemplatesNameDefaultWithBodyWithResponse), varargs...)
+}
+
+// PutV2TemplatesNameDefaultWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) PutV2TemplatesNameDefaultWithResponse(ctx context.Context, name string, params *PutV2TemplatesNameDefaultParams, body PutV2TemplatesNameDefaultJSONRequestBody, reqEditors ...RequestEditorFn) (*PutV2TemplatesNameDefaultResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, name, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PutV2TemplatesNameDefaultWithResponse", varargs...)
+	ret0, _ := ret[0].(*PutV2TemplatesNameDefaultResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PutV2TemplatesNameDefaultWithResponse indicates an expected call of PutV2TemplatesNameDefaultWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) PutV2TemplatesNameDefaultWithResponse(ctx, name, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, name, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutV2TemplatesNameDefaultWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).PutV2TemplatesNameDefaultWithResponse), varargs...)
 }
