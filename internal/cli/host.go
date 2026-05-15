@@ -53,8 +53,11 @@ orch-cli list host --project some-project --workload cluster-sn000320
 orch-cli list host --project some-project --workload NotAssigned
 `
 
-const getHostExamples = `# Get detailed information about specific host using the host Resource ID
-orch-cli get host host-1234abcd --project some-project`
+const getHostExamples = `# Get a host by resource ID
+orch-cli get host host-1234abcd --project some-project
+
+# Get a host by name
+orch-cli get host my-host --project some-project`
 
 func createHostExamples() string {
 	examples := `# Provision a host or a number of hosts from a CSV file
@@ -1732,7 +1735,7 @@ func getListHostCommand() *cobra.Command {
 
 func getGetHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "host <resourceID> [flags]",
+		Use:     "host <name|resourceID> [flags]",
 		Short:   "Gets a host",
 		Example: getHostExamples,
 		Args:    cobra.ExactArgs(1),
@@ -2120,17 +2123,68 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 }
 
 // Gets specific Host - retrieves a host using resource ID and displays detailed information
+// hostResourceIDPattern matches host resource IDs: "host-" followed by 8 hex chars.
+var hostResourceIDPattern = regexp.MustCompile(`^host-[0-9a-f]{8}$`)
+
+func isHostResourceID(s string) bool {
+	return hostResourceIDPattern.MatchString(s)
+}
+
+// findHostByName searches a slice of hosts for an exact name match.
+// Returns an error if no match is found or if multiple hosts share the same name
+// (listing the matches so the caller can retry with a resource ID).
+func findHostByName(hosts []infra.HostResource, name string) (infra.HostResource, error) {
+	var matches []infra.HostResource
+	for _, h := range hosts {
+		if h.Name == name {
+			matches = append(matches, h)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return infra.HostResource{}, fmt.Errorf("no host found with name %q", name)
+	case 1:
+		return matches[0], nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple hosts found with name %q; use a resource ID instead:\n", name)
+		for _, m := range matches {
+			fmt.Fprintf(&sb, "  name: %s  resource-id: %s\n", m.Name, derefString(m.ResourceId))
+		}
+		return infra.HostResource{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
+}
+
 func runGetHostCommand(cmd *cobra.Command, args []string) error {
 
-	hostID := args[0]
+	query := args[0]
 	writer, verbose := getOutputContext(cmd)
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
+	if !isHostResourceID(query) {
+		// Name-based lookup: pass name filter to the API to narrow results on the backend,
+		// then do an exact client-side match to handle any ambiguity.
+		nameFilter := fmt.Sprintf("name=%q", query)
+		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+			return err
+		}
+		host, err := findHostByName(resp.JSON200.Hosts, query)
+		if err != nil {
+			return err
+		}
+		query = derefString(host.ResourceId)
+	}
+
 	resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName,
-		hostID, auth.AddAuthHeader)
+		query, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
