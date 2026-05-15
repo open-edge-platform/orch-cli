@@ -200,9 +200,7 @@ license: reuse-tool
 artifact-publish:
 	@echo "TAR orch-cli."
 	FILES := src ./binaries/build/_output/orch-cli
-	
-	archive:
-    	tar -czvf orch-cli-package.tar.gz $(FILES)
+	tar -czvf orch-cli-package.tar.gz $(FILES)
 
 	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
 	aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY}/${OCI_REPOSITORY} || true
