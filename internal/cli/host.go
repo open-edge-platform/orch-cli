@@ -3917,8 +3917,8 @@ func runKVMSession(
 				if err != nil {
 					return err
 				}
-				postResp, err := mpsClient.PostV1ProjectsProjectNameOobAmtUserConsentCodeGuidWithResponse(
-					ctx, projectName, deviceGUID,
+				postResp, err := mpsClient.PostApiV1AmtUserConsentCodeGuidWithResponse(
+					ctx, deviceGUID,
 					mpsapi.UserConsentRequest{ConsentCode: codeInt},
 					auth.AddAuthHeader,
 				)
@@ -4058,8 +4058,8 @@ func runSOLSession(
 				if err != nil {
 					return err
 				}
-				postResp, err := mpsClient.PostV1ProjectsProjectNameOobAmtUserConsentCodeGuidWithResponse(
-					ctx, projectName, deviceGUID,
+				postResp, err := mpsClient.PostApiV1AmtUserConsentCodeGuidWithResponse(
+					ctx, deviceGUID,
 					mpsapi.UserConsentRequest{ConsentCode: codeInt},
 					auth.AddAuthHeader,
 				)
@@ -4181,11 +4181,11 @@ func readConsentCode() (int, error) {
 func acquireRelayToken(
 	ctx context.Context,
 	mpsClient mpsapi.ClientWithResponsesInterface,
-	projectName, deviceGUID, apiEndpointStr string,
+	_, deviceGUID, apiEndpointStr string,
 ) (token, mpsDomain string, err error) {
 	fmt.Println("Obtaining relay token from MPS...")
-	tokenResp, err := mpsClient.GetV1ProjectsProjectNameOobAuthorizeRedirectionGuidWithResponse(
-		ctx, projectName, deviceGUID, auth.AddAuthHeader,
+	tokenResp, err := mpsClient.GetApiV1AuthorizeRedirectionGuidWithResponse(
+		ctx, deviceGUID, auth.AddAuthHeader,
 	)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get relay token from MPS: %w", err)

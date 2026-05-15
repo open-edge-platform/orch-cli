@@ -123,10 +123,6 @@ fetch-rps-openapi:
 	@# Help: Fetch the OpenDMT RPS OpenAPI spec
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-external/main/dm-manager/pkg/api/rps/openapi/openapi.yaml -o pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 
-fetch-mps-openapi:
-	@# Help: Fetch the OpenDMT MPS OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-opendmt-mps-openapi.yaml -o pkg/rest/mps/amc-opendmt-mps-openapi.yaml
-
 fetch-utils-openapi:
 	@# Help: Fetch the Tenancy API OpenAPI spec
 	@# NOTE: tenancy-api-mapping has been removed from orch-utils as part of nexus replacement.
@@ -134,7 +130,7 @@ fetch-utils-openapi:
 	@# Until it does, the existing pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml is kept as-is.
 	@echo "fetch-utils-openapi: skipped - upstream spec not yet published; using vendored copy"
 
-fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi fetch-infra-openapi fetch-rps-openapi fetch-mps-openapi fetch-utils-openapi
+fetch-openapi: fetch-catalog-openapi fetch-deployment-openapi fetch-cluster-openapi fetch-infra-openapi fetch-rps-openapi fetch-mps-openapi fetch-utils-openapi
 	@# Help: Fetch OpenAPI specs for all components
 
 
@@ -174,8 +170,6 @@ rest-client-gen: oapi-codegen-dependency
 	oapi-codegen -generate types -old-config-style -package mps -o pkg/rest/mps/types.go pkg/rest/mps/amc-opendmt-mps-openapi.yaml
 	oapi-codegen -generate client -old-config-style -package rps -o pkg/rest/rps/client.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 	oapi-codegen -generate types -old-config-style -package rps -o pkg/rest/rps/types.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
-	oapi-codegen -generate client -old-config-style -package mps -o pkg/rest/mps/client.go pkg/rest/mps/amc-opendmt-mps-openapi.yaml
-	oapi-codegen -generate types -old-config-style -package mps -o pkg/rest/mps/types.go pkg/rest/mps/amc-opendmt-mps-openapi.yaml
 	oapi-codegen -generate client -old-config-style -package tenancy -o pkg/rest/tenancy/client.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
 	oapi-codegen -generate types -old-config-style -package tenancy -o pkg/rest/tenancy/types.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
 
@@ -190,8 +184,6 @@ mock-client-gen: mockgen-dependency
 	mockgen -source=pkg/rest/infra/client.go -destination=pkg/rest/infra/mock_client.go -package=infra
 	mockgen -source=pkg/rest/mps/client.go -destination=pkg/rest/mps/mock_client.go -package=mps
 	mockgen -source=pkg/rest/rps/client.go -destination=pkg/rest/rps/mock_client.go -package=rps
-	mockgen -source=pkg/rest/tenancy/client.go -destination=pkg/rest/tenancy/mock_client.go -package=tenancy
-	mockgen -source=pkg/rest/mps/client.go -destination=pkg/rest/mps/mock_client.go -package=mps
 
 cli-docs:
 	@# Help: Generates markdowns for the orchestrator cli
