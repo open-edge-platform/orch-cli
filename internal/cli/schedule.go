@@ -4,6 +4,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -30,14 +31,17 @@ orch-cli get schedule repeatedsche-abcd1234 --project some-project
 # Get a schedule by name
 orch-cli get schedule my-schedule --project some-project`
 
-const createScheduleExamples = `# Create a new repeated schedule, an osupdate , using days of week
+const createScheduleExamples = `# Create a new repeated schedule, an osupdate, using days of week (target by resource ID)
 orch-cli create schedules my-schedule --timezone GMT --frequency-type repeated --maintenance-type osupdate --target site-532d1d07 --frequency weekly --start-time "10:10" --day-of-week "1-3,5" --months "2,4,7-8" --duration 3600
 
-# Create a new repeated schedule, a maintenance , using days of month
+# Create a new repeated schedule using a site name
+orch-cli create schedules my-schedule --timezone GMT --frequency-type repeated --maintenance-type osupdate --target site:"My Site" --frequency weekly --start-time "10:10" --day-of-week "1-3,5" --months "2,4,7-8" --duration 3600
+
+# Create a new repeated schedule, a maintenance, using days of month (target by resource ID)
 orch-cli create schedules my-schedule --timezone GMT  --frequency-type repeated  --maintenance-type maintenance --target site-532d1d07 --frequency monthly --start-time "10:10" --day-of-month "1,6,31" --months "2,4,7-12" --duration 3600
 
-# Create a new single schedule, an osupdate
-orch-cli create schedules my-schedule --timezone GMT --frequency-type single --maintenance-type osupdate --target region-65c0d433 --start-time "2026-12-01 20:20" --end-time "2027-12-01 20:20"
+# Create a new single schedule, an osupdate (target region by name)
+orch-cli create schedules my-schedule --timezone GMT --frequency-type single --maintenance-type osupdate --target region:"Europe West" --start-time "2026-12-01 20:20" --end-time "2027-12-01 20:20"
 `
 
 const deleteScheduleExamples = `# Delete a schedule resource using it's resource ID
@@ -340,6 +344,86 @@ func parseTargetResource(target string) (hostname, region, site *string, err err
 	}
 	return nil, nil, nil, fmt.Errorf("invalid target type '%s', must be one of: host, region, site", targetType)
 
+}
+
+// resolveTargetForSchedule resolves the --target flag to target ID pointers.
+// Accepts a resource ID (host-abcd1234 / region-abcd1234 / site-abcd1234) or a
+// name with an explicit type prefix (host:name / region:name / site:name).
+func resolveTargetForSchedule(ctx context.Context, client infra.ClientWithResponsesInterface, projectName, target string) (hostname, region, site *string, err error) {
+	if target == "" {
+		return nil, nil, nil, errors.New("target must be specified")
+	}
+
+	// Resource ID path: matches known patterns.
+	if isHostResourceID(target) || isRegionResourceID(target) || isSiteResourceID(target) {
+		return parseTargetResource(target)
+	}
+
+	// Name path: must be "type:name".
+	if !strings.Contains(target, ":") {
+		return nil, nil, nil, fmt.Errorf("target %q is not a valid resource ID; for name-based lookup use 'host:name', 'region:name', or 'site:name'", target)
+	}
+
+	parts := strings.SplitN(target, ":", 2)
+	if parts[1] == "" {
+		return nil, nil, nil, fmt.Errorf("name-based target must be in format 'host:name', 'region:name', or 'site:name'")
+	}
+	targetType := parts[0]
+	targetName := parts[1]
+
+	switch targetType {
+	case "host":
+		nameFilter := fmt.Sprintf("name=%q", targetName)
+		resp, err := client.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+		if err != nil {
+			return nil, nil, nil, processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+			return nil, nil, nil, err
+		}
+		host, err := findHostByName(resp.JSON200.Hosts, targetName)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		resolvedID := derefString(host.ResourceId)
+		return &resolvedID, nil, nil, nil
+
+	case "region":
+		lresp, err := client.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return nil, nil, nil, processError(err)
+		}
+		if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while retrieving regions"); err != nil {
+			return nil, nil, nil, err
+		}
+		r, err := findRegionByName(lresp.JSON200.Regions, targetName)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		resolvedID := derefString(r.ResourceId)
+		return nil, &resolvedID, nil, nil
+
+	case "site":
+		lresp, err := client.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
+			&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return nil, nil, nil, processError(err)
+		}
+		if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while retrieving sites"); err != nil {
+			return nil, nil, nil, err
+		}
+		s, err := findSiteByName(lresp.JSON200.Sites, targetName)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		resolvedID := derefString(s.ResourceId)
+		return nil, nil, &resolvedID, nil
+
+	default:
+		return nil, nil, nil, fmt.Errorf("invalid target type %q, must be one of: host, region, site", targetType)
+	}
 }
 
 // validateStartTimeFormat validates that the start time is in the correct format "YYYY-MM-DD HH:MM"
@@ -729,7 +813,7 @@ func getCreateScheduleCommand() *cobra.Command {
 	cmd.PersistentFlags().StringP("frequency-type", "F", viper.GetString("frequency-type"), "Frequency of the schedule: --frequency-type single|repeated")
 	cmd.PersistentFlags().StringP("maintenance-type", "m", viper.GetString("maintenance-type"), "Type of maintenance: --maintenance-type maintenance|osupdate")
 	cmd.PersistentFlags().StringP("timezone", "t", viper.GetString("timezone"), "Set time in particular timezone: --timezone Europe/Berlin")
-	cmd.PersistentFlags().StringP("target", "T", viper.GetString("target"), "Target maintenance on a host|region|site using it's resource ID: --target host-abcd1234|region-abcd1234|site-abcd1234")
+	cmd.PersistentFlags().StringP("target", "T", viper.GetString("target"), "Target maintenance on a host|region|site: resource ID (host-abcd1234|region-abcd1234|site-abcd1234) or name with type prefix (host:name|region:name|site:name)")
 	cmd.PersistentFlags().StringP("start-time", "s", viper.GetString("start-time"), "Start time of the schedule: --start-time \"2025-12-15 12:00\"")
 	cmd.PersistentFlags().StringP("end-time", "e", viper.GetString("end-time"), "End time of the schedule: --end-time \"2025-12-15 14:00\"")
 	cmd.PersistentFlags().StringP("frequency", "f", viper.GetString("frequency"), "Frequency of the schedule: --frequency daily|weekly|monthly")
@@ -899,12 +983,13 @@ func runCreateScheduleCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// Parse target resource
-	hostname, region, site, err := parseTargetResource(target)
+	ctx, scheduleClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
-	ctx, scheduleClient, projectName, err := InfraFactory(cmd)
+	// Resolve --target: accept resource ID or "type:name" format.
+	hostname, region, site, err := resolveTargetForSchedule(ctx, scheduleClient, projectName, target)
 	if err != nil {
 		return err
 	}

@@ -35,8 +35,11 @@ orch-cli get region myregion --project some-project`
 const createRegionExamples = `# Create specific region
 orch-cli create region name --project some-project --type country
 
-# Create specific region as a subregion to another region
+# Create specific region as a subregion to another region (by resource ID)
 orch-cli create region name --project some-project --parent region-bbbb1111 --type country
+
+# Create specific region as a subregion to another region (by name)
+orch-cli create region name --project some-project --parent "My Parent Region" --type country
 
 --type = country/state/county/region/city`
 
@@ -134,7 +137,7 @@ func getCreateRegionCommand() *cobra.Command {
 		Aliases: regionAliases,
 		RunE:    runCreateRegionCommand,
 	}
-	cmd.PersistentFlags().StringP("parent", "f", viper.GetString("parent"), "Optional parent region used to create a sub region: --parent region-aaaa1111")
+	cmd.PersistentFlags().StringP("parent", "f", viper.GetString("parent"), "Optional parent region used to create a sub region: --parent region-aaaa1111 or --parent \"My Parent Region\"")
 	cmd.PersistentFlags().StringP("type", "t", viper.GetString("type"), "Mandatory flag to provide a type of region: --type country/state/county/region/city")
 	return cmd
 }
@@ -230,19 +233,32 @@ func runCreateRegionCommand(cmd *cobra.Command, args []string) error {
 
 	var parentID *string
 	if parentFlag != "" {
-		err = checkID(parentFlag)
-		if err != nil {
-			return err
+		if isRegionResourceID(parentFlag) {
+			presp, err := regionClient.RegionServiceGetRegionWithResponse(ctx, projectName, parentFlag, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(presp.HTTPResponse, presp.Body, "error while creating region - parent region not found"); err != nil {
+				return err
+			}
+			parentID = &parentFlag
+		} else {
+			// Name-based lookup: list all regions and filter by name.
+			lresp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+				&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while retrieving regions"); err != nil {
+				return err
+			}
+			parent, err := findRegionByName(lresp.JSON200.Regions, parentFlag)
+			if err != nil {
+				return err
+			}
+			resolvedID := derefString(parent.ResourceId)
+			parentID = &resolvedID
 		}
-		presp, err := regionClient.RegionServiceGetRegionWithResponse(ctx, projectName, parentFlag, auth.AddAuthHeader)
-		if err != nil {
-			return processError(err)
-		}
-		err = checkResponse(presp.HTTPResponse, presp.Body, "error while creating region - parent region not found")
-		if err != nil {
-			return processError(err)
-		}
-		parentID = &parentFlag
 	}
 
 	resp, err := regionClient.RegionServiceCreateRegionWithResponse(ctx, projectName,

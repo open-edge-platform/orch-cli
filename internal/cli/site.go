@@ -34,11 +34,11 @@ orch-cli get site mysite --project some-project`
 
 const createSiteExamples = `# Create specific site
 
-# Create a site in a region (default longitude and latitude set to 0)
+# Create a site in a region by resource ID (default longitude and latitude set to 0)
 orch-cli create site name --project some-project --region region-bbbb1111
 
-# Create a site in a region (default longitude and latitude set to 0)
-orch-cli create site name --project some-project --region region-bbbb1111 --longitude 5 --latitude 5
+# Create a site in a region by name
+orch-cli create site name --project some-project --region "My Region" --longitude 5 --latitude 5
 `
 const deleteSiteExamples = `# Delete a site by resource ID
 orch-cli delete site site-aaaa1111 --project some-project
@@ -115,7 +115,7 @@ func getCreateSiteCommand() *cobra.Command {
 		Aliases: siteAliases,
 		RunE:    runCreateSiteCommand,
 	}
-	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Region to which the site will be deployed: --region region-aaaa1111")
+	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Region to which the site will be deployed: --region region-aaaa1111 or --region \"My Region\"")
 	cmd.PersistentFlags().StringP("latitude", "l", viper.GetString("latitude"), "Optional flag to provide latitude: --latitude 5")
 	cmd.PersistentFlags().StringP("longitude", "g", viper.GetString("longitude"), "Optional flag to provide longitude: longitude 5 ")
 	return cmd
@@ -268,14 +268,30 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 	if regFlag == "" || strings.HasPrefix(regFlag, "--") {
 		return errors.New("region flag required")
 	}
-	region, err := filterRegionsHelper(regFlag)
-	if err != nil {
-		return err
-	}
 
 	ctx, siteClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	// Resolve --region: accept resource ID or region name.
+	var regionID string
+	if isRegionResourceID(regFlag) {
+		regionID = regFlag
+	} else {
+		lresp, err := siteClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while retrieving regions"); err != nil {
+			return err
+		}
+		r, err := findRegionByName(lresp.JSON200.Regions, regFlag)
+		if err != nil {
+			return err
+		}
+		regionID = derefString(r.ResourceId)
 	}
 
 	err = checkName(name, SITE)
@@ -293,7 +309,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	rresp, err := siteClient.RegionServiceGetRegionWithResponse(ctx, projectName,
-		*region, auth.AddAuthHeader)
+		regionID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -308,12 +324,12 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 			Name:     &name,
 			SiteLat:  siteLat,
 			SiteLng:  siteLng,
-			RegionId: region,
+			RegionId: &regionID,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating region")
+	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating site")
 }
 
 func runGetSiteCommand(cmd *cobra.Command, args []string) error {

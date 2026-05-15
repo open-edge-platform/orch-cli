@@ -55,17 +55,20 @@ Labels: <none>{{end}}
 )
 
 const createClusterExamples = `
-# Create a cluster with the name "my-cluster" on the given nodes using the default template and host resource ID
+# Create a cluster using host resource IDs
 orch-cli create cluster cli-cluster --project some-project --nodes host-abcd1234:all
 
-# Create a cluster with the name "my-cluster" on the given nodes using the default template and host UUID
+# Create a cluster using host UUIDs
 orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all
 
-# Create a cluster with the name "my-cluster" using the specified template on the given nodes and with the provided label
-orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue --template sometemplate-v1.0.0
+# Create a cluster using host names
+orch-cli create cluster cli-cluster --project some-project --nodes "my-edge-node:all"
 
-# Create a cluster with the name "my-cluster" on the given nodes using the default template and with the provided multiple labels
-orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue,another-label=another-value`
+# Create a cluster with multiple nodes (names and IDs can be mixed)
+orch-cli create cluster cli-cluster --project some-project --nodes "my-edge-node:control-plane" --nodes host-abcd1234:worker
+
+# Create a cluster with a specific template and labels
+orch-cli create cluster cli-cluster --project some-project --nodes d7911144-3010-11f0-a1c2-370d26b04195:all --labels sample-label=samplevalue --template sometemplate-v1.0.0`
 
 func getCreateClusterCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -77,7 +80,7 @@ func getCreateClusterCommand() *cobra.Command {
 		RunE:    runCreateClusterCommand,
 	}
 	cmd.Flags().String("template", "", "Cluster template to use")
-	cmd.Flags().StringSlice("nodes", []string{}, "Mandatory list of nodes in the format <id>:<role>")
+	cmd.Flags().StringSlice("nodes", []string{}, "Mandatory list of nodes in the format <id-or-name>:<role> (e.g. host-abcd1234:all, uuid:worker, or \"my-host:control-plane\")")
 	cmd.Flags().StringToString("labels", map[string]string{}, "Labels in the format key=value")
 	_ = cmd.MarkFlagRequired("nodes")
 	return cmd
@@ -144,15 +147,56 @@ func runCreateClusterCommand(cmd *cobra.Command, args []string) error {
 		return processError(err)
 	}
 
+	// Check if any node spec needs host name resolution (not a resource ID and not a UUID).
+	// If so, fetch the host list once and reuse it for all name lookups.
+	var (
+		infraNeedsInit = true
+		infraCtx       context.Context
+		infraClient    infra.ClientWithResponsesInterface
+		infraProject   string
+		hostList       []infra.HostResource
+	)
+
+	for _, node := range nodesFlag {
+		parts := strings.SplitN(node, ":", 2)
+		if len(parts) != 2 || parts[1] == "" {
+			return fmt.Errorf("invalid node format: %s, expected <id-or-name>:<role>", node)
+		}
+		nodeID := parts[0]
+		if !isHostResourceID(nodeID) && !isDeploymentID(nodeID) && infraNeedsInit {
+			// Lazy-init infra client and fetch full host list once.
+			infraCtx, infraClient, infraProject, err = InfraFactory(cmd)
+			if err != nil {
+				return err
+			}
+			resp, err := infraClient.HostServiceListHostsWithResponse(infraCtx, infraProject,
+				&infra.HostServiceListHostsParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+				return err
+			}
+			hostList = resp.JSON200.Hosts
+			infraNeedsInit = false
+		}
+	}
+
 	nodes := []coapi.NodeSpec{}
 	for _, node := range nodesFlag {
-		parts := strings.Split(node, ":")
-		if len(parts) != 2 {
-			return fmt.Errorf("invalid node format: %s, expected <id>:<role>", node)
+		parts := strings.SplitN(node, ":", 2)
+		nodeID := parts[0]
+		role := parts[1]
+		if !isHostResourceID(nodeID) && !isDeploymentID(nodeID) {
+			h, err := findHostByName(hostList, nodeID)
+			if err != nil {
+				return err
+			}
+			nodeID = derefString(h.Uuid)
 		}
 		nodes = append(nodes, coapi.NodeSpec{
-			Id:   parts[0],
-			Role: coapi.NodeSpecRole(parts[1]),
+			Id:   nodeID,
+			Role: coapi.NodeSpecRole(role),
 		})
 	}
 
