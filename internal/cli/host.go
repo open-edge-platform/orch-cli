@@ -682,6 +682,17 @@ type HostInspectItem struct { //nolint:revive
 	DesiredPower    string `json:"desiredPower"`
 	PowerStatus     string `json:"powerStatus"`
 	PowerOnTime     string `json:"powerOnTime"`
+
+	// KVM
+	DesiredKvmState  string `json:"desiredKvmState"`
+	CurrentKvmState  string `json:"currentKvmState"`
+	KvmStatus        string `json:"kvmStatus"`
+	KvmSessionStatus string `json:"kvmSessionStatus"`
+
+	// SOL
+	DesiredSolState  string `json:"desiredSolState"`
+	CurrentSolState  string `json:"currentSolState"`
+	SolSessionStatus string `json:"solSessionStatus"`
 }
 
 // toHostInspectItem converts a HostResource into a fully pre-computed HostInspectItem.
@@ -936,44 +947,23 @@ func toHostInspectItem(host *infra.HostResource) HostInspectItem {
 		solSessionStatus = *host.SolSessionStatus
 	}
 
-	dnsSuffix := "N/A"
-	if host.AmtDnsSuffix != nil {
-		dnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
-	}
-	amtSKU := "N/A"
-	if host.AmtSku != nil {
-		amtSKU = fmt.Sprintf("%v", *host.AmtSku)
-	}
-
 	// AMT — only populate when SKU is specified (not UNSPECIFIED)
 	if host.AmtSku != nil && *host.AmtSku != infra.AMTSKUUNSPECIFIED {
-		_, _ = fmt.Fprintf(writer, "\nAMT Info: \n\n")
-		_, _ = fmt.Fprintf(writer, "-\tAMT State:\t %v\n", currentAmtState)
-		_, _ = fmt.Fprintf(writer, "-\tAMT Desired State:\t %v\n", desiredAmtState)
-		_, _ = fmt.Fprintf(writer, "-\tAMT Desired Control Mode:\t %v\n", amtControlMode)
-		_, _ = fmt.Fprintf(writer, "-\tAMT Desired DNS Suffix:\t %v\n", dnsSuffix)
-		_, _ = fmt.Fprintf(writer, "-\tAMT SKU :\t %v\n", amtSKU)
-		_, _ = fmt.Fprintf(writer, "-\tKVM Desired State:\t %v\n", desiredKvmState)
-		_, _ = fmt.Fprintf(writer, "-\tKVM Current State:\t %v\n", currentKvmState)
-		_, _ = fmt.Fprintf(writer, "-\tKVM Status:\t %v\n", kvmStatus)
-		_, _ = fmt.Fprintf(writer, "-\tKVM Session Status:\t %v\n", kvmSessionStatus)
-		_, _ = fmt.Fprintf(writer, "-\tSOL Desired State:\t %v\n", desiredSolState)
-		_, _ = fmt.Fprintf(writer, "-\tSOL Current State:\t %v\n", currentSolState)
-		_, _ = fmt.Fprintf(writer, "-\tSOL Session Status:\t %v\n", solSessionStatus)
 		item.AmtEnabled = true
 		item.AmtSku = fmt.Sprintf("%v", *host.AmtSku)
-		if host.CurrentAmtState != nil {
-			item.CurrentAmtState = fmt.Sprintf("%v", *host.CurrentAmtState)
-		}
-		if host.DesiredAmtState != nil {
-			item.DesiredAmtState = fmt.Sprintf("%v", *host.DesiredAmtState)
-		}
-		if host.AmtControlMode != nil {
-			item.AmtControlMode = fmt.Sprintf("%v", *host.AmtControlMode)
-		}
+		item.CurrentAmtState = currentAmtState
+		item.DesiredAmtState = desiredAmtState
+		item.AmtControlMode = amtControlMode
 		if host.AmtDnsSuffix != nil {
 			item.AmtDnsSuffix = fmt.Sprintf("%v", *host.AmtDnsSuffix)
 		}
+		item.DesiredKvmState = desiredKvmState
+		item.CurrentKvmState = currentKvmState
+		item.KvmStatus = kvmStatus
+		item.KvmSessionStatus = kvmSessionStatus
+		item.DesiredSolState = desiredSolState
+		item.CurrentSolState = currentSolState
+		item.SolSessionStatus = solSessionStatus
 		// Power info only when provisioned
 		if host.CurrentAmtState != nil && *host.CurrentAmtState == infra.AMTSTATEPROVISIONED {
 			item.AmtProvisioned = true
@@ -1011,7 +1001,14 @@ AMT Info:{{if .AmtEnabled}}
   Current State:        {{.CurrentAmtState}}
   Desired State:        {{.DesiredAmtState}}
   Control Mode:         {{.AmtControlMode}}
-  DNS Suffix:           {{.AmtDnsSuffix}}{{if .AmtProvisioned}}
+  DNS Suffix:           {{.AmtDnsSuffix}}
+  KVM Desired State:    {{.DesiredKvmState}}
+  KVM Current State:    {{.CurrentKvmState}}
+  KVM Status:           {{.KvmStatus}}
+  KVM Session Status:   {{.KvmSessionStatus}}
+  SOL Desired State:    {{.DesiredSolState}}
+  SOL Current State:    {{.CurrentSolState}}
+  SOL Session Status:   {{.SolSessionStatus}}{{if .AmtProvisioned}}
   Current Power:        {{.CurrentPower}}
   Desired Power:        {{.DesiredPower}}
   Power Status:         {{.PowerStatus}}
@@ -1082,7 +1079,14 @@ AMT Info:{{if .AmtEnabled}}
   Current State:        {{.CurrentAmtState}}
   Desired State:        {{.DesiredAmtState}}
   Control Mode:         {{.AmtControlMode}}
-  DNS Suffix:           {{.AmtDnsSuffix}}{{if .AmtProvisioned}}
+  DNS Suffix:           {{.AmtDnsSuffix}}
+  KVM Desired State:    {{.DesiredKvmState}}
+  KVM Current State:    {{.CurrentKvmState}}
+  KVM Status:           {{.KvmStatus}}
+  KVM Session Status:   {{.KvmSessionStatus}}
+  SOL Desired State:    {{.DesiredSolState}}
+  SOL Current State:    {{.CurrentSolState}}
+  SOL Session Status:   {{.SolSessionStatus}}{{if .AmtProvisioned}}
   Current Power:        {{.CurrentPower}}
   Desired Power:        {{.DesiredPower}}
   Power Status:         {{.PowerStatus}}
@@ -3847,30 +3851,6 @@ func resolveRemoteSessionState(state, sessionType string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("incorrect session state '%s' for %s: use 'start' or 'stop'", state, sessionType)
-}
-
-// resolveKvmState is kept for backward compatibility with CSV import
-func resolveKvmState(kvm string) (infra.KvmState, error) {
-	switch kvm {
-	case "start", "KVM_STATE_START":
-		return infra.KVMSTATESTART, nil
-	case "stop", "KVM_STATE_STOP":
-		return infra.KVMSTATESTOP, nil
-	default:
-		return "", errors.New("incorrect KVM state provided use one of start|stop")
-	}
-}
-
-// resolveSolState is kept for backward compatibility with CSV import
-func resolveSolState(sol string) (infra.SolState, error) {
-	switch sol {
-	case "start", "SOL_STATE_START":
-		return infra.SOLSTATESTART, nil
-	case "stop", "SOL_STATE_STOP":
-		return infra.SOLSTATESTOP, nil
-	default:
-		return "", errors.New("incorrect SOL state provided use one of start|stop")
-	}
 }
 
 // runKVMSession drives the KVM session state machine (ACM and CCM).
