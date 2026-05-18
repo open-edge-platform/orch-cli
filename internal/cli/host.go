@@ -2783,6 +2783,62 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("--filter, --site, and --region require at least one action flag (--power, --power-policy, --amt-state, --control-mode, --osupdatepolicy)")
 		}
 
+		ctx, hostClient, projectName, err := InfraFactory(cmd)
+		if err != nil {
+			return err
+		}
+
+		// Resolve --site by name if not already a resource ID
+		if siteFlag != "" && !isSiteResourceID(siteFlag) {
+			lresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, "",
+				&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing sites"); err != nil {
+				return err
+			}
+			s, findErr := findSiteByName(lresp.JSON200.Sites, siteFlag)
+			if findErr != nil {
+				return findErr
+			}
+			siteFlag = *s.ResourceId
+		}
+
+		// Resolve --region by name if not already a resource ID
+		if regFlag != "" && !isRegionResourceID(regFlag) {
+			lresp, err := hostClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+				&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing regions"); err != nil {
+				return err
+			}
+			r, findErr := findRegionByName(lresp.JSON200.Regions, regFlag)
+			if findErr != nil {
+				return findErr
+			}
+			regFlag = *r.ResourceId
+		}
+
+		// Resolve --osupdatepolicy by name if not already a resource ID
+		if updFlag != "" && !isOSUpdatePolicyResourceID(updFlag) {
+			lresp, err := hostClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+				&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing OS update policies"); err != nil {
+				return err
+			}
+			pol, findErr := findOSUpdatePolicyByName(lresp.JSON200.OsUpdatePolicies, updFlag)
+			if findErr != nil {
+				return findErr
+			}
+			updFlag = *pol.ResourceId
+		}
+
 		filter := filterHelper(filtflag)
 
 		site, err := filterSitesHelper(siteFlag)
@@ -2834,11 +2890,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			amtMode = &mode
-		}
-
-		ctx, hostClient, projectName, err := InfraFactory(cmd)
-		if err != nil {
-			return err
 		}
 
 		if siteFlag == "" && regFlag != "" {
@@ -3055,10 +3106,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		power = &pow
 	}
 
-	if updFlag != "" {
-		updatePolicy = &updFlag
-	}
-
 	if amtFlag != "" {
 		amt, err := resolveAmtState(amtFlag)
 		if err != nil {
@@ -3078,6 +3125,28 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	// Resolve --osupdatepolicy by name if not already a resource ID
+	if updFlag != "" {
+		if isOSUpdatePolicyResourceID(updFlag) {
+			updatePolicy = &updFlag
+		} else {
+			lresp, err := hostClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+				&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing OS update policies"); err != nil {
+				return err
+			}
+			pol, findErr := findOSUpdatePolicyByName(lresp.JSON200.OsUpdatePolicies, updFlag)
+			if findErr != nil {
+				return findErr
+			}
+			rid := *pol.ResourceId
+			updatePolicy = &rid
+		}
 	}
 
 	if !isHostResourceID(hostID) {
@@ -3248,18 +3317,53 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 	filter := filterHelper(filtflag)
 
 	siteFlag, _ := cmd.Flags().GetString("site")
+	regFlag, _ := cmd.Flags().GetString("region")
+
+	ctx, hostClient, projectName, err := InfraFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Resolve --site by name if not already a resource ID
+	if siteFlag != "" && !isSiteResourceID(siteFlag) {
+		lresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, "",
+			&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing sites"); err != nil {
+			return err
+		}
+		s, findErr := findSiteByName(lresp.JSON200.Sites, siteFlag)
+		if findErr != nil {
+			return findErr
+		}
+		siteFlag = *s.ResourceId
+	}
+
+	// Resolve --region by name if not already a resource ID
+	if regFlag != "" && !isRegionResourceID(regFlag) {
+		lresp, err := hostClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing regions"); err != nil {
+			return err
+		}
+		r, findErr := findRegionByName(lresp.JSON200.Regions, regFlag)
+		if findErr != nil {
+			return findErr
+		}
+		regFlag = *r.ResourceId
+	}
+
 	site, err := filterSitesHelper(siteFlag)
 	if err != nil {
 		return err
 	}
 
-	regFlag, _ := cmd.Flags().GetString("region")
 	region, err := filterRegionsHelper(regFlag)
-	if err != nil {
-		return err
-	}
-
-	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -3488,14 +3592,27 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 			hostID = derefString(host.ResourceId)
 		}
 		if policyFlag != "" {
-			err := validateOSUpdatePolicy(policyFlag)
-			if err != nil {
-				return err
+			// Resolve OS update policy name to resource ID if needed
+			resolvedPolicy := policyFlag
+			if !isOSUpdatePolicyResourceID(policyFlag) {
+				lresp, err := hostClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+					&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+				if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing OS update policies"); err != nil {
+					return err
+				}
+				pol, findErr := findOSUpdatePolicyByName(lresp.JSON200.OsUpdatePolicies, policyFlag)
+				if findErr != nil {
+					return findErr
+				}
+				resolvedPolicy = *pol.ResourceId
 			}
 			updateRecords = append(updateRecords, UpdateHostRecord{
 				Name:           "",
 				ResourceID:     hostID,
-				OsUpdatePolicy: policyFlag,
+				OsUpdatePolicy: resolvedPolicy,
 				Error:          "",
 			})
 		} else {

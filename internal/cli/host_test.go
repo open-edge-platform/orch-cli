@@ -654,6 +654,16 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.setHost(project, hostID, HostArgs)
 	s.NoError(err)
 
+	// Test OSupdate policy set by name
+
+	HostArgs = map[string]string{
+		"osupdatepolicy": "security-policy-v1.2",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
 	// Test deauthorize host
 	_, err = s.deauthorizeHost(project, hostID, make(map[string]string))
 	s.NoError(err)
@@ -835,6 +845,22 @@ host-153,host-0a6e769d,AMT_STATE_PROVISIONED,AMT_CONTROL_MODE_ACM,POWER_STATE_ON
 	_, err = s.setHostBulk(project, HostArgs)
 	s.NoError(err)
 
+	// Bulk power action with --site by name
+	HostArgs = map[string]string{
+		"site":  "site",
+		"power": "reset",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power action with --site by name -duplicate
+	HostArgs = map[string]string{
+		"site":  "duplicate-site",
+		"power": "reset",
+	}
+	_, err = s.setHostBulk("duplicate-site", HostArgs)
+	s.EqualError(err, "multiple sites found with name \"duplicate-site\"; use a resource ID instead:\n  name: duplicate-site  resource-id: site-7ceae560\n  name: duplicate-site  resource-id: site-7ceae560")
+
 	// Bulk power-cycle
 	HostArgs = map[string]string{
 		"filter": "hostStatus='onboarded'",
@@ -868,6 +894,22 @@ host-153,host-0a6e769d,AMT_STATE_PROVISIONED,AMT_CONTROL_MODE_ACM,POWER_STATE_ON
 	_, err = s.setHostBulk(project, HostArgs)
 	s.NoError(err)
 
+	// Bulk with --region by name
+	HostArgs = map[string]string{
+		"region": "region",
+		"power":  "off",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk with --region by name duplicate
+	HostArgs = map[string]string{
+		"region": "duplicate-region",
+		"power":  "off",
+	}
+	_, err = s.setHostBulk("duplicate-region", HostArgs)
+	s.EqualError(err, "multiple regions found with name \"duplicate-region\"; use a resource ID instead:\n  name: duplicate-region  resource-id: region-abcd1111\n  name: duplicate-region  resource-id: region-abcd1111")
+
 	// Bulk OS update policy
 	HostArgs = map[string]string{
 		"filter":         "hostStatus='onboarded'",
@@ -875,6 +917,22 @@ host-153,host-0a6e769d,AMT_STATE_PROVISIONED,AMT_CONTROL_MODE_ACM,POWER_STATE_ON
 	}
 	_, err = s.setHostBulk(project, HostArgs)
 	s.NoError(err)
+
+	// Bulk power action with --osupdatepolicy by name
+	HostArgs = map[string]string{
+		"region":         "region",
+		"osupdatepolicy": "security-policy-v1.2",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power action with --osupdatepolicy by name -duplicate
+	HostArgs = map[string]string{
+		"region":         "region",
+		"osupdatepolicy": "duplicate",
+	}
+	_, err = s.setHostBulk("duplicate-policy", HostArgs)
+	s.EqualError(err, "multiple OS Update Policies found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: osupdatepolicy-abc12345\n  name: duplicate  resource-id: osupdatepolicy-abc12345")
 
 	// Dry run
 	HostArgs = map[string]string{
@@ -933,7 +991,7 @@ host-153,host-0a6e769d,AMT_STATE_PROVISIONED,AMT_CONTROL_MODE_ACM,POWER_STATE_ON
 		"osupdatepolicy": "updatepolicy-abc12345",
 	}
 	_, err = s.updateOsHost(project, hostID, HostArgs)
-	s.EqualError(err, "Invalid OS Update Policy")
+	s.EqualError(err, "no OS Update Policy found with name \"updatepolicy-abc12345\"")
 
 	//Test updating host OS with new policy
 	HostArgs = map[string]string{
@@ -941,6 +999,48 @@ host-153,host-0a6e769d,AMT_STATE_PROVISIONED,AMT_CONTROL_MODE_ACM,POWER_STATE_ON
 	}
 	_, err = s.updateOsHost(project, hostID, HostArgs)
 	s.NoError(err)
+
+	//Test updating host OS with named policy
+	HostArgs = map[string]string{
+		"osupdatepolicy": "security-policy-v1.2",
+	}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	//Test updating host OS with named duplicate policy
+	HostArgs = map[string]string{
+		"osupdatepolicy": "duplicate",
+	}
+	_, err = s.updateOsHost("duplicate-policy", hostID, HostArgs)
+	s.EqualError(err, "multiple OS Update Policies found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: osupdatepolicy-abc12345\n  name: duplicate  resource-id: osupdatepolicy-abc12345")
+
+	//Test updating host OS with named site
+	HostArgs = map[string]string{
+		"site": "site",
+	}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	//Test updating host OS with named duplicate site
+	HostArgs = map[string]string{
+		"site": "duplicate-site",
+	}
+	_, err = s.updateOsHost("duplicate-site", hostID, HostArgs)
+	s.EqualError(err, "multiple sites found with name \"duplicate-site\"; use a resource ID instead:\n  name: duplicate-site  resource-id: site-7ceae560\n  name: duplicate-site  resource-id: site-7ceae560")
+
+	//Test updating host OS with named region
+	HostArgs = map[string]string{
+		"region": "region",
+	}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	//Test updating host OS with named duplicate region
+	HostArgs = map[string]string{
+		"region": "duplicate-region",
+	}
+	_, err = s.updateOsHost("duplicate-region", hostID, HostArgs)
+	s.EqualError(err, "multiple regions found with name \"duplicate-region\"; use a resource ID instead:\n  name: duplicate-region  resource-id: region-abcd1111\n  name: duplicate-region  resource-id: region-abcd1111")
 
 	//Test generating CSV for OS update
 	HostArgs = map[string]string{
