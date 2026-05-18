@@ -17,6 +17,7 @@ import (
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/format"
 	promrest "github.com/open-edge-platform/cli/pkg/rest/prometheus"
+	promapi "github.com/prometheus/client_golang/api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -135,6 +136,23 @@ type metricRangeRow struct {
 	Labels    *string `json:"labels"`
 	Timestamp *string `json:"timestamp"`
 	Value     *string `json:"value"`
+}
+
+type metricQueryModes struct {
+	Average  bool
+	Sum      bool
+	Increase bool
+	Range    bool
+}
+
+type metricQueryInput struct {
+	argID         string
+	metricName    string
+	hostnameLabel string
+	hostname      string
+	startTimeStr  string
+	endTimeStr    string
+	durationSec   int64
 }
 
 // getListMetricNamesCommand builds the `list metrics` command.
@@ -461,6 +479,98 @@ func lastPrometheusSample(samples [][]interface{}) []interface{} {
 	return samples[len(samples)-1]
 }
 
+// getMetricQueryModes reads query mode flags and counts aggregation selections.
+func getMetricQueryModes(cmd *cobra.Command) (metricQueryModes, int, error) {
+	averageQuery, err := cmd.Flags().GetBool(averageFlag)
+	if err != nil {
+		return metricQueryModes{}, 0, err
+	}
+	sumQuery, err := cmd.Flags().GetBool(sumFlag)
+	if err != nil {
+		return metricQueryModes{}, 0, err
+	}
+	increaseQuery, err := cmd.Flags().GetBool(increaseFlag)
+	if err != nil {
+		return metricQueryModes{}, 0, err
+	}
+	rangeQuery, err := cmd.Flags().GetBool(rangeFlag)
+	if err != nil {
+		return metricQueryModes{}, 0, err
+	}
+
+	aggregationModeCount := 0
+	if averageQuery {
+		aggregationModeCount++
+	}
+	if sumQuery {
+		aggregationModeCount++
+	}
+	if increaseQuery {
+		aggregationModeCount++
+	}
+
+	return metricQueryModes{
+		Average:  averageQuery,
+		Sum:      sumQuery,
+		Increase: increaseQuery,
+		Range:    rangeQuery,
+	}, aggregationModeCount, nil
+}
+
+// runMetricQuery executes a selected metric query mode.
+func runMetricQuery(ctx context.Context, cmd *cobra.Command, writer *tabwriter.Writer, client promapi.Client, request metricQueryInput, mode string, verbose bool) error {
+	now := time.Now()
+	startTime, endTime, err := resolveWindowInputs(mode, request.startTimeStr, request.endTimeStr, request.durationSec, now)
+	if err != nil {
+		return err
+	}
+
+	switch mode {
+	case rangeFlag:
+		query, err := buildMetricQuery(request.metricName, request.hostnameLabel, request.hostname)
+		if err != nil {
+			return err
+		}
+
+		body, err := promrest.ExecuteRangeQuery(ctx, client, query, startTime, endTime, request.argID, defaultMetricsTimeout)
+		if err != nil {
+			return err
+		}
+
+		if err := printMetricRangeResult(cmd, writer, request.metricName, request.hostnameLabel, body, verbose); err != nil {
+			return err
+		}
+		return writer.Flush()
+	case sumFlag, increaseFlag, averageFlag:
+		windowDuration := endTime - startTime
+		var query string
+
+		switch mode {
+		case sumFlag:
+			query, err = buildSumMetricQuery(request.metricName, request.hostnameLabel, request.hostname, windowDuration)
+		case increaseFlag:
+			query, err = buildIncreaseMetricQuery(request.metricName, request.hostnameLabel, request.hostname, windowDuration)
+		case averageFlag:
+			query, err = buildAverageMetricQuery(request.metricName, request.hostnameLabel, request.hostname, windowDuration)
+		}
+		if err != nil {
+			return err
+		}
+
+		body, err := promrest.ExecuteQueryAt(ctx, client, query, endTime, request.argID, defaultMetricsTimeout)
+		if err != nil {
+			return err
+		}
+
+		if err := printMetricResult(cmd, writer, request.metricName, request.hostnameLabel, body, verbose); err != nil {
+			return err
+		}
+		return writer.Flush()
+	default:
+		return fmt.Errorf("unsupported metric query mode %q", mode)
+	}
+}
+
 // runGetMetricCommand executes instant, average, sum, increase, or range metric queries.
 func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
@@ -474,20 +584,7 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Check if this is a range query
-	averageQuery, err := cmd.Flags().GetBool(averageFlag)
-	if err != nil {
-		return err
-	}
-	sumQuery, err := cmd.Flags().GetBool(sumFlag)
-	if err != nil {
-		return err
-	}
-	increaseQuery, err := cmd.Flags().GetBool(increaseFlag)
-	if err != nil {
-		return err
-	}
-	rangeQuery, err := cmd.Flags().GetBool(rangeFlag)
+	modes, aggregationModeCount, err := getMetricQueryModes(cmd)
 	if err != nil {
 		return err
 	}
@@ -521,25 +618,15 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// Check which aggregation mode is requested and validate flag combinations
-	aggregationModeCount := 0
-	if averageQuery {
-		aggregationModeCount++
-	}
-	if sumQuery {
-		aggregationModeCount++
-	}
-	if increaseQuery {
-		aggregationModeCount++
-	}
 	if aggregationModeCount > 1 {
 		return fmt.Errorf("--average, --sum, and --increase are mutually exclusive")
 	}
-	if rangeQuery && (averageQuery || sumQuery || increaseQuery) {
+	if modes.Range && (modes.Average || modes.Sum || modes.Increase) {
 		return fmt.Errorf("--range cannot be used with --sum, --average, or --increase")
 	}
 
 	if strings.TrimSpace(timestampStr) != "" {
-		if averageQuery || sumQuery || increaseQuery || rangeQuery {
+		if modes.Average || modes.Sum || modes.Increase || modes.Range {
 			return fmt.Errorf("--timestamp cannot be used with --sum, --average, --increase, or --range")
 		}
 		if durationSec > 0 || strings.TrimSpace(startTimeStr) != "" || strings.TrimSpace(endTimeStr) != "" {
@@ -547,100 +634,31 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if durationSec > 0 && !averageQuery && !sumQuery && !increaseQuery && !rangeQuery {
+	if durationSec > 0 && !modes.Average && !modes.Sum && !modes.Increase && !modes.Range {
 		return fmt.Errorf("--duration requires either --sum, --average, --increase, or --range")
 	}
 
-	if rangeQuery {
-		startTime, endTime, err := resolveRangeWindow(startTimeStr, endTimeStr, durationSec, time.Now())
-		if err != nil {
-			return err
-		}
-
-		query, err := buildMetricQuery(metricName, hostnameLabel, hostname)
-		if err != nil {
-			return err
-		}
-
-		body, err := promrest.ExecuteRangeQuery(ctx, client, query, startTime, endTime, argID, defaultMetricsTimeout)
-		if err != nil {
-			return err
-		}
-
-		if err := printMetricRangeResult(cmd, writer, metricName, hostnameLabel, body, verbose); err != nil {
-			return err
-		}
-		return writer.Flush()
+	queryMode := ""
+	if modes.Range {
+		queryMode = rangeFlag
+	} else if modes.Sum {
+		queryMode = sumFlag
+	} else if modes.Increase {
+		queryMode = increaseFlag
+	} else if modes.Average {
+		queryMode = averageFlag
 	}
 
-	if sumQuery {
-		startTime, endTime, err := resolveSumWindow(startTimeStr, endTimeStr, durationSec, time.Now())
-		if err != nil {
-			return err
-		}
-
-		durationSec = endTime - startTime
-		query, err := buildSumMetricQuery(metricName, hostnameLabel, hostname, durationSec)
-		if err != nil {
-			return err
-		}
-
-		body, err := promrest.ExecuteQueryAt(ctx, client, query, endTime, argID, defaultMetricsTimeout)
-		if err != nil {
-			return err
-		}
-
-		if err := printMetricResult(cmd, writer, metricName, hostnameLabel, body, verbose); err != nil {
-			return err
-		}
-		return writer.Flush()
-	}
-
-	if increaseQuery {
-		startTime, endTime, err := resolveIncreaseWindow(startTimeStr, endTimeStr, durationSec, time.Now())
-		if err != nil {
-			return err
-		}
-
-		durationSec = endTime - startTime
-		query, err := buildIncreaseMetricQuery(metricName, hostnameLabel, hostname, durationSec)
-		if err != nil {
-			return err
-		}
-
-		body, err := promrest.ExecuteQueryAt(ctx, client, query, endTime, argID, defaultMetricsTimeout)
-		if err != nil {
-			return err
-		}
-
-		if err := printMetricResult(cmd, writer, metricName, hostnameLabel, body, verbose); err != nil {
-			return err
-		}
-		return writer.Flush()
-	}
-
-	// If average flag is set, support either duration or explicit start/end window.
-	if averageQuery {
-		startTime, endTime, err := resolveAverageWindow(startTimeStr, endTimeStr, durationSec, time.Now())
-		if err != nil {
-			return err
-		}
-
-		durationSec := endTime - startTime
-		query, err := buildAverageMetricQuery(metricName, hostnameLabel, hostname, durationSec)
-		if err != nil {
-			return err
-		}
-
-		body, err := promrest.ExecuteQueryAt(ctx, client, query, endTime, argID, defaultMetricsTimeout)
-		if err != nil {
-			return err
-		}
-
-		if err := printMetricResult(cmd, writer, metricName, hostnameLabel, body, verbose); err != nil {
-			return err
-		}
-		return writer.Flush()
+	if queryMode != "" {
+		return runMetricQuery(ctx, cmd, writer, client, metricQueryInput{
+			argID:         argID,
+			metricName:    metricName,
+			hostnameLabel: hostnameLabel,
+			hostname:      hostname,
+			startTimeStr:  startTimeStr,
+			endTimeStr:    endTimeStr,
+			durationSec:   durationSec,
+		}, queryMode, verbose)
 	}
 
 	// Instant query mode.
@@ -744,26 +762,6 @@ func resolveWindowInputs(mode string, startTimeStr string, endTimeStr string, du
 	}
 
 	return 0, 0, fmt.Errorf("--%s requires either --duration or both --start-time and --end-time", mode)
-}
-
-// resolveSumWindow converts sum inputs into a concrete time window.
-func resolveSumWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
-	return resolveWindowInputs("sum", startTimeStr, endTimeStr, durationSec, now)
-}
-
-// resolveAverageWindow converts average inputs into a concrete time window.
-func resolveAverageWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
-	return resolveWindowInputs("average", startTimeStr, endTimeStr, durationSec, now)
-}
-
-// resolveRangeWindow converts range inputs into a concrete time window.
-func resolveRangeWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
-	return resolveWindowInputs("range", startTimeStr, endTimeStr, durationSec, now)
-}
-
-// resolveIncreaseWindow converts increase inputs into a concrete time window.
-func resolveIncreaseWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
-	return resolveWindowInputs("increase", startTimeStr, endTimeStr, durationSec, now)
 }
 
 // validateWindowAggregationInputs validates common inputs for avg/sum/increase queries.

@@ -427,108 +427,43 @@ func TestBuildIncreaseMetricQuery(t *testing.T) {
 	}
 }
 
-func TestResolveSumWindow(t *testing.T) {
+func TestResolveWindowInputsByMode(t *testing.T) {
 	now := time.Unix(1704153600, 0)
+	modes := []string{sumFlag, rangeFlag, increaseFlag, averageFlag}
 
-	start, end, err := resolveSumWindow("1704150000", "1704153600", 0, now)
-	if err != nil {
-		t.Fatalf("unexpected error for explicit range: %v", err)
-	}
-	if start != 1704150000 || end != 1704153600 {
-		t.Fatalf("unexpected explicit range start/end: %d/%d", start, end)
-	}
+	for _, mode := range modes {
+		t.Run(mode, func(t *testing.T) {
+			start, end, err := resolveWindowInputs(mode, "1704150000", "1704153600", 0, now)
+			if err != nil {
+				t.Fatalf("unexpected error for explicit range: %v", err)
+			}
+			if start != 1704150000 || end != 1704153600 {
+				t.Fatalf("unexpected explicit range start/end: %d/%d", start, end)
+			}
 
-	start, end, err = resolveSumWindow("", "", 3600, now)
-	if err != nil {
-		t.Fatalf("unexpected error for duration range: %v", err)
-	}
-	if start != 1704150000 || end != 1704153600 {
-		t.Fatalf("unexpected duration range start/end: %d/%d", start, end)
-	}
+			start, end, err = resolveWindowInputs(mode, "", "", 3600, now)
+			if err != nil {
+				t.Fatalf("unexpected error for duration range: %v", err)
+			}
+			if start != 1704150000 || end != 1704153600 {
+				t.Fatalf("unexpected duration range start/end: %d/%d", start, end)
+			}
 
-	_, _, err = resolveSumWindow("1704150000", "1704153600", 3600, now)
-	if err == nil {
-		t.Fatal("expected conflict error when using duration with explicit range")
-	}
+			_, _, err = resolveWindowInputs(mode, "1704150000", "1704153600", 3600, now)
+			if err == nil {
+				t.Fatal("expected conflict error when using duration with explicit range")
+			}
 
-	_, _, err = resolveSumWindow("1704150000", "", 0, now)
-	if err == nil {
-		t.Fatal("expected missing end-time error")
-	}
+			_, _, err = resolveWindowInputs(mode, "1704150000", "", 0, now)
+			if err == nil {
+				t.Fatal("expected missing end-time error")
+			}
 
-	_, _, err = resolveSumWindow("", "", 0, now)
-	if err == nil {
-		t.Fatal("expected missing sum window params error")
-	}
-}
-
-func TestResolveRangeWindow(t *testing.T) {
-	now := time.Unix(1704153600, 0)
-
-	start, end, err := resolveRangeWindow("1704150000", "1704153600", 0, now)
-	if err != nil {
-		t.Fatalf("unexpected error for explicit range: %v", err)
-	}
-	if start != 1704150000 || end != 1704153600 {
-		t.Fatalf("unexpected explicit range start/end: %d/%d", start, end)
-	}
-
-	start, end, err = resolveRangeWindow("", "", 3600, now)
-	if err != nil {
-		t.Fatalf("unexpected error for duration range: %v", err)
-	}
-	if start != 1704150000 || end != 1704153600 {
-		t.Fatalf("unexpected duration range start/end: %d/%d", start, end)
-	}
-
-	_, _, err = resolveRangeWindow("1704150000", "1704153600", 3600, now)
-	if err == nil {
-		t.Fatal("expected conflict error when using duration with explicit range")
-	}
-
-	_, _, err = resolveRangeWindow("1704150000", "", 0, now)
-	if err == nil {
-		t.Fatal("expected missing end-time error")
-	}
-
-	_, _, err = resolveRangeWindow("", "", 0, now)
-	if err == nil {
-		t.Fatal("expected missing range window params error")
-	}
-}
-
-func TestResolveIncreaseWindow(t *testing.T) {
-	now := time.Unix(1704153600, 0)
-
-	start, end, err := resolveIncreaseWindow("1704150000", "1704153600", 0, now)
-	if err != nil {
-		t.Fatalf("unexpected error for explicit range: %v", err)
-	}
-	if start != 1704150000 || end != 1704153600 {
-		t.Fatalf("unexpected explicit range start/end: %d/%d", start, end)
-	}
-
-	start, end, err = resolveIncreaseWindow("", "", 3600, now)
-	if err != nil {
-		t.Fatalf("unexpected error for duration range: %v", err)
-	}
-	if start != 1704150000 || end != 1704153600 {
-		t.Fatalf("unexpected duration range start/end: %d/%d", start, end)
-	}
-
-	_, _, err = resolveIncreaseWindow("1704150000", "1704153600", 3600, now)
-	if err == nil {
-		t.Fatal("expected conflict error when using duration with explicit range")
-	}
-
-	_, _, err = resolveIncreaseWindow("1704150000", "", 0, now)
-	if err == nil {
-		t.Fatal("expected missing end-time error")
-	}
-
-	_, _, err = resolveIncreaseWindow("", "", 0, now)
-	if err == nil {
-		t.Fatal("expected missing increase window params error")
+			_, _, err = resolveWindowInputs(mode, "", "", 0, now)
+			if err == nil {
+				t.Fatal("expected missing window params error")
+			}
+		})
 	}
 }
 
