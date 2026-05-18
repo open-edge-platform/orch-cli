@@ -1642,8 +1642,8 @@ func resolveClusterTemplate(ctx context.Context, cClient cluster.ClientWithRespo
 
 	template := strings.Split(remoteCTempToQuery, ":")
 
-	resp, err := cClient.GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse(ctx, projectName,
-		strings.TrimSpace(template[0]), strings.TrimSpace(template[1]), auth.AddAuthHeader)
+	resp, err := cClient.GetV2ProjectsProjectNameTemplatesNameVersionWithResponse(ctx, projectName,
+		strings.TrimSpace(template[0]), strings.TrimSpace(template[1]), nil, auth.AddAuthHeader)
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
@@ -4173,8 +4173,8 @@ func runKVMSession(
 				if err != nil {
 					return err
 				}
-				postResp, err := mpsClient.PostV1ProjectsProjectNameOobAmtUserConsentCodeGuidWithResponse(
-					ctx, projectName, deviceGUID,
+				postResp, err := mpsClient.PostApiV1AmtUserConsentCodeGuidWithResponse(
+					ctx, deviceGUID,
 					mpsapi.UserConsentRequest{ConsentCode: codeInt},
 					auth.AddAuthHeader,
 				)
@@ -4314,8 +4314,8 @@ func runSOLSession(
 				if err != nil {
 					return err
 				}
-				postResp, err := mpsClient.PostV1ProjectsProjectNameOobAmtUserConsentCodeGuidWithResponse(
-					ctx, projectName, deviceGUID,
+				postResp, err := mpsClient.PostApiV1AmtUserConsentCodeGuidWithResponse(
+					ctx, deviceGUID,
 					mpsapi.UserConsentRequest{ConsentCode: codeInt},
 					auth.AddAuthHeader,
 				)
@@ -4437,11 +4437,11 @@ func readConsentCode() (int, error) {
 func acquireRelayToken(
 	ctx context.Context,
 	mpsClient mpsapi.ClientWithResponsesInterface,
-	projectName, deviceGUID, apiEndpointStr string,
+	_, deviceGUID, apiEndpointStr string,
 ) (token, mpsDomain string, err error) {
 	fmt.Println("Obtaining relay token from MPS...")
-	tokenResp, err := mpsClient.GetV1ProjectsProjectNameOobAuthorizeRedirectionGuidWithResponse(
-		ctx, projectName, deviceGUID, auth.AddAuthHeader,
+	tokenResp, err := mpsClient.GetApiV1AuthorizeRedirectionGuidWithResponse(
+		ctx, deviceGUID, auth.AddAuthHeader,
 	)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get relay token from MPS: %w", err)

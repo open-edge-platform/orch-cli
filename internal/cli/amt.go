@@ -148,11 +148,11 @@ func runListAmtProfileCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	// API does not support server-side order-by for AMT; always fetch and sort client-side
-	resp, err := rpsClient.GetAllDomainsWithResponse(ctx, projectName, &rps.GetAllDomainsParams{
+	resp, err := rpsClient.GetAllDomainsWithResponse(ctx, &rps.GetAllDomainsParams{
 		Top:   top,
 		Skip:  skip,
 		Count: &count,
-	}, auth.AddAuthHeader)
+	}, auth.AddAuthHeader, rewriteRpsAmtPath(projectName))
 	if err != nil {
 		return processError(err)
 	}
@@ -221,14 +221,14 @@ func runCreateAmtProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := rpsClient.CreateDomainWithResponse(ctx, projectName,
+	resp, err := rpsClient.CreateDomainWithResponse(ctx,
 		rps.CreateDomainJSONRequestBody{
 			DomainSuffix:                  domainsuffix,
 			ProfileName:                   name,
 			ProvisioningCert:              cert,
 			ProvisioningCertPassword:      certpass,
 			ProvisioningCertStorageFormat: certformat,
-		}, auth.AddAuthHeader)
+		}, auth.AddAuthHeader, rewriteRpsAmtPath(projectName))
 	if err != nil {
 		return processError(err)
 	}
@@ -244,8 +244,8 @@ func runGetAmtProfileCommand(cmd *cobra.Command, args []string) error {
 
 	name := args[0]
 
-	resp, err := rpsClient.GetDomainWithResponse(ctx, projectName,
-		name, auth.AddAuthHeader)
+	resp, err := rpsClient.GetDomainWithResponse(ctx,
+		name, auth.AddAuthHeader, rewriteRpsAmtPath(projectName))
 	if err != nil {
 		return processError(err)
 	}
@@ -270,8 +270,8 @@ func runDeleteAmtProfileCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := rpsClient.RemoveDomainWithResponse(ctx, projectName,
-		name, auth.AddAuthHeader)
+	resp, err := rpsClient.RemoveDomainWithResponse(ctx,
+		name, auth.AddAuthHeader, rewriteRpsAmtPath(projectName))
 	if err != nil {
 		return processError(err)
 	}

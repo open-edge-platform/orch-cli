@@ -34,20 +34,12 @@ func CreateRpsMock(mctrl *gomock.Controller) interfaces.RpsFactoryFunc {
 
 		// Mock GetAllDomainsWithResponse (used by list domains command)
 		mockRpsClient.EXPECT().GetAllDomainsWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, projectName string, params *rpsapi.GetAllDomainsParams, reqEditors ...rpsapi.RequestEditorFn) (*rpsapi.GetAllDomainsResponse, error) {
+			func(_ context.Context, params *rpsapi.GetAllDomainsParams, reqEditors ...rpsapi.RequestEditorFn) (*rpsapi.GetAllDomainsResponse, error) {
 				_ = params     // Ignore params for this mock, you can add logic if needed
 				_ = reqEditors // Ignore request editors for this mock
-				switch projectName {
-				case "nonexistent-project":
-					return &rpsapi.GetAllDomainsResponse{
-						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-						JSON404: &rpsapi.APIResponse{
-							Message: stringPtr("Project not found"),
-						},
-					}, nil
-				default:
+				{
 					// Create the domains slice
 					domains := []rpsapi.DomainResponse{
 						{
@@ -86,66 +78,41 @@ func CreateRpsMock(mctrl *gomock.Controller) interfaces.RpsFactoryFunc {
 
 		// Mock GetDomainWithResponse (used by get domain command)
 		mockRpsClient.EXPECT().GetDomainWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, projectName, profileName string, reqEditors ...rpsapi.RequestEditorFn) (*rpsapi.GetDomainResponse, error) {
+			func(_ context.Context, profileName string, reqEditors ...rpsapi.RequestEditorFn) (*rpsapi.GetDomainResponse, error) {
 				_ = reqEditors // Ignore request editors for this mock
-				switch projectName {
-				case "nonexistent-project":
+				switch profileName {
+				case "nonexistent-domain":
 					return &rpsapi.GetDomainResponse{
 						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
 						JSON404: &rpsapi.APIResponse{
-							Message: stringPtr("Project not found"),
+							Message: stringPtr("Domain profile not found"),
 						},
 					}, nil
 				default:
-					switch profileName {
-					case "nonexistent-domain":
-						return &rpsapi.GetDomainResponse{
-							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSON404: &rpsapi.APIResponse{
-								Message: stringPtr("Domain profile not found"),
-							},
-						}, nil
-					default:
-						return &rpsapi.GetDomainResponse{
-							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
-							JSON200: &rpsapi.DomainResponse{
-								ProfileName:                   "corporate-domain",
-								DomainSuffix:                  "corp.example.com",
-								ProvisioningCertStorageFormat: "pfx",
-								TenantId:                      "tenant-abc12345",
-								Version:                       "1.0.0",
-								ExpirationDate:                expirationDate,
-							},
-						}, nil
-					}
+					return &rpsapi.GetDomainResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &rpsapi.DomainResponse{
+							ProfileName:                   "corporate-domain",
+							DomainSuffix:                  "corp.example.com",
+							ProvisioningCertStorageFormat: "pfx",
+							TenantId:                      "tenant-abc12345",
+							Version:                       "1.0.0",
+							ExpirationDate:                expirationDate,
+						},
+					}, nil
 				}
 			},
 		).AnyTimes()
 
 		// Mock CreateDomainWithResponse (used by create domain command)
 		mockRpsClient.EXPECT().CreateDomainWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, projectName string, body rpsapi.CreateDomainJSONRequestBody, reqEditors ...rpsapi.RequestEditorFn) (*rpsapi.CreateDomainResponse, error) {
+			func(_ context.Context, body rpsapi.CreateDomainJSONRequestBody, reqEditors ...rpsapi.RequestEditorFn) (*rpsapi.CreateDomainResponse, error) {
 				_ = reqEditors // Ignore request editors for this mock
-				switch projectName {
-				case "invalid-project":
-					return &rpsapi.CreateDomainResponse{
-						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSON500: &rpsapi.APIResponse{
-							Message: stringPtr("Project validation failed"),
-						},
-					}, nil
-				case "validation-error-project":
-					return &rpsapi.CreateDomainResponse{
-						HTTPResponse: &http.Response{StatusCode: 400, Status: "Bad Request"},
-						JSON400: &rpsapi.APIResponse{
-							Message: stringPtr("Invalid domain configuration"),
-						},
-					}, nil
-				default:
+				{
 					return &rpsapi.CreateDomainResponse{
 						HTTPResponse: &http.Response{StatusCode: 201, Status: "Created"},
 						JSON201: &rpsapi.DomainResponse{
@@ -163,26 +130,11 @@ func CreateRpsMock(mctrl *gomock.Controller) interfaces.RpsFactoryFunc {
 
 		// Mock UpdateDomainSuffixWithResponse (used by update domain command)
 		mockRpsClient.EXPECT().UpdateDomainSuffixWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, projectName string, body rpsapi.UpdateDomainSuffixJSONRequestBody, reqEditors ...rpsapi.RequestEditorFn) (*rpsapi.UpdateDomainSuffixResponse, error) {
+			func(_ context.Context, body rpsapi.UpdateDomainSuffixJSONRequestBody, reqEditors ...rpsapi.RequestEditorFn) (*rpsapi.UpdateDomainSuffixResponse, error) {
 				_ = reqEditors // Ignore request editors for this mock
-				switch projectName {
-				case "invalid-project":
-					return &rpsapi.UpdateDomainSuffixResponse{
-						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSON500: &rpsapi.APIResponse{
-							Message: stringPtr("Project validation failed"),
-						},
-					}, nil
-				case "validation-error-project":
-					return &rpsapi.UpdateDomainSuffixResponse{
-						HTTPResponse: &http.Response{StatusCode: 400, Status: "Bad Request"},
-						JSON400: &rpsapi.APIResponse{
-							Message: stringPtr("Invalid domain suffix format"),
-						},
-					}, nil
-				default:
+				{
 					return &rpsapi.UpdateDomainSuffixResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &rpsapi.DomainResponse{
@@ -200,32 +152,22 @@ func CreateRpsMock(mctrl *gomock.Controller) interfaces.RpsFactoryFunc {
 
 		// Mock RemoveDomainWithResponse (used by delete domain command)
 		mockRpsClient.EXPECT().RemoveDomainWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, projectName, profileName string, reqEditors ...rpsapi.RequestEditorFn) (*rpsapi.RemoveDomainResponse, error) {
+			func(_ context.Context, profileName string, reqEditors ...rpsapi.RequestEditorFn) (*rpsapi.RemoveDomainResponse, error) {
 				_ = reqEditors // Ignore request editors for this mock
-				switch projectName {
-				case "invalid-project":
+				switch profileName {
+				case "nonexistent-domain":
 					return &rpsapi.RemoveDomainResponse{
-						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
-						JSON500: &rpsapi.APIResponse{
-							Message: stringPtr("Project validation failed"),
+						HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
+						JSON404: &rpsapi.APIResponse{
+							Message: stringPtr("Domain profile not found"),
 						},
 					}, nil
 				default:
-					switch profileName {
-					case "nonexistent-domain":
-						return &rpsapi.RemoveDomainResponse{
-							HTTPResponse: &http.Response{StatusCode: 404, Status: "Not Found"},
-							JSON404: &rpsapi.APIResponse{
-								Message: stringPtr("Domain profile not found"),
-							},
-						}, nil
-					default:
-						return &rpsapi.RemoveDomainResponse{
-							HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
-						}, nil
-					}
+					return &rpsapi.RemoveDomainResponse{
+						HTTPResponse: &http.Response{StatusCode: 204, Status: "No Content"},
+					}, nil
 				}
 			},
 		).AnyTimes()

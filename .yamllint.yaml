@@ -6,6 +6,7 @@ ignore: |
   examples/testapp/*
   pkg/rest/*/*.yaml
   internal/cli/testdata/cloudinit.yaml
+  internal/cli/my-config.yaml
   vendor/
   .github/
 rules:

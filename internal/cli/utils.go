@@ -28,6 +28,7 @@ import (
 	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
+	promapi "github.com/prometheus/client_golang/api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -35,17 +36,18 @@ import (
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
-	EIMFeature           = "orchestrator.features.edge-infrastructure-manager.installed"
-	OobFeature           = "orchestrator.features.edge-infrastructure-manager.oob.installed"
-	OnboardingFeature    = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
-	ProvisioningFeature  = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"
-	Day2Feature          = "orchestrator.features.edge-infrastructure-manager.day2.installed"
-	OxmFeature           = "orchestrator.features.edge-infrastructure-manager.oxm-profile.installed"
-	AppOrchFeature       = "orchestrator.features.application-orchestration.installed"
-	ClusterOrchFeature   = "orchestrator.features.cluster-orchestration.installed"
-	ObservabilityFeature = "orchestrator.features.orchestrator-observability.installed"
-	MultitenancyFeature  = "orchestrator.features.multitenancy.installed"
-	OrchVersion          = "orchestrator.version"
+	EIMFeature                       = "orchestrator.features.edge-infrastructure-manager.installed"
+	OobFeature                       = "orchestrator.features.edge-infrastructure-manager.oob.installed"
+	OnboardingFeature                = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
+	ProvisioningFeature              = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"
+	Day2Feature                      = "orchestrator.features.edge-infrastructure-manager.day2.installed"
+	OxmFeature                       = "orchestrator.features.edge-infrastructure-manager.oxm-profile.installed"
+	AppOrchFeature                   = "orchestrator.features.application-orchestration.installed"
+	ClusterOrchFeature               = "orchestrator.features.cluster-orchestration.installed"
+	OrchestratorObservabilityFeature = "orchestrator.features.orchestrator-observability.installed"
+	EdgeNodeObservabilityFeature     = "orchestrator.features.edgenode-observability.installed"
+	MultitenancyFeature              = "orchestrator.features.multitenancy.installed"
+	OrchVersion                      = "orchestrator.version"
 )
 
 const (
@@ -95,6 +97,46 @@ var OrchestratorFactory interfaces.OrchestratorFactoryFunc = func(cmd *cobra.Com
 
 var KeycloakAdminFactory interfaces.KeycloakAdminFactoryFunc = func(cmd *cobra.Command) (context.Context, kcapi.ClientInterface, string, error) {
 	return getKeycloakAdminServiceContext(cmd)
+}
+
+var PrometheusClientFactory interfaces.PrometheusFactoryFunc = func(cmd *cobra.Command) (promapi.Client, error) {
+	return newPrometheusClient(cmd)
+}
+
+func newPrometheusClient(cmd *cobra.Command) (promapi.Client, error) {
+	endpoint, err := getMetricsEndpoint(cmd)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(endpoint) == "" {
+		return nil, fmt.Errorf("metrics endpoint not configured. Set --%s or run 'orch-cli config set %s <url>'", metricsEndpointFlag, metricsEndpointFlag)
+	}
+
+	roundTripper := metricsAuthRoundTripper{base: promapi.DefaultRoundTripper}
+	client, err := promapi.NewClient(promapi.Config{
+		Address: endpoint,
+		Client: &http.Client{
+			Timeout:   defaultMetricsTimeout,
+			Transport: roundTripper,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+type metricsAuthRoundTripper struct {
+	base http.RoundTripper
+}
+
+func (rt metricsAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	clone := req.Clone(req.Context())
+	if err := auth.AddAuthHeader(clone.Context(), clone); err != nil {
+		return nil, err
+	}
+	return rt.base.RoundTrip(clone)
 }
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
@@ -866,8 +908,10 @@ func isFeatureEnabled(feature string) bool {
 		return viper.GetBool(Day2Feature)
 	case OxmFeature:
 		return viper.GetBool(OxmFeature)
-	case ObservabilityFeature:
-		return viper.GetBool(ObservabilityFeature)
+	case OrchestratorObservabilityFeature:
+		return viper.GetBool(OrchestratorObservabilityFeature)
+	case EdgeNodeObservabilityFeature:
+		return viper.GetBool(EdgeNodeObservabilityFeature)
 	case AppOrchFeature:
 		return viper.GetBool(AppOrchFeature)
 	case ClusterOrchFeature:

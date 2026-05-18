@@ -77,6 +77,11 @@ func headerLabelForField(field string) string {
 
 	// Handle nested fields (e.g., "Status.State") by processing each part
 	parts := strings.Split(field, ".")
+	// Drop a trailing ".AdditionalProperties" segment, which is an
+	// implementation detail of generated wrapper map types.
+	if len(parts) > 1 && parts[len(parts)-1] == "AdditionalProperties" {
+		parts = parts[:len(parts)-1]
+	}
 	var processedParts []string
 	for _, part := range parts {
 		// Convert camelCase to spaces
