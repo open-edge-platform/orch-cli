@@ -133,7 +133,7 @@ func (s *CLITestSuite) TestSchedule() {
 	_, err = s.createSchedule(project, name, SArgs)
 	s.EqualError(err, "repeated schedule --start-time must be specified in format \"HH:MM\"")
 
-	//create single schedule
+	//create invalid single schedule
 	SArgs = map[string]string{
 		"timezone":         "GMT",
 		"frequency-type":   "single",
@@ -144,6 +144,42 @@ func (s *CLITestSuite) TestSchedule() {
 	}
 	_, err = s.createSchedule(project, name, SArgs)
 	s.EqualError(err, "single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
+
+	//create single schedule target host by name
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "single",
+		"maintenance-type": "maintenance",
+		"target":           "host:edge-host-001",
+		"start-time":       "\"2026-12-01 10:10\"",
+		"end-time":         "\"2027-12-01 10:10\"",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
+	//create single schedule target host by site
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "single",
+		"maintenance-type": "maintenance",
+		"target":           "site:site",
+		"start-time":       "\"2026-12-01 10:10\"",
+		"end-time":         "\"2027-12-01 10:10\"",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
+	//create single schedule target host by region
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "single",
+		"maintenance-type": "maintenance",
+		"target":           "region:region",
+		"start-time":       "\"2026-12-01 10:10\"",
+		"end-time":         "\"2027-12-01 10:10\"",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
 
 	/////////////////////////////
 	// Test Schedule Listing
@@ -253,6 +289,10 @@ func (s *CLITestSuite) TestSchedule() {
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
+	//get schedule by name
+	getOutput, err = s.getSchedule(project, "schedule", SArgs)
+	s.EqualError(err, "multiple schedules found with name \"schedule\"; use a resource ID instead:\n  name: schedule  resource-id: singlesche-abcd1234\n  name: schedule  resource-id: repeatedsche-abcd1234")
+
 	/////////////////////////////
 	// Test Schedule Delete
 	/////////////////////////////
@@ -272,7 +312,7 @@ func (s *CLITestSuite) TestSchedule() {
 	// Test Schedule Set
 	/////////////////////////////
 
-	//create repeated schedule - monthly
+	//set repeated schedule - monthly
 	SArgs = map[string]string{
 		"timezone":         "GMT",
 		"maintenance-type": "osupdate",

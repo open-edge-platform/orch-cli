@@ -357,6 +357,103 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 					return &infra.HostServiceListHostsResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
+				case "duplicate-host":
+					return &infra.HostServiceListHostsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListHostsResponse{
+							Hosts: []infra.HostResource{
+								{
+									HostStatus: stringPtr("Running"),
+									ResourceId: stringPtr("host-abc12345"),
+									Name:       "duplicate",
+								},
+								{
+									HostStatus:        stringPtr("Running"),
+									ResourceId:        stringPtr("host-abc12345"),
+									Name:              "duplicate",
+									Hostname:          stringPtr("edge-host-001.example.com"),
+									Note:              stringPtr("Edge computing host"),
+									CpuArchitecture:   stringPtr("x86_64"),
+									CpuCores:          func() *int { i := 8; return &i }(),
+									CpuModel:          stringPtr("Intel(R) Xeon(R) CPU E5-2670 v3"),
+									CpuSockets:        func() *int { i := 2; return &i }(),
+									CpuThreads:        func() *int { i := 32; return &i }(),
+									MemoryBytes:       stringPtr("17179869184"), // 16GB in bytes
+									SerialNumber:      stringPtr("1234567890"),
+									Uuid:              stringPtr("550e8400-e29b-41d4-a716-446655440000"),
+									ProductName:       stringPtr("ThinkSystem SR650"),
+									CurrentAmtState:   (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+									DesiredAmtState:   (*infra.AmtState)(stringPtr("AMT_STATE_PROVISIONED")),
+									CurrentPowerState: (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
+									DesiredPowerState: (*infra.PowerState)(stringPtr("POWER_STATE_ON")),
+									BiosVendor:        stringPtr("Lenovo"),
+									BiosVersion:       stringPtr("TEE142L-2.61"),
+									BiosReleaseDate:   stringPtr("03/25/2023"),
+									BmcIp:             stringPtr("192.168.1.101"),
+									SiteId:            stringPtr("site-abcd1234"),
+									Site: &infra.SiteResource{
+										ResourceId: stringPtr("site-abcd1234"),
+										Name:       stringPtr("site"),
+										Timestamps: &infra.Timestamps{
+											CreatedAt: timestampPtr(timestamp),
+											UpdatedAt: timestampPtr(timestamp),
+										},
+									},
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+									Instance: &infra.InstanceResource{
+										ResourceId: stringPtr("instance-abcd1234"),
+										Name:       stringPtr("edge-instance-001"),
+										HostID:     stringPtr("host-abc12345"),
+										InstanceID: stringPtr("instance-abcd1234"),
+										WorkloadMembers: &[]infra.WorkloadMember{
+											{
+												ResourceId:       stringPtr("workload-abcd1234"),
+												WorkloadId:       stringPtr("workload-abcd1234"),
+												InstanceId:       stringPtr("instance-abc12345"),
+												WorkloadMemberId: stringPtr("workload-abcd1234"),
+												Kind:             infra.WORKLOADMEMBERKINDCLUSTERNODE,
+												Workload: &infra.WorkloadResource{
+													ResourceId: stringPtr("workload-abcd1234"),
+													WorkloadId: stringPtr("workload-abcd1234"),
+													Name:       stringPtr("Edge Kubernetes Cluster"),
+													Kind:       infra.WORKLOADKINDCLUSTER,
+													Status:     stringPtr("Running"),
+													ExternalId: stringPtr("k8s-cluster-east-001"),
+													Timestamps: &infra.Timestamps{
+														CreatedAt: timestampPtr(timestamp),
+														UpdatedAt: timestampPtr(timestamp),
+													},
+												},
+												Timestamps: &infra.Timestamps{
+													CreatedAt: timestampPtr(timestamp),
+													UpdatedAt: timestampPtr(timestamp),
+												},
+											},
+										},
+										CustomConfig: &[]infra.CustomConfigResource{
+											{
+												Name:        "haproxy-config",
+												Config:      "server {\n    listen 80;\n    server_name example.com;\n    location / {\n        proxy_pass http://backend;\n    }\n}",
+												Description: stringPtr("haproxy configuration for web services"),
+												ResourceId:  stringPtr("config-abc12345"),
+												Timestamps: &infra.Timestamps{
+													CreatedAt: timestampPtr(timestamp),
+													UpdatedAt: timestampPtr(timestamp),
+												},
+											},
+										},
+										Os: &infra.OperatingSystemResource{
+											Name: stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+										},
+										ProvisioningStatus: stringPtr("PROVISIONING_STATUS_COMPLETED"),
+									},
+								},
+							},
+						},
+					}, nil
 				default:
 					return &infra.HostServiceListHostsResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
@@ -1007,6 +1104,69 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 							TotalElements: 0,
 						},
 					}, nil
+				case "duplicate-site":
+					return &infra.SiteServiceListSitesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListSitesResponse{
+							Sites: []infra.SiteResource{
+								{
+									ResourceId: stringPtr("site-7ceae560"),
+									SiteID:     stringPtr("site-7ceae560"), // Deprecated alias
+									Name:       stringPtr("duplicate-site"),
+									RegionId:   stringPtr("region-abcd1234"),
+									SiteLat:    func() *int32 { lng := int32(50000000); return &lng }(),
+									SiteLng:    func() *int32 { lng := int32(50000000); return &lng }(),
+									Metadata: &[]infra.MetadataItem{
+										{Key: "environment", Value: "production"},
+										{Key: "datacenter", Value: "nyc-east-1"},
+									},
+									InheritedMetadata: &[]infra.MetadataItem{
+										{Key: "region", Value: "us-east"},
+										{Key: "zone", Value: "east-coast"},
+									},
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+									Region: &infra.RegionResource{
+										ResourceId: stringPtr("region-abcd1234"),
+										RegionID:   stringPtr("region-abcd1234"), // Deprecated alias
+										Name:       stringPtr("region"),
+										ParentId:   stringPtr(""),
+										TotalSites: func() *int32 { i := int32(1); return &i }(),
+									},
+								},
+								{
+									ResourceId: stringPtr("site-7ceae560"),
+									SiteID:     stringPtr("site-7ceae560"), // Deprecated alias
+									Name:       stringPtr("duplicate-site"),
+									RegionId:   stringPtr("region-abcd1234"),
+									SiteLat:    func() *int32 { lng := int32(50000000); return &lng }(),
+									SiteLng:    func() *int32 { lng := int32(50000000); return &lng }(),
+									Metadata: &[]infra.MetadataItem{
+										{Key: "environment", Value: "production"},
+										{Key: "datacenter", Value: "nyc-east-1"},
+									},
+									InheritedMetadata: &[]infra.MetadataItem{
+										{Key: "region", Value: "us-east"},
+										{Key: "zone", Value: "east-coast"},
+									},
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+									Region: &infra.RegionResource{
+										ResourceId: stringPtr("region-abcd1234"),
+										RegionID:   stringPtr("region-abcd1234"), // Deprecated alias
+										Name:       stringPtr("region"),
+										ParentId:   stringPtr(""),
+										TotalSites: func() *int32 { i := int32(1); return &i }(),
+									},
+								},
+							},
+							TotalElements: 2,
+						},
+					}, nil
 				default:
 					return &infra.SiteServiceListSitesResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
@@ -1227,6 +1387,65 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						JSON200: &infra.ListRegionsResponse{
 							Regions:       []infra.RegionResource{},
 							TotalElements: 0,
+						},
+					}, nil
+				case "duplicate-region":
+					return &infra.RegionServiceListRegionsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListRegionsResponse{
+							Regions: []infra.RegionResource{
+								{
+									ResourceId: stringPtr("region-abcd1111"),
+									RegionID:   stringPtr("region-abcd1111"), // Deprecated alias
+									Name:       stringPtr("duplicate-region"),
+									ParentId:   stringPtr(""),
+									Metadata: &[]infra.MetadataItem{
+										{Key: "region", Value: "us-east"},
+										{Key: "zone", Value: "east-coast"},
+										{Key: "environment", Value: "production"},
+									},
+									InheritedMetadata: &[]infra.MetadataItem{
+										{Key: "organization", Value: "acme-corp"},
+										{Key: "datacenter-type", Value: "primary"},
+									},
+									TotalSites: func() *int32 { i := int32(1); return &i }(),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+									ParentRegion: &infra.RegionResource{
+										ResourceId: stringPtr(""),
+										RegionID:   stringPtr(""),
+										Name:       stringPtr(""),
+									},
+								},
+								{
+									ResourceId: stringPtr("region-abcd1111"),
+									RegionID:   stringPtr("region-abcd1111"), // Deprecated alias
+									Name:       stringPtr("duplicate-region"),
+									ParentId:   stringPtr(""),
+									Metadata: &[]infra.MetadataItem{
+										{Key: "region", Value: "us-east"},
+										{Key: "zone", Value: "east-coast"},
+										{Key: "environment", Value: "production"},
+									},
+									InheritedMetadata: &[]infra.MetadataItem{
+										{Key: "organization", Value: "acme-corp"},
+										{Key: "datacenter-type", Value: "primary"},
+									},
+									TotalSites: func() *int32 { i := int32(1); return &i }(),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+									ParentRegion: &infra.RegionResource{
+										ResourceId: stringPtr(""),
+										RegionID:   stringPtr(""),
+										Name:       stringPtr(""),
+									},
+								},
+							},
+							TotalElements: 2,
 						},
 					}, nil
 				default:
@@ -1621,6 +1840,52 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 					return &infra.OSUpdateRunListOSUpdateRunResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
+				case "duplicate-run":
+					return &infra.OSUpdateRunListOSUpdateRunResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListOSUpdateRunResponse{
+							OsUpdateRuns: []infra.OSUpdateRun{
+								{
+									Name:          stringPtr("duplicate"),
+									ResourceId:    stringPtr("osupdate-run-abc123"),
+									Status:        stringPtr("completed"),
+									StatusDetails: stringPtr("All updates applied successfully"),
+									AppliedPolicy: &infra.OSUpdatePolicy{
+										Name:        "security-policy-v1.2",
+										Description: stringPtr("Security update policy"),
+										// Add other fields as needed based on the actual struct
+									},
+									Description: stringPtr("Monthly security updates for edge devices"),
+									StartTime:   func() *int { t := int(timestamp.Unix()); return &t }(),
+									EndTime:     func() *int { t := int(timestamp.Unix()); return &t }(),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+								},
+								{
+									Name:          stringPtr("duplicate"),
+									ResourceId:    stringPtr("osupdate-run-abc123"),
+									Status:        stringPtr("completed"),
+									StatusDetails: stringPtr("All updates applied successfully"),
+									AppliedPolicy: &infra.OSUpdatePolicy{
+										Name:        "security-policy-v1.2",
+										Description: stringPtr("Security update policy"),
+										// Add other fields as needed based on the actual struct
+									},
+									Description: stringPtr("Monthly security updates for edge devices"),
+									StartTime:   func() *int { t := int(timestamp.Unix()); return &t }(),
+									EndTime:     func() *int { t := int(timestamp.Unix()); return &t }(),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+								},
+							},
+							TotalElements: 2,
+							HasNext:       false,
+						},
+					}, nil
 				default:
 					return &infra.OSUpdateRunListOSUpdateRunResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
@@ -1738,6 +2003,52 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 					return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
+				case "duplicate-policy":
+					return &infra.OSUpdatePolicyListOSUpdatePolicyResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListOSUpdatePolicyResponse{
+							OsUpdatePolicies: []infra.OSUpdatePolicy{
+								{
+									Name:                "duplicate", // string, not *string
+									ResourceId:          stringPtr("osupdatepolicy-abc12345"),
+									Description:         stringPtr("Monthly security update policy"),
+									TargetOsId:          stringPtr("os-1234abcd"),
+									UpdatePolicy:        (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
+									UpdateSources:       &[]string{"https://updates.example.com"},
+									UpdatePackages:      stringPtr("curl wget vim"),
+									UpdateKernelCommand: stringPtr("console=ttyS0"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+									TargetOs: &infra.OperatingSystemResource{
+										Name:         stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+										OsResourceID: stringPtr("os-1234abcd"),
+									},
+								},
+								{
+									Name:                "duplicate", // string, not *string
+									ResourceId:          stringPtr("osupdatepolicy-abc12345"),
+									Description:         stringPtr("Monthly security update policy"),
+									TargetOsId:          stringPtr("os-1234abcd"),
+									UpdatePolicy:        (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
+									UpdateSources:       &[]string{"https://updates.example.com"},
+									UpdatePackages:      stringPtr("curl wget vim"),
+									UpdateKernelCommand: stringPtr("console=ttyS0"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: timestampPtr(timestamp),
+										UpdatedAt: timestampPtr(timestamp),
+									},
+									TargetOs: &infra.OperatingSystemResource{
+										Name:         stringPtr("Edge Microvisor Toolkit 3.0.20250504"),
+										OsResourceID: stringPtr("os-1234abcd"),
+									},
+								},
+							},
+							TotalElements: 2,
+							HasNext:       false,
+						},
+					}, nil
 				default:
 					// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
 					if params != nil && params.Offset != nil && *params.Offset > 0 {
@@ -1755,12 +2066,14 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 						JSON200: &infra.ListOSUpdatePolicyResponse{
 							OsUpdatePolicies: []infra.OSUpdatePolicy{
 								{
-									Name:          "security-policy-v1.2", // string, not *string
-									ResourceId:    stringPtr("osupdatepolicy-abc12345"),
-									Description:   stringPtr("Monthly security update policy"),
-									TargetOsId:    stringPtr("os-1234abcd"),
-									UpdatePolicy:  (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
-									UpdateSources: &[]string{"https://updates.example.com"},
+									Name:                "security-policy-v1.2", // string, not *string
+									ResourceId:          stringPtr("osupdatepolicy-abc12345"),
+									Description:         stringPtr("Monthly security update policy"),
+									TargetOsId:          stringPtr("os-1234abcd"),
+									UpdatePolicy:        (*infra.UpdatePolicy)(stringPtr("UPDATE_POLICY_LATEST")),
+									UpdateSources:       &[]string{"https://updates.example.com"},
+									UpdatePackages:      stringPtr("curl wget vim"),
+									UpdateKernelCommand: stringPtr("console=ttyS0"),
 									Timestamps: &infra.Timestamps{
 										CreatedAt: timestampPtr(timestamp),
 										UpdatedAt: timestampPtr(timestamp),
@@ -1986,6 +2299,40 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 					return &infra.ProviderServiceListProvidersResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
 					}, nil
+				case "duplicate-provider":
+					return &infra.ProviderServiceListProvidersResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListProvidersResponse{
+							Providers: []infra.ProviderResource{
+								{
+									Name:           "duplicate-provider",
+									ApiEndpoint:    "hello.com",
+									ProviderKind:   "PROVIDER_KIND_BAREMETAL",
+									Config:         func(s string) *string { return &s }("{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}"),
+									ProviderVendor: (*infra.ProviderVendor)(stringPtr("PROVIDER_VENDOR_UNSPECIFIED")),
+									ResourceId:     func(s string) *string { return &s }("provider-7ceae560"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+								{
+									Name:           "duplicate-provider",
+									ApiEndpoint:    "hello.com",
+									ProviderKind:   "PROVIDER_KIND_BAREMETAL",
+									Config:         func(s string) *string { return &s }("{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}"),
+									ProviderVendor: (*infra.ProviderVendor)(stringPtr("PROVIDER_VENDOR_UNSPECIFIED")),
+									ResourceId:     func(s string) *string { return &s }("provider-7ceae560"),
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+							},
+							TotalElements: 2,
+							HasNext:       false,
+						},
+					}, nil
 				default:
 					// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
 					if params != nil && params.Offset != nil && *params.Offset > 0 {
@@ -2006,6 +2353,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 									Name:           "provider",
 									ApiEndpoint:    "hello.com",
 									ProviderKind:   "PROVIDER_KIND_BAREMETAL",
+									Config:         func(s string) *string { return &s }("{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}"),
 									ProviderVendor: (*infra.ProviderVendor)(stringPtr("PROVIDER_VENDOR_UNSPECIFIED")),
 									ResourceId:     func(s string) *string { return &s }("provider-7ceae560"),
 									Timestamps: &infra.Timestamps{
@@ -2037,6 +2385,62 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 				case "invalid-project":
 					return &infra.ScheduleServiceListSchedulesResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Internal Server Error"},
+					}, nil
+				case "duplicate-schedule":
+					return &infra.ScheduleServiceListSchedulesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &infra.ListSchedulesResponse{
+							RepeatedSchedules: []infra.RepeatedScheduleResource{
+								{
+									CronDayMonth:    "1",
+									CronDayWeek:     "1",
+									CronHours:       "1",
+									CronMinutes:     "1",
+									CronMonth:       "1",
+									DurationSeconds: 1,
+									Name:            &name,
+									ResourceId:      &rid,
+									ScheduleStatus:  infra.SCHEDULESTATUSMAINTENANCE,
+									TargetHostId:    nil,
+									TargetRegionId:  nil,
+									TargetSiteId:    &site,
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+							},
+							SingleSchedules: []infra.SingleScheduleResource{
+								{
+									Name:           &name,
+									ResourceId:     &sid,
+									ScheduleStatus: infra.SCHEDULESTATUSMAINTENANCE,
+									TargetHostId:   nil,
+									TargetRegionId: nil,
+									TargetSiteId:   &site,
+									StartSeconds:   10000,
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+								{
+									Name:           &name,
+									ResourceId:     &sid,
+									ScheduleStatus: infra.SCHEDULESTATUSMAINTENANCE,
+									TargetHostId:   nil,
+									TargetRegionId: nil,
+									TargetSiteId:   &site,
+									StartSeconds:   10000,
+									Timestamps: &infra.Timestamps{
+										CreatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+										UpdatedAt: func(t time.Time) *infra.GoogleProtobufTimestamp { return &t }(timestamp),
+									},
+								},
+							},
+							TotalElements: 1,
+							HasNext:       false,
+						},
 					}, nil
 				default:
 					return &infra.ScheduleServiceListSchedulesResponse{

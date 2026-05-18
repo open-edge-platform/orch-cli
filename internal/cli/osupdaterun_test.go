@@ -54,6 +54,28 @@ func (s *CLITestSuite) TestOSUpdateRun() {
 
 	s.compareListOutput(expectedOutputList, parsedOutputList)
 
+	// List OS Update Runs with order-by and YAML output
+	OArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+	}
+	listOrderedOutput, err := s.listOSUpdateRun(project, OArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "security-update-jan-2025")
+	s.Contains(listOrderedOutput, "osupdate-run-abc123")
+	s.Contains(listOrderedOutput, "completed")
+
+	// List OS Update Runs with filter and YAML output
+	OArgs = map[string]string{
+		"filter":      "name=security-update-jan-2025",
+		"output-type": "yaml",
+	}
+	listFilteredOutput, err := s.listOSUpdateRun(project, OArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "security-update-jan-2025")
+	s.Contains(listFilteredOutput, "osupdate-run-abc123")
+	s.Contains(listFilteredOutput, "completed")
+
 	/////////////////////////////
 	// Test OS Update Run Get
 	/////////////////////////////
@@ -81,34 +103,39 @@ func (s *CLITestSuite) TestOSUpdateRun() {
 
 	s.compareGetOutput(expectedOutput, parsedGetOutput)
 
+	//get osupdate run by name
+	getOutput, err = s.getOSUpdateRun(project, "security-update-jan-2025", OArgs)
+	s.NoError(err)
+
+	parsedGetOutput = mapGetOutput(getOutput)
+	expectedOutput = map[string]string{
+		"Name:":           "security-update-jan-2025",
+		"Resource ID:":    "osupdate-run-abc123",
+		"Status:":         "completed",
+		"Status Detail:":  "All updates applied successfully",
+		"Applied Policy:": "security-policy-v1.2",
+		"Description:":    "Monthly security updates for edge devices",
+		"Start Time:":     "2025-01-15T10:30:00Z",
+		"End Time:":       "2025-01-15T10:30:00Z",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedGetOutput)
+
+	//get osupdate run by name duplicate
+	getOutput, err = s.getOSUpdateRun("duplicate-run", "duplicate", OArgs)
+	s.EqualError(err, "multiple OS Update Runs found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: osupdate-run-abc123\n  name: duplicate  resource-id: osupdate-run-abc123")
+
 	/////////////////////////////
 	// Test OS Update Run Delete
 	/////////////////////////////
 
-	//Get OS Update Runs
+	//Delete OS Update Runs
 	OArgs = map[string]string{}
 	_, err = s.deleteOSUpdateRun(project, id, OArgs)
 	s.NoError(err)
 
-	// List OS Update Runs with order-by and YAML output
-	OArgs = map[string]string{
-		"order-by":    "name",
-		"output-type": "yaml",
-	}
-	listOrderedOutput, err := s.listOSUpdateRun(project, OArgs)
+	//Delete OS Update Runs by name
+	OArgs = map[string]string{}
+	_, err = s.deleteOSUpdateRun(project, "security-update-jan-2025", OArgs)
 	s.NoError(err)
-	s.Contains(listOrderedOutput, "security-update-jan-2025")
-	s.Contains(listOrderedOutput, "osupdate-run-abc123")
-	s.Contains(listOrderedOutput, "completed")
-
-	// List OS Update Runs with filter and YAML output
-	OArgs = map[string]string{
-		"filter":      "name=security-update-jan-2025",
-		"output-type": "yaml",
-	}
-	listFilteredOutput, err := s.listOSUpdateRun(project, OArgs)
-	s.NoError(err)
-	s.Contains(listFilteredOutput, "security-update-jan-2025")
-	s.Contains(listFilteredOutput, "osupdate-run-abc123")
-	s.Contains(listFilteredOutput, "completed")
 }
