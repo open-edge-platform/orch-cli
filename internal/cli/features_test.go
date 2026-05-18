@@ -30,6 +30,7 @@ func (s *CLITestSuite) TestFeatures() {
 		"edge-infrastructure-manager.oxm-profile":  "enabled",
 		"multitenancy":                             "enabled",
 		"orchestrator-observability":               "enabled",
+		"edgenode-observability":                   "enabled",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
@@ -56,6 +57,7 @@ func (s *CLITestSuite) TestFeatures() {
 		"edge-infrastructure-manager.oxm-profile":  "enabled",
 		"multitenancy":                             "enabled",
 		"orchestrator-observability":               "enabled",
+		"edgenode-observability":                   "enabled",
 	}
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
