@@ -572,11 +572,11 @@ func (s *CLITestSuite) TestHost() {
 	HostArgs = map[string]string{
 		"output-type": "yaml",
 	}
-	getOutput, err = s.getHost(project, hostID, HostArgs)
+	_, err = s.getHost(project, hostID, HostArgs)
 	s.NoError(err)
 
 	// Test get specific host by name duplicate names
-	getOutput, err = s.getHost("duplicate-host", "duplicate", make(map[string]string))
+	_, err = s.getHost("duplicate-host", "duplicate", make(map[string]string))
 	s.EqualError(err, "multiple hosts found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: host-abc12345\n  name: duplicate  resource-id: host-abc12345")
 
 	// Test get host with invalid project

@@ -201,7 +201,7 @@ func (s *CLITestSuite) TestSite() {
 		"order-by":  "invalid",
 		"page-size": "1",
 	}
-	listFilteredOutput, err = s.listSite(project, SArgs)
+	_, err = s.listSite(project, SArgs)
 	s.EqualError(err, "invalid --order-by field \"invalid\"; available fields: inheritedMetadata, metadata, name, provider, region, regionId, resourceId, siteID, siteLat, siteLng, timestamps")
 
 	/////////////////////////////

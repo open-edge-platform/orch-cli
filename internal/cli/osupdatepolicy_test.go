@@ -165,7 +165,7 @@ func (s *CLITestSuite) TestOSUpdatePolicy() {
 	s.compareGetOutput(expectedOutput, parsedGetOutput)
 
 	//get by name duplicate
-	getOutput, err = s.getOSUpdatePolicy("duplicate-policy", "duplicate", OArgs)
+	_, err = s.getOSUpdatePolicy("duplicate-policy", "duplicate", OArgs)
 	s.EqualError(err, "multiple OS Update Policies found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: osupdatepolicy-abc12345\n  name: duplicate  resource-id: osupdatepolicy-abc12345")
 
 	/////////////////////////////
