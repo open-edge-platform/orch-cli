@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
+	"github.com/spf13/viper"
 )
 
 func (s *CLITestSuite) createHost(publisher string, args commandArgs) (string, error) {
@@ -409,33 +410,37 @@ func (s *CLITestSuite) TestHost() {
 		"- Device: TestGPU, Vendor: TestVendor, Capabilities: cap1,cap2, PCI: 03:00.0":                                                          "",
 		"- Name: eth0, Link: UNSPECIFIED, MTU: 1500, MAC: 30:d0:42:d9:02:7c, PCI: 0000:19:00.0, SRIOV: true, VF Total: 8, VF Num: 4, BMC: true": "",
 		"- WWID: abcd, Capacity: 0 GB, Model: Model1, Serial: 123456, Vendor: Vendor1":                                                          "",
-		"AMT Info:":                                   "",
-		"AMT SKU:              12345":                 "",
-		"Architecture:         x86_64":                "",
-		"BIOS Vendor:          Lenovo":                "",
-		"BIOS Version:         TEE142L-2.61":          "",
-		"CPU Info:":                                   "",
-		"CVEs:":                                       "",
-		"Control Mode:         AMT_CONTROL_MODE_CCM":  "",
-		"Cores:                8":                     "",
-		"Current Power:        POWER_STATE_ON":        "",
-		"Current State:        AMT_STATE_PROVISIONED": "",
-		"Custom Configs:       haproxy-config":        "",
-		"Customizations:":                             "",
-		"DNS Suffix:           example.com":           "",
-		"Desired Power:        POWER_STATE_ON":        "",
-		"Desired State:        AMT_STATE_PROVISIONED": "",
-		"Detailed Host Information":                   "",
-		"GPU:":                                        "",
-		"Host Info:":                                  "",
-		"Host Status:          Running":               "",
-		"Interfaces:":                                 "",
-		"LVM Size:             10 GB":                 "",
-		"Memory:":                                     "",
-		"Metadata:":                                   "",
-		"Model:                Intel(R) Xeon(R) CPU E5-2670 v3":      "",
-		"NIC Name and IP:      eth0 192.168.1.102":                   "",
-		"Name:                 edge-host-001":                        "",
+		"AMT Info:":                                             "",
+		"AMT SKU:              12345":                           "",
+		"Architecture:         x86_64":                          "",
+		"BIOS Vendor:          Lenovo":                          "",
+		"BIOS Version:         TEE142L-2.61":                    "",
+		"CPU Info:":                                             "",
+		"CVEs:":                                                 "",
+		"Control Mode:         AMT_CONTROL_MODE_CCM":            "",
+		"Cores:                8":                               "",
+		"Current Power:        POWER_STATE_ON":                  "",
+		"Current State:        AMT_STATE_PROVISIONED":           "",
+		"Custom Configs:       haproxy-config":                  "",
+		"Customizations:":                                       "",
+		"DNS Suffix:           example.com":                     "",
+		"Desired Power:        POWER_STATE_ON":                  "",
+		"Desired State:        AMT_STATE_PROVISIONED":           "",
+		"Detailed Host Information":                             "",
+		"GPU:":                                                  "",
+		"Host Info:":                                            "",
+		"Host Status:          Running":                         "",
+		"Interfaces:":                                           "",
+		"KVM Current State:    N/A":                             "",
+		"KVM Desired State:    N/A":                             "",
+		"KVM Session Status:   N/A":                             "",
+		"KVM Status:           N/A":                             "",
+		"LVM Size:             10 GB":                           "",
+		"Memory:":                                               "",
+		"Metadata:":                                             "",
+		"Model:                Intel(R) Xeon(R) CPU E5-2670 v3": "",
+		"NIC Name and IP:      eth0 192.168.1.102":              "",
+		"Name:                 edge-host-001":                   "",
 		"OS Profile:           Edge Microvisor Toolkit 3.0.20250504": "",
 		"OS Update Policy:": "",
 		"OS:                   Edge Microvisor Toolkit 3.0.20250504": "",
@@ -444,6 +449,9 @@ func (s *CLITestSuite) TestHost() {
 		"Product Name:         ThinkSystem SR650":                    "",
 		"Provisioning Status:  PROVISIONING_STATUS_COMPLETED":        "",
 		"Resource ID:          host-abc12345":                        "",
+		"SOL Current State:    N/A":                                  "",
+		"SOL Desired State:    N/A":                                  "",
+		"SOL Session Status:   N/A":                                  "",
 		"Serial Number:        1234567890":                           "",
 		"Sockets:              2":                                    "",
 		"Specification:":                                             "",
@@ -554,6 +562,54 @@ func (s *CLITestSuite) TestHost() {
 	// Test delete host with non-existent host
 	_, err = s.deleteHost(project, "host-11111111", make(map[string]string))
 	s.Error(err)
+
+	// List hosts with order-by and YAML output
+	HostArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "resourceid: host-abc12345")
+	s.Contains(listOrderedOutput, "name: edge-host-001")
+	s.Contains(listOrderedOutput, "hoststatus: Running")
+
+	// List hosts with filter and YAML output
+	HostArgs = map[string]string{
+		"filter":      "name=edge-host-001",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "resourceid: host-abc12345")
+	s.Contains(listFilteredOutput, "name: edge-host-001")
+	s.Contains(listFilteredOutput, "hoststatus: Running")
+
+	// List hosts with table output and order-by
+	HostArgs = map[string]string{
+		"output-type": "table",
+		"order-by":    "name",
+	}
+	tableOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+
+	parsedTableOutput := mapListOutput(tableOutput)
+	expectedTableOutput := listCommandOutput{
+		{
+			"RESOURCE ID":         resourceID,
+			"NAME":                "edge-host-001",
+			"HOST STATUS":         "Running",
+			"PROVISIONING STATUS": "PROVISIONING_STATUS_COMPLETED",
+			"SERIAL NUMBER":       "1234567890",
+			"OPERATING SYSTEM":    "Edge Microvisor Toolkit 3.0.20250504",
+			"SITE ID":             "site-abcd1234",
+			"SITE NAME":           "site",
+			"WORKLOAD":            "Edge Kubernetes Cluster",
+		},
+	}
+	s.compareListOutput(expectedTableOutput, parsedTableOutput)
 
 	// --- CSV Generation Test ---
 	os.Remove("test_output.csv")
@@ -873,6 +929,40 @@ host-66,host-abcd1002,osupdatepolicy-abcd1234
 	}
 	_, err = s.updateOsHost(project, "", HostArgs)
 	s.EqualError(err, "\nfound 2 issues related to non-existing hosts and/or no set OS update policies - fix them and re-apply")
+}
+
+// TestHostOnboarding covers the setHostName code path, which is only reached
+// when the provisioning feature is disabled (onboarding-only mode).
+func (s *CLITestSuite) TestHostOnboarding() {
+	// Switch to onboarding-only mode: provisioning=false
+	viper.Set("test_orchestrator_features_disabled", true)
+	defer func() {
+		viper.Set("test_orchestrator_features_disabled", false)
+		// Re-login to restore full feature flags for subsequent tests
+		_ = s.logout()
+		_ = s.login("u", "p")
+	}()
+	// Re-login so that feature flags are set based on the mock response
+	_ = s.logout()
+	err := s.login("u", "p")
+	s.NoError(err)
+
+	// CSV import: Serial-only row — provisioning=false means OSProfile/Site are
+	// optional, so validation passes. registerHost returns hostID="host-1111abcd",
+	// then setHostName calls PatchHost with that ID.
+	HostArgs := commandArgs{
+		"import-from-csv": "./testdata/minimal.csv",
+	}
+	_, err = s.createHost(project, HostArgs)
+	s.NoError(err)
+
+	// Single-host creation with an explicit name: covers the hostName!="" branch
+	// inside setHostName (name is passed directly rather than defaulting to hostID).
+	HostArgs = commandArgs{
+		"serial": "SNONBOARD01",
+	}
+	_, err = s.createHostSingle(project, "onboard-host-001", HostArgs)
+	s.NoError(err)
 }
 
 func FuzzHost(f *testing.F) {

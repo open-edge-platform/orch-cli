@@ -66,7 +66,9 @@ func (s *CLITestSuite) TestOSProfile() {
 	s.EqualError(err, "OS Profile Edge Microvisor Toolkit 3.0.20250504 already exists")
 
 	// Test Listing OSProfiles
-	OSPArgs["filter"] = "osType=OS_TYPE_IMMUTABLE"
+	OSPArgs = map[string]string{
+		"filter": "osType=OS_TYPE_IMMUTABLE",
+	}
 	listOutput, err := s.listOSProfile(project, OSPArgs)
 	s.NoError(err)
 
@@ -81,7 +83,10 @@ func (s *CLITestSuite) TestOSProfile() {
 	s.compareListOutput(expectedOutputList, parsedOutputList)
 
 	//Test Listing OSProfiles with verbose
-	OSPArgs["verbose"] = "true"
+	OSPArgs = map[string]string{
+		"filter":  "osType=OS_TYPE_IMMUTABLE",
+		"verbose": "true",
+	}
 	listOutput, err = s.listOSProfile(project, OSPArgs)
 	s.NoError(err)
 	s.Contains(listOutput, name)
@@ -154,6 +159,29 @@ func (s *CLITestSuite) TestOSProfile() {
 	//Server error sim list
 	_, err = s.deleteOSProfile("nonexistent-project", name, OSPArgs)
 	s.EqualError(err, "Error getting OS profiles: Internal Server Error")
+
+	// List OS profiles with order-by and YAML output
+	OSPArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+	}
+	listOrderedOutput, err := s.listOSProfile(project, OSPArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "name: Edge Microvisor Toolkit 3.0.20250504")
+	s.Contains(listOrderedOutput, "architecture: x86_64")
+	s.Contains(listOrderedOutput, "securityfeature: SECURITY_FEATURE_NONE")
+
+	// List OS profiles with filter and YAML output
+	OSPArgs = map[string]string{
+		"filter":      "name=Edge Microvisor Toolkit 3.0.20250504",
+		"output-type": "yaml",
+	}
+	listFilteredOutput, err := s.listOSProfile(project, OSPArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "name: Edge Microvisor Toolkit 3.0.20250504")
+	s.Contains(listFilteredOutput, "architecture: x86_64")
+	s.Contains(listFilteredOutput, "securityfeature: SECURITY_FEATURE_NONE")
+
 }
 
 func FuzzOSProfile(f *testing.F) {
