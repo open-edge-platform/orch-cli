@@ -1706,6 +1706,7 @@ func CreateInfraMock(mctrl *gomock.Controller, timestamp time.Time) interfaces.I
 					return &infra.InstanceServiceGetInstanceResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &infra.InstanceResource{
+							UpdateStatus:         stringPtr("UPDATE_STATUS_COMPLETED"),
 							ResourceId:           stringPtr(instanceId),
 							ProvisioningStatus:   stringPtr("PROVISIONING_STATUS_COMPLETED"),
 							InstanceStatusDetail: stringPtr("INSTANCE_STATUS_RUNNING"),
