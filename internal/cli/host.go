@@ -1525,7 +1525,6 @@ func validateOSUpdatePolicy(osUpdatePolicy string) error {
 func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface, projectName string, recordSite string,
 	globalSite string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
-
 	siteToQuery := recordSite
 
 	if globalSite != "" {
@@ -1538,26 +1537,56 @@ func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface
 		return "", e.NewCustomError(e.ErrInvalidSite)
 	}
 
+	// Check cache first
 	if siteResource, ok := respCache.SiteCache[siteToQuery]; ok {
 		return *siteResource.ResourceId, nil
 	}
 
-	resp, err := hClient.SiteServiceGetSiteWithResponse(ctx, projectName, "regionID", siteToQuery, auth.AddAuthHeader)
+	// If input already looks like a resource ID, use the get-by-id API
+	if isSiteResourceID(siteToQuery) {
+		resp, err := hClient.SiteServiceGetSiteWithResponse(ctx, projectName, "empty", siteToQuery, auth.AddAuthHeader)
+		if err != nil {
+			record.Error = err.Error()
+			*erringRecords = append(*erringRecords, record)
+			return "", err
+		}
+
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error Site not found"); err != nil {
+			record.Error = err.Error()
+			*erringRecords = append(*erringRecords, record)
+			return "", err
+		}
+
+		// Cache by the original query (resource ID)
+		respCache.SiteCache[siteToQuery] = *resp.JSON200
+		return *resp.JSON200.ResourceId, nil
+	}
+
+	// Name-based lookup: list sites and find exact match. Handle no/multiple matches like site.go
+	resp, err := hClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
+		&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
 		return "", err
 	}
 
-	err = checkResponse(resp.HTTPResponse, resp.Body, "error Site not found")
-	if err != nil {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving sites"); err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
 		return "", err
 	}
 
-	respCache.SiteCache[siteToQuery] = *resp.JSON200
-	return *resp.JSON200.ResourceId, nil
+	site, findErr := findSiteByName(resp.JSON200.Sites, siteToQuery)
+	if findErr != nil {
+		record.Error = findErr.Error()
+		*erringRecords = append(*erringRecords, record)
+		return "", findErr
+	}
+
+	// Cache using the original name so future lookups by the same name are fast
+	respCache.SiteCache[siteToQuery] = site
+	return derefString(site.ResourceId), nil
 }
 
 // Checks if LVM size is valid
