@@ -162,6 +162,9 @@ func getListCommand() *cobra.Command {
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListUsersCommand(), MultitenancyFeature)
 	addCommandIfFeatureEnabled(catalogListRootCmd, getListGroupsCommand(), MultitenancyFeature)
 
+	// Observability related commands
+	addCommandIfFeatureEnabled(catalogListRootCmd, getListMetricNamesCommand(), EdgeNodeObservabilityFeature)
+
 	return catalogListRootCmd
 }
 
@@ -220,6 +223,9 @@ func getGetCommand() *cobra.Command {
 
 	// IAM user management commands
 	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetUserCommand(), MultitenancyFeature)
+
+	// Observability related commands
+	addCommandIfFeatureEnabled(catalogGetRootCmd, getGetMetricCommand(), EdgeNodeObservabilityFeature)
 
 	return catalogGetRootCmd
 }

@@ -17,6 +17,7 @@ import (
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
 	"github.com/open-edge-platform/orch-library/go/pkg/openidconnect"
+	promapi "github.com/prometheus/client_golang/api"
 	"github.com/spf13/cobra"
 )
 
@@ -31,3 +32,4 @@ type DeploymentFactoryFunc func(cmd *cobra.Command) (context.Context, depapi.Cli
 type TenancyFactoryFunc func(cmd *cobra.Command) (context.Context, tenantapi.ClientWithResponsesInterface, error)
 type OrchestratorFactoryFunc func(cmd *cobra.Command) (context.Context, orchapi.ClientWithResponsesInterface, error)
 type KeycloakAdminFactoryFunc func(cmd *cobra.Command) (context.Context, kcapi.ClientInterface, string, error)
+type PrometheusFactoryFunc func(cmd *cobra.Command) (promapi.Client, error)

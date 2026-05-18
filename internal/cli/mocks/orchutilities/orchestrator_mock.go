@@ -80,6 +80,9 @@ func CreateOrchestratorMock(mctrl *gomock.Controller) interfaces.OrchestratorFac
 								"orchestrator-observability": {
 									Installed: boolPtr(false),
 								},
+								"edgenode-observability": {
+									Installed: boolPtr(false),
+								},
 							},
 						},
 					}
@@ -120,6 +123,9 @@ func CreateOrchestratorMock(mctrl *gomock.Controller) interfaces.OrchestratorFac
 									Installed: boolPtr(true),
 								},
 								"orchestrator-observability": {
+									Installed: boolPtr(true),
+								},
+								"edgenode-observability": {
 									Installed: boolPtr(true),
 								},
 							},
