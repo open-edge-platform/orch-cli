@@ -134,13 +134,15 @@ func (s *CLITestSuite) TestDeploymentProfile() {
 	parsedOrderedOutput := mapLinesOutput(listOrderedOutput)
 
 	expectedOrderedOutput := linesCommandOutput{
-		"- applicationprofiles: {}",
+		"- applicationprofiles:",
+		"    additionalproperties: {}",
 		"  createtime: 2025-12-31T23:59:59Z",
 		"  description: Profile.for.testing",
 		"  displayname: deployment.profile.display.name",
 		"  name: deployment-package-profile",
 		"  updatetime: 2025-12-31T23:59:59Z",
-		"- applicationprofiles: {}",
+		"- applicationprofiles:",
+		"    additionalproperties: {}",
 		"  createtime: 2025-12-31T23:59:59Z",
 		"  description: Test.Profile.for.testing",
 		"  displayname: test.deployment.profile.display.name",

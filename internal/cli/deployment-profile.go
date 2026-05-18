@@ -16,11 +16,11 @@ import (
 )
 
 const (
-	DEFAULT_DEPLOYMENT_PROFILE_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Description}}\t{{len .ApplicationProfiles}}"
+	DEFAULT_DEPLOYMENT_PROFILE_FORMAT         = "table{{.Name}}\t{{.DisplayName}}\t{{.Description}}\t{{len .ApplicationProfiles.AdditionalProperties}}"
 	DEFAULT_DEPLOYMENT_PROFILE_INSPECT_FORMAT = `Name: {{.Name}}
 Display Name: {{str .DisplayName}}
 Description: {{str .Description}}
-Profiles:{{range $app, $profile := .ApplicationProfiles}}
+Profiles:{{range $app, $profile := .ApplicationProfiles.AdditionalProperties}}
   {{$app}}:{{$profile}}{{- end}}
 Create Time: {{.CreateTime}}
 Update Time: {{.UpdateTime}}
@@ -159,7 +159,7 @@ func runCreateDeploymentProfileCommand(cmd *cobra.Command, args []string) error 
 		Name:                profileName,
 		DisplayName:         &displayName,
 		Description:         &description,
-		ApplicationProfiles: applicationProfiles,
+		ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: applicationProfiles},
 	}
 	profiles := *pkg.Profiles
 
@@ -281,7 +281,7 @@ func runSetDeploymentProfileCommand(cmd *cobra.Command, args []string) error {
 			profile.Description = getFlagOrDefault(cmd, "description", profile.Description)
 			newApplicationProfiles, _ := cmd.Flags().GetStringToString("application-profile")
 			if len(newApplicationProfiles) > 0 {
-				profile.ApplicationProfiles = newApplicationProfiles
+				profile.ApplicationProfiles = catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: newApplicationProfiles}
 			}
 			profiles[i] = profile
 			ok = true

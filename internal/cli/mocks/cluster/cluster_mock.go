@@ -28,17 +28,18 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 			projectName = "test-project" // Default fallback
 		}
 
-		// Mock GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse (used by get template command)
-		mockClusterClient.EXPECT().GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		// Mock GetV2ProjectsProjectNameTemplatesNameVersionWithResponse (used by get template command)
+		mockClusterClient.EXPECT().GetV2ProjectsProjectNameTemplatesNameVersionWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName, templateName, version string, reqEditors ...cluster.RequestEditorFn) (*cluster.GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse, error) {
+			func(ctx context.Context, projectName cluster.ProjectNamePath, templateName string, version string, params *cluster.GetV2ProjectsProjectNameTemplatesNameVersionParams, reqEditors ...cluster.RequestEditorFn) (*cluster.GetV2ProjectsProjectNameTemplatesNameVersionResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				fmt.Printf("The name of the template is %s", templateName)
 				switch projectName {
 				case "nonexistent-project":
-					return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse{
+					return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Not Found"},
 						JSON500: &cluster.ProblemDetails{
 							Message: stringPtr("Project not found"),
@@ -47,14 +48,14 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 				default:
 					switch templateName {
 					case "nonexistent-template":
-						return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse{
+						return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionResponse{
 							HTTPResponse: &http.Response{StatusCode: 500, Status: "Not Found"},
 							JSON500: &cluster.ProblemDetails{
 								Message: stringPtr("Template not found"),
 							},
 						}, nil
 					default:
-						return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse{
+						return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionResponse{
 							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 							JSON200: &cluster.TemplateInfo{
 								Name:    templateName,
