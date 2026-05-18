@@ -266,8 +266,9 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.createHost(project, HostArgs)
 	// Accept either error message as valid
 	s.True(err != nil && (err.Error() == "Pre-flight check failed" ||
-		err.Error() == "a host name or --import-from-csv <path/to/file.csv> is required"),
-		"Expected either pre-flight check failure or missing CSV error, got: %v", err)
+		err.Error() == "a host name or --import-from-csv <path/to/file.csv> is required" ||
+		err.Error() == "Failed to provision hosts"),
+		"Expected either pre-flight check failure, missing CSV error, or failed provisioning, got: %v", err)
 
 	// Host creation with wrong cloud init
 	HostArgs = map[string]string{

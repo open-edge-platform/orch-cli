@@ -212,7 +212,7 @@ func (s *CLITestSuite) TestRegion() {
 
 	//delete invalid custom config
 	_, err = s.deleteRegion(project, "nonexistent-region", make(map[string]string))
-	s.EqualError(err, "invalid region id")
+	s.EqualError(err, "no region found with name \"nonexistent-region\"")
 
 	// List regions with order-by and YAML output
 	SArgs = map[string]string{

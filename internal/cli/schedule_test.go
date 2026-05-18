@@ -266,7 +266,7 @@ func (s *CLITestSuite) TestSchedule() {
 
 	//delete invalid schedule
 	_, err = s.deleteSchedule(project, "nonexistent-site", make(map[string]string))
-	s.EqualError(err, "no schedule matches the given id")
+	s.EqualError(err, "no schedule found with name \"nonexistent-site\"")
 
 	/////////////////////////////
 	// Test Schedule Set

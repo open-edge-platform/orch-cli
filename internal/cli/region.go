@@ -612,18 +612,6 @@ func checkName(name string, resource int) error {
 		return errors.New("invalid resource name")
 	}
 }
-
-func checkID(id string) error {
-	pattern := `^region-[0-9a-f]{8}$`
-	re := regexp.MustCompile(pattern)
-
-	if re.MatchString(id) {
-		return nil
-	}
-
-	return errors.New("invalid region id")
-}
-
 func checkType(name string, loctype string) (*[]infra.MetadataItem, error) {
 
 	if loctype == "" {

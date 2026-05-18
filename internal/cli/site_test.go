@@ -64,7 +64,7 @@ func (s *CLITestSuite) TestSite() {
 		"latitude":  "5",
 	}
 	_, err = s.createSite(project, name, SArgs)
-	s.EqualError(err, "invalid region id nope --region expects region-abcd1234 format")
+	s.EqualError(err, "no region found with name \"nope\"")
 
 	//create with wrong longitude
 	SArgs = map[string]string{
@@ -201,7 +201,7 @@ func (s *CLITestSuite) TestSite() {
 
 	//delete invalid custom config
 	_, err = s.deleteSite(project, "nonexistent-site", make(map[string]string))
-	s.EqualError(err, "error while deleting site: Not Found")
+	s.EqualError(err, "no site found with name \"nonexistent-site\"")
 
 	// List sites with order-by and YAML output
 	SArgs = map[string]string{
