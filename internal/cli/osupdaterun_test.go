@@ -122,7 +122,7 @@ func (s *CLITestSuite) TestOSUpdateRun() {
 	s.compareGetOutput(expectedOutput, parsedGetOutput)
 
 	//get osupdate run by name duplicate
-	getOutput, err = s.getOSUpdateRun("duplicate-run", "duplicate", OArgs)
+	_, err = s.getOSUpdateRun("duplicate-run", "duplicate", OArgs)
 	s.EqualError(err, "multiple OS Update Runs found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: osupdate-run-abc123\n  name: duplicate  resource-id: osupdate-run-abc123")
 
 	/////////////////////////////

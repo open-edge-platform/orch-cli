@@ -155,7 +155,7 @@ func (s *CLITestSuite) TestProvider() {
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
 	//get duplicate provider
-	getOutput, err = s.getProvider("duplicate-provider", "duplicate-provider", make(map[string]string))
+	_, err = s.getProvider("duplicate-provider", "duplicate-provider", make(map[string]string))
 	s.EqualError(err, "multiple providers found with name \"duplicate-provider\"; use a resource ID instead:\n  name: duplicate-provider  resource-id: provider-7ceae560\n  name: duplicate-provider  resource-id: provider-7ceae560")
 
 	/////////////////////////////

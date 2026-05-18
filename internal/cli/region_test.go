@@ -218,7 +218,7 @@ func (s *CLITestSuite) TestRegion() {
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
 	//get duplicate region by name
-	getOutput, err = s.getRegion("duplicate-region", "duplicate-region", make(map[string]string))
+	_, err = s.getRegion("duplicate-region", "duplicate-region", make(map[string]string))
 	s.EqualError(err, "multiple regions found with name \"duplicate-region\"; use a resource ID instead:\n  name: duplicate-region  resource-id: region-abcd1111\n  name: duplicate-region  resource-id: region-abcd1111")
 
 	/////////////////////////////
