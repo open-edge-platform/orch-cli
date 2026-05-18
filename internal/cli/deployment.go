@@ -600,8 +600,8 @@ func isDeploymentID(s string) bool {
 // findDeploymentByDisplayName searches a slice of deployments for an exact DisplayName match.
 // Returns an error if no match is found or if multiple deployments share the same display name
 // (listing the matches so the caller can retry with a deployment ID).
-func findDeploymentByDisplayName(deployments []depapi.Deployment, displayName string) (depapi.Deployment, error) {
-	var matches []depapi.Deployment
+func findDeploymentByDisplayName(deployments []depapi.DeploymentV1Deployment, displayName string) (depapi.DeploymentV1Deployment, error) {
+	var matches []depapi.DeploymentV1Deployment
 	for _, d := range deployments {
 		if d.DisplayName != nil && *d.DisplayName == displayName {
 			matches = append(matches, d)
@@ -609,7 +609,7 @@ func findDeploymentByDisplayName(deployments []depapi.Deployment, displayName st
 	}
 	switch len(matches) {
 	case 0:
-		return depapi.Deployment{}, fmt.Errorf("no deployment found with display name %q", displayName)
+		return depapi.DeploymentV1Deployment{}, fmt.Errorf("no deployment found with display name %q", displayName)
 	case 1:
 		return matches[0], nil
 	default:
@@ -618,7 +618,7 @@ func findDeploymentByDisplayName(deployments []depapi.Deployment, displayName st
 		for _, m := range matches {
 			fmt.Fprintf(&sb, "  display-name: %s  id: %s\n", derefString(m.DisplayName), derefString(m.DeployId))
 		}
-		return depapi.Deployment{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+		return depapi.DeploymentV1Deployment{}, errors.New(strings.TrimRight(sb.String(), "\n"))
 	}
 }
 
@@ -633,8 +633,8 @@ func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	if !isDeploymentID(query) {
 		// DisplayName-based lookup: list all deployments and do an exact client-side match.
-		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-			&depapi.DeploymentServiceListDeploymentsParams{},
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
 			auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
@@ -708,8 +708,8 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	if !isDeploymentID(deploymentID) {
 		// DisplayName-based lookup: list all deployments and do an exact client-side match.
-		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-			&depapi.DeploymentServiceListDeploymentsParams{},
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
 			auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
@@ -786,8 +786,8 @@ func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	if !isDeploymentID(deploymentID) {
 		// DisplayName-based lookup: list all deployments and do an exact client-side match.
-		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-			&depapi.DeploymentServiceListDeploymentsParams{},
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
 			auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
@@ -849,8 +849,8 @@ func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	if !isDeploymentID(deploymentID) {
 		// DisplayName-based lookup: list all deployments and do an exact client-side match.
-		resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-			&depapi.DeploymentServiceListDeploymentsParams{},
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
 			auth.AddAuthHeader)
 		if err != nil {
 			return processError(err)
