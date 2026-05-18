@@ -761,6 +761,11 @@ func resolveRangeWindow(startTimeStr string, endTimeStr string, durationSec int6
 	return resolveWindowInputs("range", startTimeStr, endTimeStr, durationSec, now)
 }
 
+// resolveIncreaseWindow converts increase inputs into a concrete time window.
+func resolveIncreaseWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
+	return resolveWindowInputs("increase", startTimeStr, endTimeStr, durationSec, now)
+}
+
 // validateWindowAggregationInputs validates common inputs for avg/sum/increase queries.
 func validateWindowAggregationInputs(metricName string, hostnameLabel string, hostname string, durationSec int64) error {
 	if err := validateMetricSelectorInputs(metricName, hostnameLabel, hostname); err != nil {
@@ -798,11 +803,6 @@ func buildIncreaseMetricQuery(metricName string, hostnameLabel string, hostname 
 	}
 
 	return fmt.Sprintf(`increase(%s{%s=%q}[%ds])`, metricName, hostnameLabel, hostname, durationSec), nil
-}
-
-// resolveIncreaseWindow converts increase inputs into a concrete time window.
-func resolveIncreaseWindow(startTimeStr string, endTimeStr string, durationSec int64, now time.Time) (int64, int64, error) {
-	return resolveWindowInputs("increase", startTimeStr, endTimeStr, durationSec, now)
 }
 
 // configuredMetricsEndpoint reads the configured Prometheus endpoint.
@@ -869,7 +869,7 @@ func deriveMetricsEndpointFromAPIEndpoint(apiEp string) (string, error) {
 		return "", fmt.Errorf("failed to determine metrics endpoint from api endpoint %q", apiEp)
 	}
 
-	return fmt.Sprintf("%s://metrics-node_cli.%s/prometheus", u.Scheme, parts[1]), nil
+	return fmt.Sprintf("%s://metrics-node-cli.%s/prometheus", u.Scheme, parts[1]), nil
 }
 
 // resolveOrgID returns the tenant/project UID for Mimir queries

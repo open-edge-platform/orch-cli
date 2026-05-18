@@ -161,7 +161,7 @@ func (s *CLITestSuite) TestGetMetricDerivesEndpointFromAPIEndpoint() {
 	PrometheusClientFactory = func(cmd *cobra.Command) (promapi.Client, error) {
 		endpoint, err := getMetricsEndpoint(cmd)
 		s.NoError(err)
-		s.Equal("https://metrics-node_cli.kind.internal/prometheus", endpoint)
+		s.Equal("https://metrics-node-cli.kind.internal/prometheus", endpoint)
 
 		return &fakePrometheusClient{
 			responseBody: []byte(`{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"edge-node-01"},"value":[1714478400,"42"]}]}}`),
@@ -195,7 +195,7 @@ type fakePrometheusClient struct {
 }
 
 func (f *fakePrometheusClient) URL(ep string, _ map[string]string) *url.URL {
-	return &url.URL{Scheme: "https", Host: "metrics-node_cli.kind.internal", Path: ep}
+	return &url.URL{Scheme: "https", Host: "metrics-node-cli.kind.internal", Path: ep}
 }
 
 func (f *fakePrometheusClient) Do(_ context.Context, _ *http.Request) (*http.Response, []byte, error) {
@@ -307,12 +307,12 @@ func TestDeriveMetricsEndpointFromAPIEndpoint(t *testing.T) {
 		{
 			name:     "valid https endpoint",
 			input:    "https://api.kind.internal/",
-			expected: "https://metrics-node_cli.kind.internal/prometheus",
+			expected: "https://metrics-node-cli.kind.internal/prometheus",
 		},
 		{
 			name:     "valid endpoint with port",
 			input:    "http://api.example.com:8443",
-			expected: "http://metrics-node_cli.example.com/prometheus",
+			expected: "http://metrics-node-cli.example.com/prometheus",
 		},
 		{
 			name:    "invalid without scheme",
