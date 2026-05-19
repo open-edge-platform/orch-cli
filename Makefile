@@ -220,7 +220,7 @@ artifact-publish:
 	tar -czvf orch-cli-package.tar.gz $(FILES)
 
 	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
-	aws ecr create-repository --region us-west-2 --repository-name ${OCI_REGISTRY}/${OCI_REPOSITORY} || true
+	aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY} || true
 	oras push ${OCI_REGISTRY}/${OCI_REPOSITORY}:$(VERSION) ./orch-cli-package.tar.gz
 
 list: help
