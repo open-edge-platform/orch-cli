@@ -240,7 +240,7 @@ func (s *CLITestSuite) TestSite() {
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
 	//get site by name
-	getOutput, err = s.getSite("duplicate-site", "duplicate-site", make(map[string]string))
+	_, err = s.getSite("duplicate-site", "duplicate-site", make(map[string]string))
 	s.EqualError(err, "multiple sites found with name \"duplicate-site\"; use a resource ID instead:\n  name: duplicate-site  resource-id: site-7ceae560\n  name: duplicate-site  resource-id: site-7ceae560")
 
 	/////////////////////////////

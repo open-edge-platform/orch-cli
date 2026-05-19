@@ -290,7 +290,7 @@ func (s *CLITestSuite) TestSchedule() {
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
 	//get schedule by name
-	getOutput, err = s.getSchedule(project, "schedule", SArgs)
+	_, err = s.getSchedule(project, "schedule", SArgs)
 	s.EqualError(err, "multiple schedules found with name \"schedule\"; use a resource ID instead:\n  name: schedule  resource-id: singlesche-abcd1234\n  name: schedule  resource-id: repeatedsche-abcd1234")
 
 	/////////////////////////////
