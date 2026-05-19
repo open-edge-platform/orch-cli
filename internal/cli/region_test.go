@@ -202,6 +202,25 @@ func (s *CLITestSuite) TestRegion() {
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
+	//get region by name
+	getOutput, err = s.getRegion(project, name, make(map[string]string))
+	s.NoError(err)
+
+	parsedOutput = mapGetOutput(getOutput)
+	expectedOutput = map[string]string{
+		"Name:":          name,
+		"Resource ID:":   resourceID,
+		"Parent region:": "region-abcd1111",
+		"Metadata:":      "[{region us-east}]",
+		"TotalSites:":    "1",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get duplicate region by name
+	_, err = s.getRegion("duplicate-region", "duplicate-region", make(map[string]string))
+	s.EqualError(err, "multiple regions found with name \"duplicate-region\"; use a resource ID instead:\n  name: duplicate-region  resource-id: region-abcd1111\n  name: duplicate-region  resource-id: region-abcd1111")
+
 	/////////////////////////////
 	// Test Region Delete
 	/////////////////////////////
@@ -212,7 +231,7 @@ func (s *CLITestSuite) TestRegion() {
 
 	//delete invalid custom config
 	_, err = s.deleteRegion(project, "nonexistent-region", make(map[string]string))
-	s.EqualError(err, "invalid region id")
+	s.EqualError(err, "no region found with name \"nonexistent-region\"")
 
 	// List regions with order-by and YAML output
 	SArgs = map[string]string{

@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
@@ -30,15 +31,20 @@ const (
 const listProviderExamples = `# List all providers
 orch-cli list provider --project some-project`
 
-const getProviderExamples = `# Get specific provider information using resource ID
-orch-cli get provider provider-aaaa1111 --project some-project`
+const getProviderExamples = `# Get a provider by resource ID
+orch-cli get provider provider-aaaa1111 --project some-project
+
+# Get a provider by name
+orch-cli get provider myprovider --project some-project`
 
 const createProviderExamples = `# Create specific provider
 # Create a provider by providing name, kind, and empty API endpoint
 orch-cli create provider myprovider "PROVIDER_KIND_BAREMETAL" "" --vendor "PROVIDER_VENDOR_UNSPECIFIED" --config ""defaultOs":"","autoProvision":false,"defaultLocalAccount":"","osSecurityFeatureEnable":false" --project some-project`
 
-const deleteProviderExamples = `# Delete specific provider
-orch-cli delete provider provider-aaaa1111 --project some-project`
+const deleteProviderExamples = `# Delete a provider by resource ID
+orch-cli delete provider provider-aaaa1111 --project some-project
+# Delete a provider by name
+orch-cli delete provider "my-provider" --project some-project`
 
 func printProviders(cmd *cobra.Command, writer io.Writer, providers *[]infra.ProviderResource, orderBy *string, outputFilter *string, verbose bool, forList bool) error {
 	outputType, _ := cmd.Flags().GetString("output-type")
@@ -98,7 +104,7 @@ func getListProviderCommand() *cobra.Command {
 
 func getGetProviderCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "provider <resourceid> [flags]",
+		Use:     "provider <name|resourceID> [flags]",
 		Short:   "Get a provider",
 		Example: getProviderExamples,
 		Args:    cobra.ExactArgs(1),
@@ -126,7 +132,7 @@ func getCreateProviderCommand() *cobra.Command {
 
 func getDeleteProviderCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "provider <resourceid> [flags]",
+		Use:     "provider <name|resourceID> [flags]",
 		Short:   "Delete a provider",
 		Example: deleteProviderExamples,
 		Args:    cobra.ExactArgs(1),
@@ -403,6 +409,38 @@ func getValidatedProviderFilter(
 	})
 }
 
+// providerResourceIDPattern matches provider resource IDs: "provider-" followed by 8 hex chars.
+var providerResourceIDPattern = regexp.MustCompile(`^provider-[0-9a-f]{8}$`)
+
+func isProviderResourceID(s string) bool {
+	return providerResourceIDPattern.MatchString(s)
+}
+
+// findProviderByName searches a slice of providers for an exact name match.
+// Returns an error if no match is found or if multiple providers share the same name
+// (listing the matches so the caller can retry with a resource ID).
+func findProviderByName(providers []infra.ProviderResource, name string) (infra.ProviderResource, error) {
+	var matches []infra.ProviderResource
+	for _, p := range providers {
+		if p.Name == name {
+			matches = append(matches, p)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return infra.ProviderResource{}, fmt.Errorf("no provider found with name %q", name)
+	case 1:
+		return matches[0], nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple providers found with name %q; use a resource ID instead:\n", name)
+		for _, m := range matches {
+			fmt.Fprintf(&sb, "  name: %s  resource-id: %s\n", m.Name, derefString(m.ResourceId))
+		}
+		return infra.ProviderResource{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
+}
+
 func runGetProviderCommand(cmd *cobra.Command, args []string) error {
 	writer, _ := getOutputContext(cmd)
 	ctx, providerClient, projectName, err := InfraFactory(cmd)
@@ -410,26 +448,63 @@ func runGetProviderCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	id := args[0]
+	query := args[0]
 
-	resp, err := providerClient.ProviderServiceGetProviderWithResponse(ctx, projectName,
-		id, auth.AddAuthHeader)
-	if err != nil {
-		return processError(err)
+	if isProviderResourceID(query) {
+		resp, err := providerClient.ProviderServiceGetProviderWithResponse(ctx, projectName,
+			query, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting provider"); !proceed {
+			return err
+		}
+		providers := []infra.ProviderResource{*resp.JSON200}
+		var emptyFilter string
+		if err := printProviders(cmd, writer, &providers, nil, &emptyFilter, false, false); err != nil {
+			return err
+		}
+		return writer.Flush()
 	}
 
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
-		"", "error getting provider"); !proceed {
+	// Name-based lookup: list all providers and filter by name.
+	pageSize := 100
+	offset := 0
+	var allProviders []infra.ProviderResource
+	for {
+		resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
+			&infra.ProviderServiceListProvidersParams{
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving providers"); err != nil {
+			return err
+		}
+		if resp.JSON200 == nil {
+			break
+		}
+		allProviders = append(allProviders, resp.JSON200.Providers...)
+		if len(allProviders) >= int(resp.JSON200.TotalElements) || len(resp.JSON200.Providers) == 0 {
+			break
+		}
+		offset += pageSize
+	}
+
+	provider, err := findProviderByName(allProviders, query)
+	if err != nil {
 		return err
 	}
 
-	providers := []infra.ProviderResource{*resp.JSON200}
+	providers := []infra.ProviderResource{provider}
 	var emptyFilter string
 	// Get command always shows full details (forList=false)
 	if err := printProviders(cmd, writer, &providers, nil, &emptyFilter, false, false); err != nil {
 		return err
 	}
-
 	return writer.Flush()
 }
 
@@ -444,6 +519,39 @@ func runDeleteProviderCommand(cmd *cobra.Command, args []string) error {
 	ctx, providerClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	if !isProviderResourceID(id) {
+		// Name-based lookup: paginated list, then exact client-side match.
+		pageSize := 100
+		offset := 0
+		var allProviders []infra.ProviderResource
+		for {
+			resp, err := providerClient.ProviderServiceListProvidersWithResponse(ctx, projectName,
+				&infra.ProviderServiceListProvidersParams{
+					PageSize: &pageSize,
+					Offset:   &offset,
+				}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving providers"); err != nil {
+				return err
+			}
+			if resp.JSON200 == nil {
+				break
+			}
+			allProviders = append(allProviders, resp.JSON200.Providers...)
+			if len(allProviders) >= int(resp.JSON200.TotalElements) || len(resp.JSON200.Providers) == 0 {
+				break
+			}
+			offset += pageSize
+		}
+		provider, err := findProviderByName(allProviders, id)
+		if err != nil {
+			return err
+		}
+		id = derefString(provider.ResourceId)
 	}
 
 	resp, err := providerClient.ProviderServiceDeleteProviderWithResponse(ctx, projectName,

@@ -64,7 +64,7 @@ func (s *CLITestSuite) TestSite() {
 		"latitude":  "5",
 	}
 	_, err = s.createSite(project, name, SArgs)
-	s.EqualError(err, "invalid region id nope --region expects region-abcd1234 format")
+	s.EqualError(err, "no region found with name \"nope\"")
 
 	//create with wrong longitude
 	SArgs = map[string]string{
@@ -172,37 +172,6 @@ func (s *CLITestSuite) TestSite() {
 
 	s.compareListOutput(expectedOutputList, parsedOutputList)
 
-	/////////////////////////////
-	// Test Site Get
-	/////////////////////////////
-
-	getOutput, err := s.getSite(project, resourceID, make(map[string]string))
-	s.NoError(err)
-
-	parsedOutput := mapGetOutput(getOutput)
-	expectedOutput := map[string]string{
-		"Name:":        name,
-		"Resource ID:": resourceID,
-		"Region ID:":   regionID,
-		"Region Name:": "region",
-		"Latitude:":    "50000000",
-		"Longitude:":   "50000000",
-	}
-
-	s.compareGetOutput(expectedOutput, parsedOutput)
-
-	/////////////////////////////
-	// Test Site Delete
-	/////////////////////////////
-
-	//delete custom config
-	_, err = s.deleteSite(project, resourceID, make(map[string]string))
-	s.NoError(err)
-
-	//delete invalid custom config
-	_, err = s.deleteSite(project, "nonexistent-site", make(map[string]string))
-	s.EqualError(err, "error while deleting site: Not Found")
-
 	// List sites with order-by and YAML output
 	SArgs = map[string]string{
 		"order-by":    "name",
@@ -226,6 +195,65 @@ func (s *CLITestSuite) TestSite() {
 	s.Contains(listFilteredOutput, "name: site")
 	s.Contains(listFilteredOutput, "resourceid: "+resourceID)
 	s.Contains(listFilteredOutput, "regionid: "+regionID)
+
+	// List sites with invalid order-by
+	SArgs = map[string]string{
+		"order-by":  "invalid",
+		"page-size": "1",
+	}
+	_, err = s.listSite(project, SArgs)
+	s.EqualError(err, "invalid --order-by field \"invalid\"; available fields: inheritedMetadata, metadata, name, provider, region, regionId, resourceId, siteID, siteLat, siteLng, timestamps")
+
+	/////////////////////////////
+	// Test Site Get
+	/////////////////////////////
+
+	getOutput, err := s.getSite(project, resourceID, make(map[string]string))
+	s.NoError(err)
+
+	parsedOutput := mapGetOutput(getOutput)
+	expectedOutput := map[string]string{
+		"Name:":        name,
+		"Resource ID:": resourceID,
+		"Region ID:":   regionID,
+		"Region Name:": "region",
+		"Latitude:":    "50000000",
+		"Longitude:":   "50000000",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get site by name
+	getOutput, err = s.getSite(project, "site", make(map[string]string))
+	s.NoError(err)
+
+	parsedOutput = mapGetOutput(getOutput)
+	expectedOutput = map[string]string{
+		"Name:":        name,
+		"Resource ID:": resourceID,
+		"Region ID:":   regionID,
+		"Region Name:": "region",
+		"Latitude:":    "50000000",
+		"Longitude:":   "50000000",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get site by name
+	_, err = s.getSite("duplicate-site", "duplicate-site", make(map[string]string))
+	s.EqualError(err, "multiple sites found with name \"duplicate-site\"; use a resource ID instead:\n  name: duplicate-site  resource-id: site-7ceae560\n  name: duplicate-site  resource-id: site-7ceae560")
+
+	/////////////////////////////
+	// Test Site Delete
+	/////////////////////////////
+
+	//delete custom config
+	_, err = s.deleteSite(project, resourceID, make(map[string]string))
+	s.NoError(err)
+
+	//delete invalid custom config
+	_, err = s.deleteSite(project, "nonexistent-site", make(map[string]string))
+	s.EqualError(err, "no site found with name \"nonexistent-site\"")
 
 }
 

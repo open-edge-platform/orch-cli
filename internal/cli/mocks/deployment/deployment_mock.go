@@ -47,7 +47,7 @@ func CreateDeploymentMock(mctrl *gomock.Controller) interfaces.DeploymentFactory
 					JSON200: &deployment.DeploymentV1GetDeploymentResponse{
 						Deployment: deployment.DeploymentV1Deployment{
 
-							DeployId:    stringPtr("deployment-id"),
+							DeployId:    stringPtr("9d652bb4-2412-4566-89b5-614f22e2a837"),
 							Name:        stringPtr("projectName"),
 							DisplayName: stringPtr("displayName"),
 							ProfileName: stringPtr("profileName"),

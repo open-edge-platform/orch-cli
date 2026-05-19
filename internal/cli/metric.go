@@ -16,6 +16,7 @@ import (
 
 	"github.com/open-edge-platform/cli/pkg/auth"
 	"github.com/open-edge-platform/cli/pkg/format"
+	"github.com/open-edge-platform/cli/pkg/rest/infra"
 	promrest "github.com/open-edge-platform/cli/pkg/rest/prometheus"
 	promapi "github.com/prometheus/client_golang/api"
 	"github.com/spf13/cobra"
@@ -69,8 +70,10 @@ orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --
 orch-cli list metrics --filter cpu
 `
 
-const getMetricExamples = `# Query metric for a host in the current project (org-id auto-derived)
+const getMetricExamples = `# Query metric for a host by resource ID in the current project (org-id auto-derived)
 orch-cli get metric metric_example --hostname host-xxxxxxxx
+# Query metric for a host by name in the current project
+orch-cli get metric metric_example --hostname my-edge-node
 # Query metric for a host in another project (org-id auto-derived)
 orch-cli get metric metric_example --hostname host-xxxxxxxx --project sampleproject
 # Query with explicit org-id
@@ -269,7 +272,7 @@ func getGetMetricCommand() *cobra.Command {
 	}
 
 	cmd.Aliases = []string{"metrics"}
-	cmd.Flags().String(hostnameFlag, viper.GetString(hostnameFlag), "Hostname label value to match in Prometheus")
+	cmd.Flags().String(hostnameFlag, viper.GetString(hostnameFlag), "Host resource ID or name to match in Prometheus")
 	cmd.Flags().String(hostnameLabelFlag, defaultHostnameLabel, "Prometheus label name used to match the hostname")
 	cmd.Flags().String(metricsEndpointFlag, configuredMetricsEndpoint(), "Mimir (Prometheus-compatible) base URL")
 	cmd.Flags().String(orgIDFlag, viper.GetString(orgIDFlag), "Mimir tenant ID sent as X-Scope-OrgID")
@@ -579,6 +582,29 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Resolve --hostname by name if not already a resource ID.
+	if !isHostResourceID(hostname) {
+		infraCTX, hostClient, projectName, infraErr := InfraFactory(cmd)
+		if infraErr != nil {
+			return infraErr
+		}
+		nameFilter := fmt.Sprintf("name=%q", hostname)
+		hostResp, infraErr := hostClient.HostServiceListHostsWithResponse(infraCTX, projectName,
+			&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+		if infraErr != nil {
+			return processError(infraErr)
+		}
+		if infraErr = checkResponse(hostResp.HTTPResponse, hostResp.Body, "error while retrieving hosts"); infraErr != nil {
+			return infraErr
+		}
+		host, infraErr := findHostByName(hostResp.JSON200.Hosts, hostname)
+		if infraErr != nil {
+			return infraErr
+		}
+		hostname = derefString(host.ResourceId)
+	}
+
 	hostnameLabel, err := cmd.Flags().GetString(hostnameLabelFlag)
 	if err != nil {
 		return err

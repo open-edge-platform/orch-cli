@@ -97,18 +97,18 @@ func (s *CLITestSuite) TestDeployment() {
 	})
 	s.NoError(err)
 
-	_, err = s.getDeployment(project, "test-deployment", make(map[string]string))
+	_, err = s.getDeployment(project, "9d652bb4-2412-4566-89b5-614f22e2a837", make(map[string]string))
 	s.NoError(err)
 
-	_, err = s.setDeployment(project, "test-deployment", make(map[string]string))
+	_, err = s.setDeployment(project, "9d652bb4-2412-4566-89b5-614f22e2a837", make(map[string]string))
 	s.NoError(err)
 
-	_, err = s.upgradeDeployment(project, "test-deployment", map[string]string{
+	_, err = s.upgradeDeployment(project, "9d652bb4-2412-4566-89b5-614f22e2a837", map[string]string{
 		"package-version": "1.1.0",
 	})
 	s.NoError(err)
 
-	_, err = s.deleteDeployment(project, "test-deployment", make(map[string]string))
+	_, err = s.deleteDeployment(project, "9d652bb4-2412-4566-89b5-614f22e2a837", make(map[string]string))
 	s.NoError(err)
 
 	// List deployments with order-by and YAML output

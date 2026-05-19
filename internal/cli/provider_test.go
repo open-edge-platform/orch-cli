@@ -136,6 +136,28 @@ func (s *CLITestSuite) TestProvider() {
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
+	//get provider by name
+	getOutput, err = s.getProvider(project, name, make(map[string]string))
+	s.NoError(err)
+
+	parsedOutput = mapGetOutput(getOutput)
+	expectedOutput = map[string]string{
+		"Name:":               name,
+		"Resource ID:":        resourceID,
+		"Kind:":               kind,
+		"Vendor:":             vendor,
+		"API Endpoint:":       api,
+		"Config:":             "{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}",
+		"Creation Timestamp:": "2025-01-15 10:30:00 +0000 UTC",
+		"Updated Timestamp:":  "2025-01-15 10:30:00 +0000 UTC",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get duplicate provider
+	_, err = s.getProvider("duplicate-provider", "duplicate-provider", make(map[string]string))
+	s.EqualError(err, "multiple providers found with name \"duplicate-provider\"; use a resource ID instead:\n  name: duplicate-provider  resource-id: provider-7ceae560\n  name: duplicate-provider  resource-id: provider-7ceae560")
+
 	/////////////////////////////
 	// Test Provider Delete
 	/////////////////////////////
@@ -165,7 +187,7 @@ func (s *CLITestSuite) TestProvider() {
 	//delete invalid custom config
 	os.Stdin = r
 	_, err = s.deleteProvider(project, "nonexistent-provider", make(map[string]string))
-	s.EqualError(err, "error while deleting provider: Not Found")
+	s.EqualError(err, "no provider found with name \"nonexistent-provider\"")
 
 	//delete invalid custom config with N as response
 	_, err = s.deleteProvider(project, "nonexistent-provider", make(map[string]string))
