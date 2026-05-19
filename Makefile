@@ -5,6 +5,10 @@ CMD_DIR         ?= ./cmd/orch-cli
 
 PKG     	:= github.com/open-edge-platform/cli
 
+OCI_REPOSITORY 	:= edge-orch/files/orch-cli
+OCI_REGISTRY    ?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
+VERSION         ?= $(shell cat ./VERSION)
+
 RELEASE_DIR     ?= release
 RELEASE_NAME    ?= orch-cli
 RELEASE_OS_ARCH ?= linux-amd64 linux-arm64 windows-amd64 darwin-amd64
@@ -209,6 +213,15 @@ reuse-tool:
 license: reuse-tool
 	@# Help: Check licensing with the reuse tool
 	reuse lint
+
+artifact-publish:
+	@echo "TAR orch-cli."
+	FILES := src ./binaries/build/_output/orch-cli
+	tar -czvf orch-cli-package.tar.gz $(FILES)
+
+	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
+	aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY} || true
+	oras push ${OCI_REGISTRY}/${OCI_REPOSITORY}:$(VERSION) ./orch-cli-package.tar.gz
 
 list: help
 	@# Help: displays make targets
