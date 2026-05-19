@@ -71,6 +71,22 @@ func (s *CLITestSuite) TestCluster() {
 	_, err = s.createCluster(project, name, CArgs)
 	s.NoError(err)
 
+	//Create cluster - hostby name
+	CArgs = map[string]string{
+		"nodes":   "edge-host-001:all",
+		"verbose": "",
+	}
+	_, err = s.createCluster(project, name, CArgs)
+	s.NoError(err)
+
+	//Create cluster
+	CArgs = map[string]string{
+		"nodes":   "duplicate:all",
+		"verbose": "",
+	}
+	_, err = s.createCluster("duplicate-host", name, CArgs)
+	s.EqualError(err, "multiple hosts found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: host-abc12345\n  name: duplicate  resource-id: host-abc12345")
+
 	/////////////////////////////
 	// Test Cluster List
 	/////////////////////////////

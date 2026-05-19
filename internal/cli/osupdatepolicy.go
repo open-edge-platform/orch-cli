@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/open-edge-platform/cli/pkg/auth"
@@ -26,8 +27,11 @@ const listOSUpdatePolicyExamples = `# List all OS Update Policies
 orch-cli list osupdatepolicy --project some-project
 `
 
-const getOSUpdatePolicyExamples = `# Get detailed information about specific OS Update Policy using the policy name
-orch-cli get osupdatepolicy <resourceID> --project some-project`
+const getOSUpdatePolicyExamples = `# Get an OS Update Policy by resource ID
+orch-cli get osupdatepolicy osupdatepolicy-032494f7 --project some-project
+
+# Get an OS Update Policy by name
+orch-cli get osupdatepolicy myupdatepolicy --project some-project`
 
 const createOSUpdatePolicyExamples = `# Create an OS Update Policy.
 orch-cli create osupdatepolicy path/to/osupdatepolicy.yaml  --project some-project
@@ -40,8 +44,10 @@ spec:
   updatePolicy: "UPDATE_POLICY_LATEST"
 `
 
-const deleteOSUpdatePolicyExamples = `#Delete an OS Update Policy  using it's name
-orch-cli delete <resourceID> policy --project some-project`
+const deleteOSUpdatePolicyExamples = `# Delete an OS Update policy by resource ID
+orch-cli delete osupdatepolicy osupdatepolicy-1234abcd --project some-project
+# Delete an OS Update policy by name
+orch-cli delete osupdatepolicy "my-policy" --project some-project`
 
 var osUpdatePolicySchema = `
 {
@@ -209,7 +215,7 @@ func readUpdateProfileFromYaml(path string) (*UpdateNestedSpec, error) {
 
 func getGetOSUpdatePolicyCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "osupdatepolicy <name> [flags]",
+		Use:     "osupdatepolicy <name|resourceID> [flags]",
 		Short:   "Get an OS Update policy",
 		Example: getOSUpdatePolicyExamples,
 		Args:    cobra.ExactArgs(1),
@@ -248,7 +254,7 @@ func getCreateOSUpdatePolicyCommand() *cobra.Command {
 
 func getDeleteOSUpdatePolicyCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "osupdatepolicy <name> [flags]",
+		Use:     "osupdatepolicy <name|resourceID> [flags]",
 		Short:   "Delete an OS Update policy",
 		Example: deleteOSUpdatePolicyExamples,
 		Args:    cobra.ExactArgs(1),
@@ -258,24 +264,79 @@ func getDeleteOSUpdatePolicyCommand() *cobra.Command {
 	return cmd
 }
 
-// Gets specific OSUpdatePolicy - retrieves list of policies and then filters and outputs
-// specifc policy by name
-func runGetOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
+// osUpdatePolicyResourceIDPattern matches OS Update Policy resource IDs: "osupdatepolicy-" followed by 8 hex chars.
+var osUpdatePolicyResourceIDPattern = regexp.MustCompile(`^osupdatepolicy-[0-9a-f]{8}$`)
 
+func isOSUpdatePolicyResourceID(s string) bool {
+	return osUpdatePolicyResourceIDPattern.MatchString(s)
+}
+
+// findOSUpdatePolicyByName searches a slice of OS Update Policies for an exact name match.
+// Returns an error if no match is found or if multiple policies share the same name
+// (listing the matches so the caller can retry with a resource ID).
+func findOSUpdatePolicyByName(policies []infra.OSUpdatePolicy, name string) (infra.OSUpdatePolicy, error) {
+	var matches []infra.OSUpdatePolicy
+	for _, p := range policies {
+		if p.Name == name {
+			matches = append(matches, p)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return infra.OSUpdatePolicy{}, fmt.Errorf("no OS Update Policy found with name %q", name)
+	case 1:
+		return matches[0], nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple OS Update Policies found with name %q; use a resource ID instead:\n", name)
+		for _, m := range matches {
+			fmt.Fprintf(&sb, "  name: %s  resource-id: %s\n", m.Name, derefString(m.ResourceId))
+		}
+		return infra.OSUpdatePolicy{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
+}
+
+// Gets specific OSUpdatePolicy by resource ID or name.
+// If the argument matches the resource ID pattern it is looked up directly.
+// Otherwise all policies are fetched and filtered by exact name match.
+func runGetOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	writer, _ := getOutputContext(cmd)
 	ctx, OSUpdatePolicyClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
-	policyID := args[0]
-	resp, err := OSUpdatePolicyClient.OSUpdatePolicyGetOSUpdatePolicyWithResponse(ctx, projectName, policyID, auth.AddAuthHeader)
+
+	query := args[0]
+
+	if isOSUpdatePolicyResourceID(query) {
+		resp, err := OSUpdatePolicyClient.OSUpdatePolicyGetOSUpdatePolicyWithResponse(ctx, projectName, query, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error getting OS Update Policy"); err != nil {
+			return err
+		}
+		if err := printOSUpdatePolicy(cmd, writer, resp.JSON200); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	// Name-based lookup: list all policies and filter by name.
+	resp, err := OSUpdatePolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+		&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	if err := checkResponse(resp.HTTPResponse, resp.Body, "error getting OS Update Policy"); err != nil {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving OS Update policies"); err != nil {
 		return err
 	}
-	if err := printOSUpdatePolicy(cmd, writer, resp.JSON200); err != nil {
+
+	policy, err := findOSUpdatePolicyByName(resp.JSON200.OsUpdatePolicies, query)
+	if err != nil {
+		return err
+	}
+	if err := printOSUpdatePolicy(cmd, writer, &policy); err != nil {
 		return err
 	}
 	return writer.Flush()
@@ -414,6 +475,23 @@ func runDeleteOSUpdatePolicyCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	policyID := args[0]
+
+	if !isOSUpdatePolicyResourceID(policyID) {
+		// Name-based lookup: list all policies and filter by name.
+		resp, err := OSUPolicyClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+			&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving OS Update policies"); err != nil {
+			return err
+		}
+		policy, err := findOSUpdatePolicyByName(resp.JSON200.OsUpdatePolicies, policyID)
+		if err != nil {
+			return err
+		}
+		policyID = derefString(policy.ResourceId)
+	}
 
 	resp, err := OSUPolicyClient.OSUpdatePolicyDeleteOSUpdatePolicyWithResponse(ctx, projectName,
 		policyID, auth.AddAuthHeader)

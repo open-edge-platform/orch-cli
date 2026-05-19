@@ -49,7 +49,6 @@ func SanitizeEntries(entries []types.HostRecord, provisioningSupported bool) ([]
 
 	snRe := regexp.MustCompile(SNPATTERN)
 	uRe := regexp.MustCompile(UPATTERN)
-	siteRe := regexp.MustCompile(SITEIDPATTERN)
 	ctempRe := regexp.MustCompile(CLSTRTMPLTPATTERN)
 
 	for i := 1; i <= len(entries); i++ {
@@ -98,7 +97,6 @@ func SanitizeEntries(entries []types.HostRecord, provisioningSupported bool) ([]
 		// Only required if provisioning is supported
 		if record.Site != "" {
 			siteID := strings.Trim(record.Site, TRIMSET)
-			errMsg = validateSite(siteRe, siteID, errMsg)
 			sanitizedRecord.Site = siteID
 		} else if provisioningSupported {
 			errMsg = fmt.Sprintf("%s %s;", errMsg, e.NewCustomError(e.ErrSiteRequired).Error())
@@ -159,13 +157,6 @@ func validateSN(snRe *regexp.Regexp, sn, errMsg string, mapSn map[string]int, i 
 		errMsg = fmt.Sprintf("%s : Row %d;", e.NewCustomError(e.ErrDuplicateSN).Error(), idx)
 	} else if sn != "" {
 		mapSn[strings.ToLower(sn)] = i
-	}
-	return errMsg
-}
-
-func validateSite(siteRe *regexp.Regexp, site, errMsg string) string {
-	if matched := siteRe.MatchString(site); !matched {
-		errMsg = fmt.Sprintf("%s;", e.NewCustomError(e.ErrInvalidSite).Error())
 	}
 	return errMsg
 }

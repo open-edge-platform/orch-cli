@@ -26,22 +26,62 @@ orch-cli list region --project some-project
 # List all regions within specific parent region ID - first level only
 orch-cli list region --project some-project --region region-aaaa1111"`
 
-const getRegionExamples = `# Get specific region information
-orch-cli get region region-aaaa1111 --project some-project`
+const getRegionExamples = `# Get a region by resource ID
+orch-cli get region region-aaaa1111 --project some-project
+
+# Get a region by name
+orch-cli get region myregion --project some-project`
 
 const createRegionExamples = `# Create specific region
 orch-cli create region name --project some-project --type country
 
-# Create specific region as a subregion to another region
+# Create specific region as a subregion to another region (by resource ID)
 orch-cli create region name --project some-project --parent region-bbbb1111 --type country
+
+# Create specific region as a subregion to another region (by name)
+orch-cli create region name --project some-project --parent "My Parent Region" --type country
 
 --type = country/state/county/region/city`
 
-const deleteRegionExamples = `# Delete specific region
-orch-cli delete region region-aaaa1111 --project some-project`
+const deleteRegionExamples = `# Delete a region by resource ID
+orch-cli delete region region-aaaa1111 --project some-project
+# Delete a region by name
+orch-cli delete region "my-region" --project some-project`
 
 const spaces string = "       "
 const spaces2 string = ""
+
+// regionResourceIDPattern matches region resource IDs: "region-" followed by 8 hex chars.
+var regionResourceIDPattern = regexp.MustCompile(`^region-[0-9a-f]{8}$`)
+
+func isRegionResourceID(s string) bool {
+	return regionResourceIDPattern.MatchString(s)
+}
+
+// findRegionByName searches a slice of regions for an exact name match.
+// Returns an error if no match is found or if multiple regions share the same name
+// (listing the matches so the caller can retry with a resource ID).
+func findRegionByName(regions []infra.RegionResource, name string) (infra.RegionResource, error) {
+	var matches []infra.RegionResource
+	for _, r := range regions {
+		if r.Name != nil && *r.Name == name {
+			matches = append(matches, r)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return infra.RegionResource{}, fmt.Errorf("no region found with name %q", name)
+	case 1:
+		return matches[0], nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple regions found with name %q; use a resource ID instead:\n", name)
+		for _, m := range matches {
+			fmt.Fprintf(&sb, "  name: %s  resource-id: %s\n", derefString(m.Name), derefString(m.ResourceId))
+		}
+		return infra.RegionResource{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
+}
 
 type region2Site struct {
 	Sites  map[string][]infra.SiteResource
@@ -77,7 +117,7 @@ func getListRegionCommand() *cobra.Command {
 
 func getGetRegionCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "region <resourceid> [flags]",
+		Use:     "region <name|resourceID> [flags]",
 		Short:   "Get a region",
 		Example: getRegionExamples,
 		Args:    cobra.ExactArgs(1),
@@ -97,14 +137,14 @@ func getCreateRegionCommand() *cobra.Command {
 		Aliases: regionAliases,
 		RunE:    runCreateRegionCommand,
 	}
-	cmd.PersistentFlags().StringP("parent", "f", viper.GetString("parent"), "Optional parent region used to create a sub region: --parent region-aaaa1111")
+	cmd.PersistentFlags().StringP("parent", "f", viper.GetString("parent"), "Optional parent region used to create a sub region: --parent region-aaaa1111 or --parent \"My Parent Region\"")
 	cmd.PersistentFlags().StringP("type", "t", viper.GetString("type"), "Mandatory flag to provide a type of region: --type country/state/county/region/city")
 	return cmd
 }
 
 func getDeleteRegionCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "region <resourceid> [flags]",
+		Use:     "region <name|resourceID> [flags]",
 		Short:   "Delete a region",
 		Example: deleteRegionExamples,
 		Args:    cobra.ExactArgs(1),
@@ -114,8 +154,9 @@ func getDeleteRegionCommand() *cobra.Command {
 	return cmd
 }
 
-// Gets specific Region - retrieves list of regions and then filters and outputs
-// specifc region by name
+// Gets specific Region by resource ID or name.
+// If the argument matches the resource ID pattern it is looked up directly.
+// Otherwise all regions are fetched and filtered by exact name match.
 func runGetRegionCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, regionClient, projectName, err := InfraFactory(cmd)
@@ -123,10 +164,27 @@ func runGetRegionCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	id := args[0]
+	query := args[0]
+
+	if !isRegionResourceID(query) {
+		// Name-based lookup: list all regions and filter by name.
+		resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving regions"); err != nil {
+			return err
+		}
+		region, err := findRegionByName(resp.JSON200.Regions, query)
+		if err != nil {
+			return err
+		}
+		query = derefString(region.ResourceId)
+	}
 
 	resp, err := regionClient.RegionServiceGetRegionWithResponse(ctx, projectName,
-		id, auth.AddAuthHeader)
+		query, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -139,7 +197,7 @@ func runGetRegionCommand(cmd *cobra.Command, args []string) error {
 	region := resp.JSON200
 	// GET endpoint does not populate TotalSites; fetch it via list with ShowTotalSites=true
 	showTotalSites := true
-	filterStr := fmt.Sprintf("resource_id='%s'", id)
+	filterStr := fmt.Sprintf("resource_id='%s'", query)
 	lresp, lerr := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
 		&infra.RegionServiceListRegionsParams{
 			ShowTotalSites: &showTotalSites,
@@ -175,19 +233,32 @@ func runCreateRegionCommand(cmd *cobra.Command, args []string) error {
 
 	var parentID *string
 	if parentFlag != "" {
-		err = checkID(parentFlag)
-		if err != nil {
-			return err
+		if isRegionResourceID(parentFlag) {
+			presp, err := regionClient.RegionServiceGetRegionWithResponse(ctx, projectName, parentFlag, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(presp.HTTPResponse, presp.Body, "error while creating region - parent region not found"); err != nil {
+				return err
+			}
+			parentID = &parentFlag
+		} else {
+			// Name-based lookup: list all regions and filter by name.
+			lresp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+				&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while retrieving regions"); err != nil {
+				return err
+			}
+			parent, err := findRegionByName(lresp.JSON200.Regions, parentFlag)
+			if err != nil {
+				return err
+			}
+			resolvedID := derefString(parent.ResourceId)
+			parentID = &resolvedID
 		}
-		presp, err := regionClient.RegionServiceGetRegionWithResponse(ctx, projectName, parentFlag, auth.AddAuthHeader)
-		if err != nil {
-			return processError(err)
-		}
-		err = checkResponse(presp.HTTPResponse, presp.Body, "error while creating region - parent region not found")
-		if err != nil {
-			return processError(err)
-		}
-		parentID = &parentFlag
 	}
 
 	resp, err := regionClient.RegionServiceCreateRegionWithResponse(ctx, projectName,
@@ -210,9 +281,21 @@ func runDeleteRegionCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = checkID(id)
-	if err != nil {
-		return err
+	if !isRegionResourceID(id) {
+		// Name-based lookup: list all regions and filter by name.
+		resp, err := regionClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving regions"); err != nil {
+			return err
+		}
+		region, err := findRegionByName(resp.JSON200.Regions, id)
+		if err != nil {
+			return err
+		}
+		id = derefString(region.ResourceId)
 	}
 
 	resp, err := regionClient.RegionServiceDeleteRegionWithResponse(ctx, projectName,
@@ -529,18 +612,6 @@ func checkName(name string, resource int) error {
 		return errors.New("invalid resource name")
 	}
 }
-
-func checkID(id string) error {
-	pattern := `^region-[0-9a-f]{8}$`
-	re := regexp.MustCompile(pattern)
-
-	if re.MatchString(id) {
-		return nil
-	}
-
-	return errors.New("invalid region id")
-}
-
 func checkType(name string, loctype string) (*[]infra.MetadataItem, error) {
 
 	if loctype == "" {

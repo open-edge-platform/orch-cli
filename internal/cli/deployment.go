@@ -5,8 +5,10 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -70,11 +72,11 @@ func getListDeploymentsCommand() *cobra.Command {
 
 func getGetDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Aliases: deploymentAliases,
 		Short:   "Get a deployment",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli get deployment 12345 --project some-project",
+		Example: "orch-cli get deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --project some-project\norch-cli get deployment \"Test Headlamp Dashboard\" --project some-project",
 		RunE:    runGetDeploymentCommand,
 	}
 	addStandardGetOutputFlags(cmd)
@@ -83,10 +85,10 @@ func getGetDeploymentCommand() *cobra.Command {
 
 func getSetDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Short:   "Update a deployment",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli set deployment 12345 --project some-project --name my-deployment --package-name my-package --package-version 1.0.0 --profile sample-profile --application-namespace <app>=<namespace> --application-set <app>.<prop>=<prop-value> --application-label <label>=<label-value>",
+		Example: "orch-cli set deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --project some-project --profile sample-profile\norch-cli set deployment \"Test Headlamp Dashboard\" --project some-project --profile sample-profile",
 		Aliases: deploymentAliases,
 		RunE:    runSetDeploymentCommand,
 	}
@@ -103,10 +105,10 @@ func getSetDeploymentCommand() *cobra.Command {
 
 func getUpgradeDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Short:   "Upgrade a deployment to a new package version",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli upgrade deployment 12345 --package-version 1.1.0",
+		Example: "orch-cli upgrade deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --package-version 1.1.0\norch-cli upgrade deployment \"Test Headlamp Dashboard\" --package-version 1.1.0",
 		Aliases: deploymentAliases,
 		RunE:    runUpgradeDeploymentCommand,
 	}
@@ -117,10 +119,10 @@ func getUpgradeDeploymentCommand() *cobra.Command {
 
 func getDeleteDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Short:   "Delete a deployment",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli delete deployment 12345 --project some-project",
+		Example: "orch-cli delete deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --project some-project\norch-cli delete deployment \"Test Headlamp Dashboard\" --project some-project",
 		Aliases: deploymentAliases,
 		RunE:    runDeleteDeploymentCommand,
 	}
@@ -588,6 +590,38 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 	return writer.Flush()
 }
 
+// deploymentIDPattern matches deployment UUIDs.
+var deploymentIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+
+func isDeploymentID(s string) bool {
+	return deploymentIDPattern.MatchString(s)
+}
+
+// findDeploymentByDisplayName searches a slice of deployments for an exact DisplayName match.
+// Returns an error if no match is found or if multiple deployments share the same display name
+// (listing the matches so the caller can retry with a deployment ID).
+func findDeploymentByDisplayName(deployments []depapi.DeploymentV1Deployment, displayName string) (depapi.DeploymentV1Deployment, error) {
+	var matches []depapi.DeploymentV1Deployment
+	for _, d := range deployments {
+		if d.DisplayName != nil && *d.DisplayName == displayName {
+			matches = append(matches, d)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return depapi.DeploymentV1Deployment{}, fmt.Errorf("no deployment found with display name %q", displayName)
+	case 1:
+		return matches[0], nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple deployments found with display name %q; use a deployment ID instead:\n", displayName)
+		for _, m := range matches {
+			fmt.Fprintf(&sb, "  display-name: %s  id: %s\n", derefString(m.DisplayName), derefString(m.DeployId))
+		}
+		return depapi.DeploymentV1Deployment{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
+}
+
 func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	writer, verbose := getOutputContext(cmd)
 	ctx, deploymentClient, projectName, err := DeploymentFactory(cmd)
@@ -595,15 +629,33 @@ func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	deploymentID := args[0]
+	query := args[0]
 
-	resp, err := deploymentClient.DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
+	if !isDeploymentID(query) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, query)
+		if err != nil {
+			return err
+		}
+		query = derefString(deployment.DeployId)
+	}
+
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx, projectName, query,
 		auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
 	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
-		"", fmt.Sprintf("error getting deployment %s", deploymentID)); !proceed {
+		"", fmt.Sprintf("error getting deployment %s", query)); !proceed {
 		return err
 	}
 	if err := printDeployments(cmd, writer, &[]depapi.DeploymentV1Deployment{resp.JSON200.Deployment}, nil, nil, verbose); err != nil {
@@ -653,6 +705,24 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	deploymentID := args[0]
+
+	if !isDeploymentID(deploymentID) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, deploymentID)
+		if err != nil {
+			return err
+		}
+		deploymentID = derefString(deployment.DeployId)
+	}
 
 	overrideValues, err := getOverrideValues(cmd)
 	if err != nil {
@@ -714,6 +784,24 @@ func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
 	deploymentID := args[0]
 	newPackageVersion, _ := cmd.Flags().GetString("package-version")
 
+	if !isDeploymentID(deploymentID) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, deploymentID)
+		if err != nil {
+			return err
+		}
+		deploymentID = derefString(deployment.DeployId)
+	}
+
 	// Get the current deployment to retrieve package name and other details
 	gresp, err := deploymentClient.DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
 		auth.AddAuthHeader)
@@ -759,8 +847,27 @@ func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	deploymentID := args[0]
 
+	if !isDeploymentID(deploymentID) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, deploymentID)
+		if err != nil {
+			return err
+		}
+		deploymentID = derefString(deployment.DeployId)
+	}
+
 	resp, err := deploymentClient.DeploymentV1DeploymentServiceDeleteDeploymentWithResponse(ctx, projectName, deploymentID,
 		&depapi.DeploymentV1DeploymentServiceDeleteDeploymentParams{}, auth.AddAuthHeader)
+
 	if err != nil {
 		return processError(err)
 	}
