@@ -101,6 +101,46 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateApplication(ctx, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateApplication", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateApplication), varargs...)
 }
 
+// CatalogServiceCreateApplication2 mocks base method.
+func (m *MockClientInterface) CatalogServiceCreateApplication2(ctx context.Context, params *CatalogServiceCreateApplication2Params, body CatalogServiceCreateApplication2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateApplication2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateApplication2 indicates an expected call of CatalogServiceCreateApplication2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateApplication2(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateApplication2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateApplication2), varargs...)
+}
+
+// CatalogServiceCreateApplication2WithBody mocks base method.
+func (m *MockClientInterface) CatalogServiceCreateApplication2WithBody(ctx context.Context, params *CatalogServiceCreateApplication2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateApplication2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateApplication2WithBody indicates an expected call of CatalogServiceCreateApplication2WithBody.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateApplication2WithBody(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateApplication2WithBody", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateApplication2WithBody), varargs...)
+}
+
 // CatalogServiceCreateApplicationWithBody mocks base method.
 func (m *MockClientInterface) CatalogServiceCreateApplicationWithBody(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -139,6 +179,46 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateArtifact(ctx, pro
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateArtifact", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateArtifact), varargs...)
+}
+
+// CatalogServiceCreateArtifact2 mocks base method.
+func (m *MockClientInterface) CatalogServiceCreateArtifact2(ctx context.Context, params *CatalogServiceCreateArtifact2Params, body CatalogServiceCreateArtifact2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateArtifact2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateArtifact2 indicates an expected call of CatalogServiceCreateArtifact2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateArtifact2(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateArtifact2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateArtifact2), varargs...)
+}
+
+// CatalogServiceCreateArtifact2WithBody mocks base method.
+func (m *MockClientInterface) CatalogServiceCreateArtifact2WithBody(ctx context.Context, params *CatalogServiceCreateArtifact2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateArtifact2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateArtifact2WithBody indicates an expected call of CatalogServiceCreateArtifact2WithBody.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateArtifact2WithBody(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateArtifact2WithBody", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateArtifact2WithBody), varargs...)
 }
 
 // CatalogServiceCreateArtifactWithBody mocks base method.
@@ -181,6 +261,46 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateDeploymentPackage
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateDeploymentPackage", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateDeploymentPackage), varargs...)
 }
 
+// CatalogServiceCreateDeploymentPackage2 mocks base method.
+func (m *MockClientInterface) CatalogServiceCreateDeploymentPackage2(ctx context.Context, params *CatalogServiceCreateDeploymentPackage2Params, body CatalogServiceCreateDeploymentPackage2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateDeploymentPackage2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateDeploymentPackage2 indicates an expected call of CatalogServiceCreateDeploymentPackage2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateDeploymentPackage2(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateDeploymentPackage2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateDeploymentPackage2), varargs...)
+}
+
+// CatalogServiceCreateDeploymentPackage2WithBody mocks base method.
+func (m *MockClientInterface) CatalogServiceCreateDeploymentPackage2WithBody(ctx context.Context, params *CatalogServiceCreateDeploymentPackage2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateDeploymentPackage2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateDeploymentPackage2WithBody indicates an expected call of CatalogServiceCreateDeploymentPackage2WithBody.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateDeploymentPackage2WithBody(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateDeploymentPackage2WithBody", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateDeploymentPackage2WithBody), varargs...)
+}
+
 // CatalogServiceCreateDeploymentPackageWithBody mocks base method.
 func (m *MockClientInterface) CatalogServiceCreateDeploymentPackageWithBody(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -219,6 +339,46 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateRegistry(ctx, pro
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateRegistry", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateRegistry), varargs...)
+}
+
+// CatalogServiceCreateRegistry2 mocks base method.
+func (m *MockClientInterface) CatalogServiceCreateRegistry2(ctx context.Context, params *CatalogServiceCreateRegistry2Params, body CatalogServiceCreateRegistry2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateRegistry2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateRegistry2 indicates an expected call of CatalogServiceCreateRegistry2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateRegistry2(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateRegistry2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateRegistry2), varargs...)
+}
+
+// CatalogServiceCreateRegistry2WithBody mocks base method.
+func (m *MockClientInterface) CatalogServiceCreateRegistry2WithBody(ctx context.Context, params *CatalogServiceCreateRegistry2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateRegistry2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateRegistry2WithBody indicates an expected call of CatalogServiceCreateRegistry2WithBody.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceCreateRegistry2WithBody(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateRegistry2WithBody", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceCreateRegistry2WithBody), varargs...)
 }
 
 // CatalogServiceCreateRegistryWithBody mocks base method.
@@ -261,6 +421,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceDeleteApplication(ctx, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteApplication", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceDeleteApplication), varargs...)
 }
 
+// CatalogServiceDeleteApplication2 mocks base method.
+func (m *MockClientInterface) CatalogServiceDeleteApplication2(ctx context.Context, applicationName, version string, params *CatalogServiceDeleteApplication2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceDeleteApplication2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceDeleteApplication2 indicates an expected call of CatalogServiceDeleteApplication2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceDeleteApplication2(ctx, applicationName, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteApplication2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceDeleteApplication2), varargs...)
+}
+
 // CatalogServiceDeleteArtifact mocks base method.
 func (m *MockClientInterface) CatalogServiceDeleteArtifact(ctx context.Context, projectName, artifactName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -279,6 +459,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceDeleteArtifact(ctx, pro
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, artifactName}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteArtifact", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceDeleteArtifact), varargs...)
+}
+
+// CatalogServiceDeleteArtifact2 mocks base method.
+func (m *MockClientInterface) CatalogServiceDeleteArtifact2(ctx context.Context, artifactName string, params *CatalogServiceDeleteArtifact2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, artifactName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceDeleteArtifact2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceDeleteArtifact2 indicates an expected call of CatalogServiceDeleteArtifact2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceDeleteArtifact2(ctx, artifactName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, artifactName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteArtifact2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceDeleteArtifact2), varargs...)
 }
 
 // CatalogServiceDeleteDeploymentPackage mocks base method.
@@ -301,6 +501,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceDeleteDeploymentPackage
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteDeploymentPackage", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceDeleteDeploymentPackage), varargs...)
 }
 
+// CatalogServiceDeleteDeploymentPackage2 mocks base method.
+func (m *MockClientInterface) CatalogServiceDeleteDeploymentPackage2(ctx context.Context, deploymentPackageName, version string, params *CatalogServiceDeleteDeploymentPackage2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deploymentPackageName, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceDeleteDeploymentPackage2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceDeleteDeploymentPackage2 indicates an expected call of CatalogServiceDeleteDeploymentPackage2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceDeleteDeploymentPackage2(ctx, deploymentPackageName, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deploymentPackageName, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteDeploymentPackage2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceDeleteDeploymentPackage2), varargs...)
+}
+
 // CatalogServiceDeleteRegistry mocks base method.
 func (m *MockClientInterface) CatalogServiceDeleteRegistry(ctx context.Context, projectName, registryName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -319,6 +539,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceDeleteRegistry(ctx, pro
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, registryName}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteRegistry", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceDeleteRegistry), varargs...)
+}
+
+// CatalogServiceDeleteRegistry2 mocks base method.
+func (m *MockClientInterface) CatalogServiceDeleteRegistry2(ctx context.Context, registryName string, params *CatalogServiceDeleteRegistry2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, registryName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceDeleteRegistry2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceDeleteRegistry2 indicates an expected call of CatalogServiceDeleteRegistry2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceDeleteRegistry2(ctx, registryName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, registryName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteRegistry2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceDeleteRegistry2), varargs...)
 }
 
 // CatalogServiceGetApplication mocks base method.
@@ -341,6 +581,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetApplication(ctx, pro
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplication", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetApplication), varargs...)
 }
 
+// CatalogServiceGetApplication2 mocks base method.
+func (m *MockClientInterface) CatalogServiceGetApplication2(ctx context.Context, applicationName, version string, params *CatalogServiceGetApplication2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetApplication2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetApplication2 indicates an expected call of CatalogServiceGetApplication2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetApplication2(ctx, applicationName, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplication2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetApplication2), varargs...)
+}
+
 // CatalogServiceGetApplicationReferenceCount mocks base method.
 func (m *MockClientInterface) CatalogServiceGetApplicationReferenceCount(ctx context.Context, projectName, applicationName, version string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -359,6 +619,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetApplicationReference
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, applicationName, version}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplicationReferenceCount", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetApplicationReferenceCount), varargs...)
+}
+
+// CatalogServiceGetApplicationReferenceCount2 mocks base method.
+func (m *MockClientInterface) CatalogServiceGetApplicationReferenceCount2(ctx context.Context, applicationName, version string, params *CatalogServiceGetApplicationReferenceCount2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetApplicationReferenceCount2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetApplicationReferenceCount2 indicates an expected call of CatalogServiceGetApplicationReferenceCount2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetApplicationReferenceCount2(ctx, applicationName, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplicationReferenceCount2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetApplicationReferenceCount2), varargs...)
 }
 
 // CatalogServiceGetApplicationVersions mocks base method.
@@ -381,6 +661,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetApplicationVersions(
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplicationVersions", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetApplicationVersions), varargs...)
 }
 
+// CatalogServiceGetApplicationVersions2 mocks base method.
+func (m *MockClientInterface) CatalogServiceGetApplicationVersions2(ctx context.Context, applicationName string, params *CatalogServiceGetApplicationVersions2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetApplicationVersions2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetApplicationVersions2 indicates an expected call of CatalogServiceGetApplicationVersions2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetApplicationVersions2(ctx, applicationName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplicationVersions2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetApplicationVersions2), varargs...)
+}
+
 // CatalogServiceGetArtifact mocks base method.
 func (m *MockClientInterface) CatalogServiceGetArtifact(ctx context.Context, projectName, artifactName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -399,6 +699,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetArtifact(ctx, projec
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, artifactName}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetArtifact", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetArtifact), varargs...)
+}
+
+// CatalogServiceGetArtifact2 mocks base method.
+func (m *MockClientInterface) CatalogServiceGetArtifact2(ctx context.Context, artifactName string, params *CatalogServiceGetArtifact2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, artifactName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetArtifact2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetArtifact2 indicates an expected call of CatalogServiceGetArtifact2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetArtifact2(ctx, artifactName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, artifactName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetArtifact2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetArtifact2), varargs...)
 }
 
 // CatalogServiceGetDeploymentPackage mocks base method.
@@ -421,6 +741,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetDeploymentPackage(ct
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetDeploymentPackage", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetDeploymentPackage), varargs...)
 }
 
+// CatalogServiceGetDeploymentPackage2 mocks base method.
+func (m *MockClientInterface) CatalogServiceGetDeploymentPackage2(ctx context.Context, deploymentPackageName, version string, params *CatalogServiceGetDeploymentPackage2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deploymentPackageName, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetDeploymentPackage2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetDeploymentPackage2 indicates an expected call of CatalogServiceGetDeploymentPackage2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetDeploymentPackage2(ctx, deploymentPackageName, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deploymentPackageName, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetDeploymentPackage2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetDeploymentPackage2), varargs...)
+}
+
 // CatalogServiceGetDeploymentPackageVersions mocks base method.
 func (m *MockClientInterface) CatalogServiceGetDeploymentPackageVersions(ctx context.Context, projectName, deploymentPackageName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -439,6 +779,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetDeploymentPackageVer
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deploymentPackageName}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetDeploymentPackageVersions", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetDeploymentPackageVersions), varargs...)
+}
+
+// CatalogServiceGetDeploymentPackageVersions2 mocks base method.
+func (m *MockClientInterface) CatalogServiceGetDeploymentPackageVersions2(ctx context.Context, deploymentPackageName string, params *CatalogServiceGetDeploymentPackageVersions2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deploymentPackageName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetDeploymentPackageVersions2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetDeploymentPackageVersions2 indicates an expected call of CatalogServiceGetDeploymentPackageVersions2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetDeploymentPackageVersions2(ctx, deploymentPackageName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deploymentPackageName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetDeploymentPackageVersions2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetDeploymentPackageVersions2), varargs...)
 }
 
 // CatalogServiceGetRegistry mocks base method.
@@ -461,6 +821,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetRegistry(ctx, projec
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetRegistry", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetRegistry), varargs...)
 }
 
+// CatalogServiceGetRegistry2 mocks base method.
+func (m *MockClientInterface) CatalogServiceGetRegistry2(ctx context.Context, registryName string, params *CatalogServiceGetRegistry2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, registryName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetRegistry2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetRegistry2 indicates an expected call of CatalogServiceGetRegistry2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceGetRegistry2(ctx, registryName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, registryName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetRegistry2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceGetRegistry2), varargs...)
+}
+
 // CatalogServiceImport mocks base method.
 func (m *MockClientInterface) CatalogServiceImport(ctx context.Context, projectName string, params *CatalogServiceImportParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -479,6 +859,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceImport(ctx, projectName
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceImport", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceImport), varargs...)
+}
+
+// CatalogServiceImport2 mocks base method.
+func (m *MockClientInterface) CatalogServiceImport2(ctx context.Context, params *CatalogServiceImport2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceImport2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceImport2 indicates an expected call of CatalogServiceImport2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceImport2(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceImport2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceImport2), varargs...)
 }
 
 // CatalogServiceListApplications mocks base method.
@@ -501,6 +901,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceListApplications(ctx, p
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListApplications", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceListApplications), varargs...)
 }
 
+// CatalogServiceListApplications2 mocks base method.
+func (m *MockClientInterface) CatalogServiceListApplications2(ctx context.Context, params *CatalogServiceListApplications2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceListApplications2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceListApplications2 indicates an expected call of CatalogServiceListApplications2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceListApplications2(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListApplications2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceListApplications2), varargs...)
+}
+
 // CatalogServiceListArtifacts mocks base method.
 func (m *MockClientInterface) CatalogServiceListArtifacts(ctx context.Context, projectName string, params *CatalogServiceListArtifactsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -519,6 +939,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceListArtifacts(ctx, proj
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListArtifacts", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceListArtifacts), varargs...)
+}
+
+// CatalogServiceListArtifacts2 mocks base method.
+func (m *MockClientInterface) CatalogServiceListArtifacts2(ctx context.Context, params *CatalogServiceListArtifacts2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceListArtifacts2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceListArtifacts2 indicates an expected call of CatalogServiceListArtifacts2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceListArtifacts2(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListArtifacts2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceListArtifacts2), varargs...)
 }
 
 // CatalogServiceListDeploymentPackages mocks base method.
@@ -541,6 +981,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceListDeploymentPackages(
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListDeploymentPackages", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceListDeploymentPackages), varargs...)
 }
 
+// CatalogServiceListDeploymentPackages2 mocks base method.
+func (m *MockClientInterface) CatalogServiceListDeploymentPackages2(ctx context.Context, params *CatalogServiceListDeploymentPackages2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceListDeploymentPackages2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceListDeploymentPackages2 indicates an expected call of CatalogServiceListDeploymentPackages2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceListDeploymentPackages2(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListDeploymentPackages2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceListDeploymentPackages2), varargs...)
+}
+
 // CatalogServiceListRegistries mocks base method.
 func (m *MockClientInterface) CatalogServiceListRegistries(ctx context.Context, projectName string, params *CatalogServiceListRegistriesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -561,6 +1021,26 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceListRegistries(ctx, pro
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListRegistries", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceListRegistries), varargs...)
 }
 
+// CatalogServiceListRegistries2 mocks base method.
+func (m *MockClientInterface) CatalogServiceListRegistries2(ctx context.Context, params *CatalogServiceListRegistries2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceListRegistries2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceListRegistries2 indicates an expected call of CatalogServiceListRegistries2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceListRegistries2(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListRegistries2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceListRegistries2), varargs...)
+}
+
 // CatalogServiceUpdateApplication mocks base method.
 func (m *MockClientInterface) CatalogServiceUpdateApplication(ctx context.Context, projectName, applicationName, version string, body CatalogServiceUpdateApplicationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -579,6 +1059,46 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateApplication(ctx, 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, applicationName, version, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateApplication", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateApplication), varargs...)
+}
+
+// CatalogServiceUpdateApplication2 mocks base method.
+func (m *MockClientInterface) CatalogServiceUpdateApplication2(ctx context.Context, applicationName, version string, params *CatalogServiceUpdateApplication2Params, body CatalogServiceUpdateApplication2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, version, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateApplication2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateApplication2 indicates an expected call of CatalogServiceUpdateApplication2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateApplication2(ctx, applicationName, version, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, version, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateApplication2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateApplication2), varargs...)
+}
+
+// CatalogServiceUpdateApplication2WithBody mocks base method.
+func (m *MockClientInterface) CatalogServiceUpdateApplication2WithBody(ctx context.Context, applicationName, version string, params *CatalogServiceUpdateApplication2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, version, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateApplication2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateApplication2WithBody indicates an expected call of CatalogServiceUpdateApplication2WithBody.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateApplication2WithBody(ctx, applicationName, version, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, version, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateApplication2WithBody", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateApplication2WithBody), varargs...)
 }
 
 // CatalogServiceUpdateApplicationWithBody mocks base method.
@@ -621,6 +1141,46 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateArtifact(ctx, pro
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateArtifact", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateArtifact), varargs...)
 }
 
+// CatalogServiceUpdateArtifact2 mocks base method.
+func (m *MockClientInterface) CatalogServiceUpdateArtifact2(ctx context.Context, artifactName string, params *CatalogServiceUpdateArtifact2Params, body CatalogServiceUpdateArtifact2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, artifactName, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateArtifact2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateArtifact2 indicates an expected call of CatalogServiceUpdateArtifact2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateArtifact2(ctx, artifactName, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, artifactName, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateArtifact2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateArtifact2), varargs...)
+}
+
+// CatalogServiceUpdateArtifact2WithBody mocks base method.
+func (m *MockClientInterface) CatalogServiceUpdateArtifact2WithBody(ctx context.Context, artifactName string, params *CatalogServiceUpdateArtifact2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, artifactName, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateArtifact2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateArtifact2WithBody indicates an expected call of CatalogServiceUpdateArtifact2WithBody.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateArtifact2WithBody(ctx, artifactName, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, artifactName, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateArtifact2WithBody", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateArtifact2WithBody), varargs...)
+}
+
 // CatalogServiceUpdateArtifactWithBody mocks base method.
 func (m *MockClientInterface) CatalogServiceUpdateArtifactWithBody(ctx context.Context, projectName, artifactName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -659,6 +1219,46 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateDeploymentPackage
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deploymentPackageName, version, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateDeploymentPackage", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateDeploymentPackage), varargs...)
+}
+
+// CatalogServiceUpdateDeploymentPackage2 mocks base method.
+func (m *MockClientInterface) CatalogServiceUpdateDeploymentPackage2(ctx context.Context, deploymentPackageName, version string, params *CatalogServiceUpdateDeploymentPackage2Params, body CatalogServiceUpdateDeploymentPackage2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deploymentPackageName, version, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateDeploymentPackage2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateDeploymentPackage2 indicates an expected call of CatalogServiceUpdateDeploymentPackage2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateDeploymentPackage2(ctx, deploymentPackageName, version, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deploymentPackageName, version, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateDeploymentPackage2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateDeploymentPackage2), varargs...)
+}
+
+// CatalogServiceUpdateDeploymentPackage2WithBody mocks base method.
+func (m *MockClientInterface) CatalogServiceUpdateDeploymentPackage2WithBody(ctx context.Context, deploymentPackageName, version string, params *CatalogServiceUpdateDeploymentPackage2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deploymentPackageName, version, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateDeploymentPackage2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateDeploymentPackage2WithBody indicates an expected call of CatalogServiceUpdateDeploymentPackage2WithBody.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateDeploymentPackage2WithBody(ctx, deploymentPackageName, version, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deploymentPackageName, version, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateDeploymentPackage2WithBody", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateDeploymentPackage2WithBody), varargs...)
 }
 
 // CatalogServiceUpdateDeploymentPackageWithBody mocks base method.
@@ -701,6 +1301,46 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateRegistry(ctx, pro
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateRegistry", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateRegistry), varargs...)
 }
 
+// CatalogServiceUpdateRegistry2 mocks base method.
+func (m *MockClientInterface) CatalogServiceUpdateRegistry2(ctx context.Context, registryName string, params *CatalogServiceUpdateRegistry2Params, body CatalogServiceUpdateRegistry2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, registryName, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateRegistry2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateRegistry2 indicates an expected call of CatalogServiceUpdateRegistry2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateRegistry2(ctx, registryName, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, registryName, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateRegistry2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateRegistry2), varargs...)
+}
+
+// CatalogServiceUpdateRegistry2WithBody mocks base method.
+func (m *MockClientInterface) CatalogServiceUpdateRegistry2WithBody(ctx context.Context, registryName string, params *CatalogServiceUpdateRegistry2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, registryName, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateRegistry2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateRegistry2WithBody indicates an expected call of CatalogServiceUpdateRegistry2WithBody.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceUpdateRegistry2WithBody(ctx, registryName, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, registryName, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateRegistry2WithBody", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUpdateRegistry2WithBody), varargs...)
+}
+
 // CatalogServiceUpdateRegistryWithBody mocks base method.
 func (m *MockClientInterface) CatalogServiceUpdateRegistryWithBody(ctx context.Context, projectName, registryName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -739,6 +1379,46 @@ func (mr *MockClientInterfaceMockRecorder) CatalogServiceUploadCatalogEntities(c
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUploadCatalogEntities", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUploadCatalogEntities), varargs...)
+}
+
+// CatalogServiceUploadCatalogEntities2 mocks base method.
+func (m *MockClientInterface) CatalogServiceUploadCatalogEntities2(ctx context.Context, params *CatalogServiceUploadCatalogEntities2Params, body CatalogServiceUploadCatalogEntities2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUploadCatalogEntities2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUploadCatalogEntities2 indicates an expected call of CatalogServiceUploadCatalogEntities2.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceUploadCatalogEntities2(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUploadCatalogEntities2", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUploadCatalogEntities2), varargs...)
+}
+
+// CatalogServiceUploadCatalogEntities2WithBody mocks base method.
+func (m *MockClientInterface) CatalogServiceUploadCatalogEntities2WithBody(ctx context.Context, params *CatalogServiceUploadCatalogEntities2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUploadCatalogEntities2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUploadCatalogEntities2WithBody indicates an expected call of CatalogServiceUploadCatalogEntities2WithBody.
+func (mr *MockClientInterfaceMockRecorder) CatalogServiceUploadCatalogEntities2WithBody(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUploadCatalogEntities2WithBody", reflect.TypeOf((*MockClientInterface)(nil).CatalogServiceUploadCatalogEntities2WithBody), varargs...)
 }
 
 // CatalogServiceUploadCatalogEntitiesWithBody mocks base method.
@@ -785,6 +1465,46 @@ func (m *MockClientWithResponsesInterface) EXPECT() *MockClientWithResponsesInte
 	return m.recorder
 }
 
+// CatalogServiceCreateApplication2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceCreateApplication2WithBodyWithResponse(ctx context.Context, params *CatalogServiceCreateApplication2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceCreateApplication2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateApplication2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceCreateApplication2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateApplication2WithBodyWithResponse indicates an expected call of CatalogServiceCreateApplication2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateApplication2WithBodyWithResponse(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateApplication2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateApplication2WithBodyWithResponse), varargs...)
+}
+
+// CatalogServiceCreateApplication2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceCreateApplication2WithResponse(ctx context.Context, params *CatalogServiceCreateApplication2Params, body CatalogServiceCreateApplication2JSONRequestBody, reqEditors ...RequestEditorFn) (*CatalogServiceCreateApplication2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateApplication2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceCreateApplication2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateApplication2WithResponse indicates an expected call of CatalogServiceCreateApplication2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateApplication2WithResponse(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateApplication2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateApplication2WithResponse), varargs...)
+}
+
 // CatalogServiceCreateApplicationWithBodyWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceCreateApplicationWithBodyWithResponse(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceCreateApplicationResponse, error) {
 	m.ctrl.T.Helper()
@@ -823,6 +1543,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateAppl
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateApplicationWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateApplicationWithResponse), varargs...)
+}
+
+// CatalogServiceCreateArtifact2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceCreateArtifact2WithBodyWithResponse(ctx context.Context, params *CatalogServiceCreateArtifact2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceCreateArtifact2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateArtifact2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceCreateArtifact2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateArtifact2WithBodyWithResponse indicates an expected call of CatalogServiceCreateArtifact2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateArtifact2WithBodyWithResponse(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateArtifact2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateArtifact2WithBodyWithResponse), varargs...)
+}
+
+// CatalogServiceCreateArtifact2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceCreateArtifact2WithResponse(ctx context.Context, params *CatalogServiceCreateArtifact2Params, body CatalogServiceCreateArtifact2JSONRequestBody, reqEditors ...RequestEditorFn) (*CatalogServiceCreateArtifact2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateArtifact2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceCreateArtifact2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateArtifact2WithResponse indicates an expected call of CatalogServiceCreateArtifact2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateArtifact2WithResponse(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateArtifact2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateArtifact2WithResponse), varargs...)
 }
 
 // CatalogServiceCreateArtifactWithBodyWithResponse mocks base method.
@@ -865,6 +1625,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateArti
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateArtifactWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateArtifactWithResponse), varargs...)
 }
 
+// CatalogServiceCreateDeploymentPackage2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceCreateDeploymentPackage2WithBodyWithResponse(ctx context.Context, params *CatalogServiceCreateDeploymentPackage2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceCreateDeploymentPackage2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateDeploymentPackage2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceCreateDeploymentPackage2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateDeploymentPackage2WithBodyWithResponse indicates an expected call of CatalogServiceCreateDeploymentPackage2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateDeploymentPackage2WithBodyWithResponse(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateDeploymentPackage2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateDeploymentPackage2WithBodyWithResponse), varargs...)
+}
+
+// CatalogServiceCreateDeploymentPackage2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceCreateDeploymentPackage2WithResponse(ctx context.Context, params *CatalogServiceCreateDeploymentPackage2Params, body CatalogServiceCreateDeploymentPackage2JSONRequestBody, reqEditors ...RequestEditorFn) (*CatalogServiceCreateDeploymentPackage2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateDeploymentPackage2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceCreateDeploymentPackage2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateDeploymentPackage2WithResponse indicates an expected call of CatalogServiceCreateDeploymentPackage2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateDeploymentPackage2WithResponse(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateDeploymentPackage2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateDeploymentPackage2WithResponse), varargs...)
+}
+
 // CatalogServiceCreateDeploymentPackageWithBodyWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceCreateDeploymentPackageWithBodyWithResponse(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceCreateDeploymentPackageResponse, error) {
 	m.ctrl.T.Helper()
@@ -903,6 +1703,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateDepl
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateDeploymentPackageWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateDeploymentPackageWithResponse), varargs...)
+}
+
+// CatalogServiceCreateRegistry2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceCreateRegistry2WithBodyWithResponse(ctx context.Context, params *CatalogServiceCreateRegistry2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceCreateRegistry2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateRegistry2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceCreateRegistry2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateRegistry2WithBodyWithResponse indicates an expected call of CatalogServiceCreateRegistry2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateRegistry2WithBodyWithResponse(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateRegistry2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateRegistry2WithBodyWithResponse), varargs...)
+}
+
+// CatalogServiceCreateRegistry2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceCreateRegistry2WithResponse(ctx context.Context, params *CatalogServiceCreateRegistry2Params, body CatalogServiceCreateRegistry2JSONRequestBody, reqEditors ...RequestEditorFn) (*CatalogServiceCreateRegistry2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceCreateRegistry2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceCreateRegistry2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceCreateRegistry2WithResponse indicates an expected call of CatalogServiceCreateRegistry2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateRegistry2WithResponse(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateRegistry2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateRegistry2WithResponse), varargs...)
 }
 
 // CatalogServiceCreateRegistryWithBodyWithResponse mocks base method.
@@ -945,6 +1785,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceCreateRegi
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceCreateRegistryWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceCreateRegistryWithResponse), varargs...)
 }
 
+// CatalogServiceDeleteApplication2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceDeleteApplication2WithResponse(ctx context.Context, applicationName, version string, params *CatalogServiceDeleteApplication2Params, reqEditors ...RequestEditorFn) (*CatalogServiceDeleteApplication2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceDeleteApplication2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceDeleteApplication2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceDeleteApplication2WithResponse indicates an expected call of CatalogServiceDeleteApplication2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceDeleteApplication2WithResponse(ctx, applicationName, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteApplication2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceDeleteApplication2WithResponse), varargs...)
+}
+
 // CatalogServiceDeleteApplicationWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceDeleteApplicationWithResponse(ctx context.Context, projectName, applicationName, version string, reqEditors ...RequestEditorFn) (*CatalogServiceDeleteApplicationResponse, error) {
 	m.ctrl.T.Helper()
@@ -963,6 +1823,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceDeleteAppl
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, applicationName, version}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteApplicationWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceDeleteApplicationWithResponse), varargs...)
+}
+
+// CatalogServiceDeleteArtifact2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceDeleteArtifact2WithResponse(ctx context.Context, artifactName string, params *CatalogServiceDeleteArtifact2Params, reqEditors ...RequestEditorFn) (*CatalogServiceDeleteArtifact2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, artifactName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceDeleteArtifact2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceDeleteArtifact2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceDeleteArtifact2WithResponse indicates an expected call of CatalogServiceDeleteArtifact2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceDeleteArtifact2WithResponse(ctx, artifactName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, artifactName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteArtifact2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceDeleteArtifact2WithResponse), varargs...)
 }
 
 // CatalogServiceDeleteArtifactWithResponse mocks base method.
@@ -985,6 +1865,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceDeleteArti
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteArtifactWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceDeleteArtifactWithResponse), varargs...)
 }
 
+// CatalogServiceDeleteDeploymentPackage2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceDeleteDeploymentPackage2WithResponse(ctx context.Context, deploymentPackageName, version string, params *CatalogServiceDeleteDeploymentPackage2Params, reqEditors ...RequestEditorFn) (*CatalogServiceDeleteDeploymentPackage2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deploymentPackageName, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceDeleteDeploymentPackage2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceDeleteDeploymentPackage2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceDeleteDeploymentPackage2WithResponse indicates an expected call of CatalogServiceDeleteDeploymentPackage2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceDeleteDeploymentPackage2WithResponse(ctx, deploymentPackageName, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deploymentPackageName, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteDeploymentPackage2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceDeleteDeploymentPackage2WithResponse), varargs...)
+}
+
 // CatalogServiceDeleteDeploymentPackageWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceDeleteDeploymentPackageWithResponse(ctx context.Context, projectName, deploymentPackageName, version string, reqEditors ...RequestEditorFn) (*CatalogServiceDeleteDeploymentPackageResponse, error) {
 	m.ctrl.T.Helper()
@@ -1003,6 +1903,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceDeleteDepl
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deploymentPackageName, version}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteDeploymentPackageWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceDeleteDeploymentPackageWithResponse), varargs...)
+}
+
+// CatalogServiceDeleteRegistry2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceDeleteRegistry2WithResponse(ctx context.Context, registryName string, params *CatalogServiceDeleteRegistry2Params, reqEditors ...RequestEditorFn) (*CatalogServiceDeleteRegistry2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, registryName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceDeleteRegistry2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceDeleteRegistry2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceDeleteRegistry2WithResponse indicates an expected call of CatalogServiceDeleteRegistry2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceDeleteRegistry2WithResponse(ctx, registryName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, registryName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteRegistry2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceDeleteRegistry2WithResponse), varargs...)
 }
 
 // CatalogServiceDeleteRegistryWithResponse mocks base method.
@@ -1025,6 +1945,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceDeleteRegi
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceDeleteRegistryWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceDeleteRegistryWithResponse), varargs...)
 }
 
+// CatalogServiceGetApplication2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceGetApplication2WithResponse(ctx context.Context, applicationName, version string, params *CatalogServiceGetApplication2Params, reqEditors ...RequestEditorFn) (*CatalogServiceGetApplication2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetApplication2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceGetApplication2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetApplication2WithResponse indicates an expected call of CatalogServiceGetApplication2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetApplication2WithResponse(ctx, applicationName, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplication2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetApplication2WithResponse), varargs...)
+}
+
+// CatalogServiceGetApplicationReferenceCount2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceGetApplicationReferenceCount2WithResponse(ctx context.Context, applicationName, version string, params *CatalogServiceGetApplicationReferenceCount2Params, reqEditors ...RequestEditorFn) (*CatalogServiceGetApplicationReferenceCount2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetApplicationReferenceCount2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceGetApplicationReferenceCount2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetApplicationReferenceCount2WithResponse indicates an expected call of CatalogServiceGetApplicationReferenceCount2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetApplicationReferenceCount2WithResponse(ctx, applicationName, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplicationReferenceCount2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetApplicationReferenceCount2WithResponse), varargs...)
+}
+
 // CatalogServiceGetApplicationReferenceCountWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceGetApplicationReferenceCountWithResponse(ctx context.Context, projectName, applicationName, version string, reqEditors ...RequestEditorFn) (*CatalogServiceGetApplicationReferenceCountResponse, error) {
 	m.ctrl.T.Helper()
@@ -1043,6 +2003,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetApplica
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, applicationName, version}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplicationReferenceCountWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetApplicationReferenceCountWithResponse), varargs...)
+}
+
+// CatalogServiceGetApplicationVersions2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceGetApplicationVersions2WithResponse(ctx context.Context, applicationName string, params *CatalogServiceGetApplicationVersions2Params, reqEditors ...RequestEditorFn) (*CatalogServiceGetApplicationVersions2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetApplicationVersions2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceGetApplicationVersions2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetApplicationVersions2WithResponse indicates an expected call of CatalogServiceGetApplicationVersions2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetApplicationVersions2WithResponse(ctx, applicationName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplicationVersions2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetApplicationVersions2WithResponse), varargs...)
 }
 
 // CatalogServiceGetApplicationVersionsWithResponse mocks base method.
@@ -1085,6 +2065,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetApplica
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetApplicationWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetApplicationWithResponse), varargs...)
 }
 
+// CatalogServiceGetArtifact2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceGetArtifact2WithResponse(ctx context.Context, artifactName string, params *CatalogServiceGetArtifact2Params, reqEditors ...RequestEditorFn) (*CatalogServiceGetArtifact2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, artifactName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetArtifact2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceGetArtifact2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetArtifact2WithResponse indicates an expected call of CatalogServiceGetArtifact2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetArtifact2WithResponse(ctx, artifactName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, artifactName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetArtifact2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetArtifact2WithResponse), varargs...)
+}
+
 // CatalogServiceGetArtifactWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceGetArtifactWithResponse(ctx context.Context, projectName, artifactName string, reqEditors ...RequestEditorFn) (*CatalogServiceGetArtifactResponse, error) {
 	m.ctrl.T.Helper()
@@ -1103,6 +2103,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetArtifac
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, artifactName}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetArtifactWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetArtifactWithResponse), varargs...)
+}
+
+// CatalogServiceGetDeploymentPackage2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceGetDeploymentPackage2WithResponse(ctx context.Context, deploymentPackageName, version string, params *CatalogServiceGetDeploymentPackage2Params, reqEditors ...RequestEditorFn) (*CatalogServiceGetDeploymentPackage2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deploymentPackageName, version, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetDeploymentPackage2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceGetDeploymentPackage2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetDeploymentPackage2WithResponse indicates an expected call of CatalogServiceGetDeploymentPackage2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetDeploymentPackage2WithResponse(ctx, deploymentPackageName, version, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deploymentPackageName, version, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetDeploymentPackage2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetDeploymentPackage2WithResponse), varargs...)
+}
+
+// CatalogServiceGetDeploymentPackageVersions2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceGetDeploymentPackageVersions2WithResponse(ctx context.Context, deploymentPackageName string, params *CatalogServiceGetDeploymentPackageVersions2Params, reqEditors ...RequestEditorFn) (*CatalogServiceGetDeploymentPackageVersions2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deploymentPackageName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetDeploymentPackageVersions2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceGetDeploymentPackageVersions2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetDeploymentPackageVersions2WithResponse indicates an expected call of CatalogServiceGetDeploymentPackageVersions2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetDeploymentPackageVersions2WithResponse(ctx, deploymentPackageName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deploymentPackageName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetDeploymentPackageVersions2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetDeploymentPackageVersions2WithResponse), varargs...)
 }
 
 // CatalogServiceGetDeploymentPackageVersionsWithResponse mocks base method.
@@ -1145,6 +2185,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetDeploym
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetDeploymentPackageWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetDeploymentPackageWithResponse), varargs...)
 }
 
+// CatalogServiceGetRegistry2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceGetRegistry2WithResponse(ctx context.Context, registryName string, params *CatalogServiceGetRegistry2Params, reqEditors ...RequestEditorFn) (*CatalogServiceGetRegistry2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, registryName, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceGetRegistry2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceGetRegistry2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceGetRegistry2WithResponse indicates an expected call of CatalogServiceGetRegistry2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetRegistry2WithResponse(ctx, registryName, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, registryName, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetRegistry2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetRegistry2WithResponse), varargs...)
+}
+
 // CatalogServiceGetRegistryWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceGetRegistryWithResponse(ctx context.Context, projectName, registryName string, params *CatalogServiceGetRegistryParams, reqEditors ...RequestEditorFn) (*CatalogServiceGetRegistryResponse, error) {
 	m.ctrl.T.Helper()
@@ -1163,6 +2223,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceGetRegistr
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, registryName, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceGetRegistryWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceGetRegistryWithResponse), varargs...)
+}
+
+// CatalogServiceImport2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceImport2WithResponse(ctx context.Context, params *CatalogServiceImport2Params, reqEditors ...RequestEditorFn) (*CatalogServiceImport2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceImport2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceImport2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceImport2WithResponse indicates an expected call of CatalogServiceImport2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceImport2WithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceImport2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceImport2WithResponse), varargs...)
 }
 
 // CatalogServiceImportWithResponse mocks base method.
@@ -1185,6 +2265,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceImportWith
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceImportWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceImportWithResponse), varargs...)
 }
 
+// CatalogServiceListApplications2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceListApplications2WithResponse(ctx context.Context, params *CatalogServiceListApplications2Params, reqEditors ...RequestEditorFn) (*CatalogServiceListApplications2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceListApplications2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceListApplications2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceListApplications2WithResponse indicates an expected call of CatalogServiceListApplications2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceListApplications2WithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListApplications2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceListApplications2WithResponse), varargs...)
+}
+
 // CatalogServiceListApplicationsWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceListApplicationsWithResponse(ctx context.Context, projectName string, params *CatalogServiceListApplicationsParams, reqEditors ...RequestEditorFn) (*CatalogServiceListApplicationsResponse, error) {
 	m.ctrl.T.Helper()
@@ -1203,6 +2303,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceListApplic
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListApplicationsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceListApplicationsWithResponse), varargs...)
+}
+
+// CatalogServiceListArtifacts2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceListArtifacts2WithResponse(ctx context.Context, params *CatalogServiceListArtifacts2Params, reqEditors ...RequestEditorFn) (*CatalogServiceListArtifacts2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceListArtifacts2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceListArtifacts2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceListArtifacts2WithResponse indicates an expected call of CatalogServiceListArtifacts2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceListArtifacts2WithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListArtifacts2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceListArtifacts2WithResponse), varargs...)
 }
 
 // CatalogServiceListArtifactsWithResponse mocks base method.
@@ -1225,6 +2345,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceListArtifa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListArtifactsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceListArtifactsWithResponse), varargs...)
 }
 
+// CatalogServiceListDeploymentPackages2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceListDeploymentPackages2WithResponse(ctx context.Context, params *CatalogServiceListDeploymentPackages2Params, reqEditors ...RequestEditorFn) (*CatalogServiceListDeploymentPackages2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceListDeploymentPackages2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceListDeploymentPackages2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceListDeploymentPackages2WithResponse indicates an expected call of CatalogServiceListDeploymentPackages2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceListDeploymentPackages2WithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListDeploymentPackages2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceListDeploymentPackages2WithResponse), varargs...)
+}
+
 // CatalogServiceListDeploymentPackagesWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceListDeploymentPackagesWithResponse(ctx context.Context, projectName string, params *CatalogServiceListDeploymentPackagesParams, reqEditors ...RequestEditorFn) (*CatalogServiceListDeploymentPackagesResponse, error) {
 	m.ctrl.T.Helper()
@@ -1245,6 +2385,26 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceListDeploy
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListDeploymentPackagesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceListDeploymentPackagesWithResponse), varargs...)
 }
 
+// CatalogServiceListRegistries2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceListRegistries2WithResponse(ctx context.Context, params *CatalogServiceListRegistries2Params, reqEditors ...RequestEditorFn) (*CatalogServiceListRegistries2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceListRegistries2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceListRegistries2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceListRegistries2WithResponse indicates an expected call of CatalogServiceListRegistries2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceListRegistries2WithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListRegistries2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceListRegistries2WithResponse), varargs...)
+}
+
 // CatalogServiceListRegistriesWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceListRegistriesWithResponse(ctx context.Context, projectName string, params *CatalogServiceListRegistriesParams, reqEditors ...RequestEditorFn) (*CatalogServiceListRegistriesResponse, error) {
 	m.ctrl.T.Helper()
@@ -1263,6 +2423,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceListRegist
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceListRegistriesWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceListRegistriesWithResponse), varargs...)
+}
+
+// CatalogServiceUpdateApplication2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceUpdateApplication2WithBodyWithResponse(ctx context.Context, applicationName, version string, params *CatalogServiceUpdateApplication2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceUpdateApplication2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, version, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateApplication2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceUpdateApplication2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateApplication2WithBodyWithResponse indicates an expected call of CatalogServiceUpdateApplication2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateApplication2WithBodyWithResponse(ctx, applicationName, version, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, version, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateApplication2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateApplication2WithBodyWithResponse), varargs...)
+}
+
+// CatalogServiceUpdateApplication2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceUpdateApplication2WithResponse(ctx context.Context, applicationName, version string, params *CatalogServiceUpdateApplication2Params, body CatalogServiceUpdateApplication2JSONRequestBody, reqEditors ...RequestEditorFn) (*CatalogServiceUpdateApplication2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, applicationName, version, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateApplication2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceUpdateApplication2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateApplication2WithResponse indicates an expected call of CatalogServiceUpdateApplication2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateApplication2WithResponse(ctx, applicationName, version, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, applicationName, version, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateApplication2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateApplication2WithResponse), varargs...)
 }
 
 // CatalogServiceUpdateApplicationWithBodyWithResponse mocks base method.
@@ -1305,6 +2505,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateAppl
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateApplicationWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateApplicationWithResponse), varargs...)
 }
 
+// CatalogServiceUpdateArtifact2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceUpdateArtifact2WithBodyWithResponse(ctx context.Context, artifactName string, params *CatalogServiceUpdateArtifact2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceUpdateArtifact2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, artifactName, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateArtifact2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceUpdateArtifact2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateArtifact2WithBodyWithResponse indicates an expected call of CatalogServiceUpdateArtifact2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateArtifact2WithBodyWithResponse(ctx, artifactName, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, artifactName, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateArtifact2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateArtifact2WithBodyWithResponse), varargs...)
+}
+
+// CatalogServiceUpdateArtifact2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceUpdateArtifact2WithResponse(ctx context.Context, artifactName string, params *CatalogServiceUpdateArtifact2Params, body CatalogServiceUpdateArtifact2JSONRequestBody, reqEditors ...RequestEditorFn) (*CatalogServiceUpdateArtifact2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, artifactName, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateArtifact2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceUpdateArtifact2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateArtifact2WithResponse indicates an expected call of CatalogServiceUpdateArtifact2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateArtifact2WithResponse(ctx, artifactName, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, artifactName, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateArtifact2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateArtifact2WithResponse), varargs...)
+}
+
 // CatalogServiceUpdateArtifactWithBodyWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceUpdateArtifactWithBodyWithResponse(ctx context.Context, projectName, artifactName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceUpdateArtifactResponse, error) {
 	m.ctrl.T.Helper()
@@ -1343,6 +2583,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateArti
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, artifactName, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateArtifactWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateArtifactWithResponse), varargs...)
+}
+
+// CatalogServiceUpdateDeploymentPackage2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceUpdateDeploymentPackage2WithBodyWithResponse(ctx context.Context, deploymentPackageName, version string, params *CatalogServiceUpdateDeploymentPackage2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceUpdateDeploymentPackage2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deploymentPackageName, version, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateDeploymentPackage2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceUpdateDeploymentPackage2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateDeploymentPackage2WithBodyWithResponse indicates an expected call of CatalogServiceUpdateDeploymentPackage2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateDeploymentPackage2WithBodyWithResponse(ctx, deploymentPackageName, version, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deploymentPackageName, version, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateDeploymentPackage2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateDeploymentPackage2WithBodyWithResponse), varargs...)
+}
+
+// CatalogServiceUpdateDeploymentPackage2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceUpdateDeploymentPackage2WithResponse(ctx context.Context, deploymentPackageName, version string, params *CatalogServiceUpdateDeploymentPackage2Params, body CatalogServiceUpdateDeploymentPackage2JSONRequestBody, reqEditors ...RequestEditorFn) (*CatalogServiceUpdateDeploymentPackage2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deploymentPackageName, version, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateDeploymentPackage2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceUpdateDeploymentPackage2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateDeploymentPackage2WithResponse indicates an expected call of CatalogServiceUpdateDeploymentPackage2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateDeploymentPackage2WithResponse(ctx, deploymentPackageName, version, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deploymentPackageName, version, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateDeploymentPackage2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateDeploymentPackage2WithResponse), varargs...)
 }
 
 // CatalogServiceUpdateDeploymentPackageWithBodyWithResponse mocks base method.
@@ -1385,6 +2665,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateDepl
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateDeploymentPackageWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateDeploymentPackageWithResponse), varargs...)
 }
 
+// CatalogServiceUpdateRegistry2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceUpdateRegistry2WithBodyWithResponse(ctx context.Context, registryName string, params *CatalogServiceUpdateRegistry2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceUpdateRegistry2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, registryName, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateRegistry2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceUpdateRegistry2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateRegistry2WithBodyWithResponse indicates an expected call of CatalogServiceUpdateRegistry2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateRegistry2WithBodyWithResponse(ctx, registryName, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, registryName, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateRegistry2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateRegistry2WithBodyWithResponse), varargs...)
+}
+
+// CatalogServiceUpdateRegistry2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceUpdateRegistry2WithResponse(ctx context.Context, registryName string, params *CatalogServiceUpdateRegistry2Params, body CatalogServiceUpdateRegistry2JSONRequestBody, reqEditors ...RequestEditorFn) (*CatalogServiceUpdateRegistry2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, registryName, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUpdateRegistry2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceUpdateRegistry2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUpdateRegistry2WithResponse indicates an expected call of CatalogServiceUpdateRegistry2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateRegistry2WithResponse(ctx, registryName, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, registryName, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateRegistry2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateRegistry2WithResponse), varargs...)
+}
+
 // CatalogServiceUpdateRegistryWithBodyWithResponse mocks base method.
 func (m *MockClientWithResponsesInterface) CatalogServiceUpdateRegistryWithBodyWithResponse(ctx context.Context, projectName, registryName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceUpdateRegistryResponse, error) {
 	m.ctrl.T.Helper()
@@ -1423,6 +2743,46 @@ func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUpdateRegi
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, registryName, body}, reqEditors...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUpdateRegistryWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUpdateRegistryWithResponse), varargs...)
+}
+
+// CatalogServiceUploadCatalogEntities2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceUploadCatalogEntities2WithBodyWithResponse(ctx context.Context, params *CatalogServiceUploadCatalogEntities2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CatalogServiceUploadCatalogEntities2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUploadCatalogEntities2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceUploadCatalogEntities2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUploadCatalogEntities2WithBodyWithResponse indicates an expected call of CatalogServiceUploadCatalogEntities2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUploadCatalogEntities2WithBodyWithResponse(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUploadCatalogEntities2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUploadCatalogEntities2WithBodyWithResponse), varargs...)
+}
+
+// CatalogServiceUploadCatalogEntities2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) CatalogServiceUploadCatalogEntities2WithResponse(ctx context.Context, params *CatalogServiceUploadCatalogEntities2Params, body CatalogServiceUploadCatalogEntities2JSONRequestBody, reqEditors ...RequestEditorFn) (*CatalogServiceUploadCatalogEntities2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CatalogServiceUploadCatalogEntities2WithResponse", varargs...)
+	ret0, _ := ret[0].(*CatalogServiceUploadCatalogEntities2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CatalogServiceUploadCatalogEntities2WithResponse indicates an expected call of CatalogServiceUploadCatalogEntities2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) CatalogServiceUploadCatalogEntities2WithResponse(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CatalogServiceUploadCatalogEntities2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).CatalogServiceUploadCatalogEntities2WithResponse), varargs...)
 }
 
 // CatalogServiceUploadCatalogEntitiesWithBodyWithResponse mocks base method.

@@ -42,7 +42,7 @@ Profiles:
 	{{- end}}
 Default Profile: {{str .DefaultProfileName}}
 Default Namespaces:
-	{{- range $app, $ns := deref .DefaultNamespaces}}
+	{{- range $app, $ns := (deref .DefaultNamespaces).AdditionalProperties}}
   {{$app}}:{{$ns}}
 	{{- end}}
 Extensions:
@@ -271,9 +271,9 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 
 	// Collect default namespaces
 	defaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
-	var defaultNamespacesPtr *map[string]string
+	var defaultNamespacesPtr *catapi.CatalogV3DeploymentPackage_DefaultNamespaces
 	if len(defaultNamespaces) > 0 {
-		defaultNamespacesPtr = &defaultNamespaces
+		defaultNamespacesPtr = &catapi.CatalogV3DeploymentPackage_DefaultNamespaces{AdditionalProperties: defaultNamespaces}
 	}
 
 	// Set up default profile name - use "deployment-profile-1" to match UI behavior
@@ -285,7 +285,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	// Create an initial deployment profile to match UI behavior
 	initialProfile := catapi.CatalogV3DeploymentProfile{
 		Name:                defaultProfileName,
-		ApplicationProfiles: appDefaultProfiles,
+		ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: appDefaultProfiles},
 	}
 	initialProfiles := []catapi.CatalogV3DeploymentProfile{initialProfile}
 
@@ -665,10 +665,13 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 	newDefaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
 	if len(newDefaultNamespaces) > 0 {
 		if defaultNamespaces == nil {
-			defaultNamespaces = &newDefaultNamespaces
+			defaultNamespaces = &catapi.CatalogV3DeploymentPackage_DefaultNamespaces{AdditionalProperties: newDefaultNamespaces}
 		} else {
+			if defaultNamespaces.AdditionalProperties == nil {
+				defaultNamespaces.AdditionalProperties = map[string]string{}
+			}
 			for k, v := range newDefaultNamespaces {
-				(*defaultNamespaces)[k] = v
+				defaultNamespaces.AdditionalProperties[k] = v
 			}
 		}
 	}

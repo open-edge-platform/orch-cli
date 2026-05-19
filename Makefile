@@ -91,32 +91,50 @@ fuzz:
 		done \
 	done
 
+## OpenAPI source-of-truth migration (post nexus-replacement):
+## The deleted orch-utils/tenancy-api-mapping/openapispecs/generated/* combined-and-project-prefixed
+## specs have been replaced by direct fetches from each upstream service repo.
+## NOTE: Upstream specs use base paths (e.g. /catalog/...) instead of the legacy combined paths
+## (e.g. /v1/projects/{projectName}/catalog/...). After running `make fetch-openapi` and
+## `make rest-client-gen`, each affected CLI command must add a request editor that prepends
+## /v1/projects/{projectName}/<service>/ to outgoing requests (see internal/cli/amt.go
+## rewriteRpsAmtPath for the pattern). Until that per-command refactoring is done for
+## catalog/cluster/deployment, the vendored generated clients in pkg/rest/<svc>/{client,types}.go
+## are kept as-is to preserve the build.
+
 fetch-catalog-openapi:
-	@# Help: Fetch the Catalog OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-app-orch-catalog-openapi.yaml -o pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-app-orch-catalog-utilities-openapi.yaml -o pkg/rest/catalogutilities/amc-app-orch-catalog-utilities-openapi.yaml
+	@# Help: Fetch the Catalog OpenAPI spec from upstream app-orch-catalog repo
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/app-orch-catalog/main/api/spec/openapi.yaml -o pkg/rest/catalog/amc-app-orch-catalog-openapi.yaml
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/app-orch-catalog/main/api/spec/utilities-openapi.yaml -o pkg/rest/catalogutilities/amc-app-orch-catalog-utilities-openapi.yaml
+
+fetch-deployment-openapi:
+	@# Help: Fetch the App Deployment Manager OpenAPI spec from upstream app-orch-deployment repo
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/app-orch-deployment/main/app-deployment-manager/api/nbi/v2/spec/openapi.yaml -o pkg/rest/deployment/amc-app-orch-deployment-app-deployment-manager-openapi.yaml
 
 fetch-cluster-openapi:
-	@# Help: Fetch the Cluster Manager OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-cluster-manager-openapi.yaml -o pkg/rest/cluster/amc-cluster-manager-openapi.yaml
+	@# Help: Fetch the Cluster Manager OpenAPI spec from upstream cluster-manager repo
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/cluster-manager/main/api/openapi/openapi.yaml -o pkg/rest/cluster/amc-cluster-manager-openapi.yaml
 
 fetch-infra-openapi:
 	@# Help: Fetch the Infra Manager OpenAPI spec
 	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-core/main/apiv2/api/openapi/openapi.yaml -o pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 
-fetch-rps-openapi:
-	@# Help: Fetch the OpenDMT RPS OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-opendmt-rps-openapi.yaml -o pkg/rest/rps/amc-opendmt-rps-openapi.yaml
-
 fetch-mps-openapi:
 	@# Help: Fetch the OpenDMT MPS OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/amc-opendmt-mps-openapi.yaml -o pkg/rest/mps/amc-opendmt-mps-openapi.yaml
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-external/main/dm-manager/pkg/api/mps/openapi/openapi.yaml -o pkg/rest/mps/amc-opendmt-mps-openapi.yaml
+
+fetch-rps-openapi:
+	@# Help: Fetch the OpenDMT RPS OpenAPI spec
+	curl -sSL https://raw.githubusercontent.com/open-edge-platform/infra-external/main/dm-manager/pkg/api/rps/openapi/openapi.yaml -o pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 
 fetch-utils-openapi:
-	@# Help: Fetch the Utils API OpenAPI spec
-	curl -sSL https://raw.githubusercontent.com/open-edge-platform/orch-utils/main/tenancy-api-mapping/openapispecs/generated/orch-utils.tenancy-datamodel.openapi.yaml -o pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
+	@# Help: Fetch the Tenancy API OpenAPI spec
+	@# NOTE: tenancy-api-mapping has been removed from orch-utils as part of nexus replacement.
+	@# The new tenancy-manager (chi-router REST API) does not yet ship an openapi.yaml.
+	@# Until it does, the existing pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml is kept as-is.
+	@echo "fetch-utils-openapi: skipped - upstream spec not yet published; using vendored copy"
 
-fetch-openapi: fetch-catalog-openapi fetch-cluster-openapi fetch-infra-openapi fetch-rps-openapi fetch-mps-openapi fetch-utils-openapi
+fetch-openapi: fetch-catalog-openapi fetch-deployment-openapi fetch-cluster-openapi fetch-infra-openapi fetch-rps-openapi fetch-mps-openapi fetch-utils-openapi
 	@# Help: Fetch OpenAPI specs for all components
 
 
@@ -152,10 +170,10 @@ rest-client-gen: oapi-codegen-dependency
 	oapi-codegen -generate types -old-config-style -package cluster -o pkg/rest/cluster/types.go pkg/rest/cluster/amc-cluster-manager-openapi.yaml
 	oapi-codegen -generate client -old-config-style -package infra -o pkg/rest/infra/client.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
 	oapi-codegen -generate types -old-config-style -package infra -o pkg/rest/infra/types.go pkg/rest/infra/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml
-	oapi-codegen -generate client -old-config-style -package rps -o pkg/rest/rps/client.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
-	oapi-codegen -generate types -old-config-style -package rps -o pkg/rest/rps/types.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 	oapi-codegen -generate client -old-config-style -package mps -o pkg/rest/mps/client.go pkg/rest/mps/amc-opendmt-mps-openapi.yaml
 	oapi-codegen -generate types -old-config-style -package mps -o pkg/rest/mps/types.go pkg/rest/mps/amc-opendmt-mps-openapi.yaml
+	oapi-codegen -generate client -old-config-style -package rps -o pkg/rest/rps/client.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
+	oapi-codegen -generate types -old-config-style -package rps -o pkg/rest/rps/types.go pkg/rest/rps/amc-opendmt-rps-openapi.yaml
 	oapi-codegen -generate client -old-config-style -package tenancy -o pkg/rest/tenancy/client.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
 	oapi-codegen -generate types -old-config-style -package tenancy -o pkg/rest/tenancy/types.go pkg/rest/tenancy/orch-utils.tenancy-datamodel.openapi.yaml
 
@@ -168,9 +186,8 @@ mock-client-gen: mockgen-dependency
 	mockgen -source=pkg/rest/deployment/client.go -destination=pkg/rest/deployment/mock_client.go -package=deployment
 	mockgen -source=pkg/rest/cluster/client.go -destination=pkg/rest/cluster/mock_client.go -package=cluster
 	mockgen -source=pkg/rest/infra/client.go -destination=pkg/rest/infra/mock_client.go -package=infra
-	mockgen -source=pkg/rest/rps/client.go -destination=pkg/rest/rps/mock_client.go -package=rps
-	mockgen -source=pkg/rest/tenancy/client.go -destination=pkg/rest/tenancy/mock_client.go -package=tenancy
 	mockgen -source=pkg/rest/mps/client.go -destination=pkg/rest/mps/mock_client.go -package=mps
+	mockgen -source=pkg/rest/rps/client.go -destination=pkg/rest/rps/mock_client.go -package=rps
 
 cli-docs:
 	@# Help: Generates markdowns for the orchestrator cli
