@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -25,21 +26,58 @@ orch-cli list site --project some-project
 # List all sites within specific parent region ID
 orch-cli list site --project some-project --region region-aaaa1111"`
 
-const getSiteExamples = `# Get specific site information
-orch-cli get site site-aaaa1111 --project some-project`
+const getSiteExamples = `# Get a site by resource ID
+orch-cli get site site-aaaa1111 --project some-project
+
+# Get a site by name
+orch-cli get site mysite --project some-project`
 
 const createSiteExamples = `# Create specific site
 
-# Create a site in a region (default longitude and latitude set to 0)
+# Create a site in a region by resource ID (default longitude and latitude set to 0)
 orch-cli create site name --project some-project --region region-bbbb1111
 
-# Create a site in a region (default longitude and latitude set to 0)
-orch-cli create site name --project some-project --region region-bbbb1111 --longitude 5 --latitude 5
+# Create a site in a region by name
+orch-cli create site name --project some-project --region "My Region" --longitude 5 --latitude 5
 `
-const deleteSiteExamples = `# Delete specific site
-orch-cli delete site region-aaaa1111 --project some-project`
+const deleteSiteExamples = `# Delete a site by resource ID
+orch-cli delete site site-aaaa1111 --project some-project
+# Delete a site by name
+orch-cli delete site "my-site" --project some-project`
 
 var queryRegion = "region"
+
+// siteResourceIDPattern matches site resource IDs: "site-" followed by 8 hex chars.
+var siteResourceIDPattern = regexp.MustCompile(`^site-[0-9a-f]{8}$`)
+
+func isSiteResourceID(s string) bool {
+	return siteResourceIDPattern.MatchString(s)
+}
+
+// findSiteByName searches a slice of sites for an exact name match.
+// Returns an error if no match is found or if multiple sites share the same name
+// (listing the matches so the caller can retry with a resource ID).
+func findSiteByName(sites []infra.SiteResource, name string) (infra.SiteResource, error) {
+	var matches []infra.SiteResource
+	for _, s := range sites {
+		if s.Name != nil && *s.Name == name {
+			matches = append(matches, s)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return infra.SiteResource{}, fmt.Errorf("no site found with name %q", name)
+	case 1:
+		return matches[0], nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple sites found with name %q; use a resource ID instead:\n", name)
+		for _, m := range matches {
+			fmt.Fprintf(&sb, "  name: %s  resource-id: %s\n", derefString(m.Name), derefString(m.ResourceId))
+		}
+		return infra.SiteResource{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
+}
 
 func getListSiteCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -57,7 +95,7 @@ func getListSiteCommand() *cobra.Command {
 
 func getGetSiteCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "site <resourceid> [flags]",
+		Use:     "site <name|resourceID> [flags]",
 		Short:   "Get a site",
 		Example: getSiteExamples,
 		Args:    cobra.ExactArgs(1),
@@ -77,7 +115,7 @@ func getCreateSiteCommand() *cobra.Command {
 		Aliases: siteAliases,
 		RunE:    runCreateSiteCommand,
 	}
-	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Region to which the site will be deployed: --region region-aaaa1111")
+	cmd.PersistentFlags().StringP("region", "r", viper.GetString("region"), "Region to which the site will be deployed: --region region-aaaa1111 or --region \"My Region\"")
 	cmd.PersistentFlags().StringP("latitude", "l", viper.GetString("latitude"), "Optional flag to provide latitude: --latitude 5")
 	cmd.PersistentFlags().StringP("longitude", "g", viper.GetString("longitude"), "Optional flag to provide longitude: longitude 5 ")
 	return cmd
@@ -85,7 +123,7 @@ func getCreateSiteCommand() *cobra.Command {
 
 func getDeleteSiteCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "site <resourceid> [flags]",
+		Use:     "site <name|resourceID> [flags]",
 		Short:   "Delete a site",
 		Example: deleteSiteExamples,
 		Args:    cobra.ExactArgs(1),
@@ -230,14 +268,30 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 	if regFlag == "" || strings.HasPrefix(regFlag, "--") {
 		return errors.New("region flag required")
 	}
-	region, err := filterRegionsHelper(regFlag)
-	if err != nil {
-		return err
-	}
 
 	ctx, siteClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	// Resolve --region: accept resource ID or region name.
+	var regionID string
+	if isRegionResourceID(regFlag) {
+		regionID = regFlag
+	} else {
+		lresp, err := siteClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while retrieving regions"); err != nil {
+			return err
+		}
+		r, err := findRegionByName(lresp.JSON200.Regions, regFlag)
+		if err != nil {
+			return err
+		}
+		regionID = derefString(r.ResourceId)
 	}
 
 	err = checkName(name, SITE)
@@ -255,7 +309,7 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	rresp, err := siteClient.RegionServiceGetRegionWithResponse(ctx, projectName,
-		*region, auth.AddAuthHeader)
+		regionID, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -270,12 +324,12 @@ func runCreateSiteCommand(cmd *cobra.Command, args []string) error {
 			Name:     &name,
 			SiteLat:  siteLat,
 			SiteLng:  siteLng,
-			RegionId: region,
+			RegionId: &regionID,
 		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating region")
+	return checkResponse(resp.HTTPResponse, resp.Body, "error while creating site")
 }
 
 func runGetSiteCommand(cmd *cobra.Command, args []string) error {
@@ -285,20 +339,39 @@ func runGetSiteCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	id := args[0]
+	query := args[0]
 
-	resp, err := siteClient.SiteServiceGetSiteWithResponse(ctx, projectName,
-		"empty", id, auth.AddAuthHeader)
+	if isSiteResourceID(query) {
+		resp, err := siteClient.SiteServiceGetSiteWithResponse(ctx, projectName,
+			"empty", query, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, false,
+			"", "error getting site"); !proceed {
+			return err
+		}
+		if err := printSite(cmd, writer, resp.JSON200); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	// Name-based lookup: list all sites and filter by name.
+	resp, err := siteClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
+		&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, false,
-		"", "error getting site"); !proceed {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving sites"); err != nil {
 		return err
 	}
 
-	if err := printSite(cmd, writer, resp.JSON200); err != nil {
+	site, err := findSiteByName(resp.JSON200.Sites, query)
+	if err != nil {
+		return err
+	}
+	if err := printSite(cmd, writer, &site); err != nil {
 		return err
 	}
 	return writer.Flush()
@@ -310,6 +383,23 @@ func runDeleteSiteCommand(cmd *cobra.Command, args []string) error {
 	ctx, siteClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	if !isSiteResourceID(id) {
+		// Name-based lookup: list all sites and filter by name.
+		resp, err := siteClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
+			&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving sites"); err != nil {
+			return err
+		}
+		site, err := findSiteByName(resp.JSON200.Sites, id)
+		if err != nil {
+			return err
+		}
+		id = derefString(site.ResourceId)
 	}
 
 	resp, err := siteClient.SiteServiceDeleteSiteWithResponse(ctx, projectName,

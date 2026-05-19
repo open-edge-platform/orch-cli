@@ -47,7 +47,7 @@ func (s *CLITestSuite) TestMetric() {
 		s.Equal("Bearer metric-test-token", r.Header.Get("Authorization"))
 		s.Equal("698fde6a-b721-447a-a7c2-7187d64393c1", r.Header.Get("X-Scope-OrgID"))
 		s.NoError(r.ParseForm())
-		s.Equal(`node_cpu_seconds_total{host="edge-node-01"}`, r.Form.Get("query"))
+		s.Equal(`node_cpu_seconds_total{host="host-abc12345"}`, r.Form.Get("query"))
 		s.Equal(defaultMetricsTimeout.String(), r.Form.Get("timeout"))
 
 		w.Header().Set("Content-Type", "application/json")
@@ -57,7 +57,7 @@ func (s *CLITestSuite) TestMetric() {
 
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		metricsEndpointFlag: server.URL + "/prometheus",
-		hostnameFlag:        "edge-node-01",
+		hostnameFlag:        "host-abc12345",
 		orgIDFlag:           "698fde6a-b721-447a-a7c2-7187d64393c1",
 	})
 	s.NoError(err)
@@ -71,7 +71,7 @@ func (s *CLITestSuite) TestMetric() {
 
 	_, err = s.getMetric("invalid-metric!", commandArgs{
 		metricsEndpointFlag: server.URL,
-		hostnameFlag:        "edge-node-01",
+		hostnameFlag:        "host-abc12345",
 		orgIDFlag:           "698fde6a-b721-447a-a7c2-7187d64393c1",
 	})
 	s.EqualError(err, `invalid metric name "invalid-metric!"`)
@@ -99,7 +99,7 @@ func (s *CLITestSuite) TestGetMetricAtTimestamp() {
 		s.Equal("Bearer metric-ts-test-token", r.Header.Get("Authorization"))
 		s.Equal("698fde6a-b721-447a-a7c2-7187d64393c1", r.Header.Get("X-Scope-OrgID"))
 		s.NoError(r.ParseForm())
-		s.Equal(`node_cpu_seconds_total{host="edge-node-01"}`, r.Form.Get("query"))
+		s.Equal(`node_cpu_seconds_total{host="host-abc12345"}`, r.Form.Get("query"))
 		s.Equal("1704153600", r.Form.Get("time"))
 
 		w.Header().Set("Content-Type", "application/json")
@@ -109,7 +109,7 @@ func (s *CLITestSuite) TestGetMetricAtTimestamp() {
 
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		metricsEndpointFlag: server.URL + "/prometheus",
-		hostnameFlag:        "edge-node-01",
+		hostnameFlag:        "host-abc12345",
 		orgIDFlag:           "698fde6a-b721-447a-a7c2-7187d64393c1",
 		timestampFlag:       "1704153600",
 	})
@@ -144,7 +144,7 @@ func (s *CLITestSuite) TestGetMetricNoResults() {
 
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": server.URL + "/prometheus",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		orgIDFlag:          "698fde6a-b721-447a-a7c2-7187d64393c1",
 	})
 	s.NoError(err)
@@ -172,7 +172,7 @@ func (s *CLITestSuite) TestGetMetricDerivesEndpointFromAPIEndpoint() {
 	cmd.SetArgs([]string{
 		"get", "metric", "node_cpu_seconds_total",
 		"--project", "unit-test-project",
-		"--hostname", "edge-node-01",
+		"--hostname", "host-abc12345",
 		"--org-id", "698fde6a-b721-447a-a7c2-7187d64393c1",
 		"--api-endpoint", "https://api.kind.internal/",
 		"--debug-headers",
@@ -489,7 +489,7 @@ func (s *CLITestSuite) TestGetMetricWithRange() {
 		s.Equal("Bearer range-metric-test-token", r.Header.Get("Authorization"))
 		s.Equal("698fde6a-b721-447a-a7c2-7187d64393c1", r.Header.Get("X-Scope-OrgID"))
 		s.NoError(r.ParseForm())
-		s.Equal(`avg_over_time(node_cpu_seconds_total{host="edge-node-01"}[86400s])`, r.Form.Get("query"))
+		s.Equal(`avg_over_time(node_cpu_seconds_total{host="host-abc12345"}[86400s])`, r.Form.Get("query"))
 		s.Equal("1704153600", r.Form.Get("time"))
 		s.Equal(defaultMetricsTimeout.String(), r.Form.Get("timeout"))
 
@@ -500,7 +500,7 @@ func (s *CLITestSuite) TestGetMetricWithRange() {
 
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": server.URL + "/prometheus",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		orgIDFlag:          "698fde6a-b721-447a-a7c2-7187d64393c1",
 		"average":          "true",
 		"start-time":       "1704067200",
@@ -517,7 +517,7 @@ func (s *CLITestSuite) TestGetMetricWithRange() {
 func (s *CLITestSuite) TestGetMetricAverageRequiresTimeRange() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		"average":          "true",
 		// Missing duration and explicit start/end window
 	})
@@ -548,7 +548,7 @@ func (s *CLITestSuite) TestGetMetricWithAverageDuration() {
 		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		s.Equal("Bearer avg-duration-metric-test-token", r.Header.Get("Authorization"))
 		s.NoError(r.ParseForm())
-		s.Equal(`avg_over_time(node_cpu_seconds_total{host="edge-node-01"}[3600s])`, r.Form.Get("query"))
+		s.Equal(`avg_over_time(node_cpu_seconds_total{host="host-abc12345"}[3600s])`, r.Form.Get("query"))
 
 		evalTime, parseErr := strconv.ParseInt(r.Form.Get("time"), 10, 64)
 		s.NoError(parseErr)
@@ -562,7 +562,7 @@ func (s *CLITestSuite) TestGetMetricWithAverageDuration() {
 
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": server.URL + "/prometheus",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		averageFlag:        "true",
 		durationFlag:       "3600",
 	})
@@ -595,7 +595,7 @@ func (s *CLITestSuite) TestGetMetricWithSumRange() {
 		s.Equal("Bearer sum-metric-test-token", r.Header.Get("Authorization"))
 		s.Equal("698fde6a-b721-447a-a7c2-7187d64393c1", r.Header.Get("X-Scope-OrgID"))
 		s.NoError(r.ParseForm())
-		s.Equal(`sum_over_time(node_cpu_seconds_total{host="edge-node-01"}[3600s])`, r.Form.Get("query"))
+		s.Equal(`sum_over_time(node_cpu_seconds_total{host="host-abc12345"}[3600s])`, r.Form.Get("query"))
 		s.Equal("1704153600", r.Form.Get("time"))
 		s.Equal(defaultMetricsTimeout.String(), r.Form.Get("timeout"))
 
@@ -606,7 +606,7 @@ func (s *CLITestSuite) TestGetMetricWithSumRange() {
 
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": server.URL + "/prometheus",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		orgIDFlag:          "698fde6a-b721-447a-a7c2-7187d64393c1",
 		sumFlag:            "true",
 		startTimeFlag:      "1704150000",
@@ -642,7 +642,7 @@ func (s *CLITestSuite) TestGetMetricWithSumDuration() {
 		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		s.Equal("Bearer sum-duration-metric-test-token", r.Header.Get("Authorization"))
 		s.NoError(r.ParseForm())
-		s.Equal(`sum_over_time(node_cpu_seconds_total{host="edge-node-01"}[3600s])`, r.Form.Get("query"))
+		s.Equal(`sum_over_time(node_cpu_seconds_total{host="host-abc12345"}[3600s])`, r.Form.Get("query"))
 
 		// Parse eval time to verify it's near now
 		evalTime, parseErr := strconv.ParseInt(r.Form.Get("time"), 10, 64)
@@ -659,7 +659,7 @@ func (s *CLITestSuite) TestGetMetricWithSumDuration() {
 
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": server.URL + "/prometheus",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		sumFlag:            "true",
 		durationFlag:       "3600",
 	})
@@ -673,7 +673,7 @@ func (s *CLITestSuite) TestGetMetricWithSumDuration() {
 func (s *CLITestSuite) TestGetMetricSumRequiresTimeRange() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		sumFlag:            "true",
 	})
 	s.Error(err)
@@ -684,7 +684,7 @@ func (s *CLITestSuite) TestGetMetricSumRequiresTimeRange() {
 func (s *CLITestSuite) TestGetMetricSumAndAverageConflict() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		sumFlag:            "true",
 		averageFlag:        "true",
 		startTimeFlag:      "1704067200",
@@ -698,7 +698,7 @@ func (s *CLITestSuite) TestGetMetricSumAndAverageConflict() {
 func (s *CLITestSuite) TestGetMetricSumAndIncreaseConflict() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		sumFlag:            "true",
 		increaseFlag:       "true",
 		durationFlag:       "3600",
@@ -711,7 +711,7 @@ func (s *CLITestSuite) TestGetMetricSumAndIncreaseConflict() {
 func (s *CLITestSuite) TestGetMetricSumDurationAndRangeConflict() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		sumFlag:            "true",
 		durationFlag:       "3600",
 		startTimeFlag:      "1704067200",
@@ -725,7 +725,7 @@ func (s *CLITestSuite) TestGetMetricSumDurationAndRangeConflict() {
 func (s *CLITestSuite) TestGetMetricAverageDurationAndRangeConflict() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		averageFlag:        "true",
 		durationFlag:       "3600",
 		startTimeFlag:      "1704067200",
@@ -739,7 +739,7 @@ func (s *CLITestSuite) TestGetMetricAverageDurationAndRangeConflict() {
 func (s *CLITestSuite) TestGetMetricDurationRequiresAggregationMode() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		durationFlag:       "3600",
 	})
 	s.Error(err)
@@ -769,7 +769,7 @@ func (s *CLITestSuite) TestGetMetricWithIncreaseDuration() {
 		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		s.Equal("Bearer increase-duration-metric-test-token", r.Header.Get("Authorization"))
 		s.NoError(r.ParseForm())
-		s.Equal(`increase(node_cpu_seconds_total{host="edge-node-01"}[3600s])`, r.Form.Get("query"))
+		s.Equal(`increase(node_cpu_seconds_total{host="host-abc12345"}[3600s])`, r.Form.Get("query"))
 
 		evalTime, parseErr := strconv.ParseInt(r.Form.Get("time"), 10, 64)
 		s.NoError(parseErr)
@@ -783,7 +783,7 @@ func (s *CLITestSuite) TestGetMetricWithIncreaseDuration() {
 
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": server.URL + "/prometheus",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		increaseFlag:       "true",
 		durationFlag:       "3600",
 	})
@@ -797,7 +797,7 @@ func (s *CLITestSuite) TestGetMetricWithIncreaseDuration() {
 func (s *CLITestSuite) TestGetMetricIncreaseRequiresTimeRange() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		increaseFlag:       "true",
 	})
 	s.Error(err)
@@ -827,7 +827,7 @@ func (s *CLITestSuite) TestGetMetricWithRangeDuration() {
 		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		s.Equal("Bearer range-duration-metric-test-token", r.Header.Get("Authorization"))
 		s.NoError(r.ParseForm())
-		s.Equal(`node_cpu_seconds_total{host="edge-node-01"}`, r.Form.Get("query"))
+		s.Equal(`node_cpu_seconds_total{host="host-abc12345"}`, r.Form.Get("query"))
 
 		start, parseErr := strconv.ParseInt(r.Form.Get("start"), 10, 64)
 		s.NoError(parseErr)
@@ -844,7 +844,7 @@ func (s *CLITestSuite) TestGetMetricWithRangeDuration() {
 
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": server.URL + "/prometheus",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		rangeFlag:          "true",
 		durationFlag:       "3600",
 	})
@@ -882,7 +882,7 @@ func (s *CLITestSuite) TestGetMetricWithRangeExplicitWindow() {
 		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		s.Equal("Bearer range-explicit-metric-test-token", r.Header.Get("Authorization"))
 		s.NoError(r.ParseForm())
-		s.Equal(`node_cpu_seconds_total{host="edge-node-01"}`, r.Form.Get("query"))
+		s.Equal(`node_cpu_seconds_total{host="host-abc12345"}`, r.Form.Get("query"))
 		s.Equal("1704150000", r.Form.Get("start"))
 		s.Equal("1704153600", r.Form.Get("end"))
 
@@ -893,7 +893,7 @@ func (s *CLITestSuite) TestGetMetricWithRangeExplicitWindow() {
 
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": server.URL + "/prometheus",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		rangeFlag:          "true",
 		startTimeFlag:      "1704150000",
 		endTimeFlag:        "1704153600",
@@ -914,7 +914,7 @@ func (s *CLITestSuite) TestGetMetricWithRangeExplicitWindow() {
 func (s *CLITestSuite) TestGetMetricRangeAndSumConflict() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		rangeFlag:          "true",
 		sumFlag:            "true",
 		durationFlag:       "3600",
@@ -927,7 +927,7 @@ func (s *CLITestSuite) TestGetMetricRangeAndSumConflict() {
 func (s *CLITestSuite) TestGetMetricTimestampConflictsWithAggregation() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		sumFlag:            "true",
 		timestampFlag:      "1704153600",
 	})
@@ -939,7 +939,7 @@ func (s *CLITestSuite) TestGetMetricTimestampConflictsWithAggregation() {
 func (s *CLITestSuite) TestGetMetricTimestampConflictsWithRangeFlags() {
 	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
 		"metrics-endpoint": "http://localhost:9090",
-		hostnameFlag:       "edge-node-01",
+		hostnameFlag:       "host-abc12345",
 		timestampFlag:      "1704153600",
 		startTimeFlag:      "1704150000",
 		endTimeFlag:        "1704153600",
@@ -947,4 +947,61 @@ func (s *CLITestSuite) TestGetMetricTimestampConflictsWithRangeFlags() {
 	s.Error(err)
 	s.Contains(err.Error(), "--timestamp cannot be used with --duration, --start-time, or --end-time")
 	s.Empty(output)
+}
+
+func (s *CLITestSuite) TestGetMetricByHostName() {
+	tokenEnvWasSet := false
+	previousToken := os.Getenv("MT_GW_TOKEN")
+	if previousToken != "" {
+		tokenEnvWasSet = true
+	}
+	s.T().Cleanup(func() {
+		if tokenEnvWasSet {
+			s.NoError(os.Setenv("MT_GW_TOKEN", previousToken))
+			return
+		}
+		os.Unsetenv("MT_GW_TOKEN")
+	})
+	s.NoError(os.Setenv("MT_GW_TOKEN", "metric-name-test-token"))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.Equal(http.MethodPost, r.Method)
+		s.Equal("/prometheus/api/v1/query", r.URL.Path)
+		s.NoError(r.ParseForm())
+		// The hostname must be resolved to the resource ID before querying Prometheus.
+		s.Equal(`node_cpu_seconds_total{host="host-abc12345"}`, r.Form.Get("query"))
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"host-abc12345"},"value":[1714478400,"99"]}]}}`))
+	}))
+	defer server.Close()
+
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		metricsEndpointFlag: server.URL + "/prometheus",
+		hostnameFlag:        "edge-host-001",
+		orgIDFlag:           "698fde6a-b721-447a-a7c2-7187d64393c1",
+	})
+	s.NoError(err)
+	s.Contains(output, "METRIC")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "99")
+}
+
+func (s *CLITestSuite) TestGetMetricByHostNameDuplicate() {
+	commandString := addCommandArgs(commandArgs{
+		hostnameFlag: "duplicate",
+		orgIDFlag:    "698fde6a-b721-447a-a7c2-7187d64393c1",
+	}, "get metric node_cpu_seconds_total --project duplicate-host")
+	_, err := s.runCommand(commandString)
+	s.Error(err)
+	s.Contains(err.Error(), `multiple hosts found with name "duplicate"`)
+}
+
+func (s *CLITestSuite) TestGetMetricByHostNameNotFound() {
+	_, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		hostnameFlag: "nonexistent-host",
+		orgIDFlag:    "698fde6a-b721-447a-a7c2-7187d64393c1",
+	})
+	s.Error(err)
+	s.Contains(err.Error(), `no host found with name "nonexistent-host"`)
 }

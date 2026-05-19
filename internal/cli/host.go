@@ -53,8 +53,11 @@ orch-cli list host --project some-project --workload cluster-sn000320
 orch-cli list host --project some-project --workload NotAssigned
 `
 
-const getHostExamples = `# Get detailed information about specific host using the host Resource ID
-orch-cli get host host-1234abcd --project some-project`
+const getHostExamples = `# Get a host by resource ID
+orch-cli get host host-1234abcd --project some-project
+
+# Get a host by name
+orch-cli get host my-host --project some-project`
 
 func createHostExamples() string {
 	examples := `# Provision a host or a number of hosts from a CSV file
@@ -148,8 +151,10 @@ orch-cli create host <name> --project some-project --serial 2500JF3 --uuid 4c4c4
 	return examples
 }
 
-const deleteHostExamples = `#Delete a host using it's host Resource ID
-orch-cli delete host host-1234abcd  --project itep`
+const deleteHostExamples = `#Delete a host using its resource ID
+orch-cli delete host host-1234abcd  --project itep
+#Delete a host using its name
+orch-cli delete host "my-host"  --project itep`
 
 const deauthorizeHostExamples = `#Deauthorize the host and it's access to Edge Orchestrator using the host Resource ID
 orch-cli deauthorize host host-1234abcd  --project itep`
@@ -1520,7 +1525,6 @@ func validateOSUpdatePolicy(osUpdatePolicy string) error {
 func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface, projectName string, recordSite string,
 	globalSite string, record types.HostRecord, respCache ResponseCache, erringRecords *[]types.HostRecord,
 ) (string, error) {
-
 	siteToQuery := recordSite
 
 	if globalSite != "" {
@@ -1533,26 +1537,56 @@ func resolveSite(ctx context.Context, hClient infra.ClientWithResponsesInterface
 		return "", e.NewCustomError(e.ErrInvalidSite)
 	}
 
+	// Check cache first
 	if siteResource, ok := respCache.SiteCache[siteToQuery]; ok {
 		return *siteResource.ResourceId, nil
 	}
 
-	resp, err := hClient.SiteServiceGetSiteWithResponse(ctx, projectName, "regionID", siteToQuery, auth.AddAuthHeader)
+	// If input already looks like a resource ID, use the get-by-id API
+	if isSiteResourceID(siteToQuery) {
+		resp, err := hClient.SiteServiceGetSiteWithResponse(ctx, projectName, "empty", siteToQuery, auth.AddAuthHeader)
+		if err != nil {
+			record.Error = err.Error()
+			*erringRecords = append(*erringRecords, record)
+			return "", err
+		}
+
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error Site not found"); err != nil {
+			record.Error = err.Error()
+			*erringRecords = append(*erringRecords, record)
+			return "", err
+		}
+
+		// Cache by the original query (resource ID)
+		respCache.SiteCache[siteToQuery] = *resp.JSON200
+		return *resp.JSON200.ResourceId, nil
+	}
+
+	// Name-based lookup: list sites and find exact match. Handle no/multiple matches like site.go
+	resp, err := hClient.SiteServiceListSitesWithResponse(ctx, projectName, queryRegion,
+		&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
 	if err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
 		return "", err
 	}
 
-	err = checkResponse(resp.HTTPResponse, resp.Body, "error Site not found")
-	if err != nil {
+	if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving sites"); err != nil {
 		record.Error = err.Error()
 		*erringRecords = append(*erringRecords, record)
 		return "", err
 	}
 
-	respCache.SiteCache[siteToQuery] = *resp.JSON200
-	return *resp.JSON200.ResourceId, nil
+	site, findErr := findSiteByName(resp.JSON200.Sites, siteToQuery)
+	if findErr != nil {
+		record.Error = findErr.Error()
+		*erringRecords = append(*erringRecords, record)
+		return "", findErr
+	}
+
+	// Cache using the original name so future lookups by the same name are fast
+	respCache.SiteCache[siteToQuery] = site
+	return derefString(site.ResourceId), nil
 }
 
 // Checks if LVM size is valid
@@ -1811,7 +1845,7 @@ func getListHostCommand() *cobra.Command {
 
 func getGetHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "host <resourceID> [flags]",
+		Use:     "host <name|resourceID> [flags]",
 		Short:   "Gets a host",
 		Example: getHostExamples,
 		Args:    cobra.ExactArgs(1),
@@ -1863,7 +1897,7 @@ func getCreateHostCommand() *cobra.Command {
 
 func getDeleteHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "host <resourceID> [flags]",
+		Use:     "host <name|resourceID> [flags]",
 		Short:   "Deletes a host and associated instance",
 		Example: deleteHostExamples,
 		Args:    cobra.ExactArgs(1),
@@ -1875,7 +1909,7 @@ func getDeleteHostCommand() *cobra.Command {
 
 func getSetHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "host [resourceID] [flags]",
+		Use:     "host [name|resourceID] [flags]",
 		Short:   "Sets a host attribute or action",
 		Example: setHostExamples(),
 		Args: func(cmd *cobra.Command, args []string) error {
@@ -1938,7 +1972,7 @@ func getDeauthorizeHostCommand() *cobra.Command {
 
 func getUpdateHostCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "host <resourceID> [flags]",
+		Use:     "host <name|resourceID> [flags]",
 		Short:   "Updates a host",
 		Example: updateHostExamples,
 		Args: func(cmd *cobra.Command, args []string) error {
@@ -2202,17 +2236,68 @@ func runListHostCommand(cmd *cobra.Command, _ []string) error {
 }
 
 // Gets specific Host - retrieves a host using resource ID and displays detailed information
+// hostResourceIDPattern matches host resource IDs: "host-" followed by 8 hex chars.
+var hostResourceIDPattern = regexp.MustCompile(`^host-[0-9a-f]{8}$`)
+
+func isHostResourceID(s string) bool {
+	return hostResourceIDPattern.MatchString(s)
+}
+
+// findHostByName searches a slice of hosts for an exact name match.
+// Returns an error if no match is found or if multiple hosts share the same name
+// (listing the matches so the caller can retry with a resource ID).
+func findHostByName(hosts []infra.HostResource, name string) (infra.HostResource, error) {
+	var matches []infra.HostResource
+	for _, h := range hosts {
+		if h.Name == name {
+			matches = append(matches, h)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return infra.HostResource{}, fmt.Errorf("no host found with name %q", name)
+	case 1:
+		return matches[0], nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple hosts found with name %q; use a resource ID instead:\n", name)
+		for _, m := range matches {
+			fmt.Fprintf(&sb, "  name: %s  resource-id: %s\n", m.Name, derefString(m.ResourceId))
+		}
+		return infra.HostResource{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
+}
+
 func runGetHostCommand(cmd *cobra.Command, args []string) error {
 
-	hostID := args[0]
+	query := args[0]
 	writer, verbose := getOutputContext(cmd)
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
 
+	if !isHostResourceID(query) {
+		// Name-based lookup: pass name filter to the API to narrow results on the backend,
+		// then do an exact client-side match to handle any ambiguity.
+		nameFilter := fmt.Sprintf("name=%q", query)
+		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+			return err
+		}
+		host, err := findHostByName(resp.JSON200.Hosts, query)
+		if err != nil {
+			return err
+		}
+		query = derefString(host.ResourceId)
+	}
+
 	resp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName,
-		hostID, auth.AddAuthHeader)
+		query, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -2410,6 +2495,24 @@ func runDeleteHostCommand(cmd *cobra.Command, args []string) error {
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	if !isHostResourceID(hostID) {
+		// Name-based lookup: pass name filter to the API to narrow results, then exact client-side match.
+		nameFilter := fmt.Sprintf("name=%q", hostID)
+		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+			return err
+		}
+		host, err := findHostByName(resp.JSON200.Hosts, hostID)
+		if err != nil {
+			return err
+		}
+		hostID = derefString(host.ResourceId)
 	}
 
 	// retrieve the host (to check if it has an instance associated with it)
@@ -2680,6 +2783,62 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("--filter, --site, and --region require at least one action flag (--power, --power-policy, --amt-state, --control-mode, --osupdatepolicy)")
 		}
 
+		ctx, hostClient, projectName, err := InfraFactory(cmd)
+		if err != nil {
+			return err
+		}
+
+		// Resolve --site by name if not already a resource ID
+		if siteFlag != "" && !isSiteResourceID(siteFlag) {
+			lresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, "",
+				&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing sites"); err != nil {
+				return err
+			}
+			s, findErr := findSiteByName(lresp.JSON200.Sites, siteFlag)
+			if findErr != nil {
+				return findErr
+			}
+			siteFlag = *s.ResourceId
+		}
+
+		// Resolve --region by name if not already a resource ID
+		if regFlag != "" && !isRegionResourceID(regFlag) {
+			lresp, err := hostClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+				&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing regions"); err != nil {
+				return err
+			}
+			r, findErr := findRegionByName(lresp.JSON200.Regions, regFlag)
+			if findErr != nil {
+				return findErr
+			}
+			regFlag = *r.ResourceId
+		}
+
+		// Resolve --osupdatepolicy by name if not already a resource ID
+		if updFlag != "" && !isOSUpdatePolicyResourceID(updFlag) {
+			lresp, err := hostClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+				&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing OS update policies"); err != nil {
+				return err
+			}
+			pol, findErr := findOSUpdatePolicyByName(lresp.JSON200.OsUpdatePolicies, updFlag)
+			if findErr != nil {
+				return findErr
+			}
+			updFlag = *pol.ResourceId
+		}
+
 		filter := filterHelper(filtflag)
 
 		site, err := filterSitesHelper(siteFlag)
@@ -2731,11 +2890,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			amtMode = &mode
-		}
-
-		ctx, hostClient, projectName, err := InfraFactory(cmd)
-		if err != nil {
-			return err
 		}
 
 		if siteFlag == "" && regFlag != "" {
@@ -2952,10 +3106,6 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 		power = &pow
 	}
 
-	if updFlag != "" {
-		updatePolicy = &updFlag
-	}
-
 	if amtFlag != "" {
 		amt, err := resolveAmtState(amtFlag)
 		if err != nil {
@@ -2975,6 +3125,46 @@ func runSetHostCommand(cmd *cobra.Command, args []string) error {
 	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
+	}
+
+	// Resolve --osupdatepolicy by name if not already a resource ID
+	if updFlag != "" {
+		if isOSUpdatePolicyResourceID(updFlag) {
+			updatePolicy = &updFlag
+		} else {
+			lresp, err := hostClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+				&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing OS update policies"); err != nil {
+				return err
+			}
+			pol, findErr := findOSUpdatePolicyByName(lresp.JSON200.OsUpdatePolicies, updFlag)
+			if findErr != nil {
+				return findErr
+			}
+			rid := *pol.ResourceId
+			updatePolicy = &rid
+		}
+	}
+
+	if !isHostResourceID(hostID) {
+		// Name-based lookup: pass name filter to the API, then exact client-side match.
+		nameFilter := fmt.Sprintf("name=%q", hostID)
+		resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+			&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+			return err
+		}
+		host, err := findHostByName(resp.JSON200.Hosts, hostID)
+		if err != nil {
+			return err
+		}
+		hostID = derefString(host.ResourceId)
 	}
 
 	// retrieve the host (to check if it has an instance associated with it)
@@ -3127,18 +3317,53 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 	filter := filterHelper(filtflag)
 
 	siteFlag, _ := cmd.Flags().GetString("site")
+	regFlag, _ := cmd.Flags().GetString("region")
+
+	ctx, hostClient, projectName, err := InfraFactory(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Resolve --site by name if not already a resource ID
+	if siteFlag != "" && !isSiteResourceID(siteFlag) {
+		lresp, err := hostClient.SiteServiceListSitesWithResponse(ctx, projectName, "",
+			&infra.SiteServiceListSitesParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing sites"); err != nil {
+			return err
+		}
+		s, findErr := findSiteByName(lresp.JSON200.Sites, siteFlag)
+		if findErr != nil {
+			return findErr
+		}
+		siteFlag = *s.ResourceId
+	}
+
+	// Resolve --region by name if not already a resource ID
+	if regFlag != "" && !isRegionResourceID(regFlag) {
+		lresp, err := hostClient.RegionServiceListRegionsWithResponse(ctx, projectName,
+			&infra.RegionServiceListRegionsParams{}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing regions"); err != nil {
+			return err
+		}
+		r, findErr := findRegionByName(lresp.JSON200.Regions, regFlag)
+		if findErr != nil {
+			return findErr
+		}
+		regFlag = *r.ResourceId
+	}
+
 	site, err := filterSitesHelper(siteFlag)
 	if err != nil {
 		return err
 	}
 
-	regFlag, _ := cmd.Flags().GetString("region")
 	region, err := filterRegionsHelper(regFlag)
-	if err != nil {
-		return err
-	}
-
-	ctx, hostClient, projectName, err := InfraFactory(cmd)
 	if err != nil {
 		return err
 	}
@@ -3348,21 +3573,52 @@ func runUpdateHostCommand(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return fmt.Errorf("no host ID provided")
 		}
-		if policyFlag != "" {
-			err := validateOSUpdatePolicy(policyFlag)
+		hostID := args[0]
+		if !isHostResourceID(hostID) {
+			// Name-based lookup: pass name filter to the API, then exact client-side match.
+			nameFilter := fmt.Sprintf("name=%q", hostID)
+			resp, err := hostClient.HostServiceListHostsWithResponse(ctx, projectName,
+				&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+			if err != nil {
+				return processError(err)
+			}
+			if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving hosts"); err != nil {
+				return err
+			}
+			host, err := findHostByName(resp.JSON200.Hosts, hostID)
 			if err != nil {
 				return err
 			}
+			hostID = derefString(host.ResourceId)
+		}
+		if policyFlag != "" {
+			// Resolve OS update policy name to resource ID if needed
+			resolvedPolicy := policyFlag
+			if !isOSUpdatePolicyResourceID(policyFlag) {
+				lresp, err := hostClient.OSUpdatePolicyListOSUpdatePolicyWithResponse(ctx, projectName,
+					&infra.OSUpdatePolicyListOSUpdatePolicyParams{}, auth.AddAuthHeader)
+				if err != nil {
+					return processError(err)
+				}
+				if err := checkResponse(lresp.HTTPResponse, lresp.Body, "error while listing OS update policies"); err != nil {
+					return err
+				}
+				pol, findErr := findOSUpdatePolicyByName(lresp.JSON200.OsUpdatePolicies, policyFlag)
+				if findErr != nil {
+					return findErr
+				}
+				resolvedPolicy = *pol.ResourceId
+			}
 			updateRecords = append(updateRecords, UpdateHostRecord{
 				Name:           "",
-				ResourceID:     args[0],
-				OsUpdatePolicy: policyFlag,
+				ResourceID:     hostID,
+				OsUpdatePolicy: resolvedPolicy,
 				Error:          "",
 			})
 		} else {
 			updateRecords = append(updateRecords, UpdateHostRecord{
 				Name:           "",
-				ResourceID:     args[0],
+				ResourceID:     hostID,
 				OsUpdatePolicy: "",
 				Error:          "",
 			})
