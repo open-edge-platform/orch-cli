@@ -143,6 +143,13 @@ type kvmSession struct {
 	browserMu            sync.RWMutex
 	pendingBrowserFrames [][]byte
 
+	// lastBrowserActivity is updated on every message received from the browser.
+	// proxyKeepalive uses it to detect when the browser tab is minimized/idle
+	// (JavaScript timers throttled) and inject keepalive FramebufferUpdateRequests
+	// on the browser's behalf so AMT's idle timer does not fire.
+	lastBrowserActivity time.Time
+	lastBrowserMu       sync.Mutex
+
 	// browserReady is closed once the first browser WebSocket connects.
 	// ChannelOpen (0x40) is deferred until then so RFB data flows immediately.
 	browserReady chan struct{}
@@ -485,6 +492,40 @@ func (s *kvmSession) keepAlive() {
 	}
 }
 
+// proxyKeepalive injects an RFB FramebufferUpdateRequest from the Go server side
+// when the browser has been silent for >20 seconds. This keeps AMT's KVM channel
+// alive when the browser tab is minimized and JavaScript timers are throttled
+// (Chrome/Firefox suspend background-tab setInterval after ~1 minute).
+//
+// The request uses a large region (4096×4096) so it covers any screen resolution;
+// AMT clips the response to its actual framebuffer dimensions.  All bytes are
+// < 0x80 so encodeUTF8Binary passes them through unchanged.
+func (s *kvmSession) proxyKeepalive() {
+	const idleThreshold = 20 * time.Second
+	// RFB FramebufferUpdateRequest: type=3, incremental=1, x=0, y=0, w=4096, h=4096
+	var rfbKeepAlive = []byte{3, 1, 0, 0, 0, 0, 0x10, 0, 0x10, 0}
+	t := time.NewTicker(20 * time.Second)
+	defer t.Stop()
+	for {
+		select {
+		case <-s.done:
+			return
+		case <-t.C:
+			if s.amtState != "active" {
+				continue
+			}
+			s.lastBrowserMu.Lock()
+			since := time.Since(s.lastBrowserActivity)
+			s.lastBrowserMu.Unlock()
+			if since > idleThreshold {
+				if err := s.sendToMPS(rfbKeepAlive); err != nil {
+					return
+				}
+			}
+		}
+	}
+}
+
 func (s *kvmSession) readFromBrowser() {
 	for {
 		_, msg, err := s.browserConn.ReadMessage()
@@ -494,6 +535,9 @@ func (s *kvmSession) readFromBrowser() {
 			s.browserMu.Unlock()
 			return
 		}
+		s.lastBrowserMu.Lock()
+		s.lastBrowserActivity = time.Now()
+		s.lastBrowserMu.Unlock()
 		if err := s.sendToMPS(msg); err != nil {
 			return
 		}
@@ -699,13 +743,14 @@ func connectToMPSRelay(token, mpsDomain, deviceGUID, jwtToken, orchCA string, lo
 	logf("[KVM] Connected to MPS relay")
 
 	sess := &kvmSession{
-		mpsConn:      conn,
-		state:        "connecting",
-		amtState:     "start",
-		deviceGUID:   deviceGUID,
-		done:         make(chan struct{}),
-		browserReady: make(chan struct{}),
-		logf:         logf,
+		mpsConn:             conn,
+		state:               "connecting",
+		amtState:            "start",
+		deviceGUID:          deviceGUID,
+		done:                make(chan struct{}),
+		browserReady:        make(chan struct{}),
+		logf:                logf,
+		lastBrowserActivity: time.Now(),
 	}
 
 	// No read deadline on the MPS connection — keepAlive pings keep it alive;
@@ -714,6 +759,7 @@ func connectToMPSRelay(token, mpsDomain, deviceGUID, jwtToken, orchCA string, lo
 
 	go sess.readFromMPS()
 	go sess.keepAlive()
+	go sess.proxyKeepalive()
 
 	logf("[KVM] Starting AMT RedirectStart handshake")
 	sess.sendRedirectStartKVM()
