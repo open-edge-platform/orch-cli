@@ -90,9 +90,10 @@ const (
 	DEFAULT_OSUPDATEPOLICY_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{str .Description}}"
 	// Use raw timestamp fields in the verbose table so header extraction
 	// can detect the field names (fmttime/deref hides them from the extractor).
-	DEFAULT_OSUPDATEPOLICY_VERBOSE_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{str .TargetOsId}}\t{{str .Description}}\t{{.Timestamps.CreatedAt}}\t{{.Timestamps.UpdatedAt}}"
-	DEFAULT_OSUPDATEPOLICY_GET_FORMAT     = "Name:\t{{.Name}}\nResource ID:\t{{str .ResourceId}}\nTarget OS ID:\t{{str .TargetOsId}}\nTarget OS Name:\t{{if .TargetOs}}{{.TargetOs.Name}}{{end}}\nKernel Command:\t{{str .UpdateKernelCommand}}\nDescription:\t{{str .Description}}\nUpdate Packages:\t{{str .UpdatePackages}}\nUpdate Policy:\t{{deref .UpdatePolicy}}\nUpdate Sources:\t{{deref .UpdateSources}}\nCreated at:\t{{fmttime (deref .Timestamps.CreatedAt)}}\nUpdated at:\t{{fmttime (deref .Timestamps.UpdatedAt)}}\n"
-	OSUPDATEPOLICY_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_OSUPDATEPOLICY_OUTPUT_TEMPLATE"
+	DEFAULT_OSUPDATEPOLICY_VERBOSE_FORMAT  = "table{{.Name}}\t{{str .ResourceId}}\t{{str .TargetOsId}}\t{{str .Description}}\t{{.Timestamps.CreatedAt}}\t{{.Timestamps.UpdatedAt}}"
+	DEFAULT_OSUPDATEPOLICY_GET_FORMAT      = "Name:\t{{.Name}}\nResource ID:\t{{str .ResourceId}}\nTarget OS ID:\t{{str .TargetOsId}}\nTarget OS Name:\t{{if .TargetOs}}{{.TargetOs.Name}}{{end}}\nKernel Command:\t{{str .UpdateKernelCommand}}\nDescription:\t{{str .Description}}\nUpdate Packages:\t{{str .UpdatePackages}}\nUpdate Policy:\t{{deref .UpdatePolicy}}\nUpdate Sources:\t{{deref .UpdateSources}}\nCreated at:\t{{fmttime (deref .Timestamps.CreatedAt)}}\nUpdated at:\t{{fmttime (deref .Timestamps.UpdatedAt)}}\n"
+	OSUPDATEPOLICY_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_OSUPDATEPOLICY_OUTPUT_TEMPLATE"
+	OSUPDATEPOLICY_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_OSUPDATEPOLICY_INSPECT_TEMPLATE"
 )
 
 // Template-based print helpers for standardization
@@ -102,7 +103,7 @@ func getOSUpdatePolicyOutputFormat(cmd *cobra.Command, verbose bool, forList boo
 	}
 	if !forList {
 		// For single-get, return the detailed get format but allow overrides via flags/env
-		return resolveTableOutputTemplate(cmd, DEFAULT_OSUPDATEPOLICY_GET_FORMAT, OSUPDATEPOLICY_OUTPUT_TEMPLATE_ENVVAR)
+		return resolveTableOutputTemplate(cmd, DEFAULT_OSUPDATEPOLICY_GET_FORMAT, OSUPDATEPOLICY_INSPECT_TEMPLATE_ENVVAR)
 	}
 	return resolveTableOutputTemplate(cmd, DEFAULT_OSUPDATEPOLICY_FORMAT, OSUPDATEPOLICY_OUTPUT_TEMPLATE_ENVVAR)
 }

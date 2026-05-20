@@ -25,6 +25,7 @@ const (
 	DEFAULT_CUSTOMCONFIG_LIST_VERBOSE_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{str .Description}}\t{{.Timestamps.CreatedAt}}\t{{.Timestamps.UpdatedAt}}"
 	DEFAULT_CUSTOMCONFIG_GET_FORMAT          = "Name: \t{{.Name}}\nResource ID: \t{{str .ResourceId}}\nDescription: \t{{str .Description}}\nCloud Init: \t{{.Config}}\n"
 	CUSTOMCONFIG_OUTPUT_TEMPLATE_ENVVAR      = "ORCH_CLI_CUSTOMCONFIG_OUTPUT_TEMPLATE"
+	CUSTOMCONFIG_INSPECT_TEMPLATE_ENVVAR     = "ORCH_CLI_CUSTOMCONFIG_INSPECT_TEMPLATE"
 )
 
 const listCustomConfigExamples = `# List all custom config (Cloud Init) resources
@@ -80,7 +81,7 @@ func getCustomConfigOutputFormat(cmd *cobra.Command, verbose bool, forList bool)
 	}
 	if !forList {
 		// Get command always shows full details
-		return DEFAULT_CUSTOMCONFIG_GET_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_CUSTOMCONFIG_GET_FORMAT, CUSTOMCONFIG_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_CUSTOMCONFIG_FORMAT, CUSTOMCONFIG_OUTPUT_TEMPLATE_ENVVAR)

@@ -96,14 +96,14 @@ func TestResolveTableOutputTemplate_MissingFileError(t *testing.T) {
 	assert.Contains(t, err.Error(), "unable to read")
 }
 
-func TestGetDeploymentPackageOutputFormat_VerboseIgnoresTableOverrides(t *testing.T) {
+func TestGetDeploymentPackageOutputFormat_VerboseRespectsTableOverrides(t *testing.T) {
 	cmd := newTemplateTestCommand(t)
 	t.Setenv(DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR, `table{{.Name}}\t{{.Version}}`)
 	_ = cmd.Flags().Set("output-template", `table{{.Name}}\t{{.Kind}}`)
 
 	gotVerbose, err := getDeploymentPackageOutputFormat(cmd, true)
 	assert.NoError(t, err)
-	assert.Equal(t, DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT, gotVerbose)
+	assert.Contains(t, gotVerbose, "Kind")
 
 	gotTable, err := getDeploymentPackageOutputFormat(cmd, false)
 	assert.NoError(t, err)

@@ -15,10 +15,11 @@ import (
 )
 
 const (
-	DEFAULT_ORGANIZATION_FORMAT         = "table{{none .Name}}\t{{.StatusIndicator}}"
-	DEFAULT_ORGANIZATION_VERBOSE_FORMAT = "table{{none .Name}}\t{{.StatusIndicator}}\t{{none .Description}}"
-	DEFAULT_ORGANIZATION_INSPECT_FORMAT = "Name: \t{{none .Name}}\nDescription: \t{{none .Description}}\nStatus: \t{{none .StatusIndicator}}\nStatus Message: \t{{none .StatusMessage}}\nUID: \t{{none .UID}}"
-	ORGANIZATION_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_ORGANIZATION_OUTPUT_TEMPLATE"
+	DEFAULT_ORGANIZATION_FORMAT          = "table{{none .Name}}\t{{.StatusIndicator}}"
+	DEFAULT_ORGANIZATION_VERBOSE_FORMAT  = "table{{none .Name}}\t{{.StatusIndicator}}\t{{none .Description}}"
+	DEFAULT_ORGANIZATION_INSPECT_FORMAT  = "Name: \t{{none .Name}}\nDescription: \t{{none .Description}}\nStatus: \t{{none .StatusIndicator}}\nStatus Message: \t{{none .StatusMessage}}\nUID: \t{{none .UID}}"
+	ORGANIZATION_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_ORGANIZATION_OUTPUT_TEMPLATE"
+	ORGANIZATION_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_ORGANIZATION_INSPECT_TEMPLATE"
 )
 
 const listOrganizationExamples = `# List all organizations in the organization
@@ -128,7 +129,10 @@ func printOrganization(cmd *cobra.Command, writer io.Writer, name string, organi
 		}
 	}
 
-	outputFormat := DEFAULT_ORGANIZATION_INSPECT_FORMAT
+	outputFormat, err := resolveTableOutputTemplate(cmd, DEFAULT_ORGANIZATION_INSPECT_FORMAT, ORGANIZATION_INSPECT_TEMPLATE_ENVVAR)
+	if err != nil {
+		return err
+	}
 
 	result := CommandResult{
 		Format:    format.Format(outputFormat),
