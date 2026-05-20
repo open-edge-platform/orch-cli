@@ -9,6 +9,8 @@ on:
     branches:
       - main
       - release-*
+    tags:
+      - '*'
   workflow_dispatch:
 
 permissions:
@@ -30,8 +32,8 @@ jobs:
       run_docker_push: false
       run_helm_build: false
       run_helm_push: false
-      run_version_tag: true
-      run_artifact_push: true
+      run_version_tag: ${{ startsWith(github.ref, 'refs/tags/') && startsWith(github.event.base_ref, 'refs/heads/release-') }}
+      run_artifact_push: ${{ startsWith(github.ref, 'refs/tags/') && startsWith(github.event.base_ref, 'refs/heads/release-') }}
     secrets:
       SYS_EMF_GH_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
       NO_AUTH_ECR_PUSH_USERNAME: ${{ secrets.NO_AUTH_ECR_PUSH_USERNAME }}
