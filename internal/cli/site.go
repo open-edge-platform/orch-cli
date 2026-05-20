@@ -454,7 +454,7 @@ func getSiteOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string
 		return DEFAULT_SITE_VERBOSE_FORMAT, nil
 	}
 	if !forList {
-		return DEFAULT_SITE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_SITE_INSPECT_FORMAT, "ORCH_CLI_SITE_OUTPUT_TEMPLATE")
 	}
 	return resolveTableOutputTemplate(cmd, DEFAULT_SITE_FORMAT, "ORCH_CLI_SITE_OUTPUT_TEMPLATE")
 }

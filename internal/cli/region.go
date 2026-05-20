@@ -586,7 +586,7 @@ func getRegionOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (stri
 		return DEFAULT_REGION_VERBOSE_FORMAT, nil
 	}
 	if !forList {
-		return DEFAULT_REGION_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_REGION_INSPECT_FORMAT, "ORCH_CLI_REGION_OUTPUT_TEMPLATE")
 	}
 	return resolveTableOutputTemplate(cmd, DEFAULT_REGION_FORMAT, "ORCH_CLI_REGION_OUTPUT_TEMPLATE")
 }

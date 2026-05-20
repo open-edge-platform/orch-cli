@@ -215,7 +215,7 @@ func getApplicationKinds(cmd *cobra.Command) *[]catapi.CatalogV3Kind {
 
 func getApplicationOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_APPLICATION_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_APPLICATION_INSPECT_FORMAT, APPLICATION_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_APPLICATION_FORMAT, APPLICATION_OUTPUT_TEMPLATE_ENVVAR)

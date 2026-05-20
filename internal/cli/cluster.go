@@ -421,7 +421,7 @@ func getClusterOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (str
 		if forList {
 			return DEFAULT_CLUSTER_LIST_INSPECT_FORMAT, nil
 		}
-		return DEFAULT_CLUSTER_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_INSPECT_FORMAT, CLUSTER_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_FORMAT, CLUSTER_OUTPUT_TEMPLATE_ENVVAR)

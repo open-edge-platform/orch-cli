@@ -80,7 +80,7 @@ func getCustomConfigOutputFormat(cmd *cobra.Command, verbose bool, forList bool)
 	}
 	if !forList {
 		// Get command always shows full details
-		return DEFAULT_CUSTOMCONFIG_GET_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_CUSTOMCONFIG_GET_FORMAT, CUSTOMCONFIG_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_CUSTOMCONFIG_FORMAT, CUSTOMCONFIG_OUTPUT_TEMPLATE_ENVVAR)

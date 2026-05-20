@@ -145,7 +145,7 @@ func getUserOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	showGroups, _ := cmd.Flags().GetBool("groups")
 	showRoles, _ := cmd.Flags().GetBool("roles")
 	if showGroups || showRoles {
-		return DEFAULT_USER_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_USER_INSPECT_FORMAT, USER_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	if verbose {
@@ -189,7 +189,10 @@ func printUser(cmd *cobra.Command, writer io.Writer, user *keycloak.UserRepresen
 	outputType, _ := cmd.Flags().GetString("output-type")
 
 	item := flattenUser(user, groups, roles)
-	outputFormat := DEFAULT_USER_INSPECT_FORMAT
+	outputFormat, err := resolveTableOutputTemplate(cmd, DEFAULT_USER_INSPECT_FORMAT, USER_OUTPUT_TEMPLATE_ENVVAR)
+	if err != nil {
+		return err
+	}
 
 	result := CommandResult{
 		Format:    format.Format(outputFormat),

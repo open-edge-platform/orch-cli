@@ -83,7 +83,7 @@ func getProviderOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (st
 	}
 	if !forList {
 		// Get command always shows full details
-		return DEFAULT_PROVIDER_GET_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_PROVIDER_GET_FORMAT, PROVIDER_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_PROVIDER_FORMAT, PROVIDER_OUTPUT_TEMPLATE_ENVVAR)

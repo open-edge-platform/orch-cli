@@ -199,9 +199,9 @@ func printRegistries(cmd *cobra.Command, writer io.Writer, registryList *[]catap
 func getRegistryOutputFormat(cmd *cobra.Command, verbose bool, showSensitive bool) (string, error) {
 	if verbose {
 		if showSensitive {
-			return DEFAULT_REGISTRY_INSPECT_FORMAT_SENSITIVE, nil
+			return resolveTableOutputTemplate(cmd, DEFAULT_REGISTRY_INSPECT_FORMAT_SENSITIVE, REGISTRY_OUTPUT_TEMPLATE_ENVVAR)
 		}
-		return DEFAULT_REGISTRY_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_REGISTRY_INSPECT_FORMAT, REGISTRY_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_REGISTRY_FORMAT, REGISTRY_OUTPUT_TEMPLATE_ENVVAR)

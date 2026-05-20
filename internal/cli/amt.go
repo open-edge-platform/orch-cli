@@ -343,7 +343,7 @@ func getAMTProfileOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (
 		return DEFAULT_AMTPROFILE_VERBOSE_FORMAT, nil
 	}
 	if !forList {
-		return DEFAULT_AMTPROFILE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_AMTPROFILE_INSPECT_FORMAT, AMTPROFILE_OUTPUT_TEMPLATE_ENVVAR)
 	}
 	return resolveTableOutputTemplate(cmd, DEFAULT_AMTPROFILE_FORMAT, AMTPROFILE_OUTPUT_TEMPLATE_ENVVAR)
 }

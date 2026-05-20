@@ -112,7 +112,7 @@ func getSSHKeyOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (stri
 	}
 	if !forList {
 		// Get command always shows full details
-		return DEFAULT_SSHKEY_GET_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_SSHKEY_GET_FORMAT, SSHKEY_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_SSHKEY_FORMAT, SSHKEY_OUTPUT_TEMPLATE_ENVVAR)

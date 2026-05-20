@@ -133,7 +133,7 @@ func getOSProfileOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (s
 	}
 	if !forList {
 		// Get command always shows full details
-		return DEFAULT_OSPROFILE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_OSPROFILE_INSPECT_FORMAT, OSPROFILE_OUTPUT_TEMPLATE_ENVVAR)
 	}
 	return resolveTableOutputTemplate(cmd, DEFAULT_OSPROFILE_FORMAT, OSPROFILE_OUTPUT_TEMPLATE_ENVVAR)
 }

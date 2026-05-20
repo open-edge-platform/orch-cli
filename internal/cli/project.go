@@ -128,7 +128,10 @@ func printProject(cmd *cobra.Command, writer io.Writer, name string, project *te
 		}
 	}
 
-	outputFormat := DEFAULT_PROJECT_INSPECT_FORMAT
+	outputFormat, err := resolveTableOutputTemplate(cmd, DEFAULT_PROJECT_INSPECT_FORMAT, PROJECT_OUTPUT_TEMPLATE_ENVVAR)
+	if err != nil {
+		return err
+	}
 
 	result := CommandResult{
 		Format:    format.Format(outputFormat),

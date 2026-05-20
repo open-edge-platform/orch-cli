@@ -293,7 +293,7 @@ func getGetMetricCommand() *cobra.Command {
 // getMetricOutputFormat resolves the standard output template for metric queries.
 func getMetricOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_GET_METRIC_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_GET_METRIC_INSPECT_FORMAT, METRIC_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_GET_METRIC_FORMAT, METRIC_OUTPUT_TEMPLATE_ENVVAR)
@@ -302,7 +302,7 @@ func getMetricOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 // getMetricRangeOutputFormat resolves the output template for range queries.
 func getMetricRangeOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_GET_METRIC_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_GET_METRIC_INSPECT_FORMAT, METRIC_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_GET_METRIC_RANGE_FORMAT, METRIC_OUTPUT_TEMPLATE_ENVVAR)

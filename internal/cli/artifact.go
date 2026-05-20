@@ -97,7 +97,7 @@ func getDeleteArtifactCommand() *cobra.Command {
 
 func getArtifactOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_ARTIFACT_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_ARTIFACT_INSPECT_FORMAT, ARTIFACT_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_ARTIFACT_FORMAT, ARTIFACT_OUTPUT_TEMPLATE_ENVVAR)

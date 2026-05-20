@@ -221,7 +221,7 @@ func printClusterTemplates(cmd *cobra.Command, writer io.Writer, templates *[]co
 
 func getClusterTemplateOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_CLUSTER_TEMPLATE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_TEMPLATE_INSPECT_FORMAT, CLUSTER_TEMPLATE_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_TEMPLATE_FORMAT, CLUSTER_TEMPLATE_OUTPUT_TEMPLATE_ENVVAR)

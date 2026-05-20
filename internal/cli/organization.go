@@ -128,7 +128,10 @@ func printOrganization(cmd *cobra.Command, writer io.Writer, name string, organi
 		}
 	}
 
-	outputFormat := DEFAULT_ORGANIZATION_INSPECT_FORMAT
+	outputFormat, err := resolveTableOutputTemplate(cmd, DEFAULT_ORGANIZATION_INSPECT_FORMAT, ORGANIZATION_OUTPUT_TEMPLATE_ENVVAR)
+	if err != nil {
+		return err
+	}
 
 	result := CommandResult{
 		Format:    format.Format(outputFormat),

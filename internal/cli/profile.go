@@ -177,7 +177,7 @@ func parseParameterTemplate(spec string) (*catapi.CatalogV3ParameterTemplate, er
 
 func getProfileOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_PROFILE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_PROFILE_INSPECT_FORMAT, PROFILE_OUTPUT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_PROFILE_FORMAT, PROFILE_OUTPUT_TEMPLATE_ENVVAR)
