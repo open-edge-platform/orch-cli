@@ -51,7 +51,8 @@ Labels:{{range $key, $value := deref .Labels}}
   {{$key}}: {{$value}}{{end}}{{else}}
 Labels: <none>{{end}}
 `
-	CLUSTER_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_CLUSTER_OUTPUT_TEMPLATE"
+	CLUSTER_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_CLUSTER_OUTPUT_TEMPLATE"
+	CLUSTER_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_CLUSTER_INSPECT_TEMPLATE"
 )
 
 const createClusterExamples = `
@@ -421,7 +422,7 @@ func getClusterOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (str
 		if forList {
 			return DEFAULT_CLUSTER_LIST_INSPECT_FORMAT, nil
 		}
-		return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_INSPECT_FORMAT, CLUSTER_OUTPUT_TEMPLATE_ENVVAR)
+		return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_INSPECT_FORMAT, CLUSTER_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_FORMAT, CLUSTER_OUTPUT_TEMPLATE_ENVVAR)

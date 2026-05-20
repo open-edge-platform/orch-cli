@@ -34,7 +34,8 @@ Profiles:{{- range deref .Profiles}}
   {{.Name}}{{- end}}
 Default Profile: {{str .DefaultProfileName}}
 `
-	APPLICATION_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_APPLICATION_OUTPUT_TEMPLATE"
+	APPLICATION_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_APPLICATION_OUTPUT_TEMPLATE"
+	APPLICATION_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_APPLICATION_INSPECT_TEMPLATE"
 )
 
 func getCreateApplicationCommand() *cobra.Command {
@@ -215,7 +216,7 @@ func getApplicationKinds(cmd *cobra.Command) *[]catapi.CatalogV3Kind {
 
 func getApplicationOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return resolveTableOutputTemplate(cmd, DEFAULT_APPLICATION_INSPECT_FORMAT, APPLICATION_OUTPUT_TEMPLATE_ENVVAR)
+		return resolveTableOutputTemplate(cmd, DEFAULT_APPLICATION_INSPECT_FORMAT, APPLICATION_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_APPLICATION_FORMAT, APPLICATION_OUTPUT_TEMPLATE_ENVVAR)

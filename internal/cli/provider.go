@@ -26,6 +26,7 @@ const (
 	DEFAULT_PROVIDER_LIST_VERBOSE_FORMAT = "table{{.Name}}\t{{str .ResourceId}}\t{{.ProviderKind}}\t{{.ProviderVendor}}\t{{.ApiEndpoint}}\t{{.Timestamps.CreatedAt}}\t{{.Timestamps.UpdatedAt}}"
 	DEFAULT_PROVIDER_GET_FORMAT          = "Name: \t{{.Name}}\nResource ID: \t{{str .ResourceId}}\nKind: \t{{.ProviderKind}}\nVendor: \t{{.ProviderVendor}}\nAPI Endpoint: \t{{.ApiEndpoint}}\nConfig: \t{{str .Config}}\nCreation Timestamp: \t{{.Timestamps.CreatedAt}}\nUpdated Timestamp: \t{{.Timestamps.UpdatedAt}}\n"
 	PROVIDER_OUTPUT_TEMPLATE_ENVVAR      = "ORCH_CLI_PROVIDER_OUTPUT_TEMPLATE"
+	PROVIDER_INSPECT_TEMPLATE_ENVVAR     = "ORCH_CLI_PROVIDER_INSPECT_TEMPLATE"
 )
 
 const listProviderExamples = `# List all providers
@@ -83,7 +84,7 @@ func getProviderOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (st
 	}
 	if !forList {
 		// Get command always shows full details
-		return resolveTableOutputTemplate(cmd, DEFAULT_PROVIDER_GET_FORMAT, PROVIDER_OUTPUT_TEMPLATE_ENVVAR)
+		return resolveTableOutputTemplate(cmd, DEFAULT_PROVIDER_GET_FORMAT, PROVIDER_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_PROVIDER_FORMAT, PROVIDER_OUTPUT_TEMPLATE_ENVVAR)

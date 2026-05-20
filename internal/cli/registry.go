@@ -46,7 +46,8 @@ CA Certs: {{none .Cacerts}}
 Create Time: {{fmttime .CreateTime}}
 Update Time: {{fmttime .UpdateTime}}
 `
-	REGISTRY_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_REGISTRY_OUTPUT_TEMPLATE"
+	REGISTRY_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_REGISTRY_OUTPUT_TEMPLATE"
+	REGISTRY_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_REGISTRY_INSPECT_TEMPLATE"
 )
 
 func getCreateRegistryCommand() *cobra.Command {
@@ -199,9 +200,9 @@ func printRegistries(cmd *cobra.Command, writer io.Writer, registryList *[]catap
 func getRegistryOutputFormat(cmd *cobra.Command, verbose bool, showSensitive bool) (string, error) {
 	if verbose {
 		if showSensitive {
-			return resolveTableOutputTemplate(cmd, DEFAULT_REGISTRY_INSPECT_FORMAT_SENSITIVE, REGISTRY_OUTPUT_TEMPLATE_ENVVAR)
+			return resolveTableOutputTemplate(cmd, DEFAULT_REGISTRY_INSPECT_FORMAT_SENSITIVE, REGISTRY_INSPECT_TEMPLATE_ENVVAR)
 		}
-		return resolveTableOutputTemplate(cmd, DEFAULT_REGISTRY_INSPECT_FORMAT, REGISTRY_OUTPUT_TEMPLATE_ENVVAR)
+		return resolveTableOutputTemplate(cmd, DEFAULT_REGISTRY_INSPECT_FORMAT, REGISTRY_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_REGISTRY_FORMAT, REGISTRY_OUTPUT_TEMPLATE_ENVVAR)

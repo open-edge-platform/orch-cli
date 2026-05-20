@@ -34,7 +34,8 @@ Cluster Network:{{if .ClusterNetwork.Pods}}{{if .ClusterNetwork.Pods.CidrBlocks}
   Service CIDR: <none>{{end}}{{end}}
 Configuration: Use --output-type yaml to view full cluster configuration
 `
-	CLUSTER_TEMPLATE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_CLUSTER_TEMPLATE_OUTPUT_TEMPLATE"
+	CLUSTER_TEMPLATE_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_CLUSTER_TEMPLATE_OUTPUT_TEMPLATE"
+	CLUSTER_TEMPLATE_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_CLUSTER_TEMPLATE_INSPECT_TEMPLATE"
 )
 
 func getListClusterTemplatesCommand() *cobra.Command {
@@ -221,7 +222,7 @@ func printClusterTemplates(cmd *cobra.Command, writer io.Writer, templates *[]co
 
 func getClusterTemplateOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_TEMPLATE_INSPECT_FORMAT, CLUSTER_TEMPLATE_OUTPUT_TEMPLATE_ENVVAR)
+		return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_TEMPLATE_INSPECT_FORMAT, CLUSTER_TEMPLATE_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_CLUSTER_TEMPLATE_FORMAT, CLUSTER_TEMPLATE_OUTPUT_TEMPLATE_ENVVAR)

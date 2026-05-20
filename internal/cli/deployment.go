@@ -36,7 +36,8 @@ Profile: {{str .ProfileName}}
 State: {{.Status.State}}
 Create Time: {{.CreateTime}}
 `
-	DEPLOYMENT_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_OUTPUT_TEMPLATE"
+	DEPLOYMENT_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_DEPLOYMENT_OUTPUT_TEMPLATE"
+	DEPLOYMENT_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_INSPECT_TEMPLATE"
 )
 
 func getCreateDeploymentCommand() *cobra.Command {
@@ -131,7 +132,7 @@ func getDeleteDeploymentCommand() *cobra.Command {
 
 func getDeploymentOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_INSPECT_FORMAT, DEPLOYMENT_OUTPUT_TEMPLATE_ENVVAR)
+		return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_INSPECT_FORMAT, DEPLOYMENT_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_FORMAT, DEPLOYMENT_OUTPUT_TEMPLATE_ENVVAR)

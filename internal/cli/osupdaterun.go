@@ -40,8 +40,9 @@ const (
 	// Verbose table: includes description and policy
 	DEFAULT_OSUPDATERUN_VERBOSE_FORMAT = "table{{str .Name}}\t{{str .ResourceId}}\t{{str .Status}}\t{{str .AppliedPolicy.Name}}\t{{str .Description}}\t{{formatTime .StartTime}}\t{{formatTime .EndTime}}"
 	// Detailed single-get format (multiline key: value)
-	DEFAULT_OSUPDATERUN_GET_FORMAT     = "Name:\t{{str .Name}}\nResource ID:\t{{str .ResourceId}}\nStatus:\t{{str .Status}}\nStatus Detail:\t{{str .StatusDetails}}\nApplied Policy:\t{{str .AppliedPolicy.Name}}\nDescription:\t{{str .Description}}\nStart Time:\t{{formatTime .StartTime}}\nEnd Time:\t{{formatTime .EndTime}}\n"
-	OSUPDATERUN_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_OSUPDATERUN_OUTPUT_TEMPLATE"
+	DEFAULT_OSUPDATERUN_GET_FORMAT      = "Name:\t{{str .Name}}\nResource ID:\t{{str .ResourceId}}\nStatus:\t{{str .Status}}\nStatus Detail:\t{{str .StatusDetails}}\nApplied Policy:\t{{str .AppliedPolicy.Name}}\nDescription:\t{{str .Description}}\nStart Time:\t{{formatTime .StartTime}}\nEnd Time:\t{{formatTime .EndTime}}\n"
+	OSUPDATERUN_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_OSUPDATERUN_OUTPUT_TEMPLATE"
+	OSUPDATERUN_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_OSUPDATERUN_INSPECT_TEMPLATE"
 )
 
 func getOSUpdateRunOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string, error) {
@@ -50,7 +51,7 @@ func getOSUpdateRunOutputFormat(cmd *cobra.Command, verbose bool, forList bool) 
 	}
 	if !forList {
 		// For single-get, return the detailed get format but allow overrides via flags/env
-		return resolveTableOutputTemplate(cmd, DEFAULT_OSUPDATERUN_GET_FORMAT, OSUPDATERUN_OUTPUT_TEMPLATE_ENVVAR)
+		return resolveTableOutputTemplate(cmd, DEFAULT_OSUPDATERUN_GET_FORMAT, OSUPDATERUN_INSPECT_TEMPLATE_ENVVAR)
 	}
 	return resolveTableOutputTemplate(cmd, DEFAULT_OSUPDATERUN_FORMAT, OSUPDATERUN_OUTPUT_TEMPLATE_ENVVAR)
 }

@@ -23,7 +23,8 @@ Display Name: {{str .DisplayName}}
 Description: {{str .Description}}
 Mime Type: {{.MimeType}}
 `
-	ARTIFACT_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_ARTIFACT_OUTPUT_TEMPLATE"
+	ARTIFACT_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_ARTIFACT_OUTPUT_TEMPLATE"
+	ARTIFACT_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_ARTIFACT_INSPECT_TEMPLATE"
 )
 
 func getCreateArtifactCommand() *cobra.Command {
@@ -97,7 +98,7 @@ func getDeleteArtifactCommand() *cobra.Command {
 
 func getArtifactOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return resolveTableOutputTemplate(cmd, DEFAULT_ARTIFACT_INSPECT_FORMAT, ARTIFACT_OUTPUT_TEMPLATE_ENVVAR)
+		return resolveTableOutputTemplate(cmd, DEFAULT_ARTIFACT_INSPECT_FORMAT, ARTIFACT_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_ARTIFACT_FORMAT, ARTIFACT_OUTPUT_TEMPLATE_ENVVAR)
