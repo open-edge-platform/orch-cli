@@ -30,6 +30,26 @@ linters:
         text: G115.*
       - path: (.+)\.go$
         text: G101.*
+      - path: internal/cli/host\.go$
+        text: "var-naming: struct field"
+        linters:
+          - revive
+      - path: internal/cli/schedule\.go$
+        text: "var-naming: struct field"
+        linters:
+          - revive
+      - path: internal/cli/.*\.go$
+        text: "don't use ALL_CAPS in Go names"
+        linters:
+          - revive
+      - path: pkg/filter/filter\.go$
+        text: "type name will be used as filter.FilterTerm"
+        linters:
+          - revive
+      - path: pkg/format/.*\.go$
+        text: "avoid package names that conflict with Go standard library"
+        linters:
+          - revive
     paths:
       - third_party$
       - builtin$

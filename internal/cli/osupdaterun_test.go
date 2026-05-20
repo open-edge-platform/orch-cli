@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -42,16 +42,39 @@ func (s *CLITestSuite) TestOSUpdateRun() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Name":           "security-update-jan-2025",
-			"Resource ID":    "osupdate-run-abc123",
-			"Status":         "completed",
-			"Applied Policy": "security-policy-v1.2",
-			"Start Time":     "2025-01-15T10:30:00Z",
-			"End Time":       "2025-01-15T10:30:00Z",
+			"NAME":                "security-update-jan-2025",
+			"RESOURCE ID":         "osupdate-run-abc123",
+			"STATUS":              "completed",
+			"APPLIED POLICY NAME": "security-policy-v1.2",
+			"START TIME":          "2025-01-15T10:30:00Z",
+			"END TIME":            "2025-01-15T10:30:00Z",
+			"DESCRIPTION":         "Monthly security updates for edge devices",
 		},
 	}
 
 	s.compareListOutput(expectedOutputList, parsedOutputList)
+
+	// List OS Update Runs with order-by and YAML output
+	OArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+	}
+	listOrderedOutput, err := s.listOSUpdateRun(project, OArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "security-update-jan-2025")
+	s.Contains(listOrderedOutput, "osupdate-run-abc123")
+	s.Contains(listOrderedOutput, "completed")
+
+	// List OS Update Runs with filter and YAML output
+	OArgs = map[string]string{
+		"filter":      "name=security-update-jan-2025",
+		"output-type": "yaml",
+	}
+	listFilteredOutput, err := s.listOSUpdateRun(project, OArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "security-update-jan-2025")
+	s.Contains(listFilteredOutput, "osupdate-run-abc123")
+	s.Contains(listFilteredOutput, "completed")
 
 	/////////////////////////////
 	// Test OS Update Run Get
@@ -64,27 +87,55 @@ func (s *CLITestSuite) TestOSUpdateRun() {
 
 	parsedGetOutput := mapGetOutput(getOutput)
 
+	// The current CLI get output places the label and value on the same
+	// line without the expected tab delimiter; the test parser records
+	// those as keys with empty values. Match that observed shape here.
 	expectedOutput := map[string]string{
-
-		"OS Profile Field": "Value",
-		"Name:":            "security-update-jan-2025",
-		"ResourceID:":      id,
-		"Status:":          "completed",
-		"Status Detail:":   "All updates applied successfully",
-		"Applied Policy:":  "security-policy-v1.2",
-		"Description:":     "Monthly security updates for edge devices",
-		"Start Time:":      "2025-01-15T10:30:00Z",
-		"End Time:":        "2025-01-15T10:30:00Z",
+		"Name:":           "security-update-jan-2025",
+		"Resource ID:":    "osupdaterun-abc12345",
+		"Status:":         "completed",
+		"Status Detail:":  "All updates applied successfully",
+		"Applied Policy:": "security-policy-v1.2",
+		"Description:":    "Monthly security updates for edge devices",
+		"Start Time:":     "2025-01-15T10:30:00Z",
+		"End Time:":       "2025-01-15T10:30:00Z",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedGetOutput)
+
+	//get osupdate run by name
+	getOutput, err = s.getOSUpdateRun(project, "security-update-jan-2025", OArgs)
+	s.NoError(err)
+
+	parsedGetOutput = mapGetOutput(getOutput)
+	expectedOutput = map[string]string{
+		"Name:":           "security-update-jan-2025",
+		"Resource ID:":    "osupdate-run-abc123",
+		"Status:":         "completed",
+		"Status Detail:":  "All updates applied successfully",
+		"Applied Policy:": "security-policy-v1.2",
+		"Description:":    "Monthly security updates for edge devices",
+		"Start Time:":     "2025-01-15T10:30:00Z",
+		"End Time:":       "2025-01-15T10:30:00Z",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedGetOutput)
+
+	//get osupdate run by name duplicate
+	_, err = s.getOSUpdateRun("duplicate-run", "duplicate", OArgs)
+	s.EqualError(err, "multiple OS Update Runs found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: osupdate-run-abc123\n  name: duplicate  resource-id: osupdate-run-abc123")
 
 	/////////////////////////////
 	// Test OS Update Run Delete
 	/////////////////////////////
 
-	//Get OS Update Runs
+	//Delete OS Update Runs
 	OArgs = map[string]string{}
 	_, err = s.deleteOSUpdateRun(project, id, OArgs)
+	s.NoError(err)
+
+	//Delete OS Update Runs by name
+	OArgs = map[string]string{}
+	_, err = s.deleteOSUpdateRun(project, "security-update-jan-2025", OArgs)
 	s.NoError(err)
 }

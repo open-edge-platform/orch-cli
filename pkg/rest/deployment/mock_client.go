@@ -81,264 +81,564 @@ func (m *MockClientInterface) EXPECT() *MockClientInterfaceMockRecorder {
 	return m.recorder
 }
 
-// ClusterServiceGetCluster mocks base method.
-func (m *MockClientInterface) ClusterServiceGetCluster(ctx context.Context, projectName, clusterId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1ClusterServiceGetCluster mocks base method.
+func (m *MockClientInterface) DeploymentV1ClusterServiceGetCluster(ctx context.Context, projectName, clusterId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, clusterId}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "ClusterServiceGetCluster", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceGetCluster", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ClusterServiceGetCluster indicates an expected call of ClusterServiceGetCluster.
-func (mr *MockClientInterfaceMockRecorder) ClusterServiceGetCluster(ctx, projectName, clusterId any, reqEditors ...any) *gomock.Call {
+// DeploymentV1ClusterServiceGetCluster indicates an expected call of DeploymentV1ClusterServiceGetCluster.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1ClusterServiceGetCluster(ctx, projectName, clusterId any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, clusterId}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClusterServiceGetCluster", reflect.TypeOf((*MockClientInterface)(nil).ClusterServiceGetCluster), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceGetCluster", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1ClusterServiceGetCluster), varargs...)
 }
 
-// ClusterServiceListClusters mocks base method.
-func (m *MockClientInterface) ClusterServiceListClusters(ctx context.Context, projectName string, params *ClusterServiceListClustersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1ClusterServiceGetCluster2 mocks base method.
+func (m *MockClientInterface) DeploymentV1ClusterServiceGetCluster2(ctx context.Context, clusterId string, params *DeploymentV1ClusterServiceGetCluster2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, clusterId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceGetCluster2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1ClusterServiceGetCluster2 indicates an expected call of DeploymentV1ClusterServiceGetCluster2.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1ClusterServiceGetCluster2(ctx, clusterId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, clusterId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceGetCluster2", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1ClusterServiceGetCluster2), varargs...)
+}
+
+// DeploymentV1ClusterServiceGetKubeConfig mocks base method.
+func (m *MockClientInterface) DeploymentV1ClusterServiceGetKubeConfig(ctx context.Context, params *DeploymentV1ClusterServiceGetKubeConfigParams, body DeploymentV1ClusterServiceGetKubeConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceGetKubeConfig", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1ClusterServiceGetKubeConfig indicates an expected call of DeploymentV1ClusterServiceGetKubeConfig.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1ClusterServiceGetKubeConfig(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceGetKubeConfig", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1ClusterServiceGetKubeConfig), varargs...)
+}
+
+// DeploymentV1ClusterServiceGetKubeConfigWithBody mocks base method.
+func (m *MockClientInterface) DeploymentV1ClusterServiceGetKubeConfigWithBody(ctx context.Context, params *DeploymentV1ClusterServiceGetKubeConfigParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceGetKubeConfigWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1ClusterServiceGetKubeConfigWithBody indicates an expected call of DeploymentV1ClusterServiceGetKubeConfigWithBody.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1ClusterServiceGetKubeConfigWithBody(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceGetKubeConfigWithBody", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1ClusterServiceGetKubeConfigWithBody), varargs...)
+}
+
+// DeploymentV1ClusterServiceListClusters mocks base method.
+func (m *MockClientInterface) DeploymentV1ClusterServiceListClusters(ctx context.Context, projectName string, params *DeploymentV1ClusterServiceListClustersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "ClusterServiceListClusters", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceListClusters", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ClusterServiceListClusters indicates an expected call of ClusterServiceListClusters.
-func (mr *MockClientInterfaceMockRecorder) ClusterServiceListClusters(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1ClusterServiceListClusters indicates an expected call of DeploymentV1ClusterServiceListClusters.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1ClusterServiceListClusters(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClusterServiceListClusters", reflect.TypeOf((*MockClientInterface)(nil).ClusterServiceListClusters), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceListClusters", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1ClusterServiceListClusters), varargs...)
 }
 
-// DeploymentServiceCreateDeployment mocks base method.
-func (m *MockClientInterface) DeploymentServiceCreateDeployment(ctx context.Context, projectName string, body DeploymentServiceCreateDeploymentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1ClusterServiceListClusters2 mocks base method.
+func (m *MockClientInterface) DeploymentV1ClusterServiceListClusters2(ctx context.Context, params *DeploymentV1ClusterServiceListClusters2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceListClusters2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1ClusterServiceListClusters2 indicates an expected call of DeploymentV1ClusterServiceListClusters2.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1ClusterServiceListClusters2(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceListClusters2", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1ClusterServiceListClusters2), varargs...)
+}
+
+// DeploymentV1DeploymentServiceCreateDeployment mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceCreateDeployment(ctx context.Context, projectName string, body DeploymentV1DeploymentServiceCreateDeploymentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceCreateDeployment", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceCreateDeployment", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceCreateDeployment indicates an expected call of DeploymentServiceCreateDeployment.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceCreateDeployment(ctx, projectName, body any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceCreateDeployment indicates an expected call of DeploymentV1DeploymentServiceCreateDeployment.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceCreateDeployment(ctx, projectName, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, body}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceCreateDeployment", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceCreateDeployment), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceCreateDeployment", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceCreateDeployment), varargs...)
 }
 
-// DeploymentServiceCreateDeploymentWithBody mocks base method.
-func (m *MockClientInterface) DeploymentServiceCreateDeploymentWithBody(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1DeploymentServiceCreateDeployment2 mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceCreateDeployment2(ctx context.Context, params *DeploymentV1DeploymentServiceCreateDeployment2Params, body DeploymentV1DeploymentServiceCreateDeployment2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceCreateDeployment2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceCreateDeployment2 indicates an expected call of DeploymentV1DeploymentServiceCreateDeployment2.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceCreateDeployment2(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceCreateDeployment2", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceCreateDeployment2), varargs...)
+}
+
+// DeploymentV1DeploymentServiceCreateDeployment2WithBody mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceCreateDeployment2WithBody(ctx context.Context, params *DeploymentV1DeploymentServiceCreateDeployment2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceCreateDeployment2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceCreateDeployment2WithBody indicates an expected call of DeploymentV1DeploymentServiceCreateDeployment2WithBody.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceCreateDeployment2WithBody(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceCreateDeployment2WithBody", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceCreateDeployment2WithBody), varargs...)
+}
+
+// DeploymentV1DeploymentServiceCreateDeploymentWithBody mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceCreateDeploymentWithBody(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, contentType, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceCreateDeploymentWithBody", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceCreateDeploymentWithBody", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceCreateDeploymentWithBody indicates an expected call of DeploymentServiceCreateDeploymentWithBody.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceCreateDeploymentWithBody(ctx, projectName, contentType, body any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceCreateDeploymentWithBody indicates an expected call of DeploymentV1DeploymentServiceCreateDeploymentWithBody.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceCreateDeploymentWithBody(ctx, projectName, contentType, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, contentType, body}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceCreateDeploymentWithBody", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceCreateDeploymentWithBody), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceCreateDeploymentWithBody", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceCreateDeploymentWithBody), varargs...)
 }
 
-// DeploymentServiceDeleteDeployment mocks base method.
-func (m *MockClientInterface) DeploymentServiceDeleteDeployment(ctx context.Context, projectName, deplId string, params *DeploymentServiceDeleteDeploymentParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1DeploymentServiceDeleteDeployment mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceDeleteDeployment(ctx context.Context, projectName, deplId string, params *DeploymentV1DeploymentServiceDeleteDeploymentParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, deplId, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceDeleteDeployment", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceDeleteDeployment", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceDeleteDeployment indicates an expected call of DeploymentServiceDeleteDeployment.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceDeleteDeployment(ctx, projectName, deplId, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceDeleteDeployment indicates an expected call of DeploymentV1DeploymentServiceDeleteDeployment.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceDeleteDeployment(ctx, projectName, deplId, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deplId, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceDeleteDeployment", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceDeleteDeployment), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceDeleteDeployment", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceDeleteDeployment), varargs...)
 }
 
-// DeploymentServiceGetDeployment mocks base method.
-func (m *MockClientInterface) DeploymentServiceGetDeployment(ctx context.Context, projectName, deplId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1DeploymentServiceDeleteDeployment2 mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceDeleteDeployment2(ctx context.Context, deplId string, params *DeploymentV1DeploymentServiceDeleteDeployment2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deplId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceDeleteDeployment2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceDeleteDeployment2 indicates an expected call of DeploymentV1DeploymentServiceDeleteDeployment2.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceDeleteDeployment2(ctx, deplId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deplId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceDeleteDeployment2", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceDeleteDeployment2), varargs...)
+}
+
+// DeploymentV1DeploymentServiceGetAppNamespace mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceGetAppNamespace(ctx context.Context, params *DeploymentV1DeploymentServiceGetAppNamespaceParams, body DeploymentV1DeploymentServiceGetAppNamespaceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetAppNamespace", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceGetAppNamespace indicates an expected call of DeploymentV1DeploymentServiceGetAppNamespace.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceGetAppNamespace(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetAppNamespace", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceGetAppNamespace), varargs...)
+}
+
+// DeploymentV1DeploymentServiceGetAppNamespaceWithBody mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceGetAppNamespaceWithBody(ctx context.Context, params *DeploymentV1DeploymentServiceGetAppNamespaceParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetAppNamespaceWithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceGetAppNamespaceWithBody indicates an expected call of DeploymentV1DeploymentServiceGetAppNamespaceWithBody.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceGetAppNamespaceWithBody(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetAppNamespaceWithBody", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceGetAppNamespaceWithBody), varargs...)
+}
+
+// DeploymentV1DeploymentServiceGetDeployment mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceGetDeployment(ctx context.Context, projectName, deplId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, deplId}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceGetDeployment", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetDeployment", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceGetDeployment indicates an expected call of DeploymentServiceGetDeployment.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceGetDeployment(ctx, projectName, deplId any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceGetDeployment indicates an expected call of DeploymentV1DeploymentServiceGetDeployment.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceGetDeployment(ctx, projectName, deplId any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deplId}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceGetDeployment", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceGetDeployment), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetDeployment", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceGetDeployment), varargs...)
 }
 
-// DeploymentServiceGetDeploymentsStatus mocks base method.
-func (m *MockClientInterface) DeploymentServiceGetDeploymentsStatus(ctx context.Context, projectName string, params *DeploymentServiceGetDeploymentsStatusParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1DeploymentServiceGetDeployment2 mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceGetDeployment2(ctx context.Context, deplId string, params *DeploymentV1DeploymentServiceGetDeployment2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deplId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetDeployment2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceGetDeployment2 indicates an expected call of DeploymentV1DeploymentServiceGetDeployment2.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceGetDeployment2(ctx, deplId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deplId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetDeployment2", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceGetDeployment2), varargs...)
+}
+
+// DeploymentV1DeploymentServiceGetDeploymentsStatus mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceGetDeploymentsStatus(ctx context.Context, projectName string, params *DeploymentV1DeploymentServiceGetDeploymentsStatusParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceGetDeploymentsStatus", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetDeploymentsStatus", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceGetDeploymentsStatus indicates an expected call of DeploymentServiceGetDeploymentsStatus.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceGetDeploymentsStatus(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceGetDeploymentsStatus indicates an expected call of DeploymentV1DeploymentServiceGetDeploymentsStatus.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceGetDeploymentsStatus(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceGetDeploymentsStatus", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceGetDeploymentsStatus), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetDeploymentsStatus", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceGetDeploymentsStatus), varargs...)
 }
 
-// DeploymentServiceListDeploymentClusters mocks base method.
-func (m *MockClientInterface) DeploymentServiceListDeploymentClusters(ctx context.Context, projectName, deplId string, params *DeploymentServiceListDeploymentClustersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1DeploymentServiceGetDeploymentsStatus2 mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceGetDeploymentsStatus2(ctx context.Context, params *DeploymentV1DeploymentServiceGetDeploymentsStatus2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetDeploymentsStatus2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceGetDeploymentsStatus2 indicates an expected call of DeploymentV1DeploymentServiceGetDeploymentsStatus2.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceGetDeploymentsStatus2(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetDeploymentsStatus2", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceGetDeploymentsStatus2), varargs...)
+}
+
+// DeploymentV1DeploymentServiceListDeploymentClusters mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceListDeploymentClusters(ctx context.Context, projectName, deplId string, params *DeploymentV1DeploymentServiceListDeploymentClustersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, deplId, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceListDeploymentClusters", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeploymentClusters", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceListDeploymentClusters indicates an expected call of DeploymentServiceListDeploymentClusters.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceListDeploymentClusters(ctx, projectName, deplId, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceListDeploymentClusters indicates an expected call of DeploymentV1DeploymentServiceListDeploymentClusters.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeploymentClusters(ctx, projectName, deplId, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deplId, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceListDeploymentClusters", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceListDeploymentClusters), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeploymentClusters", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceListDeploymentClusters), varargs...)
 }
 
-// DeploymentServiceListDeployments mocks base method.
-func (m *MockClientInterface) DeploymentServiceListDeployments(ctx context.Context, projectName string, params *DeploymentServiceListDeploymentsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1DeploymentServiceListDeploymentClusters2 mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceListDeploymentClusters2(ctx context.Context, deplId string, params *DeploymentV1DeploymentServiceListDeploymentClusters2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deplId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeploymentClusters2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceListDeploymentClusters2 indicates an expected call of DeploymentV1DeploymentServiceListDeploymentClusters2.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeploymentClusters2(ctx, deplId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deplId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeploymentClusters2", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceListDeploymentClusters2), varargs...)
+}
+
+// DeploymentV1DeploymentServiceListDeployments mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceListDeployments(ctx context.Context, projectName string, params *DeploymentV1DeploymentServiceListDeploymentsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceListDeployments", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeployments", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceListDeployments indicates an expected call of DeploymentServiceListDeployments.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceListDeployments(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceListDeployments indicates an expected call of DeploymentV1DeploymentServiceListDeployments.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeployments(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceListDeployments", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceListDeployments), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeployments", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceListDeployments), varargs...)
 }
 
-// DeploymentServiceListDeploymentsPerCluster mocks base method.
-func (m *MockClientInterface) DeploymentServiceListDeploymentsPerCluster(ctx context.Context, projectName, clusterId string, params *DeploymentServiceListDeploymentsPerClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1DeploymentServiceListDeployments2 mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceListDeployments2(ctx context.Context, params *DeploymentV1DeploymentServiceListDeployments2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeployments2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceListDeployments2 indicates an expected call of DeploymentV1DeploymentServiceListDeployments2.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeployments2(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeployments2", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceListDeployments2), varargs...)
+}
+
+// DeploymentV1DeploymentServiceListDeploymentsPerCluster mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceListDeploymentsPerCluster(ctx context.Context, projectName, clusterId string, params *DeploymentV1DeploymentServiceListDeploymentsPerClusterParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, clusterId, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceListDeploymentsPerCluster", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeploymentsPerCluster", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceListDeploymentsPerCluster indicates an expected call of DeploymentServiceListDeploymentsPerCluster.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceListDeploymentsPerCluster(ctx, projectName, clusterId, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceListDeploymentsPerCluster indicates an expected call of DeploymentV1DeploymentServiceListDeploymentsPerCluster.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeploymentsPerCluster(ctx, projectName, clusterId, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, clusterId, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceListDeploymentsPerCluster", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceListDeploymentsPerCluster), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeploymentsPerCluster", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceListDeploymentsPerCluster), varargs...)
 }
 
-// DeploymentServiceListUIExtensions mocks base method.
-func (m *MockClientInterface) DeploymentServiceListUIExtensions(ctx context.Context, projectName string, params *DeploymentServiceListUIExtensionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1DeploymentServiceListDeploymentsPerCluster2 mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceListDeploymentsPerCluster2(ctx context.Context, clusterId string, params *DeploymentV1DeploymentServiceListDeploymentsPerCluster2Params, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, params}
+	varargs := []any{ctx, clusterId, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceListUIExtensions", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeploymentsPerCluster2", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceListUIExtensions indicates an expected call of DeploymentServiceListUIExtensions.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceListUIExtensions(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceListDeploymentsPerCluster2 indicates an expected call of DeploymentV1DeploymentServiceListDeploymentsPerCluster2.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeploymentsPerCluster2(ctx, clusterId, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceListUIExtensions", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceListUIExtensions), varargs...)
+	varargs := append([]any{ctx, clusterId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeploymentsPerCluster2", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceListDeploymentsPerCluster2), varargs...)
 }
 
-// DeploymentServiceUpdateDeployment mocks base method.
-func (m *MockClientInterface) DeploymentServiceUpdateDeployment(ctx context.Context, projectName, deplId string, body DeploymentServiceUpdateDeploymentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1DeploymentServiceUpdateDeployment mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceUpdateDeployment(ctx context.Context, projectName, deplId string, body DeploymentV1DeploymentServiceUpdateDeploymentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, deplId, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceUpdateDeployment", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceUpdateDeployment", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceUpdateDeployment indicates an expected call of DeploymentServiceUpdateDeployment.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceUpdateDeployment(ctx, projectName, deplId, body any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceUpdateDeployment indicates an expected call of DeploymentV1DeploymentServiceUpdateDeployment.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceUpdateDeployment(ctx, projectName, deplId, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deplId, body}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceUpdateDeployment", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceUpdateDeployment), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceUpdateDeployment", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceUpdateDeployment), varargs...)
 }
 
-// DeploymentServiceUpdateDeploymentWithBody mocks base method.
-func (m *MockClientInterface) DeploymentServiceUpdateDeploymentWithBody(ctx context.Context, projectName, deplId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+// DeploymentV1DeploymentServiceUpdateDeployment2 mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceUpdateDeployment2(ctx context.Context, deplId string, params *DeploymentV1DeploymentServiceUpdateDeployment2Params, body DeploymentV1DeploymentServiceUpdateDeployment2JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deplId, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceUpdateDeployment2", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceUpdateDeployment2 indicates an expected call of DeploymentV1DeploymentServiceUpdateDeployment2.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceUpdateDeployment2(ctx, deplId, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deplId, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceUpdateDeployment2", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceUpdateDeployment2), varargs...)
+}
+
+// DeploymentV1DeploymentServiceUpdateDeployment2WithBody mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceUpdateDeployment2WithBody(ctx context.Context, deplId string, params *DeploymentV1DeploymentServiceUpdateDeployment2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deplId, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceUpdateDeployment2WithBody", varargs...)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceUpdateDeployment2WithBody indicates an expected call of DeploymentV1DeploymentServiceUpdateDeployment2WithBody.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceUpdateDeployment2WithBody(ctx, deplId, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deplId, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceUpdateDeployment2WithBody", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceUpdateDeployment2WithBody), varargs...)
+}
+
+// DeploymentV1DeploymentServiceUpdateDeploymentWithBody mocks base method.
+func (m *MockClientInterface) DeploymentV1DeploymentServiceUpdateDeploymentWithBody(ctx context.Context, projectName, deplId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, deplId, contentType, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceUpdateDeploymentWithBody", varargs...)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceUpdateDeploymentWithBody", varargs...)
 	ret0, _ := ret[0].(*http.Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceUpdateDeploymentWithBody indicates an expected call of DeploymentServiceUpdateDeploymentWithBody.
-func (mr *MockClientInterfaceMockRecorder) DeploymentServiceUpdateDeploymentWithBody(ctx, projectName, deplId, contentType, body any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceUpdateDeploymentWithBody indicates an expected call of DeploymentV1DeploymentServiceUpdateDeploymentWithBody.
+func (mr *MockClientInterfaceMockRecorder) DeploymentV1DeploymentServiceUpdateDeploymentWithBody(ctx, projectName, deplId, contentType, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deplId, contentType, body}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceUpdateDeploymentWithBody", reflect.TypeOf((*MockClientInterface)(nil).DeploymentServiceUpdateDeploymentWithBody), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceUpdateDeploymentWithBody", reflect.TypeOf((*MockClientInterface)(nil).DeploymentV1DeploymentServiceUpdateDeploymentWithBody), varargs...)
 }
 
 // MockClientWithResponsesInterface is a mock of ClientWithResponsesInterface interface.
@@ -365,262 +665,562 @@ func (m *MockClientWithResponsesInterface) EXPECT() *MockClientWithResponsesInte
 	return m.recorder
 }
 
-// ClusterServiceGetClusterWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) ClusterServiceGetClusterWithResponse(ctx context.Context, projectName, clusterId string, reqEditors ...RequestEditorFn) (*ClusterServiceGetClusterResponse, error) {
+// DeploymentV1ClusterServiceGetCluster2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1ClusterServiceGetCluster2WithResponse(ctx context.Context, clusterId string, params *DeploymentV1ClusterServiceGetCluster2Params, reqEditors ...RequestEditorFn) (*DeploymentV1ClusterServiceGetCluster2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, clusterId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceGetCluster2WithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1ClusterServiceGetCluster2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1ClusterServiceGetCluster2WithResponse indicates an expected call of DeploymentV1ClusterServiceGetCluster2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1ClusterServiceGetCluster2WithResponse(ctx, clusterId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, clusterId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceGetCluster2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1ClusterServiceGetCluster2WithResponse), varargs...)
+}
+
+// DeploymentV1ClusterServiceGetClusterWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1ClusterServiceGetClusterWithResponse(ctx context.Context, projectName, clusterId string, reqEditors ...RequestEditorFn) (*DeploymentV1ClusterServiceGetClusterResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, clusterId}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "ClusterServiceGetClusterWithResponse", varargs...)
-	ret0, _ := ret[0].(*ClusterServiceGetClusterResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceGetClusterWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1ClusterServiceGetClusterResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ClusterServiceGetClusterWithResponse indicates an expected call of ClusterServiceGetClusterWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) ClusterServiceGetClusterWithResponse(ctx, projectName, clusterId any, reqEditors ...any) *gomock.Call {
+// DeploymentV1ClusterServiceGetClusterWithResponse indicates an expected call of DeploymentV1ClusterServiceGetClusterWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1ClusterServiceGetClusterWithResponse(ctx, projectName, clusterId any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, clusterId}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClusterServiceGetClusterWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).ClusterServiceGetClusterWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceGetClusterWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1ClusterServiceGetClusterWithResponse), varargs...)
 }
 
-// ClusterServiceListClustersWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) ClusterServiceListClustersWithResponse(ctx context.Context, projectName string, params *ClusterServiceListClustersParams, reqEditors ...RequestEditorFn) (*ClusterServiceListClustersResponse, error) {
+// DeploymentV1ClusterServiceGetKubeConfigWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1ClusterServiceGetKubeConfigWithBodyWithResponse(ctx context.Context, params *DeploymentV1ClusterServiceGetKubeConfigParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeploymentV1ClusterServiceGetKubeConfigResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceGetKubeConfigWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1ClusterServiceGetKubeConfigResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1ClusterServiceGetKubeConfigWithBodyWithResponse indicates an expected call of DeploymentV1ClusterServiceGetKubeConfigWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1ClusterServiceGetKubeConfigWithBodyWithResponse(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceGetKubeConfigWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1ClusterServiceGetKubeConfigWithBodyWithResponse), varargs...)
+}
+
+// DeploymentV1ClusterServiceGetKubeConfigWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1ClusterServiceGetKubeConfigWithResponse(ctx context.Context, params *DeploymentV1ClusterServiceGetKubeConfigParams, body DeploymentV1ClusterServiceGetKubeConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*DeploymentV1ClusterServiceGetKubeConfigResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceGetKubeConfigWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1ClusterServiceGetKubeConfigResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1ClusterServiceGetKubeConfigWithResponse indicates an expected call of DeploymentV1ClusterServiceGetKubeConfigWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1ClusterServiceGetKubeConfigWithResponse(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceGetKubeConfigWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1ClusterServiceGetKubeConfigWithResponse), varargs...)
+}
+
+// DeploymentV1ClusterServiceListClusters2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1ClusterServiceListClusters2WithResponse(ctx context.Context, params *DeploymentV1ClusterServiceListClusters2Params, reqEditors ...RequestEditorFn) (*DeploymentV1ClusterServiceListClusters2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceListClusters2WithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1ClusterServiceListClusters2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1ClusterServiceListClusters2WithResponse indicates an expected call of DeploymentV1ClusterServiceListClusters2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1ClusterServiceListClusters2WithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceListClusters2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1ClusterServiceListClusters2WithResponse), varargs...)
+}
+
+// DeploymentV1ClusterServiceListClustersWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1ClusterServiceListClustersWithResponse(ctx context.Context, projectName string, params *DeploymentV1ClusterServiceListClustersParams, reqEditors ...RequestEditorFn) (*DeploymentV1ClusterServiceListClustersResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "ClusterServiceListClustersWithResponse", varargs...)
-	ret0, _ := ret[0].(*ClusterServiceListClustersResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1ClusterServiceListClustersWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1ClusterServiceListClustersResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ClusterServiceListClustersWithResponse indicates an expected call of ClusterServiceListClustersWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) ClusterServiceListClustersWithResponse(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1ClusterServiceListClustersWithResponse indicates an expected call of DeploymentV1ClusterServiceListClustersWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1ClusterServiceListClustersWithResponse(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClusterServiceListClustersWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).ClusterServiceListClustersWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1ClusterServiceListClustersWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1ClusterServiceListClustersWithResponse), varargs...)
 }
 
-// DeploymentServiceCreateDeploymentWithBodyWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceCreateDeploymentWithBodyWithResponse(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeploymentServiceCreateDeploymentResponse, error) {
+// DeploymentV1DeploymentServiceCreateDeployment2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceCreateDeployment2WithBodyWithResponse(ctx context.Context, params *DeploymentV1DeploymentServiceCreateDeployment2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceCreateDeployment2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceCreateDeployment2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceCreateDeployment2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceCreateDeployment2WithBodyWithResponse indicates an expected call of DeploymentV1DeploymentServiceCreateDeployment2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceCreateDeployment2WithBodyWithResponse(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceCreateDeployment2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceCreateDeployment2WithBodyWithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceCreateDeployment2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceCreateDeployment2WithResponse(ctx context.Context, params *DeploymentV1DeploymentServiceCreateDeployment2Params, body DeploymentV1DeploymentServiceCreateDeployment2JSONRequestBody, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceCreateDeployment2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceCreateDeployment2WithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceCreateDeployment2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceCreateDeployment2WithResponse indicates an expected call of DeploymentV1DeploymentServiceCreateDeployment2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceCreateDeployment2WithResponse(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceCreateDeployment2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceCreateDeployment2WithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceCreateDeploymentWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceCreateDeploymentWithBodyWithResponse(ctx context.Context, projectName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceCreateDeploymentResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, contentType, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceCreateDeploymentWithBodyWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceCreateDeploymentResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceCreateDeploymentWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceCreateDeploymentResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceCreateDeploymentWithBodyWithResponse indicates an expected call of DeploymentServiceCreateDeploymentWithBodyWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceCreateDeploymentWithBodyWithResponse(ctx, projectName, contentType, body any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceCreateDeploymentWithBodyWithResponse indicates an expected call of DeploymentV1DeploymentServiceCreateDeploymentWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceCreateDeploymentWithBodyWithResponse(ctx, projectName, contentType, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, contentType, body}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceCreateDeploymentWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceCreateDeploymentWithBodyWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceCreateDeploymentWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceCreateDeploymentWithBodyWithResponse), varargs...)
 }
 
-// DeploymentServiceCreateDeploymentWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceCreateDeploymentWithResponse(ctx context.Context, projectName string, body DeploymentServiceCreateDeploymentJSONRequestBody, reqEditors ...RequestEditorFn) (*DeploymentServiceCreateDeploymentResponse, error) {
+// DeploymentV1DeploymentServiceCreateDeploymentWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceCreateDeploymentWithResponse(ctx context.Context, projectName string, body DeploymentV1DeploymentServiceCreateDeploymentJSONRequestBody, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceCreateDeploymentResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceCreateDeploymentWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceCreateDeploymentResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceCreateDeploymentWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceCreateDeploymentResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceCreateDeploymentWithResponse indicates an expected call of DeploymentServiceCreateDeploymentWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceCreateDeploymentWithResponse(ctx, projectName, body any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceCreateDeploymentWithResponse indicates an expected call of DeploymentV1DeploymentServiceCreateDeploymentWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceCreateDeploymentWithResponse(ctx, projectName, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, body}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceCreateDeploymentWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceCreateDeploymentWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceCreateDeploymentWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceCreateDeploymentWithResponse), varargs...)
 }
 
-// DeploymentServiceDeleteDeploymentWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceDeleteDeploymentWithResponse(ctx context.Context, projectName, deplId string, params *DeploymentServiceDeleteDeploymentParams, reqEditors ...RequestEditorFn) (*DeploymentServiceDeleteDeploymentResponse, error) {
+// DeploymentV1DeploymentServiceDeleteDeployment2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceDeleteDeployment2WithResponse(ctx context.Context, deplId string, params *DeploymentV1DeploymentServiceDeleteDeployment2Params, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceDeleteDeployment2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deplId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceDeleteDeployment2WithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceDeleteDeployment2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceDeleteDeployment2WithResponse indicates an expected call of DeploymentV1DeploymentServiceDeleteDeployment2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceDeleteDeployment2WithResponse(ctx, deplId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deplId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceDeleteDeployment2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceDeleteDeployment2WithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceDeleteDeploymentWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceDeleteDeploymentWithResponse(ctx context.Context, projectName, deplId string, params *DeploymentV1DeploymentServiceDeleteDeploymentParams, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceDeleteDeploymentResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, deplId, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceDeleteDeploymentWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceDeleteDeploymentResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceDeleteDeploymentWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceDeleteDeploymentResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceDeleteDeploymentWithResponse indicates an expected call of DeploymentServiceDeleteDeploymentWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceDeleteDeploymentWithResponse(ctx, projectName, deplId, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceDeleteDeploymentWithResponse indicates an expected call of DeploymentV1DeploymentServiceDeleteDeploymentWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceDeleteDeploymentWithResponse(ctx, projectName, deplId, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deplId, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceDeleteDeploymentWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceDeleteDeploymentWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceDeleteDeploymentWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceDeleteDeploymentWithResponse), varargs...)
 }
 
-// DeploymentServiceGetDeploymentWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceGetDeploymentWithResponse(ctx context.Context, projectName, deplId string, reqEditors ...RequestEditorFn) (*DeploymentServiceGetDeploymentResponse, error) {
+// DeploymentV1DeploymentServiceGetAppNamespaceWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceGetAppNamespaceWithBodyWithResponse(ctx context.Context, params *DeploymentV1DeploymentServiceGetAppNamespaceParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceGetAppNamespaceResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, contentType, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetAppNamespaceWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceGetAppNamespaceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceGetAppNamespaceWithBodyWithResponse indicates an expected call of DeploymentV1DeploymentServiceGetAppNamespaceWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceGetAppNamespaceWithBodyWithResponse(ctx, params, contentType, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetAppNamespaceWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceGetAppNamespaceWithBodyWithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceGetAppNamespaceWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceGetAppNamespaceWithResponse(ctx context.Context, params *DeploymentV1DeploymentServiceGetAppNamespaceParams, body DeploymentV1DeploymentServiceGetAppNamespaceJSONRequestBody, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceGetAppNamespaceResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetAppNamespaceWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceGetAppNamespaceResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceGetAppNamespaceWithResponse indicates an expected call of DeploymentV1DeploymentServiceGetAppNamespaceWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceGetAppNamespaceWithResponse(ctx, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetAppNamespaceWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceGetAppNamespaceWithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceGetDeployment2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceGetDeployment2WithResponse(ctx context.Context, deplId string, params *DeploymentV1DeploymentServiceGetDeployment2Params, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceGetDeployment2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deplId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetDeployment2WithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceGetDeployment2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceGetDeployment2WithResponse indicates an expected call of DeploymentV1DeploymentServiceGetDeployment2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceGetDeployment2WithResponse(ctx, deplId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deplId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetDeployment2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceGetDeployment2WithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceGetDeploymentWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx context.Context, projectName, deplId string, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceGetDeploymentResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, deplId}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceGetDeploymentWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceGetDeploymentResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetDeploymentWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceGetDeploymentResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceGetDeploymentWithResponse indicates an expected call of DeploymentServiceGetDeploymentWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deplId any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceGetDeploymentWithResponse indicates an expected call of DeploymentV1DeploymentServiceGetDeploymentWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deplId any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deplId}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceGetDeploymentWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceGetDeploymentWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetDeploymentWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceGetDeploymentWithResponse), varargs...)
 }
 
-// DeploymentServiceGetDeploymentsStatusWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceGetDeploymentsStatusWithResponse(ctx context.Context, projectName string, params *DeploymentServiceGetDeploymentsStatusParams, reqEditors ...RequestEditorFn) (*DeploymentServiceGetDeploymentsStatusResponse, error) {
+// DeploymentV1DeploymentServiceGetDeploymentsStatus2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceGetDeploymentsStatus2WithResponse(ctx context.Context, params *DeploymentV1DeploymentServiceGetDeploymentsStatus2Params, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceGetDeploymentsStatus2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetDeploymentsStatus2WithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceGetDeploymentsStatus2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceGetDeploymentsStatus2WithResponse indicates an expected call of DeploymentV1DeploymentServiceGetDeploymentsStatus2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceGetDeploymentsStatus2WithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetDeploymentsStatus2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceGetDeploymentsStatus2WithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceGetDeploymentsStatusWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceGetDeploymentsStatusWithResponse(ctx context.Context, projectName string, params *DeploymentV1DeploymentServiceGetDeploymentsStatusParams, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceGetDeploymentsStatusResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceGetDeploymentsStatusWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceGetDeploymentsStatusResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceGetDeploymentsStatusWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceGetDeploymentsStatusResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceGetDeploymentsStatusWithResponse indicates an expected call of DeploymentServiceGetDeploymentsStatusWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceGetDeploymentsStatusWithResponse(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceGetDeploymentsStatusWithResponse indicates an expected call of DeploymentV1DeploymentServiceGetDeploymentsStatusWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceGetDeploymentsStatusWithResponse(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceGetDeploymentsStatusWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceGetDeploymentsStatusWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceGetDeploymentsStatusWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceGetDeploymentsStatusWithResponse), varargs...)
 }
 
-// DeploymentServiceListDeploymentClustersWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceListDeploymentClustersWithResponse(ctx context.Context, projectName, deplId string, params *DeploymentServiceListDeploymentClustersParams, reqEditors ...RequestEditorFn) (*DeploymentServiceListDeploymentClustersResponse, error) {
+// DeploymentV1DeploymentServiceListDeploymentClusters2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceListDeploymentClusters2WithResponse(ctx context.Context, deplId string, params *DeploymentV1DeploymentServiceListDeploymentClusters2Params, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceListDeploymentClusters2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deplId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeploymentClusters2WithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceListDeploymentClusters2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceListDeploymentClusters2WithResponse indicates an expected call of DeploymentV1DeploymentServiceListDeploymentClusters2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeploymentClusters2WithResponse(ctx, deplId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deplId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeploymentClusters2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceListDeploymentClusters2WithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceListDeploymentClustersWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceListDeploymentClustersWithResponse(ctx context.Context, projectName, deplId string, params *DeploymentV1DeploymentServiceListDeploymentClustersParams, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceListDeploymentClustersResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, deplId, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceListDeploymentClustersWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceListDeploymentClustersResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeploymentClustersWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceListDeploymentClustersResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceListDeploymentClustersWithResponse indicates an expected call of DeploymentServiceListDeploymentClustersWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceListDeploymentClustersWithResponse(ctx, projectName, deplId, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceListDeploymentClustersWithResponse indicates an expected call of DeploymentV1DeploymentServiceListDeploymentClustersWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeploymentClustersWithResponse(ctx, projectName, deplId, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deplId, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceListDeploymentClustersWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceListDeploymentClustersWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeploymentClustersWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceListDeploymentClustersWithResponse), varargs...)
 }
 
-// DeploymentServiceListDeploymentsPerClusterWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceListDeploymentsPerClusterWithResponse(ctx context.Context, projectName, clusterId string, params *DeploymentServiceListDeploymentsPerClusterParams, reqEditors ...RequestEditorFn) (*DeploymentServiceListDeploymentsPerClusterResponse, error) {
+// DeploymentV1DeploymentServiceListDeployments2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceListDeployments2WithResponse(ctx context.Context, params *DeploymentV1DeploymentServiceListDeployments2Params, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceListDeployments2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeployments2WithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceListDeployments2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceListDeployments2WithResponse indicates an expected call of DeploymentV1DeploymentServiceListDeployments2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeployments2WithResponse(ctx, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeployments2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceListDeployments2WithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceListDeploymentsPerCluster2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceListDeploymentsPerCluster2WithResponse(ctx context.Context, clusterId string, params *DeploymentV1DeploymentServiceListDeploymentsPerCluster2Params, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceListDeploymentsPerCluster2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, clusterId, params}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeploymentsPerCluster2WithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceListDeploymentsPerCluster2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceListDeploymentsPerCluster2WithResponse indicates an expected call of DeploymentV1DeploymentServiceListDeploymentsPerCluster2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeploymentsPerCluster2WithResponse(ctx, clusterId, params any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, clusterId, params}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeploymentsPerCluster2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceListDeploymentsPerCluster2WithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceListDeploymentsPerClusterWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceListDeploymentsPerClusterWithResponse(ctx context.Context, projectName, clusterId string, params *DeploymentV1DeploymentServiceListDeploymentsPerClusterParams, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceListDeploymentsPerClusterResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, clusterId, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceListDeploymentsPerClusterWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceListDeploymentsPerClusterResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeploymentsPerClusterWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceListDeploymentsPerClusterResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceListDeploymentsPerClusterWithResponse indicates an expected call of DeploymentServiceListDeploymentsPerClusterWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceListDeploymentsPerClusterWithResponse(ctx, projectName, clusterId, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceListDeploymentsPerClusterWithResponse indicates an expected call of DeploymentV1DeploymentServiceListDeploymentsPerClusterWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeploymentsPerClusterWithResponse(ctx, projectName, clusterId, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, clusterId, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceListDeploymentsPerClusterWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceListDeploymentsPerClusterWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeploymentsPerClusterWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceListDeploymentsPerClusterWithResponse), varargs...)
 }
 
-// DeploymentServiceListDeploymentsWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceListDeploymentsWithResponse(ctx context.Context, projectName string, params *DeploymentServiceListDeploymentsParams, reqEditors ...RequestEditorFn) (*DeploymentServiceListDeploymentsResponse, error) {
+// DeploymentV1DeploymentServiceListDeploymentsWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx context.Context, projectName string, params *DeploymentV1DeploymentServiceListDeploymentsParams, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceListDeploymentsResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, params}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceListDeploymentsWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceListDeploymentsResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceListDeploymentsWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceListDeploymentsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceListDeploymentsWithResponse indicates an expected call of DeploymentServiceListDeploymentsWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceListDeploymentsWithResponse(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceListDeploymentsWithResponse indicates an expected call of DeploymentV1DeploymentServiceListDeploymentsWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceListDeploymentsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceListDeploymentsWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceListDeploymentsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceListDeploymentsWithResponse), varargs...)
 }
 
-// DeploymentServiceListUIExtensionsWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceListUIExtensionsWithResponse(ctx context.Context, projectName string, params *DeploymentServiceListUIExtensionsParams, reqEditors ...RequestEditorFn) (*DeploymentServiceListUIExtensionsResponse, error) {
+// DeploymentV1DeploymentServiceUpdateDeployment2WithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceUpdateDeployment2WithBodyWithResponse(ctx context.Context, deplId string, params *DeploymentV1DeploymentServiceUpdateDeployment2Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceUpdateDeployment2Response, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, projectName, params}
+	varargs := []any{ctx, deplId, params, contentType, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceListUIExtensionsWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceListUIExtensionsResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceUpdateDeployment2WithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceUpdateDeployment2Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceListUIExtensionsWithResponse indicates an expected call of DeploymentServiceListUIExtensionsWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceListUIExtensionsWithResponse(ctx, projectName, params any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceUpdateDeployment2WithBodyWithResponse indicates an expected call of DeploymentV1DeploymentServiceUpdateDeployment2WithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceUpdateDeployment2WithBodyWithResponse(ctx, deplId, params, contentType, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, projectName, params}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceListUIExtensionsWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceListUIExtensionsWithResponse), varargs...)
+	varargs := append([]any{ctx, deplId, params, contentType, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceUpdateDeployment2WithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceUpdateDeployment2WithBodyWithResponse), varargs...)
 }
 
-// DeploymentServiceUpdateDeploymentWithBodyWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceUpdateDeploymentWithBodyWithResponse(ctx context.Context, projectName, deplId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeploymentServiceUpdateDeploymentResponse, error) {
+// DeploymentV1DeploymentServiceUpdateDeployment2WithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceUpdateDeployment2WithResponse(ctx context.Context, deplId string, params *DeploymentV1DeploymentServiceUpdateDeployment2Params, body DeploymentV1DeploymentServiceUpdateDeployment2JSONRequestBody, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceUpdateDeployment2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, deplId, params, body}
+	for _, a := range reqEditors {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceUpdateDeployment2WithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceUpdateDeployment2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeploymentV1DeploymentServiceUpdateDeployment2WithResponse indicates an expected call of DeploymentV1DeploymentServiceUpdateDeployment2WithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceUpdateDeployment2WithResponse(ctx, deplId, params, body any, reqEditors ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, deplId, params, body}, reqEditors...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceUpdateDeployment2WithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceUpdateDeployment2WithResponse), varargs...)
+}
+
+// DeploymentV1DeploymentServiceUpdateDeploymentWithBodyWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceUpdateDeploymentWithBodyWithResponse(ctx context.Context, projectName, deplId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceUpdateDeploymentResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, deplId, contentType, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceUpdateDeploymentWithBodyWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceUpdateDeploymentResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceUpdateDeploymentWithBodyWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceUpdateDeploymentResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceUpdateDeploymentWithBodyWithResponse indicates an expected call of DeploymentServiceUpdateDeploymentWithBodyWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceUpdateDeploymentWithBodyWithResponse(ctx, projectName, deplId, contentType, body any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceUpdateDeploymentWithBodyWithResponse indicates an expected call of DeploymentV1DeploymentServiceUpdateDeploymentWithBodyWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceUpdateDeploymentWithBodyWithResponse(ctx, projectName, deplId, contentType, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deplId, contentType, body}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceUpdateDeploymentWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceUpdateDeploymentWithBodyWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceUpdateDeploymentWithBodyWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceUpdateDeploymentWithBodyWithResponse), varargs...)
 }
 
-// DeploymentServiceUpdateDeploymentWithResponse mocks base method.
-func (m *MockClientWithResponsesInterface) DeploymentServiceUpdateDeploymentWithResponse(ctx context.Context, projectName, deplId string, body DeploymentServiceUpdateDeploymentJSONRequestBody, reqEditors ...RequestEditorFn) (*DeploymentServiceUpdateDeploymentResponse, error) {
+// DeploymentV1DeploymentServiceUpdateDeploymentWithResponse mocks base method.
+func (m *MockClientWithResponsesInterface) DeploymentV1DeploymentServiceUpdateDeploymentWithResponse(ctx context.Context, projectName, deplId string, body DeploymentV1DeploymentServiceUpdateDeploymentJSONRequestBody, reqEditors ...RequestEditorFn) (*DeploymentV1DeploymentServiceUpdateDeploymentResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, projectName, deplId, body}
 	for _, a := range reqEditors {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "DeploymentServiceUpdateDeploymentWithResponse", varargs...)
-	ret0, _ := ret[0].(*DeploymentServiceUpdateDeploymentResponse)
+	ret := m.ctrl.Call(m, "DeploymentV1DeploymentServiceUpdateDeploymentWithResponse", varargs...)
+	ret0, _ := ret[0].(*DeploymentV1DeploymentServiceUpdateDeploymentResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DeploymentServiceUpdateDeploymentWithResponse indicates an expected call of DeploymentServiceUpdateDeploymentWithResponse.
-func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentServiceUpdateDeploymentWithResponse(ctx, projectName, deplId, body any, reqEditors ...any) *gomock.Call {
+// DeploymentV1DeploymentServiceUpdateDeploymentWithResponse indicates an expected call of DeploymentV1DeploymentServiceUpdateDeploymentWithResponse.
+func (mr *MockClientWithResponsesInterfaceMockRecorder) DeploymentV1DeploymentServiceUpdateDeploymentWithResponse(ctx, projectName, deplId, body any, reqEditors ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, projectName, deplId, body}, reqEditors...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentServiceUpdateDeploymentWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentServiceUpdateDeploymentWithResponse), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeploymentV1DeploymentServiceUpdateDeploymentWithResponse", reflect.TypeOf((*MockClientWithResponsesInterface)(nil).DeploymentV1DeploymentServiceUpdateDeploymentWithResponse), varargs...)
 }

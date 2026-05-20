@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -64,8 +64,8 @@ func (s *CLITestSuite) TestSSHKey() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Remote User": name,
-			"Resource ID": resourceID,
+			"USERNAME":    name,
+			"RESOURCE ID": resourceID,
 		},
 	}
 
@@ -82,13 +82,63 @@ func (s *CLITestSuite) TestSSHKey() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Remote User": name,
-			"Resource ID": resourceID,
-			"In use":      "No",
+			"USERNAME":    name,
+			"RESOURCE ID": resourceID,
+			"IN USE":      "No",
 		},
 	}
 
 	s.compareListOutput(expectedOutputList, parsedOutputList)
+
+	//List SSH Key --verbose with pagesize
+	SArgs = map[string]string{
+		"verbose":   "true",
+		"page-size": "1",
+	}
+	listOutput, err = s.listSSHKey(project, SArgs)
+	s.NoError(err)
+
+	parsedOutputList = mapListOutput(listOutput)
+
+	expectedOutputList = listCommandOutput{
+		{
+			"USERNAME":    name,
+			"RESOURCE ID": resourceID,
+			"IN USE":      "No",
+		},
+	}
+
+	s.compareListOutput(expectedOutputList, parsedOutputList)
+
+	// List SSH keys with order-by and YAML output
+	SArgs = map[string]string{
+		"order-by":    "username",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listSSHKey(project, SArgs)
+	s.NoError(err)
+
+	expectedYAMLOutput := linesCommandOutput{
+		"- localaccountid: localaccount-abc12345",
+		"  resourceid: localaccount-abc12345",
+		"  sshkey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7... admin@example.com",
+		"  timestamps:",
+		"    createdat: 2025-01-15T10:30:00Z",
+		"    updatedat: 2025-01-15T10:30:00Z",
+		"  username: admin",
+	}
+	s.compareLinesOutput(expectedYAMLOutput, mapLinesOutput(listOrderedOutput))
+
+	// List SSH keys with filter and YAML output
+	SArgs = map[string]string{
+		"filter":      "username=admin",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listSSHKey(project, SArgs)
+	s.NoError(err)
+	s.compareLinesOutput(expectedYAMLOutput, mapLinesOutput(listFilteredOutput))
 
 	/////////////////////////////
 	// Test SSH Key Get
@@ -111,7 +161,7 @@ func (s *CLITestSuite) TestSSHKey() {
 	// Test SSH Key Delete
 	/////////////////////////////
 
-	//delete custom config
+	//delete SSH key
 	_, err = s.deleteSSHKey(project, name, make(map[string]string))
 	s.NoError(err)
 

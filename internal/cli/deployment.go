@@ -1,12 +1,14 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,6 +16,7 @@ import (
 
 	"github.com/open-edge-platform/cli/internal/validator"
 	"github.com/open-edge-platform/cli/pkg/auth"
+	"github.com/open-edge-platform/cli/pkg/format"
 	catapi "github.com/open-edge-platform/cli/pkg/rest/catalog"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	"github.com/spf13/cobra"
@@ -23,8 +26,17 @@ import (
 type contextKey string
 
 const (
-	expandedLabelsKey     contextKey = "expandedLabels"
-	expandedClusterIDsKey contextKey = "expandedClusterIDs"
+	expandedLabelsKey                 contextKey = "expandedLabels"
+	expandedClusterIDsKey             contextKey = "expandedClusterIDs"
+	DEFAULT_DEPLOYMENT_FORMAT                    = "table{{str .DeployId}}\t{{str .Name}}\t{{str .DisplayName}}\t{{str .ProfileName}}\t{{.Status.State}}"
+	DEFAULT_DEPLOYMENT_INSPECT_FORMAT            = `Deployment ID: {{str .DeployId}}
+Name: {{str .Name}}
+Display Name: {{str .DisplayName}}
+Profile: {{str .ProfileName}}
+State: {{.Status.State}}
+Create Time: {{.CreateTime}}
+`
+	DEPLOYMENT_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_OUTPUT_TEMPLATE"
 )
 
 func getCreateDeploymentCommand() *cobra.Command {
@@ -53,27 +65,30 @@ func getListDeploymentsCommand() *cobra.Command {
 		Example: "orch-cli list deployments --project some-project",
 		RunE:    runListDeploymentsCommand,
 	}
+	addListOrderingFilteringPaginationFlags(cmd, "deployment")
+	addStandardListOutputFlags(cmd)
 	return cmd
 }
 
 func getGetDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Aliases: deploymentAliases,
 		Short:   "Get a deployment",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli get deployment 12345 --project some-project",
+		Example: "orch-cli get deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --project some-project\norch-cli get deployment \"Test Headlamp Dashboard\" --project some-project",
 		RunE:    runGetDeploymentCommand,
 	}
+	addStandardGetOutputFlags(cmd)
 	return cmd
 }
 
 func getSetDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Short:   "Update a deployment",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli set deployment 12345 --project some-project --name my-deployment --package-name my-package --package-version 1.0.0 --profile sample-profile --application-namespace <app>=<namespace> --application-set <app>.<prop>=<prop-value> --application-label <label>=<label-value>",
+		Example: "orch-cli set deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --project some-project --profile sample-profile\norch-cli set deployment \"Test Headlamp Dashboard\" --project some-project --profile sample-profile",
 		Aliases: deploymentAliases,
 		RunE:    runSetDeploymentCommand,
 	}
@@ -90,10 +105,10 @@ func getSetDeploymentCommand() *cobra.Command {
 
 func getUpgradeDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Short:   "Upgrade a deployment to a new package version",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli upgrade deployment 12345 --package-version 1.1.0",
+		Example: "orch-cli upgrade deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --package-version 1.1.0\norch-cli upgrade deployment \"Test Headlamp Dashboard\" --package-version 1.1.0",
 		Aliases: deploymentAliases,
 		RunE:    runUpgradeDeploymentCommand,
 	}
@@ -104,44 +119,96 @@ func getUpgradeDeploymentCommand() *cobra.Command {
 
 func getDeleteDeploymentCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "deployment <deployment-id> [flags]",
+		Use:     "deployment <deployment-id|display-name> [flags]",
 		Short:   "Delete a deployment",
 		Args:    cobra.ExactArgs(1),
-		Example: "orch-cli delete deployment 12345 --project some-project",
+		Example: "orch-cli delete deployment 9d652bb4-2412-4566-89b5-614f22e2a837 --project some-project\norch-cli delete deployment \"Test Headlamp Dashboard\" --project some-project",
 		Aliases: deploymentAliases,
 		RunE:    runDeleteDeploymentCommand,
 	}
 	return cmd
 }
 
-var deploymentHeader = fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
-	"Deployment ID", "Name", "Display Name", "Profile", "State")
-
-func printDeployments(writer *tabwriter.Writer, deployments *[]depapi.Deployment, verbose bool) {
-	for _, d := range *deployments {
-		state := ""
-		if d.Status != nil && d.Status.State != nil {
-			state = string(*d.Status.State)
-		}
-
-		createTime := ""
-		if d.CreateTime != nil {
-			createTime = d.CreateTime.Format(timeLayout)
-		}
-
-		if !verbose {
-			_, _ = fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", safeString(d.DeployId), safeString(d.Name),
-				safeString(d.DisplayName), safeString(d.ProfileName), state)
-		} else {
-			_, _ = fmt.Fprintf(writer, "Deployment ID: %s\n", safeString(d.DeployId))
-			_, _ = fmt.Fprintf(writer, "Name: %s\n", safeString(d.Name))
-			_, _ = fmt.Fprintf(writer, "Display Name: %s\n", safeString(d.DisplayName))
-			_, _ = fmt.Fprintf(writer, "Profile: %s\n", safeString(d.ProfileName))
-			_, _ = fmt.Fprintf(writer, "State: %s\n", state)
-			// FIXME: add the rest
-			_, _ = fmt.Fprintf(writer, "Create Time: %s\n", createTime)
-		}
+func getDeploymentOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
+	if verbose {
+		return DEFAULT_DEPLOYMENT_INSPECT_FORMAT, nil
 	}
+
+	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_FORMAT, DEPLOYMENT_OUTPUT_TEMPLATE_ENVVAR)
+}
+
+func printDeployments(cmd *cobra.Command, writer *tabwriter.Writer, deployments *[]depapi.DeploymentV1Deployment, orderBy *string, outputFilter *string, verbose bool) error {
+	outputType, _ := cmd.Flags().GetString("output-type")
+	outputFormat, err := getDeploymentOutputFormat(cmd, verbose)
+	if err != nil {
+		return err
+	}
+
+	sortSpec := ""
+	if outputType == "table" && orderBy != nil {
+		sortSpec = *orderBy
+	}
+
+	filterSpec := ""
+	if outputType == "table" && outputFilter != nil && *outputFilter != "" {
+		filterSpec = *outputFilter
+	}
+
+	result := CommandResult{
+		Format:    format.Format(outputFormat),
+		Filter:    filterSpec,
+		OrderBy:   sortSpec,
+		OutputAs:  toOutputType(outputType),
+		NameLimit: -1,
+		Data:      *deployments,
+	}
+
+	GenerateOutput(writer, &result)
+	return nil
+}
+
+func getValidatedDeploymentOrderBy(
+	ctx context.Context,
+	cmd *cobra.Command,
+	deploymentClient depapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("order-by")
+	if err != nil {
+		return nil, err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+
+	// For table format (default), use client-side sorting which supports any field in the model
+	if outputType == "table" {
+		return normalizeOrderByForClientSorting(raw, depapi.DeploymentV1Deployment{})
+	}
+
+	// For JSON/YAML, use API ordering (only API-supported fields)
+	return normalizeOrderByWithAPIProbe(raw, "deployments", depapi.DeploymentV1Deployment{}, func(orderBy string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		// Validate ordering in isolation. Reusing the caller's --filter here can turn
+		// filter errors into misleading "invalid --order-by field" errors.
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{
+				OrderBy:  &orderBy,
+				Filter:   nil,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment order-by"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
@@ -184,6 +251,17 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 		cmd.SetContext(context.WithValue(cmd.Context(), expandedLabelsKey, expandedLabels))
 	}
 
+	// Expand --application-cluster-id to apply to ALL applications in the package
+	// Format: <cluster-id> applies the same cluster to all apps
+	clusterID, _ := cmd.Flags().GetString("application-cluster-id")
+	if clusterID != "" {
+		expandedClusterIDs := make(map[string]string)
+		for appName := range validAppNames {
+			expandedClusterIDs[appName] = clusterID
+		}
+		cmd.SetContext(context.WithValue(cmd.Context(), expandedClusterIDsKey, expandedClusterIDs))
+	}
+
 	overrideValues, err := getOverrideValues(cmd)
 	if err != nil {
 		return err
@@ -204,8 +282,8 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	resp, err := deploymentClient.DeploymentServiceCreateDeploymentWithResponse(ctx, projectName,
-		depapi.DeploymentServiceCreateDeploymentJSONRequestBody{
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceCreateDeploymentWithResponse(ctx, projectName,
+		depapi.DeploymentV1DeploymentServiceCreateDeploymentJSONRequestBody{
 			DisplayName:    getFlag(cmd, "display-name"),
 			AppName:        appName,
 			AppVersion:     appVersion,
@@ -229,20 +307,20 @@ func runCreateDeploymentCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getOverrideValues(cmd *cobra.Command) ([]depapi.OverrideValues, error) {
+func getOverrideValues(cmd *cobra.Command) ([]depapi.DeploymentV1OverrideValues, error) {
 	namespaces, _ := cmd.Flags().GetStringToString("application-namespace")
 	sets, _ := cmd.Flags().GetStringToString("application-set")
 	return getOverrideValuesRaw(namespaces, sets)
 }
 
-func getOverrideValuesRaw(namespaces, sets map[string]string) ([]depapi.OverrideValues, error) {
-	overrides := make(map[string]depapi.OverrideValues, 0)
+func getOverrideValuesRaw(namespaces, sets map[string]string) ([]depapi.DeploymentV1OverrideValues, error) {
+	overrides := make(map[string]depapi.DeploymentV1OverrideValues, 0)
 
 	// First, accumulate any app target namespace settings in the format "<app-name>=<target-namespace>"
 	for app, namespace := range namespaces {
 		ns := namespace
-		values := make(map[string]interface{}, 0)
-		overrides[app] = depapi.OverrideValues{AppName: app, TargetNamespace: &ns, Values: &values}
+		values := make(depapi.GoogleProtobufStruct, 0)
+		overrides[app] = depapi.DeploymentV1OverrideValues{AppName: app, TargetNamespace: &ns, Values: &values}
 	}
 
 	// Next accumulate any app value overrides in format "<app-name>.<property-name>=<value>"
@@ -256,36 +334,48 @@ func getOverrideValuesRaw(namespaces, sets map[string]string) ([]depapi.Override
 
 		override, ok := overrides[app]
 		if !ok {
-			values := make(map[string]interface{}, 0)
-			override = depapi.OverrideValues{AppName: app, Values: &values}
+			values := make(depapi.GoogleProtobufStruct, 0)
+			override = depapi.DeploymentV1OverrideValues{AppName: app, Values: &values}
 		}
 		override.Values = addProperty(override.Values, app, prop, value)
 		overrides[app] = override
 	}
 
 	// Transform overrides map into array
-	overrideValues := make([]depapi.OverrideValues, 0)
+	overrideValues := make([]depapi.DeploymentV1OverrideValues, 0)
 	for _, override := range overrides {
 		overrideValues = append(overrideValues, override)
 	}
 	return overrideValues, nil
 }
 
-func addProperty(values *map[string]interface{}, app string, prop string, value string) *map[string]interface{} {
+func addProperty(values *depapi.GoogleProtobufStruct, _ string, prop string, value string) *depapi.GoogleProtobufStruct {
 	ovs := *values
+	segs := strings.SplitN(prop, ".", 2)
+	if _, ok := ovs[segs[0]]; !ok {
+		gv := depapi.GoogleProtobufValue{}
+		ovs[segs[0]] = &gv
+	}
+	if len(segs) == 1 {
+		(*ovs[segs[0]])[segs[0]] = parseValue(value)
+	} else {
+		addToProtobufValue((*map[string]interface{})(ovs[segs[0]]), segs[1], value)
+	}
+	return values
+}
+
+func addToProtobufValue(m *map[string]interface{}, prop string, value string) {
+	ovs := *m
 	segs := strings.SplitN(prop, ".", 2)
 	if len(segs) == 1 {
 		ovs[segs[0]] = parseValue(value)
-	} else if len(segs) > 1 {
-		gprops, ok := ovs[segs[0]]
-		if !ok {
-			newProps := make(map[string]interface{}, 0)
-			gprops = &newProps
+	} else {
+		if _, ok := ovs[segs[0]]; !ok {
+			newProps := make(map[string]interface{})
+			ovs[segs[0]] = &newProps
 		}
-		props := gprops.(*map[string]interface{})
-		ovs[segs[0]] = addProperty(props, app, segs[1], value)
+		addToProtobufValue(ovs[segs[0]].(*map[string]interface{}), segs[1], value)
 	}
-	return values
 }
 
 func parseValue(value string) interface{} {
@@ -301,7 +391,7 @@ func parseValue(value string) interface{} {
 	return value
 }
 
-func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.TargetClusters, string, error) {
+func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.DeploymentV1TargetClusters, string, error) {
 	targetClustersByLabel, err := getTargetClustersByLabel(cmd)
 	if err != nil {
 		return nil, "", err
@@ -326,10 +416,10 @@ func getTargetClusters(cmd *cobra.Command, allowEmpty bool) (*[]depapi.TargetClu
 	if !allowEmpty {
 		return nil, "", fmt.Errorf("no target clusters specified, use either --application-label or --application-cluster-id")
 	}
-	return &[]depapi.TargetClusters{}, "", nil
+	return &[]depapi.DeploymentV1TargetClusters{}, "", nil
 }
 
-func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
+func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.DeploymentV1TargetClusters, error) {
 	// Check for expanded labels from context (set during command preprocessing)
 	var labels map[string]string
 	if expandedLabels := cmd.Context().Value(expandedLabelsKey); expandedLabels != nil {
@@ -340,7 +430,7 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 	}
 
 	// Accumulate any app target cluster labels in format "<app-name>.<label-name>=<label-value>"
-	targets := make(map[string]depapi.TargetClusters, 0)
+	targets := make(map[string]depapi.DeploymentV1TargetClusters, 0)
 	for appLabel, value := range labels {
 		fields := strings.SplitN(appLabel, ".", 2)
 		if len(fields) < 2 {
@@ -353,21 +443,21 @@ func getTargetClustersByLabel(cmd *cobra.Command) (*[]depapi.TargetClusters, err
 
 		if !alreadyExists {
 			lbls := make(map[string]string, 1)
-			target = depapi.TargetClusters{AppName: &app, Labels: &lbls}
+			target = depapi.DeploymentV1TargetClusters{AppName: &app, Labels: &lbls}
 			targets[app] = target
 		}
 		(*target.Labels)[label] = value
 	}
 
 	// Transform targets map into array
-	targetClusters := make([]depapi.TargetClusters, 0, len(targets))
+	targetClusters := make([]depapi.DeploymentV1TargetClusters, 0, len(targets))
 	for _, target := range targets {
 		targetClusters = append(targetClusters, target)
 	}
 	return &targetClusters, nil
 }
 
-func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error) {
+func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.DeploymentV1TargetClusters, error) {
 	// Check for expanded cluster IDs from context (set during command preprocessing)
 	var clusterIDs map[string]string
 	if expandedIDs := cmd.Context().Value(expandedClusterIDsKey); expandedIDs != nil {
@@ -375,15 +465,15 @@ func getTargetClustersByID(cmd *cobra.Command) (*[]depapi.TargetClusters, error)
 	}
 
 	if len(clusterIDs) == 0 {
-		return &[]depapi.TargetClusters{}, nil
+		return &[]depapi.DeploymentV1TargetClusters{}, nil
 	}
 
 	// Transform to target clusters array
-	targetClusters := make([]depapi.TargetClusters, 0, len(clusterIDs))
+	targetClusters := make([]depapi.DeploymentV1TargetClusters, 0, len(clusterIDs))
 	for app, clusterID := range clusterIDs {
 		appName := app
 		cID := clusterID
-		target := depapi.TargetClusters{AppName: &appName, ClusterId: &cID}
+		target := depapi.DeploymentV1TargetClusters{AppName: &appName, ClusterId: &cID}
 		targetClusters = append(targetClusters, target)
 	}
 	return &targetClusters, nil
@@ -396,17 +486,140 @@ func runListDeploymentsCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	resp, err := deploymentClient.DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
-		&depapi.DeploymentServiceListDeploymentsParams{}, auth.AddAuthHeader)
+	validatedOrderBy, err := getValidatedDeploymentOrderBy(ctx, cmd, deploymentClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	validatedFilter, err := getValidatedDeploymentFilter(ctx, cmd, deploymentClient, projectName)
+	if err != nil {
+		return err
+	}
+
+	outputType, _ := cmd.Flags().GetString("output-type")
+	apiOrderBy := validatedOrderBy
+	if outputType == "table" {
+		// Table output sorts locally via GenerateOutput(CommandResult.OrderBy).
+		apiOrderBy = nil
+	}
+
+	pageSize, offset, err := getPageSizeOffset(cmd)
+	if err != nil {
+		return err
+	}
+
+	// Preserve explicit pagination requests as single-page results.
+	if cmd.Flags().Changed("page-size") || cmd.Flags().Changed("offset") {
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{
+				OrderBy:  apiOrderBy,
+				Filter:   validatedFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting deployments"); !proceed {
+			return err
+		}
+		outputFilter, _ := cmd.Flags().GetString("output-filter")
+		if err := printDeployments(cmd, writer, &resp.JSON200.Deployments, validatedOrderBy, &outputFilter, verbose); err != nil {
+			return err
+		}
+		return writer.Flush()
+	}
+
+	allDeployments := make([]depapi.DeploymentV1Deployment, 0)
+
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+		&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{
+			OrderBy:  apiOrderBy,
+			Filter:   validatedFilter,
+			PageSize: &pageSize,
+			Offset:   &offset,
+		}, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		deploymentHeader, "error getting deployments"); !proceed {
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+		"", "error getting deployments"); !proceed {
 		return err
 	}
-	printDeployments(writer, &resp.JSON200.Deployments, verbose)
+
+	allDeployments = append(allDeployments, resp.JSON200.Deployments...)
+	totalElements := int(resp.JSON200.TotalElements)
+
+	// When page size is omitted (0), derive increment from the first page length.
+	if pageSize <= 0 {
+		pageSize = int32(len(resp.JSON200.Deployments))
+	}
+
+	for len(allDeployments) < totalElements {
+		if pageSize <= 0 {
+			break
+		}
+
+		offset += pageSize
+		resp, err = deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{
+				OrderBy:  apiOrderBy,
+				Filter:   validatedFilter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+			"", "error getting deployments"); !proceed {
+			return err
+		}
+
+		if len(resp.JSON200.Deployments) == 0 {
+			break
+		}
+		allDeployments = append(allDeployments, resp.JSON200.Deployments...)
+	}
+
+	outputFilter, _ := cmd.Flags().GetString("output-filter")
+	if err := printDeployments(cmd, writer, &allDeployments, validatedOrderBy, &outputFilter, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
+}
+
+// deploymentIDPattern matches deployment UUIDs.
+var deploymentIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+
+func isDeploymentID(s string) bool {
+	return deploymentIDPattern.MatchString(s)
+}
+
+// findDeploymentByDisplayName searches a slice of deployments for an exact DisplayName match.
+// Returns an error if no match is found or if multiple deployments share the same display name
+// (listing the matches so the caller can retry with a deployment ID).
+func findDeploymentByDisplayName(deployments []depapi.DeploymentV1Deployment, displayName string) (depapi.DeploymentV1Deployment, error) {
+	var matches []depapi.DeploymentV1Deployment
+	for _, d := range deployments {
+		if d.DisplayName != nil && *d.DisplayName == displayName {
+			matches = append(matches, d)
+		}
+	}
+	switch len(matches) {
+	case 0:
+		return depapi.DeploymentV1Deployment{}, fmt.Errorf("no deployment found with display name %q", displayName)
+	case 1:
+		return matches[0], nil
+	default:
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "multiple deployments found with display name %q; use a deployment ID instead:\n", displayName)
+		for _, m := range matches {
+			fmt.Fprintf(&sb, "  display-name: %s  id: %s\n", derefString(m.DisplayName), derefString(m.DeployId))
+		}
+		return depapi.DeploymentV1Deployment{}, errors.New(strings.TrimRight(sb.String(), "\n"))
+	}
 }
 
 func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
@@ -416,19 +629,73 @@ func runGetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	deploymentID := args[0]
+	query := args[0]
 
-	resp, err := deploymentClient.DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
+	if !isDeploymentID(query) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, query)
+		if err != nil {
+			return err
+		}
+		query = derefString(deployment.DeployId)
+	}
+
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx, projectName, query,
 		auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
-	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, verbose,
-		deploymentHeader, fmt.Sprintf("error getting deployment %s", deploymentID)); !proceed {
+	if proceed, err := processResponse(resp.HTTPResponse, resp.Body, writer, true,
+		"", fmt.Sprintf("error getting deployment %s", query)); !proceed {
 		return err
 	}
-	printDeployments(writer, &[]depapi.Deployment{resp.JSON200.Deployment}, verbose)
+	if err := printDeployments(cmd, writer, &[]depapi.DeploymentV1Deployment{resp.JSON200.Deployment}, nil, nil, verbose); err != nil {
+		return err
+	}
 	return writer.Flush()
+}
+
+func getValidatedDeploymentFilter(
+	ctx context.Context,
+	cmd *cobra.Command,
+	deploymentClient depapi.ClientWithResponsesInterface,
+	projectName string,
+) (*string, error) {
+	raw, err := cmd.Flags().GetString("filter")
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeFilterWithAPIProbe(raw, "deployments", depapi.DeploymentV1Deployment{}, func(filter string) (bool, error) {
+		pageSize := int32(1)
+		offset := int32(0)
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{
+				OrderBy:  nil,
+				Filter:   &filter,
+				PageSize: &pageSize,
+				Offset:   &offset,
+			}, auth.AddAuthHeader)
+		if err != nil {
+			return false, processError(err)
+		}
+		if resp.HTTPResponse != nil && resp.HTTPResponse.StatusCode == http.StatusBadRequest {
+			return false, &api400Error{string(resp.Body)}
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error validating deployment filter"); err != nil {
+			return false, err
+		}
+		return true, nil
+	})
 }
 
 func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
@@ -438,6 +705,24 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	deploymentID := args[0]
+
+	if !isDeploymentID(deploymentID) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, deploymentID)
+		if err != nil {
+			return err
+		}
+		deploymentID = derefString(deployment.DeployId)
+	}
 
 	overrideValues, err := getOverrideValues(cmd)
 	if err != nil {
@@ -449,7 +734,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	gresp, err := deploymentClient.DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
+	gresp, err := deploymentClient.DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
 		auth.AddAuthHeader)
 	if err != nil {
 		return err
@@ -461,7 +746,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	dep := gresp.JSON200.Deployment
 
-	request := depapi.DeploymentServiceUpdateDeploymentJSONRequestBody{
+	request := depapi.DeploymentV1DeploymentServiceUpdateDeploymentJSONRequestBody{
 		DeployId:       &deploymentID,
 		Name:           getFlagOrDefault(cmd, "name", dep.Name),
 		AppName:        *getFlagOrDefault(cmd, "application-name", &dep.AppName),
@@ -479,7 +764,7 @@ func runSetDeploymentCommand(cmd *cobra.Command, args []string) error {
 		request.DeploymentType = &deploymentType
 	}
 
-	resp, err := deploymentClient.DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -499,8 +784,26 @@ func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
 	deploymentID := args[0]
 	newPackageVersion, _ := cmd.Flags().GetString("package-version")
 
+	if !isDeploymentID(deploymentID) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, deploymentID)
+		if err != nil {
+			return err
+		}
+		deploymentID = derefString(deployment.DeployId)
+	}
+
 	// Get the current deployment to retrieve package name and other details
-	gresp, err := deploymentClient.DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
+	gresp, err := deploymentClient.DeploymentV1DeploymentServiceGetDeploymentWithResponse(ctx, projectName, deploymentID,
 		auth.AddAuthHeader)
 	if err != nil {
 		return err
@@ -513,7 +816,7 @@ func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
 	dep := gresp.JSON200.Deployment
 
 	// Build the update request with the new package version
-	request := depapi.DeploymentServiceUpdateDeploymentJSONRequestBody{
+	request := depapi.DeploymentV1DeploymentServiceUpdateDeploymentJSONRequestBody{
 		DeployId:       &deploymentID,
 		Name:           dep.Name,
 		AppName:        dep.AppName,
@@ -525,7 +828,7 @@ func runUpgradeDeploymentCommand(cmd *cobra.Command, args []string) error {
 		DeploymentType: dep.DeploymentType,
 	}
 
-	resp, err := deploymentClient.DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceUpdateDeploymentWithResponse(cmd.Context(), projectName, deploymentID, request, auth.AddAuthHeader)
 	if err != nil {
 		return processError(err)
 	}
@@ -544,8 +847,27 @@ func runDeleteDeploymentCommand(cmd *cobra.Command, args []string) error {
 
 	deploymentID := args[0]
 
-	resp, err := deploymentClient.DeploymentServiceDeleteDeploymentWithResponse(ctx, projectName, deploymentID,
-		&depapi.DeploymentServiceDeleteDeploymentParams{}, auth.AddAuthHeader)
+	if !isDeploymentID(deploymentID) {
+		// DisplayName-based lookup: list all deployments and do an exact client-side match.
+		resp, err := deploymentClient.DeploymentV1DeploymentServiceListDeploymentsWithResponse(ctx, projectName,
+			&depapi.DeploymentV1DeploymentServiceListDeploymentsParams{},
+			auth.AddAuthHeader)
+		if err != nil {
+			return processError(err)
+		}
+		if err := checkResponse(resp.HTTPResponse, resp.Body, "error while retrieving deployments"); err != nil {
+			return err
+		}
+		deployment, err := findDeploymentByDisplayName(resp.JSON200.Deployments, deploymentID)
+		if err != nil {
+			return err
+		}
+		deploymentID = derefString(deployment.DeployId)
+	}
+
+	resp, err := deploymentClient.DeploymentV1DeploymentServiceDeleteDeploymentWithResponse(ctx, projectName, deploymentID,
+		&depapi.DeploymentV1DeploymentServiceDeleteDeploymentParams{}, auth.AddAuthHeader)
+
 	if err != nil {
 		return processError(err)
 	}
@@ -585,7 +907,7 @@ func getValidApplicationNames(ctx context.Context, catalogClient catapi.ClientWi
 }
 
 // validateApplicationNames checks that all application names in overrides exist in validNames
-func validateApplicationNames(overrides []depapi.OverrideValues, validNames map[string]bool, flagName string) error {
+func validateApplicationNames(overrides []depapi.DeploymentV1OverrideValues, validNames map[string]bool, flagName string) error {
 	var invalidNames []string
 	for _, override := range overrides {
 		appName := override.AppName
@@ -608,7 +930,7 @@ func validateApplicationNames(overrides []depapi.OverrideValues, validNames map[
 }
 
 // validateTargetClustersApplicationNames checks that all application names in target clusters exist in validNames
-func validateTargetClustersApplicationNames(targetClusters *[]depapi.TargetClusters, validNames map[string]bool) error {
+func validateTargetClustersApplicationNames(targetClusters *[]depapi.DeploymentV1TargetClusters, validNames map[string]bool) error {
 	if targetClusters == nil {
 		return nil
 	}

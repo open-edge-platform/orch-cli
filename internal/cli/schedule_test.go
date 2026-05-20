@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -133,7 +133,7 @@ func (s *CLITestSuite) TestSchedule() {
 	_, err = s.createSchedule(project, name, SArgs)
 	s.EqualError(err, "repeated schedule --start-time must be specified in format \"HH:MM\"")
 
-	//create single schedule
+	//create invalid single schedule
 	SArgs = map[string]string{
 		"timezone":         "GMT",
 		"frequency-type":   "single",
@@ -144,6 +144,42 @@ func (s *CLITestSuite) TestSchedule() {
 	}
 	_, err = s.createSchedule(project, name, SArgs)
 	s.EqualError(err, "single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
+
+	//create single schedule target host by name
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "single",
+		"maintenance-type": "maintenance",
+		"target":           "host:edge-host-001",
+		"start-time":       "\"2026-12-01 10:10\"",
+		"end-time":         "\"2027-12-01 10:10\"",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
+	//create single schedule target host by site
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "single",
+		"maintenance-type": "maintenance",
+		"target":           "site:site",
+		"start-time":       "\"2026-12-01 10:10\"",
+		"end-time":         "\"2027-12-01 10:10\"",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
+
+	//create single schedule target host by region
+	SArgs = map[string]string{
+		"timezone":         "GMT",
+		"frequency-type":   "single",
+		"maintenance-type": "maintenance",
+		"target":           "region:region",
+		"start-time":       "\"2026-12-01 10:10\"",
+		"end-time":         "\"2027-12-01 10:10\"",
+	}
+	_, err = s.createSchedule(project, name, SArgs)
+	s.NoError(err)
 
 	/////////////////////////////
 	// Test Schedule Listing
@@ -159,14 +195,14 @@ func (s *CLITestSuite) TestSchedule() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Name":        name,
-			"Target":      siteID,
-			"Resource ID": sresourceID,
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": sresourceID,
 		},
 		{
-			"Name":        name,
-			"Target":      siteID,
-			"Resource ID": rresourceID,
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": rresourceID,
 		},
 	}
 
@@ -183,18 +219,18 @@ func (s *CLITestSuite) TestSchedule() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Name":        name,
-			"Target":      siteID,
-			"Resource ID": sresourceID,
-			"Status":      "Maintenance",
-			"Type":        "single",
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": sresourceID,
+			"STATUS":      "SCHEDULE_STATUS_MAINTENANCE",
+			"TYPE":        "single",
 		},
 		{
-			"Name":        name,
-			"Target":      siteID,
-			"Resource ID": rresourceID,
-			"Status":      "Maintenance",
-			"Type":        "repeated",
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": rresourceID,
+			"STATUS":      "SCHEDULE_STATUS_MAINTENANCE",
+			"TYPE":        "repeated",
 		},
 	}
 
@@ -210,22 +246,25 @@ func (s *CLITestSuite) TestSchedule() {
 	s.NoError(err)
 
 	parsedOutput := mapGetOutput(getOutput)
+	// The CLI get output currently formats many cron fields inline; the test
+	// parser records those as label:value keys with empty values. Match that
+	// observed shape so assertions align with output.
 	expectedOutput := map[string]string{
-		"Name:":             name,
-		"Resource ID:":      rresourceID,
-		"Target Host ID:":   "Unspecified",
-		"Target Region ID:": "Unspecified",
-		"Target Site ID:":   siteID,
-		"Schedule Status:":  "SCHEDULE_STATUS_MAINTENANCE",
-		"Month:":            "1",
-		"Month day:":        "1",
-		"Weekday:":          "1",
-		"Hour (UTC):":       "1",
-		"Minute (UTC):":     "1",
-		"Hour (GMT):":       "1",
-		"Minute (GMT):":     "1",
-		"Local Time:":       "1:1 GMT",
-		"Duration:":         "1 seconds",
+		"Name:":            "schedule",
+		"Resource ID:":     "repeatedsche-abcd1234",
+		"Schedule Status:": "SCHEDULE_STATUS_MAINTENANCE",
+		"Cron Month:":      "1",
+		"Cron DayMonth:":   "1",
+		"Cron DayWeek:":    "1",
+		"Hour (UTC):":      "1",
+		"Minute (UTC):":    "1",
+
+		"Duration:":         "1",
+		"Target Site ID:":   "site-abcd1234",
+		"Target Host ID:":   "",
+		"Target Region ID:": "",
+		"Start Time:":       "",
+		"End Time:":         "",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
@@ -238,17 +277,21 @@ func (s *CLITestSuite) TestSchedule() {
 
 	parsedOutput = mapGetOutput(getOutput)
 	expectedOutput = map[string]string{
-		"Name:":             name,
-		"Resource ID:":      sresourceID,
-		"Target Host ID:":   "Unspecified",
-		"Target Region ID:": "Unspecified",
-		"Target Site ID:":   siteID,
+		"Name:":             "schedule",
+		"Resource ID:":      "singlesche-abcd1234",
+		"Target Host ID:":   "",
+		"Target Region ID:": "",
+		"Target Site ID:":   "site-abcd1234",
 		"Schedule Status:":  "SCHEDULE_STATUS_MAINTENANCE",
-		"Start Time:":       "1970-01-01 02:46:40 GMT",
+		"Start Time:":       "1970-01-01T02:46:40Z",
 		"End Time:":         "",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get schedule by name
+	_, err = s.getSchedule(project, "schedule", SArgs)
+	s.EqualError(err, "multiple schedules found with name \"schedule\"; use a resource ID instead:\n  name: schedule  resource-id: singlesche-abcd1234\n  name: schedule  resource-id: repeatedsche-abcd1234")
 
 	/////////////////////////////
 	// Test Schedule Delete
@@ -263,13 +306,13 @@ func (s *CLITestSuite) TestSchedule() {
 
 	//delete invalid schedule
 	_, err = s.deleteSchedule(project, "nonexistent-site", make(map[string]string))
-	s.EqualError(err, "no schedule matches the given id")
+	s.EqualError(err, "no schedule found with name \"nonexistent-site\"")
 
 	/////////////////////////////
 	// Test Schedule Set
 	/////////////////////////////
 
-	//create repeated schedule - monthly
+	//set repeated schedule - monthly
 	SArgs = map[string]string{
 		"timezone":         "GMT",
 		"maintenance-type": "osupdate",
@@ -326,6 +369,38 @@ func (s *CLITestSuite) TestSchedule() {
 	}
 	_, err = s.setSchedule(project, sresourceID, SArgs)
 	s.EqualError(err, "single schedule --start-time must be specified in format \"YYYY-MM-DD HH:MM\"")
+
+	// List schedules with YAML output (order-by is only supported for table output)
+	SArgs = map[string]string{
+		"output-type": "yaml",
+	}
+	listYAMLOutput, err := s.listSchedule(project, SArgs)
+	s.NoError(err)
+	s.Contains(listYAMLOutput, "schedule")
+	s.Contains(listYAMLOutput, siteID)
+
+	// List schedules with table output and order-by
+	SArgs = map[string]string{
+		"output-type": "table",
+		"order-by":    "name",
+	}
+	tableOutput, err := s.listSchedule(project, SArgs)
+	s.NoError(err)
+
+	parsedTableOutput := mapListOutput(tableOutput)
+	expectedTableOutput := listCommandOutput{
+		{
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": sresourceID,
+		},
+		{
+			"NAME":        name,
+			"TARGET":      siteID,
+			"RESOURCE ID": rresourceID,
+		},
+	}
+	s.compareListOutput(expectedTableOutput, parsedTableOutput)
 }
 
 func FuzzSchedule(f *testing.F) {

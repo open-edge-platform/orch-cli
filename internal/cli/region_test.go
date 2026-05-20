@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -81,7 +81,6 @@ func (s *CLITestSuite) TestRegion() {
 	parsedOutputLines := mapLinesOutput(linesOutput)
 
 	expectedOutputLines := linesCommandOutput{
-		"",
 		"Printing regions tree",
 		"",
 		"Region: " + resourceID + " (region)",
@@ -145,7 +144,6 @@ func (s *CLITestSuite) TestRegion() {
 	parsedOutputLines = mapLinesOutput(linesOutput)
 
 	expectedOutputLines = linesCommandOutput{
-		"",
 		"Printing regions tree",
 		"",
 		"Region: " + resourceID + " (region)",
@@ -204,6 +202,25 @@ func (s *CLITestSuite) TestRegion() {
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
 
+	//get region by name
+	getOutput, err = s.getRegion(project, name, make(map[string]string))
+	s.NoError(err)
+
+	parsedOutput = mapGetOutput(getOutput)
+	expectedOutput = map[string]string{
+		"Name:":          name,
+		"Resource ID:":   resourceID,
+		"Parent region:": "region-abcd1111",
+		"Metadata:":      "[{region us-east}]",
+		"TotalSites:":    "1",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get duplicate region by name
+	_, err = s.getRegion("duplicate-region", "duplicate-region", make(map[string]string))
+	s.EqualError(err, "multiple regions found with name \"duplicate-region\"; use a resource ID instead:\n  name: duplicate-region  resource-id: region-abcd1111\n  name: duplicate-region  resource-id: region-abcd1111")
+
 	/////////////////////////////
 	// Test Region Delete
 	/////////////////////////////
@@ -214,7 +231,47 @@ func (s *CLITestSuite) TestRegion() {
 
 	//delete invalid custom config
 	_, err = s.deleteRegion(project, "nonexistent-region", make(map[string]string))
-	s.EqualError(err, "invalid region id")
+	s.EqualError(err, "no region found with name \"nonexistent-region\"")
+
+	// List regions with order-by and YAML output
+	SArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+	}
+	listOrderedOutput, err := s.listRegion(project, SArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "name: region")
+	s.Contains(listOrderedOutput, "resourceid: "+resourceID)
+	s.Contains(listOrderedOutput, "totalsites: 1")
+
+	// List regions with filter and YAML output
+	SArgs = map[string]string{
+		"filter":      "name=region",
+		"output-type": "yaml",
+	}
+	listFilteredOutput, err := s.listRegion(project, SArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "name: region")
+	s.Contains(listFilteredOutput, "resourceid: "+resourceID)
+	s.Contains(listFilteredOutput, "totalsites: 1")
+
+	// List regions with table output
+	SArgs = map[string]string{
+		"output-type": "table",
+	}
+	tableOutput, err := s.listRegion(project, SArgs)
+	s.NoError(err)
+
+	parsedTableOutput := mapListOutput(tableOutput)
+	expectedTableOutput := listCommandOutput{
+		{
+			"RESOURCE ID": resourceID,
+			"NAME":        name,
+			"PARENT ID":   "",
+			"TOTAL SITES": "1",
+		},
+	}
+	s.compareListOutput(expectedTableOutput, parsedTableOutput)
 
 }
 

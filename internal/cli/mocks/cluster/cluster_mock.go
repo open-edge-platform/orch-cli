@@ -28,17 +28,18 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 			projectName = "test-project" // Default fallback
 		}
 
-		// Mock GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse (used by get template command)
-		mockClusterClient.EXPECT().GetV2ProjectsProjectNameTemplatesNameVersionsVersionWithResponse(
-			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		// Mock GetV2ProjectsProjectNameTemplatesNameVersionWithResponse (used by get template command)
+		mockClusterClient.EXPECT().GetV2ProjectsProjectNameTemplatesNameVersionWithResponse(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(ctx context.Context, projectName, templateName, version string, reqEditors ...cluster.RequestEditorFn) (*cluster.GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse, error) {
+			func(ctx context.Context, projectName cluster.ProjectNamePath, templateName string, version string, params *cluster.GetV2ProjectsProjectNameTemplatesNameVersionParams, reqEditors ...cluster.RequestEditorFn) (*cluster.GetV2ProjectsProjectNameTemplatesNameVersionResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
+				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				fmt.Printf("The name of the template is %s", templateName)
 				switch projectName {
 				case "nonexistent-project":
-					return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse{
+					return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionResponse{
 						HTTPResponse: &http.Response{StatusCode: 500, Status: "Not Found"},
 						JSON500: &cluster.ProblemDetails{
 							Message: stringPtr("Project not found"),
@@ -47,14 +48,14 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 				default:
 					switch templateName {
 					case "nonexistent-template":
-						return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse{
+						return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionResponse{
 							HTTPResponse: &http.Response{StatusCode: 500, Status: "Not Found"},
 							JSON500: &cluster.ProblemDetails{
 								Message: stringPtr("Template not found"),
 							},
 						}, nil
 					default:
-						return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionsVersionResponse{
+						return &cluster.GetV2ProjectsProjectNameTemplatesNameVersionResponse{
 							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 							JSON200: &cluster.TemplateInfo{
 								Name:    templateName,
@@ -72,7 +73,6 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *cluster.GetV2ProjectsProjectNameTemplatesParams, reqEditors ...cluster.RequestEditorFn) (*cluster.GetV2ProjectsProjectNameTemplatesResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
-				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
 				switch projectName {
 				case "nonexistent-project":
@@ -83,6 +83,17 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 						},
 					}, nil
 				default:
+					// On paginated follow-up calls (offset>0) return nil TemplateInfoList to trigger the nil-break in the loop
+					if params != nil && params.Offset != nil && *params.Offset > 0 {
+						count := int32(3)
+						return &cluster.GetV2ProjectsProjectNameTemplatesResponse{
+							HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+							JSON200: &cluster.TemplateInfoList{
+								TemplateInfoList: nil,
+								TotalElements:    &count,
+							},
+						}, nil
+					}
 					return &cluster.GetV2ProjectsProjectNameTemplatesResponse{
 						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 						JSON200: &cluster.TemplateInfoList{
@@ -148,7 +159,7 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 									},
 								},
 							},
-							TotalElements: func() *int32 { count := int32(2); return &count }(),
+							TotalElements: func() *int32 { count := int32(3); return &count }(),
 						},
 					}, nil
 				}
@@ -242,8 +253,20 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 		).DoAndReturn(
 			func(ctx context.Context, projectName string, params *cluster.GetV2ProjectsProjectNameClustersParams, reqEditors ...cluster.RequestEditorFn) (*cluster.GetV2ProjectsProjectNameClustersResponse, error) {
 				_ = ctx        // Acknowledge we're not using it
-				_ = params     // Acknowledge we're not using it
 				_ = reqEditors // Acknowledge we're not using it
+				// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+				if params != nil && params.Offset != nil && *params.Offset > 0 {
+					return &cluster.GetV2ProjectsProjectNameClustersResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &struct {
+							Clusters      *[]cluster.ClusterInfo `json:"clusters,omitempty"`
+							TotalElements int32                  `json:"totalElements"`
+						}{
+							Clusters:      &[]cluster.ClusterInfo{},
+							TotalElements: 2,
+						},
+					}, nil
+				}
 				switch projectName {
 				case "nonexistent-project":
 					return &cluster.GetV2ProjectsProjectNameClustersResponse{
@@ -314,7 +337,7 @@ func CreateClusterMock(mctrl *gomock.Controller) interfaces.ClusterFactoryFunc {
 									},
 								},
 							},
-							TotalElements: 1,
+							TotalElements: 2,
 						},
 					}, nil
 				}

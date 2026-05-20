@@ -108,7 +108,7 @@ func (s *CLITestSuite) TestLogin() {
 	s.Equal(kcTest, viper.Get(auth.KeycloakEndpointField))
 
 	// Now call any function - should invoke auth.AddAuthHeader() and do the refresh flow
-	_, err = s.listRegistries(project, false, true, "", "")
+	_, err = s.listRegistries(project, false, true, "", "", "", "")
 	s.NoError(err)
 }
 

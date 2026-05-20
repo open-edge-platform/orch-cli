@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package catalog
@@ -86,17 +86,27 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
 			func(_ context.Context, _ string, params *catapi.CatalogServiceListRegistriesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListRegistriesResponse, error) {
+				// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+				if params != nil && params.Offset != nil && *params.Offset > 0 {
+					return &catapi.CatalogServiceListRegistriesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &catapi.CatalogV3ListRegistriesResponse{
+							Registries:    []catapi.CatalogV3Registry{},
+							TotalElements: 3,
+						},
+					}, nil
+				}
 				// You may want to simulate both registries in the list
 				registries := []catapi.CatalogV3Registry{}
 				for _, registryName := range []string{"registry-image", "registry-helm"} {
 					name, displayName, regType := getRegistryInfo(registryName)
-					var authToken, username *string
+					var authToken *string
+					// Username is always returned (not considered sensitive)
+					username := stringPtr("user")
 					if params.ShowSensitiveInfo != nil && *params.ShowSensitiveInfo {
 						authToken = stringPtr("token")
-						username = stringPtr("user")
 					} else {
 						authToken = stringPtr("********")
-						username = stringPtr("<none>")
 					}
 					registries = append(registries, catapi.CatalogV3Registry{
 						Name:        name,
@@ -113,7 +123,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 				resp := &catapi.CatalogServiceListRegistriesResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.CatalogV3ListRegistriesResponse{
-						Registries: registries,
+						Registries:    registries,
+						TotalElements: 3,
 					},
 				}
 				return resp, nil
@@ -288,50 +299,90 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceListApplicationsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ *catapi.CatalogServiceListApplicationsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListApplicationsResponse, error) {
+			func(_ context.Context, _ string, params *catapi.CatalogServiceListApplicationsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListApplicationsResponse, error) {
+				// wipe.go calls with PageSize=500; return TotalElements == item count so the wipe
+				// loop terminates immediately without a second call.
+				isWipeCall := params != nil && params.PageSize != nil && *params.PageSize == 500
+				// Second-page call from the list pagination loop: return one extra item so the
+				// loop appends it and exits normally (len == totalElements).
+				isSecondPage := !isWipeCall && params != nil && params.Offset != nil && *params.Offset > 0
+
+				if isWipeCall || !isSecondPage {
+					// First page (or wipe): return 3 items.
+					// For wipe TotalElements==3 ends the loop; for list TotalElements==4 triggers pagination.
+					totalElements := int32(3)
+					if !isWipeCall {
+						totalElements = 4
+					}
+					return &catapi.CatalogServiceListApplicationsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &catapi.CatalogV3ListApplicationsResponse{
+							Applications: []catapi.CatalogV3Application{
+								{
+									Name:               "new-application",
+									Version:            "1.2.3",
+									Kind:               applicationKindPtr(catapi.KINDNORMAL),
+									DisplayName:        stringPtr("application.display.name"),
+									Description:        stringPtr("Application.Description"),
+									ChartName:          "chart-name",
+									ChartVersion:       "22.33.44",
+									HelmRegistryName:   "test-registry",
+									ImageRegistryName:  nil,
+									Profiles:           &[]catapi.CatalogV3Profile{},
+									DefaultProfileName: stringPtr(""),
+									CreateTime:         timePtr(testTime),
+									UpdateTime:         timePtr(testTime),
+								},
+								{
+									Name:               "addon-app",
+									Version:            "1.0.0",
+									Kind:               applicationKindPtr(catapi.KINDADDON),
+									DisplayName:        stringPtr("addon.display.name"),
+									Description:        stringPtr("Addon Description"),
+									ChartName:          "addon-chart",
+									ChartVersion:       "1.0.0",
+									HelmRegistryName:   "addon-registry",
+									ImageRegistryName:  nil,
+									Profiles:           &[]catapi.CatalogV3Profile{},
+									DefaultProfileName: stringPtr(""),
+									CreateTime:         timePtr(testTime),
+									UpdateTime:         timePtr(testTime),
+								},
+								{
+									Name:               "extension-app",
+									Version:            "2.0.0",
+									Kind:               applicationKindPtr(catapi.KINDEXTENSION),
+									DisplayName:        stringPtr("extension.display.name"),
+									Description:        stringPtr("Extension Description"),
+									ChartName:          "extension-chart",
+									ChartVersion:       "2.0.0",
+									HelmRegistryName:   "extension-registry",
+									ImageRegistryName:  nil,
+									Profiles:           &[]catapi.CatalogV3Profile{},
+									DefaultProfileName: stringPtr(""),
+									CreateTime:         timePtr(testTime),
+									UpdateTime:         timePtr(testTime),
+								},
+							},
+							TotalElements: totalElements,
+						},
+					}, nil
+				}
+
+				// Second page for the list pagination loop: return one additional application.
 				return &catapi.CatalogServiceListApplicationsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.CatalogV3ListApplicationsResponse{
 						Applications: []catapi.CatalogV3Application{
 							{
-								Name:               "new-application",
-								Version:            "1.2.3",
+								Name:               "paged-app",
+								Version:            "3.0.0",
 								Kind:               applicationKindPtr(catapi.KINDNORMAL),
-								DisplayName:        stringPtr("application.display.name"),
-								Description:        stringPtr("Application.Description"),
-								ChartName:          "chart-name",
-								ChartVersion:       "22.33.44",
-								HelmRegistryName:   "test-registry",
-								ImageRegistryName:  nil,
-								Profiles:           &[]catapi.CatalogV3Profile{},
-								DefaultProfileName: stringPtr(""),
-								CreateTime:         timePtr(testTime),
-								UpdateTime:         timePtr(testTime),
-							},
-							{
-								Name:               "addon-app",
-								Version:            "1.0.0",
-								Kind:               applicationKindPtr(catapi.KINDADDON),
-								DisplayName:        stringPtr("addon.display.name"),
-								Description:        stringPtr("Addon Description"),
-								ChartName:          "addon-chart",
-								ChartVersion:       "1.0.0",
-								HelmRegistryName:   "addon-registry",
-								ImageRegistryName:  nil,
-								Profiles:           &[]catapi.CatalogV3Profile{},
-								DefaultProfileName: stringPtr(""),
-								CreateTime:         timePtr(testTime),
-								UpdateTime:         timePtr(testTime),
-							},
-							{
-								Name:               "extension-app",
-								Version:            "2.0.0",
-								Kind:               applicationKindPtr(catapi.KINDEXTENSION),
-								DisplayName:        stringPtr("extension.display.name"),
-								Description:        stringPtr("Extension Description"),
-								ChartName:          "extension-chart",
-								ChartVersion:       "2.0.0",
-								HelmRegistryName:   "extension-registry",
+								DisplayName:        stringPtr("paged.display.name"),
+								Description:        stringPtr("Paged Application"),
+								ChartName:          "paged-chart",
+								ChartVersion:       "3.0.0",
+								HelmRegistryName:   "paged-registry",
 								ImageRegistryName:  nil,
 								Profiles:           &[]catapi.CatalogV3Profile{},
 								DefaultProfileName: stringPtr(""),
@@ -339,12 +390,10 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 								UpdateTime:         timePtr(testTime),
 							},
 						},
-						TotalElements: 3,
-					},
+						TotalElements: 4},
 				}, nil
 			},
 		).AnyTimes()
-
 		mockClient.EXPECT().CatalogServiceGetApplicationVersionsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
@@ -419,7 +468,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							Description:         stringPtr("Profile.for.testing"),
 							CreateTime:          timePtr(testTime),
 							UpdateTime:          timePtr(testTime),
-							ApplicationProfiles: map[string]string{},
+							ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}},
 						},
 						{
 							Name:                "test-deployment-profile",
@@ -427,7 +476,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							Description:         stringPtr("Test.Profile.for.testing"),
 							CreateTime:          timePtr(testTime),
 							UpdateTime:          timePtr(testTime),
-							ApplicationProfiles: map[string]string{},
+							ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}},
 						},
 					}
 				}
@@ -474,8 +523,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							profiles[i].UpdateTime = timePtr(testTime)
 						}
 						// Ensure ApplicationProfiles is not nil
-						if profiles[i].ApplicationProfiles == nil {
-							profiles[i].ApplicationProfiles = map[string]string{}
+						if profiles[i].ApplicationProfiles.AdditionalProperties == nil {
+							profiles[i].ApplicationProfiles = catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}}
 						}
 					}
 					createdProfiles[key] = profiles
@@ -502,7 +551,19 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceListDeploymentPackagesWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ *catapi.CatalogServiceListDeploymentPackagesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListDeploymentPackagesResponse, error) {
+			func(_ context.Context, _ string, params *catapi.CatalogServiceListDeploymentPackagesParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListDeploymentPackagesResponse, error) {
+				// Pagination loop second call: offset>0 AND pageSize>0 (derived from first page length).
+				// Distinguished from the "--offset 1" test path where pageSize=0 (flag not set).
+				if params != nil && params.Offset != nil && *params.Offset > 0 &&
+					params.PageSize != nil && *params.PageSize > 0 {
+					return &catapi.CatalogServiceListDeploymentPackagesResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &catapi.CatalogV3ListDeploymentPackagesResponse{
+							DeploymentPackages: []catapi.CatalogV3DeploymentPackage{},
+							TotalElements:      2,
+						},
+					}, nil
+				}
 				// Get the tracked profiles for deployment-pkg:1.0.0
 				mockStateMutex.RLock()
 				key := "deployment-pkg:1.0.0"
@@ -518,7 +579,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							Description:         stringPtr("Profile.for.testing"),
 							CreateTime:          timePtr(testTime),
 							UpdateTime:          timePtr(testTime),
-							ApplicationProfiles: map[string]string{},
+							ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}},
 						},
 						{
 							Name:                "test-deployment-profile",
@@ -526,7 +587,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							Description:         stringPtr("Test.Profile.for.testing"),
 							CreateTime:          timePtr(testTime),
 							UpdateTime:          timePtr(testTime),
-							ApplicationProfiles: map[string]string{},
+							ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}},
 						},
 					}
 				}
@@ -556,6 +617,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 								// Add other fields as needed for your tests
 							},
 						},
+						TotalElements: 2,
 					},
 				}, nil
 			},
@@ -591,7 +653,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 										Description:         stringPtr("Profile.for.testing"),
 										CreateTime:          timePtr(testTime),
 										UpdateTime:          timePtr(testTime),
-										ApplicationProfiles: map[string]string{},
+										ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}},
 									},
 								},
 							},
@@ -617,22 +679,32 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 		mockClient.EXPECT().CatalogServiceListArtifactsWithResponse(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 		).DoAndReturn(
-			func(_ context.Context, _ string, _ *catapi.CatalogServiceListArtifactsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListArtifactsResponse, error) {
+			func(_ context.Context, _ string, params *catapi.CatalogServiceListArtifactsParams, _ ...catapi.RequestEditorFn) (*catapi.CatalogServiceListArtifactsResponse, error) {
+				// On paginated follow-up calls (offset>0) return empty page to exercise the pagination loop exit
+				if params != nil && params.Offset != nil && *params.Offset > 0 {
+					return &catapi.CatalogServiceListArtifactsResponse{
+						HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
+						JSON200: &catapi.CatalogV3ListArtifactsResponse{
+							Artifacts:     []catapi.CatalogV3Artifact{},
+							TotalElements: 2,
+						},
+					}, nil
+				}
 				return &catapi.CatalogServiceListArtifactsResponse{
 					HTTPResponse: &http.Response{StatusCode: 200, Status: "OK"},
 					JSON200: &catapi.CatalogV3ListArtifactsResponse{
 						Artifacts: []catapi.CatalogV3Artifact{
-
 							{
 								Name:        "artifact",
 								DisplayName: stringPtr("artifact-display-name"),
 								Description: stringPtr("Artifact-Description"),
 								MimeType:    "text/plain",
-								CreateTime:  timePtr(time.Now()),
-								UpdateTime:  timePtr(time.Now()),
+								CreateTime:  timePtr(testTime),
+								UpdateTime:  timePtr(testTime),
 								// Add other fields as needed
 							},
 						},
+						TotalElements: 2,
 					},
 				}, nil
 			},

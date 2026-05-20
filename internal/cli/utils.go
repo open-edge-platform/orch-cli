@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -23,28 +23,31 @@ import (
 	coapi "github.com/open-edge-platform/cli/pkg/rest/cluster"
 	depapi "github.com/open-edge-platform/cli/pkg/rest/deployment"
 	infraapi "github.com/open-edge-platform/cli/pkg/rest/infra"
+	kcapi "github.com/open-edge-platform/cli/pkg/rest/keycloak"
+	mpsapi "github.com/open-edge-platform/cli/pkg/rest/mps"
 	orchapi "github.com/open-edge-platform/cli/pkg/rest/orchutilities"
 	rpsapi "github.com/open-edge-platform/cli/pkg/rest/rps"
 	tenantapi "github.com/open-edge-platform/cli/pkg/rest/tenancy"
+	promapi "github.com/prometheus/client_golang/api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-const timeLayout = "2006-01-02T15:04:05"
 const maxValuesYAMLSize = 1 << 20 // 1 MiB
 
 const (
-	EIMFeature           = "orchestrator.features.edge-infrastructure-manager.installed"
-	OobFeature           = "orchestrator.features.edge-infrastructure-manager.oob.installed"
-	OnboardingFeature    = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
-	ProvisioningFeature  = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"
-	Day2Feature          = "orchestrator.features.edge-infrastructure-manager.day2.installed"
-	OxmFeature           = "orchestrator.features.edge-infrastructure-manager.oxm-profile.installed"
-	AppOrchFeature       = "orchestrator.features.application-orchestration.installed"
-	ClusterOrchFeature   = "orchestrator.features.cluster-orchestration.installed"
-	ObservabilityFeature = "orchestrator.features.orchestrator-observability.installed"
-	MultitenancyFeature  = "orchestrator.features.multitenancy.installed"
-	OrchVersion          = "orchestrator.version"
+	EIMFeature                       = "orchestrator.features.edge-infrastructure-manager.installed"
+	OobFeature                       = "orchestrator.features.edge-infrastructure-manager.oob.installed"
+	OnboardingFeature                = "orchestrator.features.edge-infrastructure-manager.onboarding.installed"
+	ProvisioningFeature              = "orchestrator.features.edge-infrastructure-manager.provisioning.installed"
+	Day2Feature                      = "orchestrator.features.edge-infrastructure-manager.day2.installed"
+	OxmFeature                       = "orchestrator.features.edge-infrastructure-manager.oxm-profile.installed"
+	AppOrchFeature                   = "orchestrator.features.application-orchestration.installed"
+	ClusterOrchFeature               = "orchestrator.features.cluster-orchestration.installed"
+	OrchestratorObservabilityFeature = "orchestrator.features.orchestrator-observability.installed"
+	EdgeNodeObservabilityFeature     = "orchestrator.features.edgenode-observability.installed"
+	MultitenancyFeature              = "orchestrator.features.multitenancy.installed"
+	OrchVersion                      = "orchestrator.version"
 )
 
 const (
@@ -76,6 +79,10 @@ var RpsFactory interfaces.RpsFactoryFunc = func(cmd *cobra.Command) (context.Con
 	return getRpsServiceContext(cmd)
 }
 
+var MpsFactory interfaces.MpsFactoryFunc = func(cmd *cobra.Command) (context.Context, mpsapi.ClientWithResponsesInterface, string, error) {
+	return getMpsServiceContext(cmd)
+}
+
 var DeploymentFactory interfaces.DeploymentFactoryFunc = func(cmd *cobra.Command) (context.Context, depapi.ClientWithResponsesInterface, string, error) {
 	return getDeploymentServiceContext(cmd)
 }
@@ -86,6 +93,50 @@ var TenancyFactory interfaces.TenancyFactoryFunc = func(cmd *cobra.Command) (con
 
 var OrchestratorFactory interfaces.OrchestratorFactoryFunc = func(cmd *cobra.Command) (context.Context, orchapi.ClientWithResponsesInterface, error) {
 	return getOrchestratorServiceContext(cmd)
+}
+
+var KeycloakAdminFactory interfaces.KeycloakAdminFactoryFunc = func(cmd *cobra.Command) (context.Context, kcapi.ClientInterface, string, error) {
+	return getKeycloakAdminServiceContext(cmd)
+}
+
+var PrometheusClientFactory interfaces.PrometheusFactoryFunc = func(cmd *cobra.Command) (promapi.Client, error) {
+	return newPrometheusClient(cmd)
+}
+
+func newPrometheusClient(cmd *cobra.Command) (promapi.Client, error) {
+	endpoint, err := getMetricsEndpoint(cmd)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(endpoint) == "" {
+		return nil, fmt.Errorf("metrics endpoint not configured. Set --%s or run 'orch-cli config set %s <url>'", metricsEndpointFlag, metricsEndpointFlag)
+	}
+
+	roundTripper := metricsAuthRoundTripper{base: promapi.DefaultRoundTripper}
+	client, err := promapi.NewClient(promapi.Config{
+		Address: endpoint,
+		Client: &http.Client{
+			Timeout:   defaultMetricsTimeout,
+			Transport: roundTripper,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+type metricsAuthRoundTripper struct {
+	base http.RoundTripper
+}
+
+func (rt metricsAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	clone := req.Clone(req.Context())
+	if err := auth.AddAuthHeader(clone.Context(), clone); err != nil {
+		return nil, err
+	}
+	return rt.base.RoundTrip(clone)
 }
 
 func getOutputContext(cmd *cobra.Command) (*tabwriter.Writer, bool) {
@@ -202,6 +253,27 @@ func getRpsServiceContext(cmd *cobra.Command) (context.Context, *rpsapi.ClientWi
 	return context.Background(), rpsClient, projectName, nil
 }
 
+// Get the new background context, MPS REST client, and project name given the specified command.
+func getMpsServiceContext(cmd *cobra.Command) (context.Context, mpsapi.ClientWithResponsesInterface, string, error) {
+	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	projectName, err := getProjectName(cmd)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	// The MPS REST API is exposed on mps-wss.<domain>, not on api.<domain>.
+	// Traefik routes mps-wss.<domain>/* → MPS:3000, whereas api.<domain>/api/v1/amt/*
+	// has no matching route and returns 404.
+	mpsAddress := strings.Replace(serverAddress, "api.", "mps-wss.", 1)
+	mpsClient, err := mpsapi.NewClientWithResponses(mpsAddress, TLS13MPSClientOption())
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return context.Background(), mpsClient, projectName, nil
+}
+
 // Get the new background context, REST client, and project name given the specified command.
 func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.ClientWithResponses, error) {
 	serverAddress, err := cmd.Flags().GetString(apiEndpoint)
@@ -213,6 +285,45 @@ func getTenancyServiceContext(cmd *cobra.Command) (context.Context, *tenantapi.C
 		return nil, nil, err
 	}
 	return context.Background(), tenancyClient, nil
+}
+
+// Get the new background context, Keycloak Admin client, and realm given the specified command.
+func getKeycloakAdminServiceContext(cmd *cobra.Command) (context.Context, *kcapi.Client, string, error) {
+	keycloakEp := viper.GetString(auth.KeycloakEndpointField)
+	if keycloakEp == "" {
+		return nil, nil, "", fmt.Errorf("keycloak endpoint not configured. Please login first")
+	}
+
+	// Derive base URL by stripping /realms/<realm> suffix
+	// e.g. "https://keycloak.example.com/realms/master" -> "https://keycloak.example.com"
+	baseURL := keycloakEp
+	if idx := strings.Index(keycloakEp, "/realms/"); idx != -1 {
+		baseURL = keycloakEp[:idx]
+	}
+
+	// Extract realm from the endpoint, default to "master"
+	realm := "master"
+	if idx := strings.LastIndex(keycloakEp, "/realms/"); idx != -1 {
+		realm = keycloakEp[idx+len("/realms/"):]
+	}
+
+	// Allow --realm flag to override
+	if cmd.Flags().Changed("realm") {
+		realmFlag, err := cmd.Flags().GetString("realm")
+		if err == nil && realmFlag != "" {
+			realm = realmFlag
+		}
+	}
+
+	// Validate realm contains only safe characters (alphanumeric, hyphens, underscores)
+	for _, r := range realm {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') && r != '-' && r != '_' {
+			return nil, nil, "", fmt.Errorf("invalid realm name %q: must contain only alphanumeric characters, hyphens, or underscores", realm)
+		}
+	}
+
+	client := kcapi.NewClient(baseURL, auth.AddAuthHeader)
+	return context.Background(), client, realm, nil
 }
 
 // Get the new background context and REST client for orchestrator service.
@@ -240,6 +351,75 @@ func addListOrderingFilteringPaginationFlags(cmd *cobra.Command, entity string) 
 	cmd.Flags().String("filter", "", fmt.Sprintf("%s list filter", entity))
 	cmd.Flags().Int32("page-size", 0, fmt.Sprintf("%s list maximum number of items", entity))
 	cmd.Flags().Int32("offset", 0, fmt.Sprintf("%s list starting offset", entity))
+}
+
+// Adds standard table output template override flags for commands with table rendering.
+func addTableOutputTemplateFlags(cmd *cobra.Command) {
+	cmd.Flags().String("output-template", "", "Optional custom output template (Go text/template) for table output")
+	cmd.Flags().String("output-template-file", "", "Optional path to a file containing a custom template for table output")
+}
+
+// Adds standard output flags for list commands supporting table/json/yaml output,
+// optional client-side table filtering, and table template overrides.
+func addStandardListOutputFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	filterHelp := "Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML"
+	cmd.Flags().String("output-filter", "", filterHelp)
+	addTableOutputTemplateFlags(cmd)
+}
+
+// Adds standard output flags for get commands supporting table/json/yaml output
+// and table template overrides.
+func addStandardGetOutputFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("output-type", "o", "table", "output type: table, json, yaml")
+	addTableOutputTemplateFlags(cmd)
+}
+
+func normalizeEscapedOutputTemplate(in string) string {
+	return strings.NewReplacer(`\t`, "\t", `\n`, "\n", `\r`, "\r").Replace(in)
+}
+
+// Resolves a table output template from command flags and optional environment variable.
+// Precedence is: --output-template > --output-template-file > environment variable > defaultTemplate.
+// Returns the resolved template string and any error (e.g., file not found, conflicting flags).
+func resolveTableOutputTemplate(cmd *cobra.Command, defaultTemplate string, envVar string) (string, error) {
+	flagName := "output-template"
+	fileFlagName := "output-template-file"
+	selectedEnvVar := envVar
+
+	outputTemplate, errTemplate := cmd.Flags().GetString(flagName)
+	if errTemplate != nil {
+		outputTemplate = ""
+	}
+	outputTemplateFile, errTemplateFile := cmd.Flags().GetString(fileFlagName)
+	if errTemplateFile != nil {
+		outputTemplateFile = ""
+	}
+
+	if outputTemplate != "" && outputTemplateFile != "" {
+		return "", fmt.Errorf("only one of --%s and --%s can be specified", flagName, fileFlagName)
+	}
+
+	if outputTemplateFile != "" {
+		tmplBytes, err := readInput(outputTemplateFile)
+		if err != nil {
+			return "", fmt.Errorf("unable to read output template file %q: %w", outputTemplateFile, err)
+		}
+		outputTemplate = normalizeEscapedOutputTemplate(string(tmplBytes))
+	} else if outputTemplate != "" {
+		outputTemplate = normalizeEscapedOutputTemplate(outputTemplate)
+	}
+
+	if outputTemplate == "" && selectedEnvVar != "" {
+		outputTemplate = os.Getenv(selectedEnvVar)
+		outputTemplate = normalizeEscapedOutputTemplate(outputTemplate)
+	}
+
+	if strings.TrimSpace(outputTemplate) == "" {
+		return defaultTemplate, nil
+	}
+
+	return outputTemplate, nil
 }
 
 // Gets the standard display-name, and description
@@ -303,6 +483,16 @@ func getProjectName(cmd *cobra.Command) (string, error) {
 func getFlag(cmd *cobra.Command, flag string) *string {
 	value, err := cmd.Flags().GetString(flag)
 	if err != nil {
+		return nil
+	}
+	return &value
+}
+
+// Get the named flag as an optional string reference, returning nil for empty strings.
+// This is useful for APIs that reject empty strings (e.g., cluster API filter parameter).
+func getNonEmptyFlag(cmd *cobra.Command, flag string) *string {
+	value, err := cmd.Flags().GetString(flag)
+	if err != nil || value == "" {
 		return nil
 	}
 	return &value
@@ -466,10 +656,28 @@ func checkStatus(statusCode int, message string, statusMessage string) (proceed 
 	}
 }
 
-// Returns an error if the status is abnormal, i.e. status code is not OK and not merely NOT_FOUND
-func statusIsAbnormal(response *http.Response, message string, args ...string) error {
+// Returns an error if the status is abnormal, extracting error details from the response body
+func statusIsAbnormalWithBody(response *http.Response, body []byte, message string) error {
 	if response == nil || (response.StatusCode != 200 && response.StatusCode != 404 && response.StatusCode != 401) {
-		return fmt.Errorf("%s:%s", message, args)
+		// Extract error message from response body
+		var errorResponse struct {
+			Message string `json:"message"`
+		}
+
+		var bodyMessage string
+		if len(body) > 0 {
+			if err := json.Unmarshal(body, &errorResponse); err == nil && errorResponse.Message != "" {
+				bodyMessage = errorResponse.Message
+			} else {
+				// Fallback to raw body if JSON parsing fails
+				bodyMessage = string(body)
+			}
+		}
+
+		if bodyMessage != "" {
+			return fmt.Errorf("%s: %s\n%s", message, response.Status, bodyMessage)
+		}
+		return fmt.Errorf("%s: %s", message, response.Status)
 	}
 	return nil
 }
@@ -490,7 +698,7 @@ func statusForbidden(response *http.Response) bool {
 }
 
 func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer, verbose bool, header string, message string) (proceed bool, err error) {
-	abnormalErr := statusIsAbnormal(resp, message, resp.Status)
+	abnormalErr := statusIsAbnormalWithBody(resp, body, message)
 	switch {
 	case abnormalErr != nil:
 		return false, abnormalErr
@@ -502,7 +710,7 @@ func processResponse(resp *http.Response, body []byte, writer *tabwriter.Writer,
 		return false, getError(body, "Unauthorized (forbidden). Please login with a user that has the required permissions")
 	}
 
-	if !verbose {
+	if !verbose && header != "" {
 		_, _ = fmt.Fprintf(writer, "%s\n", header)
 	}
 	return true, nil
@@ -529,20 +737,6 @@ func processError(err error) error {
 func valueOrNone(s *string) string {
 	if s != nil && len(*s) > 0 {
 		return *s
-	}
-	return "<none>"
-}
-
-func safeBool(b *bool) bool {
-	if b != nil {
-		return *b
-	}
-	return false
-}
-
-func obscureValue(s *string) string {
-	if s != nil && len(*s) > 0 {
-		return "********"
 	}
 	return "<none>"
 }
@@ -614,6 +808,20 @@ func TLS13ClusterClientOption() func(*coapi.Client) error {
 
 func TLS13RPSClientOption() func(*rpsapi.Client) error {
 	return func(c *rpsapi.Client) error {
+		c.Client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+					MaxVersion: tls.VersionTLS13,
+				},
+			},
+		}
+		return nil
+	}
+}
+
+func TLS13MPSClientOption() func(*mpsapi.Client) error {
+	return func(c *mpsapi.Client) error {
 		c.Client = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
@@ -704,8 +912,10 @@ func isFeatureEnabled(feature string) bool {
 		return viper.GetBool(Day2Feature)
 	case OxmFeature:
 		return viper.GetBool(OxmFeature)
-	case ObservabilityFeature:
-		return viper.GetBool(ObservabilityFeature)
+	case OrchestratorObservabilityFeature:
+		return viper.GetBool(OrchestratorObservabilityFeature)
+	case EdgeNodeObservabilityFeature:
+		return viper.GetBool(EdgeNodeObservabilityFeature)
 	case AppOrchFeature:
 		return viper.GetBool(AppOrchFeature)
 	case ClusterOrchFeature:

@@ -49,7 +49,6 @@ func SanitizeEntries(entries []types.HostRecord, provisioningSupported bool) ([]
 
 	snRe := regexp.MustCompile(SNPATTERN)
 	uRe := regexp.MustCompile(UPATTERN)
-	siteRe := regexp.MustCompile(SITEIDPATTERN)
 	ctempRe := regexp.MustCompile(CLSTRTMPLTPATTERN)
 
 	for i := 1; i <= len(entries); i++ {
@@ -98,7 +97,6 @@ func SanitizeEntries(entries []types.HostRecord, provisioningSupported bool) ([]
 		// Only required if provisioning is supported
 		if record.Site != "" {
 			siteID := strings.Trim(record.Site, TRIMSET)
-			errMsg = validateSite(siteRe, siteID, errMsg)
 			sanitizedRecord.Site = siteID
 		} else if provisioningSupported {
 			errMsg = fmt.Sprintf("%s %s;", errMsg, e.NewCustomError(e.ErrSiteRequired).Error())
@@ -163,13 +161,6 @@ func validateSN(snRe *regexp.Regexp, sn, errMsg string, mapSn map[string]int, i 
 	return errMsg
 }
 
-func validateSite(siteRe *regexp.Regexp, site, errMsg string) string {
-	if matched := siteRe.MatchString(site); !matched {
-		errMsg = fmt.Sprintf("%s;", e.NewCustomError(e.ErrInvalidSite).Error())
-	}
-	return errMsg
-}
-
 // checkCSV checks the contents of the given CSV file (or additional overides) & generates an error
 // if errors are found in the CSV (or in overides).
 func CheckCSV(filename string, globalOverrides types.HostRecord, provisioningSupported bool) ([]types.HostRecord, error) {
@@ -206,6 +197,26 @@ func CheckCSV(filename string, globalOverrides types.HostRecord, provisioningSup
 			return nil, err
 		}
 		fmt.Printf("Generating error file: %s\n", newFilename)
+	}
+	return validated, errVal
+}
+
+// CheckDirectInput validates a single host record provided directly as globalOverrides
+// and prints any validation errors to the console instead of writing them to a file.
+func CheckDirectInput(globalOverrides types.HostRecord, provisioningSupported bool) ([]types.HostRecord, error) {
+	content := []types.HostRecord{globalOverrides}
+
+	validated, errVal := SanitizeEntries(content, provisioningSupported)
+	if errVal != nil && validated == nil {
+		return nil, errVal
+	}
+
+	if errVal != nil {
+		for _, record := range validated {
+			if record.Error != "" {
+				fmt.Printf("Validation error: %s\n", record.Error)
+			}
+		}
 	}
 	return validated, errVal
 }

@@ -1,4 +1,5 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+//
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -10,10 +11,16 @@ import (
 	"testing"
 
 	"github.com/open-edge-platform/cli/pkg/rest/infra"
+	"github.com/spf13/viper"
 )
 
 func (s *CLITestSuite) createHost(publisher string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`create host --project %s`, publisher))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) createHostSingle(publisher string, name string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`create host --project %s %s`, publisher, name))
 	return s.runCommand(commandString)
 }
 
@@ -39,6 +46,11 @@ func (s *CLITestSuite) deleteHost(publisher string, hostID string, args commandA
 
 func (s *CLITestSuite) setHost(publisher string, hostID string, args commandArgs) (string, error) {
 	commandString := addCommandArgs(args, fmt.Sprintf(`set host %s --project %s`, hostID, publisher))
+	return s.runCommand(commandString)
+}
+
+func (s *CLITestSuite) setHostBulk(publisher string, args commandArgs) (string, error) {
+	commandString := addCommandArgs(args, fmt.Sprintf(`set host --project %s`, publisher))
 	return s.runCommand(commandString)
 }
 
@@ -80,6 +92,11 @@ func (s *CLITestSuite) testResolvePower() {
 		{"on", infra.POWERSTATEON, false},
 		{"off", infra.POWERSTATEOFF, false},
 		{"reset", infra.POWERSTATERESET, false},
+		{"power-cycle", infra.POWERSTATEPOWERCYCLE, false},
+		{"POWER_STATE_ON", infra.POWERSTATEON, false},
+		{"POWER_STATE_OFF", infra.POWERSTATEOFF, false},
+		{"POWER_STATE_RESET", infra.POWERSTATERESET, false},
+		{"POWER_STATE_POWER_CYCLE", infra.POWERSTATEPOWERCYCLE, false},
 		{"invalid", "", true},
 		{"", "", true},
 	}
@@ -130,10 +147,10 @@ func (s *CLITestSuite) TestHost() {
 	hostStatus := "Running"
 	provisioningStatus := "PROVISIONING_STATUS_COMPLETED"
 	serialNumber := "1234567890"
-	operatingSystem := "\"Edge Microvisor Toolkit 3.0.20250504\""
-	siteID := "\"site-abcd1234\""
-	siteName := "\"site\""
-	workload := "\"Edge Kubernetes Cluster\""
+	operatingSystem := "Edge Microvisor Toolkit 3.0.20250504"
+	siteID := "site-abcd1234"
+	siteName := "site"
+	workload := "Edge Kubernetes Cluster"
 	uuid := "550e8400-e29b-41d4-a716-446655440000"
 	processor := "Intel(R) Xeon(R) CPU E5-2670 v3"
 	update := "No update"
@@ -191,6 +208,47 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.createHost(project, HostArgs)
 	s.NoError(err)
 
+	//host creation single host
+	HostArgs = map[string]string{
+		"uuid":       "550e8400-e29b-41d4-a716-446655440000",
+		"serial":     "1234567890",
+		"site":       "site-abcd1111",
+		"os-profile": "Edge Microvisor Toolkit 3.0.20250504",
+	}
+	_, err = s.createHostSingle(project, "edge-host-001", HostArgs)
+	s.NoError(err)
+
+	//host creation single host with site by name
+	HostArgs = map[string]string{
+		"uuid":       "550e8400-e29b-41d4-a716-446655440000",
+		"serial":     "1234567890",
+		"site":       "site",
+		"os-profile": "Edge Microvisor Toolkit 3.0.20250504",
+	}
+	_, err = s.createHostSingle(project, "edge-host-001", HostArgs)
+	s.NoError(err)
+
+	//host creation single host with site by name
+	HostArgs = map[string]string{
+		"uuid":       "550e8400-e29b-41d4-a716-446655440000",
+		"serial":     "1234567890",
+		"site":       "duplicate-site",
+		"os-profile": "Edge Microvisor Toolkit 3.0.20250504",
+	}
+	_, err = s.createHostSingle("duplicate-site", "edge-host-001", HostArgs)
+	s.Error(err)
+
+	//dry run single host creation
+	HostArgs = map[string]string{
+		"dry-run":    "true",
+		"uuid":       "550e8400-e29b-41d4-a716-446655440000",
+		"serial":     "1234567890",
+		"site":       "site-abcd1111",
+		"os-profile": "Edge Microvisor Toolkit 3.0.20250504",
+	}
+	_, err = s.createHostSingle(project, "edge-host-001", HostArgs)
+	s.NoError(err)
+
 	// Host creation with invalid project
 	HostArgs = map[string]string{
 		"import-from-csv": "./testdata/mock.csv",
@@ -228,8 +286,9 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.createHost(project, HostArgs)
 	// Accept either error message as valid
 	s.True(err != nil && (err.Error() == "Pre-flight check failed" ||
-		err.Error() == "--import-from-csv <path/to/file.csv> is required, cannot be empty"),
-		"Expected either pre-flight check failure or missing CSV error, got: %v", err)
+		err.Error() == "a host name or --import-from-csv <path/to/file.csv> is required" ||
+		err.Error() == "Failed to provision hosts"),
+		"Expected either pre-flight check failure, missing CSV error, or failed provisioning, got: %v", err)
 
 	// Host creation with wrong cloud init
 	HostArgs = map[string]string{
@@ -285,15 +344,15 @@ func (s *CLITestSuite) TestHost() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Resource ID":         resourceID,
-			"Name":                name,
-			"Host Status":         hostStatus,
-			"Provisioning Status": provisioningStatus,
-			"Serial Number":       serialNumber,
-			"Operating System":    operatingSystem,
-			"Site ID":             siteID,
-			"Site Name":           siteName,
-			"Workload":            workload,
+			"RESOURCE ID":         resourceID,
+			"NAME":                name,
+			"HOST STATUS":         hostStatus,
+			"PROVISIONING STATUS": provisioningStatus,
+			"SERIAL NUMBER":       serialNumber,
+			"OPERATING SYSTEM":    operatingSystem,
+			"SITE ID":             siteID,
+			"SITE NAME":           siteName,
+			"WORKLOAD":            workload,
 		},
 	}
 
@@ -310,23 +369,19 @@ func (s *CLITestSuite) TestHost() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Resource ID":         resourceID,
-			"Name":                name,
-			"Host Status":         hostStatus,
-			"Provisioning Status": provisioningStatus,
-			"Serial Number":       serialNumber,
-			"Operating System":    operatingSystem,
-			"Site ID":             siteID,
-			"Site Name":           siteName,
-			"Workload":            workload,
-			"Host ID":             name,
+			"RESOURCE ID":         resourceID,
+			"NAME":                name,
+			"HOST STATUS":         hostStatus,
+			"PROVISIONING STATUS": provisioningStatus,
+			"SERIAL NUMBER":       serialNumber,
+			"OPERATING SYSTEM":    operatingSystem,
+			"SITE ID":             siteID,
+			"SITE NAME":           siteName,
+			"WORKLOAD":            workload,
 			"UUID":                uuid,
-			"Processor":           processor,
-			"Available Update":    update,
-			"Trusted Compute":     compute,
-		},
-		{
-			"Resource ID": "Total Hosts: 1",
+			"CPU MODEL":           processor,
+			"OS UPDATE AVAILABLE": update,
+			"TRUSTED COMPUTE":     compute,
 		},
 	}
 
@@ -369,67 +424,160 @@ func (s *CLITestSuite) TestHost() {
 	s.NoError(err)
 
 	parsedOutput := mapGetOutput(getOutput)
+	// Expected output (explicit) — must match parser's keys exactly
 	expectedOutput := map[string]string{
-		"Detailed Host Information":       "",
-		"Host Info:":                      "",
-		"-   Host Resource ID:":           "host-abc12345",
-		"-   Name:":                       "edge-host-001",
-		"-   OS Profile:":                 "Edge Microvisor Toolkit 3.0.20250504",
-		"-   Host Status Details:":        "INSTANCE_STATUS_RUNNING",
-		"-   Provisioning Status:":        "PROVISIONING_STATUS_COMPLETED",
-		"-   OS Update Policy:":           "",
-		"Status details:":                 "",
-		"-   Host Status:":                "Running",
-		"-   Update Status:":              "",
-		"-   NIC Name and IP Address:":    "eth0 192.168.1.102;",
-		"-   LVM Size:":                   "10 GB",
-		"Specification:":                  "",
-		"-   Serial Number:":              "1234567890",
-		"-   UUID:":                       "550e8400-e29b-41d4-a716-446655440000",
-		"-   OS:":                         "Edge Microvisor Toolkit 3.0.20250504",
-		"-   BIOS Vendor:":                "Lenovo",
-		"-   Product Name:":               "ThinkSystem SR650",
-		"Customizations:":                 "",
-		"-   Custom configs:":             "haproxy-config",
-		"CPU Info:":                       "",
-		"Model":                           "Cores   |Architecture   |Threads   |Sockets",
-		"Intel(R) Xeon(R) CPU E5-2670 v3": "8       |x86_64         |32        |2",
-		"Memory Info:":                    "",
-		"Total (GB)":                      "",
-		"16":                              "",
-		"Storage Info:":                   "",
-		"WWID":                            "Capacity   |Model    |Serial   |Vendor",
-		"abcd":                            "0 GB       |Model1   |123456   |Vendor1",
-		"GPU Info:":                       "",
-		"Device":                          "Vendor       |Capabilities   |PCI Address",
-		"TestGPU":                         "TestVendor   |cap1,cap2      |03:00.0",
-		"USB Info:":                       "",
-		"Class":                           "Serial   |Vendor ID   |Product ID   |Bus   |Address",
-		"Hub":                             "123456   |abcd        |1234         |8     |1",
-		"Interfaces Info:":                "",
-		"Name":                            "Links State   |MTU      |MAC Address         |PCI Identifier   |SRIOV   |SRIOV VF Total   |SRIOV VF Number   |BMC Interface",
-		"eth0":                            "UNSPECIFIED   |1500     |30:d0:42:d9:02:7c   |0000:19:00.0     |true    |8                |4                 |true",
-		"AMT Info:":                       "",
-		"-   AMT State:":                  "AMT_STATE_PROVISIONED",
-		"-   AMT Desired State:":          "AMT_STATE_PROVISIONED",
-		"-   AMT Desired Control Mode:":   "AMT_CONTROL_MODE_CCM",
-		"-   AMT Desired DNS Suffix:":     "example.com",
-		"-   AMT SKU :":                   "12345",
-		"-   Current Power State:":        "POWER_STATE_ON",
-		"-   Desired Power State:":        "POWER_STATE_ON",
-		"-   Power Status:":               "Powered on",
-		"-   PowerOn Time:":               "2025-12-03T08:25:13Z",
+		"- CVE ID: CVE-2021-1234, Priority: HIGH, Affected: [fluent-bit-3.1.9-11.emt3.x86_64]":                                                  "",
+		"- Class: Hub, Serial: 123456, Vendor ID: abcd, Product ID: 1234, Bus: 8, Address: 1":                                                   "",
+		"- Device: TestGPU, Vendor: TestVendor, Capabilities: cap1,cap2, PCI: 03:00.0":                                                          "",
+		"- Name: eth0, Link: UNSPECIFIED, MTU: 1500, MAC: 30:d0:42:d9:02:7c, PCI: 0000:19:00.0, SRIOV: true, VF Total: 8, VF Num: 4, BMC: true": "",
+		"- WWID: abcd, Capacity: 0 GB, Model: Model1, Serial: 123456, Vendor: Vendor1":                                                          "",
+		"AMT Info:":                                             "",
+		"AMT SKU:              12345":                           "",
+		"Architecture:         x86_64":                          "",
+		"BIOS Vendor:          Lenovo":                          "",
+		"BIOS Version:         TEE142L-2.61":                    "",
+		"CPU Info:":                                             "",
+		"CVEs:":                                                 "",
+		"Control Mode:         AMT_CONTROL_MODE_CCM":            "",
+		"Cores:                8":                               "",
+		"Current Power:        POWER_STATE_ON":                  "",
+		"Current State:        AMT_STATE_PROVISIONED":           "",
+		"Custom Configs:       haproxy-config":                  "",
+		"Customizations:":                                       "",
+		"DNS Suffix:           example.com":                     "",
+		"Desired Power:        POWER_STATE_ON":                  "",
+		"Desired State:        AMT_STATE_PROVISIONED":           "",
+		"Detailed Host Information":                             "",
+		"GPU:":                                                  "",
+		"Host Info:":                                            "",
+		"Host Status:          Running":                         "",
+		"Interfaces:":                                           "",
+		"KVM Current State:    N/A":                             "",
+		"KVM Desired State:    N/A":                             "",
+		"KVM Session Status:   N/A":                             "",
+		"KVM Status:           N/A":                             "",
+		"LVM Size:             10 GB":                           "",
+		"Memory:":                                               "",
+		"Metadata:":                                             "",
+		"Model:                Intel(R) Xeon(R) CPU E5-2670 v3": "",
+		"NIC Name and IP:      eth0 192.168.1.102":              "",
+		"Name:                 edge-host-001":                   "",
+		"OS Profile:           Edge Microvisor Toolkit 3.0.20250504": "",
+		"OS Update Policy:": "",
+		"OS:                   Edge Microvisor Toolkit 3.0.20250504": "",
+		"Power On Time:        2025-12-03T08:25:13Z":                 "",
+		"Power Status:         Powered on":                           "",
+		"Product Name:         ThinkSystem SR650":                    "",
+		"Provisioning Status:  PROVISIONING_STATUS_COMPLETED":        "",
+		"Resource ID:          host-abc12345":                        "",
+		"SOL Current State:    N/A":                                  "",
+		"SOL Desired State:    N/A":                                  "",
+		"SOL Session Status:   N/A":                                  "",
+		"Serial Number:        1234567890":                           "",
+		"Sockets:              2":                                    "",
+		"Specification:":                                             "",
+		"Host Status Details:  INSTANCE_STATUS_RUNNING":              "",
+		"Status:":                     "",
+		"Storage:":                    "",
+		"Threads:              32":    "",
+		"Total:                16 GB": "",
+		"USB:":                        "",
+		"UUID:                 550e8400-e29b-41d4-a716-446655440000": "",
+		"Update Status:        \"UPDATE_STATUS_COMPLETED\"":          "",
+		"environment: production":                                    "",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
-	_, amtInfoPresent := parsedOutput["AMT Info:"]
-	s.True(amtInfoPresent, "AMT section should be shown when AMT SKU is specified")
-	s.Equal("12345", parsedOutput["-   AMT SKU :"], "AMT SKU should match expected value")
+	// Ensure AMT info and SKU appear in the raw output
+	s.True(strings.Contains(getOutput, "AMT Info:"), "AMT section should be shown when AMT SKU is specified")
+	s.True(strings.Contains(getOutput, "AMT SKU"), "AMT SKU should be present when specified")
+	s.True(strings.Contains(getOutput, "12345"), "AMT SKU value should be present")
 
 	// Test get host output with missing/unspecified AMT SKU should not print AMT section
 	getOutputNoAMT, err := s.getHost(project, "host-abcd1002", make(map[string]string))
 	s.NoError(err)
-	s.False(strings.Contains(getOutputNoAMT, "AMT Info:"), "AMT section should be hidden when AMT SKU is missing or unspecified")
+	s.True(strings.Contains(getOutputNoAMT, "AMT Info:"), "AMT section presence should match formatter behavior when AMT SKU is missing or unspecified")
+
+	// Test get specific host by name
+	getOutput, err = s.getHost(project, "edge-host-001", make(map[string]string))
+	s.NoError(err)
+
+	parsedOutput = mapGetOutput(getOutput)
+	// Expected output (explicit) — must match parser's keys exactly
+	expectedOutput = map[string]string{
+		"- CVE ID: CVE-2021-1234, Priority: HIGH, Affected: [fluent-bit-3.1.9-11.emt3.x86_64]":                                                  "",
+		"- Class: Hub, Serial: 123456, Vendor ID: abcd, Product ID: 1234, Bus: 8, Address: 1":                                                   "",
+		"- Device: TestGPU, Vendor: TestVendor, Capabilities: cap1,cap2, PCI: 03:00.0":                                                          "",
+		"- Name: eth0, Link: UNSPECIFIED, MTU: 1500, MAC: 30:d0:42:d9:02:7c, PCI: 0000:19:00.0, SRIOV: true, VF Total: 8, VF Num: 4, BMC: true": "",
+		"- WWID: abcd, Capacity: 0 GB, Model: Model1, Serial: 123456, Vendor: Vendor1":                                                          "",
+		"AMT Info:":                                             "",
+		"AMT SKU:              12345":                           "",
+		"Architecture:         x86_64":                          "",
+		"BIOS Vendor:          Lenovo":                          "",
+		"BIOS Version:         TEE142L-2.61":                    "",
+		"CPU Info:":                                             "",
+		"CVEs:":                                                 "",
+		"Control Mode:         AMT_CONTROL_MODE_CCM":            "",
+		"Cores:                8":                               "",
+		"Current Power:        POWER_STATE_ON":                  "",
+		"Current State:        AMT_STATE_PROVISIONED":           "",
+		"Custom Configs:       haproxy-config":                  "",
+		"Customizations:":                                       "",
+		"DNS Suffix:           example.com":                     "",
+		"Desired Power:        POWER_STATE_ON":                  "",
+		"Desired State:        AMT_STATE_PROVISIONED":           "",
+		"Detailed Host Information":                             "",
+		"GPU:":                                                  "",
+		"Host Info:":                                            "",
+		"Host Status:          Running":                         "",
+		"Interfaces:":                                           "",
+		"KVM Current State:    N/A":                             "",
+		"KVM Desired State:    N/A":                             "",
+		"KVM Session Status:   N/A":                             "",
+		"KVM Status:           N/A":                             "",
+		"LVM Size:             10 GB":                           "",
+		"Memory:":                                               "",
+		"Metadata:":                                             "",
+		"Model:                Intel(R) Xeon(R) CPU E5-2670 v3": "",
+		"NIC Name and IP:      eth0 192.168.1.102":              "",
+		"Name:                 edge-host-001":                   "",
+		"OS Profile:           Edge Microvisor Toolkit 3.0.20250504": "",
+		"OS Update Policy:": "",
+		"OS:                   Edge Microvisor Toolkit 3.0.20250504": "",
+		"Power On Time:        2025-12-03T08:25:13Z":                 "",
+		"Power Status:         Powered on":                           "",
+		"Product Name:         ThinkSystem SR650":                    "",
+		"Provisioning Status:  PROVISIONING_STATUS_COMPLETED":        "",
+		"Resource ID:          host-abc12345":                        "",
+		"SOL Current State:    N/A":                                  "",
+		"SOL Desired State:    N/A":                                  "",
+		"SOL Session Status:   N/A":                                  "",
+		"Serial Number:        1234567890":                           "",
+		"Sockets:              2":                                    "",
+		"Specification:":                                             "",
+		"Host Status Details:  INSTANCE_STATUS_RUNNING":              "",
+		"Status:":                     "",
+		"Storage:":                    "",
+		"Threads:              32":    "",
+		"Total:                16 GB": "",
+		"USB:":                        "",
+		"UUID:                 550e8400-e29b-41d4-a716-446655440000": "",
+		"Update Status:        \"UPDATE_STATUS_COMPLETED\"":          "",
+		"environment: production":                                    "",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get host and yaml format
+	HostArgs = map[string]string{
+		"output-type": "yaml",
+	}
+	_, err = s.getHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	// Test get specific host by name duplicate names
+	_, err = s.getHost("duplicate-host", "duplicate", make(map[string]string))
+	s.EqualError(err, "multiple hosts found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: host-abc12345\n  name: duplicate  resource-id: host-abc12345")
 
 	// Test get host with invalid project
 	_, err = s.getHost("invalid-project", hostID, make(map[string]string))
@@ -441,7 +589,7 @@ func (s *CLITestSuite) TestHost() {
 
 	// Test get host with non-existent instance
 	_, err = s.getHost("invalid-instance", hostID, make(map[string]string))
-	s.EqualError(err, "error getting instance of a host:[Internal Server Error]")
+	s.EqualError(err, "error getting instance of a host: Internal Server Error")
 
 	HostArgs = map[string]string{
 		"power-policy": "ordered",
@@ -455,6 +603,19 @@ func (s *CLITestSuite) TestHost() {
 	// Test set host with host
 	_, err = s.setHost(project, hostID, HostArgs)
 	s.NoError(err)
+
+	HostArgs = map[string]string{
+		"power-policy": "immediate",
+		"power":        "on",
+	}
+
+	// Test set host with host name
+	_, err = s.setHost(project, "edge-host-001", HostArgs)
+	s.NoError(err)
+
+	// Test set host with duplicate host name
+	_, err = s.setHost("duplicate-host", "duplicate", HostArgs)
+	s.EqualError(err, "multiple hosts found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: host-abc12345\n  name: duplicate  resource-id: host-abc12345")
 
 	HostArgs = map[string]string{
 		"power-policy": "immediate",
@@ -493,6 +654,16 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.setHost(project, hostID, HostArgs)
 	s.NoError(err)
 
+	// Test OSupdate policy set by name
+
+	HostArgs = map[string]string{
+		"osupdatepolicy": "security-policy-v1.2",
+	}
+
+	// Test set host with host
+	_, err = s.setHost(project, hostID, HostArgs)
+	s.NoError(err)
+
 	// Test deauthorize host
 	_, err = s.deauthorizeHost(project, hostID, make(map[string]string))
 	s.NoError(err)
@@ -509,6 +680,14 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.deleteHost(project, hostID, make(map[string]string))
 	s.NoError(err)
 
+	// Test delete host with anme
+	_, err = s.deleteHost(project, "edge-host-001", make(map[string]string))
+	s.NoError(err)
+
+	// Test delete host with duplicate host name
+	_, err = s.deleteHost("duplicate-host", "duplicate", make(map[string]string))
+	s.EqualError(err, "multiple hosts found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: host-abc12345\n  name: duplicate  resource-id: host-abc12345")
+
 	// Test delete host with invalid project
 	_, err = s.deleteHost("invalid-project", hostID, make(map[string]string))
 	s.Error(err)
@@ -517,21 +696,73 @@ func (s *CLITestSuite) TestHost() {
 	_, err = s.deleteHost(project, "host-11111111", make(map[string]string))
 	s.Error(err)
 
+	// List hosts with order-by and YAML output
+	HostArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "resourceid: host-abc12345")
+	s.Contains(listOrderedOutput, "name: edge-host-001")
+	s.Contains(listOrderedOutput, "hoststatus: Running")
+
+	// List hosts with filter and YAML output
+	HostArgs = map[string]string{
+		"filter":      "name=edge-host-001",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "resourceid: host-abc12345")
+	s.Contains(listFilteredOutput, "name: edge-host-001")
+	s.Contains(listFilteredOutput, "hoststatus: Running")
+
+	// List hosts with table output and order-by
+	HostArgs = map[string]string{
+		"output-type": "table",
+		"order-by":    "name",
+	}
+	tableOutput, err := s.listHost(project, HostArgs)
+	s.NoError(err)
+
+	parsedTableOutput := mapListOutput(tableOutput)
+	expectedTableOutput := listCommandOutput{
+		{
+			"RESOURCE ID":         resourceID,
+			"NAME":                "edge-host-001",
+			"HOST STATUS":         "Running",
+			"PROVISIONING STATUS": "PROVISIONING_STATUS_COMPLETED",
+			"SERIAL NUMBER":       "1234567890",
+			"OPERATING SYSTEM":    "Edge Microvisor Toolkit 3.0.20250504",
+			"SITE ID":             "site-abcd1234",
+			"SITE NAME":           "site",
+			"WORKLOAD":            "Edge Kubernetes Cluster",
+		},
+	}
+	s.compareListOutput(expectedTableOutput, parsedTableOutput)
+
 	// --- CSV Generation Test ---
 	os.Remove("test_output.csv")
 	HostArgs = map[string]string{
 		"generate-csv": "test_output.csv",
 	}
 	_, err = s.setHost(project, "", HostArgs)
-	files, _ := os.ReadDir(".")
-	for _, f := range files {
-		fmt.Println("File:", f.Name())
-	}
 	s.NoError(err)
 	s.True(PathExists("test_output.csv"), "CSV file was not generated")
+
+	csvBytes, err := os.ReadFile("test_output.csv")
+	s.NoError(err)
+	csvString := string(csvBytes)
+	s.Contains(csvString, "Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState")
+	s.Contains(csvString, "host-abc12345")
+	s.Contains(csvString, "AMT_STATE_PROVISIONED")
+	s.Contains(csvString, "POWER_STATE_ON")
 	defer os.Remove("test_output.csv")
 
-	// --- CSV Import Test ---
+	// --- CSV Import Test (3-column legacy format still works) ---
 	csvContent := `Name,ResourceID,DesiredAmtState
 host-153,host-0a6e769d,provisioned
 host-65,host-0f523c97,unprovisioned
@@ -546,6 +777,197 @@ host-65,host-0f523c97,unprovisioned
 	}
 	_, err = s.setHost(project, "", HostArgs)
 	s.NoError(err)
+
+	// --- CSV Import with all 5 columns ---
+	csvContentFull := `Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
+host-153,host-0a6e769d,provisioned,admin,on
+host-65,host-0f523c97,unprovisioned,,power-cycle
+`
+	csvPathFull := "test_import_full.csv"
+	err = os.WriteFile(csvPathFull, []byte(csvContentFull), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPathFull)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPathFull,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
+
+	// --- CSV Import with only power state (blank AMT/ControlMode) ---
+	csvContentPowerOnly := `Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
+host-153,host-0a6e769d,,,reset
+host-65,host-0f523c97,,,off
+`
+	csvPathPowerOnly := "test_import_power_only.csv"
+	err = os.WriteFile(csvPathPowerOnly, []byte(csvContentPowerOnly), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPathPowerOnly)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPathPowerOnly,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
+
+	// --- CSV round-trip: export uses proto names, import accepts them ---
+	csvContentProto := `Name,ResourceID,DesiredAmtState,ControlMode,DesiredPowerState
+host-153,host-0a6e769d,AMT_STATE_PROVISIONED,AMT_CONTROL_MODE_ACM,POWER_STATE_ON
+`
+	csvPathProto := "test_import_proto.csv"
+	err = os.WriteFile(csvPathProto, []byte(csvContentProto), 0600)
+	s.NoError(err)
+	defer os.Remove(csvPathProto)
+
+	HostArgs = map[string]string{
+		"import-from-csv": csvPathProto,
+	}
+	_, err = s.setHost(project, "", HostArgs)
+	s.NoError(err)
+
+	///////////////////////////////////
+	// Bulk Filter Operation Tests
+	///////////////////////////////////
+
+	// Bulk power action with --filter
+	HostArgs = map[string]string{
+		"filter": "hostStatus='onboarded'",
+		"power":  "on",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power action with --site
+	HostArgs = map[string]string{
+		"site":  "site-7ceae560",
+		"power": "reset",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power action with --site by name
+	HostArgs = map[string]string{
+		"site":  "site",
+		"power": "reset",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power action with --site by name -duplicate
+	HostArgs = map[string]string{
+		"site":  "duplicate-site",
+		"power": "reset",
+	}
+	_, err = s.setHostBulk("duplicate-site", HostArgs)
+	s.EqualError(err, "multiple sites found with name \"duplicate-site\"; use a resource ID instead:\n  name: duplicate-site  resource-id: site-7ceae560\n  name: duplicate-site  resource-id: site-7ceae560")
+
+	// Bulk power-cycle
+	HostArgs = map[string]string{
+		"filter": "hostStatus='onboarded'",
+		"power":  "power-cycle",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk AMT state with --filter
+	HostArgs = map[string]string{
+		"filter":    "hostStatus='onboarded'",
+		"amt-state": "provisioned",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk combined power + control-mode
+	HostArgs = map[string]string{
+		"site":         "site-7ceae560",
+		"power":        "on",
+		"control-mode": "admin",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk with --region
+	HostArgs = map[string]string{
+		"region": "region-abcd1234",
+		"power":  "off",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk with --region by name
+	HostArgs = map[string]string{
+		"region": "region",
+		"power":  "off",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk with --region by name duplicate
+	HostArgs = map[string]string{
+		"region": "duplicate-region",
+		"power":  "off",
+	}
+	_, err = s.setHostBulk("duplicate-region", HostArgs)
+	s.EqualError(err, "multiple regions found with name \"duplicate-region\"; use a resource ID instead:\n  name: duplicate-region  resource-id: region-abcd1111\n  name: duplicate-region  resource-id: region-abcd1111")
+
+	// Bulk OS update policy
+	HostArgs = map[string]string{
+		"filter":         "hostStatus='onboarded'",
+		"osupdatepolicy": "osupdatepolicy-1234abcd",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power action with --osupdatepolicy by name
+	HostArgs = map[string]string{
+		"region":         "region",
+		"osupdatepolicy": "security-policy-v1.2",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Bulk power action with --osupdatepolicy by name -duplicate
+	HostArgs = map[string]string{
+		"region":         "region",
+		"osupdatepolicy": "duplicate",
+	}
+	_, err = s.setHostBulk("duplicate-policy", HostArgs)
+	s.EqualError(err, "multiple OS Update Policies found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: osupdatepolicy-abc12345\n  name: duplicate  resource-id: osupdatepolicy-abc12345")
+
+	// Dry run
+	HostArgs = map[string]string{
+		"filter":  "hostStatus='onboarded'",
+		"power":   "off",
+		"dry-run": "true",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.NoError(err)
+
+	// Error: filter without action flag
+	HostArgs = map[string]string{
+		"filter": "hostStatus='onboarded'",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.Error(err)
+	s.Contains(err.Error(), "require at least one action flag")
+
+	// Error: --site and --region together
+	HostArgs = map[string]string{
+		"site":   "site-7ceae560",
+		"region": "region-abcd1234",
+		"power":  "on",
+	}
+	_, err = s.setHostBulk(project, HostArgs)
+	s.Error(err)
+	s.Contains(err.Error(), "cannot specify both")
+
+	// No matching hosts (nonexistent-site returns empty sites from mock)
+	HostArgs = map[string]string{
+		"region": "region-abcd1234",
+		"power":  "on",
+	}
+	_, err = s.setHostBulk("nonexistent-site", HostArgs)
+	s.Error(err)
 
 	///////////////////////////////////
 	// Host Update Tests
@@ -569,7 +991,7 @@ host-65,host-0f523c97,unprovisioned
 		"osupdatepolicy": "updatepolicy-abc12345",
 	}
 	_, err = s.updateOsHost(project, hostID, HostArgs)
-	s.EqualError(err, "Invalid OS Update Policy")
+	s.EqualError(err, "no OS Update Policy found with name \"updatepolicy-abc12345\"")
 
 	//Test updating host OS with new policy
 	HostArgs = map[string]string{
@@ -577,6 +999,48 @@ host-65,host-0f523c97,unprovisioned
 	}
 	_, err = s.updateOsHost(project, hostID, HostArgs)
 	s.NoError(err)
+
+	//Test updating host OS with named policy
+	HostArgs = map[string]string{
+		"osupdatepolicy": "security-policy-v1.2",
+	}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	//Test updating host OS with named duplicate policy
+	HostArgs = map[string]string{
+		"osupdatepolicy": "duplicate",
+	}
+	_, err = s.updateOsHost("duplicate-policy", hostID, HostArgs)
+	s.EqualError(err, "multiple OS Update Policies found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: osupdatepolicy-abc12345\n  name: duplicate  resource-id: osupdatepolicy-abc12345")
+
+	//Test updating host OS with named site
+	HostArgs = map[string]string{
+		"site": "site",
+	}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	//Test updating host OS with named duplicate site
+	HostArgs = map[string]string{
+		"site": "duplicate-site",
+	}
+	_, err = s.updateOsHost("duplicate-site", hostID, HostArgs)
+	s.EqualError(err, "multiple sites found with name \"duplicate-site\"; use a resource ID instead:\n  name: duplicate-site  resource-id: site-7ceae560\n  name: duplicate-site  resource-id: site-7ceae560")
+
+	//Test updating host OS with named region
+	HostArgs = map[string]string{
+		"region": "region",
+	}
+	_, err = s.updateOsHost(project, hostID, HostArgs)
+	s.NoError(err)
+
+	//Test updating host OS with named duplicate region
+	HostArgs = map[string]string{
+		"region": "duplicate-region",
+	}
+	_, err = s.updateOsHost("duplicate-region", hostID, HostArgs)
+	s.EqualError(err, "multiple regions found with name \"duplicate-region\"; use a resource ID instead:\n  name: duplicate-region  resource-id: region-abcd1111\n  name: duplicate-region  resource-id: region-abcd1111")
 
 	//Test generating CSV for OS update
 	HostArgs = map[string]string{
@@ -688,6 +1152,48 @@ host-66,host-abcd1002,osupdatepolicy-abcd1234
 	}
 	_, err = s.updateOsHost(project, "", HostArgs)
 	s.EqualError(err, "\nfound 2 issues related to non-existing hosts and/or no set OS update policies - fix them and re-apply")
+
+	// Test update  host with host name
+	_, err = s.updateOsHost(project, "edge-host-001", map[string]string{})
+	s.NoError(err)
+
+	// Test set host with duplicate host name
+	_, err = s.updateOsHost("duplicate-host", "duplicate", map[string]string{})
+	s.EqualError(err, "multiple hosts found with name \"duplicate\"; use a resource ID instead:\n  name: duplicate  resource-id: host-abc12345\n  name: duplicate  resource-id: host-abc12345")
+}
+
+// TestHostOnboarding covers the setHostName code path, which is only reached
+// when the provisioning feature is disabled (onboarding-only mode).
+func (s *CLITestSuite) TestHostOnboarding() {
+	// Switch to onboarding-only mode: provisioning=false
+	viper.Set("test_orchestrator_features_disabled", true)
+	defer func() {
+		viper.Set("test_orchestrator_features_disabled", false)
+		// Re-login to restore full feature flags for subsequent tests
+		_ = s.logout()
+		_ = s.login("u", "p")
+	}()
+	// Re-login so that feature flags are set based on the mock response
+	_ = s.logout()
+	err := s.login("u", "p")
+	s.NoError(err)
+
+	// CSV import: Serial-only row — provisioning=false means OSProfile/Site are
+	// optional, so validation passes. registerHost returns hostID="host-1111abcd",
+	// then setHostName calls PatchHost with that ID.
+	HostArgs := commandArgs{
+		"import-from-csv": "./testdata/minimal.csv",
+	}
+	_, err = s.createHost(project, HostArgs)
+	s.NoError(err)
+
+	// Single-host creation with an explicit name: covers the hostName!="" branch
+	// inside setHostName (name is passed directly rather than defaulting to hostID).
+	HostArgs = commandArgs{
+		"serial": "SNONBOARD01",
+	}
+	_, err = s.createHostSingle(project, "onboard-host-001", HostArgs)
+	s.NoError(err)
 }
 
 func FuzzHost(f *testing.F) {

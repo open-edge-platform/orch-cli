@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -29,12 +29,11 @@ func (s *CLITestSuite) deleteSite(project string, name string, args commandArgs)
 }
 
 func (s *CLITestSuite) TestSite() {
+	var expectedOutputList listCommandOutput
 
 	name := "site"
 	resourceID := "site-7ceae560"
 	regionID := "region-abcd1234"
-	longitude := "5"
-	latitiude := "5"
 
 	/////////////////////////////
 	// Test Site Creation
@@ -65,7 +64,7 @@ func (s *CLITestSuite) TestSite() {
 		"latitude":  "5",
 	}
 	_, err = s.createSite(project, name, SArgs)
-	s.EqualError(err, "invalid region id nope --region expects region-abcd1234 format")
+	s.EqualError(err, "no region found with name \"nope\"")
 
 	//create with wrong longitude
 	SArgs = map[string]string{
@@ -97,11 +96,12 @@ func (s *CLITestSuite) TestSite() {
 
 	parsedOutputList := mapListOutput(listOutput)
 
-	expectedOutputList := listCommandOutput{
+	expectedOutputList = listCommandOutput{
 		{
-			"Site ID":       resourceID,
-			"Site Name":     name,
-			"Region (Name)": regionID + (" (region)"),
+			"RESOURCE ID": resourceID,
+			"NAME":        name,
+			"REGION ID":   regionID,
+			"REGION NAME": "region",
 		},
 	}
 
@@ -118,11 +118,12 @@ func (s *CLITestSuite) TestSite() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Site ID":       resourceID,
-			"Site Name":     name,
-			"Region (Name)": regionID + (" (region)"),
-			"Longitude":     longitude,
-			"Latitude":      latitiude,
+			"RESOURCE ID": resourceID,
+			"NAME":        name,
+			"REGION ID":   regionID,
+			"REGION NAME": "region",
+			"SITE LAT":    "50000000",
+			"SITE LNG":    "50000000",
 		},
 	}
 
@@ -140,11 +141,12 @@ func (s *CLITestSuite) TestSite() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Site ID":       resourceID,
-			"Site Name":     name,
-			"Region (Name)": regionID + (" (region)"),
-			"Longitude":     longitude,
-			"Latitude":      latitiude,
+			"RESOURCE ID": resourceID,
+			"NAME":        name,
+			"REGION ID":   regionID,
+			"REGION NAME": "region",
+			"SITE LAT":    "50000000",
+			"SITE LNG":    "50000000",
 		},
 	}
 
@@ -161,13 +163,46 @@ func (s *CLITestSuite) TestSite() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Site ID":       resourceID,
-			"Site Name":     name,
-			"Region (Name)": regionID + (" (region)"),
+			"RESOURCE ID": resourceID,
+			"NAME":        name,
+			"REGION ID":   regionID,
+			"REGION NAME": "region",
 		},
 	}
 
 	s.compareListOutput(expectedOutputList, parsedOutputList)
+
+	// List sites with order-by and YAML output
+	SArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listSite(project, SArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "name: site")
+	s.Contains(listOrderedOutput, "resourceid: "+resourceID)
+	s.Contains(listOrderedOutput, "regionid: "+regionID)
+
+	// List sites with filter and YAML output
+	SArgs = map[string]string{
+		"filter":      "name=site",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listSite(project, SArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "name: site")
+	s.Contains(listFilteredOutput, "resourceid: "+resourceID)
+	s.Contains(listFilteredOutput, "regionid: "+regionID)
+
+	// List sites with invalid order-by
+	SArgs = map[string]string{
+		"order-by":  "invalid",
+		"page-size": "1",
+	}
+	_, err = s.listSite(project, SArgs)
+	s.EqualError(err, "invalid --order-by field \"invalid\"; available fields: inheritedMetadata, metadata, name, provider, region, regionId, resourceId, siteID, siteLat, siteLng, timestamps")
 
 	/////////////////////////////
 	// Test Site Get
@@ -180,12 +215,33 @@ func (s *CLITestSuite) TestSite() {
 	expectedOutput := map[string]string{
 		"Name:":        name,
 		"Resource ID:": resourceID,
-		"Region:":      "region " + regionID,
-		"Longitude:":   longitude,
-		"Latitude:":    latitiude,
+		"Region ID:":   regionID,
+		"Region Name:": "region",
+		"Latitude:":    "50000000",
+		"Longitude:":   "50000000",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get site by name
+	getOutput, err = s.getSite(project, "site", make(map[string]string))
+	s.NoError(err)
+
+	parsedOutput = mapGetOutput(getOutput)
+	expectedOutput = map[string]string{
+		"Name:":        name,
+		"Resource ID:": resourceID,
+		"Region ID:":   regionID,
+		"Region Name:": "region",
+		"Latitude:":    "50000000",
+		"Longitude:":   "50000000",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get site by name
+	_, err = s.getSite("duplicate-site", "duplicate-site", make(map[string]string))
+	s.EqualError(err, "multiple sites found with name \"duplicate-site\"; use a resource ID instead:\n  name: duplicate-site  resource-id: site-7ceae560\n  name: duplicate-site  resource-id: site-7ceae560")
 
 	/////////////////////////////
 	// Test Site Delete
@@ -197,7 +253,7 @@ func (s *CLITestSuite) TestSite() {
 
 	//delete invalid custom config
 	_, err = s.deleteSite(project, "nonexistent-site", make(map[string]string))
-	s.EqualError(err, "error while deleting site: Not Found")
+	s.EqualError(err, "no site found with name \"nonexistent-site\"")
 
 }
 

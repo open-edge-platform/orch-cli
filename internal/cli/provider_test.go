@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -83,10 +83,10 @@ func (s *CLITestSuite) TestProvider() {
 
 	expectedOutputList := listCommandOutput{
 		{
-			"Name":        name,
-			"Resource ID": resourceID,
-			"Kind":        kind,
-			"Vendor":      vendor,
+			"NAME":            name,
+			"RESOURCE ID":     resourceID,
+			"PROVIDER KIND":   kind,
+			"PROVIDER VENDOR": vendor,
 		},
 	}
 
@@ -103,13 +103,13 @@ func (s *CLITestSuite) TestProvider() {
 
 	expectedOutputList = listCommandOutput{
 		{
-			"Name":         name,
-			"Resource ID":  resourceID,
-			"Kind":         kind,
-			"Vendor":       vendor,
-			"API Endpoint": api,
-			"Created At":   "2025-01-15 10:30:00 +0000 UTC",
-			"Updated At":   "2025-01-15 10:30:00 +0000 UTC",
+			"NAME":                  name,
+			"RESOURCE ID":           resourceID,
+			"PROVIDER KIND":         kind,
+			"PROVIDER VENDOR":       vendor,
+			"API ENDPOINT":          api,
+			"TIMESTAMPS CREATED AT": "2025-01-15 10:30:00 +0000 UTC",
+			"TIMESTAMPS UPDATED AT": "2025-01-15 10:30:00 +0000 UTC",
 		},
 	}
 
@@ -124,17 +124,39 @@ func (s *CLITestSuite) TestProvider() {
 
 	parsedOutput := mapGetOutput(getOutput)
 	expectedOutput := map[string]string{
-		"Name:":         name,
-		"Resource ID:":  resourceID,
-		"Kind:":         kind,
-		"Vendor:":       vendor,
-		"API Endpoint:": api,
-		"Config:":       "{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}",
-		"Created At:":   "2025-01-15 10:30:00 +0000 UTC",
-		"Updated At:":   "2025-01-15 10:30:00 +0000 UTC",
+		"Name:":               name,
+		"Resource ID:":        resourceID,
+		"Kind:":               kind,
+		"Vendor:":             vendor,
+		"API Endpoint:":       api,
+		"Config:":             "{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}",
+		"Creation Timestamp:": "2025-01-15 10:30:00 +0000 UTC",
+		"Updated Timestamp:":  "2025-01-15 10:30:00 +0000 UTC",
 	}
 
 	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get provider by name
+	getOutput, err = s.getProvider(project, name, make(map[string]string))
+	s.NoError(err)
+
+	parsedOutput = mapGetOutput(getOutput)
+	expectedOutput = map[string]string{
+		"Name:":               name,
+		"Resource ID:":        resourceID,
+		"Kind:":               kind,
+		"Vendor:":             vendor,
+		"API Endpoint:":       api,
+		"Config:":             "{\"defaultOs\": \"\", \"autoProvision\": false, \"defaultLocalAccount\": \"\", \"osSecurityFeatureEnable\": false}",
+		"Creation Timestamp:": "2025-01-15 10:30:00 +0000 UTC",
+		"Updated Timestamp:":  "2025-01-15 10:30:00 +0000 UTC",
+	}
+
+	s.compareGetOutput(expectedOutput, parsedOutput)
+
+	//get duplicate provider
+	_, err = s.getProvider("duplicate-provider", "duplicate-provider", make(map[string]string))
+	s.EqualError(err, "multiple providers found with name \"duplicate-provider\"; use a resource ID instead:\n  name: duplicate-provider  resource-id: provider-7ceae560\n  name: duplicate-provider  resource-id: provider-7ceae560")
 
 	/////////////////////////////
 	// Test Provider Delete
@@ -165,11 +187,54 @@ func (s *CLITestSuite) TestProvider() {
 	//delete invalid custom config
 	os.Stdin = r
 	_, err = s.deleteProvider(project, "nonexistent-provider", make(map[string]string))
-	s.EqualError(err, "error while deleting provider: Not Found")
+	s.EqualError(err, "no provider found with name \"nonexistent-provider\"")
 
 	//delete invalid custom config with N as response
 	_, err = s.deleteProvider(project, "nonexistent-provider", make(map[string]string))
 	s.EqualError(err, "operation cancelled by user")
+
+	// List providers with order-by and YAML output
+	SArgs = map[string]string{
+		"order-by":    "name",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listOrderedOutput, err := s.listProvider(project, SArgs)
+	s.NoError(err)
+	s.Contains(listOrderedOutput, "name: provider")
+	s.Contains(listOrderedOutput, "resourceid: "+resourceID)
+	s.Contains(listOrderedOutput, "providerkind: PROVIDER_KIND_BAREMETAL")
+
+	// List providers with filter and YAML output
+	SArgs = map[string]string{
+		"filter":      "name=provider",
+		"output-type": "yaml",
+		"page-size":   "1",
+	}
+	listFilteredOutput, err := s.listProvider(project, SArgs)
+	s.NoError(err)
+	s.Contains(listFilteredOutput, "name: provider")
+	s.Contains(listFilteredOutput, "resourceid: "+resourceID)
+	s.Contains(listFilteredOutput, "providerkind: PROVIDER_KIND_BAREMETAL")
+
+	// List providers with table output and order-by
+	SArgs = map[string]string{
+		"output-type": "table",
+		"order-by":    "name",
+	}
+	tableOutput, err := s.listProvider(project, SArgs)
+	s.NoError(err)
+
+	parsedTableOutput := mapListOutput(tableOutput)
+	expectedTableOutput := listCommandOutput{
+		{
+			"NAME":            name,
+			"RESOURCE ID":     resourceID,
+			"PROVIDER KIND":   kind,
+			"PROVIDER VENDOR": vendor,
+		},
+	}
+	s.compareListOutput(expectedTableOutput, parsedTableOutput)
 
 }
 
