@@ -867,7 +867,7 @@ func isExpectedError(err error) bool {
 		"not", "unknown", "match", "invalid", "required", "requires",
 		"no such", "missing", "no", "must", "in form", "incorrect",
 		"unexpected", "expected", "failed", "is a", "bad", "exists", "open",
-		"cannot", "nonexistent", "deleting", "getting", "listing", "wrong",
+		"cannot", "nonexistent", "deleting", "getting", "listing", "wrong", "unable",
 		"creating", "Internal Server Error", "null", "accepts", "error", "failed", "inappropriate",
 	}
 	errStr := strings.ToLower(err.Error())
