@@ -25,7 +25,8 @@ Profiles:{{range $app, $profile := .ApplicationProfiles.AdditionalProperties}}
 Create Time: {{.CreateTime}}
 Update Time: {{.UpdateTime}}
 `
-	DEPLOYMENT_PROFILE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_PROFILE_OUTPUT_TEMPLATE"
+	DEPLOYMENT_PROFILE_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_DEPLOYMENT_PROFILE_OUTPUT_TEMPLATE"
+	DEPLOYMENT_PROFILE_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_PROFILE_INSPECT_TEMPLATE"
 )
 
 func getCreateDeploymentProfileCommand() *cobra.Command {
@@ -96,7 +97,7 @@ func getDeleteDeploymentProfileCommand() *cobra.Command {
 
 func getDeploymentProfileOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_DEPLOYMENT_PROFILE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_PROFILE_INSPECT_FORMAT, DEPLOYMENT_PROFILE_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_PROFILE_FORMAT, DEPLOYMENT_PROFILE_OUTPUT_TEMPLATE_ENVVAR)

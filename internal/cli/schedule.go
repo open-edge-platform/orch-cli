@@ -68,13 +68,14 @@ const (
 	DEFAULT_SCHEDULE_GET_REPEATED_FORMAT = DEFAULT_SCHEDULE_GET_FORMAT
 )
 const SCHEDULE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_SCHEDULE_OUTPUT_TEMPLATE"
+const SCHEDULE_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_SCHEDULE_INSPECT_TEMPLATE"
 
 func getScheduleOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (string, error) {
 	if verbose && forList {
 		return DEFAULT_SCHEDULE_VERBOSE_FORMAT, nil
 	}
 	if !forList {
-		return resolveTableOutputTemplate(cmd, DEFAULT_SCHEDULE_GET_FORMAT, SCHEDULE_OUTPUT_TEMPLATE_ENVVAR)
+		return resolveTableOutputTemplate(cmd, DEFAULT_SCHEDULE_GET_FORMAT, SCHEDULE_INSPECT_TEMPLATE_ENVVAR)
 	}
 	return resolveTableOutputTemplate(cmd, DEFAULT_SCHEDULE_FORMAT, SCHEDULE_OUTPUT_TEMPLATE_ENVVAR)
 }

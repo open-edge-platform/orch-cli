@@ -23,10 +23,11 @@ const (
 	passwordPromptSentinel = "__prompt__"
 	passwordEnvVar         = "ORCH_PASSWORD"
 
-	DEFAULT_USER_FORMAT         = "table{{.Username}}\t{{.Enabled}}"
-	DEFAULT_USER_VERBOSE_FORMAT = "table{{.Username}}\t{{.Email}}\t{{.FirstName}}\t{{.Enabled}}"
-	DEFAULT_USER_INSPECT_FORMAT = "Username: \t{{.Username}}\nID: \t{{.ID}}\nEmail: \t{{.Email}}\nFirst Name: \t{{.FirstName}}\nLast Name: \t{{.LastName}}\nEnabled: \t{{.Enabled}}{{if .Groups}}\nGroups: \t{{.Groups}}{{end}}{{if .RealmRoles}}\nRealm Roles: \t{{.RealmRoles}}{{end}}"
-	USER_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_USER_OUTPUT_TEMPLATE"
+	DEFAULT_USER_FORMAT          = "table{{.Username}}\t{{.Enabled}}"
+	DEFAULT_USER_VERBOSE_FORMAT  = "table{{.Username}}\t{{.Email}}\t{{.FirstName}}\t{{.Enabled}}"
+	DEFAULT_USER_INSPECT_FORMAT  = "Username: \t{{.Username}}\nID: \t{{.ID}}\nEmail: \t{{.Email}}\nFirst Name: \t{{.FirstName}}\nLast Name: \t{{.LastName}}\nEnabled: \t{{.Enabled}}{{if .Groups}}\nGroups: \t{{.Groups}}{{end}}{{if .RealmRoles}}\nRealm Roles: \t{{.RealmRoles}}{{end}}"
+	USER_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_USER_OUTPUT_TEMPLATE"
+	USER_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_USER_INSPECT_TEMPLATE"
 )
 
 const listUsersExamples = `# List all users
@@ -145,7 +146,7 @@ func getUserOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	showGroups, _ := cmd.Flags().GetBool("groups")
 	showRoles, _ := cmd.Flags().GetBool("roles")
 	if showGroups || showRoles {
-		return DEFAULT_USER_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_USER_INSPECT_FORMAT, USER_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	if verbose {
@@ -189,7 +190,10 @@ func printUser(cmd *cobra.Command, writer io.Writer, user *keycloak.UserRepresen
 	outputType, _ := cmd.Flags().GetString("output-type")
 
 	item := flattenUser(user, groups, roles)
-	outputFormat := DEFAULT_USER_INSPECT_FORMAT
+	outputFormat, err := resolveTableOutputTemplate(cmd, DEFAULT_USER_INSPECT_FORMAT, USER_INSPECT_TEMPLATE_ENVVAR)
+	if err != nil {
+		return err
+	}
 
 	result := CommandResult{
 		Format:    format.Format(outputFormat),

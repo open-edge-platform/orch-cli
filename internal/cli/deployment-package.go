@@ -56,7 +56,8 @@ Artifacts:
 Create Time: {{.CreateTime}}
 Update Time: {{.UpdateTime}}
 `
-	DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE"
+	DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE"
+	DEPLOYMENT_PACKAGE_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_PACKAGE_INSPECT_TEMPLATE"
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
@@ -155,7 +156,7 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 
 func getDeploymentPackageOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT, DEPLOYMENT_PACKAGE_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_PACKAGE_FORMAT, DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR)

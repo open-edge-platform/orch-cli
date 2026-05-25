@@ -23,10 +23,11 @@ import (
 )
 
 const (
-	DEFAULT_OSPROFILE_FORMAT         = "table{{str .Name}}\t{{str .Architecture}}\t{{.SecurityFeature}}"
-	DEFAULT_OSPROFILE_VERBOSE_FORMAT = "Name: \t{{str .Name}}\nProfile Name: \t{{str .ProfileName}}\nSecurity Feature: \t{{.SecurityFeature}}\nArchitecture: \t{{str .Architecture}}\nRepository URL: \t{{str .RepoUrl}}\nsha256: \t{{.Sha256}}\n"
-	DEFAULT_OSPROFILE_INSPECT_FORMAT = "Name: \t{{str .Name}}\nProfile Name: \t{{str .ProfileName}}\nOS Resource ID: \t{{str .OsResourceID}}\nVersion: \t{{str .ProfileVersion}}\nSha256: \t{{.Sha256}}\nImage ID: \t{{str .ImageId}}\nImage URL: \t{{str .ImageUrl}}\nRepository URL: \t{{str .RepoUrl}}\nDescription: \t{{str .Description}}\nMetadata: \t{{str .Metadata}}\nSecurity Feature: \t{{.SecurityFeature}}\nArchitecture: \t{{str .Architecture}}\nOS Type: \t{{.OsType}}\nOS Provider: \t{{.OsProvider}}\nPlatform Bundle: \t{{str .PlatformBundle}}\nInstalled Packages: \t{{str .InstalledPackages}}\nCreated: \t{{.Timestamps.CreatedAt}}\nUpdated: \t{{.Timestamps.UpdatedAt}}\n{{if .TlsCaCert}}TLS CA Cert: \t{{str .TlsCaCert}}\n{{end}}{{if .ExistingCves}}Existing CVEs: \t{{str .ExistingCves}}\n{{end}}{{if .FixedCves}}Fixed CVEs: \t{{str .FixedCves}}\n{{end}}"
-	OSPROFILE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_OSPROFILE_OUTPUT_TEMPLATE"
+	DEFAULT_OSPROFILE_FORMAT          = "table{{str .Name}}\t{{str .Architecture}}\t{{.SecurityFeature}}"
+	DEFAULT_OSPROFILE_VERBOSE_FORMAT  = "Name: \t{{str .Name}}\nProfile Name: \t{{str .ProfileName}}\nSecurity Feature: \t{{.SecurityFeature}}\nArchitecture: \t{{str .Architecture}}\nRepository URL: \t{{str .RepoUrl}}\nsha256: \t{{.Sha256}}\n"
+	DEFAULT_OSPROFILE_INSPECT_FORMAT  = "Name: \t{{str .Name}}\nProfile Name: \t{{str .ProfileName}}\nOS Resource ID: \t{{str .OsResourceID}}\nVersion: \t{{str .ProfileVersion}}\nSha256: \t{{.Sha256}}\nImage ID: \t{{str .ImageId}}\nImage URL: \t{{str .ImageUrl}}\nRepository URL: \t{{str .RepoUrl}}\nDescription: \t{{str .Description}}\nMetadata: \t{{str .Metadata}}\nSecurity Feature: \t{{.SecurityFeature}}\nArchitecture: \t{{str .Architecture}}\nOS Type: \t{{.OsType}}\nOS Provider: \t{{.OsProvider}}\nPlatform Bundle: \t{{str .PlatformBundle}}\nInstalled Packages: \t{{str .InstalledPackages}}\nCreated: \t{{.Timestamps.CreatedAt}}\nUpdated: \t{{.Timestamps.UpdatedAt}}\n{{if .TlsCaCert}}TLS CA Cert: \t{{str .TlsCaCert}}\n{{end}}{{if .ExistingCves}}Existing CVEs: \t{{str .ExistingCves}}\n{{end}}{{if .FixedCves}}Fixed CVEs: \t{{str .FixedCves}}\n{{end}}"
+	OSPROFILE_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_OSPROFILE_OUTPUT_TEMPLATE"
+	OSPROFILE_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_OSPROFILE_INSPECT_TEMPLATE"
 )
 
 const listOSProfileExamples = `# List all OS Profiles
@@ -133,7 +134,7 @@ func getOSProfileOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (s
 	}
 	if !forList {
 		// Get command always shows full details
-		return DEFAULT_OSPROFILE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_OSPROFILE_INSPECT_FORMAT, OSPROFILE_INSPECT_TEMPLATE_ENVVAR)
 	}
 	return resolveTableOutputTemplate(cmd, DEFAULT_OSPROFILE_FORMAT, OSPROFILE_OUTPUT_TEMPLATE_ENVVAR)
 }

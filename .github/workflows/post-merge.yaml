@@ -9,6 +9,8 @@ on:
     branches:
       - main
       - release-*
+    tags:
+      - '*'
   workflow_dispatch:
 
 permissions:
@@ -31,7 +33,6 @@ jobs:
       run_helm_build: false
       run_helm_push: false
       run_version_tag: true
-      run_artifact_push: true
     secrets:
       SYS_EMF_GH_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
       NO_AUTH_ECR_PUSH_USERNAME: ${{ secrets.NO_AUTH_ECR_PUSH_USERNAME }}

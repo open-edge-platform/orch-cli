@@ -24,6 +24,7 @@ const (
 	DEFAULT_SSHKEY_LIST_VERBOSE_FORMAT = "table{{.Username}}\t{{str .ResourceId}}\t{{.InUse}}"
 	DEFAULT_SSHKEY_GET_FORMAT          = "Remote User Name: \t{{.Username}}\nResource ID: \t{{str .ResourceId}}\nKey: \t{{.SshKey}}\nIn use by: \t{{.UseHosts}}\n"
 	SSHKEY_OUTPUT_TEMPLATE_ENVVAR      = "ORCH_CLI_SSHKEY_OUTPUT_TEMPLATE"
+	SSHKEY_INSPECT_TEMPLATE_ENVVAR     = "ORCH_CLI_SSHKEY_INSPECT_TEMPLATE"
 )
 
 // SSHKeyWithUsage wraps LocalAccountResource with usage information
@@ -112,7 +113,7 @@ func getSSHKeyOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (stri
 	}
 	if !forList {
 		// Get command always shows full details
-		return DEFAULT_SSHKEY_GET_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_SSHKEY_GET_FORMAT, SSHKEY_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_SSHKEY_FORMAT, SSHKEY_OUTPUT_TEMPLATE_ENVVAR)
