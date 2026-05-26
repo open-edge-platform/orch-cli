@@ -101,6 +101,7 @@ make build-kvm
 ```
 
 This runs two steps in sequence:
+
 1. `make build-kvm-ui` — runs `npm ci && ng build` inside `ui/kvm-viewer/`,
    writing static assets into `internal/cli/static/`.
 2. `make build` — compiles the Go binary with the Angular bundle embedded via
