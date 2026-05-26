@@ -83,19 +83,44 @@ installed on your development machine:
 
 #### Build the Binary
 
-Build the project as follows:
+**Standard build (Go only):**
 
 ```bash
-# Build go binary
+# Build orch-cli binary
 make build
 ```
 
-The `orch-cli` binary is created in the `orch-cli/build/_output` directory
+**KVM-enabled build (Angular UI + Go binary):**
+
+The KVM viewer feature embeds an Angular web app into the binary. Building it
+requires [Node.js v20+](https://nodejs.org) and npm (v10) in addition to Go.
+
+```bash
+# Build Angular KVM Viewer UI, then compile the full orch-cli binary
+make build-kvm
+```
+
+This runs two steps in sequence:
+
+1. `make build-kvm-ui` — runs `npm ci && ng build` inside `ui/kvm-viewer/`,
+   writing static assets into `internal/cli/static/`.
+2. Compiles the Go binary with `-tags kvm`, embedding the Angular bundle via
+   `//go:embed static` into the binary.
+
+To rebuild the UI independently (e.g. during Angular development):
+
+```bash
+make build-kvm-ui
+```
+
+The `orch-cli` binary is created in the `build/_output/` directory.
+
+The `orch-cli` binary is created in the `build/_output/` directory.
 
 To install the cli:
 
 ```bash
-# Install go binary
+# Install binary
 make install
 ```
 
@@ -122,8 +147,14 @@ Below are some of the important make targets which developer should be aware abo
 Build the component binary as follows:
 
 ```bash
-# Build go binary
+# Standard build — Go only, no Node.js required
 make build
+
+# KVM-enabled build — builds Angular UI then compiles Go binary with -tags kvm
+make build-kvm
+
+# Rebuild Angular UI only (during KVM UI development)
+make build-kvm-ui
 ```
 
 Unit tests are run for each PR and the developer can run unit tests locally as follows:
@@ -155,7 +186,7 @@ For support, start with [Troubleshooting] or [Contact us].
 
 The Orchestrator CLI is licensed under [Apache 2.0 License]
 
-Last Updated Date: June 16, 2025
+Last Updated Date: May 26, 2026
 
 [Application Orchestration]: https://github.com/open-edge-platform/app-orch-deployment
 [Infrastructure Management]: https://github.com/open-edge-platform/infra-charts
