@@ -59,7 +59,7 @@ jobs:
         run: |
           curl -fsSL https://registry.npmjs.org/npm/-/npm-10.9.4.tgz -o npm.tgz
 
-          echo "f33c339aaebd68f7510ed97efc62bbac0b96e8e6  npm.tgz" | sha1sum -c -
+          echo "61e81f9dc6ea559d9173e69aae772bc8fe75c3ce  npm.tgz" | sha1sum -c -
 
           npm install -g ./npm.tgz
       - name: Build KVM-enabled orch-cli
