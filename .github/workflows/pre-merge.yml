@@ -1,5 +1,5 @@
 ---
-# SPDX-FileCopyrightText: (C) 2025 Intel Corporation
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 name: Pre-Merge CI Pipeline
@@ -56,7 +56,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ui/kvm-viewer/package-lock.json
       - name: Pin npm to v10
-        run: npm install -g npm@10
+        run: npm install -g npm@10.9.4
       - name: Build KVM-enabled orch-cli
         run: make build-kvm
   final-check:
