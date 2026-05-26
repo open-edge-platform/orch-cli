@@ -1,3 +1,8 @@
+<!--
+  SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+  SPDX-License-Identifier: Apache-2.0
+-->
+
 # KvmAngularApp
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.3.

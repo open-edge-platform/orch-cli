@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 import { Component, signal, computed, OnInit, ViewChild } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { CommonModule, AsyncPipe } from '@angular/common'

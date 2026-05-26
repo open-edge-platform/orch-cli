@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
 /*********************************************************************
  * KVM Service — connects Angular app to Go KVM server
  * Go server handles: JWT → redirect token → MPS WebSocket → Binary relay
