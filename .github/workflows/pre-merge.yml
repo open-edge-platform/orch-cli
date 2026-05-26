@@ -55,11 +55,11 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: ui/kvm-viewer/package-lock.json
-      - name: Install hash-pinned npm
+      - name: Install pinned npm
         run: |
           curl -fsSL https://registry.npmjs.org/npm/-/npm-10.9.4.tgz -o npm.tgz
 
-          echo "<SHA512>  npm.tgz" | sha512sum -c -
+          echo "f33c339aaebd68f7510ed97efc62bbac0b96e8e6  npm.tgz" | sha1sum -c -
 
           npm install -g ./npm.tgz
       - name: Build KVM-enabled orch-cli
