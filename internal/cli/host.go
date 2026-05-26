@@ -4390,9 +4390,51 @@ func solAcquireAndActivate(
 	}
 	jwtToken, _ := auth.GetAccessToken(ctx)
 	amtPassword := os.Getenv("AMT_PASSWORD")
-	sessionErr := connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPassword, orchCA, nil)
 
-	// After SOL session ends (Ctrl+] or connection drop), signal sol-manager to deactivate.
+	// Start a goroutine that polls the host's desiredSolState.
+	// When another orch-cli instance sets --session-state stop, the desired
+	// state becomes SOL_STATE_STOP.  Closing stopCh makes connectSOLSession
+	// terminate gracefully — equivalent to pressing Ctrl+].
+	stopCh := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(3 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-stopCh:
+				return
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				resp, pollErr := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+				if pollErr != nil || resp.JSON200 == nil {
+					continue
+				}
+				if resp.JSON200.DesiredSolState != nil && *resp.JSON200.DesiredSolState == infra.SOLSTATESTOP {
+					// Remote stop requested — signal the active session to disconnect
+					select {
+					case <-stopCh:
+						// Already closed
+					default:
+						close(stopCh)
+					}
+					return
+				}
+			}
+		}
+	}()
+
+	sessionErr := connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPassword, orchCA, stopCh)
+
+	// Ensure the polling goroutine is cleaned up
+	select {
+	case <-stopCh:
+		// Already closed (remote stop triggered the disconnect)
+	default:
+		close(stopCh)
+	}
+
+	// After SOL session ends (Ctrl+] or connection drop or remote stop), signal sol-manager to deactivate.
 	fmt.Println("Deactivating SOL session...")
 	stopState := infra.SOLSTATESTOP
 	stopResp, patchErr := hostClient.HostServicePatchHostWithResponse(ctx, projectName, hostID,
