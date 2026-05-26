@@ -55,8 +55,12 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: ui/kvm-viewer/package-lock.json
-      - name: Pin npm to v10
-        run: npm install -g npm@10.9.4
+      - name: Install specific npm version
+        run: |
+          curl -fsSL https://registry.npmjs.org/npm/-/npm-10.9.4.tgz -o npm.tgz
+          echo "expected_sha256_hash npm.tgz" | sha256sum -c
+          tar -xzf npm.tgz
+          sudo cp -r package/* /usr/local/
       - name: Build KVM-enabled orch-cli
         run: make build-kvm
   final-check:
