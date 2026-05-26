@@ -11,10 +11,6 @@ path = [
     "**.png",
     "internal/cli/deployment-mock-rest_test.go",
     "internal/cli/testdata/**",
-    "internal/cli/static/favicon.ico",
-    "internal/cli/static/index.html",
-    "internal/cli/static/main-IM2YPGKV.js",
-    "internal/cli/static/styles-5INURTSO.css",
     "docs/cli/**",
     "pkg/rest/**",
 ]
@@ -23,8 +19,16 @@ SPDX-FileCopyrightText = "2025 Intel Corporation"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "internal/cli/static/3rdpartylicenses.txt"
+path = [
+    "ui/kvm-viewer/angular.json",
+    "ui/kvm-viewer/package.json",
+    "ui/kvm-viewer/package-lock.json",
+    "ui/kvm-viewer/tsconfig.json",
+    "ui/kvm-viewer/tsconfig.app.json",
+    "ui/kvm-viewer/tsconfig.spec.json",
+    "ui/kvm-viewer/public/favicon.ico",
+]
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2025 Intel Corporation"
-SPDX-License-Identifier = "LicenseRef-third-party-software"
+SPDX-FileCopyrightText = "2026 Intel Corporation"
+SPDX-License-Identifier = "Apache-2.0"
 
