@@ -55,22 +55,28 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: ui/kvm-viewer/package-lock.json
-      - name: Debug KVM UI build
+      - name: Debug UI install
         run: |
           cd ui/kvm-viewer
           echo "Node version:"
           node --version
           echo "NPM version:"
           npm --version
-          npm ci
-          echo "Installed Angular packages:"
-          npm ls @angular/cli || true
-          echo "node_modules/.bin contents:"
-          ls -la node_modules/.bin || true
-          echo "Check ng binary:"
-          which ng || true
-          ls -la node_modules/.bin/ng || true
-          npm run build
+          rm -rf node_modules
+          npm cache clean --force
+          npm ci --verbose || true
+          echo "=== package.json ==="
+          cat package.json
+          echo "=== lockfile exists ==="
+          ls -la package-lock.json || true
+          echo "=== node_modules ==="
+          ls -la node_modules || true
+      - name: Upload npm logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-debug
+          path: /home/runner/.npm/_logs/*
       - name: Build KVM-enabled orch-cli
         run: make build-kvm
   final-check:
