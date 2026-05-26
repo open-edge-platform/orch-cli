@@ -83,19 +83,41 @@ installed on your development machine:
 
 #### Build the Binary
 
-Build the project as follows:
+**Standard build (Go only):**
 
 ```bash
-# Build go binary
+# Build orch-cli binary
 make build
 ```
 
-The `orch-cli` binary is created in the `orch-cli/build/_output` directory
+**KVM-enabled build (Angular UI + Go binary):**
+
+The KVM viewer feature embeds an Angular web app into the binary. Building it
+requires [Node.js v20.19+](https://nodejs.org) and npm in addition to Go.
+
+```bash
+# Build Angular KVM Viewer UI, then compile the full orch-cli binary
+make build-kvm
+```
+
+This runs two steps in sequence:
+1. `make build-kvm-ui` — runs `npm ci && ng build` inside `ui/kvm-viewer/`,
+   writing static assets into `internal/cli/static/`.
+2. `make build` — compiles the Go binary with the Angular bundle embedded via
+   `//go:embed static`.
+
+To rebuild the UI independently (e.g. during Angular development):
+
+```bash
+make build-kvm-ui
+```
+
+The `orch-cli` binary is created in the `build/_output/` directory.
 
 To install the cli:
 
 ```bash
-# Install go binary
+# Install binary
 make install
 ```
 
@@ -122,8 +144,11 @@ Below are some of the important make targets which developer should be aware abo
 Build the component binary as follows:
 
 ```bash
-# Build go binary
+# Standard build (Go only)
 make build
+
+# KVM-enabled build — Angular UI + Go binary in one step
+make build-kvm
 ```
 
 Unit tests are run for each PR and the developer can run unit tests locally as follows:

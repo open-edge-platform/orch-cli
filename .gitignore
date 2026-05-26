@@ -13,6 +13,9 @@ kind.config.yaml
 /coverage.xml
 release/
 
+# Generated KVM Viewer UI bundle (built by make build-kvm-ui)
+/internal/cli/static/
+
 # Test artifacts and temporary files
 import_error_*
 preflight_error_*
