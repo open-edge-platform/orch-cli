@@ -27,7 +27,10 @@ MOCKGEN_VERSION = v0.5.2
 
 FUZZ_TIME ?= 30m
 
-.PHONY: build test
+KVM_UI_DIR      ?= ui/kvm-viewer
+KVM_STATIC_DIR  ?= internal/cli/static
+
+.PHONY: build test build-kvm-ui build-kvm
 
 all:  build lint test
 	@# Help: Runs build, lint, test stages
@@ -55,8 +58,19 @@ mod-update:
 	@# Help: Update Go modules
 	go mod tidy
 
+build-kvm-ui:
+	@# Help: Builds the KVM Viewer Angular UI and writes output to internal/cli/static/
+	@echo "Building KVM Viewer UI ($(KVM_UI_DIR))..."
+	cd $(KVM_UI_DIR) && npm ci && npm run build
+	@echo "KVM Viewer UI build complete — static assets in $(KVM_STATIC_DIR)/"
+
+build-kvm: build-kvm-ui
+	@# Help: Builds KVM Viewer UI then compiles the full orch-cli binary with KVM support
+	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
+	go build -tags kvm -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="$(PKG)/...=-spectre=all -l" -asmflags="$(PKG)/...=-spectre=all" -ldflags="all=-s -w -extldflags=-static -X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
+
 build: mod-update
-	@# Help: Runs build stage
+	@# Help: Runs build stage (no KVM; use 'make build-kvm' for KVM-enabled binary)
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
 	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="$(PKG)/...=-spectre=all -l" -asmflags="$(PKG)/...=-spectre=all" -ldflags="all=-s -w -extldflags=-static -X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
 
@@ -227,7 +241,8 @@ list: help
 	@# Help: displays make targets
 
 clean: ## remove the test collateral
-	rm -rf vendor build/_output
+	@# Help: Removes build output, embedded static assets, and test cache
+	rm -rf vendor build/_output $(KVM_STATIC_DIR)
 	go clean -testcache
 
 help:	
