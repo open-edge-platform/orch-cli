@@ -57,11 +57,8 @@ jobs:
           cache-dependency-path: ui/kvm-viewer/package-lock.json
       - name: Install pinned npm
         run: |
-          curl -fsSL https://registry.npmjs.org/npm/-/npm-10.9.4.tgz -o npm.tgz
-
-          echo "61e81f9dc6ea559d9173e69aae772bc8fe75c3ce  npm.tgz" | sha1sum -c -
-
-          npm install -g ./npm.tgz
+          npm install -g \
+            npm@10.9.4#61e81f9dc6ea559d9173e69aae772bc8fe75c3ce
       - name: Build KVM-enabled orch-cli
         run: make build-kvm
   final-check:
