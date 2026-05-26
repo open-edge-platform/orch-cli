@@ -69,6 +69,10 @@ build-kvm: build-kvm-ui build
 
 build: mod-update
 	@# Help: Runs build stage
+	@if [ ! -d "$(KVM_STATIC_DIR)" ] || [ -z "$$(ls -A $(KVM_STATIC_DIR) 2>/dev/null)" ]; then \
+		echo "[build] $(KVM_STATIC_DIR)/ not found — building KVM UI first (nodejs required)..."; \
+		$(MAKE) build-kvm-ui; \
+	fi
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
 	go build -buildmode=pie -trimpath -mod=$(GO_MOD) -gcflags="$(PKG)/...=-spectre=all -l" -asmflags="$(PKG)/...=-spectre=all" -ldflags="all=-s -w -extldflags=-static -X $(PKG)/internal/cli.Version=`cat VERSION`" -o build/_output/$(RELEASE_NAME) $(CMD_DIR)
 
