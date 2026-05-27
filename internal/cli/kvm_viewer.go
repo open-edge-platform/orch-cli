@@ -252,10 +252,12 @@ func (s *kvmSession) readFromMPS() {
 			s.browserConn = nil
 		}
 		s.browserMu.Unlock()
-		// Do NOT close s.done here — session lifecycle is managed only by
-		// serveDisconnect (browser Disconnect button) or ctx.Done (Ctrl+C).
-		// An MPS read error just means AMT closed the channel; the operator
-		// must explicitly stop the session.
+		// Close the session so startKVMViewer unblocks and runs its full
+		// cleanup regardless of how the MPS connection ended — Ctrl+C,
+		// browser disconnect, or an external `--session-state stop` command
+		// that caused AMT to drop the relay connection.
+		// s.close() is idempotent so double-calls from Ctrl+C or serveDisconnect
+		s.close()
 	}()
 
 	for {
@@ -874,6 +876,35 @@ func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID, orchCA st
 	fmt.Printf("\n  %s\n\n", viewerURL)
 	fmt.Println("Press Ctrl+C to stop the KVM session.")
 	go openBrowser(viewerURL)
+
+	// poll orchestrator for an external `--session-state stop` request.
+	// The stop command only patches DesiredKvmState on the backend; AMT does not
+	// immediately drop the MPS relay, so readFromMPS never exits on its own.
+	// This goroutine detects the change within ~5 s and calls sess.close() so
+	// startKVMViewer unblocks and runs the normal cleanup path.
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-sess.done:
+				return
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				getResp, err := hostClient.HostServiceGetHostWithResponse(ctx, projectName, hostID, auth.AddAuthHeader)
+				if err != nil {
+					continue
+				}
+				if getResp.JSON200 != nil && getResp.JSON200.DesiredKvmState != nil &&
+					*getResp.JSON200.DesiredKvmState == infra.KVMSTATESTOP {
+					logf("[KVM] External stop detected (DesiredKvmState=stop) — closing session")
+					sess.close()
+					return
+				}
+			}
+		}
+	}()
 
 	// Step 4 — wait for session to end (MPS disconnect, ctx cancel, or browser disconnect)
 	select {
