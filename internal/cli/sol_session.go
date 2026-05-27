@@ -416,7 +416,9 @@ func (s *SOLSession) handleMPSFrame(data []byte, debug bool) int {
 
 // connectSOLSession connects to the MPS relay and runs the AMT SOL protocol
 // handshake. The function blocks until Ctrl-C or the MPS connection drops.
-func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA string, _ chan<- int) error {
+// If stopCh is non-nil, closing it will trigger a graceful disconnect
+// (equivalent to Ctrl+]).
+func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA string, stopCh <-chan struct{}) error {
 	// Construct carrier URL so parsed.Host, token and GUID are available below
 	sessionURL := fmt.Sprintf("wss://%s/relay/webrelay.ashx?token=%s&host=%s", mpsDomain, token, deviceGUID)
 	parsed, err := url.Parse(sessionURL)
@@ -724,6 +726,16 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 
 	// Wait for interrupt, MPS connection close, or Ctrl+C in terminal
 	var sessionErr error
+
+	// Build a nil-safe stop channel (avoids select on nil channel blocking forever)
+	var stopChSafe <-chan struct{}
+	if stopCh != nil {
+		stopChSafe = stopCh
+	} else {
+		// Create a channel that is never closed so this case never fires
+		stopChSafe = make(chan struct{})
+	}
+
 	select {
 	case <-interrupt:
 		if debug {
@@ -740,6 +752,10 @@ func connectSOLSession(token, mpsDomain, deviceGUID, jwtToken, amtPass, orchCA s
 		if debug {
 			fmt.Fprintf(os.Stderr, "\n[SOL] MPS connection closed\n")
 		}
+		sol.Close()
+	case <-stopChSafe:
+		// Remote stop command received — terminate session gracefully
+		fmt.Fprintf(os.Stderr, "\n[SOL] Remote stop command received, disconnecting...\n")
 		sol.Close()
 	case sessionErr = <-sol.errChan:
 		// Error occurred
