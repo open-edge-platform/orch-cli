@@ -19,6 +19,7 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
@@ -717,7 +718,8 @@ func mpsRelayTLSConfig(caPath string, logf func(string, ...interface{})) (*tls.C
 		return nil, fmt.Errorf("no valid certificates found in %q — ensure it is a valid .crt file", caPath)
 	}
 	logf("[KVM] TLS: using CA certificate from %q", caPath)
-	return &tls.Config{MinVersion: tls.VersionTLS12, RootCAs: pool}, nil
+	// TLS 1.3 minimum.
+	return &tls.Config{MinVersion: tls.VersionTLS13, RootCAs: pool}, nil
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -839,7 +841,21 @@ func startKVMViewer(ctx context.Context, token, mpsDomain, deviceGUID, orchCA st
 		session:      sess,
 		sessionToken: sessionToken,
 		upgrader: websocket.Upgrader{
-			CheckOrigin: func(_ *http.Request) bool { return true },
+			// restrict WebSocket upgrades to localhost origins.
+			// The server only listens on 127.0.0.1; reject any request whose
+			// Origin header points outside localhost.
+			CheckOrigin: func(r *http.Request) bool {
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					return true // non-browser client
+				}
+				u, err := url.Parse(origin)
+				if err != nil {
+					return false
+				}
+				h := u.Hostname()
+				return h == "localhost" || h == "127.0.0.1"
+			},
 		},
 	}
 
