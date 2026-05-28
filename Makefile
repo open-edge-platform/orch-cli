@@ -216,7 +216,7 @@ license: reuse-tool
 	reuse lint
 
 artifact-publish:
-    @echo "Copy license files into tar directory."	
+    @echo "Copy license files into tar directory."
     cp -R LICENSES $(ARTIFACT_FILES)
     @echo "TAR orch-cli."
     tar -czvf orch-cli-package.tar.gz $(ARTIFACT_FILES)
