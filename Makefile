@@ -233,9 +233,11 @@ oras-dependency:
 		set -eu; \
 		echo "Installing oras $(ORAS_VERSION)..."; \
 		tmpdir=$$(mktemp -d); \
+		bindir="$$(go env GOPATH)/bin"; \
+		mkdir -p "$$bindir"; \
 		curl -fsSL "https://github.com/oras-project/oras/releases/download/v$(ORAS_VERSION)/oras_$(ORAS_VERSION)_linux_amd64.tar.gz" -o "$$tmpdir/oras.tar.gz"; \
 		tar -xzf "$$tmpdir/oras.tar.gz" -C "$$tmpdir" oras; \
-		install "$$tmpdir/oras" "$(GOPATH)/bin/oras"; \
+		install -m 0755 "$$tmpdir/oras" "$$bindir/oras"; \
 		rm -rf "$$tmpdir"; \
 	else \
 		echo "oras already installed: $$(command -v oras)"; \
