@@ -8,7 +8,7 @@ PKG     	:= github.com/open-edge-platform/cli
 OCI_REPOSITORY 	:= edge-orch/files/orch-cli
 OCI_REGISTRY    ?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
 VERSION         ?= $(shell cat ./VERSION)
-ARTIFACT_FILES := ./signed-package/build/_output
+ARTIFACT_FILES := ./signed-package
 
 ORAS_VERSION = 1.2.0
 
@@ -220,8 +220,8 @@ license: reuse-tool
 artifact-publish: oras-dependency
 	@echo "Copy files into UPLOAD_DIR folder."
 	mkdir -p ./UPLOAD_DIR
-	cp -R LICENSES  ./UPLOAD_DIR/
-	find $(ARTIFACT_FILES) -type f -exec cp {} ./UPLOAD_DIR \;
+	cp LICENSES/*  ./UPLOAD_DIR/
+	find $(ARTIFACT_FILES) -type f -exec cp {} ./UPLOAD_DIR/ \;
 	
 	@echo "TAR orch-cli."
 	tar -czvf orch-cli-package.tar.gz ./UPLOAD_DIR/
