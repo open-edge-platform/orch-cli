@@ -11,6 +11,7 @@ VERSION         ?= $(shell cat ./VERSION)
 ARTIFACT_FILES := ./signed-package
 
 ORAS_VERSION = v1.2.0
+ORAS_VERSION_NO_V := $(patsubst v%,%,$(ORAS_VERSION))
 
 RELEASE_DIR     ?= release
 RELEASE_NAME    ?= orch-cli
@@ -230,10 +231,13 @@ artifact-publish: oras-dependency
 oras-dependency:
 	@# Help: Install oras if not present
 	@if ! command -v oras >/dev/null 2>&1; then \
+		set -eu; \
 		echo "Installing oras $(ORAS_VERSION)..."; \
-		curl -sSL https://github.com/oras-project/oras/releases/download/$(ORAS_VERSION)/oras_$(ORAS_VERSION#v)_linux_amd64.tar.gz -o /tmp/oras.tar.gz && \
-		tar -xzf /tmp/oras.tar.gz -C /tmp oras && \
-		install /tmp/oras $(GOPATH)/bin/oras; \
+		tmpdir=$$(mktemp -d); \
+		curl -fsSL "https://github.com/oras-project/oras/releases/download/$(ORAS_VERSION)/oras_$(ORAS_VERSION_NO_V)_linux_amd64.tar.gz" -o "$$tmpdir/oras.tar.gz"; \
+		tar -xzf "$$tmpdir/oras.tar.gz" -C "$$tmpdir" oras; \
+		install "$$tmpdir/oras" "$(GOPATH)/bin/oras"; \
+		rm -rf "$$tmpdir"; \
 	else \
 		echo "oras already installed: $$(command -v oras)"; \
 	fi
