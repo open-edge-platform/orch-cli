@@ -10,7 +10,7 @@ OCI_REGISTRY    ?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
 VERSION         ?= $(shell cat ./VERSION)
 ARTIFACT_FILES := ./signed-package
 
-ORAS_VERSION = v1.2.0
+ORAS_VERSION = 1.2.0
 
 RELEASE_DIR     ?= release
 RELEASE_NAME    ?= orch-cli
@@ -233,7 +233,7 @@ oras-dependency:
 		set -eu; \
 		echo "Installing oras $(ORAS_VERSION)..."; \
 		tmpdir=$$(mktemp -d); \
-		curl -fsSL "https://github.com/oras-project/oras/releases/download/v${ORAS_VERSION}/oras_${ORAS_VERSION}_linux_amd64.tar.gz" -o "$$tmpdir/oras.tar.gz"; \		
+		curl -fsSL "https://github.com/oras-project/oras/releases/download/v$(ORAS_VERSION)/oras_$(ORAS_VERSION)_linux_amd64.tar.gz" -o "$$tmpdir/oras.tar.gz"; \
 		tar -xzf "$$tmpdir/oras.tar.gz" -C "$$tmpdir" oras; \
 		install "$$tmpdir/oras" "$(GOPATH)/bin/oras"; \
 		rm -rf "$$tmpdir"; \
