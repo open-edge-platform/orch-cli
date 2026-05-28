@@ -218,10 +218,13 @@ license: reuse-tool
 	reuse lint
 
 artifact-publish: oras-dependency
-	@echo "Copy license files into tar directory."
-	cp -R LICENSES $(ARTIFACT_FILES)
+	@echo "Copy files into UPLOAD_DIR folder."
+	mkdir ./UPLOAD_DIR
+	cp -R LICENSES  ./UPLOAD_DIR/
+	find $(ARTIFACT_FILES) -type f -exec cp {} ./UPLOAD_DIR \;
+	
 	@echo "TAR orch-cli."
-	tar -czvf orch-cli-package.tar.gz $(ARTIFACT_FILES)
+	tar -czvf orch-cli-package.tar.gz ./UPLOAD_DIR/
 
 	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
 	@if aws ecr describe-repositories --region us-west-2 --repository-names ${OCI_REPOSITORY} >/dev/null 2>&1; then \
