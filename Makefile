@@ -8,7 +8,7 @@ PKG     	:= github.com/open-edge-platform/cli
 OCI_REPOSITORY 	:= edge-orch/files/orch-cli
 OCI_REGISTRY    ?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
 VERSION         ?= $(shell cat ./VERSION)
-ARTIFACT_FILES := src ./binaries/build/_output/orch-cli
+ARTIFACT_FILES := src ./signed-package
 
 RELEASE_DIR     ?= release
 RELEASE_NAME    ?= orch-cli
@@ -216,8 +216,10 @@ license: reuse-tool
 	reuse lint
 
 artifact-publish:
-	@echo "TAR orch-cli."
-	tar -czvf orch-cli-package.tar.gz $(ARTIFACT_FILES)
+    @echo "Copy license files into tar directory."	
+    cp -R LICENSES $(ARTIFACT_FILES)
+    @echo "TAR orch-cli."
+    tar -czvf orch-cli-package.tar.gz $(ARTIFACT_FILES)
 
 	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
 	aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY} || true
