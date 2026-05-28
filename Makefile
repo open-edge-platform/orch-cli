@@ -224,7 +224,11 @@ artifact-publish: oras-dependency
 	tar -czvf orch-cli-package.tar.gz $(ARTIFACT_FILES)
 
 	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
-	aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY} || true
+	@if aws ecr describe-repositories --region us-west-2 --repository-names ${OCI_REPOSITORY} >/dev/null 2>&1; then \
+		echo "ECR repository ${OCI_REPOSITORY} already exists."; \
+	else \
+		aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY}; \
+	fi
 	oras push ${OCI_REGISTRY}/${OCI_REPOSITORY}:$(VERSION) ./orch-cli-package.tar.gz
 
 oras-dependency:
