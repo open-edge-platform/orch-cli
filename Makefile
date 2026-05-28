@@ -10,6 +10,8 @@ OCI_REGISTRY    ?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
 VERSION         ?= $(shell cat ./VERSION)
 ARTIFACT_FILES := ./signed-package
 
+ORAS_VERSION = v1.2.0
+
 RELEASE_DIR     ?= release
 RELEASE_NAME    ?= orch-cli
 RELEASE_OS_ARCH ?= linux-amd64 linux-arm64 windows-amd64 darwin-amd64
@@ -215,7 +217,7 @@ license: reuse-tool
 	@# Help: Check licensing with the reuse tool
 	reuse lint
 
-artifact-publish:
+artifact-publish: oras-dependency
 	@echo "Copy license files into tar directory."
 	cp -R LICENSES $(ARTIFACT_FILES)
 	@echo "TAR orch-cli."
@@ -224,6 +226,17 @@ artifact-publish:
 	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
 	aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY} || true
 	oras push ${OCI_REGISTRY}/${OCI_REPOSITORY}:$(VERSION) ./orch-cli-package.tar.gz
+
+oras-dependency:
+	@# Help: Install oras if not present
+	@if ! command -v oras >/dev/null 2>&1; then \
+		echo "Installing oras $(ORAS_VERSION)..."; \
+		curl -sSL https://github.com/oras-project/oras/releases/download/$(ORAS_VERSION)/oras_$(ORAS_VERSION#v)_linux_amd64.tar.gz -o /tmp/oras.tar.gz && \
+		tar -xzf /tmp/oras.tar.gz -C /tmp oras && \
+		install /tmp/oras $(GOPATH)/bin/oras; \
+	else \
+		echo "oras already installed: $$(command -v oras)"; \
+	fi
 
 list: help
 	@# Help: displays make targets
