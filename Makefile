@@ -216,10 +216,10 @@ license: reuse-tool
 	reuse lint
 
 artifact-publish:
-    @echo "Copy license files into tar directory."
-    cp -R LICENSES $(ARTIFACT_FILES)
-    @echo "TAR orch-cli."
-    tar -czvf orch-cli-package.tar.gz $(ARTIFACT_FILES)
+	@echo "Copy license files into tar directory."
+	cp -R LICENSES $(ARTIFACT_FILES)
+	@echo "TAR orch-cli."
+	tar -czvf orch-cli-package.tar.gz $(ARTIFACT_FILES)
 
 	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
 	aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY} || true
