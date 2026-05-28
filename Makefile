@@ -219,7 +219,7 @@ license: reuse-tool
 
 artifact-publish: oras-dependency
 	@echo "Copy files into UPLOAD_DIR folder."
-	mkdir ./UPLOAD_DIR
+	mkdir -p ./UPLOAD_DIR
 	cp -R LICENSES  ./UPLOAD_DIR/
 	find $(ARTIFACT_FILES) -type f -exec cp {} ./UPLOAD_DIR \;
 	
