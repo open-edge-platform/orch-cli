@@ -8,7 +8,7 @@ PKG     	:= github.com/open-edge-platform/cli
 OCI_REPOSITORY 	:= edge-orch/files/orch-cli
 OCI_REGISTRY    ?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
 VERSION         ?= $(shell cat ./VERSION)
-ARTIFACT_FILES := ./signed-package
+ARTIFACT_FILES := ./signed-package/build/_output
 
 ORAS_VERSION = 1.2.0
 
