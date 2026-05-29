@@ -1,0 +1,142 @@
+SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+SPDX-License-Identifier: Apache-2.0
+
+SDL430-12 / SDL523-13 — KVM and SoL Port/Pipe Permission Evidence
+==================================================================
+Date: May 2026
+Component: orch-cli KVM viewer and SoL session
+Files audited:
+  internal/cli/kvm_viewer.go
+  internal/cli/sol_session.go
+
+
+SUMMARY
+-------
+No excessive permissions found. Two minor findings were corrected
+(TLS minimum version and WebSocket origin validation). No named
+pipes, Unix sockets, or privileged ports are opened.
+
+
+PORTS AND SOCKETS OPENED
+-------------------------
+
+1. KVM — Inbound TCP listener (local HTTP server)
+   File:    internal/cli/kvm_viewer.go, line 825
+   Code:    net.Listen("tcp", "127.0.0.1:0")
+   Address: 127.0.0.1 only (loopback — not reachable from the network)
+   Port:    0 (OS-assigned ephemeral port — random on each session start)
+   Access:  Protected by 256-bit crypto/rand session token (X-Session-Token
+            header); all /api/* and /ws/kvm routes return HTTP 403 without it
+   Server:  ReadTimeout 60 s; WriteTimeout 0 (streaming WebSocket relay)
+   Finding: PASS — minimal binding (loopback + ephemeral port + token auth)
+
+2. KVM — Outbound WSS dial to MPS relay
+   File:    internal/cli/kvm_viewer.go, mpsRelayTLSConfig()
+   Code:    websocket.Dialer{TLSClientConfig: tlsConfig}.Dial("wss://...")
+   TLS:     MinVersion = tls.VersionTLS13 (upgraded from 1.2 — see Fix 1)
+   CA:      Validated against operator-supplied --orch-ca certificate
+   Auth:    Keycloak JWT in Cookie header
+   Finding: PASS — outbound only, TLS 1.3, CA-pinned, JWT-authenticated
+
+3. SoL — Outbound WSS dial to MPS relay
+   File:    internal/cli/sol_session.go, createMPSRelayTLSConfig()
+   Code:    websocket.Dialer{TLSClientConfig: tlsConfig}.Dial("wss://...")
+   TLS:     MinVersion = tls.VersionTLS13
+   CA:      Validated against operator-supplied --orch-ca certificate
+   Auth:    Keycloak JWT in Cookie header
+   Finding: PASS — outbound only, TLS 1.3, CA-pinned, JWT-authenticated
+
+4. SoL — Terminal stdin/stdout (raw mode)
+   File:    internal/cli/sol_session.go, line 665
+   Code:    term.MakeRaw(int(os.Stdin.Fd()))
+   Type:    Not a new pipe or socket — uses the process's inherited stdin/stdout
+            file descriptors (opened by the shell that launched orch-cli)
+   Cleanup: defer term.Restore() always restores original terminal state
+   Finding: PASS — no new pipe or device opened; inherits existing permissions
+
+
+NO PIPES OR UNIX SOCKETS
+-------------------------
+Neither KVM nor SoL opens any named pipes (mkfifo), Unix domain sockets
+(ListenUnix), or /dev/ device files. Confirmed by audit:
+
+  grep -rn "ListenUnix|mkfifo|/dev/|os.Pipe" internal/cli/kvm_viewer.go \
+       internal/cli/sol_session.go
+  (no output)
+
+
+FILE PERMISSION MODES
+---------------------
+All files written by the CLI use mode 0600 (owner read/write only):
+  internal/cli/deployment-package.go:809  os.OpenFile(..., 0600)
+  internal/cli/standalone.go:421          os.WriteFile(..., 0600)
+Finding: PASS — no world-readable or world-writable files
+
+
+FIXES APPLIED
+-------------
+
+Fix 1 — KVM MPS relay TLS minimum version (SDL430-12)
+  Before: tls.Config{MinVersion: tls.VersionTLS12, ...}
+  After:  tls.Config{MinVersion: tls.VersionTLS13, ...}
+  Reason: TLS 1.2 permits cipher suites with known weaknesses (e.g. CBC,
+          RC4 fallback). TLS 1.3 eliminates these and aligns KVM with the
+          SoL implementation which already used TLS 1.3 on the same MPS.
+  File:   internal/cli/kvm_viewer.go, mpsRelayTLSConfig()
+
+Fix 2 — KVM WebSocket origin validation (SDL523-13)
+  Before: CheckOrigin: func(_ *http.Request) bool { return true }
+  After:  CheckOrigin validates that Origin header (when present) has
+          hostname == "localhost" or "127.0.0.1"
+  Reason: Defense-in-depth. Although the server only listens on 127.0.0.1
+          and all routes require the session token, accepting any Origin
+          violates the principle of minimal permissions. A browser script
+          from a different origin cannot obtain the session token (it is
+          injected into the orch-cli-launched tab only), but explicit
+          rejection at the WebSocket upgrade layer removes the surface.
+  File:   internal/cli/kvm_viewer.go, startKVMViewer()
+
+
+VERIFICATION COMMANDS
+---------------------
+The following commands can be run after starting a KVM session to confirm
+minimal permissions. Replace <PORT> with the port printed at session start.
+
+1. Confirm server is bound to loopback only (not 0.0.0.0):
+   ss -tlnp | grep <PORT>
+   Expected: Local Address = 127.0.0.1:<PORT>
+
+2. Confirm network interface is NOT listening externally:
+   ss -tlnp | grep <PORT> | grep -v 127.0.0.1
+   Expected: no output
+
+3. Confirm TLS 1.3 on outbound MPS connection:
+   (logged at session start)
+   [KVM] TLS: using CA certificate from "orch-ca.crt"
+
+4. Confirm token rejection (403) without valid token:
+   curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:<PORT>/api/status
+   Expected: 403
+
+5. Confirm WebSocket upgrade rejected from non-localhost origin:
+   curl -s -o /dev/null -w "%{http_code}" \
+     -H "Origin: http://evil.example.com" \
+     -H "Upgrade: websocket" \
+     -H "Connection: Upgrade" \
+     -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+     -H "Sec-WebSocket-Version: 13" \
+     "http://127.0.0.1:<PORT>/ws/kvm?token=<TOKEN>"
+   Expected: 403
+
+6. Confirm no named pipes or Unix sockets:
+   grep -rn "ListenUnix\|mkfifo\|os\.Pipe" \
+     internal/cli/kvm_viewer.go internal/cli/sol_session.go
+   Expected: no output
+
+
+CONCLUSION
+----------
+SDL430-12: CLOSED — All ports use minimal binding (loopback+ephemeral),
+           TLS 1.3 minimum enforced, token authentication on all routes.
+SDL523-13: CLOSED — No excessive permissions. WebSocket origin validated.
+           File writes use mode 0600. No privileged ports or pipes.

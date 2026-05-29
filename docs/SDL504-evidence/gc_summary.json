@@ -1,0 +1,4 @@
+{
+  "note": "KVM Viewer REST API is a stateless session-relay server. It has no resource creation / deletion lifecycle (no POST→GET→DELETE resource chains). RESTler GC phase is not applicable.",
+  "delete_stats": {}
+}

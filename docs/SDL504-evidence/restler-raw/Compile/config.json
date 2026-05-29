@@ -1,0 +1,25 @@
+{
+  "SwaggerSpecFilePath": [
+    "/restler-workdir/80d328b2-9ddf-4896-8e36-c1397a4184be/swagger.json"
+  ],
+  "GrammarOutputDirectoryPath": "/restler-workdir/80d328b2-9ddf-4896-8e36-c1397a4184be/Compile",
+  "CustomDictionaryFilePath": "/restler-workdir/80d328b2-9ddf-4896-8e36-c1397a4184be/custom_dict.json",
+  "AnnotationFilePath": "/restler-workdir/80d328b2-9ddf-4896-8e36-c1397a4184be/annotations.json",
+  "EngineSettingsFilePath": "/restler-workdir/80d328b2-9ddf-4896-8e36-c1397a4184be/restlerConfig/engine_settings.json",
+  "IncludeOptionalParameters": true,
+  "UseHeaderExamples": true,
+  "UsePathExamples": false,
+  "UseQueryExamples": true,
+  "UseBodyExamples": true,
+  "UseAllExamplePayloads": false,
+  "DiscoverExamples": false,
+  "ExamplesDirectory": "",
+  "DataFuzzing": true,
+  "ReadOnlyFuzz": false,
+  "ResolveQueryDependencies": true,
+  "ResolveBodyDependencies": true,
+  "ResolveHeaderDependencies": false,
+  "UseRefreshableToken": true,
+  "AllowGetProducers": false,
+  "TrackFuzzedParameterNames": false
+}

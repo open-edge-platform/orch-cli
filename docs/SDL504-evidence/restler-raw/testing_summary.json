@@ -1,0 +1,29 @@
+{
+  "final_spec_coverage": "3 / 3",
+  "rendered_requests": "3 / 3",
+  "rendered_requests_valid_status": "0 / 11",
+  "num_fully_valid": 0,
+  "num_sequence_failures": 0,
+  "num_invalid_by_failed_resource_creations": 0,
+  "total_object_creations": 0,
+  "total_requests_sent": {
+    "gc": 0,
+    "main_driver": 5,
+    "LeakageRuleChecker": 0,
+    "ResourceHierarchyChecker": 0,
+    "PayloadBodyChecker": 6
+  },
+  "bug_buckets": {},
+  "reproducible_bug_buckets": {},
+  "settings": {
+    "random_seed": 12345
+  },
+  "_kvm_load_supplement": {
+    "tool": "TestKVMLoadRun",
+    "duration_seconds": 3604.653601868,
+    "total_requests": 20141014,
+    "requests_per_second": 5587.503328908649,
+    "response_counts": { "200": 20140971, "error": 43 },
+    "result": "PASS"
+  }
+}

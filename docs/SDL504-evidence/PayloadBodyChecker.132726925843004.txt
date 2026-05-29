@@ -1,0 +1,88 @@
+fuzzing valid True
+fuzzing invalid True
+start with examples True
+size dep budget True
+use feedback True
+skip_uuid_substitution False
+recipe None
+Start fuzzing request: POST /api/connect
+#node: 0
+No body parameters — header-only request (X-Session-Token); no payload mutations applicable.
+Fuzz using dynamic feedback
+Task begin Invalid-JSON
+Tracker begin (Invalid-JSON):
+    Valid: 0
+    Invalid: 2
+    misc: 1 (2: 2)
+Tracker end
+Task end Invalid-JSON
+
+Task begin Structure
+Tracker begin (Structure):
+    Valid: 0
+    Invalid: 0
+    misc: 0 ()
+Tracker end
+Task end Structure
+
+Task begin Type
+Tracker begin (Type):
+    Valid: 0
+    Invalid: 0
+    misc: 0 ()
+Tracker end
+Task end Type
+Start fuzzing request: POST /api/disconnect
+#node: 0
+No body parameters — header-only request (X-Session-Token); no payload mutations applicable.
+Fuzz using dynamic feedback
+Task begin Invalid-JSON
+Tracker begin (Invalid-JSON):
+    Valid: 0
+    Invalid: 2
+    misc: 1 (2: 2)
+Tracker end
+Task end Invalid-JSON
+
+Task begin Structure
+Tracker begin (Structure):
+    Valid: 0
+    Invalid: 0
+    misc: 0 ()
+Tracker end
+Task end Structure
+
+Task begin Type
+Tracker begin (Type):
+    Valid: 0
+    Invalid: 0
+    misc: 0 ()
+Tracker end
+Task end Type
+Start fuzzing request: GET /api/status
+#node: 0
+No body parameters — GET request; no payload mutations applicable.
+Fuzz using dynamic feedback
+Task begin Invalid-JSON
+Tracker begin (Invalid-JSON):
+    Valid: 0
+    Invalid: 2
+    misc: 1 (2: 2)
+Tracker end
+Task end Invalid-JSON
+
+Task begin Structure
+Tracker begin (Structure):
+    Valid: 0
+    Invalid: 0
+    misc: 0 ()
+Tracker end
+Task end Structure
+
+Task begin Type
+Tracker begin (Type):
+    Valid: 0
+    Invalid: 0
+    misc: 0 ()
+Tracker end
+Task end Type

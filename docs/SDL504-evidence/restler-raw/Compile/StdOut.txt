@@ -1,0 +1,92 @@
+[05/29/2026 04:43:05] Generating grammar...
+[05/29/2026 04:43:05] Getting requests...
+[05/29/2026 04:43:05] Getting dependencies...
+[05/29/2026 04:43:05] Getting path consumers...
+[05/29/2026 04:43:05] Getting query consumers...
+[05/29/2026 04:43:05] Getting header consumers...
+[05/29/2026 04:43:05] Getting body consumers...
+[05/29/2026 04:43:05] Getting producers...
+[05/29/2026 04:43:05] Done processing producers
+[05/29/2026 04:43:05] Compute dependencies
+[05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/status"
+  xMsPath = None
+  method = Get }
+[[[[05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/status"
+  xMsPath = None
+  method = Get }05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/disconnect"
+  xMsPath = None
+  method = Post }
+
+[05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/connect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/connect"
+  xMsPath = None
+  method = Post }
+05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/status"
+  xMsPath = None
+  method = Get }
+[05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/disconnect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/disconnect"
+  xMsPath = None
+  method = Post }[05/29/2026 04:43:05
+] Second pass dependencies for request { endpoint = "/api/connect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/connect"
+  xMsPath = None
+  method = Post }
+05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/disconnect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Second pass dependencies for request { endpoint = "/api/status"
+  xMsPath = None
+  method = Get }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/status"
+  xMsPath = None
+  method = Get }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/disconnect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/connect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/status"
+  xMsPath = None
+  method = Get }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/connect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/status"
+  xMsPath = None
+  method = Get }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/disconnect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/connect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/disconnect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/disconnect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/connect"
+  xMsPath = None
+  method = Post }
+[05/29/2026 04:43:05] Done dependencies for request { endpoint = "/api/status"
+  xMsPath = None
+  method = Get }
+[05/29/2026 04:43:05] Assigning equality constraints...
+[05/29/2026 04:43:05] Getting ordering constraints...
+[05/29/2026 04:43:05] Dependency analysis completed.
+[05/29/2026 04:43:05] Generating request primitives...
+Writing new dictionary to /restler-workdir/80d328b2-9ddf-4896-8e36-c1397a4184be/Compile/dict.json
+[05/29/2026 04:43:05] Generating python grammar...
+[05/29/2026 04:43:05] Get requests
+[05/29/2026 04:43:05] Done get requests
+[05/29/2026 04:43:05] Done generating python grammar.
+Workflow completed.  See /restler-workdir/80d328b2-9ddf-4896-8e36-c1397a4184be/Compile for REST-ler grammar.

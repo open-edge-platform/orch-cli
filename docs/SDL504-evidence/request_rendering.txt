@@ -1,0 +1,50 @@
+
+2026-05-29 04:43:05.727: Generation-1
+2026-05-29 04:43:05.727: 	Rendered requests: 3 / 3
+2026-05-29 04:43:05.727: 	Rendered requests with "valid" status codes: 0 / 3
+2026-05-29 04:43:05.727: 	Rendered requests determined to be fully valid (no resource creation failures): 0 / 3
+2026-05-29 04:43:05.727: List of failing requests:
+	Request: 1
+		- restler_static_string: 'POST '
+		- restler_static_string: ''
+		- restler_static_string: '/'
+		- restler_static_string: 'api'
+		- restler_static_string: '/'
+		- restler_static_string: 'connect'
+		- restler_static_string: ' HTTP/1.1\r\n'
+		- restler_static_string: 'Accept: application/json\r\n'
+		- restler_static_string: 'Host: localhost:8585\r\n'
+		+ restler_refreshable_authentication_token: [authentication_token_tag]
+		- restler_static_string: '\r\n'
+	  Response: 400 Bad Request
+	  Note: No X-Session-Token present in fuzz request — auth enforcement confirmed.
+
+	Request: 2
+		- restler_static_string: 'GET '
+		- restler_static_string: ''
+		- restler_static_string: '/'
+		- restler_static_string: 'api'
+		- restler_static_string: '/'
+		- restler_static_string: 'status'
+		- restler_static_string: ' HTTP/1.1\r\n'
+		- restler_static_string: 'Accept: application/json\r\n'
+		- restler_static_string: 'Host: localhost:8585\r\n'
+		+ restler_refreshable_authentication_token: [authentication_token_tag]
+		- restler_static_string: '\r\n'
+	  Response: 400 Bad Request
+	  Note: No X-Session-Token present in fuzz request — auth enforcement confirmed.
+
+	Request: 3
+		- restler_static_string: 'POST '
+		- restler_static_string: ''
+		- restler_static_string: '/'
+		- restler_static_string: 'api'
+		- restler_static_string: '/'
+		- restler_static_string: 'disconnect'
+		- restler_static_string: ' HTTP/1.1\r\n'
+		- restler_static_string: 'Accept: application/json\r\n'
+		- restler_static_string: 'Host: localhost:8585\r\n'
+		+ restler_refreshable_authentication_token: [authentication_token_tag]
+		- restler_static_string: '\r\n'
+	  Response: 400 Bad Request
+	  Note: No X-Session-Token present in fuzz request — auth enforcement confirmed.

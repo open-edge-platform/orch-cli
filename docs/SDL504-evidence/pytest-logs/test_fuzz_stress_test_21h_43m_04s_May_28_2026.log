@@ -1,0 +1,35 @@
+DEBUG    Fuzz-StressTest:test-web-service.py:87 {'app_id': '80d328b2-9ddf-4896-8e36-c1397a4184be'}
+INFO     Fuzz-StressTest:test-web-service.py:106 {
+    "status": "OK",
+    "bugCount": 0,
+    "codeCounts": {
+        "0": 5,
+        "400": 6
+    },
+    "400": [
+        {
+            "request": "curl -X 'POST' 'http://localhost:8585/api/connect' -H 'Content-Type: application/json' -v",
+            "response": "400 Bad Request"
+        },
+        {
+            "request": "curl -X 'POST' 'http://localhost:8585/api/disconnect' -H 'Content-Type: application/json' -v",
+            "response": "400 Bad Request"
+        },
+        {
+            "request": "curl -X 'GET' 'http://localhost:8585/api/status' -H 'Content-Type: application/json' -v",
+            "response": "400 Bad Request"
+        },
+        {
+            "request": "curl -X 'GET' 'http://localhost:8585/api/status' -H 'Content-Type: application/json' -v",
+            "response": "400 Bad Request"
+        },
+        {
+            "request": "curl -X 'POST' 'http://localhost:8585/api/connect' -H 'Content-Type: application/json' -v",
+            "response": "400 Bad Request"
+        },
+        {
+            "request": "curl -X 'POST' 'http://localhost:8585/api/disconnect' -H 'Content-Type: application/json' -v",
+            "response": "400 Bad Request"
+        }
+    ]
+}

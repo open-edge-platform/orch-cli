@@ -1,0 +1,131 @@
+{
+  "0": {},
+  "400": {
+    "27a30dab-949d-4bb0-82ee-cd6e9ae711fb": [
+      {
+        "request": {
+          "RequestData": {
+            "method": "POST",
+            "path": "/api/connect",
+            "query": "",
+            "body": ""
+          }
+        },
+        "response": {
+          "ResponseData": {
+            "code": 400,
+            "codeDescription": "Bad Request",
+            "content": "400 Bad Request",
+            "isFailure": true,
+            "isBug": false
+          }
+        }
+      }
+    ],
+    "a1a541e5-162c-4ceb-ba5e-6c8733082064": [
+      {
+        "request": {
+          "RequestData": {
+            "method": "POST",
+            "path": "/api/disconnect",
+            "query": "",
+            "body": ""
+          }
+        },
+        "response": {
+          "ResponseData": {
+            "code": 400,
+            "codeDescription": "Bad Request",
+            "content": "400 Bad Request",
+            "isFailure": true,
+            "isBug": false
+          }
+        }
+      }
+    ],
+    "a517b6dc-4f8e-4316-8bd1-d1849567a958": [
+      {
+        "request": {
+          "RequestData": {
+            "method": "GET",
+            "path": "/api/status",
+            "query": "",
+            "body": ""
+          }
+        },
+        "response": {
+          "ResponseData": {
+            "code": 400,
+            "codeDescription": "Bad Request",
+            "content": "400 Bad Request",
+            "isFailure": true,
+            "isBug": false
+          }
+        }
+      }
+    ],
+    "e0266749-09b8-4ed3-91dd-478f7e1b2fc4": [
+      {
+        "request": {
+          "RequestData": {
+            "method": "GET",
+            "path": "/api/status",
+            "query": "",
+            "body": ""
+          }
+        },
+        "response": {
+          "ResponseData": {
+            "code": 400,
+            "codeDescription": "Bad Request",
+            "content": "400 Bad Request",
+            "isFailure": true,
+            "isBug": false
+          }
+        }
+      }
+    ],
+    "ef100689-20d0-4e82-8c9c-0720f0fffdbe": [
+      {
+        "request": {
+          "RequestData": {
+            "method": "POST",
+            "path": "/api/connect",
+            "query": "",
+            "body": ""
+          }
+        },
+        "response": {
+          "ResponseData": {
+            "code": 400,
+            "codeDescription": "Bad Request",
+            "content": "400 Bad Request",
+            "isFailure": true,
+            "isBug": false
+          }
+        }
+      }
+    ],
+    "f24783c5-d6c7-41cf-89b7-e9079170e3f3": [
+      {
+        "request": {
+          "RequestData": {
+            "method": "POST",
+            "path": "/api/disconnect",
+            "query": "",
+            "body": ""
+          }
+        },
+        "response": {
+          "ResponseData": {
+            "code": 400,
+            "codeDescription": "Bad Request",
+            "content": "400 Bad Request",
+            "isFailure": true,
+            "isBug": false
+          }
+        }
+      }
+    ]
+  }
+}

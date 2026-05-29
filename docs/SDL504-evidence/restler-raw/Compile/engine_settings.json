@@ -1,0 +1,1 @@
+{"max_combinations": 20, "per_resource_settings": {}, "disable_cert_validation": true, "authentication": {"token": {"token_refresh_cmd": "sh /restler-workdir/80d328b2-9ddf-4896-8e36-c1397a4184be/authentication.sh", "token_refresh_interval": 300}}}

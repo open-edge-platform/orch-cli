@@ -1,0 +1,21 @@
+{
+  "restler_fuzzable_string": [],
+  "restler_fuzzable_string_unquoted": [],
+  "restler_fuzzable_datetime": [],
+  "restler_fuzzable_datetime_unquoted": [],
+  "restler_fuzzable_date": [
+    "2019-06-26"
+  ],
+  "restler_fuzzable_date_unquoted": [],
+  "restler_fuzzable_uuid4": [],
+  "restler_fuzzable_uuid4_unquoted": [],
+  "restler_fuzzable_int": [],
+  "restler_fuzzable_number": [],
+  "restler_fuzzable_bool": [],
+  "restler_fuzzable_object": [],
+  "restler_custom_payload": {},
+  "restler_custom_payload_unquoted": {},
+  "restler_custom_payload_uuid4_suffix": {},
+  "restler_custom_payload_header": {},
+  "restler_custom_payload_query": {}
+}

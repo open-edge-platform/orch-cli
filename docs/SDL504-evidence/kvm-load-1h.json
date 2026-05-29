@@ -1,0 +1,16 @@
+{
+  "tool": "TestKVMLoadRun",
+  "target": "KVM REST API (orch-cli) — GET /api/status, POST /api/connect",
+  "server": "http://127.0.0.1:8587",
+  "start_time": "2026-05-29T06:27:21Z",
+  "end_time": "2026-05-29T07:27:26Z",
+  "duration_seconds": 3604.653601868,
+  "total_requests": 20141014,
+  "requests_per_second": 5587.503328908649,
+  "response_counts": {
+    "200": 20140971,
+    "error": 43
+  },
+  "errors": 43,
+  "result": "PASS"
+}

@@ -22,3 +22,6 @@ preflight_error_*
 test.csv
 my-config.yaml
 cloud-init.cfg
+
+# SDL504 load-test raw logs (600MB+; JSON reports committed instead)
+docs/SDL504-evidence/kvm-load-*.log

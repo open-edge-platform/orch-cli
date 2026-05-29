@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="28.286" timestamp="2026-05-28T21:43:04.323416" hostname="inayak-eom"><testcase classname="containers.docker.fuzzing.faas.unittest.test-web-service" name="test_fuzz_stress_test" time="28.217" /></testsuite></testsuites>
