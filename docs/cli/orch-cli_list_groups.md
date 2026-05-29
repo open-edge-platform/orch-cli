@@ -1,30 +1,32 @@
-## orch-cli list cluster
+## orch-cli list groups
 
-List clusters
+List all groups
 
 ```
-orch-cli list cluster [flags]
+orch-cli list groups [flags]
 ```
 
 ### Examples
 
 ```
-orch-cli list cluster --project some-project
+# List all groups
+orch-cli list groups
+
+# List all groups in a specific realm
+orch-cli list groups --realm master
+
 ```
 
 ### Options
 
 ```
-      --filter string                 cluster list filter
-  -h, --help                          help for cluster
-      --not-ready                     Show only clusters that are not ready
-      --offset int32                  cluster list starting offset
-      --order-by string               cluster list order by
+  -h, --help                          help for groups
+      --order-by string               order results by field (table output only)
       --output-filter string          Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML
       --output-template string        Optional custom output template (Go text/template) for table output
       --output-template-file string   Optional path to a file containing a custom template for table output
   -o, --output-type string            output type: table, json, yaml (default "table")
-      --page-size int32               cluster list maximum number of items
+      --realm string                  Keycloak realm (default "master")
 ```
 
 ### Options inherited from parent commands

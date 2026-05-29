@@ -1,30 +1,38 @@
-## orch-cli list cluster
+## orch-cli list metrics
 
-List clusters
+List all metric names available at a Mimir (Prometheus-compatible) endpoint
 
 ```
-orch-cli list cluster [flags]
+orch-cli list metrics [flags]
 ```
 
 ### Examples
 
 ```
-orch-cli list cluster --project some-project
+# Configure metrics endpoint (once)
+orch-cli config set metrics-endpoint https://metrics-node-cli.<CLUSTER_FQDN>/prometheus
+# List metrics for the current project (org-id auto-derived from project UID) and current metrics endpoint
+orch-cli list metrics
+# List metrics for a different project and metrics endpoint
+orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --project sampleproject
+# List metrics with explicit org-id
+orch-cli list metrics --metrics-endpoint https://mimir.example.com/prometheus --org-id 698fde6a-b721-447a-a7c2-7187d64393c1
+# Filter metric names
+orch-cli list metrics --filter cpu
+
 ```
 
 ### Options
 
 ```
-      --filter string                 cluster list filter
-  -h, --help                          help for cluster
-      --not-ready                     Show only clusters that are not ready
-      --offset int32                  cluster list starting offset
-      --order-by string               cluster list order by
+      --filter string                 Only show metric names containing this substring
+  -h, --help                          help for metrics
+      --metrics-endpoint string       Mimir (Prometheus-compatible) base URL
+      --org-id string                 Mimir tenant ID sent as X-Scope-OrgID
       --output-filter string          Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML
       --output-template string        Optional custom output template (Go text/template) for table output
       --output-template-file string   Optional path to a file containing a custom template for table output
   -o, --output-type string            output type: table, json, yaml (default "table")
-      --page-size int32               cluster list maximum number of items
 ```
 
 ### Options inherited from parent commands
