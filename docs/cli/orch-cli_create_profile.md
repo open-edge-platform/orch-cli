@@ -26,10 +26,10 @@ orch-cli create profile my-app 1.0.0 my-profile --display-name 'My Profile' --de
 ### Options inherited from parent commands
 
 ```
-      --api-endpoint string   API Service Endpoint (default "https://api.orch-10-114-181-120.espdqa.infra-host.com")
+      --api-endpoint string   API Service Endpoint (default "https://api.kind.internal/")
       --debug-headers         emit debug-style headers separating columns via '|' character
   -n, --noauth                use without authentication checks
-  -p, --project string        Active project name (default "itep")
+  -p, --project string        Active project name
   -v, --verbose               produce verbose output
 ```
 

@@ -5,11 +5,11 @@ Orch-cli Command Line Interface
 ### Options
 
 ```
-      --api-endpoint string   API Service Endpoint (default "https://api.orch-10-114-181-120.espdqa.infra-host.com")
+      --api-endpoint string   API Service Endpoint (default "https://api.kind.internal/")
       --debug-headers         emit debug-style headers separating columns via '|' character
   -h, --help                  help for orch-cli
   -n, --noauth                use without authentication checks
-  -p, --project string        Active project name (default "itep")
+  -p, --project string        Active project name
   -v, --verbose               produce verbose output
 ```
 
