@@ -12,10 +12,19 @@ path = [
     "internal/cli/deployment-mock-rest_test.go",
     "internal/cli/testdata/**",
     "docs/cli/**",
+    "docs/*.txt",
     "pkg/rest/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2025 Intel Corporation"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+    "test/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Intel Corporation"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
