@@ -224,8 +224,8 @@ artifact-publish: oras-dependency
 	find $(ARTIFACT_FILES) -type f -exec cp {} ./UPLOAD_DIR/ \;
 	
 	@echo "TAR orch-cli."
-	tar -czvf orch-cli-package.tar.gz ./UPLOAD_DIR/
-
+	tar -czvf orch-cli-package.tar.gz -C ./UPLOAD_DIR .
+	
 	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
 	@if aws ecr describe-repositories --region us-west-2 --repository-names ${OCI_REPOSITORY} >/dev/null 2>&1; then \
 		echo "ECR repository ${OCI_REPOSITORY} already exists."; \
