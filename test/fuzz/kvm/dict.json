@@ -1,0 +1,12 @@
+{
+    "restler_fuzzable_string": [],
+    "restler_fuzzable_int": [],
+    "restler_fuzzable_number": [],
+    "restler_fuzzable_bool": [],
+    "restler_fuzzable_datetime": [],
+    "restler_fuzzable_object": [],
+    "restler_fuzzable_uuid4": [],
+    "restler_custom_payload": {},
+    "restler_custom_payload_uuid4_suffix": {},
+    "restler_custom_payload_header": {}
+}
