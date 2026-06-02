@@ -219,8 +219,8 @@ license: reuse-tool
 
 artifact-publish: oras-dependency
 	@echo "Copy files into UPLOAD_DIR folder."
-	mkdir -p ./UPLOAD_DIR
-	cp LICENSES/*  ./UPLOAD_DIR/
+	mkdir -p ./UPLOAD_DIR/LICENSES/
+	cp LICENSES/*  ./UPLOAD_DIR/LICENSES/
 	find $(ARTIFACT_FILES) -type f -exec cp {} ./UPLOAD_DIR/ \;
 	
 	@echo "TAR orch-cli."
