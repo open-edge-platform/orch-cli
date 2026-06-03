@@ -468,7 +468,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							Description:         stringPtr("Profile.for.testing"),
 							CreateTime:          timePtr(testTime),
 							UpdateTime:          timePtr(testTime),
-							ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}},
+							ApplicationProfiles: map[string]string{},
 						},
 						{
 							Name:                "test-deployment-profile",
@@ -476,7 +476,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							Description:         stringPtr("Test.Profile.for.testing"),
 							CreateTime:          timePtr(testTime),
 							UpdateTime:          timePtr(testTime),
-							ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}},
+							ApplicationProfiles: map[string]string{},
 						},
 					}
 				}
@@ -523,8 +523,8 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							profiles[i].UpdateTime = timePtr(testTime)
 						}
 						// Ensure ApplicationProfiles is not nil
-						if profiles[i].ApplicationProfiles.AdditionalProperties == nil {
-							profiles[i].ApplicationProfiles = catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}}
+						if profiles[i].ApplicationProfiles == nil {
+							profiles[i].ApplicationProfiles = map[string]string{}
 						}
 					}
 					createdProfiles[key] = profiles
@@ -579,7 +579,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							Description:         stringPtr("Profile.for.testing"),
 							CreateTime:          timePtr(testTime),
 							UpdateTime:          timePtr(testTime),
-							ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}},
+							ApplicationProfiles: map[string]string{},
 						},
 						{
 							Name:                "test-deployment-profile",
@@ -587,7 +587,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 							Description:         stringPtr("Test.Profile.for.testing"),
 							CreateTime:          timePtr(testTime),
 							UpdateTime:          timePtr(testTime),
-							ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}},
+							ApplicationProfiles: map[string]string{},
 						},
 					}
 				}
@@ -653,7 +653,7 @@ func CreateCatalogMock(mctrl *gomock.Controller) interfaces.CatalogFactoryFunc {
 										Description:         stringPtr("Profile.for.testing"),
 										CreateTime:          timePtr(testTime),
 										UpdateTime:          timePtr(testTime),
-										ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: map[string]string{}},
+										ApplicationProfiles: map[string]string{},
 									},
 								},
 							},

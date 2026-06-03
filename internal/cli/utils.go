@@ -263,7 +263,11 @@ func getMpsServiceContext(cmd *cobra.Command) (context.Context, mpsapi.ClientWit
 	if err != nil {
 		return nil, nil, "", err
 	}
-	mpsClient, err := mpsapi.NewClientWithResponses(serverAddress, TLS13MPSClientOption())
+	// The MPS REST API is exposed on mps-wss.<domain>, not on api.<domain>.
+	// Traefik routes mps-wss.<domain>/* → MPS:3000, whereas api.<domain>/api/v1/amt/*
+	// has no matching route and returns 404.
+	mpsAddress := strings.Replace(serverAddress, "api.", "mps-wss.", 1)
+	mpsClient, err := mpsapi.NewClientWithResponses(mpsAddress, TLS13MPSClientOption())
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -867,7 +871,7 @@ func isExpectedError(err error) bool {
 		"not", "unknown", "match", "invalid", "required", "requires",
 		"no such", "missing", "no", "must", "in form", "incorrect",
 		"unexpected", "expected", "failed", "is a", "bad", "exists", "open",
-		"cannot", "nonexistent", "deleting", "getting", "listing", "wrong",
+		"cannot", "nonexistent", "deleting", "getting", "listing", "wrong", "unable",
 		"creating", "Internal Server Error", "null", "accepts", "error", "failed", "inappropriate",
 	}
 	errStr := strings.ToLower(err.Error())

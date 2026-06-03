@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: (C) 2026 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+---
+# FaaS / RESTler configuration for fuzzing the KVM Viewer REST API.
+#
+# Usage (from containers.docker.fuzzing.faas/):
+#   task fuzz \
+#     openapi=<orch-cli>/internal/cli/testdata/kvm-rest-openapi.yaml \
+#     config=<orch-cli>/test/fuzz/kvm/config.yml
+#
+# Prerequisites:
+#   - KVM fuzz server must be running on 127.0.0.1:8585:
+#       go test -run TestKVMFuzzServer -tags kvm -timeout 0 -v ./internal/cli/
+cfg:
+  restler_cfg:
+    annotations:
+      filepath: annotations.json
+    authentication:
+      # token.sh echoes the fixed test token used by TestKVMFuzzServer.
+      # The token value must match kvmFuzzToken in internal/cli/kvm_fuzz_test.go.
+      token_script: token.sh
+      token_cmd: "sh token.sh"
+      token_refresh_interval: 300
+    dictionary:
+      # Minimal RESTler custom dictionary — uses RESTler defaults for all types.
+      filepath: dict.json

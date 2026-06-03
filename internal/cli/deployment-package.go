@@ -56,7 +56,8 @@ Artifacts:
 Create Time: {{.CreateTime}}
 Update Time: {{.UpdateTime}}
 `
-	DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE"
+	DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE"
+	DEPLOYMENT_PACKAGE_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_DEPLOYMENT_PACKAGE_INSPECT_TEMPLATE"
 )
 
 func getCreateDeploymentPackageCommand() *cobra.Command {
@@ -155,7 +156,7 @@ func getExportDeploymentPackageCommand() *cobra.Command {
 
 func getDeploymentPackageOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_PACKAGE_INSPECT_FORMAT, DEPLOYMENT_PACKAGE_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_DEPLOYMENT_PACKAGE_FORMAT, DEPLOYMENT_PACKAGE_OUTPUT_TEMPLATE_ENVVAR)
@@ -271,9 +272,9 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 
 	// Collect default namespaces
 	defaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
-	var defaultNamespacesPtr *catapi.CatalogV3DeploymentPackage_DefaultNamespaces
+	var defaultNamespacesPtr *map[string]string
 	if len(defaultNamespaces) > 0 {
-		defaultNamespacesPtr = &catapi.CatalogV3DeploymentPackage_DefaultNamespaces{AdditionalProperties: defaultNamespaces}
+		defaultNamespacesPtr = &defaultNamespaces
 	}
 
 	// Set up default profile name - use "deployment-profile-1" to match UI behavior
@@ -285,7 +286,7 @@ func runCreateDeploymentPackageCommand(cmd *cobra.Command, args []string) error 
 	// Create an initial deployment profile to match UI behavior
 	initialProfile := catapi.CatalogV3DeploymentProfile{
 		Name:                defaultProfileName,
-		ApplicationProfiles: catapi.CatalogV3DeploymentProfile_ApplicationProfiles{AdditionalProperties: appDefaultProfiles},
+		ApplicationProfiles: appDefaultProfiles,
 	}
 	initialProfiles := []catapi.CatalogV3DeploymentProfile{initialProfile}
 
@@ -665,13 +666,10 @@ func runSetDeploymentPackageCommand(cmd *cobra.Command, args []string) error {
 	newDefaultNamespaces, _ := cmd.Flags().GetStringToString("default-namespace")
 	if len(newDefaultNamespaces) > 0 {
 		if defaultNamespaces == nil {
-			defaultNamespaces = &catapi.CatalogV3DeploymentPackage_DefaultNamespaces{AdditionalProperties: newDefaultNamespaces}
+			defaultNamespaces = &newDefaultNamespaces
 		} else {
-			if defaultNamespaces.AdditionalProperties == nil {
-				defaultNamespaces.AdditionalProperties = map[string]string{}
-			}
 			for k, v := range newDefaultNamespaces {
-				defaultNamespaces.AdditionalProperties[k] = v
+				(*defaultNamespaces)[k] = v
 			}
 		}
 	}

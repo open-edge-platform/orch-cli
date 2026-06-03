@@ -45,10 +45,11 @@ orch-cli delete amtprofile name --project some-project
 `
 
 const (
-	DEFAULT_AMTPROFILE_FORMAT         = "table{{.ProfileName}}\t{{.DomainSuffix}}"
-	DEFAULT_AMTPROFILE_VERBOSE_FORMAT = "table{{.ProfileName}}\t{{.DomainSuffix}}\t{{.Version}}\t{{.ProvisioningCertStorageFormat}}\t{{formatTime .ExpirationDate}}"
-	DEFAULT_AMTPROFILE_INSPECT_FORMAT = "Name: \t{{.ProfileName}}\nDomain Suffix: \t{{.DomainSuffix}}\nVersion: \t{{.Version}}\nTenant ID: \t{{.TenantId}}\nCert Format: \t{{.ProvisioningCertStorageFormat}}\nExpiration Date: \t{{formatTime .ExpirationDate}}\n"
-	AMTPROFILE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_AMTPROFILE_OUTPUT_TEMPLATE"
+	DEFAULT_AMTPROFILE_FORMAT          = "table{{.ProfileName}}\t{{.DomainSuffix}}"
+	DEFAULT_AMTPROFILE_VERBOSE_FORMAT  = "table{{.ProfileName}}\t{{.DomainSuffix}}\t{{.Version}}\t{{.ProvisioningCertStorageFormat}}\t{{formatTime .ExpirationDate}}"
+	DEFAULT_AMTPROFILE_INSPECT_FORMAT  = "Name: \t{{.ProfileName}}\nDomain Suffix: \t{{.DomainSuffix}}\nVersion: \t{{.Version}}\nTenant ID: \t{{.TenantId}}\nCert Format: \t{{.ProvisioningCertStorageFormat}}\nExpiration Date: \t{{formatTime .ExpirationDate}}\n"
+	AMTPROFILE_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_AMTPROFILE_OUTPUT_TEMPLATE"
+	AMTPROFILE_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_AMTPROFILE_INSPECT_TEMPLATE"
 )
 
 func getListAmtProfileCommand() *cobra.Command {
@@ -343,7 +344,7 @@ func getAMTProfileOutputFormat(cmd *cobra.Command, verbose bool, forList bool) (
 		return DEFAULT_AMTPROFILE_VERBOSE_FORMAT, nil
 	}
 	if !forList {
-		return DEFAULT_AMTPROFILE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_AMTPROFILE_INSPECT_FORMAT, AMTPROFILE_INSPECT_TEMPLATE_ENVVAR)
 	}
 	return resolveTableOutputTemplate(cmd, DEFAULT_AMTPROFILE_FORMAT, AMTPROFILE_OUTPUT_TEMPLATE_ENVVAR)
 }
