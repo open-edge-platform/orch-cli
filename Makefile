@@ -8,7 +8,9 @@ PKG     	:= github.com/open-edge-platform/cli
 OCI_REPOSITORY 	:= edge-orch/files/orch-cli
 OCI_REGISTRY    ?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
 VERSION         ?= $(shell cat ./VERSION)
-ARTIFACT_FILES := src ./binaries/build/_output/orch-cli
+ARTIFACT_FILES := ./signed-package
+
+ORAS_VERSION = 1.2.0
 
 RELEASE_DIR     ?= release
 RELEASE_NAME    ?= orch-cli
@@ -229,13 +231,38 @@ license: reuse-tool
 	@# Help: Check licensing with the reuse tool
 	reuse lint
 
-artifact-publish:
+artifact-publish: oras-dependency
+	@echo "Copy files into UPLOAD_DIR folder."
+	mkdir -p ./UPLOAD_DIR/LICENSES/
+	cp LICENSES/*  ./UPLOAD_DIR/LICENSES/
+	find $(ARTIFACT_FILES) -type f -exec cp {} ./UPLOAD_DIR/ \;
+	
 	@echo "TAR orch-cli."
-	tar -czvf orch-cli-package.tar.gz $(ARTIFACT_FILES)
+	tar -czvf orch-cli-package.tar.gz -C ./UPLOAD_DIR .
 
 	@echo "Publishing orch-cli-package.tar.gz to Production Release Service."
-	aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY} || true
+	@if aws ecr describe-repositories --region us-west-2 --repository-names ${OCI_REPOSITORY} >/dev/null 2>&1; then \
+		echo "ECR repository ${OCI_REPOSITORY} already exists."; \
+	else \
+		aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY}; \
+	fi
 	oras push ${OCI_REGISTRY}/${OCI_REPOSITORY}:$(VERSION) ./orch-cli-package.tar.gz
+
+oras-dependency:
+	@# Help: Install oras if not present
+	@if ! command -v oras >/dev/null 2>&1; then \
+		set -eu; \
+		echo "Installing oras $(ORAS_VERSION)..."; \
+		tmpdir=$$(mktemp -d); \
+		bindir="$$(go env GOPATH)/bin"; \
+		mkdir -p "$$bindir"; \
+		curl -fsSL "https://github.com/oras-project/oras/releases/download/v$(ORAS_VERSION)/oras_$(ORAS_VERSION)_linux_amd64.tar.gz" -o "$$tmpdir/oras.tar.gz"; \
+		tar -xzf "$$tmpdir/oras.tar.gz" -C "$$tmpdir" oras; \
+		install -m 0755 "$$tmpdir/oras" "$$bindir/oras"; \
+		rm -rf "$$tmpdir"; \
+	else \
+		echo "oras already installed: $$(command -v oras)"; \
+	fi
 
 list: help
 	@# Help: displays make targets
