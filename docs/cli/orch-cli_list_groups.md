@@ -1,31 +1,32 @@
-## orch-cli list osprofile
+## orch-cli list groups
 
-List all OS profiles
+List all groups
 
 ```
-orch-cli list osprofile [flags]
+orch-cli list groups [flags]
 ```
 
 ### Examples
 
 ```
-# List all OS Profiles
-orch-cli list osprofile --project some-project
+# List all groups
+orch-cli list groups
 
-# List OS Profiles using a custom filter (see: https://google.aip.dev/160 and API spec @ https://github.com/open-edge-platform/orch-utils/blob/main/tenancy-api-mapping/openapispecs/generated/amc-infra-core-edge-infrastructure-manager-openapi-all.yaml )
-orch-cli list osprofile --project some-project --filter "osType=OS_TYPE_IMMUTABLE"
+# List all groups in a specific realm
+orch-cli list groups --realm master
+
 ```
 
 ### Options
 
 ```
-  -f, --filter string                 API filter (see https://google.aip.dev/160)
-  -h, --help                          help for osprofile
+  -h, --help                          help for groups
       --order-by string               order results by field (table output only)
       --output-filter string          Optional client-side filter for table output (see https://google.aip.dev/160); does not apply to JSON/YAML
       --output-template string        Optional custom output template (Go text/template) for table output
       --output-template-file string   Optional path to a file containing a custom template for table output
   -o, --output-type string            output type: table, json, yaml (default "table")
+      --realm string                  Keycloak realm (default "master")
 ```
 
 ### Options inherited from parent commands
