@@ -1,21 +1,24 @@
-## orch-cli delete artifact
+## orch-cli delete user
 
-Delete an artifact
+Delete a user
 
 ```
-orch-cli delete artifact <name> [flags]
+orch-cli delete user <username> [flags]
 ```
 
 ### Examples
 
 ```
-orch-cli delete artifact my-artifact --project some-project
+# Delete a user by username
+orch-cli delete user sample-user
+
 ```
 
 ### Options
 
 ```
-  -h, --help   help for artifact
+  -h, --help           help for user
+      --realm string   Keycloak realm (default "master")
 ```
 
 ### Options inherited from parent commands
