@@ -80,7 +80,7 @@ orch-cli get metric metric_example --hostname host-xxxxxxxx --project sampleproj
 # Query with explicit org-id
 orch-cli get metric metric_example --hostname host-xxxxxxx --org-id 698fde6a-b721-447a-a7c2-7187d64393c1
 # Query using a custom hostname label
-orch-cli get metric metric_example --hostname host-xxxxxxxx --hostname-label instance --project sampleproject
+orch-cli get metric metric_example --hostname  --hostname-label hostGuid --project sampleproject
 # Query average metric over a time range (Unix timestamps)
 orch-cli get metric metric_example --hostname host-xxxxxxxx --average --start-time 1704067200 --end-time 1704153600
 # Query average metric over the last hour ending now
