@@ -195,7 +195,32 @@ This file contains the list of third-party software included in or with the Inte
     │ limitations under the License.
     ────────────────────────────────────────
 
-    
+    github.com/prometheus/client_golang
+    Copyright The Prometheus Authors
+
+    rxjs
+    https://github.com/reactivex/rxjs
+    ────────────────────────────────────────
+    | Copyright (c) 2015-2025 
+    |    Ben Lesh <ben@benlesh.com>
+    |    Google, Inc.
+    |    Netflix, Inc.
+    |    Microsoft Corp.
+    |    and contributors
+    |
+    | Licensed under the Apache License, Version 2.0 (the "License");
+    | you may not use this file except in compliance with the License.
+    | You may obtain a copy of the License at
+    |
+    |    http://www.apache.org/licenses/LICENSE-2.0
+    |
+    | Unless required by applicable law or agreed to in writing, software
+    | distributed under the License is distributed on an "AS IS" BASIS,
+    | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    | See the License for the specific language governing permissions and
+    | limitations under the License.
+    ────────────────────────────────────────
+ 
 
 Apache License
 Version 2.0, January 2004
@@ -392,6 +417,9 @@ limitations under the License.
     gopkg.in/check.v1
     Copyright (c) 2010-2013 Gustavo Niemeyer <gustavo@niemeyer.net>
 
+    github.com/gorilla/websocket
+    Copyright (c) 2013 The Gorilla WebSocket Authors. All rights reserved.
+
 2-Clause BSD License
 
 Redistribution and use in source and binary forms, with or without
@@ -568,7 +596,21 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     | writerc.go yamlh.go yamlprivateh.go
     Copyright (c) 2006-2010 Kirill Simonov
     Copyright (c) 2006-2011 Kirill Simonov
-    
+
+    @angular/common
+    @angular/compiler
+    @angular/core
+    @angular/forms
+    @angular/platform-browser
+    @angular/router
+    https://github.com/angular/angular
+    Copyright (c) 2010-2026 Google LLC. https://angular.dev/license
+
+    @standard-schema/spec
+    https://github.com/standard-schema/standard-schema
+    Copyright (c) 2024 Colin McDonnell
+
+
 
 The MIT License (MIT)
 
@@ -608,5 +650,22 @@ ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+==============================
+
+6. Copyright (c) Microsoft Corporation.
+
+0BSD License
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
 
 ==============================

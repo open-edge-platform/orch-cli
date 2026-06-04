@@ -32,7 +32,8 @@ Parameter templates:{{- range deref .ParameterTemplates}}
    Default: {{str .Default}}
    Suggested values: {{if .SuggestedValues}}{{range $i, $v := deref .SuggestedValues}}{{if $i}},{{end}}{{$v}}{{end}}{{end}}{{end}}{{- end}}{{if str .ChartValues}}
 Chart Values: {{str .ChartValues}}{{end}}`
-	PROFILE_OUTPUT_TEMPLATE_ENVVAR = "ORCH_CLI_PROFILE_OUTPUT_TEMPLATE"
+	PROFILE_OUTPUT_TEMPLATE_ENVVAR  = "ORCH_CLI_PROFILE_OUTPUT_TEMPLATE"
+	PROFILE_INSPECT_TEMPLATE_ENVVAR = "ORCH_CLI_PROFILE_INSPECT_TEMPLATE"
 )
 
 func getCreateProfileCommand() *cobra.Command {
@@ -177,7 +178,7 @@ func parseParameterTemplate(spec string) (*catapi.CatalogV3ParameterTemplate, er
 
 func getProfileOutputFormat(cmd *cobra.Command, verbose bool) (string, error) {
 	if verbose {
-		return DEFAULT_PROFILE_INSPECT_FORMAT, nil
+		return resolveTableOutputTemplate(cmd, DEFAULT_PROFILE_INSPECT_FORMAT, PROFILE_INSPECT_TEMPLATE_ENVVAR)
 	}
 
 	return resolveTableOutputTemplate(cmd, DEFAULT_PROFILE_FORMAT, PROFILE_OUTPUT_TEMPLATE_ENVVAR)
