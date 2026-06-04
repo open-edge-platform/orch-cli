@@ -80,7 +80,7 @@ orch-cli get metric metric_example --hostname host-xxxxxxxx --project sampleproj
 # Query with explicit org-id
 orch-cli get metric metric_example --hostname host-xxxxxxx --org-id 698fde6a-b721-447a-a7c2-7187d64393c1
 # Query using a custom hostname label
-orch-cli get metric metric_example --hostname host-xxxxxxxx --hostname-label instance --project sampleproject
+orch-cli get metric metric_example --hostname 21a17948-087c-85eb-3a42-88aedd66eded --hostname-label hostGuid --project sampleproject
 # Query average metric over a time range (Unix timestamps)
 orch-cli get metric metric_example --hostname host-xxxxxxxx --average --start-time 1704067200 --end-time 1704153600
 # Query average metric over the last hour ending now
@@ -583,32 +583,45 @@ func runGetMetricCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	hostnameLabel, err := cmd.Flags().GetString(hostnameLabelFlag)
+	if err != nil {
+		return err
+	}
 
-	// Resolve --hostname by name if not already a resource ID.
-	if !isHostResourceID(hostname) {
+	// If hostname label is explicitly set, skip inventory lookup and use the raw
+	// hostname value as the label value for Prometheus queries.
+	if !cmd.Flags().Changed(hostnameLabelFlag) {
 		infraCTX, hostClient, projectName, infraErr := InfraFactory(cmd)
 		if infraErr != nil {
 			return infraErr
 		}
-		nameFilter := fmt.Sprintf("name=%q", hostname)
-		hostResp, infraErr := hostClient.HostServiceListHostsWithResponse(infraCTX, projectName,
-			&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
-		if infraErr != nil {
-			return processError(infraErr)
-		}
-		if infraErr = checkResponse(hostResp.HTTPResponse, hostResp.Body, "error while retrieving hosts"); infraErr != nil {
-			return infraErr
-		}
-		host, infraErr := findHostByName(hostResp.JSON200.Hosts, hostname)
-		if infraErr != nil {
-			return infraErr
-		}
-		hostname = derefString(host.ResourceId)
-	}
 
-	hostnameLabel, err := cmd.Flags().GetString(hostnameLabelFlag)
-	if err != nil {
-		return err
+		if isHostResourceID(hostname) {
+			hostname, infraErr = getHostUUID(infraCTX, hostClient, projectName, hostname)
+			if infraErr != nil {
+				return infraErr
+			}
+		} else {
+			nameFilter := fmt.Sprintf("name=%q", hostname)
+			hostResp, infraErr := hostClient.HostServiceListHostsWithResponse(infraCTX, projectName,
+				&infra.HostServiceListHostsParams{Filter: &nameFilter}, auth.AddAuthHeader)
+			if infraErr != nil {
+				return processError(infraErr)
+			}
+			if infraErr = checkResponse(hostResp.HTTPResponse, hostResp.Body, "error while retrieving hosts"); infraErr != nil {
+				return infraErr
+			}
+			host, infraErr := findHostByName(hostResp.JSON200.Hosts, hostname)
+			if infraErr != nil {
+				return infraErr
+			}
+			if host.Uuid == nil || strings.TrimSpace(*host.Uuid) == "" {
+				return fmt.Errorf("host %q does not have a UUID", hostname)
+			}
+			hostname = strings.TrimSpace(*host.Uuid)
+		}
+
+		hostnameLabel = "hostGuid"
 	}
 
 	modes, aggregationModeCount, err := getMetricQueryModes(cmd)

@@ -47,7 +47,7 @@ func (s *CLITestSuite) TestMetric() {
 		s.Equal("Bearer metric-test-token", r.Header.Get("Authorization"))
 		s.Equal("698fde6a-b721-447a-a7c2-7187d64393c1", r.Header.Get("X-Scope-OrgID"))
 		s.NoError(r.ParseForm())
-		s.Equal(`node_cpu_seconds_total{host="host-abc12345"}`, r.Form.Get("query"))
+		s.Equal(`node_cpu_seconds_total{hostGuid="550e8400-e29b-41d4-a716-446655440000"}`, r.Form.Get("query"))
 		s.Equal(defaultMetricsTimeout.String(), r.Form.Get("timeout"))
 
 		w.Header().Set("Content-Type", "application/json")
@@ -99,7 +99,7 @@ func (s *CLITestSuite) TestGetMetricAtTimestamp() {
 		s.Equal("Bearer metric-ts-test-token", r.Header.Get("Authorization"))
 		s.Equal("698fde6a-b721-447a-a7c2-7187d64393c1", r.Header.Get("X-Scope-OrgID"))
 		s.NoError(r.ParseForm())
-		s.Equal(`node_cpu_seconds_total{host="host-abc12345"}`, r.Form.Get("query"))
+		s.Equal(`node_cpu_seconds_total{hostGuid="550e8400-e29b-41d4-a716-446655440000"}`, r.Form.Get("query"))
 		s.Equal("1704153600", r.Form.Get("time"))
 
 		w.Header().Set("Content-Type", "application/json")
@@ -489,7 +489,7 @@ func (s *CLITestSuite) TestGetMetricWithRange() {
 		s.Equal("Bearer range-metric-test-token", r.Header.Get("Authorization"))
 		s.Equal("698fde6a-b721-447a-a7c2-7187d64393c1", r.Header.Get("X-Scope-OrgID"))
 		s.NoError(r.ParseForm())
-		s.Equal(`avg_over_time(node_cpu_seconds_total{host="host-abc12345"}[86400s])`, r.Form.Get("query"))
+		s.Equal(`avg_over_time(node_cpu_seconds_total{hostGuid="550e8400-e29b-41d4-a716-446655440000"}[86400s])`, r.Form.Get("query"))
 		s.Equal("1704153600", r.Form.Get("time"))
 		s.Equal(defaultMetricsTimeout.String(), r.Form.Get("timeout"))
 
@@ -548,7 +548,7 @@ func (s *CLITestSuite) TestGetMetricWithAverageDuration() {
 		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		s.Equal("Bearer avg-duration-metric-test-token", r.Header.Get("Authorization"))
 		s.NoError(r.ParseForm())
-		s.Equal(`avg_over_time(node_cpu_seconds_total{host="host-abc12345"}[3600s])`, r.Form.Get("query"))
+		s.Equal(`avg_over_time(node_cpu_seconds_total{hostGuid="550e8400-e29b-41d4-a716-446655440000"}[3600s])`, r.Form.Get("query"))
 
 		evalTime, parseErr := strconv.ParseInt(r.Form.Get("time"), 10, 64)
 		s.NoError(parseErr)
@@ -595,7 +595,7 @@ func (s *CLITestSuite) TestGetMetricWithSumRange() {
 		s.Equal("Bearer sum-metric-test-token", r.Header.Get("Authorization"))
 		s.Equal("698fde6a-b721-447a-a7c2-7187d64393c1", r.Header.Get("X-Scope-OrgID"))
 		s.NoError(r.ParseForm())
-		s.Equal(`sum_over_time(node_cpu_seconds_total{host="host-abc12345"}[3600s])`, r.Form.Get("query"))
+		s.Equal(`sum_over_time(node_cpu_seconds_total{hostGuid="550e8400-e29b-41d4-a716-446655440000"}[3600s])`, r.Form.Get("query"))
 		s.Equal("1704153600", r.Form.Get("time"))
 		s.Equal(defaultMetricsTimeout.String(), r.Form.Get("timeout"))
 
@@ -642,7 +642,7 @@ func (s *CLITestSuite) TestGetMetricWithSumDuration() {
 		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		s.Equal("Bearer sum-duration-metric-test-token", r.Header.Get("Authorization"))
 		s.NoError(r.ParseForm())
-		s.Equal(`sum_over_time(node_cpu_seconds_total{host="host-abc12345"}[3600s])`, r.Form.Get("query"))
+		s.Equal(`sum_over_time(node_cpu_seconds_total{hostGuid="550e8400-e29b-41d4-a716-446655440000"}[3600s])`, r.Form.Get("query"))
 
 		// Parse eval time to verify it's near now
 		evalTime, parseErr := strconv.ParseInt(r.Form.Get("time"), 10, 64)
@@ -769,7 +769,7 @@ func (s *CLITestSuite) TestGetMetricWithIncreaseDuration() {
 		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		s.Equal("Bearer increase-duration-metric-test-token", r.Header.Get("Authorization"))
 		s.NoError(r.ParseForm())
-		s.Equal(`increase(node_cpu_seconds_total{host="host-abc12345"}[3600s])`, r.Form.Get("query"))
+		s.Equal(`increase(node_cpu_seconds_total{hostGuid="550e8400-e29b-41d4-a716-446655440000"}[3600s])`, r.Form.Get("query"))
 
 		evalTime, parseErr := strconv.ParseInt(r.Form.Get("time"), 10, 64)
 		s.NoError(parseErr)
@@ -827,7 +827,7 @@ func (s *CLITestSuite) TestGetMetricWithRangeDuration() {
 		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		s.Equal("Bearer range-duration-metric-test-token", r.Header.Get("Authorization"))
 		s.NoError(r.ParseForm())
-		s.Equal(`node_cpu_seconds_total{host="host-abc12345"}`, r.Form.Get("query"))
+		s.Equal(`node_cpu_seconds_total{hostGuid="550e8400-e29b-41d4-a716-446655440000"}`, r.Form.Get("query"))
 
 		start, parseErr := strconv.ParseInt(r.Form.Get("start"), 10, 64)
 		s.NoError(parseErr)
@@ -882,7 +882,7 @@ func (s *CLITestSuite) TestGetMetricWithRangeExplicitWindow() {
 		s.Equal("application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		s.Equal("Bearer range-explicit-metric-test-token", r.Header.Get("Authorization"))
 		s.NoError(r.ParseForm())
-		s.Equal(`node_cpu_seconds_total{host="host-abc12345"}`, r.Form.Get("query"))
+		s.Equal(`node_cpu_seconds_total{hostGuid="550e8400-e29b-41d4-a716-446655440000"}`, r.Form.Get("query"))
 		s.Equal("1704150000", r.Form.Get("start"))
 		s.Equal("1704153600", r.Form.Get("end"))
 
@@ -969,7 +969,7 @@ func (s *CLITestSuite) TestGetMetricByHostName() {
 		s.Equal("/prometheus/api/v1/query", r.URL.Path)
 		s.NoError(r.ParseForm())
 		// The hostname must be resolved to the resource ID before querying Prometheus.
-		s.Equal(`node_cpu_seconds_total{host="host-abc12345"}`, r.Form.Get("query"))
+		s.Equal(`node_cpu_seconds_total{hostGuid="550e8400-e29b-41d4-a716-446655440000"}`, r.Form.Get("query"))
 
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","host":"host-abc12345"},"value":[1714478400,"99"]}]}}`))
@@ -1004,4 +1004,42 @@ func (s *CLITestSuite) TestGetMetricByHostNameNotFound() {
 	})
 	s.Error(err)
 	s.Contains(err.Error(), `no host found with name "nonexistent-host"`)
+}
+
+func (s *CLITestSuite) TestGetMetricWithExplicitHostnameLabelSkipsInventoryLookup() {
+	tokenEnvWasSet := false
+	previousToken := os.Getenv("MT_GW_TOKEN")
+	if previousToken != "" {
+		tokenEnvWasSet = true
+	}
+	s.T().Cleanup(func() {
+		if tokenEnvWasSet {
+			s.NoError(os.Setenv("MT_GW_TOKEN", previousToken))
+			return
+		}
+		os.Unsetenv("MT_GW_TOKEN")
+	})
+	s.NoError(os.Setenv("MT_GW_TOKEN", "metric-host-label-override-test-token"))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.Equal(http.MethodPost, r.Method)
+		s.Equal("/prometheus/api/v1/query", r.URL.Path)
+		s.NoError(r.ParseForm())
+		s.Equal(`node_cpu_seconds_total{hostGuid="21a17948-087c-85eb-3a42-88aedd66eded"}`, r.Form.Get("query"))
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"node_cpu_seconds_total","hostGuid":"21a17948-087c-85eb-3a42-88aedd66eded"},"value":[1714478400,"99"]}]}}`))
+	}))
+	defer server.Close()
+
+	output, err := s.getMetric("node_cpu_seconds_total", commandArgs{
+		metricsEndpointFlag: server.URL + "/prometheus",
+		hostnameFlag:        "21a17948-087c-85eb-3a42-88aedd66eded",
+		hostnameLabelFlag:   "hostGuid",
+		orgIDFlag:           "698fde6a-b721-447a-a7c2-7187d64393c1",
+	})
+	s.NoError(err)
+	s.Contains(output, "METRIC")
+	s.Contains(output, "node_cpu_seconds_total")
+	s.Contains(output, "99")
 }
