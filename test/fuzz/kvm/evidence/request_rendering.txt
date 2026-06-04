@@ -1,0 +1,9 @@
+
+2026-06-04 10:37:55.476: Generation-1
+2026-06-04 10:37:55.476: 	Rendered requests: 3 / 3
+2026-06-04 10:37:55.476: 	Rendered requests with "valid" status codes: 3 / 3
+2026-06-04 10:37:55.476: 	Rendered requests determined to be fully valid (no resource creation failures): 3 / 3
+
+2026-06-04 10:37:55.477: 	Never Rendered requests:
+-------------------------
+

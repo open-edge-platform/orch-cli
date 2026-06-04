@@ -1,0 +1,96 @@
+Random seed: 12345
+Setting fuzzing schemes: directed-smoke-test
+2026-06-04 10:37:55.274: Going to fuzz a set with 3 requests
+2026-06-04 10:37:55.274: Request-0: Value Combinations: 2
+2026-06-04 10:37:55.274: Request-1: Value Combinations: 2
+2026-06-04 10:37:55.274: Request-2: Value Combinations: 2
+2026-06-04 10:37:55.274: Avg. Value Combinations per Request: 2
+2026-06-04 10:37:55.274: Median Value Combinations per Request: 2
+2026-06-04 10:37:55.274: Min Value Combinations per Request: 2
+2026-06-04 10:37:55.274: Max Value Combinations per Request: 2
+2026-06-04 10:37:55.274: Total dependencies: 0
+
+2026-06-04 10:37:55.279: Generation: 1 / Sequences Collection Size: 3 
+(After directed-smoke-test Extend)
+
+Rendering request 0 from scratch
+
+2026-06-04 10:37:55.359: Request 0
+2026-06-04 10:37:55.359: Endpoint - /api/connect
+2026-06-04 10:37:55.359: Hex Def - 14fdd3eb9ac6ef3a28d04a9c6544d76511826b83
+2026-06-04 10:37:55.359: Sequence length that satisfies dependencies: 1
+2026-06-04 10:37:55.359: Rendering VALID
+		- restler_static_string: 'POST '
+		- restler_static_string: ''
+		- restler_static_string: '/'
+		- restler_static_string: 'api'
+		- restler_static_string: '/'
+		- restler_static_string: 'connect'
+		- restler_static_string: ' HTTP/1.1\r\n'
+		- restler_static_string: 'Accept: application/json\r\n'
+		- restler_static_string: 'Host: localhost:8585\r\n'
+		+ restler_refreshable_authentication_token: ['token_auth_method', 'token_refresh_interval', 'token_refresh_cmd']
+		- restler_static_string: '\r\n'
+
+Rendering request 1 from scratch
+
+2026-06-04 10:37:55.417: Request 1
+2026-06-04 10:37:55.417: Endpoint - /api/disconnect
+2026-06-04 10:37:55.417: Hex Def - a6e84f8421508c94f4e51d821142d325cd2ce619
+2026-06-04 10:37:55.417: Sequence length that satisfies dependencies: 1
+2026-06-04 10:37:55.417: Rendering VALID
+		- restler_static_string: 'POST '
+		- restler_static_string: ''
+		- restler_static_string: '/'
+		- restler_static_string: 'api'
+		- restler_static_string: '/'
+		- restler_static_string: 'disconnect'
+		- restler_static_string: ' HTTP/1.1\r\n'
+		- restler_static_string: 'Accept: application/json\r\n'
+		- restler_static_string: 'Host: localhost:8585\r\n'
+		+ restler_refreshable_authentication_token: ['token_auth_method', 'token_refresh_interval', 'token_refresh_cmd']
+		- restler_static_string: '\r\n'
+
+Rendering request 2 from scratch
+
+2026-06-04 10:37:55.475: Request 2
+2026-06-04 10:37:55.475: Endpoint - /api/status
+2026-06-04 10:37:55.475: Hex Def - af426a2e765e9d9575a47255dc9f78f45325eab6
+2026-06-04 10:37:55.475: Sequence length that satisfies dependencies: 1
+2026-06-04 10:37:55.476: Rendering VALID
+		- restler_static_string: 'GET '
+		- restler_static_string: ''
+		- restler_static_string: '/'
+		- restler_static_string: 'api'
+		- restler_static_string: '/'
+		- restler_static_string: 'status'
+		- restler_static_string: ' HTTP/1.1\r\n'
+		- restler_static_string: 'Accept: application/json\r\n'
+		- restler_static_string: 'Host: localhost:8585\r\n'
+		+ restler_refreshable_authentication_token: ['token_auth_method', 'token_refresh_interval', 'token_refresh_cmd']
+		- restler_static_string: '\r\n'
+
+2026-06-04 10:37:55.476: Generation: 1 / Sequences Collection Size: 3 
+(After directed-smoke-test Render)
+
+2026-06-04 10:37:55.476: Final Swagger spec coverage: 3 / 3
+2026-06-04 10:37:55.476: Rendered requests: 3 / 3
+2026-06-04 10:37:55.476: Rendered requests with "valid" status codes: 3 / 3
+2026-06-04 10:37:55.476: Num fully valid requests (no resource creation failures): 3
+2026-06-04 10:37:55.476: Num requests not rendered due to invalid sequence re-renders: 0
+2026-06-04 10:37:55.476: Num invalid requests caused by failed resource creations: 0
+2026-06-04 10:37:55.476: Total Creations of Dyn Objects: 0
+2026-06-04 10:37:55.476: Total Requests Sent: {'gc': 0, 'main_driver': 3, 'LeakageRuleChecker': 0, 'ResourceHierarchyChecker': 0, 'UseAfterFreeChecker': 0, 'NameSpaceRuleChecker': 0, 'InvalidDynamicObjectChecker': 0, 'PayloadBodyChecker': 0, 'ExamplesChecker': 0}
+2026-06-04 10:37:55.476: Bug Buckets: {}
+
+Testing completed -- below are the final stats:
+
+2026-06-04 10:37:55.477: Final Swagger spec coverage: 3 / 3
+2026-06-04 10:37:55.477: Rendered requests: 3 / 3
+2026-06-04 10:37:55.477: Rendered requests with "valid" status codes: 3 / 3
+2026-06-04 10:37:55.477: Num fully valid requests (no resource creation failures): 3
+2026-06-04 10:37:55.477: Num requests not rendered due to invalid sequence re-renders: 0
+2026-06-04 10:37:55.477: Num invalid requests caused by failed resource creations: 0
+2026-06-04 10:37:55.477: Total Creations of Dyn Objects: 0
+2026-06-04 10:37:55.477: Total Requests Sent: {'gc': 0, 'main_driver': 3, 'LeakageRuleChecker': 0, 'ResourceHierarchyChecker': 0, 'UseAfterFreeChecker': 0, 'NameSpaceRuleChecker': 0, 'InvalidDynamicObjectChecker': 0, 'PayloadBodyChecker': 0, 'ExamplesChecker': 0}
+2026-06-04 10:37:55.477: Bug Buckets: {}

@@ -11,4 +11,7 @@
 # To use a different token, set KVM_FUZZ_TOKEN in the environment
 # and restart TestKVMFuzzServer with the same value via KVM_FUZZ_TOKEN.
 TOKEN="${KVM_FUZZ_TOKEN:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}"
+# RESTler requires the first output line to be an ast.literal_eval()-able
+# Python dict (app metadata), followed by the actual header line(s).
+echo "{'app1': {}}"
 echo "X-Session-Token: ${TOKEN}"

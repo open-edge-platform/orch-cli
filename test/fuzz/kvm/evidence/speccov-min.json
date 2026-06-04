@@ -1,0 +1,25 @@
+{
+    "14fdd3eb9ac6ef3a28d04a9c6544d76511826b83_1": {
+        "verb": "POST",
+        "endpoint": "/api/connect",
+        "valid": 1,
+        "matching_prefix": [],
+        "request": "POST /api/connect HTTP/1.1\r\nAccept: application/json\r\nHost: localhost:8585\r\nAUTHORIZATION TOKEN\r\n\r\n",
+        "response": "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Thu, 04 Jun 2026 10:37:55 GMT\r\nContent-Length: 18\r\n\r\n{\"state\":\"active\"}"
+    },
+    "a6e84f8421508c94f4e51d821142d325cd2ce619_1": {
+        "verb": "POST",
+        "endpoint": "/api/disconnect",
+        "valid": 1,
+        "matching_prefix": [],
+        "request": "POST /api/disconnect HTTP/1.1\r\nAccept: application/json\r\nHost: localhost:8585\r\nAUTHORIZATION TOKEN\r\n\r\n",
+        "response": "HTTP/1.1 200 OK\r\nDate: Thu, 04 Jun 2026 10:37:55 GMT\r\nContent-Length: 0\r\n\r\n"
+    },
+    "af426a2e765e9d9575a47255dc9f78f45325eab6_1": {
+        "verb": "GET",
+        "endpoint": "/api/status",
+        "valid": 1,
+        "matching_prefix": [],
+        "request": "GET /api/status HTTP/1.1\r\nAccept: application/json\r\nHost: localhost:8585\r\nAUTHORIZATION TOKEN\r\n\r\n",
+        "response": "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Thu, 04 Jun 2026 10:37:55 GMT\r\nContent-Length: 24\r\n\r\n{\"state\":\"disconnected\"}"
+    }}

@@ -1,0 +1,7 @@
+fuzzing valid True
+fuzzing invalid True
+start with examples True
+size dep budget True
+use feedback True
+skip_uuid_substitution False
+recipe None

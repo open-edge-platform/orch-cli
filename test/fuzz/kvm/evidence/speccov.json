@@ -1,0 +1,109 @@
+{
+    "14fdd3eb9ac6ef3a28d04a9c6544d76511826b83_1": {
+        "verb": "POST",
+        "endpoint": "/api/connect",
+        "verb_endpoint": "POST /api/connect",
+        "valid": 1,
+        "matching_prefix": [],
+        "invalid_due_to_sequence_failure": 0,
+        "invalid_due_to_resource_failure": 0,
+        "invalid_due_to_parser_failure": 0,
+        "invalid_due_to_500": 0,
+        "status_code": "200",
+        "status_text": "OK",
+        "error_message": null,
+        "request_order": 0,
+        "sample_request": {
+            "request_sent_timestamp": null,
+            "response_received_timestamp": "2026-06-04 10:37:55",
+            "request_verb": "POST",
+            "request_uri": "/api/connect",
+            "request_headers": [
+                "Accept: application/json",
+                "Host: localhost:8585",
+                "AUTHORIZATION TOKEN"
+            ],
+            "request_body": null,
+            "response_status_code": "200",
+            "response_status_text": "OK",
+            "response_headers": [
+                "Content-Type: application/json",
+                "Date: Thu, 04 Jun 2026 10:37:55 GMT",
+                "Content-Length: 18"
+            ],
+            "response_body": "{\"state\":\"active\"}"
+        },
+        "tracked_parameters": {}
+    },
+    "a6e84f8421508c94f4e51d821142d325cd2ce619_1": {
+        "verb": "POST",
+        "endpoint": "/api/disconnect",
+        "verb_endpoint": "POST /api/disconnect",
+        "valid": 1,
+        "matching_prefix": [],
+        "invalid_due_to_sequence_failure": 0,
+        "invalid_due_to_resource_failure": 0,
+        "invalid_due_to_parser_failure": 0,
+        "invalid_due_to_500": 0,
+        "status_code": "200",
+        "status_text": "OK",
+        "error_message": null,
+        "request_order": 1,
+        "sample_request": {
+            "request_sent_timestamp": null,
+            "response_received_timestamp": "2026-06-04 10:37:55",
+            "request_verb": "POST",
+            "request_uri": "/api/disconnect",
+            "request_headers": [
+                "Accept: application/json",
+                "Host: localhost:8585",
+                "AUTHORIZATION TOKEN"
+            ],
+            "request_body": null,
+            "response_status_code": "200",
+            "response_status_text": "OK",
+            "response_headers": [
+                "Date: Thu, 04 Jun 2026 10:37:55 GMT",
+                "Content-Length: 0"
+            ],
+            "response_body": ""
+        },
+        "tracked_parameters": {}
+    },
+    "af426a2e765e9d9575a47255dc9f78f45325eab6_1": {
+        "verb": "GET",
+        "endpoint": "/api/status",
+        "verb_endpoint": "GET /api/status",
+        "valid": 1,
+        "matching_prefix": [],
+        "invalid_due_to_sequence_failure": 0,
+        "invalid_due_to_resource_failure": 0,
+        "invalid_due_to_parser_failure": 0,
+        "invalid_due_to_500": 0,
+        "status_code": "200",
+        "status_text": "OK",
+        "error_message": null,
+        "request_order": 2,
+        "sample_request": {
+            "request_sent_timestamp": null,
+            "response_received_timestamp": "2026-06-04 10:37:55",
+            "request_verb": "GET",
+            "request_uri": "/api/status",
+            "request_headers": [
+                "Accept: application/json",
+                "Host: localhost:8585",
+                "AUTHORIZATION TOKEN"
+            ],
+            "request_body": null,
+            "response_status_code": "200",
+            "response_status_text": "OK",
+            "response_headers": [
+                "Content-Type: application/json",
+                "Date: Thu, 04 Jun 2026 10:37:55 GMT",
+                "Content-Length: 24"
+            ],
+            "response_body": "{\"state\":\"disconnected\"}"
+        },
+        "tracked_parameters": {}
+    }
+}

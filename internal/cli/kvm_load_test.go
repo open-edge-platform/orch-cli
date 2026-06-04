@@ -92,7 +92,7 @@ func TestKVMLoadRun(t *testing.T) {
 
 	srv := &kvmServer{
 		session:      sess,
-		sessionToken: kvmFuzzToken,
+		sessionToken: kvmFuzzDefaultToken,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(_ *http.Request) bool { return true },
 		},
@@ -139,7 +139,7 @@ func TestKVMLoadRun(t *testing.T) {
 			errCount++
 			continue
 		}
-		req.Header.Set("X-Session-Token", kvmFuzzToken)
+		req.Header.Set("X-Session-Token", kvmFuzzDefaultToken)
 
 		resp, doErr := client.Do(req)
 		totalReqs++

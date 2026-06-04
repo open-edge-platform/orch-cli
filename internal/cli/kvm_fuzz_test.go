@@ -44,9 +44,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// kvmFuzzToken is a fixed, well-known token used only for fuzz testing.
-// It must match the value in test/fuzz/kvm/token.sh.
-const kvmFuzzToken = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+// kvmFuzzDefaultToken is the fallback token when KVM_FUZZ_TOKEN is not set.
+// It must match the default value in test/fuzz/kvm/token.sh.
+const kvmFuzzDefaultToken = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 // kvmFuzzAddr is the fixed listen address for the fuzz target server.
 // Override via KVM_FUZZ_ADDR environment variable if the port is in use.
@@ -56,6 +56,11 @@ func TestKVMFuzzServer(t *testing.T) {
 	addr := os.Getenv("KVM_FUZZ_ADDR")
 	if addr == "" {
 		addr = kvmFuzzDefaultAddr
+	}
+
+	token := os.Getenv("KVM_FUZZ_TOKEN")
+	if token == "" {
+		token = kvmFuzzDefaultToken
 	}
 
 	// Mock session in "active" state — no real MPS connection needed.
@@ -71,7 +76,7 @@ func TestKVMFuzzServer(t *testing.T) {
 
 	srv := &kvmServer{
 		session:      sess,
-		sessionToken: kvmFuzzToken,
+		sessionToken: token,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(_ *http.Request) bool { return true },
 		},
@@ -95,7 +100,7 @@ func TestKVMFuzzServer(t *testing.T) {
 	go func() { _ = httpSrv.Serve(listener) }()
 
 	t.Logf("KVM fuzz server listening on http://%s", addr)
-	t.Logf("X-Session-Token: %s", kvmFuzzToken)
+	t.Logf("X-Session-Token: %s", token)
 	t.Log("Waiting for SIGINT or SIGTERM to stop...")
 
 	// Block until the process is interrupted (Ctrl+C or SIGTERM from CI).

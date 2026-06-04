@@ -99,24 +99,50 @@ Fix 2 — KVM WebSocket origin validation (SDL523-13)
 
 VERIFICATION COMMANDS
 ---------------------
-The following commands can be run after starting a KVM session to confirm
+The following commands executed after starting a KVM session to confirm
 minimal permissions. Replace <PORT> with the port printed at session start.
 
 1. Confirm server is bound to loopback only (not 0.0.0.0):
    ss -tlnp | grep <PORT>
    Expected: Local Address = 127.0.0.1:<PORT>
 
+    ss -tlnp | grep 44577
+LISTEN 0      4096       127.0.0.1:44577      0.0.0.0:*    users:(("orch-cli",pid=587448,fd=43))
+
+   seu@inayak-eom:~$ ss -tlnp | grep 44577
+LISTEN 0      4096       127.0.0.1:44577      0.0.0.0:*    users:(("orch-cli",pid=587448,fd=43))     
+
+
 2. Confirm network interface is NOT listening externally:
    ss -tlnp | grep <PORT> | grep -v 127.0.0.1
    Expected: no output
 
+ seu@inayak-eom:~$ ss -tlnp | grep 44577 | grep -v 127.0.0.1  no output
+seu@inayak-eom:~$ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:44577/api/status
+403seu@inayak-eom:~$ 
+
 3. Confirm TLS 1.3 on outbound MPS connection:
    (logged at session start)
-   [KVM] TLS: using CA certificate from "orch-ca.crt"
+   KVM/SOL session requires operator consent.
+Please read the 6-digit code shown on the device screen.
+Enter consent code: 104723
+Consent code accepted by MPS.
+Obtaining relay token from MPS...
+Waiting for kvm-manager to confirm session start...
+[KVM] AMT_PASSWORD not set — using empty password (CCM mode)
+[KVM] Connecting to MPS relay: wss://mps-wss.orch-10-139-218-76.pid.infra-host.com/relay/webrelay.ashx?p=2&host=94e00576-d750-3391-de61-48210b50d802&port=16994&tls=0&tls1only=0&mode=kvm
+[KVM] TLS: using CA certificate from "orch-ca.crt"
+[KVM] Connected to MPS relay
+[KVM] Starting AMT RedirectStart handshake
+[KVM] → RedirectStartKVM sent
+[KVM] session token generated (first 8 chars: 4a444307...)
 
 4. Confirm token rejection (403) without valid token:
    curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:<PORT>/api/status
    Expected: 403
+ 
+   seu@inayak-eom:~$ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:44577/api/status
+   403
 
 5. Confirm WebSocket upgrade rejected from non-localhost origin:
    curl -s -o /dev/null -w "%{http_code}" \
@@ -125,13 +151,15 @@ minimal permissions. Replace <PORT> with the port printed at session start.
      -H "Connection: Upgrade" \
      -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
      -H "Sec-WebSocket-Version: 13" \
-     "http://127.0.0.1:<PORT>/ws/kvm?token=<TOKEN>"
+     "http://127.0.0.1:44577/ws/kvm?token=<TOKEN>"
    Expected: 403
 
 6. Confirm no named pipes or Unix sockets:
    grep -rn "ListenUnix\|mkfifo\|os\.Pipe" \
      internal/cli/kvm_viewer.go internal/cli/sol_session.go
    Expected: no output
+   
+   seu@inayak-eom:~/6-2/orch-cli$ grep -rn "ListenUnix\|mkfifo\|os\.Pipe"    internal/cli/kvm_viewer.go internal/cli/sol_session.g
 
 
 CONCLUSION

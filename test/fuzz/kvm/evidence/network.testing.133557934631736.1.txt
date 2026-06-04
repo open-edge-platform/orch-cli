@@ -1,0 +1,158 @@
+2026-06-04 10:37:55.275: Will refresh token: sh /restler-workdir/a4dfcd79-8371-4f32-a5eb-8c6a7171f31e/authentication.sh
+
+Generation-1: Rendering Sequence-1
+
+	Request: 1 (Remaining candidate combinations: 2)
+	Request hash: 14fdd3eb9ac6ef3a28d04a9c6544d76511826b83
+
+		- restler_static_string: 'POST '
+		- restler_static_string: ''
+		- restler_static_string: '/'
+		- restler_static_string: 'api'
+		- restler_static_string: '/'
+		- restler_static_string: 'connect'
+		- restler_static_string: ' HTTP/1.1\r\n'
+		- restler_static_string: 'Accept: application/json\r\n'
+		- restler_static_string: 'Host: localhost:8585\r\n'
+		+ restler_refreshable_authentication_token: [token_auth_method, token_refresh_interval, ...]
+		- restler_static_string: '\r\n'
+
+2026-06-04 10:37:55.294: Sending: 'POST /api/connect HTTP/1.1\r\nAccept: application/json\r\nHost: localhost:8585\r\n_OMITTED_AUTH_TOKEN_\r\nContent-Length: 0\r\nUser-Agent: restler/9.3.1\r\nx-restler-sequence-id: 48a933f5-dc09-43f0-a517-738f0b89b216\r\n\r\n'
+
+2026-06-04 10:37:55.298: Received: 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Thu, 04 Jun 2026 10:37:55 GMT\r\nContent-Length: 18\r\n\r\n{"state":"active"}'
+
+2026-06-04 10:37:55.301: Checker: LeakageRuleChecker kicks in
+
+2026-06-04 10:37:55.304: Checker: LeakageRuleChecker kicks out
+
+2026-06-04 10:37:55.307: Checker: ResourceHierarchyChecker kicks in
+
+2026-06-04 10:37:55.309: Checker: ResourceHierarchyChecker kicks out
+
+2026-06-04 10:37:55.312: Checker: UseAfterFreeChecker kicks in
+
+2026-06-04 10:37:55.315: Checker: UseAfterFreeChecker kicks out
+
+2026-06-04 10:37:55.317: Checker: NameSpaceRuleChecker kicks in
+
+2026-06-04 10:37:55.320: Checker: NameSpaceRuleChecker kicks out
+
+2026-06-04 10:37:55.323: Checker: InvalidDynamicObjectChecker kicks in
+
+2026-06-04 10:37:55.326: Checker: InvalidDynamicObjectChecker kicks out
+
+2026-06-04 10:37:55.328: Checker: PayloadBodyChecker kicks in
+
+2026-06-04 10:37:55.331: PayloadBodyChecker fuzzing valid True
+2026-06-04 10:37:55.334: PayloadBodyChecker fuzzing invalid True
+2026-06-04 10:37:55.337: PayloadBodyChecker start with examples True
+2026-06-04 10:37:55.339: PayloadBodyChecker size dep budget True
+2026-06-04 10:37:55.342: PayloadBodyChecker use feedback True
+2026-06-04 10:37:55.345: PayloadBodyChecker skip_uuid_substitution False
+2026-06-04 10:37:55.347: PayloadBodyChecker recipe None
+2026-06-04 10:37:55.350: Checker: PayloadBodyChecker kicks out
+
+2026-06-04 10:37:55.353: Checker: ExamplesChecker kicks in
+
+2026-06-04 10:37:55.356: Checker: ExamplesChecker kicks out
+
+
+Generation-1: Rendering Sequence-2
+
+	Request: 1 (Remaining candidate combinations: 2)
+	Request hash: a6e84f8421508c94f4e51d821142d325cd2ce619
+
+		- restler_static_string: 'POST '
+		- restler_static_string: ''
+		- restler_static_string: '/'
+		- restler_static_string: 'api'
+		- restler_static_string: '/'
+		- restler_static_string: 'disconnect'
+		- restler_static_string: ' HTTP/1.1\r\n'
+		- restler_static_string: 'Accept: application/json\r\n'
+		- restler_static_string: 'Host: localhost:8585\r\n'
+		+ restler_refreshable_authentication_token: [token_auth_method, token_refresh_interval, ...]
+		- restler_static_string: '\r\n'
+
+2026-06-04 10:37:55.373: Sending: 'POST /api/disconnect HTTP/1.1\r\nAccept: application/json\r\nHost: localhost:8585\r\n_OMITTED_AUTH_TOKEN_\r\nContent-Length: 0\r\nUser-Agent: restler/9.3.1\r\nx-restler-sequence-id: 990c7ed2-6d84-4589-9413-b6f623da2c54\r\n\r\n'
+
+2026-06-04 10:37:55.376: Received: 'HTTP/1.1 200 OK\r\nDate: Thu, 04 Jun 2026 10:37:55 GMT\r\nContent-Length: 0\r\n\r\n'
+
+2026-06-04 10:37:55.379: Checker: LeakageRuleChecker kicks in
+
+2026-06-04 10:37:55.381: Checker: LeakageRuleChecker kicks out
+
+2026-06-04 10:37:55.384: Checker: ResourceHierarchyChecker kicks in
+
+2026-06-04 10:37:55.387: Checker: ResourceHierarchyChecker kicks out
+
+2026-06-04 10:37:55.390: Checker: UseAfterFreeChecker kicks in
+
+2026-06-04 10:37:55.392: Checker: UseAfterFreeChecker kicks out
+
+2026-06-04 10:37:55.395: Checker: NameSpaceRuleChecker kicks in
+
+2026-06-04 10:37:55.397: Checker: NameSpaceRuleChecker kicks out
+
+2026-06-04 10:37:55.400: Checker: InvalidDynamicObjectChecker kicks in
+
+2026-06-04 10:37:55.403: Checker: InvalidDynamicObjectChecker kicks out
+
+2026-06-04 10:37:55.406: Checker: PayloadBodyChecker kicks in
+
+2026-06-04 10:37:55.409: Checker: PayloadBodyChecker kicks out
+
+2026-06-04 10:37:55.411: Checker: ExamplesChecker kicks in
+
+2026-06-04 10:37:55.414: Checker: ExamplesChecker kicks out
+
+
+Generation-1: Rendering Sequence-3
+
+	Request: 1 (Remaining candidate combinations: 2)
+	Request hash: af426a2e765e9d9575a47255dc9f78f45325eab6
+
+		- restler_static_string: 'GET '
+		- restler_static_string: ''
+		- restler_static_string: '/'
+		- restler_static_string: 'api'
+		- restler_static_string: '/'
+		- restler_static_string: 'status'
+		- restler_static_string: ' HTTP/1.1\r\n'
+		- restler_static_string: 'Accept: application/json\r\n'
+		- restler_static_string: 'Host: localhost:8585\r\n'
+		+ restler_refreshable_authentication_token: [token_auth_method, token_refresh_interval, ...]
+		- restler_static_string: '\r\n'
+
+2026-06-04 10:37:55.431: Sending: 'GET /api/status HTTP/1.1\r\nAccept: application/json\r\nHost: localhost:8585\r\n_OMITTED_AUTH_TOKEN_\r\nContent-Length: 0\r\nUser-Agent: restler/9.3.1\r\nx-restler-sequence-id: 2f60adb7-18e9-4b50-87b4-b5a5a628369c\r\n\r\n'
+
+2026-06-04 10:37:55.434: Received: 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nDate: Thu, 04 Jun 2026 10:37:55 GMT\r\nContent-Length: 24\r\n\r\n{"state":"disconnected"}'
+
+2026-06-04 10:37:55.437: Checker: LeakageRuleChecker kicks in
+
+2026-06-04 10:37:55.440: Checker: LeakageRuleChecker kicks out
+
+2026-06-04 10:37:55.443: Checker: ResourceHierarchyChecker kicks in
+
+2026-06-04 10:37:55.445: Checker: ResourceHierarchyChecker kicks out
+
+2026-06-04 10:37:55.448: Checker: UseAfterFreeChecker kicks in
+
+2026-06-04 10:37:55.451: Checker: UseAfterFreeChecker kicks out
+
+2026-06-04 10:37:55.454: Checker: NameSpaceRuleChecker kicks in
+
+2026-06-04 10:37:55.456: Checker: NameSpaceRuleChecker kicks out
+
+2026-06-04 10:37:55.459: Checker: InvalidDynamicObjectChecker kicks in
+
+2026-06-04 10:37:55.462: Checker: InvalidDynamicObjectChecker kicks out
+
+2026-06-04 10:37:55.464: Checker: PayloadBodyChecker kicks in
+
+2026-06-04 10:37:55.467: Checker: PayloadBodyChecker kicks out
+
+2026-06-04 10:37:55.470: Checker: ExamplesChecker kicks in
+
+2026-06-04 10:37:55.472: Checker: ExamplesChecker kicks out
+

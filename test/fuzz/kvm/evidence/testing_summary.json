@@ -1,0 +1,25 @@
+{
+    "final_spec_coverage": "3 / 3",
+    "rendered_requests": "3 / 3",
+    "rendered_requests_valid_status": "3 / 3",
+    "num_fully_valid": 3,
+    "num_sequence_failures": 0,
+    "num_invalid_by_failed_resource_creations": 0,
+    "total_object_creations": 0,
+    "total_requests_sent": {
+        "gc": 0,
+        "main_driver": 3,
+        "LeakageRuleChecker": 0,
+        "ResourceHierarchyChecker": 0,
+        "UseAfterFreeChecker": 0,
+        "NameSpaceRuleChecker": 0,
+        "InvalidDynamicObjectChecker": 0,
+        "PayloadBodyChecker": 0,
+        "ExamplesChecker": 0
+    },
+    "bug_buckets": {},
+    "reproducible_bug_buckets": {},
+    "settings": {
+        "random_seed": 12345
+    }
+}
