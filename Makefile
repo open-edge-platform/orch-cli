@@ -7,7 +7,7 @@ PKG     	:= github.com/open-edge-platform/cli
 
 OCI_REPOSITORY 	:= edge-orch/files/orch-cli
 OCI_REGISTRY    ?= 080137407410.dkr.ecr.us-west-2.amazonaws.com
-VERSION         ?= $(shell cat ./VERSION)
+TAG ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo "dev")
 ARTIFACT_FILES := ./signed-package
 
 ORAS_VERSION = 1.2.0
@@ -246,7 +246,7 @@ artifact-publish: oras-dependency
 	else \
 		aws ecr create-repository --region us-west-2 --repository-name ${OCI_REPOSITORY}; \
 	fi
-	oras push ${OCI_REGISTRY}/${OCI_REPOSITORY}:$(VERSION) ./orch-cli-package.tar.gz
+	oras push ${OCI_REGISTRY}/${OCI_REPOSITORY}:$(TAG) ./orch-cli-package.tar.gz
 
 oras-dependency:
 	@# Help: Install oras if not present
