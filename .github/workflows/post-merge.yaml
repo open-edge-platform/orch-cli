@@ -33,9 +33,9 @@ jobs:
       run_helm_build: false
       run_helm_push: false
       bin_zip_name: Orch-cli-package
-      bin_path: ./orch-cli-package.tar.gz    
-      run_version_tag: ${{ startsWith(github.ref, 'refs/tags/') && startsWith(github.event.base_ref, 'refs/heads/release-') }}
-      run_artifact_push: ${{ startsWith(github.ref, 'refs/tags/') && startsWith(github.event.base_ref, 'refs/heads/release-') }}
+      bin_path: ./orch-cli-package.tar.gz
+      run_version_tag: ${{ startsWith(github.ref, 'refs/tags/v202') }}
+      run_artifact_push: ${{ startsWith(github.ref, 'refs/tags/v202') }}
     secrets:
       SYS_EMF_GH_TOKEN: ${{ secrets.SYS_EMF_GH_TOKEN }}
       NO_AUTH_ECR_PUSH_USERNAME: ${{ secrets.NO_AUTH_ECR_PUSH_USERNAME }}
