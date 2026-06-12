@@ -13,7 +13,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
-	github.com/mattn/go-sqlite3 v1.14.44
+	github.com/mattn/go-sqlite3 v1.14.45
 	github.com/oapi-codegen/runtime v1.4.1
 	github.com/open-edge-platform/orch-library/go v0.6.4
 	github.com/prometheus/client_golang v1.23.2
